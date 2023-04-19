@@ -313,6 +313,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
@@ -353,6 +354,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
@@ -378,6 +380,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSingleTileCsrWhenExecutingMultiTileCo
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -418,6 +421,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionF
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
@@ -456,6 +460,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -521,6 +526,7 @@ HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPo
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
@@ -542,6 +548,7 @@ HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPo
                                                           device,
                                                           csr.get(),
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -608,6 +615,7 @@ TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQue
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
     ASSERT_EQ(nullptr, commandQueue);
@@ -662,7 +670,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, returnValue);
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
 
     const uint64_t expectedBitfield = maxNBitValue(numSubDevices);
@@ -687,7 +695,7 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, returnValue);
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
     auto deviceImp = static_cast<DeviceImp *>(device);
     EXPECT_TRUE(deviceImp->allocationsForReuse->peekIsEmpty());
@@ -720,6 +728,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
                                                           device,
                                                           neoDevice->getInternalEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           res));

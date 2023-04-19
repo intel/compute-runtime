@@ -2305,7 +2305,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
     ze_command_queue_desc_t desc = {};
     auto cmdQueueHw = new MockCommandQueueHw<gfxCoreFamily>(device, commandQueue->getCsr(), &desc);
-    cmdQueueHw->initialize(false, false);
+    cmdQueueHw->initialize(false, false, false);
 
     auto &cmdQueueStream = cmdQueueHw->commandStream;
 

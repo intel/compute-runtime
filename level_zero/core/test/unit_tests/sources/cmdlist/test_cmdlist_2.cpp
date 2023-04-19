@@ -1423,6 +1423,16 @@ HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmd
 
 using PrimaryBatchBufferCmdListTest = Test<PrimaryBatchBufferCmdListFixture>;
 
+HWTEST_F(PrimaryBatchBufferCmdListTest, givenForcedPrimaryBatchBufferWhenRegularAndImmediateObjectCreatedThenRegularSetPrimaryFlagAndImmediateNot) {
+    EXPECT_TRUE(commandList->dispatchCmdListBatchBufferAsPrimary);
+    EXPECT_TRUE(commandQueue->dispatchCmdListBatchBufferAsPrimary);
+
+    EXPECT_FALSE(commandListImmediate->dispatchCmdListBatchBufferAsPrimary);
+    ASSERT_NE(nullptr, commandListImmediate->cmdQImmediate);
+    auto immediateCmdQueue = static_cast<L0::ult::CommandQueue *>(commandListImmediate->cmdQImmediate);
+    EXPECT_FALSE(immediateCmdQueue->dispatchCmdListBatchBufferAsPrimary);
+}
+
 HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenAppendingKernelAndClosingCommandListThenExpectAlignedSpaceForBatchBufferStart) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 

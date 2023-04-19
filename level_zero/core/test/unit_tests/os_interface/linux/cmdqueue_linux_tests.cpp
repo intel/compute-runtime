@@ -48,6 +48,7 @@ HWTEST2_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecutingComman
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

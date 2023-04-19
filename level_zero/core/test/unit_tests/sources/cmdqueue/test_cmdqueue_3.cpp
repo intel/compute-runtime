@@ -85,7 +85,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
@@ -130,7 +130,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenProgrammingStateBaseAddressWithStatele
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     auto &commandStream = commandQueue->commandStream;
     auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
@@ -171,7 +171,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
     NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
@@ -212,7 +212,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
     NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
@@ -276,6 +276,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
                                                           &desc,
                                                           true,
                                                           false,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -304,6 +305,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
                                                           &csr,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
@@ -348,6 +350,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
                                                           device,
                                                           &csr,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue);
@@ -409,6 +412,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
                                                           device,
                                                           &csr,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue);
@@ -473,6 +477,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
                                                           device,
                                                           &csr,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue);
@@ -702,7 +707,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     NEO::CommandStreamReceiver *csr;
     l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, false, returnValue));
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
     auto commandListHandle = commandList->toHandle();
 
@@ -753,7 +758,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabri
     NEO::CommandStreamReceiver *csr;
     l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, false, returnValue));
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
     auto commandListHandle = commandList->toHandle();
 
@@ -795,7 +800,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecuti
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto cmdListHandle = commandList->toHandle();
@@ -818,7 +823,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecu
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto cmdListHandle = commandList.get()->toHandle();
@@ -845,7 +850,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCommandQueueWhenHandleIndirectAl
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto cmdListHandle = commandList.get()->toHandle();
@@ -877,6 +882,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenMakeResidentAndMigrateWithEmptyR
                                                           &desc,
                                                           true,
                                                           false,
+                                                          false,
                                                           returnValue);
     ResidencyContainer container;
     commandQueue->makeResidentAndMigrate(false, container);
@@ -895,6 +901,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenMakeResidentAndMigrateWithTwoAll
                                                           &csr,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           false,
                                                           returnValue);
     ResidencyContainer container;
@@ -920,6 +927,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsFalseThenTrans
                                                           &desc,
                                                           true,
                                                           false,
+                                                          false,
                                                           returnValue);
     ResidencyContainer container;
     MockGraphicsAllocation mockGA;
@@ -942,6 +950,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
                                                           &csr,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           false,
                                                           returnValue);
     ResidencyContainer container;
@@ -967,6 +976,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
                                                           &desc,
                                                           true,
                                                           false,
+                                                          false,
                                                           returnValue);
     ResidencyContainer container;
     MockGraphicsAllocation mockGA;
@@ -990,6 +1000,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
                                                           &csr,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           false,
                                                           returnValue);
     ResidencyContainer container;
@@ -1053,7 +1064,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     ASSERT_NE(nullptr, csr);
 
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     Mock<::L0::Kernel> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -1202,7 +1213,7 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
     ASSERT_NE(nullptr, csr);
 
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     Mock<::L0::Kernel> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -1236,10 +1247,10 @@ HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandLi
     ASSERT_NE(nullptr, csr);
 
     auto commandQueue1 = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
-    commandQueue1->initialize(false, false);
+    commandQueue1->initialize(false, false, false);
 
     auto commandQueue2 = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
-    commandQueue2->initialize(false, false);
+    commandQueue2->initialize(false, false, false);
 
     Mock<::L0::Kernel> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));

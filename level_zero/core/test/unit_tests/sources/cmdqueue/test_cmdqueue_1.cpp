@@ -42,6 +42,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
 
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -77,6 +78,7 @@ TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutput
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
 
     Mock<Kernel> kernel1, kernel2;
@@ -100,6 +102,7 @@ HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingBy
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -134,6 +137,7 @@ HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingTh
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
 
     Mock<Kernel> kernel1;
@@ -161,6 +165,7 @@ HWTEST_F(CommandQueueCreate, givenGpuHangOnSecondReserveWhenReservingLinearStrea
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -202,6 +207,7 @@ HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -264,6 +270,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueWithInvalidProductFamilyThenF
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue);
 
     ASSERT_EQ(nullptr, commandQueue);
@@ -276,6 +283,7 @@ TEST_F(CommandQueueCreate, whenCmdBuffersAllocationsAreCreatedThenSizeIsNotLessT
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -308,6 +316,7 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -359,6 +368,7 @@ HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperWhenExecutingThenMergeState
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->logicalStateHelper.reset(mockCsrLogicalStateHelper);
@@ -396,6 +406,7 @@ HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperAndImmediateCmdListWhenExec
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->logicalStateHelper.reset(mockCsrLogicalStateHelper);
@@ -422,7 +433,7 @@ HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperAndImmediateCmdListWhenExec
 HWTEST2_F(CommandQueueCreate, givenOutOfHostMemoryErrorFromSubmitBatchBufferWhenExecutingCommandListsThenOutOfHostMemoryIsReturned, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     commandQueue->submitBatchBufferReturnValue = NEO::SubmissionStatus::OUT_OF_HOST_MEMORY;
 
     Mock<Kernel> kernel;
@@ -470,7 +481,7 @@ HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferT
     NEO::DebugManager.flags.EnableSWTags.set(1);
     const ze_command_queue_desc_t desc = {};
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
@@ -519,7 +530,7 @@ struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFam
 HWTEST2_F(CommandQueueCreate, GivenDispatchTaskCountPostSyncRequiredWhenExecuteCommandListsThenEstimatedSizeIsCorrect, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
     auto commandQueue = new MockCommandQueueHwEstimateSizeTest<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(
@@ -556,6 +567,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDi
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -598,6 +610,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndImmediateCmdListWhen
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
 
     auto commandList = CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue);
@@ -635,6 +648,7 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     ResidencyContainer container;
     TaskCountType peekTaskCountBefore = commandQueue->csr->peekTaskCount();
@@ -658,6 +672,7 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
                                                           device,
                                                           csr.get(),
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -684,6 +699,7 @@ HWTEST_F(CommandQueueCreate, givenOutOfMemoryThenSubmitBatchBufferReturnsOutOfMe
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     ResidencyContainer container;
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
@@ -700,6 +716,7 @@ TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitiali
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -726,6 +743,7 @@ HWTEST_F(CommandQueueCreate, givenQueueInAsyncModeAndRugularCmdListWithAppendBar
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
@@ -745,6 +763,7 @@ HWTEST_F(CommandQueueCreate, givenQueueInSyncModeAndRugularCmdListWithAppendBarr
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -769,6 +788,7 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitComm
                                                           &desc,
                                                           true,
                                                           false,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -791,6 +811,7 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
@@ -1147,7 +1168,7 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     commandList->setCommandListPerThreadScratchSize(100u);
@@ -1187,7 +1208,7 @@ HWTEST2_F(ExecuteCommandListTests, givenOutOfMemorySubmitBatchBufferThenExecuteC
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::OUT_OF_MEMORY;
 
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     auto commandListHandle = commandList->toHandle();
@@ -1205,7 +1226,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     commandList->setCommandListPerThreadScratchSize(100u);
@@ -1231,7 +1252,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     commandList->setCommandListPerThreadPrivateScratchSize(100u);
@@ -1261,7 +1282,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEn
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     commandList->setCommandListPerThreadScratchSize(100u);
@@ -1281,7 +1302,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenExecuteComma
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
 
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     auto commandListHandle = commandList->toHandle();
@@ -1302,7 +1323,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
 
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     auto commandListHandle = commandList->toHandle();
@@ -1332,7 +1353,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
 
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     auto commandListHandle = commandList->toHandle();
@@ -1360,7 +1381,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForCompl
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
 
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     auto commandListHandle = commandList->toHandle();
@@ -1381,7 +1402,7 @@ HWTEST2_F(ExecuteCommandListTests, givenSuccessfulSubmitBatchBufferThenExecuteCo
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::SUCCESS;
 
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     auto commandListHandle = commandList->toHandle();
@@ -1402,6 +1423,7 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
                                              device,
                                              csr,
                                              &desc,
+                                             false,
                                              false,
                                              false,
                                              returnValue);
@@ -1440,6 +1462,7 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
                                                           device,
                                                           csr,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -1483,6 +1506,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -1517,6 +1541,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            device,
                                                            csr,
                                                            &desc,
+                                                           false,
                                                            false,
                                                            false,
                                                            returnValue));
@@ -1555,6 +1580,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -1589,6 +1615,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            device,
                                                            csr,
                                                            &desc,
+                                                           false,
                                                            false,
                                                            false,
                                                            returnValue));
@@ -1627,6 +1654,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -1661,6 +1689,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            device,
                                                            csr,
                                                            &desc,
+                                                           false,
                                                            false,
                                                            false,
                                                            returnValue));
@@ -1699,6 +1728,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -1735,6 +1765,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            &desc,
                                                            false,
                                                            false,
+                                                           false,
                                                            returnValue));
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
@@ -1767,6 +1798,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           device,
                                                           csr,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -1803,6 +1835,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            &desc,
                                                            false,
                                                            false,
+                                                           false,
                                                            returnValue));
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
@@ -1834,6 +1867,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
                                                           device,
                                                           csr,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -1878,6 +1912,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList->setCommandListPerThreadPrivateScratchSize(0u);
@@ -1920,6 +1955,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToDefaultWhenCommandQueu
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -1942,6 +1978,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToAsynchronousWhenComman
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -1962,6 +1999,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue);
@@ -1987,6 +2025,7 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
 
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -2010,7 +2049,7 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
     auto expectedHeapAddressModel = l0GfxCoreHelper.getPlatformHeapAddressModel();
     EXPECT_EQ(expectedHeapAddressModel, commandQueue->cmdListHeapAddressModel);
 
-    auto expectedDispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary();
+    auto expectedDispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true);
     EXPECT_EQ(expectedDispatchCmdListBatchBufferAsPrimary, commandQueue->dispatchCmdListBatchBufferAsPrimary);
 
     commandQueue->destroy();
@@ -2046,6 +2085,7 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     std::unique_lock<std::mutex> lock;
     auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
@@ -2069,6 +2109,7 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -2095,6 +2136,7 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));

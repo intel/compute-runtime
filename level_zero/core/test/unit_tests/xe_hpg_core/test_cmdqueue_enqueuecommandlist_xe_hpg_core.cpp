@@ -31,7 +31,7 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
-        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
+        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
@@ -75,7 +75,7 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
-        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
+        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 

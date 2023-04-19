@@ -103,12 +103,13 @@ NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDevice
     return l0GfxCoreHelper.getPlatformHeapAddressModel();
 }
 
-bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary() {
-    bool defaultValue = false;
+bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(bool allowPrimary) {
+    constexpr bool defaultValue = false;
+    bool value = defaultValue;
     if (NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get() != -1) {
-        return !!(NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get());
+        value = !!(NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get());
     }
-    return defaultValue;
+    return value && allowPrimary;
 }
 
 } // namespace L0

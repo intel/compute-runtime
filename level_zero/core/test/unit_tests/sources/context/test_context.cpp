@@ -614,6 +614,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                           &desc,
                                                           true,
                                                           false,
+                                                          false,
                                                           returnValue);
     EXPECT_NE(nullptr, commandQueue);
 
@@ -665,6 +666,7 @@ HWTEST2_F(ContextMakeMemoryResidentAndMigrationTests,
                                                           &desc,
                                                           true,
                                                           false,
+                                                          false,
                                                           returnValue);
     EXPECT_NE(nullptr, commandQueue);
 
@@ -713,6 +715,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                           &csr,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           false,
                                                           returnValue);
     EXPECT_NE(nullptr, commandQueue);

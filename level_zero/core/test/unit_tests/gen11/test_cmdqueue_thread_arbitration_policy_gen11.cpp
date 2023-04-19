@@ -54,6 +54,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
                                                          &queueDesc,
                                                          false,
                                                          false,
+                                                         false,
                                                          returnValue));
         ASSERT_NE(nullptr, commandQueue);
 

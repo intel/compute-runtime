@@ -2436,7 +2436,7 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
     EXPECT_EQ(expectedHeapAddressModel, commandList->getCmdListHeapAddressModel());
     EXPECT_EQ(expectedHeapAddressModel, commandList->getCmdContainer().getHeapAddressModel());
 
-    auto expectedDispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary();
+    auto expectedDispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true);
     EXPECT_EQ(expectedDispatchCmdListBatchBufferAsPrimary, commandList->dispatchCmdListBatchBufferAsPrimary);
 }
 

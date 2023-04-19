@@ -31,7 +31,7 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
@@ -80,7 +80,7 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
@@ -168,7 +168,7 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
     device->setPreemptionMode(NEO::PreemptionMode::Disabled);
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc));
-    commandQueue->initialize(false, true);
+    commandQueue->initialize(false, true, false);
     EXPECT_TRUE(commandQueue->internalUsage);
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {

@@ -36,7 +36,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
-        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
+        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
@@ -77,7 +77,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
-        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
+        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
@@ -125,7 +125,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenMidThre
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
-        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
+        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
@@ -172,7 +172,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
-        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
+        device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 

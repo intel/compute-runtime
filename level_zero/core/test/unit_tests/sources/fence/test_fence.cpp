@@ -361,6 +361,7 @@ HWTEST_F(FenceTest, givenPrintfKernelWhenSynchronizingFenceThenPrintPrintfOutput
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     Mock<Kernel> kernel;
     TaskCountType currentTaskCount = 33u;
@@ -402,6 +403,7 @@ HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPr
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
 
     Mock<Kernel> kernel;
@@ -437,6 +439,7 @@ HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroT
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));

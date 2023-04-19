@@ -47,7 +47,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     virtual ze_result_t synchronize(uint64_t timeout) = 0;
 
     static CommandQueue *create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
-                                const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, ze_result_t &resultValue);
+                                const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, bool immediateCmdListQueue, ze_result_t &resultValue);
 
     static CommandQueue *fromHandle(ze_command_queue_handle_t handle) {
         return static_cast<CommandQueue *>(handle);
@@ -83,6 +83,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool stateBaseAddressTracking = false;
     bool doubleSbaWa = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
+    bool internalQueueForImmediateCommandList = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

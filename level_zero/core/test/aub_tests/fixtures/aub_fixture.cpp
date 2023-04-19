@@ -91,7 +91,7 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
 
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
     ze_command_queue_desc_t queueDesc = {};
-    pCmdq = CommandQueue::create(hwInfo.platform.eProductFamily, device, csr, &queueDesc, false, false, returnValue);
+    pCmdq = CommandQueue::create(hwInfo.platform.eProductFamily, device, csr, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 void AUBFixtureL0::tearDown() {

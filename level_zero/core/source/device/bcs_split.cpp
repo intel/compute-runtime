@@ -60,7 +60,7 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
 
     for (const auto &csr : csrs) {
         ze_result_t result;
-        auto commandQueue = CommandQueue::create(productFamily, &device, csr, &splitDesc, true, false, result);
+        auto commandQueue = CommandQueue::create(productFamily, &device, csr, &splitDesc, true, false, true, result);
         UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
 
         this->cmdQs.push_back(commandQueue);

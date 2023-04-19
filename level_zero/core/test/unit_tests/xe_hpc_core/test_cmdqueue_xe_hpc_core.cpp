@@ -35,7 +35,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
     csr.createGlobalFenceAllocation();
 
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, &csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
@@ -61,7 +61,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
@@ -90,7 +90,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsF
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false);
+    commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
@@ -158,7 +158,9 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenSpl
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+    ASSERT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+    auto bcsInternalQueue = static_cast<L0::ult::CommandQueue *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0]);
+    EXPECT_TRUE(bcsInternalQueue->internalQueueForImmediateCommandList);
 
     std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
     ASSERT_NE(nullptr, commandList2);

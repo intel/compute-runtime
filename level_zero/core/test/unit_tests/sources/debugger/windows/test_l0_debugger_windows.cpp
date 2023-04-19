@@ -93,10 +93,10 @@ HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndCommandQueuesAreCreatedA
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue1 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
+    auto commandQueue1 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
 
-    auto commandQueue2 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
+    auto commandQueue2 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
 
     commandQueue1->destroy();

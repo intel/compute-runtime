@@ -71,9 +71,10 @@ ze_result_t CommandQueueImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
+ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue) {
     ze_result_t returnValue;
     internalUsage = isInternal;
+    internalQueueForImmediateCommandList = immediateCmdListQueue;
     returnValue = buffers.initialize(device, totalCmdBufferSize);
     if (returnValue == ZE_RESULT_SUCCESS) {
         NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();
@@ -99,7 +100,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
         this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
         this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
-        this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary();
+        this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(!immediateCmdListQueue);
     }
     return returnValue;
 }
@@ -211,7 +212,7 @@ void CommandQueueImp::postSyncOperations(bool hangDetected) {
 }
 
 CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
-                                   const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, ze_result_t &returnValue) {
+                                   const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, bool immediateCmdListQueue, ze_result_t &returnValue) {
     CommandQueueAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandQueueFactory[productFamily];
@@ -224,7 +225,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     }
 
     commandQueue = static_cast<CommandQueueImp *>((*allocator)(device, csr, desc));
-    returnValue = commandQueue->initialize(isCopyOnly, isInternal);
+    returnValue = commandQueue->initialize(isCopyOnly, isInternal, immediateCmdListQueue);
     if (returnValue != ZE_RESULT_SUCCESS) {
         commandQueue->destroy();
         commandQueue = nullptr;

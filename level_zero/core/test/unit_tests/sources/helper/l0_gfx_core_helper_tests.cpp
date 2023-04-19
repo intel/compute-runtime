@@ -862,11 +862,19 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
 
     DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
-    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary());
+    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true));
 
     DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
 
-    EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary());
+    EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true));
+}
+
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDispatchCmdListCmdBufferPrimaryAndNotAllowPrimaryThenOverrideDbgKeyValueAndDisallow) {
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+
+    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(false));
 }
 
 } // namespace ult

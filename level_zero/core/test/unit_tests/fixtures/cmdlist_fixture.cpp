@@ -99,6 +99,7 @@ void ModuleMutableCommandListFixture::setUpImpl() {
                                                      &queueDesc,
                                                      false,
                                                      false,
+                                                     false,
                                                      returnValue));
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();

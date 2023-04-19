@@ -185,7 +185,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             return commandList;
         }
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, commandList->isCopyOnly(), internalUsage, returnValue);
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, commandList->isCopyOnly(), internalUsage, true, returnValue);
         if (!commandQueue) {
             commandList->destroy();
             commandList = nullptr;

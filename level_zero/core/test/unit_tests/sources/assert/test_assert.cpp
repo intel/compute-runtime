@@ -221,7 +221,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     cmdList.setCsr(&csr);
     cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
-    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, result);
+    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
 
     auto mockCsrLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
@@ -257,7 +257,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, result);
+    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
 
     auto mockCsrLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
@@ -297,7 +297,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynch
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, result);
+    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -323,6 +323,7 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertWhenExecutingThenCommandQue
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -357,6 +358,7 @@ TEST_F(CommandQueueWithAssert, GivenAssertKernelExecutedAndNoAssertHandlerWhenCh
                                                           &desc,
                                                           false,
                                                           false,
+                                                          false,
                                                           returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -379,6 +381,7 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertExecutedWhenSynchronizeByPo
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -405,6 +408,7 @@ HWTEST_F(CommandQueueWithAssert, GivenCmdListWithAssertExecutedAndDetectedHangWh
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));
@@ -438,6 +442,7 @@ TEST_F(CommandQueueWithAssert, GivenAssertKernelExecutedWhenSynchronizingFenceTh
                                                           device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
+                                                          false,
                                                           false,
                                                           false,
                                                           returnValue));

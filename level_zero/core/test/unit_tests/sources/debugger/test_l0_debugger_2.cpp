@@ -358,7 +358,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForReg
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
     ze_command_list_handle_t commandLists[] = {
@@ -437,7 +437,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsed
     ze_command_queue_desc_t queueDesc = {};
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
-    commandQueue->initialize(false, true);
+    commandQueue->initialize(false, true, false);
     EXPECT_TRUE(commandQueue->internalUsage);
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
@@ -492,7 +492,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
 
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, bcsEngine->commandStreamReceiver, &queueDesc, true, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, bcsEngine->commandStreamReceiver, &queueDesc, true, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
