@@ -213,6 +213,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingS
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
@@ -243,6 +244,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainC
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
@@ -292,6 +294,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, giveNotAllLinkBcsEnginesWhenBi
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
@@ -341,6 +344,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingM
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0b1111;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
@@ -373,6 +377,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -402,6 +407,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -431,6 +437,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContex
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -782,6 +789,46 @@ TEST(DrmTest, givenNewMemoryInfoQuerySupportedWhenQueryingEngineInfoThenEngineIn
 
     drm->queryEngineInfo();
     EXPECT_NE(nullptr, drm->engineInfo);
+}
+struct MockEngineInfo : EngineInfo {
+    using EngineInfo::getBaseCopyEngineType;
+    MockEngineInfo(Drm *drm, const std::vector<EngineCapabilities> &engineInfos) : EngineInfo(drm, engineInfos){};
+};
+
+TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsIntegratedGpuThenBcs0AlwaysIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
+    std::vector<NEO::EngineCapabilities> i915engineInfo(1);
+
+    auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), i915engineInfo);
+    bool isIntegratedGpu = true;
+    auto caps = drm->ioctlHelper->getCopyClassSaturatePCIECapability();
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+
+    caps = drm->ioctlHelper->getCopyClassSaturateLinkCapability();
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+
+    caps = 0;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+}
+
+TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsNotIntegratedGpuThenProperBcsIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
+    std::vector<NEO::EngineCapabilities> i915engineInfo(1);
+
+    auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), i915engineInfo);
+    bool isIntegratedGpu = false;
+    auto caps = drm->ioctlHelper->getCopyClassSaturatePCIECapability();
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+
+    caps = drm->ioctlHelper->getCopyClassSaturateLinkCapability();
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+
+    caps = 0;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
 }
 
 struct DistanceQueryDrmTests : ::testing::Test {

@@ -64,7 +64,8 @@ EngineInfo::EngineInfo(Drm *drm, const std::vector<EngineCapabilities> &engineIn
         if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)) {
             tileToEngineToInstanceMap[0][EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment)] = engine;
         } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
-            assignCopyEngine(EngineInfo::getBaseCopyEngineType(ioctlHelper, engineInfo.capabilities), 0, engine,
+            const auto &hwInfo = rootDeviceEnvironment.getHardwareInfo();
+            assignCopyEngine(EngineInfo::getBaseCopyEngineType(ioctlHelper, engineInfo.capabilities, hwInfo->capabilityTable.isIntegratedDevice), 0, engine,
                              bcsInfoMask, numHostLinkCopyEngines, numScaleUpLinkCopyEngines);
         } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute)) {
             tileToEngineToInstanceMap[0][static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + computeEngines)] = engine;
@@ -183,16 +184,16 @@ void EngineInfo::assignCopyEngine(aub_stream::EngineType baseEngineType, uint32_
 }
 
 // EngineIndex = (Base + EngineCounter - 1)
-aub_stream::EngineType EngineInfo::getBaseCopyEngineType(IoctlHelper *ioctlHelper, uint64_t capabilities) {
+aub_stream::EngineType EngineInfo::getBaseCopyEngineType(IoctlHelper *ioctlHelper, uint64_t capabilities, bool isIntegratedDevice) {
+    if (!isIntegratedDevice) {
+        if (const auto capa = ioctlHelper->getCopyClassSaturatePCIECapability(); capa && isValueSet(capabilities, *capa)) {
+            return DrmEngineMappingHelper::baseForHostLinkCopyEngine;
+        }
 
-    if (const auto capa = ioctlHelper->getCopyClassSaturatePCIECapability(); capa && isValueSet(capabilities, *capa)) {
-        return DrmEngineMappingHelper::baseForHostLinkCopyEngine;
+        if (const auto capa = ioctlHelper->getCopyClassSaturateLinkCapability(); capa && isValueSet(capabilities, *capa)) {
+            return DrmEngineMappingHelper::baseForScaleUpLinkCopyEngine;
+        }
     }
-
-    if (const auto capa = ioctlHelper->getCopyClassSaturateLinkCapability(); capa && isValueSet(capabilities, *capa)) {
-        return DrmEngineMappingHelper::baseForScaleUpLinkCopyEngine;
-    }
-
     // no capabilites check for BCS0, to be backward compatible
     return DrmEngineMappingHelper::baseForMainCopyEngine;
 }
