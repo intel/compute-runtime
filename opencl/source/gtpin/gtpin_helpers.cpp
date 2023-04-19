@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/validators.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
@@ -27,38 +28,45 @@ using namespace gtpin;
 namespace NEO {
 
 GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinCreateBuffer(context_handle_t context, uint32_t reqSize, resource_handle_t *pResource) {
-    cl_int diag = CL_SUCCESS;
-    Context *pContext = castToObject<Context>((cl_context)context);
-    if ((pContext == nullptr) || (pResource == nullptr)) {
+    cl_int retVal = CL_SUCCESS;
+    Context *pContext = castToObject<Context>(reinterpret_cast<cl_context>(context));
+    if (isAnyNullptr(pContext, pResource)) {
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
     size_t size = alignUp(reqSize, MemoryConstants::cacheLineSize);
-    auto &gtpinHelper = pContext->getDevice(0)->getGTPinGfxCoreHelper();
-    if (gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
-        void *unifiedMemorySharedAllocation = clSharedMemAllocINTEL(pContext, pContext->getDevice(0), 0, size, 0, &diag);
-        auto allocationsManager = pContext->getSVMAllocsManager();
-        auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
-        *pResource = (resource_handle_t)graphicsAllocation;
-    } else {
-        void *hostPtr = pContext->getMemoryManager()->allocateSystemMemory(size, MemoryConstants::pageSize);
-        if (hostPtr == nullptr) {
+    auto clDevice = pContext->getDevice(0);
+    auto &gtpinHelper = clDevice->getGTPinGfxCoreHelper();
+    if (gtpinHelper.canUseSharedAllocation(clDevice->getHardwareInfo())) {
+        void *unifiedMemorySharedAllocation = clSharedMemAllocINTEL(pContext, clDevice, 0, size, 0, &retVal);
+        if (retVal != CL_SUCCESS) {
             return GTPIN_DI_ERROR_ALLOCATION_FAILED;
         }
-        cl_mem buffer = Buffer::create(pContext, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_FORCE_HOST_MEMORY_INTEL, size, hostPtr, diag);
-        *pResource = (resource_handle_t)buffer;
+        auto allocationsManager = pContext->getSVMAllocsManager();
+        auto allocData = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+        *pResource = reinterpret_cast<resource_handle_t>(allocData);
+    } else {
+        void *hostPtr = pContext->getMemoryManager()->allocateSystemMemory(size, MemoryConstants::pageSize);
+        cl_mem buffer = Buffer::create(pContext, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_FORCE_HOST_MEMORY_INTEL, size, hostPtr, retVal);
+        if (retVal != CL_SUCCESS) {
+            return GTPIN_DI_ERROR_ALLOCATION_FAILED;
+        }
+        *pResource = reinterpret_cast<resource_handle_t>(buffer);
     }
     return GTPIN_DI_SUCCESS;
 }
 
 GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinFreeBuffer(context_handle_t context, resource_handle_t resource) {
-    Context *pContext = castToObject<Context>((cl_context)context);
-    if ((pContext == nullptr) || (resource == nullptr)) {
+    Context *pContext = castToObject<Context>(reinterpret_cast<cl_context>(context));
+    if (isAnyNullptr(pContext, resource)) {
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
-    auto &gtpinHelper = pContext->getDevice(0)->getGTPinGfxCoreHelper();
-    if (gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
+
+    auto clDevice = pContext->getDevice(0);
+    auto &gtpinHelper = clDevice->getGTPinGfxCoreHelper();
+    if (gtpinHelper.canUseSharedAllocation(clDevice->getHardwareInfo())) {
         auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
-        clMemFreeINTEL(pContext, allocData->cpuAllocation->getUnderlyingBuffer());
+        auto graphicsAllocation = allocData->gpuAllocations.getGraphicsAllocation(clDevice->getRootDeviceIndex());
+        clMemFreeINTEL(pContext, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
     } else {
         auto pMemObj = castToObject<MemObj>(resource);
         if (pMemObj == nullptr) {
@@ -71,17 +79,20 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinFreeBuffer(context_handle_t context, 
 }
 
 GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinMapBuffer(context_handle_t context, resource_handle_t resource, uint8_t **pAddress) {
-    cl_mem buffer = (cl_mem)resource;
-    Context *pContext = castToObject<Context>((cl_context)context);
-    if ((pContext == nullptr) || (buffer == nullptr) || (pAddress == nullptr)) {
+    Context *pContext = castToObject<Context>(reinterpret_cast<cl_context>(context));
+    if (isAnyNullptr(pContext, resource, pAddress)) {
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
-    auto &gtpinHelper = pContext->getDevice(0)->getGTPinGfxCoreHelper();
-    if (gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
+
+    auto clDevice = pContext->getDevice(0);
+    auto &gtpinHelper = clDevice->getGTPinGfxCoreHelper();
+    if (gtpinHelper.canUseSharedAllocation(clDevice->getHardwareInfo())) {
         auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
-        *pAddress = reinterpret_cast<uint8_t *>(allocData->cpuAllocation->getUnderlyingBuffer());
+        auto graphicsAllocation = allocData->gpuAllocations.getGraphicsAllocation(clDevice->getRootDeviceIndex());
+        *pAddress = reinterpret_cast<uint8_t *>(graphicsAllocation->getGpuAddress());
+
     } else {
-        auto pMemObj = castToObject<MemObj>(buffer);
+        auto pMemObj = castToObject<MemObj>(resource);
         if (pMemObj == nullptr) {
             return GTPIN_DI_ERROR_INVALID_ARGUMENT;
         }
@@ -91,12 +102,14 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinMapBuffer(context_handle_t context, r
 }
 
 GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinUnmapBuffer(context_handle_t context, resource_handle_t resource) {
-    Context *pContext = castToObject<Context>((cl_context)context);
-    if ((pContext == nullptr) || (resource == nullptr)) {
+    Context *pContext = castToObject<Context>(reinterpret_cast<cl_context>(context));
+    if (isAnyNullptr(pContext, resource)) {
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
-    auto &gtpinHelper = pContext->getDevice(0)->getGTPinGfxCoreHelper();
-    if (!gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
+
+    auto clDevice = pContext->getDevice(0);
+    auto &gtpinHelper = clDevice->getGTPinGfxCoreHelper();
+    if (!gtpinHelper.canUseSharedAllocation(clDevice->getHardwareInfo())) {
         auto pMemObj = castToObject<MemObj>(resource);
         if (pMemObj == nullptr) {
             return GTPIN_DI_ERROR_INVALID_ARGUMENT;

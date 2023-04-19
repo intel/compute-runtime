@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,5 +18,10 @@ bool areNotNullptr() {
 template <typename T, typename... RT>
 bool areNotNullptr(T t, RT... rt) {
     return (t != nullptr) && areNotNullptr<RT...>(rt...);
+}
+
+template <typename T, typename... RT>
+bool isAnyNullptr(T t, RT... rt) {
+    return !areNotNullptr(t, rt...);
 }
 } // namespace NEO

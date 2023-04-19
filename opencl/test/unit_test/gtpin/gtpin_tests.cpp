@@ -432,35 +432,40 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferUnMapFails) {
 
 TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFails) {
 
-    InjectedFunction allocBufferFunc = [this](size_t failureIndex) {
-        resource_handle_t res;
-        cl_context ctxt = (cl_context)((Context *)pContext);
-        uint32_t hugeSize = 400u; // Will be handled as huge memory allocation
-        retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, hugeSize, &res);
-        if (MemoryManagement::nonfailingAllocation != failureIndex) {
-            EXPECT_EQ(GTPIN_DI_ERROR_ALLOCATION_FAILED, retFromGtPin);
-        } else {
-            EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-            EXPECT_NE(nullptr, res);
-            retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, res);
-            EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-        }
-    };
+    DebugManagerStateRestore restorer;
+    for (auto &allocationInUSMShared : ::testing::Bool()) {
+        DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(allocationInUSMShared);
+        InjectedFunction allocBufferFunc = [this](size_t failureIndex) {
+            resource_handle_t res;
+            cl_context ctxt = (cl_context)((Context *)pContext);
+            uint32_t hugeSize = 400u; // Will be handled as huge memory allocation
+            retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, hugeSize, &res);
+            if (MemoryManagement::nonfailingAllocation != failureIndex) {
+                EXPECT_EQ(GTPIN_DI_ERROR_ALLOCATION_FAILED, retFromGtPin);
+            } else {
+                EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+                EXPECT_NE(nullptr, res);
+                retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, res);
+                EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+            }
+        };
+        isGTPinInitialized = false;
+        gtpinCallbacks.onContextCreate = onContextCreate;
+        gtpinCallbacks.onContextDestroy = onContextDestroy;
+        gtpinCallbacks.onKernelCreate = onKernelCreate;
+        gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+        gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+        gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
+        retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+        EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+        ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
+        ASSERT_EQ(&NEO::gtpinFreeBuffer, driverServices.bufferDeallocate);
+        ASSERT_EQ(&NEO::gtpinFreeBuffer, driverServices.bufferDeallocate);
+        EXPECT_EQ(&NEO::gtpinMapBuffer, driverServices.bufferMap);
+        EXPECT_EQ(&NEO::gtpinUnmapBuffer, driverServices.bufferUnMap);
 
-    gtpinCallbacks.onContextCreate = onContextCreate;
-    gtpinCallbacks.onContextDestroy = onContextDestroy;
-    gtpinCallbacks.onKernelCreate = onKernelCreate;
-    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
-    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
-    ASSERT_EQ(&NEO::gtpinFreeBuffer, driverServices.bufferDeallocate);
-    EXPECT_EQ(&NEO::gtpinMapBuffer, driverServices.bufferMap);
-    EXPECT_EQ(&NEO::gtpinUnmapBuffer, driverServices.bufferUnMap);
-
-    injectFailures(allocBufferFunc);
+        injectFailures(allocBufferFunc);
+    }
 }
 
 TEST_F(GTPinTests, givenValidRequestForMemoryAllocationThenBufferAllocateAndDeallocateSucceeds) {
@@ -2160,7 +2165,7 @@ TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCant
     }
 }
 
-HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhenGtPinHelperFunctionsAreCalledThenCheckIfSharedAllocationCabBeUsed) {
+HWTEST_F(GTPinTests, givenGtPinWithSupportForSharedAllocationWhenGtPinHelperFunctionsAreCalledThenCheckIfSharedAllocationCanBeUsed) {
     auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
@@ -2180,39 +2185,39 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhen
     pDevice->gtpinGfxCoreHelper.swap(backup);
 
     resource_handle_t resource = nullptr;
-    cl_context ctxt = (cl_context)((Context *)pContext);
+    gtpin::context_handle_t gtPinContext = reinterpret_cast<gtpin::context_handle_t>(static_cast<cl_context>(pContext));
 
     mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled = false;
-    gtpinCreateBuffer((gtpin::context_handle_t)ctxt, 256, &resource);
+    gtpinCreateBuffer(gtPinContext, 256, &resource);
     EXPECT_TRUE(mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled);
 
     mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled = false;
     uint8_t *address = nullptr;
-    gtpinMapBuffer((gtpin::context_handle_t)ctxt, resource, &address);
+    gtpinMapBuffer(gtPinContext, resource, &address);
     EXPECT_TRUE(mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled);
 
     mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled = false;
-    gtpinUnmapBuffer((gtpin::context_handle_t)ctxt, resource);
+    gtpinUnmapBuffer(gtPinContext, resource);
     EXPECT_TRUE(mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled);
 
     mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled = false;
-    gtpinFreeBuffer((gtpin::context_handle_t)ctxt, resource);
+    gtpinFreeBuffer(gtPinContext, resource);
     EXPECT_TRUE(mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled);
 
     pDevice->gtpinGfxCoreHelper.swap(backup);
 }
 
-HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedThenAllocateBufferInSharedMemory) {
+TEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedThenAllocateBufferInSharedMemory) {
     auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
     }
 
     resource_handle_t resource = nullptr;
-    cl_context ctxt = (cl_context)((Context *)pContext);
+    gtpin::context_handle_t gtPinContext = reinterpret_cast<gtpin::context_handle_t>(static_cast<cl_context>(pContext));
     GTPIN_DI_STATUS status = GTPIN_DI_SUCCESS;
 
-    status = gtpinCreateBuffer((gtpin::context_handle_t)ctxt, 256, &resource);
+    status = gtpinCreateBuffer(gtPinContext, 256, &resource);
     EXPECT_EQ(GTPIN_DI_SUCCESS, status);
     EXPECT_NE(nullptr, resource);
 
@@ -2227,14 +2232,51 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
     EXPECT_NE(AllocationType::UNIFIED_SHARED_MEMORY, gpuAllocation->getAllocationType());
 
     uint8_t *address = nullptr;
-    status = gtpinMapBuffer((gtpin::context_handle_t)ctxt, resource, &address);
+    status = gtpinMapBuffer(gtPinContext, resource, &address);
     EXPECT_EQ(GTPIN_DI_SUCCESS, status);
     EXPECT_EQ(allocData->cpuAllocation->getUnderlyingBuffer(), address);
 
-    status = gtpinUnmapBuffer((gtpin::context_handle_t)ctxt, resource);
+    status = gtpinUnmapBuffer(gtPinContext, resource);
     EXPECT_EQ(GTPIN_DI_SUCCESS, status);
 
-    status = gtpinFreeBuffer((gtpin::context_handle_t)ctxt, resource);
+    status = gtpinFreeBuffer(gtPinContext, resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+}
+
+TEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedInSingleStorageThenAllocateBufferWithoutCpuAllocation) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(0);
+    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+
+    resource_handle_t resource = nullptr;
+    gtpin::context_handle_t gtPinContext = reinterpret_cast<gtpin::context_handle_t>(static_cast<cl_context>(pContext));
+    GTPIN_DI_STATUS status = GTPIN_DI_SUCCESS;
+
+    status = gtpinCreateBuffer(gtPinContext, 256, &resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+    EXPECT_NE(nullptr, resource);
+
+    auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
+
+    auto cpuAllocation = allocData->cpuAllocation;
+    EXPECT_EQ(nullptr, cpuAllocation);
+
+    auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAllocation);
+    EXPECT_NE(AllocationType::UNIFIED_SHARED_MEMORY, gpuAllocation->getAllocationType());
+
+    uint8_t *address = nullptr;
+    status = gtpinMapBuffer(gtPinContext, resource, &address);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+    EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(address));
+
+    status = gtpinUnmapBuffer(gtPinContext, resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+
+    status = gtpinFreeBuffer(gtPinContext, resource);
     EXPECT_EQ(GTPIN_DI_SUCCESS, status);
 }
 
@@ -2365,15 +2407,6 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
         }
         uint8_t data[128];
     };
-
-    struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
-        void moveAllocationToGpuDomain(void *ptr) override {
-            moveAllocationToGpuDomainCalledTimes++;
-            migratedAddress = ptr;
-        }
-        uint32_t moveAllocationToGpuDomainCalledTimes = 0;
-        void *migratedAddress = nullptr;
-    };
     static std::unique_ptr<SvmAllocationData> allocDataHandle;
     static std::unique_ptr<MockGraphicsAllocation> mockGAHandle;
 
@@ -2394,21 +2427,34 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
     gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
     gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
 
-    GTPIN_DI_STATUS status = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+    DebugManagerStateRestore restorer;
+    for (auto &allocateDualStorageUSM : ::testing::Bool()) {
+        DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(allocateDualStorageUSM);
+        isGTPinInitialized = false;
+        if (allocateDualStorageUSM) {
+            memoryManager->pageFaultManager = std::make_unique<MockResidentTestsPageFaultManager>();
+        } else {
+            memoryManager->pageFaultManager.reset();
+        }
 
-    MockKernelWithInternals mockkernel(*pDevice);
-    MockCommandQueue mockCmdQueue;
-    cl_context ctxt = (cl_context)((Context *)pContext);
-    currContext = (gtpin::context_handle_t)(ctxt);
-    mockCmdQueue.device = pDevice;
+        GTPIN_DI_STATUS status = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+        EXPECT_EQ(GTPIN_DI_SUCCESS, status);
 
-    gtpinNotifyKernelSubmit(mockkernel.mockMultiDeviceKernel, &mockCmdQueue);
-    EXPECT_EQ(reinterpret_cast<MockResidentTestsPageFaultManager *>(pDevice->getExecutionEnvironment()->memoryManager->getPageFaultManager())->moveAllocationToGpuDomainCalledTimes, 1u);
+        MockKernelWithInternals mockkernel(*pDevice);
+        MockCommandQueue mockCmdQueue;
+        cl_context ctxt = (cl_context)((Context *)pContext);
+        currContext = (gtpin::context_handle_t)(ctxt);
+        mockCmdQueue.device = pDevice;
 
-    mockCmdQueue.device = nullptr;
-    mockGAHandle.reset();
-    allocDataHandle.reset();
+        gtpinNotifyKernelSubmit(mockkernel.mockMultiDeviceKernel, &mockCmdQueue);
+        if (allocateDualStorageUSM) {
+            EXPECT_EQ(static_cast<MockResidentTestsPageFaultManager *>(pDevice->getExecutionEnvironment()->memoryManager->getPageFaultManager())->moveAllocationToGpuDomainCalledTimes, 1u);
+        }
+
+        mockCmdQueue.device = nullptr;
+        mockGAHandle.reset();
+        allocDataHandle.reset();
+    }
 
     pDevice->gtpinGfxCoreHelper.swap(backup);
 }

@@ -153,7 +153,9 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
             size_t size = gpuAllocation->getUnderlyingBufferSize();
             Buffer::setSurfaceState(&device, pSurfaceState, false, false, size, gpuAllocation->getUnderlyingBuffer(), 0, gpuAllocation, 0, 0,
                                     pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
-            device.getMemoryManager()->getPageFaultManager()->moveAllocationToGpuDomain(reinterpret_cast<void *>(gpuAllocation->getGpuAddress()));
+            if (device.getMemoryManager()->getPageFaultManager()) {
+                device.getMemoryManager()->getPageFaultManager()->moveAllocationToGpuDomain(reinterpret_cast<void *>(gpuAllocation->getGpuAddress()));
+            }
         } else {
             cl_mem buffer = (cl_mem)resource;
             auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
