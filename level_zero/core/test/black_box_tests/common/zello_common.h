@@ -115,6 +115,8 @@ void printP2PProperties(const ze_device_p2p_properties_t &props, bool canAccessP
 
 void printKernelProperties(const ze_kernel_properties_t &props, const char *kernelName);
 
+void printCommandQueueGroupsProperties(ze_device_handle_t &device);
+
 const std::vector<const char *> &getResourcesSearchLocations();
 
 // read binary file into a non-NULL-terminated string

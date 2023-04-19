@@ -155,6 +155,7 @@ int main(int argc, char *argv[]) {
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     printDeviceProperties(deviceProperties);
+    printCommandQueueGroupsProperties(device);
 
     executeGpuKernelAndValidate(context, device, outputValidationSuccessful);
 

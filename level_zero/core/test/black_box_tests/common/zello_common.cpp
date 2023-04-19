@@ -476,6 +476,35 @@ void printKernelProperties(const ze_kernel_properties_t &props, const char *kern
     }
 }
 
+void printCommandQueueGroupsProperties(ze_device_handle_t &device) {
+    if (verbose) {
+        uint32_t numQueueGroups = 0;
+        SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
+        if (numQueueGroups == 0) {
+            std::cerr << "No queue groups found!\n";
+            std::terminate();
+        }
+        std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
+        SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups,
+                                                                    queueProperties.data()));
+
+        for (uint32_t i = 0; i < numQueueGroups; i++) {
+            bool computeQueue = (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
+            bool copyQueue = (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
+            std::cout << "CommandQueue group : " << i << "\n"
+                      << " * flags : " << std::hex << queueProperties[i].flags << std::dec << "\n";
+            if (computeQueue) {
+                std::cout << "    flag: ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE \n";
+            }
+            if (copyQueue) {
+                std::cout << "    flag: ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY \n";
+            }
+            std::cout << " * maxMemoryFillPatternSize : " << queueProperties[i].maxMemoryFillPatternSize << "\n"
+                      << " * numQueues : " << queueProperties[i].numQueues << "\n";
+        }
+    }
+}
+
 const std::vector<const char *> &getResourcesSearchLocations() {
     static std::vector<const char *> locations {
         "test_files/spv_modules/",
