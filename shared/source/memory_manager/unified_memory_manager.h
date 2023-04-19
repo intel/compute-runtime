@@ -130,10 +130,10 @@ class SVMAllocsManager {
         size_t allocationSize;
         void *allocation;
         SvmCacheAllocationInfo(size_t allocationSize, void *allocation) : allocationSize(allocationSize), allocation(allocation) {}
-        bool operator<(SvmCacheAllocationInfo const &other) {
+        bool operator<(SvmCacheAllocationInfo const &other) const {
             return allocationSize < other.allocationSize;
         }
-        bool operator<(size_t const &size) {
+        bool operator<(size_t const &size) const {
             return allocationSize < size;
         }
     };
