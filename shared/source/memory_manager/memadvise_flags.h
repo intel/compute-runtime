@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ struct MemAdviseFlags {
     };
     MemAdviseFlags() {
         allFlags = 0;
+        devicePreferredLocation = 1;
         cachedMemory = 1;
     }
 };
