@@ -28,7 +28,6 @@ struct MemAdviseFlags {
     };
     MemAdviseFlags() {
         allFlags = 0;
-        devicePreferredLocation = 1;
         cachedMemory = 1;
     }
 };

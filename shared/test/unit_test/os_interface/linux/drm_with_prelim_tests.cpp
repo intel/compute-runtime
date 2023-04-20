@@ -276,7 +276,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
 
     MemAdviseFlags memAdviseFlags{};
 
-    for (auto devicePreferredLocation : {false, true}) {
+    for (auto devicePreferredLocation : {true, false}) {
         memAdviseFlags.devicePreferredLocation = devicePreferredLocation;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
