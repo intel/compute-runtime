@@ -106,6 +106,7 @@ ze_result_t FirmwareUtilImp::fwDeviceInit() {
 }
 
 ze_result_t FirmwareUtilImp::fwGetVersion(std::string &fwVersion) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     igsc_fw_version deviceFwVersion;
     memset(&deviceFwVersion, 0, sizeof(deviceFwVersion));
     int ret = deviceGetFwVersion(&fwDeviceHandle, &deviceFwVersion);
@@ -121,6 +122,7 @@ ze_result_t FirmwareUtilImp::fwGetVersion(std::string &fwVersion) {
 }
 
 ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     igsc_oprom_version opromVersion;
     memset(&opromVersion, 0, sizeof(opromVersion));
     int ret = deviceOpromVersion(&fwDeviceHandle, IGSC_OPROM_CODE, &opromVersion);
@@ -145,6 +147,7 @@ ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
 }
 
 ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, progressFunc, nullptr);
     if (ret != IGSC_SUCCESS) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
@@ -153,6 +156,7 @@ ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
 }
 
 ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     struct igsc_oprom_image *opromImg = nullptr;
     uint32_t opromImgType = 0;
     int retData = 0, retCode = 0;
@@ -180,6 +184,7 @@ FirmwareUtilImp::FirmwareUtilImp(uint16_t domain, uint8_t bus, uint8_t device, u
 }
 
 FirmwareUtilImp::~FirmwareUtilImp() {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     if (nullptr != libraryHandle) {
         deviceClose(&fwDeviceHandle);
         delete libraryHandle;

@@ -82,6 +82,7 @@ PmuInterface *LinuxSysmanImp::getPmuInterface() {
 }
 
 FirmwareUtil *LinuxSysmanImp::getFwUtilInterface() {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     if (pFwUtilInterface == nullptr) {
         createFwUtilInterface();
     }

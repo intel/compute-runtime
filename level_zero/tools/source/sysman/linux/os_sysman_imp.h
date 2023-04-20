@@ -20,6 +20,7 @@
 
 #include <linux/pci_regs.h>
 #include <map>
+#include <mutex>
 
 namespace L0 {
 
@@ -100,6 +101,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     static const std::string deviceDir;
     void clearHPIE(int fd);
+    std::mutex fwLock;
 };
 
 } // namespace L0
