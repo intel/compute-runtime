@@ -880,10 +880,11 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 OpenCL C kernel language).
 
   -device <device_type>         Target device.
-                                <device_type> can be: %s, version  or hexadecimal value with 0x prefix
+                                <device_type> can be: %s, ip version  or hexadecimal value with 0x prefix
                                 - can be single or multiple target devices.
-                                The version is a representation of the
-                                <major>.<minor>.<revision> value.
+                                The ip version can be a representation of the
+                                <major>.<minor>.<revision> or a decimal value that
+                                can be queried using the L0 ZE_extension_device_ip_version.
                                 The hexadecimal value represents device ID.
                                 If such value is provided, ocloc will try to
                                 match it with corresponding device type.
@@ -896,6 +897,7 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 Supported -device patterns examples:
                                 -device 0x4905        ; will compile 1 target (dg1)
                                 -device 12.10.0       ; will compile 1 target (dg1)
+                                -device 50495488      ; will compile 1 target (dg1)
                                 -device dg1           ; will compile 1 target
                                 -device dg1,acm-g10   ; will compile 2 targets
                                 -device dg1:acm-g10   ; will compile all targets
