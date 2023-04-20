@@ -103,4 +103,9 @@ bool UnitTestHelper<GfxFamily>::findStateCacheFlushPipeControl(LinearStream &csr
     return stateCacheFlushFound;
 }
 
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getProgrammedGrfValue(CommandStreamReceiver &csr, LinearStream &linearStream) {
+    return 0u;
+}
+
 } // namespace NEO

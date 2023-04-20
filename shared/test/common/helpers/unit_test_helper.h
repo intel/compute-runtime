@@ -78,6 +78,8 @@ struct UnitTestHelper {
 
     static std::vector<bool> getProgrammedLargeGrfValues(CommandStreamReceiver &csr, LinearStream &linearStream);
 
+    static uint32_t getProgrammedGrfValue(CommandStreamReceiver &csr, LinearStream &linearStream);
+
     static bool getWorkloadPartitionForStoreRegisterMemCmd(typename GfxFamily::MI_STORE_REGISTER_MEM &storeRegisterMem);
 
     static bool timestampRegisterHighAddress();
