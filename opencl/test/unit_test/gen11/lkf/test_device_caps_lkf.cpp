@@ -16,10 +16,6 @@ using namespace NEO;
 
 using LkfTest = Test<ClDeviceFixture>;
 
-LKFTEST_F(LkfTest, givenLkfThenDebuggerIsNotSupported) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
-}
-
 LKFTEST_F(LkfTest, givenLkfWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }

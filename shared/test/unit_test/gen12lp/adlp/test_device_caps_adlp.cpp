@@ -16,10 +16,6 @@ using namespace NEO;
 
 using AdlpUsDeviceIdTest = Test<DeviceFixture>;
 
-ADLPTEST_F(AdlpUsDeviceIdTest, givenADLPThenDebuggerIsNotSupported) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
-}
-
 ADLPTEST_F(AdlpUsDeviceIdTest, givenADLPWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }

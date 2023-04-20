@@ -16,10 +16,6 @@ using namespace NEO;
 
 using Gen11DeviceCaps = Test<DeviceFixture>;
 
-GEN11TEST_F(Gen11DeviceCaps, givenGen11ThenDebuggerIsNotSupported) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
-}
-
 GEN11TEST_F(Gen11DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReturned) {
     EXPECT_TRUE(PreemptionMode::MidThread == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }

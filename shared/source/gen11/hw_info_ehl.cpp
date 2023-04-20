@@ -62,7 +62,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     true,                                          // ftr64KBpages
     true,                                          // instrumentationEnabled
-    false,                                         // sourceLevelDebuggerSupported
+    true,                                          // sourceLevelDebuggerSupported
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages

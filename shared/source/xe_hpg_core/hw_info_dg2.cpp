@@ -68,7 +68,7 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     false,                                                     // ftrRenderCompressedImages
     true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
-    false,                                                     // sourceLevelDebuggerSupported
+    true,                                                      // sourceLevelDebuggerSupported
     false,                                                     // supportsVme
     true,                                                      // supportCacheFlushAfterWalker
     true,                                                      // supportsImages

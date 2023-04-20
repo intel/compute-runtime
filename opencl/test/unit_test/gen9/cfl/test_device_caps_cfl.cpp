@@ -16,10 +16,6 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> CflDeviceCaps;
 
-CFLTEST_F(CflDeviceCaps, GivenCFLThenDebuggerIsNotSupported) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
-}
-
 CFLTEST_F(CflDeviceCaps, GivenCFLWhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
