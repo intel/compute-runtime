@@ -15,6 +15,7 @@
 #include "level_zero/sysman/source/sysman_device_imp.h"
 
 #include <map>
+#include <mutex>
 
 namespace NEO {
 class Drm;
@@ -87,6 +88,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     static const std::string deviceDir;
     void createFwUtilInterface();
     void clearHPIE(int fd);
+    std::mutex fwLock;
 };
 
 } // namespace Sysman

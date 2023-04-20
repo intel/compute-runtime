@@ -51,6 +51,7 @@ ze_result_t FirmwareUtilImp::fwIfrApplied(bool &ifrStatus) {
 
 // fwCallGetstatusExt() is a helper function to get the status of IFR after the diagnostics tests are run
 ze_result_t FirmwareUtilImp::fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     uint32_t hwCapabilities = 0;
     ifrApplied = 0;
     prevErrors = 0;
@@ -113,6 +114,7 @@ ze_result_t FirmwareUtilImp::fwGetMemoryErrorCount(zes_ras_error_type_t type, ui
 }
 
 void FirmwareUtilImp::fwGetMemoryHealthIndicator(zes_mem_health_t *health) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     gfspGetHealthIndicator = reinterpret_cast<pIgscGfspGetHealthIndicator>(libraryHandle->getProcAddress(fwGfspGetHealthIndicator));
     if (gfspGetHealthIndicator != nullptr) {
         uint8_t healthIndicator = 0;
@@ -142,6 +144,7 @@ void FirmwareUtilImp::fwGetMemoryHealthIndicator(zes_mem_health_t *health) {
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     getEccConfig = reinterpret_cast<pIgscGetEccConfig>(libraryHandle->getProcAddress(fwEccConfigGet));
     if (getEccConfig != nullptr) {
         int ret = getEccConfig(&fwDeviceHandle, currentState, pendingState);
@@ -154,6 +157,7 @@ ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pend
 }
 
 ze_result_t FirmwareUtilImp::fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     setEccConfig = reinterpret_cast<pIgscSetEccConfig>(libraryHandle->getProcAddress(fwEccConfigSet));
     if (setEccConfig != nullptr) {
         int ret = setEccConfig(&fwDeviceHandle, newState, currentState, pendingState);
@@ -188,6 +192,7 @@ ze_result_t FirmwareUtilImp::fwSupportedDiagTests(std::vector<std::string> &supp
 }
 
 ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     uint32_t status = 0;
     uint32_t extendedStatus = 0;
     uint32_t pendingReset = 0;
@@ -244,6 +249,7 @@ ze_result_t FirmwareUtilImp::pscGetVersion(std::string &fwVersion) {
 }
 
 ze_result_t FirmwareUtilImp::fwFlashIafPsc(void *pImage, uint32_t size) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     iafPscUpdate = reinterpret_cast<pIgscIafPscUpdate>(libraryHandle->getProcAddress(fwIafPscUpdate));
 
     if (iafPscUpdate == nullptr) {
