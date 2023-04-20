@@ -101,7 +101,7 @@ TEST_F(clGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringT
     EXPECT_STREQ(paramValue, "Intel(R) OpenCL Graphics");
 }
 
-class clGetPlatformInfoOverridePlatformNameTests : public clGetPlatformInfoTests {
+class ClGetPlatformInfoOverridePlatformNameTests : public clGetPlatformInfoTests {
   public:
     void SetUp() override {
         NEO::DebugManager.flags.OverridePlatformName.set(testPlatformName);
@@ -116,7 +116,7 @@ class clGetPlatformInfoOverridePlatformNameTests : public clGetPlatformInfoTests
     const std::string testPlatformName = "test platform name";
 };
 
-TEST_F(clGetPlatformInfoOverridePlatformNameTests, givenDebugVariableOverridePlatformNameSpecifiedWhenGettingPlatformInfoStringThenPlatformNameIsTakenFromDebugVariable) {
+TEST_F(ClGetPlatformInfoOverridePlatformNameTests, givenDebugVariableOverridePlatformNameSpecifiedWhenGettingPlatformInfoStringThenPlatformNameIsTakenFromDebugVariable) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);
     EXPECT_STREQ(paramValue, testPlatformName.c_str());
 }
