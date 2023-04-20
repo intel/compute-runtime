@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,17 @@ TEST(PtrMath, givenCastToUint64FunctionWhenConstPointerIsPassedItIsCalledThenPro
     uint64_t expectedUint64Address = 0xf0000000;
     auto uintAddress = castToUint64(addressWithTrailingBitSet);
     EXPECT_EQ(uintAddress, expectedUint64Address);
+}
+
+TEST(PtrMath, givenPatchWithRequiredSizeFunctionThenProperMemoryToBePatchedIsSet) {
+    uint64_t memoryToBePatched = 0;
+    patchWithRequiredSize(&memoryToBePatched, 8, 0xaaaaaaaaaaaaaaaa);
+    EXPECT_EQ(memoryToBePatched, 0xaaaaaaaaaaaaaaaa);
+    patchWithRequiredSize(&memoryToBePatched, 4, 0xbbbbbbbbbbbbbbbb);
+    EXPECT_EQ(memoryToBePatched, 0xaaaaaaaabbbbbbbb);
+    patchWithRequiredSize(&memoryToBePatched, 0, 0xcccccccccccccccc);
+    EXPECT_EQ(memoryToBePatched, 0xaaaaaaaabbbbbbbb);
+    EXPECT_THROW(patchWithRequiredSize(&memoryToBePatched, 1, 0xcccccccccccccccc), std::exception);
 }
 
 TEST(ptrOffset, WhenGettingPtrOffsetThen64BitIsPreserved) {

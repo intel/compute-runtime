@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/debug_helpers.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -58,9 +60,11 @@ inline void patchWithRequiredSize(void *memoryToBePatched, uint32_t patchSize, u
     if (patchSize == sizeof(uint64_t)) {
         uint64_t *curbeAddress = reinterpret_cast<uint64_t *>(memoryToBePatched);
         PatchStoreOperation{}(curbeAddress, patchValue);
-    } else {
+    } else if (patchSize == sizeof(uint32_t)) {
         uint32_t *curbeAddress = reinterpret_cast<uint32_t *>(memoryToBePatched);
         PatchStoreOperation{}(curbeAddress, static_cast<uint32_t>(patchValue));
+    } else {
+        UNRECOVERABLE_IF(patchSize != 0);
     }
 }
 

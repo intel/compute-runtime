@@ -689,7 +689,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
 
     {
         MockKernelWithInternals kernelInternals{*pClDevice, context};
-        kernelInternals.kernelInfo.setSyncBuffer(sizeof(uint8_t), 0, 0);
+        kernelInternals.kernelInfo.setSyncBuffer(sizeof(uint32_t), 0, 0);
         constexpr auto bindingTableOffset = sizeof(RENDER_SURFACE_STATE);
         kernelInternals.kernelInfo.setBindingTable(bindingTableOffset, 1);
         kernelInternals.kernelInfo.heapInfo.SurfaceStateHeapSize = sizeof(RENDER_SURFACE_STATE) + sizeof(BINDING_TABLE_STATE);

@@ -88,7 +88,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     void patchAllocateSyncBuffer() {
-        kernelInternals->kernelInfo.setSyncBuffer(sizeof(uint8_t), 0, 0);
+        kernelInternals->kernelInfo.setSyncBuffer(sizeof(uint32_t), 0, 0);
     }
 
     MockSyncBufferHandler *getSyncBufferHandler() {
