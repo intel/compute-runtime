@@ -254,7 +254,7 @@ CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() {
 CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) {
     initializeBcsEngine(isSpecial());
     if (isCopyOnly) {
-        return *getBcsCommandStreamReceiver(bcsEngineTypes[0]);
+        return *getBcsCommandStreamReceiver(*bcsQueueEngineType);
     }
 
     if (!blitEnqueueAllowed(args)) {
@@ -308,8 +308,8 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
             selectedCsr = getBcsCommandStreamReceiver(preferredBcsEngineType);
         }
 
-        if (selectedCsr == nullptr && !bcsEngineTypes.empty()) {
-            selectedCsr = getBcsCommandStreamReceiver(bcsEngineTypes[0]);
+        if (selectedCsr == nullptr && bcsQueueEngineType.has_value()) {
+            selectedCsr = getBcsCommandStreamReceiver(*bcsQueueEngineType);
         }
     }
     if (selectedCsr == nullptr) {
@@ -335,12 +335,12 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
             bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
         }
 
-        bcsEngineTypes.push_back(bcsEngineType);
-        bcsInitialized = true;
         if (bcsEngines[bcsIndex]) {
+            bcsQueueEngineType = bcsEngineType;
             bcsEngines[bcsIndex]->osContext->ensureContextInitialized();
             bcsEngines[bcsIndex]->commandStreamReceiver->initDirectSubmission();
         }
+        bcsInitialized = true;
     }
 }
 
@@ -362,8 +362,9 @@ void CommandQueue::constructBcsEnginesForSplit() {
             auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
             auto engineType = EngineHelpers::mapBcsIndexToEngineType(i, true);
             bcsEngines[i] = neoDevice.tryGetEngine(engineType, EngineUsage::Regular);
-            bcsEngineTypes.push_back(engineType);
+
             if (bcsEngines[i]) {
+                bcsQueueEngineType = engineType;
                 bcsEngines[i]->commandStreamReceiver->initializeResources();
                 bcsEngines[i]->commandStreamReceiver->initDirectSubmission();
             }
@@ -1177,7 +1178,9 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         } else {
             bcsEngines[engineIndex] = &device->getEngine(engineType, EngineUsage::Regular);
         }
-        bcsEngineTypes = {engineType};
+        if (bcsEngines[engineIndex]) {
+            bcsQueueEngineType = engineType;
+        }
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;

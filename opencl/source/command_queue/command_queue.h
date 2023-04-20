@@ -24,6 +24,7 @@
 #include "opencl/source/helpers/properties_helper.h"
 
 #include <cstdint>
+#include <optional>
 
 enum InternalMemoryType : uint32_t;
 
@@ -412,7 +413,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     ClDevice *device = nullptr;
     mutable EngineControl *gpgpuEngine = nullptr;
     std::array<EngineControl *, bcsInfoMaskSize> bcsEngines = {};
-    std::vector<aub_stream::EngineType> bcsEngineTypes = {};
+    std::optional<aub_stream::EngineType> bcsQueueEngineType{};
 
     cl_command_queue_properties commandQueueProperties = 0;
     std::vector<uint64_t> propertiesVector;

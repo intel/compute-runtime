@@ -23,8 +23,8 @@ namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::bcsEngines;
-    using CommandQueue::bcsEngineTypes;
     using CommandQueue::bcsInitialized;
+    using CommandQueue::bcsQueueEngineType;
     using CommandQueue::bcsStates;
     using CommandQueue::bcsTimestampPacketContainers;
     using CommandQueue::blitEnqueueAllowed;
@@ -47,14 +47,15 @@ class MockCommandQueue : public CommandQueue {
 
     void clearBcsEngines() {
         std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
-        bcsEngineTypes.clear();
+        bcsQueueEngineType = std::nullopt;
     }
 
     void insertBcsEngine(aub_stream::EngineType bcsEngineType) {
         const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
         const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::Regular);
         bcsEngines[index] = engine;
-        bcsEngineTypes.push_back(bcsEngineType);
+        bcsQueueEngineType = bcsEngineType;
+        bcsInitialized = true;
     }
 
     size_t countBcsEngines() const {
@@ -241,7 +242,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
   public:
     using BaseClass::bcsEngines;
-    using BaseClass::bcsEngineTypes;
+    using BaseClass::bcsQueueEngineType;
     using BaseClass::bcsStates;
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
@@ -270,7 +271,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
         const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::Regular);
         bcsEngines[index] = engine;
-        bcsEngineTypes.push_back(bcsEngineType);
+        bcsQueueEngineType = bcsEngineType;
     }
 
     MockCommandQueueHw(Context *context,

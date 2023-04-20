@@ -1987,7 +1987,7 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndAssignBCSAtEnque
 
     auto &csr = queue->selectCsrForBuiltinOperation(args);
 
-    EXPECT_EQ(&csr, queue->getBcsCommandStreamReceiver(queue->bcsEngineTypes[0]));
+    EXPECT_EQ(&csr, queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType));
 }
 
 TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelectedWithQueueFamiliesWhenSelectingBlitterThenSelectBlitter) {
