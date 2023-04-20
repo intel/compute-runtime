@@ -25,7 +25,9 @@ FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
 template <DebugFunctionalityLevel DebugLevel>
 FileLogger<DebugLevel>::FileLogger(std::string filename, const DebugVariables &flags) {
     logFileName = std::move(filename);
-    std::remove(logFileName.c_str());
+    if (enabled()) {
+        std::remove(logFileName.c_str());
+    }
 
     dumpKernels = flags.DumpKernels.get();
     logApiCalls = flags.LogApiCalls.get();

@@ -126,6 +126,20 @@ TEST(FileLogger, GivenSameFileNameWhenCreatingNewInstanceThenOldFileIsRemoved) {
     EXPECT_FALSE(fileExists(fileLogger.getLogFileName()));
 }
 
+TEST(FileLogger, GivenSameFileNameWhenCreatingNewFullyDisabledLoggerThenOldFileIsNotRemoved) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogApiCalls.set(true);
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(true);
+    fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
+
+    EXPECT_TRUE(fileExists(fileLogger.getLogFileName()));
+    FullyDisabledFileLogger fileLogger2(testFile, flags);
+    EXPECT_TRUE(fileExists(fileLogger.getLogFileName()));
+    std::remove(fileLogger.getLogFileName());
+}
+
 TEST(FileLogger, GivenFlagIsFalseWhenLoggingThenOnlyCustomLogsAreDumped) {
     std::string testFile = "testfile";
     DebugVariables flags;
