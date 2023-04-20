@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -573,6 +574,79 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
                                                       (sizeAfter - sizeBefore)));
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, pipelineSelectList.size());
+}
+
+template <typename FamilyType>
+void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondCommandList() {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto result = ZE_RESULT_SUCCESS;
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
+
+    result = commandList2->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList2->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    // execute first clear command list to settle global init
+    ze_command_list_handle_t commandLists[2] = {commandList->toHandle(), nullptr};
+    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto queueSize = cmdQueueStream.getUsed();
+    // add command list that requires both scratch and systolic.
+    // scratch makes globally front end dirty and so global init too,
+    // but dispatch systolic programming only before second command list
+    commandLists[1] = commandList2->toHandle();
+    result = commandQueue->executeCommandLists(2, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdQueueStream.getCpuBase(), queueSize),
+                                                      (cmdQueueStream.getUsed() - queueSize)));
+
+    // first is scratch command dispatched globally
+    auto iterFeCmd = find<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), iterFeCmd);
+
+    // find bb start jumping to first command list
+    auto iterBbStartCmd = find<MI_BATCH_BUFFER_START *>(iterFeCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), iterBbStartCmd);
+    auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*iterBbStartCmd);
+
+    auto firstCmdListBufferAddress = commandList->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
+    EXPECT_EQ(firstCmdListBufferAddress, bbStart->getBatchBufferStartAddress());
+
+    // 3rd is pipeline select before systolic kernel
+    auto iterPsCmd = find<PIPELINE_SELECT *>(iterBbStartCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), iterPsCmd);
+    auto pipelineSelectCmd = reinterpret_cast<PIPELINE_SELECT *>(*iterPsCmd);
+
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+
+    // find bb start jumping to second command list
+    iterBbStartCmd = find<MI_BATCH_BUFFER_START *>(iterPsCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), iterBbStartCmd);
+    bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*iterBbStartCmd);
+
+    auto secondCmdListBufferAddress = commandList2->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
+    EXPECT_EQ(secondCmdListBufferAddress, bbStart->getBatchBufferStartAddress());
 }
 
 template <typename FamilyType>

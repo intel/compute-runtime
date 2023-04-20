@@ -145,6 +145,15 @@ void FrontEndCommandListFixtureInit::setUp(int32_t dispatchCmdBufferPrimary) {
 void CmdListPipelineSelectStateFixture::setUp() {
     DebugManager.flags.EnablePipelineSelectTracking.set(1);
     ModuleMutableCommandListFixture::setUp();
+
+    auto result = ZE_RESULT_SUCCESS;
+    commandList2.reset(whiteboxCast(CommandList::create(productFamily, this->device, this->engineGroupType, 0u, result)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+void CmdListPipelineSelectStateFixture::tearDown() {
+    commandList2.reset(nullptr);
+    ModuleMutableCommandListFixture::tearDown();
 }
 
 void CmdListStateComputeModeStateFixture::setUp() {

@@ -102,6 +102,7 @@ struct FrontEndCommandListFixture : public FrontEndCommandListFixtureInit {
 
 struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixture {
     void setUp();
+    void tearDown();
 
     template <typename FamilyType>
     void testBody();
@@ -111,6 +112,11 @@ struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixtur
 
     template <typename FamilyType>
     void testBodyShareStateImmediateRegular();
+
+    template <typename FamilyType>
+    void testBodySystolicAndScratchOnSecondCommandList();
+
+    std::unique_ptr<L0::ult::CommandList> commandList2;
 };
 
 struct CmdListStateComputeModeStateFixture : public ModuleMutableCommandListFixture {

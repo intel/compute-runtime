@@ -733,6 +733,11 @@ HWTEST2_F(CmdListPipelineSelectStateTest,
 }
 
 HWTEST2_F(CmdListPipelineSelectStateTest,
+          givenAppendSystolicAndScratchSpaceKernelToSecondCommandListWhenExecutingTwoCommandListsThenPipelineSelectStateIsDispatchedBeforeSecondScratchProgramingBeforeBatch, SystolicSupport) {
+    testBodySystolicAndScratchOnSecondCommandList<FamilyType>();
+}
+
+HWTEST2_F(CmdListPipelineSelectStateTest,
           givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingSystolicKernelOnBothRegularFirstThenPipelineSelectStateIsNotChanged, SystolicSupport) {
     testBodyShareStateRegularImmediate<FamilyType>();
 }

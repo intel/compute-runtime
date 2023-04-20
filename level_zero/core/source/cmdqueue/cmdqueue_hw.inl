@@ -83,6 +83,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                            NEO::Debugger::isDebugEnabled(internalUsage),
                                            csr->isProgramActivePartitionConfigRequired(),
                                            performMigration};
+    ctx.globalInit |= ctx.isDebugEnabled && !this->commandQueueDebugCmdsProgrammed && (neoDevice->getSourceLevelDebugger() || device->getL0Debugger());
 
     this->device->activateMetricGroups();
 
@@ -505,7 +506,7 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
         this->isMigrationRequested = false;
     }
 
-    this->globalInit |= (this->isProgramActivePartitionConfigRequired || this->isPreemptionModeInitial || this->stateSipRequired || this->isDebugEnabled);
+    this->globalInit |= (this->isProgramActivePartitionConfigRequired || this->isPreemptionModeInitial || this->stateSipRequired);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
