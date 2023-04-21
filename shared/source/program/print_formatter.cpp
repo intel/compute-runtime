@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,9 @@ void PrintFormatter::printKernelOutput(const std::function<void(char *)> &print)
         while (currentOffset + sizeof(char *) <= printfOutputBufferSize) {
             char *formatString = nullptr;
             read(&formatString);
-            printString(formatString, print);
+            if (formatString != nullptr) {
+                printString(formatString, print);
+            }
         }
     }
 }

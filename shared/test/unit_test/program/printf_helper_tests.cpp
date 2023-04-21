@@ -957,6 +957,16 @@ TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringThenItIsPrin
     EXPECT_STREQ(formatString, output);
 }
 
+TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithEmptyFormatThenNothingIsPrinted) {
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
+    const char *formatString = nullptr;
+    storeData(formatString);
+
+    char output[maxPrintfOutputLength]{};
+    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+    EXPECT_STREQ("", output);
+}
+
 TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringAnd2StringsThenDataIsParsedAndPrintedProperly) {
     printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
     const char *formatString = "%s %s";
