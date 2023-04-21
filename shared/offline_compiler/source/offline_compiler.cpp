@@ -640,6 +640,9 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
         preferredIntermediateRepresentation = fclFacade->getPreferredIntermediateRepresentation();
     } else {
+        if (!isQuiet()) {
+            argHelper->printf("Compilation from IR - skipping loading of FCL\n");
+        }
         preferredIntermediateRepresentation = IGC::CodeType::spirV;
     }
 
