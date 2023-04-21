@@ -86,7 +86,7 @@ uint32_t IoctlHelperUpstream::getPreferredLocationAdvise() {
     return 0;
 }
 
-std::optional<MemoryClassInstance> IoctlHelperUpstream::getPreferredLocationRegion(uint32_t memoryInstance) {
+std::optional<MemoryClassInstance> IoctlHelperUpstream::getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) {
     return std::nullopt;
 }
 

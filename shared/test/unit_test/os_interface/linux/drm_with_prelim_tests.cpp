@@ -273,6 +273,8 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
     MockBufferObject bo(drm.get(), 3, 0, 0, 1);
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x1;
+    allocation.setNumHandles(1);
 
     MemAdviseFlags memAdviseFlags{};
 

@@ -103,6 +103,8 @@ class DrmAllocation : public GraphicsAllocation {
     bool setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex);
     void setCachePolicy(CachePolicy memType);
 
+    bool setPreferredLocation(Drm *drm, PreferredLocation memoryLocation);
+
     bool setMemAdvise(Drm *drm, MemAdviseFlags flags);
     bool setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds);
 

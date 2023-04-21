@@ -2176,12 +2176,6 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             return nullptr;
         }
 
-        std::optional<MemoryClassInstance> region = ioctlHelper->getPreferredLocationRegion(memoryInstance);
-        if (region != std::nullopt) {
-            [[maybe_unused]] auto success = ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
-            DEBUG_BREAK_IF(!success);
-        }
-
         uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
         uint64_t offset = 0;
         if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
@@ -2207,6 +2201,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     allocation->setMmapPtr(cpuBasePointer);
     allocation->setMmapSize(totalSizeToAlloc);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc);
+    allocation->setNumHandles(static_cast<uint32_t>(bos.size()));
+    allocation->storageInfo = allocationData.storageInfo;
     if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
         this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
         for (auto bo : bos) {
@@ -2214,9 +2210,11 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         }
         return nullptr;
     }
-    if (numHandles > 1) {
-        allocation->storageInfo = allocationData.storageInfo;
-    }
+
+    MemAdviseFlags memAdviseFlags{};
+    memAdviseFlags.devicePreferredLocation = true;
+    [[maybe_unused]] auto success = allocation->setMemAdvise(&drm, memAdviseFlags);
+    DEBUG_BREAK_IF(!success);
 
     return allocation.release();
 }

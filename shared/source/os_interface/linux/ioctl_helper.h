@@ -24,6 +24,7 @@ class Drm;
 class OsContextLinux;
 class IoctlHelper;
 enum class CacheRegion : uint16_t;
+enum class PreferredLocation : int16_t;
 struct HardwareInfo;
 struct HardwareIpVersion;
 
@@ -81,7 +82,7 @@ class IoctlHelper {
                               uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) = 0;
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
-    virtual std::optional<MemoryClassInstance> getPreferredLocationRegion(uint32_t memoryInstance) = 0;
+    virtual std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) = 0;
     virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
@@ -162,7 +163,7 @@ class IoctlHelperUpstream : public IoctlHelper {
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
-    std::optional<MemoryClassInstance> getPreferredLocationRegion(uint32_t memoryInstance) override;
+    std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     uint32_t getDirectSubmissionFlag() override;
@@ -230,7 +231,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
-    std::optional<MemoryClassInstance> getPreferredLocationRegion(uint32_t memoryInstance) override;
+    std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     uint32_t getDirectSubmissionFlag() override;

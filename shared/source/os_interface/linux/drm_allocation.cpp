@@ -68,6 +68,26 @@ void DrmAllocation::setCachePolicy(CachePolicy memType) {
     }
 }
 
+bool DrmAllocation::setPreferredLocation(Drm *drm, PreferredLocation memoryLocation) {
+    auto ioctlHelper = drm->getIoctlHelper();
+    auto remainingMemoryBanks = storageInfo.memoryBanks;
+    bool success = true;
+
+    for (uint8_t handleId = 0u; handleId < numHandles; handleId++) {
+        auto memoryInstance = Math::getMinLsbSet(static_cast<uint32_t>(remainingMemoryBanks.to_ulong()));
+
+        std::optional<MemoryClassInstance> region = ioctlHelper->getPreferredLocationRegion(memoryLocation, memoryInstance);
+        if (region != std::nullopt) {
+            auto bo = this->getBOs()[handleId];
+            success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
+        }
+
+        remainingMemoryBanks.reset(memoryInstance);
+    }
+
+    return success;
+}
+
 bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
     if (regionIndex == CacheRegion::Default) {
         return true;
@@ -334,20 +354,7 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     }
 
     if (flags.devicePreferredLocation != enabledMemAdviseFlags.devicePreferredLocation) {
-        MemoryClassInstance region{};
-        for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
-            auto bo = bufferObjects[handleId];
-            if (bo != nullptr) {
-                if (flags.devicePreferredLocation) {
-                    region.memoryClass = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
-                    region.memoryInstance = handleId;
-                } else {
-                    region.memoryClass = -1;
-                    region.memoryInstance = 0;
-                }
-                success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
-            }
-        }
+        success &= setPreferredLocation(drm, flags.devicePreferredLocation ? PreferredLocation::Device : PreferredLocation::Clear);
     }
 
     if (success) {

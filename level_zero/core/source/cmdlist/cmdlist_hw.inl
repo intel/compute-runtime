@@ -940,8 +940,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_handle_t hDevice,
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
-    NEO::MemAdviseFlags flags;
-    flags.allFlags = 0;
+    NEO::MemAdviseFlags flags{};
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     if (allocData) {

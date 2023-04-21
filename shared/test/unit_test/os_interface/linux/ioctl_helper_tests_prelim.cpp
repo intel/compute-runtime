@@ -520,3 +520,31 @@ TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingThenWaitIsNeededOnlyBefo
     EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
     EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
 }
+
+TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorrectMemoryClassAndInstance) {
+    DebugManagerStateRestore restorer;
+
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    EXPECT_EQ(std::nullopt, ioctlHelper.getPreferredLocationRegion(PreferredLocation::None, 0));
+
+    auto region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::System, 0);
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassSystem), region->memoryClass);
+    EXPECT_EQ(0u, region->memoryInstance);
+
+    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::Device, 1);
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), region->memoryClass);
+    EXPECT_EQ(1u, region->memoryInstance);
+
+    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::Clear, 1);
+    EXPECT_EQ(static_cast<uint16_t>(-1), region->memoryClass);
+    EXPECT_EQ(0u, region->memoryInstance);
+
+    DebugManager.flags.SetVmAdvisePreferredLocation.set(3);
+    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::None, 1);
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), region->memoryClass);
+    EXPECT_EQ(1u, region->memoryInstance);
+}

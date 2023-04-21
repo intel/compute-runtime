@@ -61,6 +61,13 @@ enum class CachePolicy : uint32_t {
     WriteBack = 3,
 };
 
+enum class PreferredLocation : int16_t {
+    Clear = -1,
+    System = 0,
+    Device = 1,
+    None = 2,
+};
+
 enum class PostSyncMode : uint32_t {
     NoWrite = 0,
     Timestamp = 1,

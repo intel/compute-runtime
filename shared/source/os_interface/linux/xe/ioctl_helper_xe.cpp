@@ -459,7 +459,7 @@ uint32_t IoctlHelperXe::getPreferredLocationAdvise() {
     return 0;
 }
 
-std::optional<MemoryClassInstance> IoctlHelperXe::getPreferredLocationRegion(uint32_t memoryInstance) {
+std::optional<MemoryClassInstance> IoctlHelperXe::getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) {
     return std::nullopt;
 }
 
