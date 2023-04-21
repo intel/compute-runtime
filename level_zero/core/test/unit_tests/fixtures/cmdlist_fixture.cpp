@@ -339,5 +339,23 @@ void PrimaryBatchBufferCmdListFixture::setUp() {
     ModuleMutableCommandListFixture::setUp();
 }
 
+void PrimaryBatchBufferPreamblelessCmdListFixture::setUp() {
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless));
+    DebugManager.flags.ForceL1Caching.set(0);
+
+    PrimaryBatchBufferCmdListFixture::setUp();
+
+    ze_result_t returnValue;
+    commandList2.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+    commandList3.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+}
+
+void PrimaryBatchBufferPreamblelessCmdListFixture::tearDown() {
+    commandList2.reset(nullptr);
+    commandList3.reset(nullptr);
+
+    PrimaryBatchBufferCmdListFixture::tearDown();
+}
+
 } // namespace ult
 } // namespace L0

@@ -287,5 +287,13 @@ struct PrimaryBatchBufferCmdListFixture : public ModuleMutableCommandListFixture
     void setUp();
 };
 
+struct PrimaryBatchBufferPreamblelessCmdListFixture : public PrimaryBatchBufferCmdListFixture {
+    void setUp();
+    void tearDown();
+
+    std::unique_ptr<L0::ult::CommandList> commandList2;
+    std::unique_ptr<L0::ult::CommandList> commandList3;
+};
+
 } // namespace ult
 } // namespace L0

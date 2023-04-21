@@ -158,8 +158,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             if (this->stateChanges.size() > 0) {
                 auto &firstCmdListWithStateChange = this->stateChanges[0];
                 // check first required state change is for the first command list
-                if (firstCmdListWithStateChange.commandList == ctx.firstCommandList && firstCmdListWithStateChange.flags.propertyPsDirty) {
-                    this->programOneCmdListPipelineSelect(ctx.firstCommandList, child, firstCmdListWithStateChange);
+                if (firstCmdListWithStateChange.cmdListIndex == 0 && firstCmdListWithStateChange.flags.propertyPsDirty) {
+                    this->programOneCmdListPipelineSelect(child, firstCmdListWithStateChange);
                     firstCmdListWithStateChange.flags.propertyPsDirty = false;
                 }
             }
@@ -187,12 +187,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
         if (this->stateChanges.size() > this->currentStateChangeIndex) {
             auto &stateChange = this->stateChanges[this->currentStateChangeIndex];
-            if (stateChange.commandList == commandList) {
+            if (stateChange.cmdListIndex == i) {
+                DEBUG_BREAK_IF(commandList != stateChange.commandList);
                 this->updateOneCmdListPreemptionModeAndCtxStatePreemption(child, stateChange);
-                this->programOneCmdListPipelineSelect(commandList, child, stateChange);
+                this->programOneCmdListPipelineSelect(child, stateChange);
                 this->programOneCmdListFrontEndIfDirty(ctx, child, stateChange);
-                this->programRequiredStateComputeModeForCommandList(commandList, child, stateChange);
-                this->programRequiredStateBaseAddressForCommandList(ctx, child, commandList->getCmdListHeapAddressModel(), commandList->getCmdContainer().isIndirectHeapInLocalMemory(), stateChange);
+                this->programRequiredStateComputeModeForCommandList(child, stateChange);
+                this->programRequiredStateBaseAddressForCommandList(ctx, child, stateChange);
 
                 this->currentStateChangeIndex++;
             }
@@ -756,7 +757,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
 
         if (propertyScmDirty || propertyFeDirty || propertyPsDirty || propertySbaDirty || frontEndReturnPoint || propertyPreemptionDirty) {
             CommandListDirtyFlags dirtyFlags = {propertyScmDirty, propertyFeDirty, propertyPsDirty, propertySbaDirty, frontEndReturnPoint, propertyPreemptionDirty};
-            this->stateChanges.emplace_back(stagingState, cmdList, dirtyFlags, ctx.statePreemption);
+            this->stateChanges.emplace_back(stagingState, cmdList, dirtyFlags, ctx.statePreemption, i);
         }
     }
 
@@ -1278,7 +1279,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimatePipelineSelectCmdSizeForMultipleCo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(CommandList *commandList, NEO::LinearStream &commandStream,
+void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(NEO::LinearStream &commandStream,
                                                                     CommandListRequiredStateChange &cmdListRequired) {
     if (!this->pipelineSelectStateTracking) {
         return;
@@ -1290,7 +1291,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(CommandList 
             systolic,
             false,
             false,
-            commandList->getSystolicModeSupport()};
+            cmdListRequired.commandList->getSystolicModeSupport()};
 
         NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, args, device->getNEODevice()->getRootDeviceEnvironment());
         csr->setPreambleSetFlag(true);
@@ -1337,8 +1338,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateScmCmdSizeForMultipleCommandLists(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandList(CommandList *commandList,
-                                                                                  NEO::LinearStream &commandStream,
+void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandList(NEO::LinearStream &commandStream,
                                                                                   CommandListRequiredStateChange &cmdListRequired) {
     if (!this->stateComputeModeTracking) {
         return;
@@ -1349,11 +1349,11 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
             cmdListRequired.requiredState.pipelineSelect.systolicMode.value == 1,
             false,
             false,
-            commandList->getSystolicModeSupport()};
+            cmdListRequired.commandList->getSystolicModeSupport()};
 
-        bool isRcs = this->getCsr()->isRcs();
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(commandStream, cmdListRequired.requiredState.stateComputeMode, pipelineSelectArgs,
-                                                                                        false, device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->getCsr()->getDcFlushSupport(), nullptr);
+                                                                                        false, device->getNEODevice()->getRootDeviceEnvironment(), this->csr->isRcs(),
+                                                                                        this->csr->getDcFlushSupport(), nullptr);
         this->csr->setStateComputeModeDirty(false);
     }
 }
@@ -1361,14 +1361,14 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
                                                                                   NEO::LinearStream &commandStream,
-                                                                                  NEO::HeapAddressModel commandListHeapAddressModel,
-                                                                                  bool indirectHeapInLocalMemory,
                                                                                   CommandListRequiredStateChange &cmdListRequired) {
 
     if (!this->stateBaseAddressTracking) {
         return;
     }
+
     if (cmdListRequired.flags.propertySbaDirty) {
+        bool indirectHeapInLocalMemory = cmdListRequired.commandList->getCmdContainer().isIndirectHeapInLocalMemory();
         programStateBaseAddress(ctx.scratchGsba,
                                 indirectHeapInLocalMemory,
                                 commandStream,
@@ -1439,7 +1439,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForGlobalSt
     if (baseAddressStateDirty) {
         csrState.stateBaseAddress.copyPropertiesAll(cmdListRequired.stateBaseAddress);
     } else {
-        csrState.stateBaseAddress.copyPropertiesStatelessMocs(cmdListFinal.stateBaseAddress);
+        csrState.stateBaseAddress.copyPropertiesStatelessMocs(cmdListRequired.stateBaseAddress);
     }
     csrState.stateBaseAddress.setPropertiesSurfaceState(globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages());
 

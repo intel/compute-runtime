@@ -9,6 +9,7 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -1527,6 +1528,68 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCommandListHa
 
     void *expectedEndPtr = ptrOffset(cmdListStream.getCpuBase(), secondCmdBufferUsed);
     EXPECT_EQ(expectedEndPtr, cmdContainer.getEndCmdPtr());
+}
+
+using PrimaryBatchBufferPreamblelessCmdListTest = Test<PrimaryBatchBufferPreamblelessCmdListFixture>;
+
+HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
+          givenPrimaryBatchBufferWhenExecutingSingleCommandListTwiceInSingleCallAndFirstTimeNotExpectsPreambleThenProperlyDispatchPreambleForSecondInstance,
+          IsAtLeastXeHpCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    // command list 1 will have two kernels, transition from cached MOCS to uncached MOCS state
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    kernel->kernelRequiresUncachedMocsCount++;
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // command list 2 will have two kernels, transition from uncached MOCS to cached MOCS state
+    result = commandList2->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    kernel->kernelRequiresUncachedMocsCount--;
+
+    result = commandList2->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList2->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // first command list settles global init and leaves state as uncached MOCS
+    auto commandListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+    auto queueSizeUsed = cmdQueueStream.getUsed();
+
+    ze_command_list_handle_t sameCommandListTwice[] = {commandList2->toHandle(), commandList2->toHandle()};
+    // second command list requires uncached MOCS state, so no dynamic preamble for the fist instance, but leaves cached MOCS state
+    // second instance require dynamic preamble to reload MOCS to uncached state
+    result = commandQueue->executeCommandLists(2, sameCommandListTwice, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueSizeUsed),
+        cmdQueueStream.getUsed() - queueSizeUsed));
+
+    auto cmdQueueSbaDirtyCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_TRUE(cmdQueueSbaDirtyCmds.size() >= 1u);
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*cmdQueueSbaDirtyCmds[0]);
+
+    auto uncachedMocs = device->getMOCS(false, false) >> 1;
+    EXPECT_EQ((uncachedMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
 } // namespace ult

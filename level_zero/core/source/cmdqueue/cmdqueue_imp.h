@@ -112,14 +112,17 @@ struct CommandQueueImp : public CommandQueue {
         CommandListRequiredStateChange() = default;
         CommandListRequiredStateChange(NEO::StreamProperties &requiredState, CommandList *commandList,
                                        CommandListDirtyFlags flags,
-                                       NEO::PreemptionMode newMode) : requiredState(requiredState),
-                                                                      commandList(commandList),
-                                                                      flags(flags),
-                                                                      newMode(newMode) {}
+                                       NEO::PreemptionMode newMode,
+                                       uint32_t cmdListIndex) : requiredState(requiredState),
+                                                                commandList(commandList),
+                                                                flags(flags),
+                                                                newMode(newMode),
+                                                                cmdListIndex(cmdListIndex) {}
         NEO::StreamProperties requiredState{};
         CommandList *commandList = nullptr;
         CommandListDirtyFlags flags;
         NEO::PreemptionMode newMode = NEO::PreemptionMode::Initial;
+        uint32_t cmdListIndex = 0;
     };
 
     using CommandListStateChangeList = std::vector<CommandListRequiredStateChange>;

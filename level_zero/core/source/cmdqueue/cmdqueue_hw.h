@@ -184,8 +184,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                                        NEO::StreamProperties &requiredState,
                                                                        bool &propertyDirty);
     inline size_t estimatePipelineSelectCmdSize();
-    inline void programOneCmdListPipelineSelect(CommandList *commandList,
-                                                NEO::LinearStream &commandStream,
+    inline void programOneCmdListPipelineSelect(NEO::LinearStream &commandStream,
                                                 CommandListRequiredStateChange &cmdListRequired);
 
     inline size_t estimateScmCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrState,
@@ -195,8 +194,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                             NEO::StreamProperties &requiredState,
                                                             bool &propertyDirty);
 
-    inline void programRequiredStateComputeModeForCommandList(CommandList *commandList,
-                                                              NEO::LinearStream &commandStream,
+    inline void programRequiredStateComputeModeForCommandList(NEO::LinearStream &commandStream,
                                                               CommandListRequiredStateChange &cmdListRequired);
 
     inline size_t estimateStateBaseAddressCmdDispatchSize(bool bindingTableBaseAddress);
@@ -223,8 +221,6 @@ struct CommandQueueHw : public CommandQueueImp {
 
     inline void programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
                                                               NEO::LinearStream &commandStream,
-                                                              NEO::HeapAddressModel commandListHeapAddressModel,
-                                                              bool indirectHeapInLocalMemory,
                                                               CommandListRequiredStateChange &cmdListRequired);
     inline void updateBaseAddressState(CommandList *lastCommandList);
 
