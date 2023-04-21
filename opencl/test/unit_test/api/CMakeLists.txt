@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -65,6 +65,7 @@ set(IGDRCL_SRCS_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_write_buffer_rect_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_write_buffer_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_write_image_tests.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_external_memory_extension_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_finish_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_flush_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_function_pointers_tests.inl

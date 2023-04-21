@@ -4477,6 +4477,9 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSizeINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueNDCountKernelINTEL);
 
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueAcquireExternalMemObjectsKHR);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueReleaseExternalMemObjectsKHR);
+
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
         TRACING_EXIT(ClGetExtensionFunctionAddress, &ret);
@@ -6133,4 +6136,64 @@ cl_int CL_API_CALL clSetContextDestructorCallback(cl_context context,
     }
 
     return retVal;
+}
+
+cl_int CL_API_CALL clEnqueueExternalMemObjectsKHR(
+    cl_command_queue commandQueue,
+    cl_uint numMemObjects,
+    const cl_mem *memObjects,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event) {
+
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue,
+                   "memObjects", getClFileLogger().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numMemObjects),
+                   "eventWaitList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+
+    auto pCommandQueue = castToObject<CommandQueue>(commandQueue);
+
+    retVal = validateObjects(MemObjList(numMemObjects, memObjects),
+                             withCastToInternal(commandQueue, &pCommandQueue),
+                             EventWaitList(numEventsInWaitList, eventWaitList));
+
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
+    for (unsigned int num = 0; num < numEventsInWaitList; num++) {
+        auto pEvent = castToObject<Event>(eventWaitList[num]);
+        if (pEvent->peekExecutionStatus() < CL_COMPLETE) {
+            retVal = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
+            return retVal;
+        }
+    }
+
+    retVal = pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
+
+    return retVal;
+}
+
+cl_int CL_API_CALL clEnqueueAcquireExternalMemObjectsKHR(
+    cl_command_queue commandQueue,
+    cl_uint numMemObjects,
+    const cl_mem *memObjects,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event) {
+
+    return clEnqueueExternalMemObjectsKHR(commandQueue, numMemObjects, memObjects, numEventsInWaitList, eventWaitList, event);
+}
+
+cl_int CL_API_CALL clEnqueueReleaseExternalMemObjectsKHR(
+    cl_command_queue commandQueue,
+    cl_uint numMemObjects,
+    const cl_mem *memObjects,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event) {
+
+    return clEnqueueExternalMemObjectsKHR(commandQueue, numMemObjects, memObjects, numEventsInWaitList, eventWaitList, event);
 }

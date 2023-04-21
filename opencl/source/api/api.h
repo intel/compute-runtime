@@ -1101,3 +1101,27 @@ cl_int CL_API_CALL clSetContextDestructorCallback(
     cl_context context,
     void(CL_CALLBACK *pfnNotify)(cl_context /* context */, void * /* user_data */),
     void *userData);
+
+cl_int CL_API_CALL clEnqueueExternalMemObjectsKHR(
+    cl_command_queue commandQueue,
+    cl_uint numMemObjects,
+    const cl_mem *memObjects,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event);
+
+cl_int CL_API_CALL clEnqueueAcquireExternalMemObjectsKHR(
+    cl_command_queue commandQueue,
+    cl_uint numMemObjects,
+    const cl_mem *memObjects,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event);
+
+cl_int CL_API_CALL clEnqueueReleaseExternalMemObjectsKHR(
+    cl_command_queue commandQueue,
+    cl_uint numMemObjects,
+    const cl_mem *memObjects,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event);

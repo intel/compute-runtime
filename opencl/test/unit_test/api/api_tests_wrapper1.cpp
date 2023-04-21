@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,5 +35,6 @@
 #include "opencl/test/unit_test/api/cl_enqueue_map_image_tests.inl"
 #include "opencl/test/unit_test/api/cl_enqueue_marker_tests.inl"
 #include "opencl/test/unit_test/api/cl_enqueue_marker_with_wait_list_tests.inl"
+#include "opencl/test/unit_test/api/cl_external_memory_extension_tests.inl"
 #include "opencl/test/unit_test/api/cl_function_pointers_tests.inl"
 #include "opencl/test/unit_test/api/cl_unified_shared_memory_tests.inl"
