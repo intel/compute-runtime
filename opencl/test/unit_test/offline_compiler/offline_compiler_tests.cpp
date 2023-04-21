@@ -2469,13 +2469,8 @@ TEST(OfflineCompilerTest, GivenUnknownIsaConfigValueWhenInitHardwareInfoThenInva
     auto deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(AOT::UNKNOWN_ISA);
     std::stringstream resString;
 
-    testing::internal::CaptureStdout();
     auto retVal = mockOfflineCompiler->initHardwareInfoForProductConfig(deviceName);
     EXPECT_EQ(retVal, OclocErrorCode::INVALID_DEVICE);
-
-    auto output = testing::internal::GetCapturedStdout();
-    resString << "Could not determine device target: " << deviceName << ".\n";
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST(OfflineCompilerTest, GivenUnsupportedDeviceConfigWhenInitHardwareInfoThenInvalidDeviceIsReturned) {
@@ -2484,8 +2479,18 @@ TEST(OfflineCompilerTest, GivenUnsupportedDeviceConfigWhenInitHardwareInfoThenIn
     auto deviceName = "00.01.02";
     std::stringstream resString;
 
-    testing::internal::CaptureStdout();
     auto retVal = mockOfflineCompiler->initHardwareInfoForProductConfig(deviceName);
+    EXPECT_EQ(retVal, OclocErrorCode::INVALID_DEVICE);
+}
+
+TEST(OfflineCompilerTest, GivenUnsupportedDeviceWhenInitHardwareInfoThenInvalidDeviceIsReturned) {
+    auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+
+    auto deviceName = "unk";
+    std::stringstream resString;
+
+    testing::internal::CaptureStdout();
+    auto retVal = mockOfflineCompiler->initHardwareInfo(deviceName);
     EXPECT_EQ(retVal, OclocErrorCode::INVALID_DEVICE);
 
     auto output = testing::internal::GetCapturedStdout();

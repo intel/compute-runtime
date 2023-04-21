@@ -473,7 +473,6 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
         productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(deviceName);
     }
     if (productConfig == AOT::UNKNOWN_ISA) {
-        argHelper->printf("Could not determine device target: %s.\n", deviceName.c_str());
         return INVALID_DEVICE;
     }
 
@@ -499,7 +498,9 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     }
 
     retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, std::move(compilerProductHelper));
-
+    if (retVal != SUCCESS) {
+        argHelper->printf("Could not determine device target: %s.\n", deviceName.c_str());
+    }
     return retVal;
 }
 
