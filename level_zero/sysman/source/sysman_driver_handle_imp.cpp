@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
+#include "level_zero/sysman/source/os_sysman_driver.h"
 #include "level_zero/sysman/source/sysman_device.h"
 #include "level_zero/sysman/source/sysman_driver.h"
 
@@ -41,6 +42,8 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
     if (this->sysmanDevices.size() == 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+
+    pOsSysmanDriver = L0::Sysman::OsSysmanDriver::create();
     this->numDevices = static_cast<uint32_t>(this->sysmanDevices.size());
     return ZE_RESULT_SUCCESS;
 }
@@ -93,11 +96,34 @@ ze_result_t SysmanDriverHandleImp::getDevice(uint32_t *pCount, zes_device_handle
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t SysmanDriverHandleImp::sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
+    if (pOsSysmanDriver == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "%s", "Os Sysman Driver Not initialized\n");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+}
+
+ze_result_t SysmanDriverHandleImp::sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
+    if (pOsSysmanDriver == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "%s", "Os Sysman Driver Not initialized\n");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+};
+
 SysmanDriverHandleImp::~SysmanDriverHandleImp() {
     for (auto &device : this->sysmanDevices) {
         delete device;
     }
     this->sysmanDevices.clear();
+
+    if (pOsSysmanDriver != nullptr) {
+        delete pOsSysmanDriver;
+        pOsSysmanDriver = nullptr;
+    }
 }
 
 } // namespace Sysman

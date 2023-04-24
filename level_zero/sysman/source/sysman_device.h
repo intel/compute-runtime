@@ -12,6 +12,7 @@
 #include "level_zero/sysman/source/diagnostics/sysman_diagnostics.h"
 #include "level_zero/sysman/source/ecc/sysman_ecc.h"
 #include "level_zero/sysman/source/engine/sysman_engine.h"
+#include "level_zero/sysman/source/events/sysman_events.h"
 #include "level_zero/sysman/source/fabric_port/sysman_fabric_port.h"
 #include "level_zero/sysman/source/fan/sysman_fan.h"
 #include "level_zero/sysman/source/firmware/sysman_firmware.h"
@@ -114,6 +115,13 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t pciGetStats(zes_pci_stats_t *pStats) = 0;
     static ze_result_t fanGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fan_handle_t *phFan);
     virtual ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) = 0;
+
+    static ze_result_t deviceEventRegister(zes_device_handle_t hDevice, zes_event_type_flags_t events);
+    virtual ze_result_t deviceEventRegister(zes_event_type_flags_t events) = 0;
+
+    virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) = 0;
+
+    virtual OsSysman *deviceGetOsInterface() = 0;
 };
 
 } // namespace Sysman

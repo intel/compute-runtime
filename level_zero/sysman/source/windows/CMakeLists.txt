@@ -14,5 +14,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_imp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_sys_manager.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_hw_device_id_windows.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_driver_imp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_driver_imp.h
   )
 endif()

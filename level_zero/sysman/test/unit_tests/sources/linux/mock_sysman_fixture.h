@@ -16,6 +16,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_device.h"
 #include "level_zero/sysman/source/sysman_driver_handle_imp.h"
@@ -66,6 +67,7 @@ class SysmanDeviceFixture : public ::testing::Test {
         driverHandle = std::make_unique<L0::Sysman::SysmanDriverHandleImp>();
         driverHandle->initialize(*execEnv);
         pSysmanDevice = driverHandle->sysmanDevices[0];
+        L0::Sysman::GlobalSysmanDriver = driverHandle.get();
 
         pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
@@ -73,6 +75,7 @@ class SysmanDeviceFixture : public ::testing::Test {
         pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
     }
     void TearDown() override {
+        L0::Sysman::GlobalSysmanDriver = nullptr;
     }
 
     L0::Sysman::SysmanDevice *pSysmanDevice = nullptr;
@@ -142,6 +145,13 @@ class PublicFsAccess : public L0::Sysman::FsAccess {
 class PublicSysfsAccess : public L0::Sysman::SysfsAccess {
   public:
     using SysfsAccess::accessSyscall;
+};
+
+class PublicLinuxSysmanDriverImp : public L0::Sysman::LinuxSysmanDriverImp {
+  public:
+    PublicLinuxSysmanDriverImp() : LinuxSysmanDriverImp() {}
+    using LinuxSysmanDriverImp::pLinuxEventsUtil;
+    using LinuxSysmanDriverImp::pUdevLib;
 };
 
 } // namespace ult

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/ecc/sysman_ecc_imp.h"
+#include "level_zero/sysman/source/events/sysman_events_imp.h"
 #include "level_zero/sysman/source/fan/sysman_fan_imp.h"
 #include "level_zero/sysman/source/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/os_sysman.h"
@@ -41,6 +42,7 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pTempHandleContext = new TemperatureHandleContext(pOsSysman);
     pPci = new PciImp(pOsSysman);
     pFanHandleContext = new FanHandleContext(pOsSysman);
+    pEvents = new EventsImp(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -61,6 +63,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pPci);
     freeResource(pFanHandleContext);
     freeResource(pOsSysman);
+    freeResource(pEvents);
     executionEnvironment->decRefInternal();
 }
 
@@ -174,6 +177,18 @@ ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {
 
 ze_result_t SysmanDeviceImp::fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) {
     return pFanHandleContext->fanGet(pCount, phFan);
+}
+
+ze_result_t SysmanDeviceImp::deviceEventRegister(zes_event_type_flags_t events) {
+    return pEvents->eventRegister(events);
+}
+
+bool SysmanDeviceImp::deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) {
+    return pEvents->eventListen(pEvent, timeout);
+}
+
+OsSysman *SysmanDeviceImp::deviceGetOsInterface() {
+    return pOsSysman;
 }
 
 } // namespace Sysman

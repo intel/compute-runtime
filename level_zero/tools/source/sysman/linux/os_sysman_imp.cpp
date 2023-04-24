@@ -228,10 +228,6 @@ LinuxSysmanImp::~LinuxSysmanImp() {
         delete pPmuInterface;
         pPmuInterface = nullptr;
     }
-    if (nullptr != pUdevLib) {
-        delete pUdevLib;
-        pUdevLib = nullptr;
-    }
     releaseFwUtilInterface();
     releasePmtObject();
 }

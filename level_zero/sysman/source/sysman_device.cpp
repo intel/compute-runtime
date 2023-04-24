@@ -154,5 +154,10 @@ ze_result_t SysmanDevice::fanGet(zes_device_handle_t hDevice, uint32_t *pCount, 
     return pSysmanDevice->fanGet(pCount, phFan);
 }
 
+ze_result_t SysmanDevice::deviceEventRegister(zes_device_handle_t hDevice, zes_event_type_flags_t events) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceEventRegister(events);
+}
+
 } // namespace Sysman
 } // namespace L0

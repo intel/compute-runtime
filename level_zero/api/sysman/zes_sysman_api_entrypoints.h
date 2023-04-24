@@ -943,7 +943,10 @@ ze_result_t zesRasGetState(
 ze_result_t zesDeviceEventRegister(
     zes_device_handle_t hDevice,
     zes_event_type_flags_t events) {
-    return L0::SysmanDevice::deviceEventRegister(hDevice, events);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceEventRegister(hDevice, events);
+    }
+    return L0::Sysman::SysmanDevice::deviceEventRegister(hDevice, events);
 }
 
 ze_result_t zesDriverEventListen(
@@ -953,7 +956,10 @@ ze_result_t zesDriverEventListen(
     zes_device_handle_t *phDevices,
     uint32_t *pNumDeviceEvents,
     zes_event_type_flags_t *pEvents) {
-    return L0::DriverHandle::fromHandle(hDriver)->sysmanEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    if (L0::sysmanInitFromCore) {
+        return L0::DriverHandle::fromHandle(hDriver)->sysmanEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    }
+    return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ze_result_t zesDriverEventListenEx(
@@ -963,7 +969,10 @@ ze_result_t zesDriverEventListenEx(
     zes_device_handle_t *phDevices,
     uint32_t *pNumDeviceEvents,
     zes_event_type_flags_t *pEvents) {
-    return L0::DriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    if (L0::sysmanInitFromCore) {
+        return L0::DriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    }
+    return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ze_result_t zesDeviceEnumDiagnosticTestSuites(
