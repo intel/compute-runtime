@@ -800,24 +800,28 @@ bool MemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllo
 }
 void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) {
     for (auto &engine : getRegisteredEngines()) {
-        auto osContextId = engine.osContext->getContextId();
-        auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
-        if (graphicsAllocation.isUsedByOsContext(osContextId) &&
-            engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
-            engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, TimeoutControls::maxTimeout}, allocationTaskCount);
+        if (graphicsAllocation.getRootDeviceIndex() == engine.osContext->getRootDeviceIndex()) {
+            auto osContextId = engine.osContext->getContextId();
+            auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
+            if (graphicsAllocation.isUsedByOsContext(osContextId) &&
+                engine.commandStreamReceiver->getTagAllocation() != nullptr &&
+                allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+                engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, TimeoutControls::maxTimeout}, allocationTaskCount);
+            }
         }
     }
 }
 
 bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
     for (auto &engine : getRegisteredEngines()) {
-        auto osContextId = engine.osContext->getContextId();
-        auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
-        if (graphicsAllocation.isUsedByOsContext(osContextId) &&
-            engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
-            return true;
+        if (graphicsAllocation.getRootDeviceIndex() == engine.osContext->getRootDeviceIndex()) {
+            auto osContextId = engine.osContext->getContextId();
+            auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
+            if (graphicsAllocation.isUsedByOsContext(osContextId) &&
+                engine.commandStreamReceiver->getTagAllocation() != nullptr &&
+                allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+                return true;
+            }
         }
     }
     return false;
