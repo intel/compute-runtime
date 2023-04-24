@@ -11,6 +11,8 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "platforms.h"
+
 using namespace NEO;
 
 using CompilerProductHelperDg2Test = ::testing::Test;
@@ -36,4 +38,25 @@ DG2TEST_F(CompilerProductHelperDg2Test, givenDg2NonG10WhenGettingHwInfoConfigThe
 
     hwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
     EXPECT_EQ(0x200040010u, compilerProductHelper.getHwInfoConfig(hwInfo));
+}
+
+DG2TEST_F(CompilerProductHelperDg2Test, givenDg2ConfigsWhenMatchConfigWithRevIdThenProperConfigIsReturned) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+
+    std::vector<HardwareIpVersion> dg2G10Config = {AOT::DG2_G10_A0, AOT::DG2_G10_A1, AOT::DG2_G10_B0, AOT::DG2_G10_C0};
+    std::vector<HardwareIpVersion> dg2G11Config = {AOT::DG2_G11_A0, AOT::DG2_G11_B0, AOT::DG2_G11_B1};
+
+    for (const auto &config : dg2G10Config) {
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_A0), AOT::DG2_G10_A0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_A1), AOT::DG2_G10_A1);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_B0), AOT::DG2_G10_B0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_C0), AOT::DG2_G10_C0);
+    }
+    for (const auto &config : dg2G11Config) {
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_A0), AOT::DG2_G11_A0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_B0), AOT::DG2_G11_B0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_B1), AOT::DG2_G11_B1);
+    }
 }

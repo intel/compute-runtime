@@ -190,4 +190,8 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     return extensions;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t CompilerProductHelperHw<gfxProduct>::matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const {
+    return ipVersion.value;
+}
 } // namespace NEO

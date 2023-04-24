@@ -150,38 +150,56 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
     }
 }
 
-bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, uint32_t deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
-    bool retVal = false;
+uint32_t OclocArgHelper::getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(NEO::HardwareInfo &hwInfo, unsigned short deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
+    const auto &deviceAotMap = productConfigHelper->getDeviceAotInfo();
+
+    for (const auto &device : deviceAotMap) {
+        if (std::find(device.deviceIds->begin(), device.deviceIds->end(), deviceID) != device.deviceIds->end()) {
+            hwInfo = *device.hwInfo;
+            hwInfo.platform.usDeviceID = deviceID;
+            if (revisionID != -1) {
+                hwInfo.platform.usRevId = revisionID;
+                compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+                UNRECOVERABLE_IF(compilerProductHelper == nullptr);
+                auto config = compilerProductHelper->matchRevisionIdWithProductConfig(device.aotConfig, revisionID);
+                if (productConfigHelper->isSupportedProductConfig(config)) {
+                    hwInfo.ipVersion = config;
+                    return config;
+                }
+            }
+            hwInfo.ipVersion = device.aotConfig.value;
+            return device.aotConfig.value;
+        }
+    }
+    return AOT::UNKNOWN_ISA;
+}
+
+bool OclocArgHelper::setHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
     if (productConfig == AOT::UNKNOWN_ISA) {
-        return retVal;
+        return false;
     }
 
     const auto &deviceAotMap = productConfigHelper->getDeviceAotInfo();
-
     for (auto &deviceConfig : deviceAotMap) {
         if (deviceConfig.aotConfig.value == productConfig) {
             hwInfo = *deviceConfig.hwInfo;
+            hwInfo.platform.usDeviceID = deviceConfig.deviceIds->front();
             compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
             UNRECOVERABLE_IF(compilerProductHelper == nullptr);
-
-            if (deviceID) {
-                hwInfo.platform.usDeviceID = deviceID;
-            } else {
-                compilerProductHelper->setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
-                hwInfo.platform.usDeviceID = deviceConfig.deviceIds->front();
-            }
-            if (revisionID != -1) {
-                hwInfo.platform.usRevId = revisionID;
-            }
-            uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
-            setHwInfoValuesFromConfig(config, hwInfo);
-            NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, *compilerProductHelper);
-
-            retVal = true;
-            return retVal;
+            compilerProductHelper->setProductConfigForHwInfo(hwInfo, productConfig);
+            return true;
         }
     }
-    return retVal;
+    return false;
+}
+
+void OclocArgHelper::setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
+    compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    UNRECOVERABLE_IF(compilerProductHelper == nullptr);
+
+    uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
+    setHwInfoValuesFromConfig(config, hwInfo);
+    NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, *compilerProductHelper);
 }
 
 void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) {

@@ -582,7 +582,7 @@ TEST_F(AotDeviceInfoTests, givenDeviceAcronymsOrProductConfigWhenGetProductFamil
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenDeviceIdWhenSearchForProductConfigAndDeviceAcronymThenCorrectResultsAreReturned) {
+TEST_F(AotDeviceInfoTests, givenTmpStringWhenSearchForDeviceAcronymThenCorrectResultIsReturned) {
     auto &deviceAot = productConfigHelper->getDeviceAotInfo();
     if (deviceAot.empty()) {
         GTEST_SKIP();
@@ -591,15 +591,11 @@ TEST_F(AotDeviceInfoTests, givenDeviceIdWhenSearchForProductConfigAndDeviceAcron
     std::string tmpStr("tmp");
     product.deviceAcronyms.insert(product.deviceAcronyms.begin(), NEO::ConstStringRef(tmpStr));
 
-    for (const auto &deviceId : *product.deviceIds) {
-        auto config = productConfigHelper->getProductConfigBasedOnDeviceId(deviceId);
-        EXPECT_EQ(config, product.aotConfig.value);
-        auto name = productConfigHelper->getAcronymForProductConfig(config);
-        EXPECT_EQ(name, tmpStr);
-    }
+    auto name = productConfigHelper->getAcronymForProductConfig(product.aotConfig.value);
+    EXPECT_EQ(name, tmpStr);
 }
 
-TEST_F(AotDeviceInfoTests, givenDeviceIdWhenSearchForProductConfigAndRtlIdAcronymThenCorrectResultsAreReturned) {
+TEST_F(AotDeviceInfoTests, givenTmpStringWhenSearchForRtlIdAcronymThenCorrectResultIsReturned) {
     auto &deviceAot = productConfigHelper->getDeviceAotInfo();
     if (deviceAot.empty()) {
         GTEST_SKIP();
@@ -609,12 +605,8 @@ TEST_F(AotDeviceInfoTests, givenDeviceIdWhenSearchForProductConfigAndRtlIdAcrony
     std::string tmpStr("tmp");
     product.rtlIdAcronyms.insert(product.rtlIdAcronyms.begin(), NEO::ConstStringRef(tmpStr));
 
-    for (const auto &deviceId : *product.deviceIds) {
-        auto config = productConfigHelper->getProductConfigBasedOnDeviceId(deviceId);
-        EXPECT_EQ(config, product.aotConfig.value);
-        auto name = productConfigHelper->getAcronymForProductConfig(config);
-        EXPECT_EQ(name, tmpStr);
-    }
+    auto name = productConfigHelper->getAcronymForProductConfig(product.aotConfig.value);
+    EXPECT_EQ(name, tmpStr);
 }
 
 TEST_F(AotDeviceInfoTests, givenDeprecatedDeviceAcronymsWhenGetProductFamilyThenUnknownIsReturned) {
@@ -653,47 +645,21 @@ TEST_F(AotDeviceInfoTests, givenDeviceAcroynmsWhenSearchingForDeviceAcronymsForR
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenDeviceIdWhenThereAreNoAcronymsThenMajorMinorRevisionIsReturned) {
+TEST_F(AotDeviceInfoTests, givenNoAcronymsWhenGetAcronymForProductConfigThenMajorMinorRevisionIsReturned) {
     auto &deviceAot = productConfigHelper->getDeviceAotInfo();
     if (deviceAot.empty()) {
         GTEST_SKIP();
     }
-
     for (auto &device : deviceAot) {
-        for (const auto &deviceId : *device.deviceIds) {
-            auto config = productConfigHelper->getProductConfigBasedOnDeviceId(deviceId);
-            EXPECT_NE(config, AOT::UNKNOWN_ISA);
-
-            device.deviceAcronyms.clear();
-            device.rtlIdAcronyms.clear();
-            auto name = productConfigHelper->getAcronymForProductConfig(config);
-            auto expected = productConfigHelper->parseMajorMinorRevisionValue(config);
-            EXPECT_STREQ(name.c_str(), expected.c_str());
-        }
+        device.deviceAcronyms.clear();
+        device.rtlIdAcronyms.clear();
+        auto name = productConfigHelper->getAcronymForProductConfig(device.aotConfig.value);
+        auto expected = productConfigHelper->parseMajorMinorRevisionValue(device.aotConfig);
+        EXPECT_STREQ(name.c_str(), expected.c_str());
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenInvalidDeviceIdWhenSearchForProductConfigAndAcronymThenUnknownIsaIsReturned) {
-    auto config = productConfigHelper->getProductConfigBasedOnDeviceId(0x0);
-    EXPECT_EQ(config, AOT::UNKNOWN_ISA);
-    auto name = productConfigHelper->getAcronymForProductConfig(config);
+TEST_F(AotDeviceInfoTests, givenUnknownIsaWhenSearchForAnAcronymThenEmptyIsReturned) {
+    auto name = productConfigHelper->getAcronymForProductConfig(AOT::UNKNOWN_ISA);
     EXPECT_TRUE(name.empty());
-}
-
-TEST_F(AotDeviceInfoTests, givenDeviceIdsFromDevicesFileWhenGetProductConfigThenValueIsExpectedToBeFound) {
-    std::vector<unsigned short> deviceIds{
-#define NAMEDDEVICE(devId, ignored_product, ignored_devName) devId,
-#define DEVICE(devId, ignored_product) devId,
-#include "devices.inl"
-#undef DEVICE
-#undef NAMEDDEVICE
-    };
-
-    if (deviceIds.empty()) {
-        GTEST_SKIP();
-    }
-
-    for (const auto &deviceId : deviceIds) {
-        EXPECT_NE(productConfigHelper->getProductConfigBasedOnDeviceId(deviceId), AOT::UNKNOWN_ISA);
-    }
 }

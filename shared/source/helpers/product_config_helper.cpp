@@ -87,15 +87,6 @@ const std::string ProductConfigHelper::getAcronymForProductConfig(uint32_t confi
         return parseMajorMinorRevisionValue(it->aotConfig);
 }
 
-AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigBasedOnDeviceId(unsigned short deviceId) const {
-    for (const auto &device : deviceAotInfo) {
-        if (std::find(device.deviceIds->begin(), device.deviceIds->end(), deviceId) != device.deviceIds->end()) {
-            return static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.value);
-        }
-    }
-    return AOT::UNKNOWN_ISA;
-}
-
 bool ProductConfigHelper::isSupportedFamily(uint32_t family) const {
     if (family == AOT::UNKNOWN_FAMILY) {
         return false;

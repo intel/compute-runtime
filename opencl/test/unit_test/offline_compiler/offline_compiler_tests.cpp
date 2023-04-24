@@ -546,11 +546,33 @@ TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenCorrec
     EXPECT_EQ(mockOfflineCompiler.deviceConfig, config);
 }
 
-TEST_F(MockOfflineCompilerTests, givenDeviceIdAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
+TEST_F(MockOfflineCompilerTests, givenDeviceIdsFromDevicesFileWhenInitHwInfoThenDeviceConfigValuesIsSet) {
+    std::vector<unsigned short> deviceIds{
+#define NAMEDDEVICE(devId, ignored_product, ignored_devName) devId,
+#define DEVICE(devId, ignored_product) devId,
+#include "devices.inl"
+#undef DEVICE
+#undef NAMEDDEVICE
+    };
+    if (deviceIds.empty()) {
+        GTEST_SKIP();
+    }
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.argHelper->getPrinterRef().setSuppressMessages(true);
+    for (const auto &deviceId : deviceIds) {
+        std::stringstream deviceIDStr;
+        deviceIDStr << "0x" << std::hex << deviceId;
+        mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
+        EXPECT_NE(mockOfflineCompiler.deviceConfig, AOT::UNKNOWN_ISA);
+    }
+}
+
+TEST_F(MockOfflineCompilerTests, givenDeviceIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
     MockOfflineCompiler mockOfflineCompiler;
     uint32_t deviceID = 0;
     std::stringstream deviceIDStr, expectedOutput;
     std::string deviceStr;
+    uint32_t productConfig = AOT::UNKNOWN_ISA;
 
     auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
@@ -562,6 +584,42 @@ TEST_F(MockOfflineCompilerTests, givenDeviceIdAndRevisionIdValueWhenInitHwInfoTh
             deviceID = deviceMapConfig.deviceIds->front();
             deviceIDStr << "0x" << std::hex << deviceID;
             deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(deviceMapConfig.aotConfig.value);
+            productConfig = deviceMapConfig.aotConfig.value;
+            break;
+        }
+    }
+
+    mockOfflineCompiler.deviceName = deviceIDStr.str();
+    EXPECT_FALSE(mockOfflineCompiler.deviceName.empty());
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+    std::string output = testing::internal::GetCapturedStdout();
+    expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
+
+    EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceID);
+    EXPECT_EQ(mockOfflineCompiler.deviceConfig, productConfig);
+}
+
+TEST_F(MockOfflineCompilerTests, givenDeviceIdAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
+    MockOfflineCompiler mockOfflineCompiler;
+    uint32_t deviceID = 0;
+    std::stringstream deviceIDStr, expectedOutput;
+    std::string deviceStr;
+    uint32_t productConfig = AOT::UNKNOWN_ISA;
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            deviceID = deviceMapConfig.deviceIds->front();
+            deviceIDStr << "0x" << std::hex << deviceID;
+            deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(deviceMapConfig.aotConfig.value);
+            productConfig = deviceMapConfig.aotConfig.value;
             break;
         }
     }
@@ -578,6 +636,7 @@ TEST_F(MockOfflineCompilerTests, givenDeviceIdAndRevisionIdValueWhenInitHwInfoTh
     EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceID);
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, mockOfflineCompiler.revisionId);
+    EXPECT_EQ(mockOfflineCompiler.deviceConfig, productConfig);
 }
 
 TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHardwareInfoValuesAreSet) {

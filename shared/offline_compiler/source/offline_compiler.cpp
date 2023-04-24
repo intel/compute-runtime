@@ -464,24 +464,25 @@ bool OfflineCompiler::isArgumentDeviceId(const std::string &argument) const {
 int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
     uint32_t productConfig = AOT::UNKNOWN_ISA;
     ProductConfigHelper::adjustDeviceName(deviceName);
-    uint32_t deviceID = 0;
 
     if (isArgumentDeviceId(deviceName)) {
-        deviceID = std::stoi(deviceName, 0, 16);
-        productConfig = argHelper->productConfigHelper->getProductConfigBasedOnDeviceId(deviceID);
-    } else if (revisionId == -1) {
-        productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(deviceName);
-    }
-    if (productConfig == AOT::UNKNOWN_ISA) {
-        return INVALID_DEVICE;
-    }
-
-    argHelper->getHwInfoForProductConfig(productConfig, hwInfo, hwInfoConfig, deviceID, revisionId, std::move(compilerProductHelper));
-    if (deviceID) {
+        auto deviceID = static_cast<unsigned short>(std::stoi(deviceName, 0, 16));
+        productConfig = argHelper->getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(hwInfo, deviceID, revisionId, std::move(compilerProductHelper));
+        if (productConfig == AOT::UNKNOWN_ISA) {
+            return INVALID_DEVICE;
+        }
         auto product = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
         argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
+    } else if (revisionId == -1) {
+        productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(deviceName);
+        if (!argHelper->setHwInfoForProductConfig(productConfig, hwInfo, std::move(compilerProductHelper))) {
+            return INVALID_DEVICE;
+        }
+    } else {
+        return INVALID_DEVICE;
     }
-    deviceConfig = productConfig;
+    argHelper->setHwInfoForHwInfoConfig(hwInfo, hwInfoConfig, std::move(compilerProductHelper));
+    deviceConfig = hwInfo.ipVersion.value;
     productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
     return SUCCESS;
 }

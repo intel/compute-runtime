@@ -271,3 +271,12 @@ HWTEST2_F(CompilerProductHelperFixture, GivenAtLeastGen12lpDeviceWhenCheckingIfI
 
     EXPECT_TRUE(compilerProductHelper.isDotIntegerProductExtensionSupported());
 }
+
+HWTEST2_F(CompilerProductHelperFixture, givenConfigWhenMatchConfigWithRevIdThenProperConfigIsReturned, IsNotPvcOrDg2) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto config = hwInfo.ipVersion.value;
+    EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x0), config);
+    EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x1), config);
+    EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x4), config);
+}

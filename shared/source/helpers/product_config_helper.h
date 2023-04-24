@@ -118,7 +118,6 @@ struct ProductConfigHelper {
     AOT::FAMILY getFamilyFromDeviceName(const std::string &device) const;
     AOT::PRODUCT_CONFIG getProductConfigFromDeviceName(const std::string &device) const;
     PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &device) const;
-    AOT::PRODUCT_CONFIG getProductConfigBasedOnDeviceId(unsigned short deviceId) const;
     AOT::RELEASE getReleaseFromDeviceName(const std::string &device) const;
     const std::string getAcronymForProductConfig(uint32_t config) const;
 
