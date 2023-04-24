@@ -33,6 +33,8 @@ extern int passedFileDescriptorFlagsToSet;
 extern int getFileDescriptorFlagsCalled;
 extern int setFileDescriptorFlagsCalled;
 extern uint32_t closeFuncCalled;
+extern bool exitCalled;
+extern int latestExitCode;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;

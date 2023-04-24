@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,8 @@ namespace SysCalls {
 unsigned int getProcessId();
 
 unsigned long getNumThreads();
+
+void exit(int code);
 
 } // namespace SysCalls
 

@@ -31,7 +31,9 @@ uint32_t closeFuncCalled = 0u;
 int closeFuncArgPassed = 0;
 int closeFuncRetVal = 0;
 int dlOpenFlags = 0;
-bool dlOpenCalled = 0;
+int latestExitCode = 0;
+bool exitCalled = false;
+bool dlOpenCalled = false;
 bool getNumThreadsCalled = false;
 bool makeFakeDevicePath = false;
 bool allowFakeDevicePath = false;
@@ -65,6 +67,11 @@ ssize_t (*sysCallsWrite)(int fd, void *buf, size_t count) = nullptr;
 int (*sysCallsPipe)(int pipeFd[2]) = nullptr;
 int (*sysCallsFstat)(int fd, struct stat *buf) = nullptr;
 char *(*sysCallsRealpath)(const char *path, char *buf) = nullptr;
+
+void exit(int code) {
+    exitCalled = true;
+    latestExitCode = code;
+}
 
 int close(int fileDescriptor) {
     closeFuncCalled++;

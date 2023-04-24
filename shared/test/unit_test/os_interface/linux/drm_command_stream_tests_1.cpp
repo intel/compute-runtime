@@ -40,6 +40,13 @@
 
 using namespace NEO;
 
+namespace NEO {
+namespace SysCalls {
+extern bool exitCalled;
+extern int latestExitCode;
+} // namespace SysCalls
+} // namespace NEO
+
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedBoHandle) {
     FlushStamp handleToWait = 123;
     GemWait expectedWait = {};
@@ -49,6 +56,72 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitFo
     csr->waitForFlushStamp(handleToWait);
     EXPECT_TRUE(memcmp(&expectedWait, &mock->receivedGemWait, sizeof(GemWait)) == 0);
     EXPECT_EQ(1, mock->ioctlCount.gemWait);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCallExit) {
+    uint32_t expectedExitCounter = 13;
+
+    DebugManager.flags.ExitOnSubmissionNumber.set(expectedExitCounter);
+
+    csr->initializeTagAllocation();
+
+    auto &cs = csr->getCS();
+    IndirectHeap ih(cs.getGraphicsAllocation());
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.preemptionMode = PreemptionMode::Disabled;
+
+    executionEnvironment.incRefInternal();
+    std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(&executionEnvironment, 0));
+    device->setPreemptionMode(PreemptionMode::Disabled);
+
+    bool bcsSupported = false;
+    for (auto &engine : csr->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment())) {
+        if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
+            bcsSupported = true;
+            break;
+        }
+    }
+
+    for (int32_t mode : {0, 1, 2}) {
+        DebugManager.flags.ExitOnSubmissionMode.set(mode);
+
+        for (auto engineType : {aub_stream::ENGINE_BCS, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::ENGINE_RCS, device->getRootDeviceEnvironment())}) {
+            if (engineType == aub_stream::ENGINE_BCS && !bcsSupported) {
+                continue;
+            }
+
+            osContext = std::make_unique<OsContextLinux>(*mock, 0, 0,
+                                                         EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::Regular}, PreemptionMode::ThreadGroup));
+
+            osContext->ensureContextInitialized();
+
+            csr->setupContext(*osContext);
+            static_cast<MockDrmCsr<FamilyType> *>(csr)->taskCount = 0;
+
+            for (uint32_t i = 0; i <= expectedExitCounter + 3; i++) {
+                SysCalls::exitCalled = false;
+
+                csr->flushTask(cs, 0u, &ih, &ih, &ih, 0u, dispatchFlags, *device);
+
+                bool enabled = (i >= expectedExitCounter);
+
+                if (mode == 1 && !EngineHelpers::isComputeEngine(engineType)) {
+                    enabled = false;
+                }
+
+                if (mode == 2 && !EngineHelpers::isBcs(engineType)) {
+                    enabled = false;
+                }
+
+                if (enabled) {
+                    EXPECT_TRUE(SysCalls::exitCalled);
+                    EXPECT_EQ(0, SysCalls::latestExitCode);
+                } else {
+                    EXPECT_FALSE(SysCalls::exitCalled);
+                }
+            }
+        }
+    }
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenMakingResidentThenSucceeds) {

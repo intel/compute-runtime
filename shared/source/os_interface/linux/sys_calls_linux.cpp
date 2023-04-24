@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/sys_calls.h"
 
+#include <cstdlib>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <iostream>
@@ -20,6 +21,10 @@
 namespace NEO {
 
 namespace SysCalls {
+
+void exit(int code) {
+    std::exit(code);
+}
 
 unsigned int getProcessId() {
     static unsigned int pid = getpid();

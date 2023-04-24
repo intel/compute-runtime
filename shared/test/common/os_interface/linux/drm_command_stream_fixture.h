@@ -29,6 +29,7 @@ struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
     using DrmCommandStreamReceiver<GfxFamily>::dispatchMode;
     using DrmCommandStreamReceiver<GfxFamily>::completionFenceValuePointer;
     using DrmCommandStreamReceiver<GfxFamily>::flushInternal;
+    using DrmCommandStreamReceiver<GfxFamily>::CommandStreamReceiver::taskCount;
 };
 
 class DrmCommandStreamTest : public ::testing::Test {

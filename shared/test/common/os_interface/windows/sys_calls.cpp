@@ -33,6 +33,9 @@ const HKEY validHkey = reinterpret_cast<HKEY>(0);
 bool getNumThreadsCalled = false;
 bool mmapAllowExtendedPointers = false;
 
+void exit(int code) {
+}
+
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName) {
     if (mockCreateEventClb) {
         return mockCreateEventClb(lpEventAttributes, bManualReset, bInitialState, lpName, mockCreateEventClbData);

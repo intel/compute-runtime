@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/windows/sys_calls.h"
+
+#include <cstdlib>
 
 namespace NEO {
 
@@ -25,6 +27,9 @@ bool isShutdownInProgress() {
 }
 
 namespace SysCalls {
+void exit(int code) {
+    std::exit(code);
+}
 
 unsigned int getProcessId() {
     return GetCurrentProcessId();

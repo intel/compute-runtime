@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 
 namespace NEO {
 
@@ -87,6 +88,22 @@ inline DrmCommandStreamReceiver<GfxFamily>::~DrmCommandStreamReceiver() {
 
 template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    if (DebugManager.flags.ExitOnSubmissionNumber.get() != -1) {
+        bool enabled = (this->taskCount >= static_cast<TaskCountType>(DebugManager.flags.ExitOnSubmissionNumber.get()));
+
+        if (DebugManager.flags.ExitOnSubmissionMode.get() == 1 && !EngineHelpers::isComputeEngine(this->osContext->getEngineType())) {
+            enabled = false;
+        }
+
+        if (DebugManager.flags.ExitOnSubmissionMode.get() == 2 && !EngineHelpers::isBcs(this->osContext->getEngineType())) {
+            enabled = false;
+        }
+
+        if (enabled) {
+            SysCalls::exit(0);
+        }
+    }
+
     this->printDeviceIndex();
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
