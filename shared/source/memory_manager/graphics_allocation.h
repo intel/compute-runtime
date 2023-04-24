@@ -214,9 +214,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::SHARED_RESOURCE_COPY;
     }
 
-    static bool isIsaAllocationType(AllocationType type) {
+    static bool isKernelIsaAllocationType(AllocationType type) {
         return type == AllocationType::KERNEL_ISA ||
-               type == AllocationType::KERNEL_ISA_INTERNAL ||
+               type == AllocationType::KERNEL_ISA_INTERNAL;
+    }
+
+    static bool isIsaAllocationType(AllocationType type) {
+        return isKernelIsaAllocationType(type) ||
                type == AllocationType::DEBUG_MODULE_AREA;
     }
 
