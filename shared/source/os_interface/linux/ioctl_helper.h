@@ -139,6 +139,7 @@ class IoctlHelper {
     virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const;
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
+    virtual void *pciBarrierMmap() { return nullptr; };
 
     uint32_t getFlagsForPrimeHandleToFd() const;
 
@@ -267,6 +268,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
     bool isWaitBeforeBindRequired(bool bind) const override;
+    void *pciBarrierMmap() override;
 
   protected:
     bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);

@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/wait_util.h"
 
 #include <iostream>
@@ -49,6 +50,23 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
 
     auto &drm = osContextLinux->getDrm();
     drm.setDirectSubmissionActive(true);
+
+    auto usePciBarrier = true;
+    if (DebugManager.flags.DirectSubmissionPCIBarrier.get() != -1) {
+        usePciBarrier = DebugManager.flags.DirectSubmissionPCIBarrier.get();
+    }
+
+    if (usePciBarrier) {
+        auto ptr = static_cast<uint32_t *>(drm.getIoctlHelper()->pciBarrierMmap());
+        if (ptr != MAP_FAILED) {
+            this->pciBarrierPtr = ptr;
+        }
+    }
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Using PCI barrier ptr: %p\n", this->pciBarrierPtr);
+    if (this->pciBarrierPtr) {
+        this->miMemFenceRequired = false;
+        this->sfenceMode = DirectSubmissionSfenceMode::Disabled;
+    }
 
     if (this->partitionedMode) {
         this->workPartitionAllocation = inputParams.workPartitionAllocation;
@@ -86,6 +104,9 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
         drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, this->postSyncOffset);
     }
     this->deallocateResources();
+    if (this->pciBarrierPtr) {
+        SysCalls::munmap(this->pciBarrierPtr, MemoryConstants::pageSize);
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>

@@ -160,6 +160,17 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenSys
     EXPECT_TRUE(directSubmission.systemMemoryFenceAddressSet);
 }
 
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrSetWhenUnblockGpuThenWriteZero) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    uint32_t pciBarrierMock = 1;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    EXPECT_TRUE(directSubmission.initialize(false, false));
+
+    directSubmission.unblockGpu();
+
+    EXPECT_EQ(*directSubmission.pciBarrierPtr, 0u);
+}
+
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetWhenCreatingDirectSubmissionThenDontEnableMiMemFenceProgramming) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);

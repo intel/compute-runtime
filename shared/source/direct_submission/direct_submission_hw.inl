@@ -408,6 +408,10 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
         CpuIntrinsics::sfence();
     }
 
+    if (this->pciBarrierPtr) {
+        *this->pciBarrierPtr = 0u;
+    }
+
     semaphoreData->QueueWorkCount = currentQueueWorkCount;
 
     if (sfenceMode == DirectSubmissionSfenceMode::BeforeAndAfterSemaphore) {

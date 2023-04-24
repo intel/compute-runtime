@@ -56,6 +56,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::osContext;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
+    using BaseClass::pciBarrierPtr;
     using BaseClass::performDiagnosticMode;
     using BaseClass::postSyncOffset;
     using BaseClass::preinitializedRelaxedOrderingScheduler;
@@ -78,6 +79,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::stopRingBuffer;
     using BaseClass::switchRingBuffersAllocations;
     using BaseClass::systemMemoryFenceAddressSet;
+    using BaseClass::unblockGpu;
     using BaseClass::useNotifyForPostSync;
     using BaseClass::workloadMode;
     using BaseClass::workloadModeOneExpectedValue;

@@ -12,6 +12,7 @@
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -30,6 +31,12 @@
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
 }
+
+namespace NEO {
+namespace SysCalls {
+extern bool failMmap;
+}
+} // namespace NEO
 
 struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
     void SetUp() override {
@@ -78,9 +85,11 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::miMemFenceRequired;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
+    using BaseClass::pciBarrierPtr;
     using BaseClass::postSyncOffset;
     using BaseClass::ringBuffers;
     using BaseClass::ringStart;
+    using BaseClass::sfenceMode;
     using BaseClass::submit;
     using BaseClass::switchRingBuffers;
     using BaseClass::tagAddress;
@@ -200,6 +209,67 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenGettingComple
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
     EXPECT_EQ(nullptr, directSubmission.getCompletionValuePointer());
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierWhenCreateDirectSubmissionThenPtrMappedAndOtherSyncMethodsDisabled) {
+    auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
+    auto ptr = drm->getIoctlHelper()->pciBarrierMmap();
+    if (!ptr) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionPCIBarrier.set(1);
+    auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
+
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
+
+    EXPECT_NE(nullptr, directSubmission.pciBarrierPtr);
+    EXPECT_EQ(DirectSubmissionSfenceMode::Disabled, directSubmission.sfenceMode);
+    EXPECT_FALSE(directSubmission.miMemFenceRequired);
+
+    SysCalls::munmap(ptr, MemoryConstants::pageSize);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierWhenCreateDirectSubmissionAndMmapFailsThenPtrNotMappedAndOtherSyncMethodsRemain) {
+    auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
+    auto ptr = drm->getIoctlHelper()->pciBarrierMmap();
+    if (!ptr) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionPCIBarrier.set(1);
+    auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
+    VariableBackup<bool> backup(&SysCalls::failMmap, true);
+
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
+
+    EXPECT_EQ(nullptr, directSubmission.pciBarrierPtr);
+    EXPECT_NE(DirectSubmissionSfenceMode::Disabled, directSubmission.sfenceMode);
+    EXPECT_EQ(directSubmission.miMemFenceRequired, device->getRootDeviceEnvironment().getHelper<ProductHelper>().isGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo()));
+
+    SysCalls::munmap(ptr, MemoryConstants::pageSize);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierDisabledWhenCreateDirectSubmissionThenPtrNotMappedAndOtherSyncMethodsRemain) {
+    auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
+    auto ptr = drm->getIoctlHelper()->pciBarrierMmap();
+    if (!ptr) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionPCIBarrier.set(0);
+    auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
+
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
+
+    EXPECT_EQ(nullptr, directSubmission.pciBarrierPtr);
+    EXPECT_NE(DirectSubmissionSfenceMode::Disabled, directSubmission.sfenceMode);
+    EXPECT_EQ(directSubmission.miMemFenceRequired, device->getRootDeviceEnvironment().getHelper<ProductHelper>().isGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo()));
+
+    SysCalls::munmap(ptr, MemoryConstants::pageSize);
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenCreateDrmDirectSubmissionThenCompletionFenceAllocationIsNotSet) {

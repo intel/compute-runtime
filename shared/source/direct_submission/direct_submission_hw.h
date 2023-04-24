@@ -211,6 +211,7 @@ class DirectSubmissionHw {
     void *semaphorePtr = nullptr;
     volatile RingSemaphoreData *semaphoreData = nullptr;
     volatile void *workloadModeOneStoreAddress = nullptr;
+    uint32_t *pciBarrierPtr = nullptr;
 
     uint32_t currentQueueWorkCount = 1u;
     uint32_t workloadMode = 0;

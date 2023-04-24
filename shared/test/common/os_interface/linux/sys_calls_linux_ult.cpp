@@ -50,6 +50,7 @@ std::vector<void *> mmapVector(64);
 std::vector<void *> mmapCapturedExtendedPointers(64);
 bool mmapCaptureExtendedPointers = false;
 bool mmapAllowExtendedPointers = false;
+bool failMmap = false;
 uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 
@@ -201,6 +202,9 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
 
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noexcept {
     mmapFuncCalled++;
+    if (failMmap) {
+        return reinterpret_cast<void *>(-1);
+    }
     if (reinterpret_cast<uint64_t>(addr) > maxNBitValue(48)) {
         if (mmapCaptureExtendedPointers) {
             mmapCapturedExtendedPointers.push_back(addr);

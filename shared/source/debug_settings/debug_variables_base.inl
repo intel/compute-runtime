@@ -344,6 +344,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerMaxTimeout, -1, "Set d
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerDivisor, -1, "Set direct submission controller timeout divider, -1: default 1, >0: divider value")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionForceLocalMemoryStorageMode, -1, "Force local memory storage for command/ring/semaphore buffer, -1: default - for all engines, 0: disabled, 1: for multiOsContextCapable engine, 2: for all engines")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableRingSwitchTagUpdateWa, -1, "-1: default, 0 - disable, 1 - enable. If enabled, completionFences wont be updated if ring is not running.")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionPCIBarrier, -1, "Use PCI barrier for data synchronization before semaphore unblock -1: default, 0 - disable, 1 - enable.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertExtraMiMemFenceCommands, -1, "-1: default, 0 - disable, 1 - enable. If enabled, add extra MI_MEM_FENCE instructions with acquire bit set")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertSfenceInstructionPriorToSubmission, -1, "-1: default, 0 - disable, 1 - Insert _mm_sfence before unlocking semaphore only, 2 - insert before and after semaphore")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionMaxRingBuffers, -1, "-1: default, >0: max ring buffer count, During switch ring buffer, if there is no available ring, wait for completion instead of allocating new one if DirectSubmissionMaxRingBuffers is reached")
