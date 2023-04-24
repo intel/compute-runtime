@@ -167,6 +167,10 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImp
         for (auto &allocation : allocationsForEviction) {
             bool evict = true;
 
+            if (allocation->getRootDeviceIndex() != this->rootDeviceIndex) {
+                continue;
+            }
+
             for (const auto &engine : engines) {
                 if (this->rootDeviceIndex == engine.commandStreamReceiver->getRootDeviceIndex() &&
                     engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {

@@ -554,7 +554,7 @@ bool Context::BufferPoolAllocator::BufferPool::isPoolBuffer(const MemObj *buffer
 
 void Context::BufferPoolAllocator::BufferPool::drain() {
     for (auto allocation : mainStorage->getMultiGraphicsAllocation().getGraphicsAllocations()) {
-        if (memoryManager->allocInUse(*allocation)) {
+        if (allocation && memoryManager->allocInUse(*allocation)) {
             return;
         }
     }
