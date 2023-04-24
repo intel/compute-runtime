@@ -14,6 +14,7 @@
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -59,8 +60,9 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const {
-    constexpr bool enabled = false;
-    return enabled;
+    const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::Zebin;
+    const bool isCMKernelHeuristic = kernelDescriptor.kernelAttributes.simdSize == 1;
+    return isZebin && !isCMKernelHeuristic;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
