@@ -549,7 +549,9 @@ TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenCorrec
 TEST_F(MockOfflineCompilerTests, givenDeviceIdAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
     MockOfflineCompiler mockOfflineCompiler;
     uint32_t deviceID = 0;
-    std::stringstream deviceIDStr;
+    std::stringstream deviceIDStr, expectedOutput;
+    std::string deviceStr;
+
     auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
@@ -559,16 +561,21 @@ TEST_F(MockOfflineCompilerTests, givenDeviceIdAndRevisionIdValueWhenInitHwInfoTh
         if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
             deviceID = deviceMapConfig.deviceIds->front();
             deviceIDStr << "0x" << std::hex << deviceID;
+            deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(deviceMapConfig.aotConfig.value);
             break;
         }
     }
 
     mockOfflineCompiler.deviceName = deviceIDStr.str();
     mockOfflineCompiler.revisionId = 0x0;
-
     EXPECT_FALSE(mockOfflineCompiler.deviceName.empty());
 
+    testing::internal::CaptureStdout();
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+    std::string output = testing::internal::GetCapturedStdout();
+    expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
+
+    EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceID);
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, mockOfflineCompiler.revisionId);
 }
