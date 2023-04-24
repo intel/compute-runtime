@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,11 @@
 
 using namespace NEO;
 
-typedef api_tests clReleaseMemObjectTests;
+using ClReleaseMemObjectTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clReleaseMemObjectTests, GivenValidBufferWhenReleasingMemObjectThenSuccessIsReturned) {
+TEST_F(ClReleaseMemObjectTests, GivenValidBufferWhenReleasingMemObjectThenSuccessIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;
     cl_mem buffer = nullptr;

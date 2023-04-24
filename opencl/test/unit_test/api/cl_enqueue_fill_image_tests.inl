@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueFillImageTests;
+using ClEnqueueFillImageTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueFillImageTests, GivenNullCommandQueueWhenFillingImageThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueFillImageTests, GivenNullCommandQueueWhenFillingImageThenInvalidCommandQueueErrorIsReturned) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
@@ -37,7 +37,7 @@ TEST_F(clEnqueueFillImageTests, GivenNullCommandQueueWhenFillingImageThenInvalid
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueFillImageTests, GivenNullImageWhenFillingImageThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueFillImageTests, GivenNullImageWhenFillingImageThenInvalidMemObjectErrorIsReturned) {
     uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};
@@ -55,7 +55,7 @@ TEST_F(clEnqueueFillImageTests, GivenNullImageWhenFillingImageThenInvalidMemObje
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueFillImageTests, GivenNullFillColorWhenFillingImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueFillImageTests, GivenNullFillColorWhenFillingImageThenInvalidValueErrorIsReturned) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};
@@ -73,7 +73,7 @@ TEST_F(clEnqueueFillImageTests, GivenNullFillColorWhenFillingImageThenInvalidVal
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueFillImageTests, GivenCorrectArgumentsWhenFillingImageThenSuccessIsReturned) {
+TEST_F(ClEnqueueFillImageTests, GivenCorrectArgumentsWhenFillingImageThenSuccessIsReturned) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
@@ -92,7 +92,7 @@ TEST_F(clEnqueueFillImageTests, GivenCorrectArgumentsWhenFillingImageThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueFillImageTests, GivenQueueIncapableWhenFillingImageThenInvalidOperationReturned) {
+TEST_F(ClEnqueueFillImageTests, GivenQueueIncapableWhenFillingImageThenInvalidOperationReturned) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};

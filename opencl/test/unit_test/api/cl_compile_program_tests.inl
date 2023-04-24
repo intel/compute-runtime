@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCompileProgramTests;
+using ClCompileProgramTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenSuccessIsReturned) {
+TEST_F(ClCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -63,7 +63,7 @@ TEST_F(clCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramThenSuccessIsReturned) {
+TEST_F(ClCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     cl_program pHeader = nullptr;
     size_t sourceSize = 0;
@@ -132,7 +132,7 @@ TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramT
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCompileProgramTests, GivenNullProgramWhenCompilingProgramThenInvalidProgramErrorIsReturned) {
+TEST_F(ClCompileProgramTests, GivenNullProgramWhenCompilingProgramThenInvalidProgramErrorIsReturned) {
     retVal = clCompileProgram(
         nullptr,
         1,
@@ -146,7 +146,7 @@ TEST_F(clCompileProgramTests, GivenNullProgramWhenCompilingProgramThenInvalidPro
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
-TEST_F(clCompileProgramTests, GivenInvalidCallbackInputWhenCompileProgramThenInvalidValueErrorIsReturned) {
+TEST_F(ClCompileProgramTests, GivenInvalidCallbackInputWhenCompileProgramThenInvalidValueErrorIsReturned) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -188,7 +188,7 @@ TEST_F(clCompileProgramTests, GivenInvalidCallbackInputWhenCompileProgramThenInv
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCompileProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
+TEST_F(ClCompileProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;

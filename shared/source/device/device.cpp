@@ -797,7 +797,7 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
          * Consult other driver teams before changing this.
          */
 
-        struct device_uuid {
+        struct DeviceUUID {
             uint16_t vendor_id;
             uint16_t device_id;
             uint16_t revision_id;
@@ -809,7 +809,7 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
             uint8_t sub_device_id;
         };
 
-        device_uuid deviceUUID = {};
+        DeviceUUID deviceUUID = {};
         deviceUUID.vendor_id = 0x8086; // Intel
         deviceUUID.device_id = getHardwareInfo().platform.usDeviceID;
         deviceUUID.revision_id = getHardwareInfo().platform.usRevId;
@@ -819,9 +819,9 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
         deviceUUID.pci_func = static_cast<uint8_t>(pciBusInfo.pciFunction);
         deviceUUID.sub_device_id = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
 
-        static_assert(sizeof(device_uuid) == ProductHelper::uuidSize);
+        static_assert(sizeof(DeviceUUID) == ProductHelper::uuidSize);
 
-        memcpy_s(uuid.data(), ProductHelper::uuidSize, &deviceUUID, sizeof(device_uuid));
+        memcpy_s(uuid.data(), ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
 
         return true;
     }

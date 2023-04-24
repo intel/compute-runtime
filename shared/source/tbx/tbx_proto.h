@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ enum HAS_MSG_TYPE {
     NUM_OF_MSG_TYPE
 };
 
-struct HAS_HDR {
+struct HasHdr {
     union {
         uint32_t msg_type;
         HAS_MSG_TYPE type;
@@ -62,7 +62,7 @@ enum {
     MSG_TYPE_FUNNY_IO
 };
 
-struct HAS_MMIO_REQ {
+struct HasMmioReq {
     uint32_t write : 1;
     uint32_t size : 3;
     uint32_t dev_idx : 2;
@@ -78,8 +78,8 @@ struct HAS_MMIO_REQ {
     };
 };
 
-struct HAS_MMIO_EXT_REQ {
-    struct HAS_MMIO_REQ mmio_req;
+struct HasMmioExtReq {
+    struct HasMmioReq mmio_req;
     uint32_t sourceid : 8;
     uint32_t reserved1 : 24;
     enum {
@@ -87,7 +87,7 @@ struct HAS_MMIO_EXT_REQ {
     };
 };
 
-struct HAS_MMIO_RES {
+struct HasMmioRes {
     uint32_t data;
 
     enum {
@@ -95,7 +95,7 @@ struct HAS_MMIO_RES {
     };
 };
 
-struct HAS_GTT32_REQ {
+struct HasGtt32Req {
     uint32_t write : 1;
     uint32_t reserved : 31;
 
@@ -107,7 +107,7 @@ struct HAS_GTT32_REQ {
     };
 };
 
-struct HAS_GTT32_RES {
+struct HasGtt32Res {
     uint32_t data;
 
     enum {
@@ -115,7 +115,7 @@ struct HAS_GTT32_RES {
     };
 };
 
-struct HAS_GTT64_REQ {
+struct HasGtt64Req {
     uint32_t write : 1;
     uint32_t reserved : 31;
 
@@ -128,7 +128,7 @@ struct HAS_GTT64_REQ {
     };
 };
 
-struct HAS_GTT64_RES {
+struct HasGtt64Res {
     uint32_t data;
     uint32_t data_h;
 
@@ -137,7 +137,7 @@ struct HAS_GTT64_RES {
     };
 };
 
-struct HAS_WRITE_DATA_REQ {
+struct HasWriteDataReq {
     uint32_t addr_type : 1;
     uint32_t mask_exist : 1;
     uint32_t frontdoor : 1;
@@ -155,7 +155,7 @@ struct HAS_WRITE_DATA_REQ {
     };
 };
 
-struct HAS_READ_DATA_REQ {
+struct HasReadDataReq {
     uint32_t addr_type : 1;
     uint32_t frontdoor : 1;
     uint32_t ownership_req : 1;
@@ -171,7 +171,7 @@ struct HAS_READ_DATA_REQ {
     };
 };
 
-struct HAS_READ_DATA_RES {
+struct HasReadDataRes {
     uint32_t addr_type : 1;
     uint32_t mask_exist : 1;
     uint32_t last_page : 1;
@@ -186,7 +186,7 @@ struct HAS_READ_DATA_RES {
     };
 };
 
-struct HAS_CONTROL_REQ {
+struct HasControlReq {
     uint32_t reset : 1;          // [0:0]
     uint32_t has : 1;            // [1:1]
     uint32_t rd_on_demand : 1;   // [2:2]
@@ -222,7 +222,7 @@ struct HAS_CONTROL_REQ {
     };
 };
 
-struct HAS_REPORT_REND_END_REQ {
+struct HasReportRendEndReq {
     uint32_t timeout;
 
     enum {
@@ -230,7 +230,7 @@ struct HAS_REPORT_REND_END_REQ {
     };
 };
 
-struct HAS_REPORT_REND_END_RES {
+struct HasReportRendEndRes {
     uint32_t timeout : 1;
     uint32_t reserved : 31;
 
@@ -239,7 +239,7 @@ struct HAS_REPORT_REND_END_RES {
     };
 };
 
-struct HAS_PCICFG_REQ {
+struct HasPcicfgReq {
     uint32_t write : 1;
     uint32_t size : 3;
     uint32_t bus : 8;
@@ -254,11 +254,11 @@ struct HAS_PCICFG_REQ {
     };
 };
 
-struct HAS_PCICFG_RES {
+struct HasPcicfgRes {
     uint32_t data;
 };
 
-struct HAS_GTT_PARAMS_REQ {
+struct HasGttParamsReq {
     uint32_t base;
     uint32_t base_h : 8;
     uint32_t size : 24;
@@ -268,7 +268,7 @@ struct HAS_GTT_PARAMS_REQ {
     };
 };
 
-struct HAS_EVENT_OBSOLETE_REQ {
+struct HasEventObsoleteReq {
     uint32_t offset;
     uint32_t data;
 
@@ -277,7 +277,7 @@ struct HAS_EVENT_OBSOLETE_REQ {
     };
 };
 
-struct HAS_EVENT_REQ {
+struct HasEventReq {
     uint32_t offset;
     uint32_t data;
     uint32_t dev_idx : 2;
@@ -288,7 +288,7 @@ struct HAS_EVENT_REQ {
     };
 };
 
-struct HAS_INNER_VAR_REQ {
+struct HasInnerVarReq {
     uint32_t write : 1;
     uint32_t non_dword : 16;
     uint32_t reserved : 15;
@@ -300,7 +300,7 @@ struct HAS_INNER_VAR_REQ {
     };
 };
 
-struct HAS_INNER_VAR_RES {
+struct HasInnerVarRes {
     uint32_t data;
 
     enum {
@@ -308,7 +308,7 @@ struct HAS_INNER_VAR_RES {
     };
 };
 
-struct HAS_INNER_VAR_LIST_RES {
+struct HasInnerVarListRes {
     uint32_t size;
 
     enum {
@@ -316,14 +316,14 @@ struct HAS_INNER_VAR_LIST_RES {
     };
 };
 
-struct HAS_INTERNAL_VAR_LIST_ENTRY_RES {
+struct HasInternalVarListEntryRes {
     uint32_t id;
     uint32_t min;
     uint32_t max;
     uint32_t desc_size;
 };
 
-struct HAS_FUNNY_IO_REQ {
+struct HasFunnyIoReq {
     uint32_t write : 1;
     uint32_t reserved : 28;
     uint32_t size : 3;
@@ -335,7 +335,7 @@ struct HAS_FUNNY_IO_REQ {
     };
 };
 
-struct HAS_FUNNY_IO_RES {
+struct HasFunnyIoRes {
     uint32_t data;
 
     enum {
@@ -343,7 +343,7 @@ struct HAS_FUNNY_IO_RES {
     };
 };
 
-struct HAS_IO_REQ {
+struct HasIoReq {
     uint32_t write : 1;
     uint32_t dev_idx : 2;
     uint32_t reserved : 26;
@@ -356,7 +356,7 @@ struct HAS_IO_REQ {
     };
 };
 
-struct HAS_IO_RES {
+struct HasIoRes {
     uint32_t data;
 
     enum {
@@ -364,7 +364,7 @@ struct HAS_IO_RES {
     };
 };
 
-struct HAS_RPC_REQ {
+struct HasRpcReq {
     uint32_t size;
 
     enum {
@@ -372,7 +372,7 @@ struct HAS_RPC_REQ {
     };
 };
 
-struct HAS_RPC_RES {
+struct HasRpcRes {
     uint32_t status;
     uint32_t size;
 
@@ -381,7 +381,7 @@ struct HAS_RPC_RES {
     };
 };
 
-struct HAS_CL_FLUSH_REQ {
+struct HasClFlushReq {
     uint32_t reserved : 23;
     uint32_t ignore : 1;
     uint32_t address_h : 8;
@@ -394,7 +394,7 @@ struct HAS_CL_FLUSH_REQ {
     };
 };
 
-struct HAS_CL_FLUSH_RES {
+struct HasClFlushRes {
     uint32_t data;
 
     enum {
@@ -402,7 +402,7 @@ struct HAS_CL_FLUSH_RES {
     };
 };
 
-struct HAS_SIMTIME_RES {
+struct HasSimtimeRes {
     uint32_t data_l;
     uint32_t data_h;
 
@@ -411,7 +411,7 @@ struct HAS_SIMTIME_RES {
     };
 };
 
-struct HAS_GD2_MESSAGE {
+struct HasGd2Message {
     uint32_t subOpcode;
     uint32_t data[1];
 
@@ -420,41 +420,41 @@ struct HAS_GD2_MESSAGE {
     };
 };
 
-union HAS_MSG_BODY {
-    struct HAS_MMIO_REQ mmio_req;
-    struct HAS_MMIO_EXT_REQ mmio_req_ext;
-    struct HAS_MMIO_RES mmio_res;
-    struct HAS_GTT32_REQ gtt32_req;
-    struct HAS_GTT32_RES gtt32_res;
-    struct HAS_GTT64_REQ gtt64_req;
-    struct HAS_GTT64_RES gtt64_res;
-    struct HAS_WRITE_DATA_REQ write_req;
-    struct HAS_READ_DATA_REQ read_req;
-    struct HAS_READ_DATA_RES read_res;
-    struct HAS_CONTROL_REQ control_req;
-    struct HAS_REPORT_REND_END_REQ render_req;
-    struct HAS_REPORT_REND_END_RES render_res;
-    struct HAS_PCICFG_REQ pcicfg_req;
-    struct HAS_PCICFG_RES pcicfg_res;
-    struct HAS_GTT_PARAMS_REQ gtt_params_req;
-    struct HAS_EVENT_REQ event_req;
-    struct HAS_EVENT_OBSOLETE_REQ event_obsolete_req;
-    struct HAS_INNER_VAR_REQ inner_var_req;
-    struct HAS_INNER_VAR_RES inner_var_res;
-    struct HAS_INNER_VAR_LIST_RES inner_var_list_res;
-    struct HAS_IO_REQ io_req;
-    struct HAS_IO_RES io_res;
-    struct HAS_RPC_REQ rpc_req;
-    struct HAS_RPC_RES rpc_res;
-    struct HAS_CL_FLUSH_REQ flush_req;
-    struct HAS_CL_FLUSH_RES flush_res;
-    struct HAS_SIMTIME_RES stime_res;
-    struct HAS_GD2_MESSAGE gd2_message_req;
+union HasMsgBody {
+    struct HasMmioReq mmio_req;
+    struct HasMmioExtReq mmio_req_ext;
+    struct HasMmioRes mmio_res;
+    struct HasGtt32Req gtt32_req;
+    struct HasGtt32Res gtt32_res;
+    struct HasGtt64Req gtt64_req;
+    struct HasGtt64Res gtt64_res;
+    struct HasWriteDataReq write_req;
+    struct HasReadDataReq read_req;
+    struct HasReadDataRes read_res;
+    struct HasControlReq control_req;
+    struct HasReportRendEndReq render_req;
+    struct HasReportRendEndRes render_res;
+    struct HasPcicfgReq pcicfg_req;
+    struct HasPcicfgRes pcicfg_res;
+    struct HasGttParamsReq gtt_params_req;
+    struct HasEventReq event_req;
+    struct HasEventObsoleteReq event_obsolete_req;
+    struct HasInnerVarReq inner_var_req;
+    struct HasInnerVarRes inner_var_res;
+    struct HasInnerVarListRes inner_var_list_res;
+    struct HasIoReq io_req;
+    struct HasIoRes io_res;
+    struct HasRpcReq rpc_req;
+    struct HasRpcRes rpc_res;
+    struct HasClFlushReq flush_req;
+    struct HasClFlushRes flush_res;
+    struct HasSimtimeRes stime_res;
+    struct HasGd2Message gd2_message_req;
 };
 
-struct HAS_MSG {
-    struct HAS_HDR hdr;
-    union HAS_MSG_BODY u;
+struct HasMsg {
+    struct HasHdr hdr;
+    union HasMsgBody u;
 };
 
 enum mem_types : uint32_t {

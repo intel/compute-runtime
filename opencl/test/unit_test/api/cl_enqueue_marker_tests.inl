@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,23 +12,23 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueMarkerTests;
+using ClEnqueueMarkerTests = ApiTests;
 
-TEST_F(clEnqueueMarkerTests, GivenNullCommandQueueWhenEnqueingMarkerThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueMarkerTests, GivenNullCommandQueueWhenEnqueingMarkerThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueMarker(
         nullptr,
         nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueMarkerTests, GivenValidCommandQueueWhenEnqueingMarkerThenSuccessIsReturned) {
+TEST_F(ClEnqueueMarkerTests, GivenValidCommandQueueWhenEnqueingMarkerThenSuccessIsReturned) {
     auto retVal = clEnqueueMarker(
         pCommandQueue,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueMarkerTests, GivenQueueIncapableWhenEnqueingMarkerThenInvalidOperationReturned) {
+TEST_F(ClEnqueueMarkerTests, GivenQueueIncapableWhenEnqueingMarkerThenInvalidOperationReturned) {
     this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_MARKER_INTEL);
     auto retVal = clEnqueueMarker(
         pCommandQueue,

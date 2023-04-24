@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ TEST(clSetProgramSpecializationConstantTest, givenNullptrProgramWhenSetProgramSp
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
-using clSetProgramSpecializationConstantTests = api_tests;
+using clSetProgramSpecializationConstantTests = ApiTests;
 
 TEST_F(clSetProgramSpecializationConstantTests, givenNonSpirVProgramWhenSetProgramSpecializationConstantThenErrorIsReturned) {
     pProgram->isSpirV = false;

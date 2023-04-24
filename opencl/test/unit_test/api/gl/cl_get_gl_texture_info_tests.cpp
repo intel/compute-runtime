@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 
 using namespace NEO;
 
-typedef api_tests clGetGLTextureInfo_;
+using ClGetGLTextureInfo_ = ApiTests;
 
 namespace ULT {
 
-TEST_F(clGetGLTextureInfo_, givenNullMemObjectWhenGetGLTextureInfoIsCalledThenInvalidMemObjectIsReturned) {
+TEST_F(ClGetGLTextureInfo_, givenNullMemObjectWhenGetGLTextureInfoIsCalledThenInvalidMemObjectIsReturned) {
     auto retVal = clGetGLTextureInfo(nullptr,              // cl_mem memobj
                                      CL_GL_TEXTURE_TARGET, // cl_gl_texture_info param_name
                                      0,                    // size_t param_value_size

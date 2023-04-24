@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ TEST(clSetContextDestructorCallbackTest, givenNullptrContextWhenSettingContextDe
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-using clSetContextDestructorCallbackTests = api_tests;
+using clSetContextDestructorCallbackTests = ApiTests;
 
 TEST_F(clSetContextDestructorCallbackTests, givenPfnNotifyNullptrWhenSettingContextDestructorCallbackThenInvalidValueErrorIsReturned) {
     auto retVal = clSetContextDestructorCallback(pContext, nullptr, nullptr);

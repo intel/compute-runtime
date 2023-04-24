@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,13 +15,13 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateProgramWithBinaryTests;
-typedef api_tests clCreateProgramWithILTests;
-typedef api_tests clCreateProgramWithILKHRTests;
+using ClCreateProgramWithBinaryTests = ApiTests;
+using ClCreateProgramWithILTests = ApiTests;
+using ClCreateProgramWithILKHRTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgramWithBinaryThenProgramIsCreatedAndSuccessIsReturned) {
+TEST_F(ClCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgramWithBinaryThenProgramIsCreatedAndSuccessIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
     size_t binarySize = 0;
@@ -66,7 +66,7 @@ TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
     EXPECT_EQ(nullptr, pProgram);
 }
 
-TEST_F(clCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithBinaryThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithBinaryThenInvalidValueErrorIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
     size_t binarySize = 0;
@@ -127,7 +127,7 @@ TEST_F(clCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithB
     clReleaseProgram(pProgram);
 }
 
-TEST_F(clCreateProgramWithBinaryTests, GivenDeviceNotAssociatedWithContextWhenCreatingProgramWithBinaryThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClCreateProgramWithBinaryTests, GivenDeviceNotAssociatedWithContextWhenCreatingProgramWithBinaryThenInvalidDeviceErrorIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
     size_t binarySize = 0;
@@ -175,7 +175,7 @@ TEST_F(clCreateProgramWithBinaryTests, GivenDeviceNotAssociatedWithContextWhenCr
     EXPECT_EQ(nullptr, pProgram);
 }
 
-TEST_F(clCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlThenInvalidContextErrorIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_SUCCESS;
@@ -184,14 +184,14 @@ TEST_F(clCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlT
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILTests, GivenNullIlWhenCreatingProgramWithIlThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateProgramWithILTests, GivenNullIlWhenCreatingProgramWithIlThenInvalidValueErrorIsReturned) {
     cl_int err = CL_SUCCESS;
     cl_program prog = clCreateProgramWithIL(pContext, nullptr, 0, &err);
     EXPECT_EQ(CL_INVALID_VALUE, err);
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
+TEST_F(ClCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_SUCCESS;
@@ -200,7 +200,7 @@ TEST_F(clCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIl
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
+TEST_F(ClCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
     const uint32_t notSpirv[16] = {0xDEADBEEF};
 
     cl_int err = CL_SUCCESS;
@@ -209,14 +209,14 @@ TEST_F(clCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThen
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILTests, GivenIncorrectIlAndNoErrorPointerWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
+TEST_F(ClCreateProgramWithILTests, GivenIncorrectIlAndNoErrorPointerWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
     const uint32_t notSpirv[16] = {0xDEADBEEF};
 
     cl_program prog = clCreateProgramWithIL(pContext, notSpirv, sizeof(notSpirv), nullptr);
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramWithIlkhrThenProgramIsCreatedAndSuccessIsReturned) {
+TEST_F(ClCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramWithIlkhrThenProgramIsCreatedAndSuccessIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_INVALID_VALUE;
@@ -228,7 +228,7 @@ TEST_F(clCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramW
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBuildIsCalledThenReturnSuccess) {
+TEST_F(ClCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBuildIsCalledThenReturnSuccess) {
     const uint32_t spirv[16] = {0x03022307};
     cl_int err = CL_INVALID_VALUE;
     cl_program program = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
@@ -242,12 +242,12 @@ TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBui
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateProgramWithILKHRTests, GivenNullIlWhenCreatingProgramWithIlkhrThenNullProgramIsReturned) {
+TEST_F(ClCreateProgramWithILKHRTests, GivenNullIlWhenCreatingProgramWithIlkhrThenNullProgramIsReturned) {
     cl_program program = clCreateProgramWithILKHR(pContext, nullptr, 0, nullptr);
     EXPECT_EQ(nullptr, program);
 }
 
-TEST_F(clCreateProgramWithILKHRTests, GivenBothFunctionVariantsWhenCreatingProgramWithIlThenCommonLogicIsUsed) {
+TEST_F(ClCreateProgramWithILKHRTests, GivenBothFunctionVariantsWhenCreatingProgramWithIlThenCommonLogicIsUsed) {
     VariableBackup<ProgramFunctions::CreateFromILFunc> createFromIlBackup{&ProgramFunctions::createFromIL};
 
     bool createFromIlCalled;

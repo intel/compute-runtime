@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-struct ClGetPipeInfoTests : api_tests {
+struct ClGetPipeInfoTests : ApiTests {
     VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
 };
 

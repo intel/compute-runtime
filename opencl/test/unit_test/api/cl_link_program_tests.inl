@@ -19,9 +19,9 @@ using namespace NEO;
 
 namespace ULT {
 
-typedef api_tests clLinkProgramTests;
+using ClLinkProgramTests = ApiTests;
 
-TEST_F(clLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturned) {
+TEST_F(ClLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -81,7 +81,7 @@ TEST_F(clLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccessIsReturned) {
+TEST_F(ClLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -141,7 +141,7 @@ TEST_F(clLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clLinkProgramTests, GivenNullContextWhenLinkingProgramThenClInvalidContextErrorIsReturned) {
+TEST_F(ClLinkProgramTests, GivenNullContextWhenLinkingProgramThenClInvalidContextErrorIsReturned) {
     cl_program program = {0};
     cl_program oprog;
     oprog = clLinkProgram(
@@ -165,7 +165,7 @@ std::vector<T> asVec(const uint8_t *src, size_t size) {
     return std::vector<T>(beg, end);
 }
 
-TEST_F(clLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmbeddedIntoElf) {
+TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmbeddedIntoElf) {
     uint8_t ir1[] = {15, 17, 19, 23};
     uint8_t ir2[] = {29, 31, 37, 41};
     uint8_t ir3[] = {43, 47, 53, 59};
@@ -248,7 +248,7 @@ TEST_F(clLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     EXPECT_EQ(0, memcmp(ir3, elf.sectionHeaders[7].data.begin(), sizeof(ir3)));
 }
 
-TEST_F(clLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidValueErrorIsReturned) {
+TEST_F(ClLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidValueErrorIsReturned) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -306,7 +306,7 @@ TEST_F(clLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidVa
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
+TEST_F(ClLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -369,7 +369,7 @@ TEST_F(clLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clLinkProgramTests, givenMultiDeviceProgramWhenLinkingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClLinkProgramTests, givenMultiDeviceProgramWhenLinkingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;

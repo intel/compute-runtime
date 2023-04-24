@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,11 @@
 
 using namespace NEO;
 
-typedef api_tests clGetContextInfoTests;
+using ClGetContextInfoTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clGetContextInfoTests, GivenContextNumDevicesParamWhenGettingContextInfoThenNumDevicesIsReturned) {
+TEST_F(ClGetContextInfoTests, GivenContextNumDevicesParamWhenGettingContextInfoThenNumDevicesIsReturned) {
     cl_uint numDevices = 0;
 
     retVal = clGetContextInfo(
@@ -31,7 +31,7 @@ TEST_F(clGetContextInfoTests, GivenContextNumDevicesParamWhenGettingContextInfoT
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetContextInfoTests, GivenContextWithSingleDeviceAndContextDevicesParamWhenGettingContextInfoThenListOfDevicesContainsOneDevice) {
+TEST_F(ClGetContextInfoTests, GivenContextWithSingleDeviceAndContextDevicesParamWhenGettingContextInfoThenListOfDevicesContainsOneDevice) {
     retVal = clGetContextInfo(
         pContext,
         CL_CONTEXT_DEVICES,
@@ -43,7 +43,7 @@ TEST_F(clGetContextInfoTests, GivenContextWithSingleDeviceAndContextDevicesParam
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetContextInfoTests, GivenContextWithMultipleDevicesAndContextDevicesParamWhenGettingContextInfoThenListOfDevicesContainsAllDevices) {
+TEST_F(ClGetContextInfoTests, GivenContextWithMultipleDevicesAndContextDevicesParamWhenGettingContextInfoThenListOfDevicesContainsAllDevices) {
     cl_uint numDevices = 2u;
     auto inputDevices = std::make_unique<cl_device_id[]>(numDevices);
     auto outputDevices = std::make_unique<cl_device_id[]>(numDevices);

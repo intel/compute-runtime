@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,16 +11,16 @@
 
 using namespace NEO;
 
-typedef api_tests clFlushTests;
+using ClFlushTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clFlushTests, GivenValidCommandQueueWhenFlushingThenSuccessIsReturned) {
+TEST_F(ClFlushTests, GivenValidCommandQueueWhenFlushingThenSuccessIsReturned) {
     retVal = clFlush(pCommandQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clFlushTests, GivenNullCommandQueueWhenFlushingThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClFlushTests, GivenNullCommandQueueWhenFlushingThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clFlush(nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }

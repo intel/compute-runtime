@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,9 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueMapBufferTests;
+using ClEnqueueMapBufferTests = ApiTests;
 
-TEST_F(clEnqueueMapBufferTests, GivenNullCommandQueueWhenMappingBufferThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueMapBufferTests, GivenNullCommandQueueWhenMappingBufferThenInvalidCommandQueueErrorIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -53,7 +53,7 @@ TEST_F(clEnqueueMapBufferTests, GivenNullCommandQueueWhenMappingBufferThenInvali
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(clEnqueueMapBufferTests, GivenValidParametersWhenMappingBufferThenSuccessIsReturned) {
+TEST_F(ClEnqueueMapBufferTests, GivenValidParametersWhenMappingBufferThenSuccessIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -91,7 +91,7 @@ TEST_F(clEnqueueMapBufferTests, GivenValidParametersWhenMappingBufferThenSuccess
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(clEnqueueMapBufferTests, GivenQueueIncapableWhenMappingBufferThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueMapBufferTests, GivenQueueIncapableWhenMappingBufferThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
 
     disableQueueCapabilities(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL);
@@ -110,7 +110,7 @@ TEST_F(clEnqueueMapBufferTests, GivenQueueIncapableWhenMappingBufferThenInvalidO
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPointerThenInvalidHostPtrErrorIsReturned) {
+TEST_F(ClEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPointerThenInvalidHostPtrErrorIsReturned) {
     unsigned int bufferSize = 16;
 
     cl_mem buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);

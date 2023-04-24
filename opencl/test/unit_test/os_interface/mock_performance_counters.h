@@ -34,7 +34,7 @@ using MetricsLibraryApi::QueryHandle_1_0;
 //////////////////////////////////////////////////////
 // MI_REPORT_PERF_COUNT definition for all GENs
 //////////////////////////////////////////////////////
-struct MI_REPORT_PERF_COUNT {
+struct MI_REPORT_PERF_COUNT { // NOLINT(readability-identifier-naming)
     uint32_t DwordLength : BITFIELD_RANGE(0, 5);
     uint32_t Reserved_6 : BITFIELD_RANGE(6, 22);
     uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);

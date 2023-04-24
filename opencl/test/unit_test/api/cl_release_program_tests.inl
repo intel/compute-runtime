@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,16 +11,16 @@
 
 using namespace NEO;
 
-typedef api_tests clReleaseProgramTests;
+using ClReleaseProgramTests = ApiTests;
 
-TEST_F(clReleaseProgramTests, GivenNullProgramWhenReleasingProgramThenClInvalidProgramIsReturned) {
+TEST_F(ClReleaseProgramTests, GivenNullProgramWhenReleasingProgramThenClInvalidProgramIsReturned) {
     auto retVal = clReleaseProgram(nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
 static const char fakeSrc[] = "__kernel void func(void) { }";
 
-TEST_F(clReleaseProgramTests, GivenRetainedProgramWhenReleasingProgramThenProgramIsReleasedAndProgramReferenceCountDecrementedCorrectly) {
+TEST_F(ClReleaseProgramTests, GivenRetainedProgramWhenReleasingProgramThenProgramIsReleasedAndProgramReferenceCountDecrementedCorrectly) {
     size_t srcLen = sizeof(fakeSrc);
     const char *src = fakeSrc;
     cl_int retVal;

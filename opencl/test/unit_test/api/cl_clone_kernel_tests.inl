@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,21 +14,21 @@
 
 using namespace NEO;
 
-typedef api_tests clCloneKernelTests;
+using ClCloneKernelTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCloneKernelTests, GivenNullKernelWhenCloningKernelThenNullIsReturned) {
+TEST_F(ClCloneKernelTests, GivenNullKernelWhenCloningKernelThenNullIsReturned) {
     auto kernel = clCloneKernel(nullptr, nullptr);
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCloneKernelTests, GivenNullKernelWhenCloningKernelThenInvalidKernelErrorIsReturned) {
+TEST_F(ClCloneKernelTests, GivenNullKernelWhenCloningKernelThenInvalidKernelErrorIsReturned) {
     clCloneKernel(nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(clCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturned) {
+TEST_F(ClCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturned) {
     cl_kernel pSourceKernel = nullptr;
     cl_kernel pClonedKernel = nullptr;
     cl_program pProgram = nullptr;

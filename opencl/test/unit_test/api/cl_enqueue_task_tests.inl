@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueTaskTests;
+using ClEnqueueTaskTests = ApiTests;
 
 struct EnqueueTaskWithRequiredWorkGroupSize : public HelloWorldTest<HelloWorldFixtureFactory> {
     typedef HelloWorldTest<HelloWorldFixtureFactory> Parent;
@@ -31,7 +31,7 @@ struct EnqueueTaskWithRequiredWorkGroupSize : public HelloWorldTest<HelloWorldFi
 
 namespace ULT {
 
-TEST_F(clEnqueueTaskTests, GivenValidParametersWhenEnqueingTaskThenSuccessIsReturned) {
+TEST_F(ClEnqueueTaskTests, GivenValidParametersWhenEnqueingTaskThenSuccessIsReturned) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;

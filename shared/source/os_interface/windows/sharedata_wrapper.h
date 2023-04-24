@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ static constexpr COMMAND_BUFFER_HEADER initCommandBufferHeader(uint32_t umdConte
 #endif
 
 #else
-struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
+struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM { // NOLINT(readability-identifier-naming)
     bool FtrGpGpuMidBatchPreempt : 1;
     bool FtrGpGpuThreadGroupLevelPreempt : 1;
     bool FtrGpGpuMidThreadLevelPreempt : 1;
@@ -94,7 +94,7 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
     bool FtrLocalMemoryAllows4KB : 1;
 };
 
-struct WA_TABLE_KMD : WA_TABLE_GMM {
+struct WA_TABLE_KMD : WA_TABLE_GMM { // NOLINT(readability-identifier-naming)
 
     bool WaSendMIFLUSHBeforeVFE = false;
     bool WaDisableLSQCROPERFforOCL = false;
@@ -118,7 +118,7 @@ struct WA_TABLE_KMD : WA_TABLE_GMM {
     bool WaDisableFusedThreadScheduling = false;
 };
 
-typedef struct COMMAND_BUFFER_HEADER_REC {
+typedef struct COMMAND_BUFFER_HEADER_REC { // NOLINT(readability-identifier-naming)
     uint32_t UmdContextType : 4;
     uint32_t UmdPatchList : 1;
 
@@ -149,7 +149,7 @@ typedef struct __GMM_GFX_PARTITIONING {
         Heap32[4];
 } GMM_GFX_PARTITIONING;
 
-struct CREATECONTEXT_PVTDATA {
+struct CREATECONTEXT_PVTDATA { // NOLINT(readability-identifier-naming)
     unsigned long *pHwContextId;
     uint32_t NumberOfHwContextIds;
 
@@ -161,7 +161,7 @@ struct CREATECONTEXT_PVTDATA {
     BOOLEAN NoRingFlushes;
 };
 
-struct ADAPTER_INFO_KMD : ADAPTER_INFO_GMM {
+struct ADAPTER_INFO_KMD : ADAPTER_INFO_GMM { // NOLINT(readability-identifier-naming)
     SKU_FEATURE_TABLE_KMD SkuTable;
     WA_TABLE_KMD WaTable;
     GMM_GFX_PARTITIONING GfxPartition;

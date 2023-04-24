@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-typedef api_tests clSVMAllocTests;
+using ClSVMAllocTests = ApiTests;
 
 namespace ULT {
 
@@ -172,19 +172,19 @@ INSTANTIATE_TEST_CASE_P(
     ClSVMAllocInvalidFlagsTests,
     testing::ValuesIn(SVMAllocInvalidFlags));
 
-TEST_F(clSVMAllocTests, GivenNullContextWhenAllocatingSvmThenSvmIsNotAllocated) {
+TEST_F(ClSVMAllocTests, GivenNullContextWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto svmPtr = clSVMAlloc(nullptr /* cl_context */, flags, 4096 /* Size*/, 128 /* alignment */);
     EXPECT_EQ(nullptr, svmPtr);
 }
 
-TEST_F(clSVMAllocTests, GivenZeroSizeWhenAllocatingSvmThenSvmIsNotAllocated) {
+TEST_F(ClSVMAllocTests, GivenZeroSizeWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto svmPtr = clSVMAlloc(pContext /* cl_context */, flags, 0 /* Size*/, 128 /* alignment */);
     EXPECT_EQ(nullptr, svmPtr);
 }
 
-TEST_F(clSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
+TEST_F(ClSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -194,7 +194,7 @@ TEST_F(clSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
     }
 }
 
-TEST_F(clSVMAllocTests, givenUnrestrictedFlagWhenCreatingSvmAllocThenAllowSizeBiggerThanMaxMemAllocSize) {
+TEST_F(ClSVMAllocTests, givenUnrestrictedFlagWhenCreatingSvmAllocThenAllowSizeBiggerThanMaxMemAllocSize) {
     REQUIRE_SVM_OR_SKIP(pDevice);
 
     const size_t maxMemAllocSize = 128;
@@ -239,7 +239,7 @@ TEST_F(clSVMAllocTests, givenUnrestrictedFlagWhenCreatingSvmAllocThenAllowSizeBi
     }
 }
 
-TEST_F(clSVMAllocTests, GivenUnalignedSizeAndDefaultAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
+TEST_F(ClSVMAllocTests, GivenUnalignedSizeAndDefaultAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -249,18 +249,18 @@ TEST_F(clSVMAllocTests, GivenUnalignedSizeAndDefaultAlignmentWhenAllocatingSvmTh
     }
 }
 
-TEST_F(clSVMAllocTests, GivenAlignmentNotPowerOfTwoWhenAllocatingSvmThenSvmIsNotAllocated) {
+TEST_F(ClSVMAllocTests, GivenAlignmentNotPowerOfTwoWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto svmPtr = clSVMAlloc(pContext /* cl_context */, flags, 4096 /* Size*/, 129 /* alignment */);
     EXPECT_EQ(nullptr, svmPtr);
 }
 
-TEST_F(clSVMAllocTests, GivenAlignmentTooLargeWhenAllocatingSvmThenSvmIsNotAllocated) {
+TEST_F(ClSVMAllocTests, GivenAlignmentTooLargeWhenAllocatingSvmThenSvmIsNotAllocated) {
     auto svmPtr = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 4096 /* Size */, 4096 /* alignment */);
     EXPECT_EQ(nullptr, svmPtr);
 };
 
-TEST_F(clSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocationIsCreated) {
+TEST_F(ClSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocationIsCreated) {
     REQUIRE_SVM_OR_SKIP(pDevice);
     DebugManagerStateRestore restore{};
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,8 +92,8 @@ struct ApiFixture {
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironmentBackup;
 };
 
-struct api_tests : public ApiFixture<>,
-                   public ::testing::Test {
+struct ApiTests : public ApiFixture<>,
+                  public ::testing::Test {
     void SetUp() override {
         ApiFixture::setUp();
     }

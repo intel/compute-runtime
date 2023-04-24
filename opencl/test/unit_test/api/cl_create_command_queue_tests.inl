@@ -15,11 +15,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateCommandQueueTest;
+using ClCreateCommandQueueTest = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCreateCommandQueueTest, GivenCorrectParametersWhenCreatingCommandQueueThenCommandQueueIsCreatedAndSuccessIsReturned) {
+TEST_F(ClCreateCommandQueueTest, GivenCorrectParametersWhenCreatingCommandQueueThenCommandQueueIsCreatedAndSuccessIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
 
@@ -32,24 +32,24 @@ TEST_F(clCreateCommandQueueTest, GivenCorrectParametersWhenCreatingCommandQueueT
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, GivenNullContextWhenCreatingCommandQueueThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreateCommandQueueTest, GivenNullContextWhenCreatingCommandQueueThenInvalidContextErrorIsReturned) {
     clCreateCommandQueue(nullptr, testedClDevice, 0, &retVal);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, GivenNullDeviceWhenCreatingCommandQueueThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClCreateCommandQueueTest, GivenNullDeviceWhenCreatingCommandQueueThenInvalidDeviceErrorIsReturned) {
     clCreateCommandQueue(pContext, nullptr, 0, &retVal);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, GivenDeviceNotAssociatedWithContextWhenCreatingCommandQueueThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClCreateCommandQueueTest, GivenDeviceNotAssociatedWithContextWhenCreatingCommandQueueThenInvalidDeviceErrorIsReturned) {
     UltClDeviceFactory deviceFactory{1, 0};
     EXPECT_FALSE(pContext->isDeviceAssociated(*deviceFactory.rootDevices[0]));
     clCreateCommandQueue(pContext, deviceFactory.rootDevices[0], 0, &retVal);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, GivenInvalidPropertiesWhenCreatingCommandQueueThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateCommandQueueTest, GivenInvalidPropertiesWhenCreatingCommandQueueThenInvalidValueErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0xf0000;
 
@@ -59,7 +59,7 @@ TEST_F(clCreateCommandQueueTest, GivenInvalidPropertiesWhenCreatingCommandQueueT
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIsSucesfullyCreated) {
+TEST_F(ClCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIsSucesfullyCreated) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);
@@ -68,7 +68,7 @@ TEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIs
     retVal = clReleaseCommandQueue(cmdq);
 }
 
-HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
+HWTEST_F(ClCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
     using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
@@ -83,7 +83,7 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenComma
     retVal = clReleaseCommandQueue(cmdq);
 }
 
-HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedAndUpdateTaskCountFromWaitEnabledThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
+HWTEST_F(ClCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedAndUpdateTaskCountFromWaitEnabledThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
 
@@ -101,7 +101,7 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedAndUpdate
     retVal = clReleaseCommandQueue(cmdq);
 }
 
-HWTEST_F(clCreateCommandQueueTest, GivenForcedDispatchModeAndOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
+HWTEST_F(ClCreateCommandQueueTest, GivenForcedDispatchModeAndOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
 
@@ -117,7 +117,7 @@ HWTEST_F(clCreateCommandQueueTest, GivenForcedDispatchModeAndOoqParametersWhenQu
     retVal = clReleaseCommandQueue(cmdq);
 }
 
-HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
+HWTEST_F(ClCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
     using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;

@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-using EnqueueKernelTestGenXeHpcCore = api_tests;
+using EnqueueKernelTestGenXeHpcCore = ApiTests;
 
 XE_HPC_CORETEST_F(EnqueueKernelTestGenXeHpcCore, givenCommandQueueWithCCCSEngineAndRevisionBWhenCallingClEnqueueNDCountKernelINTELThenInvalidCommandQueueIsReturned) {
     size_t workgroupCount[3] = {2, 1, 1};

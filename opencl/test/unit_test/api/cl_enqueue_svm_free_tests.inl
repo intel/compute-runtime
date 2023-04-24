@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueSVMFreeTests;
+using ClEnqueueSVMFreeTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueSVMFreeTests, GivenInvalidCommandQueueWhenFreeingSVMThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueSVMFreeTests, GivenInvalidCommandQueueWhenFreeingSVMThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueSVMFree(
         nullptr, // cl_command_queue command_queue
         0,       // cl_uint num_svm_pointers
@@ -35,7 +35,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenInvalidCommandQueueWhenFreeingSVMThenInvalidC
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNullSVMPointersWhenFreeingSVMThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNullSVMPointersWhenFreeingSVMThenInvalidValueErrorIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto retVal = clEnqueueSVMFree(
@@ -52,7 +52,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNullSVMPointersWhen
     }
 }
 
-TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNonNullSVMPointersWhenFreeingSVMThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNonNullSVMPointersWhenFreeingSVMThenInvalidValueErrorIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -75,7 +75,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNonNullSVMPointersWhen
     }
 }
 
-TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfEventsAndNullEventListWhenFreeingSVMThenInvalidEventWaitListErrorIsReturned) {
+TEST_F(ClEnqueueSVMFreeTests, GivenNonZeroNumOfEventsAndNullEventListWhenFreeingSVMThenInvalidEventWaitListErrorIsReturned) {
     auto retVal = clEnqueueSVMFree(
         pCommandQueue, // cl_command_queue command_queue
         0,             // cl_uint num_svm_pointers
@@ -89,7 +89,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfEventsAndNullEventListWhenFreeing
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfEventsAndNonNullEventListWhenFreeingSVMThenInvalidEventWaitListErrorIsReturned) {
+TEST_F(ClEnqueueSVMFreeTests, GivenZeroNumOfEventsAndNonNullEventListWhenFreeingSVMThenInvalidEventWaitListErrorIsReturned) {
     UserEvent uEvent(pContext);
     cl_event eventWaitList[] = {&uEvent};
     auto retVal = clEnqueueSVMFree(
@@ -105,7 +105,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfEventsAndNonNullEventListWhenFreeing
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNonNullSVMPointersWhenFreeingSVMThenSuccessIsReturned) {
+TEST_F(ClEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNonNullSVMPointersWhenFreeingSVMThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -128,7 +128,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNonNullSVMPointersW
     }
 }
 
-TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNullSVMPointersWhenFreeingSVMThenSuccessIsReturned) {
+TEST_F(ClEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNullSVMPointersWhenFreeingSVMThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto retVal = clEnqueueSVMFree(
@@ -145,7 +145,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNullSVMPointersWhenFre
     }
 }
 
-TEST_F(clEnqueueSVMFreeTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMFreeThenInvalidOperationErrorIsReturned) {
+TEST_F(ClEnqueueSVMFreeTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMFreeThenInvalidOperationErrorIsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;
 

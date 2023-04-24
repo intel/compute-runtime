@@ -12,11 +12,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueNDRangeKernelTests;
+using ClEnqueueNDRangeKernelTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenSuccessIsReturned) {
+TEST_F(ClEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenSuccessIsReturned) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -39,7 +39,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySizeWhenExecutingKernelThenDebugMsgErrIsPrintedAndOutOfResourcesIsReturned) {
+TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySizeWhenExecutingKernelThenDebugMsgErrIsPrintedAndOutOfResourcesIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.PrintDebugMessages.set(true);
 
@@ -94,7 +94,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST_F(clEnqueueNDRangeKernelTests, GivenQueueIncapableWhenExecutingKernelThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueNDRangeKernelTests, GivenQueueIncapableWhenExecutingKernelThenInvalidOperationIsReturned) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -118,7 +118,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenQueueIncapableWhenExecutingKernelThenIn
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clEnqueueNDRangeKernelTests, GivenNullCommandQueueWhenExecutingKernelThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueNDRangeKernelTests, GivenNullCommandQueueWhenExecutingKernelThenInvalidCommandQueueErrorIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};
 
     retVal = clEnqueueNDRangeKernel(
@@ -135,7 +135,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenNullCommandQueueWhenExecutingKernelThen
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueNDRangeKernelTests, GivenNonZeroEventsAndEmptyEventWaitListWhenExecutingKernelThenInvalidEventWaitListErrorIsReturned) {
+TEST_F(ClEnqueueNDRangeKernelTests, GivenNonZeroEventsAndEmptyEventWaitListWhenExecutingKernelThenInvalidEventWaitListErrorIsReturned) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -158,7 +158,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenNonZeroEventsAndEmptyEventWaitListWhenE
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueNDRangeKernelTests, GivenConcurrentKernelWhenExecutingKernelThenInvalidKernelErrorIsReturned) {
+TEST_F(ClEnqueueNDRangeKernelTests, GivenConcurrentKernelWhenExecutingKernelThenInvalidKernelErrorIsReturned) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -181,7 +181,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenConcurrentKernelWhenExecutingKernelThen
 
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
-TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenExecutingKernelThenInvalidKernelErrorIsReturned) {
+TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenExecutingKernelThenInvalidKernelErrorIsReturned) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};

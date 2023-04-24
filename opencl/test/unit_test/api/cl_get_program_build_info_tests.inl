@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,12 +18,12 @@
 #include "cl_api_tests.h"
 
 using namespace NEO;
-typedef api_tests clGetProgramBuildInfoTests;
+using ClGetProgramBuildInfoTests = ApiTests;
 
 namespace ULT {
 void verifyDevices(cl_program pProgram, size_t expectedNumDevices, cl_device_id *expectedDevices);
 
-TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
+TEST_F(ClGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -236,7 +236,7 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingWithoutInput
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
+TEST_F(ClGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
 
@@ -271,7 +271,7 @@ TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCall
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetProgramBuildInfoTests, givenInvalidDeviceInputWhenGetProgramBuildInfoIsCalledThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClGetProgramBuildInfoTests, givenInvalidDeviceInputWhenGetProgramBuildInfoIsCalledThenInvalidDeviceErrorIsReturned) {
     cl_build_status buildStatus;
     retVal = clGetProgramBuildInfo(pProgram, nullptr, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);

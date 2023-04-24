@@ -13,12 +13,12 @@ using namespace NEO;
 
 namespace ULT {
 
-struct IntelGlTracingTest : public api_tests {
+struct IntelGlTracingTest : public ApiTests {
   public:
     IntelGlTracingTest() {}
 
     void SetUp() override {
-        api_tests::SetUp();
+        ApiTests::SetUp();
 
         status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle);
         ASSERT_NE(nullptr, handle);
@@ -40,7 +40,7 @@ struct IntelGlTracingTest : public api_tests {
         status = clDestroyTracingHandleINTEL(handle);
         ASSERT_EQ(CL_SUCCESS, status);
 
-        api_tests::TearDown();
+        ApiTests::TearDown();
     }
 
   protected:

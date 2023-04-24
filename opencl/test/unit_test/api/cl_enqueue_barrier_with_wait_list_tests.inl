@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueBarrierWithWaitListTests;
+using ClEnqueueBarrierWithWaitListTests = ApiTests;
 
-TEST_F(clEnqueueBarrierWithWaitListTests, GivenNullCommandQueueWhenEnqueuingBarrierWithWaitListThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueBarrierWithWaitListTests, GivenNullCommandQueueWhenEnqueuingBarrierWithWaitListThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueBarrierWithWaitList(
         nullptr,
         0,
@@ -22,7 +22,7 @@ TEST_F(clEnqueueBarrierWithWaitListTests, GivenNullCommandQueueWhenEnqueuingBarr
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueBarrierWithWaitListTests, GivenValidCommandQueueWhenEnqueuingBarrierWithWaitListThenSuccessIsReturned) {
+TEST_F(ClEnqueueBarrierWithWaitListTests, GivenValidCommandQueueWhenEnqueuingBarrierWithWaitListThenSuccessIsReturned) {
     auto retVal = clEnqueueBarrierWithWaitList(
         pCommandQueue,
         0,
@@ -31,7 +31,7 @@ TEST_F(clEnqueueBarrierWithWaitListTests, GivenValidCommandQueueWhenEnqueuingBar
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueBarrierWithWaitListTests, GivenQueueIncapableWhenEnqueuingBarrierWithWaitListThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueBarrierWithWaitListTests, GivenQueueIncapableWhenEnqueuingBarrierWithWaitListThenInvalidOperationIsReturned) {
     this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_BARRIER_INTEL);
     auto retVal = clEnqueueBarrierWithWaitList(
         pCommandQueue,

@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-struct ClCreatePipeTests : api_tests {
+struct ClCreatePipeTests : ApiTests {
     VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
 };
 

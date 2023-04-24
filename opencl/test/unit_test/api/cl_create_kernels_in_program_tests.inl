@@ -16,11 +16,11 @@
 
 using namespace NEO;
 
-struct ClCreateKernelsInProgramTests : public api_tests {
+struct ClCreateKernelsInProgramTests : public ApiTests {
     void SetUp() override {
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
-        api_tests::SetUp();
+        ApiTests::SetUp();
 
         constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
         auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
@@ -57,7 +57,7 @@ struct ClCreateKernelsInProgramTests : public api_tests {
     void TearDown() override {
         clReleaseKernel(kernel);
         clReleaseProgram(program);
-        api_tests::TearDown();
+        ApiTests::TearDown();
     }
 
     cl_program program = nullptr;

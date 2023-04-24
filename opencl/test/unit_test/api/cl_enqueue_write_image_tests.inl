@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-typedef api_tests ClEnqueueWriteImageTests;
+using ClEnqueueWriteImageTests = ApiTests;
 
 namespace ULT {
 

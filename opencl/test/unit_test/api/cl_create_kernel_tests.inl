@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateKernelTests;
+using ClCreateKernelTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThenKernelIsCreatedAndSuccessIsReturned) {
+TEST_F(ClCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThenKernelIsCreatedAndSuccessIsReturned) {
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
@@ -74,7 +74,7 @@ TEST_F(clCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThen
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInvalidKernelNameErrorIsReturned) {
+TEST_F(ClCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInvalidKernelNameErrorIsReturned) {
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
@@ -126,7 +126,7 @@ TEST_F(clCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInval
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateKernelTests, GivenNullProgramWhenCreatingNewKernelThenInvalidProgramErrorIsReturned) {
+TEST_F(ClCreateKernelTests, GivenNullProgramWhenCreatingNewKernelThenInvalidProgramErrorIsReturned) {
     cl_kernel kernel = nullptr;
     kernel = clCreateKernel(
         nullptr,
@@ -137,7 +137,7 @@ TEST_F(clCreateKernelTests, GivenNullProgramWhenCreatingNewKernelThenInvalidProg
     ASSERT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, GivenNullKernelNameWhenCreatingNewKernelThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateKernelTests, GivenNullKernelNameWhenCreatingNewKernelThenInvalidValueErrorIsReturned) {
     cl_kernel kernel = nullptr;
     KernelInfo *pKernelInfo = new KernelInfo();
 
@@ -153,7 +153,7 @@ TEST_F(clCreateKernelTests, GivenNullKernelNameWhenCreatingNewKernelThenInvalidV
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, GivenInvalidProgramWhenCreatingNewKernelThenInvalidProgramErrorIsReturned) {
+TEST_F(ClCreateKernelTests, GivenInvalidProgramWhenCreatingNewKernelThenInvalidProgramErrorIsReturned) {
     cl_kernel kernel = nullptr;
 
     kernel = clCreateKernel(
@@ -165,7 +165,7 @@ TEST_F(clCreateKernelTests, GivenInvalidProgramWhenCreatingNewKernelThenInvalidP
     ASSERT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, GivenProgramWithBuildErrorWhenCreatingNewKernelThenInvalidProgramExecutableErrorIsReturned) {
+TEST_F(ClCreateKernelTests, GivenProgramWithBuildErrorWhenCreatingNewKernelThenInvalidProgramExecutableErrorIsReturned) {
     cl_kernel kernel = nullptr;
     std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(pContext, false, toClDeviceVector(*pDevice));
     pMockProg->setBuildStatus(CL_BUILD_ERROR);
@@ -179,7 +179,7 @@ TEST_F(clCreateKernelTests, GivenProgramWithBuildErrorWhenCreatingNewKernelThenI
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, GivenNullPtrForReturnWhenCreatingNewKernelThenKernelIsCreated) {
+TEST_F(ClCreateKernelTests, GivenNullPtrForReturnWhenCreatingNewKernelThenKernelIsCreated) {
     cl_kernel kernel = nullptr;
     kernel = clCreateKernel(
         nullptr,

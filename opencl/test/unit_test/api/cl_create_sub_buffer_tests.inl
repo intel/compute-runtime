@@ -101,9 +101,9 @@ INSTANTIATE_TEST_CASE_P(
     ClCreateSubBufferInvalidFlagsHostPtrTests,
     testing::ValuesIn(invalidFlags));
 
-class ClCreateSubBufferTests : public api_tests {
+class ClCreateSubBufferTests : public ApiTests {
     void SetUp() override {
-        api_tests::SetUp();
+        ApiTests::SetUp();
         cl_mem_flags flg = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS;
 
         buffer = clCreateBuffer(pContext, flg, 64, pHostPtr, &retVal);

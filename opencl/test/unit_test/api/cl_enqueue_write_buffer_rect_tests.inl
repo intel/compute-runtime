@@ -14,11 +14,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueWriteBufferRectTests;
+using ClEnqueueWriteBufferRectTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueWriteBufferRectTests, GivenInvalidBufferWhenWritingRectangularRegionThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueWriteBufferRectTests, GivenInvalidBufferWhenWritingRectangularRegionThenInvalidMemObjectErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -44,7 +44,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenInvalidBufferWhenWritingRectangularRe
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferRectTests, GivenNullCommandQueueWhenWritingRectangularRegionThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueWriteBufferRectTests, GivenNullCommandQueueWhenWritingRectangularRegionThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -70,7 +70,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullCommandQueueWhenWritingRectangula
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegionThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegionThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
@@ -105,7 +105,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegi
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangularRegionThenSuccessIsReturned) {
+TEST_F(ClEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangularRegionThenSuccessIsReturned) {
     MockBuffer buffer{};
     buffer.size = 100;
     char ptr[10] = {};
@@ -133,7 +133,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangul
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferRectTests, GivenQueueIncapableWhenWritingRectangularRegionThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueWriteBufferRectTests, GivenQueueIncapableWhenWritingRectangularRegionThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
     buffer.size = 100;
     char ptr[10] = {};

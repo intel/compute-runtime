@@ -19,10 +19,10 @@
 
 using namespace NEO;
 
-typedef api_tests clGetPlatformIDsTests;
+using ClGetPlatformIDsTests = ApiTests;
 
 namespace ULT {
-TEST_F(clGetPlatformIDsTests, GivenNullPlatformWhenGettingPlatformIdsThenNumberofPlatformsIsReturned) {
+TEST_F(ClGetPlatformIDsTests, GivenNullPlatformWhenGettingPlatformIdsThenNumberofPlatformsIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_uint numPlatforms = 0;
 
@@ -32,7 +32,7 @@ TEST_F(clGetPlatformIDsTests, GivenNullPlatformWhenGettingPlatformIdsThenNumbero
     EXPECT_GT(numPlatforms, 0u);
 }
 
-TEST_F(clGetPlatformIDsTests, GivenPlatformsWhenGettingPlatformIdsThenPlatformsIdIsReturned) {
+TEST_F(ClGetPlatformIDsTests, GivenPlatformsWhenGettingPlatformIdsThenPlatformsIdIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platform = nullptr;
 
@@ -42,7 +42,7 @@ TEST_F(clGetPlatformIDsTests, GivenPlatformsWhenGettingPlatformIdsThenPlatformsI
     EXPECT_NE(nullptr, platform);
 }
 
-TEST_F(clGetPlatformIDsTests, GivenNumEntriesZeroAndPlatformNotNullWhenGettingPlatformIdsThenClInvalidValueErrorIsReturned) {
+TEST_F(ClGetPlatformIDsTests, GivenNumEntriesZeroAndPlatformNotNullWhenGettingPlatformIdsThenClInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platform = nullptr;
 

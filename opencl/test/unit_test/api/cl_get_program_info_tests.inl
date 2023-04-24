@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-typedef api_tests clGetProgramInfoTests;
+using ClGetProgramInfoTests = ApiTests;
 
 namespace ULT {
 
@@ -42,7 +42,7 @@ void verifyDevices(cl_program pProgram, size_t expectedNumDevices, cl_device_id 
     }
 }
 
-TEST_F(clGetProgramInfoTests, GivenSourceWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
+TEST_F(ClGetProgramInfoTests, GivenSourceWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -151,7 +151,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithSourceWhenGettingDe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
+TEST_F(ClGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
     const size_t binarySize = 16;
     const uint32_t spirv[binarySize] = {0x03022307};
 
@@ -313,7 +313,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBi
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetProgramInfoTests, GivenSPIRVProgramWhenGettingProgramSourceThenReturnNullString) {
+TEST_F(ClGetProgramInfoTests, GivenSPIRVProgramWhenGettingProgramSourceThenReturnNullString) {
     const size_t binarySize = 16;
     const uint32_t spirv[binarySize] = {0x03022307};
 

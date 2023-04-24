@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,9 @@ TEST(clReleaseCommandQueueTest, GivenNullCmdQueueWhenReleasingCmdQueueThenClInva
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-typedef api_tests clReleaseCommandQueueTests;
+using ClReleaseCommandQueueTests = ApiTests;
 
-TEST_F(clReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVirtualEventWhenReleasingCmdQueueThenInternalRefCountIsDecrementedAndQueueDeleted) {
+TEST_F(ClReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVirtualEventWhenReleasingCmdQueueThenInternalRefCountIsDecrementedAndQueueDeleted) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     ClDevice *device = (ClDevice *)testedClDevice;

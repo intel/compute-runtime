@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,12 @@ using namespace NEO;
 
 namespace ULT {
 
-struct IntelMotionEstimationTest : public api_tests {
+struct IntelMotionEstimationTest : public ApiTests {
   public:
     IntelMotionEstimationTest() {}
 
     void SetUp() override {
-        api_tests::SetUp();
+        ApiTests::SetUp();
 
         desc.mb_block_type = CL_ME_MB_TYPE_16x16_INTEL;
         desc.subpixel_mode = CL_ME_SUBPIXEL_MODE_QPEL_INTEL;
@@ -28,7 +28,7 @@ struct IntelMotionEstimationTest : public api_tests {
     }
 
     void TearDown() override {
-        api_tests::TearDown();
+        ApiTests::TearDown();
     }
 
   protected:

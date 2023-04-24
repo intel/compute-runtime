@@ -22,7 +22,7 @@
 
 using namespace NEO;
 
-typedef api_tests ClCreateProgramWithBuiltInKernelsTests;
+using ClCreateProgramWithBuiltInKernelsTests = ApiTests;
 
 struct ClCreateProgramWithBuiltInVmeKernelsTests : ClCreateProgramWithBuiltInKernelsTests {
     void SetUp() override {

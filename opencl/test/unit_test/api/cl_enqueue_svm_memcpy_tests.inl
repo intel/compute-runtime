@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueSVMMemcpyTests;
+using ClEnqueueSVMMemcpyTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenInvalidCommandQueueWhenCopyingSVMMemoryThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenInvalidCommandQueueWhenCopyingSVMMemoryThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueSVMMemcpy(
         nullptr,  // cl_command_queue command_queue
         CL_FALSE, // cl_bool blocking_copy
@@ -35,7 +35,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenInvalidCommandQueueWhenCopyingSVMMemoryThen
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenNullDstPtrWhenCopyingSVMMemoryThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenNullDstPtrWhenCopyingSVMMemoryThenInvalidValueErrorIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *pSrcSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -57,7 +57,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenNullDstPtrWhenCopyingSVMMemoryThenInvalidVa
     }
 }
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenNullSrcPtrWhenCopyingSVMMemoryThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenNullSrcPtrWhenCopyingSVMMemoryThenInvalidValueErrorIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -79,7 +79,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenNullSrcPtrWhenCopyingSVMMemoryThenInvalidVa
     }
 }
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenNonZeroEventsAndNullEventListWhenCopyingSVMMemoryThenInvalidEventWaitListErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenNonZeroEventsAndNullEventListWhenCopyingSVMMemoryThenInvalidEventWaitListErrorIsReturned) {
     auto retVal = clEnqueueSVMMemcpy(
         pCommandQueue, // cl_command_queue command_queue
         CL_FALSE,      // cl_bool blocking_copy
@@ -93,7 +93,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenNonZeroEventsAndNullEventListWhenCopyingSVM
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenZeroEventsAndNonNullEventListWhenCopyingSVMMemoryThenInvalidEventWaitListErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenZeroEventsAndNonNullEventListWhenCopyingSVMMemoryThenInvalidEventWaitListErrorIsReturned) {
     UserEvent uEvent(pContext);
     cl_event eventWaitList[] = {&uEvent};
     auto retVal = clEnqueueSVMMemcpy(
@@ -109,7 +109,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenZeroEventsAndNonNullEventListWhenCopyingSVM
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenNonZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenNonZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -134,7 +134,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenNonZeroSizeWhenCopyingSVMMemoryThenSuccessI
     }
 }
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenQueueIncapableWhenCopyingSvmBufferThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenQueueIncapableWhenCopyingSvmBufferThenInvalidOperationIsReturned) {
     REQUIRE_SVM_OR_SKIP(pDevice);
 
     disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL);
@@ -160,7 +160,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenQueueIncapableWhenCopyingSvmBufferThenInval
     clSVMFree(pContext, pSrcSvm);
 }
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -185,7 +185,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryThenSuccessIsRe
     }
 }
 
-TEST_F(clEnqueueSVMMemcpyTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemcpyThenInvalidOperationErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemcpyTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemcpyThenInvalidOperationErrorIsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;
 

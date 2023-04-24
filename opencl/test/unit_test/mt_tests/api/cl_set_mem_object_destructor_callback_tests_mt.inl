@@ -10,7 +10,7 @@
 
 using namespace NEO;
 
-typedef api_tests ClCreateBufferTests;
+using ClCreateBufferTests = ApiTests;
 
 namespace ULT {
 

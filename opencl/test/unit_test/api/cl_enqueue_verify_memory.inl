@@ -31,7 +31,7 @@ struct ClEnqueueVerifyMemoryINTELSettings {
     void *gpuAddress = expected;
 };
 
-class ClEnqueueVerifyMemoryIntelTests : public api_tests,
+class ClEnqueueVerifyMemoryIntelTests : public ApiTests,
                                         public ClEnqueueVerifyMemoryINTELSettings {
 };
 

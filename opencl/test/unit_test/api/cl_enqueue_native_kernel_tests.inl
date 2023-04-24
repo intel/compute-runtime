@@ -9,11 +9,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueNativeKernelTests;
+using ClEnqueueNativeKernelTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueNativeKernelTests, GivenAnyParametersWhenExecutingNativeKernelThenOutOfHostMemoryErrorIsReturned) {
+TEST_F(ClEnqueueNativeKernelTests, GivenAnyParametersWhenExecutingNativeKernelThenOutOfHostMemoryErrorIsReturned) {
     auto retVal = clEnqueueNativeKernel(
         nullptr, // commandQueue
         nullptr, // user_func

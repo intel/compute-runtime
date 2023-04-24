@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueReadBufferTests;
+using ClEnqueueReadBufferTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueReadBufferTests, GivenCorrectArgumentsWhenReadingBufferThenSuccessIsReturned) {
+TEST_F(ClEnqueueReadBufferTests, GivenCorrectArgumentsWhenReadingBufferThenSuccessIsReturned) {
     MockBuffer buffer{};
     auto data = 1;
     auto retVal = clEnqueueReadBuffer(
@@ -37,7 +37,7 @@ TEST_F(clEnqueueReadBufferTests, GivenCorrectArgumentsWhenReadingBufferThenSucce
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadBufferTests, GivenQueueIncapableArgumentsWhenReadingBufferThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueReadBufferTests, GivenQueueIncapableArgumentsWhenReadingBufferThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
     auto data = 1;
 
@@ -56,7 +56,7 @@ TEST_F(clEnqueueReadBufferTests, GivenQueueIncapableArgumentsWhenReadingBufferTh
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clEnqueueReadBufferTests, GivenNullCommandQueueWhenReadingBufferThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueReadBufferTests, GivenNullCommandQueueWhenReadingBufferThenInvalidCommandQueueErrorIsReturned) {
     auto data = 1;
     auto retVal = clEnqueueReadBuffer(
         nullptr,
@@ -135,7 +135,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(read_buffer_flags));
 } // namespace ULT
 
-class EnqueueReadBufferTest : public api_tests {
+class EnqueueReadBufferTest : public ApiTests {
   public:
     EnqueueReadBufferTest() {}
 
@@ -146,7 +146,7 @@ class EnqueueReadBufferTest : public api_tests {
     unsigned int bufferSize = 0;
 
     void SetUp() override {
-        api_tests::SetUp();
+        ApiTests::SetUp();
 
         bufferSize = 16;
 
@@ -167,7 +167,7 @@ class EnqueueReadBufferTest : public api_tests {
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);
         delete[] pHostMem;
-        api_tests::TearDown();
+        ApiTests::TearDown();
     }
 };
 TEST_F(EnqueueReadBufferTest, GivenSvmPtrWhenReadingBufferThenSuccessIsReturned) {

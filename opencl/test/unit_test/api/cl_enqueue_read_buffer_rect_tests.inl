@@ -15,11 +15,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueReadBufferRectTest;
+using ClEnqueueReadBufferRectTest = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueReadBufferRectTest, GivenInvalidBufferWhenReadingRectangularRegionThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueReadBufferRectTest, GivenInvalidBufferWhenReadingRectangularRegionThenInvalidMemObjectErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -45,7 +45,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidBufferWhenReadingRectangularRegi
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, GivenNullCommandQueueWhenReadingRectangularRegionThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueReadBufferRectTest, GivenNullCommandQueueWhenReadingRectangularRegionThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -71,7 +71,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenNullCommandQueueWhenReadingRectangularR
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, GivenNullHostPtrWhenReadingRectangularRegionThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueReadBufferRectTest, GivenNullHostPtrWhenReadingRectangularRegionThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
@@ -106,7 +106,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenNullHostPtrWhenReadingRectangularRegion
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRegionThenSuccessIsReturned) {
+TEST_F(ClEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRegionThenSuccessIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
@@ -142,7 +142,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
     clReleaseMemObject(buffer);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, GivenQueueIncapableWhenReadingRectangularRegionThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueReadBufferRectTest, GivenQueueIncapableWhenReadingRectangularRegionThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
     buffer.size = 100;
     char ptr[10];
@@ -171,7 +171,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenQueueIncapableWhenReadingRectangularReg
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegionThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegionThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,

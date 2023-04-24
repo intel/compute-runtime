@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueSVMUnmapTests;
+using ClEnqueueSVMUnmapTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueSVMUnmapTests, GivenInvalidCommandQueueWhenUnmappingSvmThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueSVMUnmapTests, GivenInvalidCommandQueueWhenUnmappingSvmThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueSVMUnmap(
         nullptr, // cl_command_queue  command_queue
         nullptr, // void *svm_ptr
@@ -32,7 +32,7 @@ TEST_F(clEnqueueSVMUnmapTests, GivenInvalidCommandQueueWhenUnmappingSvmThenInval
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueSVMUnmapTests, GivenNullSvmPtrWhenUnmappingSvmThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueSVMUnmapTests, GivenNullSvmPtrWhenUnmappingSvmThenInvalidValueErrorIsReturned) {
     auto retVal = clEnqueueSVMUnmap(
         pCommandQueue, // cl_command_queue  command_queue
         nullptr,       // void *svm_ptr
@@ -43,7 +43,7 @@ TEST_F(clEnqueueSVMUnmapTests, GivenNullSvmPtrWhenUnmappingSvmThenInvalidValueEr
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueSVMUnmapTests, GivenNullEventListAndNonZeroEventsWhenUnmappingSvmThenInvalidEventWaitListErrorIsReturned) {
+TEST_F(ClEnqueueSVMUnmapTests, GivenNullEventListAndNonZeroEventsWhenUnmappingSvmThenInvalidEventWaitListErrorIsReturned) {
     auto retVal = clEnqueueSVMUnmap(
         pCommandQueue, // cl_command_queue  command_queue
         nullptr,       // void *svm_ptr
@@ -54,7 +54,7 @@ TEST_F(clEnqueueSVMUnmapTests, GivenNullEventListAndNonZeroEventsWhenUnmappingSv
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueSVMUnmapTests, GivenNonNullEventListAndZeroEventsWhenUnmappingSvmThenInvalidEventWaitListErrorIsReturned) {
+TEST_F(ClEnqueueSVMUnmapTests, GivenNonNullEventListAndZeroEventsWhenUnmappingSvmThenInvalidEventWaitListErrorIsReturned) {
     UserEvent uEvent(pContext);
     cl_event eventWaitList[] = {&uEvent};
     auto retVal = clEnqueueSVMUnmap(
@@ -67,7 +67,7 @@ TEST_F(clEnqueueSVMUnmapTests, GivenNonNullEventListAndZeroEventsWhenUnmappingSv
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueSVMUnmapTests, GivenValidParametersWhenUnmappingSvmThenSuccessIsReturned) {
+TEST_F(ClEnqueueSVMUnmapTests, GivenValidParametersWhenUnmappingSvmThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -98,7 +98,7 @@ TEST_F(clEnqueueSVMUnmapTests, GivenValidParametersWhenUnmappingSvmThenSuccessIs
     }
 }
 
-TEST_F(clEnqueueSVMUnmapTests, GivenQueueIncapableWhenUnmappingSvmBufferThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueSVMUnmapTests, GivenQueueIncapableWhenUnmappingSvmBufferThenInvalidOperationIsReturned) {
     REQUIRE_SVM_OR_SKIP(pDevice);
 
     void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -130,7 +130,7 @@ TEST_F(clEnqueueSVMUnmapTests, GivenQueueIncapableWhenUnmappingSvmBufferThenInva
     clSVMFree(pContext, ptrSvm);
 }
 
-TEST_F(clEnqueueSVMUnmapTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMUnmapThenInvalidOperationErrorIsReturned) {
+TEST_F(ClEnqueueSVMUnmapTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMUnmapThenInvalidOperationErrorIsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;
 

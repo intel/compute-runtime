@@ -39,7 +39,7 @@ namespace L0 {
 extern thread_local ze_bool_t tracingInProgress;
 extern struct APITracerContextImp *pGlobalAPITracerContextImp;
 
-typedef struct tracer_array_entry {
+typedef struct TracerArrayEntry {
     zet_core_callbacks_t corePrologues;
     zet_core_callbacks_t coreEpilogues;
     zet_device_handle_t hDevice;

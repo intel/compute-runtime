@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,16 +14,16 @@
 
 using namespace NEO;
 
-typedef api_tests clReleaseKernelTests;
+using ClReleaseKernelTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clReleaseKernelTests, GivenNullKernelWhenReleasingKernelThenClInvalidKernelErrorIsReturned) {
+TEST_F(ClReleaseKernelTests, GivenNullKernelWhenReleasingKernelThenClInvalidKernelErrorIsReturned) {
     retVal = clReleaseKernel(nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(clReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsCorrectlyReleased) {
+TEST_F(ClReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsCorrectlyReleased) {
     cl_kernel kernel = nullptr;
     cl_program program = nullptr;
     cl_int binaryStatus = CL_SUCCESS;

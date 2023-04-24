@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueFillBufferTests;
+using ClEnqueueFillBufferTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueFillBufferTests, GivenNullCommandQueueWhenFillingBufferThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueFillBufferTests, GivenNullCommandQueueWhenFillingBufferThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     cl_float pattern = 1.0f;
 
@@ -35,7 +35,7 @@ TEST_F(clEnqueueFillBufferTests, GivenNullCommandQueueWhenFillingBufferThenInval
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueFillBufferTests, GivenNullBufferWhenFillingBufferThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueFillBufferTests, GivenNullBufferWhenFillingBufferThenInvalidMemObjectErrorIsReturned) {
     cl_float pattern = 1.0f;
 
     retVal = clEnqueueFillBuffer(
@@ -52,7 +52,7 @@ TEST_F(clEnqueueFillBufferTests, GivenNullBufferWhenFillingBufferThenInvalidMemO
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueFillBufferTests, GivenValidArgumentsWhenFillingBufferThenSuccessIsReturned) {
+TEST_F(ClEnqueueFillBufferTests, GivenValidArgumentsWhenFillingBufferThenSuccessIsReturned) {
     MockBuffer buffer{};
     cl_float pattern = 1.0f;
 
@@ -69,7 +69,7 @@ TEST_F(clEnqueueFillBufferTests, GivenValidArgumentsWhenFillingBufferThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueFillBufferTests, GivenQueueIncapableWhenFillingBufferThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueFillBufferTests, GivenQueueIncapableWhenFillingBufferThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
     cl_float pattern = 1.0f;
 

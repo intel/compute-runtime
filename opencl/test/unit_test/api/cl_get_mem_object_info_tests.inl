@@ -16,11 +16,11 @@
 
 using namespace NEO;
 
-typedef api_tests clGetMemObjectInfoTests;
+using ClGetMemObjectInfoTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clGetMemObjectInfoTests, givenValidBufferWhenGettingMemObjectInfoThenCorrectBufferSizeIsReturned) {
+TEST_F(ClGetMemObjectInfoTests, givenValidBufferWhenGettingMemObjectInfoThenCorrectBufferSizeIsReturned) {
     size_t bufferSize = 16;
     cl_mem buffer = nullptr;
 
@@ -42,7 +42,7 @@ TEST_F(clGetMemObjectInfoTests, givenValidBufferWhenGettingMemObjectInfoThenCorr
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetMemObjectInfoTests, givenBufferWithMappedRegionWhenGettingMemObjectInfoThenCorrectMapCountIsReturned) {
+TEST_F(ClGetMemObjectInfoTests, givenBufferWithMappedRegionWhenGettingMemObjectInfoThenCorrectMapCountIsReturned) {
     size_t bufferSize = 16;
     cl_mem buffer = nullptr;
 
@@ -81,7 +81,7 @@ TEST_F(clGetMemObjectInfoTests, givenBufferWithMappedRegionWhenGettingMemObjectI
     clReleaseCommandQueue(cmdQ);
 }
 
-TEST_F(clGetMemObjectInfoTests, givenBufferCreatedFromSvmPointerWhenGettingMemObjectInfoThenClTrueIsReturned) {
+TEST_F(ClGetMemObjectInfoTests, givenBufferCreatedFromSvmPointerWhenGettingMemObjectInfoThenClTrueIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         size_t bufferSize = 64;

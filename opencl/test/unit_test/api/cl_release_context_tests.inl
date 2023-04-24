@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 
 using namespace NEO;
 
-typedef api_tests clReleaseContextTests;
+using ClReleaseContextTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clReleaseContextTests, GivenValidContextWhenReleasingContextThenSuccessIsReturned) {
+TEST_F(ClReleaseContextTests, GivenValidContextWhenReleasingContextThenSuccessIsReturned) {
     auto context = clCreateContext(
         nullptr,
         1u,
@@ -29,7 +29,7 @@ TEST_F(clReleaseContextTests, GivenValidContextWhenReleasingContextThenSuccessIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clReleaseContextTests, GivenNullContextWhenReleasingContextThenClInvalidContextIsReturned) {
+TEST_F(ClReleaseContextTests, GivenNullContextWhenReleasingContextThenClInvalidContextIsReturned) {
     auto retVal = clReleaseContext(nullptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }

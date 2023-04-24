@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,10 @@
 
 using namespace NEO;
 
-typedef api_tests clRetainReleaseSamplerTests;
+using ClRetainReleaseSamplerTests = ApiTests;
 
 namespace ULT {
-TEST_F(clRetainReleaseSamplerTests, GivenValidSamplerWhenRetainingThenSamplerReferenceCountIsIncremented) {
+TEST_F(ClRetainReleaseSamplerTests, GivenValidSamplerWhenRetainingThenSamplerReferenceCountIsIncremented) {
     cl_int retVal = CL_SUCCESS;
     auto sampler = clCreateSampler(pContext, CL_TRUE, CL_ADDRESS_CLAMP,
                                    CL_FILTER_NEAREST, &retVal);

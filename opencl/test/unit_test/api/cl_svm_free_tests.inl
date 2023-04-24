@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,18 +9,18 @@
 
 using namespace NEO;
 
-typedef api_tests clSVMFreeTests;
+using ClSVMFreeTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clSVMFreeTests, GivenNullPtrWhenFreeingSvmThenNoAction) {
+TEST_F(ClSVMFreeTests, GivenNullPtrWhenFreeingSvmThenNoAction) {
     clSVMFree(
         nullptr, // cl_context context
         nullptr  // void *svm_pointer
     );
 }
 
-TEST_F(clSVMFreeTests, GivenContextWithDeviceNotSupportingSvmWhenFreeingSvmThenNoAction) {
+TEST_F(ClSVMFreeTests, GivenContextWithDeviceNotSupportingSvmWhenFreeingSvmThenNoAction) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));

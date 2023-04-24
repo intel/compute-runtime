@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-using clGetGLContextInfoKhrTest = api_tests;
+using clGetGLContextInfoKhrTest = ApiTests;
 
 namespace ULT {
 

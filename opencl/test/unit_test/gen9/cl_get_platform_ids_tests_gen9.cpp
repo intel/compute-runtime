@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-typedef api_tests clGetPlatformIDsTests;
+using ClGetPlatformIDsTests = ApiTests;
 
 TEST(clGetPlatformIDsMultiPlatformTest, whenCreateDevicesWithDifferentProductFamilyThenClGetPlatformIdsCreatesMultiplePlatformsProperlySorted) {
 

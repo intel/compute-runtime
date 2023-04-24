@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,31 +12,31 @@
 
 using namespace NEO;
 
-typedef api_tests clGetExtensionFunctionAddressTests;
+using ClGetExtensionFunctionAddressTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateFromVaMediaSurfaceIntelWhenGettingFunctionAddressThenCorrectPointerReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClCreateFromVaMediaSurfaceIntelWhenGettingFunctionAddressThenCorrectPointerReturned) {
     auto retVal = clGetExtensionFunctionAddress("clCreateFromVA_APIMediaSurfaceINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clCreateFromVA_APIMediaSurfaceINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueAcquireVaApiMediaSurfacesIntelWhenGettingFunctionAddressThenCorrectPointerReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnqueueAcquireVaApiMediaSurfacesIntelWhenGettingFunctionAddressThenCorrectPointerReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueAcquireVA_APIMediaSurfacesINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueAcquireVA_APIMediaSurfacesINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueReleaseVaApiMediaSurfacesIntelWhenGettingFunctionAddressThenCorrectPointerReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnqueueReleaseVaApiMediaSurfacesIntelWhenGettingFunctionAddressThenCorrectPointerReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueReleaseVA_APIMediaSurfacesINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueReleaseVA_APIMediaSurfacesINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetDeviceIDsFromVaApiMediaAdapterIntelWhenGettingFunctionAddressThenCorrectPointerReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetDeviceIDsFromVaApiMediaAdapterIntelWhenGettingFunctionAddressThenCorrectPointerReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetDeviceIDsFromVA_APIMediaAdapterINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetDeviceIDsFromVA_APIMediaAdapterINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, givenEnabledFormatQueryWhenGettingFuncionAddressThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, givenEnabledFormatQueryWhenGettingFuncionAddressThenCorrectAddressIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableFormatQuery.set(true);
 
@@ -44,7 +44,7 @@ TEST_F(clGetExtensionFunctionAddressTests, givenEnabledFormatQueryWhenGettingFun
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetSupportedVA_APIMediaSurfaceFormatsINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, givenDisabledFormatQueryWhenGettingFuncionAddressThenNullptrIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, givenDisabledFormatQueryWhenGettingFuncionAddressThenNullptrIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableFormatQuery.set(false);
 

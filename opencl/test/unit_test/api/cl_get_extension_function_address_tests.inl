@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,186 +9,186 @@
 
 using namespace NEO;
 
-typedef api_tests clGetExtensionFunctionAddressTests;
+using ClGetExtensionFunctionAddressTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenNonExistentExtensionWhenGettingExtensionFunctionThenNullIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenNonExistentExtensionWhenGettingExtensionFunctionThenNullIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("__some__function__");
     EXPECT_EQ(nullptr, retVal);
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClIcdGetPlatformIDsKHRWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClIcdGetPlatformIDsKHRWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clIcdGetPlatformIDsKHR");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clIcdGetPlatformIDsKHR));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateAcceleratorINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClCreateAcceleratorINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clCreateAcceleratorINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clCreateAcceleratorINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetAcceleratorInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetAcceleratorInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetAcceleratorInfoINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetAcceleratorInfoINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClRetainAcceleratorINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClRetainAcceleratorINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clRetainAcceleratorINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clRetainAcceleratorINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClReleaseAcceleratorINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClReleaseAcceleratorINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clReleaseAcceleratorINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clReleaseAcceleratorINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClCreatePerfCountersCommandQueueINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClCreatePerfCountersCommandQueueINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clCreatePerfCountersCommandQueueINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clCreatePerfCountersCommandQueueINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClSetPerformanceConfigurationINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClSetPerformanceConfigurationINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clSetPerformanceConfigurationINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetPerformanceConfigurationINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateBufferWithPropertiesINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClCreateBufferWithPropertiesINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto functionPointer = clGetExtensionFunctionAddress("clCreateBufferWithPropertiesINTEL");
     EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clCreateBufferWithPropertiesINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateImageWithPropertiesINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClCreateImageWithPropertiesINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto functionPointer = clGetExtensionFunctionAddress("clCreateImageWithPropertiesINTEL");
     EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clCreateImageWithPropertiesINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, givenClAddCommentToAubIntelAsInputWhenFunctionIsCalledThenProperPointerIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, givenClAddCommentToAubIntelAsInputWhenFunctionIsCalledThenProperPointerIsReturned) {
     auto functionPointer = clGetExtensionFunctionAddress("clAddCommentINTEL");
     EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clAddCommentINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateTracingHandleINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClCreateTracingHandleINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clCreateTracingHandleINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clCreateTracingHandleINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClSetTracingPointINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClSetTracingPointINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clSetTracingPointINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetTracingPointINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClDestroyTracingHandleINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClDestroyTracingHandleINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clDestroyTracingHandleINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clDestroyTracingHandleINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnableTracingINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnableTracingINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnableTracingINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnableTracingINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClDisableTracingINTELLWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClDisableTracingINTELLWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clDisableTracingINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clDisableTracingINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetTracingStateINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetTracingStateINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetTracingStateINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetTracingStateINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClHostMemAllocINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClHostMemAllocINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clHostMemAllocINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clHostMemAllocINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClDeviceMemAllocINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClDeviceMemAllocINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clDeviceMemAllocINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clDeviceMemAllocINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClSharedMemAllocINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClSharedMemAllocINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clSharedMemAllocINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clSharedMemAllocINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClMemFreeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClMemFreeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clMemFreeINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clMemFreeINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClMemBlockingFreeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClMemBlockingFreeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clMemBlockingFreeINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clMemBlockingFreeINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetMemAllocInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetMemAllocInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetMemAllocInfoINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetMemAllocInfoINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClSetKernelArgMemPointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClSetKernelArgMemPointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clSetKernelArgMemPointerINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetKernelArgMemPointerINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMemsetINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnqueueMemsetINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueMemsetINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMemsetINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMemFillINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnqueueMemFillINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueMemFillINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMemFillINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMemcpyINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnqueueMemcpyINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueMemcpyINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMemcpyINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMigrateMemINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnqueueMigrateMemINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueMigrateMemINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMigrateMemINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMemAdviseINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnqueueMemAdviseINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueMemAdviseINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMemAdviseINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetDeviceGlobalVariablePointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetDeviceGlobalVariablePointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetDeviceGlobalVariablePointerINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetDeviceGlobalVariablePointerINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetDeviceFunctionPointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetDeviceFunctionPointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetDeviceFunctionPointerINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetDeviceFunctionPointerINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetKernelSuggestedLocalWorkSizeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetKernelSuggestedLocalWorkSizeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetKernelSuggestedLocalWorkSizeINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetKernelSuggestedLocalWorkSizeINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetKernelSuggestedLocalWorkSizeKHRWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetKernelSuggestedLocalWorkSizeKHRWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetKernelSuggestedLocalWorkSizeKHR");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetKernelSuggestedLocalWorkSizeKHR));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClGetKernelMaxConcurrentWorkGroupCountINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetKernelMaxConcurrentWorkGroupCountINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetKernelMaxConcurrentWorkGroupCountINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetKernelMaxConcurrentWorkGroupCountINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueNDCountKernelINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenClEnqueueNDCountKernelINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueNDCountKernelINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueNDCountKernelINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressTests, GivenCSlSetProgramSpecializationConstantWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+TEST_F(ClGetExtensionFunctionAddressTests, GivenCSlSetProgramSpecializationConstantWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clSetProgramSpecializationConstant");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetProgramSpecializationConstant));
 }

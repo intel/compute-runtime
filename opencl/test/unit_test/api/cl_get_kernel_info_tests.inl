@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@
 
 using namespace NEO;
 
-typedef api_tests clGetKernelInfoTests;
+using ClGetKernelInfoTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsReturned) {
+TEST_F(ClGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;

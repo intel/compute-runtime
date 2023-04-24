@@ -312,7 +312,7 @@ TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingNDCountKernelINTELThenInva
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-using clEnqueueNDCountKernelTests = api_tests;
+using clEnqueueNDCountKernelTests = ApiTests;
 
 TEST_F(clEnqueueNDCountKernelTests, GivenQueueIncapableWhenEnqueuingNDCountKernelINTELThenInvalidOperationIsReturned) {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using clGetKernelMaxConcurrentWorkGroupCountTests = api_tests;
+using clGetKernelMaxConcurrentWorkGroupCountTests = ApiTests;
 
 namespace ULT {
 

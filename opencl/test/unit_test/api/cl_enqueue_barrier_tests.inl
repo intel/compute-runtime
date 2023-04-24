@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,21 +11,21 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueBarrierTests;
+using ClEnqueueBarrierTests = ApiTests;
 
-TEST_F(clEnqueueBarrierTests, GivenNullCommandQueueWhenEnqueuingThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueBarrierTests, GivenNullCommandQueueWhenEnqueuingThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueBarrier(
         nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueBarrierTests, GivenValidCommandQueueWhenEnqueuingBarrierThenSuccessIsReturned) {
+TEST_F(ClEnqueueBarrierTests, GivenValidCommandQueueWhenEnqueuingBarrierThenSuccessIsReturned) {
     auto retVal = clEnqueueBarrier(
         pCommandQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueBarrierTests, GivenQueueIncapableWhenEnqueuingBarrierThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueBarrierTests, GivenQueueIncapableWhenEnqueuingBarrierThenInvalidOperationIsReturned) {
     this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_BARRIER_INTEL);
     auto retVal = clEnqueueBarrier(
         pCommandQueue);

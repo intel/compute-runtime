@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,8 @@
 
 using namespace NEO;
 
-using clGetDeviceGlobalVariablePointer = api_tests;
-using clGetDeviceFunctionPointer = api_tests;
+using clGetDeviceGlobalVariablePointer = ApiTests;
+using clGetDeviceFunctionPointer = ApiTests;
 
 TEST_F(clGetDeviceGlobalVariablePointer, GivenNullMandatoryArgumentsThenReturnInvalidArgError) {
     auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;

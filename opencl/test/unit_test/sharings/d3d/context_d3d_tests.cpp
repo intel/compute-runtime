@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ TEST(D3DContextTest, givenDispatchTableThenItContainsValidEntries) {
     EXPECT_EQ(&clEnqueueReleaseDX9ObjectsINTEL, context.dispatch.crtDispatch->clEnqueueReleaseDX9ObjectsINTEL);
 }
 
-struct clIntelSharingFormatQueryDX9 : public api_tests {
+struct clIntelSharingFormatQueryDX9 : public ApiTests {
     std::vector<D3DFORMAT> supportedNonPlanarFormats;
     std::vector<D3DFORMAT> supportedPlanarFormats;
     std::vector<D3DFORMAT> supportedPlane1Formats;
@@ -45,7 +45,7 @@ struct clIntelSharingFormatQueryDX9 : public api_tests {
     cl_uint numImageFormats;
 
     void SetUp() override {
-        api_tests::SetUp();
+        ApiTests::SetUp();
         supportedNonPlanarFormats = {D3DFMT_R32F, D3DFMT_R16F, D3DFMT_L16, D3DFMT_A8,
                                      D3DFMT_L8, D3DFMT_G32R32F, D3DFMT_G16R16F, D3DFMT_G16R16,
                                      D3DFMT_A8L8, D3DFMT_A32B32G32R32F, D3DFMT_A16B16G16R16F, D3DFMT_A16B16G16R16,
@@ -65,7 +65,7 @@ struct clIntelSharingFormatQueryDX9 : public api_tests {
     }
 
     void TearDown() override {
-        api_tests::TearDown();
+        ApiTests::TearDown();
     }
 };
 

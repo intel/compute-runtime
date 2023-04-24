@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateFromGLTexture2D_;
+using ClCreateFromGLTexture2D_ = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCreateFromGLTexture2D_, givenNullConxtextWhenClCreateFromGlTexture2DIsCalledThenInvalidContextIsReturned) {
+TEST_F(ClCreateFromGLTexture2D_, givenNullConxtextWhenClCreateFromGlTexture2DIsCalledThenInvalidContextIsReturned) {
     int errCode = CL_SUCCESS;
     auto retVal = clCreateFromGLTexture2D(nullptr,           // cl_context context
                                           CL_MEM_READ_WRITE, // cl_mem_flags flags

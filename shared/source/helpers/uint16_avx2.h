@@ -15,7 +15,7 @@
 namespace NEO {
 
 #if __AVX2__
-struct uint16x16_t {
+struct uint16x16_t { // NOLINT(readability-identifier-naming)
     enum { numChannels = 16 };
 
     __m256i value;

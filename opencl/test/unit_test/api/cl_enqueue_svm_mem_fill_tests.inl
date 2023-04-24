@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueSVMMemFillTests;
+using ClEnqueueSVMMemFillTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueSVMMemFillTests, GivenInvalidCommandQueueWhenFillingSVMMemoryThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenInvalidCommandQueueWhenFillingSVMMemoryThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueSVMMemFill(
         nullptr, // cl_command_queue command_queue
         nullptr, // void *svm_ptr
@@ -35,7 +35,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenInvalidCommandQueueWhenFillingSVMMemoryThe
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueSVMMemFillTests, GivenNullSVMPtrWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenNullSVMPtrWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto retVal = clEnqueueSVMMemFill(
@@ -52,7 +52,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenNullSVMPtrWhenFillingSVMMemoryThenInvalidV
     }
 }
 
-TEST_F(clEnqueueSVMMemFillTests, GivenRegionSizeZeroWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenRegionSizeZeroWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -74,7 +74,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenRegionSizeZeroWhenFillingSVMMemoryThenInva
     }
 }
 
-TEST_F(clEnqueueSVMMemFillTests, GivenNullEventWaitListAndNonZeroEventsWhenFillingSVMMemoryThenInvalidEventWaitListIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenNullEventWaitListAndNonZeroEventsWhenFillingSVMMemoryThenInvalidEventWaitListIsReturned) {
     auto retVal = clEnqueueSVMMemFill(
         pCommandQueue, // cl_command_queue command_queue
         nullptr,       // void *svm_ptr
@@ -88,7 +88,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenNullEventWaitListAndNonZeroEventsWhenFilli
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueSVMMemFillTests, GivenNonNullEventWaitListAndZeroEventsWhenFillingSVMMemoryThenInvalidEventWaitListIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenNonNullEventWaitListAndZeroEventsWhenFillingSVMMemoryThenInvalidEventWaitListIsReturned) {
     UserEvent uEvent(pContext);
     cl_event eventWaitList[] = {&uEvent};
     auto retVal = clEnqueueSVMMemFill(
@@ -104,7 +104,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenNonNullEventWaitListAndZeroEventsWhenFilli
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(clEnqueueSVMMemFillTests, GivenValidParametersWhenFillingSVMMemoryThenSuccessIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenValidParametersWhenFillingSVMMemoryThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -126,7 +126,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenValidParametersWhenFillingSVMMemoryThenSuc
     }
 }
 
-TEST_F(clEnqueueSVMMemFillTests, GivenQueueIncapableWhenFillingSvmBufferThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenQueueIncapableWhenFillingSvmBufferThenInvalidOperationIsReturned) {
     REQUIRE_SVM_OR_SKIP(pDevice);
 
     disableQueueCapabilities(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL);
@@ -149,7 +149,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenQueueIncapableWhenFillingSvmBufferThenInva
     clSVMFree(pContext, ptrSvm);
 }
 
-TEST_F(clEnqueueSVMMemFillTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemFillThenInvalidOperationErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemFillThenInvalidOperationErrorIsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueReleaseGLObjects_;
+using ClEnqueueReleaseGLObjects_ = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueReleaseGLObjects_, givenNullCommandQueueWhenReleaseGlObjectsIsCalledThenInvalidCommandQueueIsReturned) {
+TEST_F(ClEnqueueReleaseGLObjects_, givenNullCommandQueueWhenReleaseGlObjectsIsCalledThenInvalidCommandQueueIsReturned) {
     auto retVal = clEnqueueReleaseGLObjects(nullptr, // cl_command_queue command_queue
                                             0,       // cl_uint num_objects
                                             nullptr, // const cl_mem *mem_objects

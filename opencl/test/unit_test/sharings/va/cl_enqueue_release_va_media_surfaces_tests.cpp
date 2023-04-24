@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueReleaseVaMediaSurfacesTests;
+using ClEnqueueReleaseVaMediaSurfacesTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueReleaseVaMediaSurfacesTests, givenNullCommandQueueWhenReleaseObjectsIsCalledThenInvalidCommandQueueIsReturned) {
+TEST_F(ClEnqueueReleaseVaMediaSurfacesTests, givenNullCommandQueueWhenReleaseObjectsIsCalledThenInvalidCommandQueueIsReturned) {
     retVal = clEnqueueReleaseVA_APIMediaSurfacesINTEL(nullptr, 0, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_INVALID_COMMAND_QUEUE);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-using clEnqueueWaitForEventsTests = api_tests;
+using clEnqueueWaitForEventsTests = ApiTests;
 
 TEST_F(clEnqueueWaitForEventsTests, GivenInvalidCommandQueueWhenClEnqueueWaitForEventsIsCalledThenReturnError) {
     auto retVal = CL_SUCCESS;

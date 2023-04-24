@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,16 +13,16 @@ using namespace NEO;
 
 namespace ULT {
 
-struct IntelTracingTest : public api_tests {
+struct IntelTracingTest : public ApiTests {
   public:
     IntelTracingTest() {}
 
     void SetUp() override {
-        api_tests::SetUp();
+        ApiTests::SetUp();
     }
 
     void TearDown() override {
-        api_tests::TearDown();
+        ApiTests::TearDown();
     }
 
   protected:

@@ -571,7 +571,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     cl_int retVal = CL_INVALID_VALUE;
     const void *pSrc = nullptr;
     size_t srcSize = GetInfo::invalidSourceSize;
-    struct size_t3 {
+    struct SizeT3 {
         size_t val[3];
     } requiredWorkGroupSize;
     cl_ulong localMemorySize;
@@ -716,20 +716,20 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
         case 1:
             return changeGetInfoStatusToCLResultType(info.set<size_t>(workGroupSize));
         case 2:
-            struct size_t2 {
+            struct SizeT2 {
                 size_t val[2];
             } workGroupSize2;
             workGroupSize2.val[0] = workGroupSize;
             workGroupSize2.val[1] = (workGroupSize > 0) ? 1 : 0;
-            return changeGetInfoStatusToCLResultType(info.set<size_t2>(workGroupSize2));
+            return changeGetInfoStatusToCLResultType(info.set<SizeT2>(workGroupSize2));
         default:
-            struct size_t3 {
+            struct SizeT3 {
                 size_t val[3];
             } workGroupSize3;
             workGroupSize3.val[0] = workGroupSize;
             workGroupSize3.val[1] = (workGroupSize > 0) ? 1 : 0;
             workGroupSize3.val[2] = (workGroupSize > 0) ? 1 : 0;
-            return changeGetInfoStatusToCLResultType(info.set<size_t3>(workGroupSize3));
+            return changeGetInfoStatusToCLResultType(info.set<SizeT3>(workGroupSize3));
         }
     }
     case CL_KERNEL_MAX_NUM_SUB_GROUPS: {

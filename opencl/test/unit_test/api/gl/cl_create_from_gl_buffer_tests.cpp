@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateFromGLBuffer_;
+using ClCreateFromGLBuffer_ = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCreateFromGLBuffer_, givenNullConxtextWhenCreateFromGLIsCalledThenErrorIsReturned) {
+TEST_F(ClCreateFromGLBuffer_, givenNullConxtextWhenCreateFromGLIsCalledThenErrorIsReturned) {
     int errCode = CL_SUCCESS;
     auto retVal = clCreateFromGLBuffer(nullptr,           // cl_context context
                                        CL_MEM_READ_WRITE, // cl_mem_flags flags

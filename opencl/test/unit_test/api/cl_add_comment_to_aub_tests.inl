@@ -19,13 +19,13 @@ using namespace NEO;
 
 namespace ULT {
 
-struct ClAddCommentToAubTest : api_tests {
+struct ClAddCommentToAubTest : ApiTests {
     void SetUp() override {
-        api_tests::SetUp();
+        ApiTests::SetUp();
         pDevice = pContext->getDevice(0);
     }
     void TearDown() override {
-        api_tests::TearDown();
+        ApiTests::TearDown();
     }
 
     ClDevice *pDevice = nullptr;

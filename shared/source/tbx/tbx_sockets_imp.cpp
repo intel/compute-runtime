@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,10 +81,10 @@ bool TbxSocketsImp::init(const std::string &hostNameOrIp, uint16_t port) {
             break;
         }
 
-        HAS_MSG cmd;
+        HasMsg cmd;
         memset(&cmd, 0, sizeof(cmd));
         cmd.hdr.msg_type = HAS_CONTROL_REQ_TYPE;
-        cmd.hdr.size = sizeof(HAS_CONTROL_REQ);
+        cmd.hdr.size = sizeof(HasControlReq);
         cmd.hdr.trans_id = transID++;
 
         cmd.u.control_req.time_adv_mask = 1;
@@ -96,7 +96,7 @@ bool TbxSocketsImp::init(const std::string &hostNameOrIp, uint16_t port) {
         cmd.u.control_req.has_mask = 1;
         cmd.u.control_req.has = 1;
 
-        sendWriteData(&cmd, sizeof(HAS_HDR) + cmd.hdr.size);
+        sendWriteData(&cmd, sizeof(HasHdr) + cmd.hdr.size);
     } while (false);
 
     return m_socket != INVALID_SOCKET;
@@ -134,10 +134,10 @@ bool TbxSocketsImp::connectToServer(const std::string &hostNameOrIp, uint16_t po
 bool TbxSocketsImp::readMMIO(uint32_t offset, uint32_t *data) {
     bool success;
     do {
-        HAS_MSG cmd;
+        HasMsg cmd;
         memset(&cmd, 0, sizeof(cmd));
         cmd.hdr.msg_type = HAS_MMIO_REQ_TYPE;
-        cmd.hdr.size = sizeof(HAS_MMIO_REQ);
+        cmd.hdr.size = sizeof(HasMmioReq);
         cmd.hdr.trans_id = transID++;
         cmd.u.mmio_req.offset = offset;
         cmd.u.mmio_req.data = 0;
@@ -146,13 +146,13 @@ bool TbxSocketsImp::readMMIO(uint32_t offset, uint32_t *data) {
         cmd.u.mmio_req.msg_type = MSG_TYPE_MMIO;
         cmd.u.mmio_req.size = sizeof(uint32_t);
 
-        success = sendWriteData(&cmd, sizeof(HAS_HDR) + cmd.hdr.size);
+        success = sendWriteData(&cmd, sizeof(HasHdr) + cmd.hdr.size);
         if (!success) {
             break;
         }
 
-        HAS_MSG resp;
-        success = getResponseData((char *)(&resp), sizeof(HAS_HDR) + sizeof(HAS_MMIO_RES));
+        HasMsg resp;
+        success = getResponseData((char *)(&resp), sizeof(HasHdr) + sizeof(HasMmioRes));
         if (!success) {
             break;
         }
@@ -172,10 +172,10 @@ bool TbxSocketsImp::readMMIO(uint32_t offset, uint32_t *data) {
 }
 
 bool TbxSocketsImp::writeMMIO(uint32_t offset, uint32_t value) {
-    HAS_MSG cmd;
+    HasMsg cmd;
     memset(&cmd, 0, sizeof(cmd));
     cmd.hdr.msg_type = HAS_MMIO_REQ_TYPE;
-    cmd.hdr.size = sizeof(HAS_MMIO_REQ);
+    cmd.hdr.size = sizeof(HasMmioReq);
     cmd.hdr.trans_id = transID++;
     cmd.u.mmio_req.msg_type = MSG_TYPE_MMIO;
     cmd.u.mmio_req.offset = offset;
@@ -183,15 +183,15 @@ bool TbxSocketsImp::writeMMIO(uint32_t offset, uint32_t value) {
     cmd.u.mmio_req.write = 1;
     cmd.u.mmio_req.size = sizeof(uint32_t);
 
-    return sendWriteData(&cmd, sizeof(HAS_HDR) + cmd.hdr.size);
+    return sendWriteData(&cmd, sizeof(HasHdr) + cmd.hdr.size);
 }
 
 bool TbxSocketsImp::readMemory(uint64_t addrOffset, void *data, size_t size) {
-    HAS_MSG cmd;
+    HasMsg cmd;
     memset(&cmd, 0, sizeof(cmd));
     cmd.hdr.msg_type = HAS_READ_DATA_REQ_TYPE;
     cmd.hdr.trans_id = transID++;
-    cmd.hdr.size = sizeof(HAS_READ_DATA_REQ);
+    cmd.hdr.size = sizeof(HasReadDataReq);
     cmd.u.read_req.address = static_cast<uint32_t>(addrOffset);
     cmd.u.read_req.address_h = static_cast<uint32_t>(addrOffset >> 32);
     cmd.u.read_req.addr_type = 0;
@@ -202,13 +202,13 @@ bool TbxSocketsImp::readMemory(uint64_t addrOffset, void *data, size_t size) {
 
     bool success;
     do {
-        success = sendWriteData(&cmd, sizeof(HAS_HDR) + sizeof(HAS_READ_DATA_REQ));
+        success = sendWriteData(&cmd, sizeof(HasHdr) + sizeof(HasReadDataReq));
         if (!success) {
             break;
         }
 
-        HAS_MSG resp;
-        success = getResponseData(&resp, sizeof(HAS_HDR) + sizeof(HAS_READ_DATA_RES));
+        HasMsg resp;
+        success = getResponseData(&resp, sizeof(HasHdr) + sizeof(HasReadDataRes));
         if (!success) {
             break;
         }
@@ -227,11 +227,11 @@ bool TbxSocketsImp::readMemory(uint64_t addrOffset, void *data, size_t size) {
 }
 
 bool TbxSocketsImp::writeMemory(uint64_t physAddr, const void *data, size_t size, uint32_t type) {
-    HAS_MSG cmd;
+    HasMsg cmd;
     memset(&cmd, 0, sizeof(cmd));
     cmd.hdr.msg_type = HAS_WRITE_DATA_REQ_TYPE;
     cmd.hdr.trans_id = transID++;
-    cmd.hdr.size = sizeof(HAS_WRITE_DATA_REQ);
+    cmd.hdr.size = sizeof(HasWriteDataReq);
 
     cmd.u.write_req.address = static_cast<uint32_t>(physAddr);
     cmd.u.write_req.address_h = static_cast<uint32_t>(physAddr >> 32);
@@ -244,7 +244,7 @@ bool TbxSocketsImp::writeMemory(uint64_t physAddr, const void *data, size_t size
 
     bool success;
     do {
-        success = sendWriteData(&cmd, sizeof(HAS_HDR) + sizeof(HAS_WRITE_DATA_REQ));
+        success = sendWriteData(&cmd, sizeof(HasHdr) + sizeof(HasWriteDataReq));
         if (!success) {
             break;
         }
@@ -261,17 +261,17 @@ bool TbxSocketsImp::writeMemory(uint64_t physAddr, const void *data, size_t size
 }
 
 bool TbxSocketsImp::writeGTT(uint32_t offset, uint64_t entry) {
-    HAS_MSG cmd;
+    HasMsg cmd;
     memset(&cmd, 0, sizeof(cmd));
     cmd.hdr.msg_type = HAS_GTT_REQ_TYPE;
-    cmd.hdr.size = sizeof(HAS_GTT64_REQ);
+    cmd.hdr.size = sizeof(HasGtt64Req);
     cmd.hdr.trans_id = transID++;
     cmd.u.gtt64_req.write = 1;
     cmd.u.gtt64_req.offset = offset / sizeof(uint64_t); // the TBX server expects GTT index here, not offset
     cmd.u.gtt64_req.data = static_cast<uint32_t>(entry & 0xffffffff);
     cmd.u.gtt64_req.data_h = static_cast<uint32_t>(entry >> 32);
 
-    return sendWriteData(&cmd, sizeof(HAS_HDR) + cmd.hdr.size);
+    return sendWriteData(&cmd, sizeof(HasHdr) + cmd.hdr.size);
 }
 
 bool TbxSocketsImp::sendWriteData(const void *buffer, size_t sizeInBytes) {

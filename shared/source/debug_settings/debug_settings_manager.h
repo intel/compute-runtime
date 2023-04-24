@@ -82,8 +82,8 @@ struct DebugVarBase {
     T defaultValue;
 };
 
-struct DebugVariables { // NOLINT(clang-analyzer-optin.performance.Padding)
-    struct DEBUGGER_LOG_BITMASK {
+struct DebugVariables {                                 // NOLINT(clang-analyzer-optin.performance.Padding)
+    struct DEBUGGER_LOG_BITMASK {                       // NOLINT(readability-identifier-naming)
         constexpr static int32_t LOG_INFO{1};           // NOLINT(readability-identifier-naming)
         constexpr static int32_t LOG_ERROR{1 << 1};     // NOLINT(readability-identifier-naming)
         constexpr static int32_t LOG_THREADS{1 << 2};   // NOLINT(readability-identifier-naming)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,9 @@
 
 using namespace NEO;
 
-typedef api_tests clGetSupportedImageFormatsTests;
+using ClGetSupportedImageFormatsTests = ApiTests;
 
-TEST_F(clGetSupportedImageFormatsTests, GivenValidParamsWhenGettingSupportImageFormatsThenNumImageFormatsIsGreaterThanZero) {
+TEST_F(ClGetSupportedImageFormatsTests, GivenValidParamsWhenGettingSupportImageFormatsThenNumImageFormatsIsGreaterThanZero) {
     if (!pContext->getDevice(0)->getSharedDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
@@ -36,7 +36,7 @@ TEST_F(clGetSupportedImageFormatsTests, GivenValidParamsWhenGettingSupportImageF
     EXPECT_GT(numImageFormats, 0u);
 }
 
-TEST_F(clGetSupportedImageFormatsTests, givenInvalidContextWhenGettingSupportImageFormatsThenClInvalidContextErrorIsReturned) {
+TEST_F(ClGetSupportedImageFormatsTests, givenInvalidContextWhenGettingSupportImageFormatsThenClInvalidContextErrorIsReturned) {
     auto device = pContext->getDevice(0u);
     auto dummyContext = reinterpret_cast<cl_context>(device);
 

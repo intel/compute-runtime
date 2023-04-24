@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-using clGetDeviceInfoTests = api_tests;
+using clGetDeviceInfoTests = ApiTests;
 
 namespace ULT {
 

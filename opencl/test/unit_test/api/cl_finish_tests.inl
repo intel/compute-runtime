@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,16 +11,16 @@
 
 using namespace NEO;
 
-typedef api_tests clFinishTests;
+using ClFinishTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clFinishTests, GivenValidCommandQueueWhenWaitingForFinishThenSuccessIsReturned) {
+TEST_F(ClFinishTests, GivenValidCommandQueueWhenWaitingForFinishThenSuccessIsReturned) {
     retVal = clFinish(pCommandQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clFinishTests, GivenNullCommandQueueWhenWaitingForFinishThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClFinishTests, GivenNullCommandQueueWhenWaitingForFinishThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clFinish(nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }

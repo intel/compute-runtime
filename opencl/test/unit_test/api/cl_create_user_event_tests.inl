@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateUserEventTests;
+using ClCreateUserEventTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCreateUserEventTests, GivenValidContextWhenCreatingUserEventThenEventIsCreated) {
+TEST_F(ClCreateUserEventTests, GivenValidContextWhenCreatingUserEventThenEventIsCreated) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -26,7 +26,7 @@ TEST_F(clCreateUserEventTests, GivenValidContextWhenCreatingUserEventThenEventIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, GivenNullContextWhenCreatingUserEventThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreateUserEventTests, GivenNullContextWhenCreatingUserEventThenInvalidContextErrorIsReturned) {
     auto userEvent = clCreateUserEvent(
         nullptr,
         &retVal);
@@ -34,7 +34,7 @@ TEST_F(clCreateUserEventTests, GivenNullContextWhenCreatingUserEventThenInvalidC
     EXPECT_EQ(nullptr, userEvent);
 }
 
-TEST_F(clCreateUserEventTests, GivenCorrectUserEventWhenGetingEventInfoThenClCommandUserCmdTypeIsReturned) {
+TEST_F(ClCreateUserEventTests, GivenCorrectUserEventWhenGetingEventInfoThenClCommandUserCmdTypeIsReturned) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -58,7 +58,7 @@ TEST_F(clCreateUserEventTests, GivenCorrectUserEventWhenGetingEventInfoThenClCom
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, GivenUserEventStatusSetToCompleteWhenGettingEventInfoThenStatusIsSetToCompleteAndSuccessReturned) {
+TEST_F(ClCreateUserEventTests, GivenUserEventStatusSetToCompleteWhenGettingEventInfoThenStatusIsSetToCompleteAndSuccessReturned) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -79,7 +79,7 @@ TEST_F(clCreateUserEventTests, GivenUserEventStatusSetToCompleteWhenGettingEvent
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, GivenValidUserEventWhenGettingContextThenValidContextAndSuccessIsReturned) {
+TEST_F(ClCreateUserEventTests, GivenValidUserEventWhenGettingContextThenValidContextAndSuccessIsReturned) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -97,7 +97,7 @@ TEST_F(clCreateUserEventTests, GivenValidUserEventWhenGettingContextThenValidCon
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, GivenCompleteUserEventWhenWaitingForUserEventThenReturnIsImmediate) {
+TEST_F(ClCreateUserEventTests, GivenCompleteUserEventWhenWaitingForUserEventThenReturnIsImmediate) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -112,7 +112,7 @@ TEST_F(clCreateUserEventTests, GivenCompleteUserEventWhenWaitingForUserEventThen
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, GivenUserEventWithErrorStatusWhenWaitingForUserEventThenClExecStatusErrorForEventsInWaitListErrorIsReturned) {
+TEST_F(ClCreateUserEventTests, GivenUserEventWithErrorStatusWhenWaitingForUserEventThenClExecStatusErrorForEventsInWaitListErrorIsReturned) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);

@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-typedef api_tests ClEnqueueReadImageTests;
+using ClEnqueueReadImageTests = ApiTests;
 
 namespace ULT {
 

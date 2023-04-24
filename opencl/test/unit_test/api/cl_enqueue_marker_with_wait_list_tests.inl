@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueMarkerWithWaitListTests;
+using ClEnqueueMarkerWithWaitListTests = ApiTests;
 
-TEST_F(clEnqueueMarkerWithWaitListTests, GivenNullCommandQueueWhenEnqueingMarkerWithWaitListThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueMarkerWithWaitListTests, GivenNullCommandQueueWhenEnqueingMarkerWithWaitListThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueMarkerWithWaitList(
         nullptr,
         0,
@@ -22,7 +22,7 @@ TEST_F(clEnqueueMarkerWithWaitListTests, GivenNullCommandQueueWhenEnqueingMarker
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueMarkerWithWaitListTests, GivenValidCommandQueueWhenEnqueingMarkerWithWaitListThenSuccessIsReturned) {
+TEST_F(ClEnqueueMarkerWithWaitListTests, GivenValidCommandQueueWhenEnqueingMarkerWithWaitListThenSuccessIsReturned) {
     auto retVal = clEnqueueMarkerWithWaitList(
         pCommandQueue,
         0,
@@ -31,7 +31,7 @@ TEST_F(clEnqueueMarkerWithWaitListTests, GivenValidCommandQueueWhenEnqueingMarke
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueMarkerWithWaitListTests, GivenQueueIncapableWhenEnqueingMarkerWithWaitListThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueMarkerWithWaitListTests, GivenQueueIncapableWhenEnqueingMarkerWithWaitListThenInvalidOperationIsReturned) {
     this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_MARKER_INTEL);
     auto retVal = clEnqueueMarkerWithWaitList(
         pCommandQueue,

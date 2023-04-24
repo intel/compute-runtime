@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateSamplerTests;
+using ClCreateSamplerTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCreateSamplerTests, GivenCorrectParametersWhenCreatingSamplerThenSamplerIsCreatedAndSuccessReturned) {
+TEST_F(ClCreateSamplerTests, GivenCorrectParametersWhenCreatingSamplerThenSamplerIsCreatedAndSuccessReturned) {
     auto sampler = clCreateSampler(
         pContext,
         CL_TRUE,
@@ -29,7 +29,7 @@ TEST_F(clCreateSamplerTests, GivenCorrectParametersWhenCreatingSamplerThenSample
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateSamplerTests, GivenCorrectParametersAndNullReturnPointerWhenCreatingSamplerThenSamplerIsCreated) {
+TEST_F(ClCreateSamplerTests, GivenCorrectParametersAndNullReturnPointerWhenCreatingSamplerThenSamplerIsCreated) {
     auto sampler = clCreateSampler(
         pContext,
         CL_TRUE,
@@ -42,7 +42,7 @@ TEST_F(clCreateSamplerTests, GivenCorrectParametersAndNullReturnPointerWhenCreat
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateSamplerTests, GivenInvalidContextWhenCreatingSamplerThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreateSamplerTests, GivenInvalidContextWhenCreatingSamplerThenInvalidContextErrorIsReturned) {
     auto sampler = clCreateSampler(
         nullptr,
         CL_FALSE,

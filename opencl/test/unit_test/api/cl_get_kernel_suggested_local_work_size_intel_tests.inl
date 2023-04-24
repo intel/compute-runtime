@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using clGetKernelSuggestedLocalWorkSizeTests = api_tests;
+using clGetKernelSuggestedLocalWorkSizeTests = ApiTests;
 
 namespace ULT {
 

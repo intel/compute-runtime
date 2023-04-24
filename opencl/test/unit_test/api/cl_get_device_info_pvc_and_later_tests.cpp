@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-using clGetDeviceInfoPvcAndLater = api_tests;
+using clGetDeviceInfoPvcAndLater = ApiTests;
 using matcherPvcAndLater = IsAtLeastXeHpcCore;
 namespace ULT {
 HWTEST2_F(clGetDeviceInfoPvcAndLater, givenClDeviceSupportedThreadArbitrationPolicyIntelWhenPvcAndLatereAndCallClGetDeviceInfoThenProperArrayIsReturned, matcherPvcAndLater) {

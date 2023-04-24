@@ -25,7 +25,7 @@ struct drm_xe_engine_class_instance;
 
 namespace NEO {
 
-struct bind_info {
+struct BindInfo {
     uint32_t handle;
     uint64_t userptr;
     uint64_t addr;
@@ -127,7 +127,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::unique_ptr<struct drm_xe_engine_class_instance[]> hwEngines;
     int xe_fileHandle = 0;
     std::mutex xeLock;
-    std::vector<bind_info> bindInfo;
+    std::vector<BindInfo> bindInfo;
     int instance = 0;
     uint64_t xeMemoryRegions = 0;
     uint32_t xeTimestampFrequency = 0;

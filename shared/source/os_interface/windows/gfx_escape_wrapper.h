@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #ifdef _WIN32
 #include "gfxEscape.h"
 #else // !_WIN32
-typedef struct GFX_ESCAPE_HEADER {
+typedef struct GFX_ESCAPE_HEADER { // NOLINT(readability-identifier-naming)
     union {
         struct
         {

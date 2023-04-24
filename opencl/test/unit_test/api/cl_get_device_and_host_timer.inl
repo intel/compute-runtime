@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,12 +30,12 @@ struct FailOSTime : public MockOSTime {
     };
 };
 
-typedef api_tests clGetDeviceAndHostTimerTest;
-typedef api_tests clGetHostTimerTest;
+using ClGetDeviceAndHostTimerTest = ApiTests;
+using ClGetHostTimerTest = ApiTests;
 
 namespace ULT {
 
-TEST_F(clGetDeviceAndHostTimerTest, GivenNullDeviceWhenGettingDeviceAndHostTimerThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClGetDeviceAndHostTimerTest, GivenNullDeviceWhenGettingDeviceAndHostTimerThenInvalidDeviceErrorIsReturned) {
     cl_ulong deviceTimestamp = 0;
     cl_ulong hostTimestamp = 0;
 
@@ -47,7 +47,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenNullDeviceWhenGettingDeviceAndHostTimer
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clGetDeviceAndHostTimerTest, GivenNullHostTimerWhenGettingDeviceAndHostTimerThenInvalidValueErrorIsReturned) {
+TEST_F(ClGetDeviceAndHostTimerTest, GivenNullHostTimerWhenGettingDeviceAndHostTimerThenInvalidValueErrorIsReturned) {
     cl_ulong deviceTimestamp = 0;
 
     retVal = clGetDeviceAndHostTimer(
@@ -58,7 +58,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenNullHostTimerWhenGettingDeviceAndHostTi
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clGetDeviceAndHostTimerTest, GivenNullDevicesTimerWhenGettingDeviceAndHostTimerThenInvalidValueErrorIsReturned) {
+TEST_F(ClGetDeviceAndHostTimerTest, GivenNullDevicesTimerWhenGettingDeviceAndHostTimerThenInvalidValueErrorIsReturned) {
     cl_ulong hostTimestamp = 0;
 
     retVal = clGetDeviceAndHostTimer(
@@ -69,7 +69,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenNullDevicesTimerWhenGettingDeviceAndHos
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clGetDeviceAndHostTimerTest, GivenValidOSTimeWhenGettingDeviceAndHostTimerThenSuccessIsReturned) {
+TEST_F(ClGetDeviceAndHostTimerTest, GivenValidOSTimeWhenGettingDeviceAndHostTimerThenSuccessIsReturned) {
     cl_ulong deviceTimestamp = 0;
     cl_ulong hostTimestamp = 0;
     cl_ulong zeroTimestamp = 0;
@@ -89,7 +89,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenValidOSTimeWhenGettingDeviceAndHostTime
     delete mDev;
 }
 
-TEST_F(clGetDeviceAndHostTimerTest, GivenInvalidOSTimeWhenGettingDeviceAndHostTimerThenOutOfResourcesErrorIsReturned) {
+TEST_F(ClGetDeviceAndHostTimerTest, GivenInvalidOSTimeWhenGettingDeviceAndHostTimerThenOutOfResourcesErrorIsReturned) {
     cl_ulong deviceTimestamp = 0;
     cl_ulong hostTimestamp = 0;
     cl_ulong zeroTimestamp = 0;
@@ -109,7 +109,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenInvalidOSTimeWhenGettingDeviceAndHostTi
     delete mDev;
 }
 
-TEST_F(clGetHostTimerTest, GivenNullDeviceWhenGettingHostTimerThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClGetHostTimerTest, GivenNullDeviceWhenGettingHostTimerThenInvalidDeviceErrorIsReturned) {
     cl_ulong hostTimestamp = 0;
 
     retVal = clGetHostTimer(
@@ -119,7 +119,7 @@ TEST_F(clGetHostTimerTest, GivenNullDeviceWhenGettingHostTimerThenInvalidDeviceE
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clGetHostTimerTest, GivenNullHostTimerWhenGettingHostTimerThenInvalidValueErrorIsReturned) {
+TEST_F(ClGetHostTimerTest, GivenNullHostTimerWhenGettingHostTimerThenInvalidValueErrorIsReturned) {
     retVal = clGetHostTimer(
         testedClDevice,
         nullptr);
@@ -127,7 +127,7 @@ TEST_F(clGetHostTimerTest, GivenNullHostTimerWhenGettingHostTimerThenInvalidValu
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clGetHostTimerTest, GivenCorrectParametersWhenGettingHostTimerThenSuccessIsReturned) {
+TEST_F(ClGetHostTimerTest, GivenCorrectParametersWhenGettingHostTimerThenSuccessIsReturned) {
     cl_ulong hostTimestamp = 0;
     cl_ulong zeroTimestamp = 0;
 
@@ -139,7 +139,7 @@ TEST_F(clGetHostTimerTest, GivenCorrectParametersWhenGettingHostTimerThenSuccess
     EXPECT_EQ(retVal, CL_SUCCESS);
 }
 
-TEST_F(clGetHostTimerTest, GivenValidOSTimeWhenGettingHostTimerThenSuccessIsReturned) {
+TEST_F(ClGetHostTimerTest, GivenValidOSTimeWhenGettingHostTimerThenSuccessIsReturned) {
     cl_ulong hostTimestamp = 0;
     cl_ulong zeroTimestamp = 0;
 
@@ -156,7 +156,7 @@ TEST_F(clGetHostTimerTest, GivenValidOSTimeWhenGettingHostTimerThenSuccessIsRetu
     delete mDev;
 }
 
-TEST_F(clGetHostTimerTest, GivenInvalidOSTimeWhenGettingHostTimerThenOutOfResourcesErrorIsReturned) {
+TEST_F(ClGetHostTimerTest, GivenInvalidOSTimeWhenGettingHostTimerThenOutOfResourcesErrorIsReturned) {
     cl_ulong hostTimestamp = 0;
     cl_ulong zeroTimestamp = 0;
 

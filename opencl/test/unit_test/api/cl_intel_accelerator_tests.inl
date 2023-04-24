@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,16 +14,16 @@ using namespace NEO;
 
 namespace ULT {
 
-struct IntelAcceleratorTest : public api_tests {
+struct IntelAcceleratorTest : public ApiTests {
   public:
     IntelAcceleratorTest() {}
 
     void SetUp() override {
-        api_tests::SetUp();
+        ApiTests::SetUp();
     }
 
     void TearDown() override {
-        api_tests::TearDown();
+        ApiTests::TearDown();
     }
 
   protected:

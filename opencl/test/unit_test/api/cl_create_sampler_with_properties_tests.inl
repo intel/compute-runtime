@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,10 +35,10 @@ struct SamplerWithPropertiesTest : public ApiFixture<>,
     cl_sampler_properties FilterProperties = 0;
 };
 
-typedef api_tests clCreateSamplerWithPropertiesTests;
-typedef SamplerWithPropertiesTest clCreateSamplerWithPropertiesTests2;
+using ClCreateSamplerWithPropertiesTests = ApiTests;
+using ClCreateSamplerWithPropertiesTests2 = SamplerWithPropertiesTest;
 
-TEST_F(clCreateSamplerWithPropertiesTests, GivenSamplerPropertiesAndNoReturnPointerWhenCreatingSamplerWithPropertiesThenSamplerIsCreated) {
+TEST_F(ClCreateSamplerWithPropertiesTests, GivenSamplerPropertiesAndNoReturnPointerWhenCreatingSamplerWithPropertiesThenSamplerIsCreated) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -57,7 +57,7 @@ TEST_F(clCreateSamplerWithPropertiesTests, GivenSamplerPropertiesAndNoReturnPoin
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateSamplerWithPropertiesTests, GivenNullContextWhenCreatingSamplerWithPropertiesThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreateSamplerWithPropertiesTests, GivenNullContextWhenCreatingSamplerWithPropertiesThenInvalidContextErrorIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -74,7 +74,7 @@ TEST_F(clCreateSamplerWithPropertiesTests, GivenNullContextWhenCreatingSamplerWi
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clCreateSamplerWithPropertiesTests, GivenSamplerCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
+TEST_F(ClCreateSamplerWithPropertiesTests, GivenSamplerCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto sampler = clCreateSamplerWithProperties(pContext, nullptr, &retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -88,7 +88,7 @@ TEST_F(clCreateSamplerWithPropertiesTests, GivenSamplerCreatedWithNullProperties
     clReleaseSampler(sampler);
 }
 
-TEST_F(clCreateSamplerWithPropertiesTests, WhenCreatingSamplerWithPropertiesThenPropertiesAreCorrectlyStored) {
+TEST_F(ClCreateSamplerWithPropertiesTests, WhenCreatingSamplerWithPropertiesThenPropertiesAreCorrectlyStored) {
     cl_int retVal = CL_SUCCESS;
     cl_sampler_properties properties[7];
     size_t propertiesSize;
@@ -114,7 +114,7 @@ TEST_F(clCreateSamplerWithPropertiesTests, WhenCreatingSamplerWithPropertiesThen
     }
 }
 
-TEST_P(clCreateSamplerWithPropertiesTests2, GivenCorrectParametersWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndSuccessIsReturned) {
+TEST_P(ClCreateSamplerWithPropertiesTests2, GivenCorrectParametersWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndSuccessIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -152,7 +152,7 @@ TEST_P(clCreateSamplerWithPropertiesTests2, GivenCorrectParametersWhenCreatingSa
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(clCreateSamplerWithPropertiesTests2, GivenInvalidPropertiesWhenCreatingSamplerWithPropertiesThenInvalidValueErrorIsReturned) {
+TEST_P(ClCreateSamplerWithPropertiesTests2, GivenInvalidPropertiesWhenCreatingSamplerWithPropertiesThenInvalidValueErrorIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -234,13 +234,13 @@ static cl_sampler_properties FilterProperties[] =
 };
 
 INSTANTIATE_TEST_CASE_P(api,
-                        clCreateSamplerWithPropertiesTests2,
+                        ClCreateSamplerWithPropertiesTests2,
                         ::testing::Combine(
                             ::testing::ValuesIn(NormalizdProperties),
                             ::testing::ValuesIn(AddressingProperties),
                             ::testing::ValuesIn(FilterProperties)));
 
-TEST_F(clCreateSamplerWithPropertiesTests, GivenMipMapDataWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndCorrectlyPopulated) {
+TEST_F(ClCreateSamplerWithPropertiesTests, GivenMipMapDataWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndCorrectlyPopulated) {
     SamplerLodProperty minLodProperty;
     SamplerLodProperty maxLodProperty;
     minLodProperty.lod = 2.0f;

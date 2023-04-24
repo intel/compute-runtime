@@ -18,7 +18,7 @@
 
 namespace NEO {
 
-struct uint16x8_t {
+struct uint16x8_t { // NOLINT(readability-identifier-naming)
     enum { numChannels = 8 };
 
     __m128i value;

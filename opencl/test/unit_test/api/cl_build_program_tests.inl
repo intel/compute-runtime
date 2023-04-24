@@ -20,13 +20,13 @@
 
 using namespace NEO;
 
-struct ClBuildProgramTests : public api_tests {
+struct ClBuildProgramTests : public ApiTests {
     void SetUp() override {
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
-        api_tests::setUp();
+        ApiTests::setUp();
     }
     void TearDown() override {
-        api_tests::tearDown();
+        ApiTests::tearDown();
     }
 
     DebugManagerStateRestore restore;

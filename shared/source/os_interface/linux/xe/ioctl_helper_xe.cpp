@@ -40,7 +40,7 @@
 namespace NEO {
 
 #define VMBIND_FENCE_TAG 0x123987
-struct xe_fake_ext_user_fence {
+struct XeFakeExtUserFence {
     uint32_t tag;
     uint64_t addr;
     uint64_t value;
@@ -382,7 +382,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
 
     {
         std::unique_lock<std::mutex> lock(xeLock);
-        bind_info b = {create.handle, 0, 0, create.size};
+        BindInfo b = {create.handle, 0, 0, create.size};
         bindInfo.push_back(b);
     }
 
@@ -628,7 +628,7 @@ void IoctlHelperXe::fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint6
 
 void IoctlHelperXe::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {
     xeLog(" -> IoctlHelperXe::%s 0x%lx 0x%lx\n", __FUNCTION__, fenceAddress, fenceValue);
-    auto xeBindExtUserFence = reinterpret_cast<xe_fake_ext_user_fence *>(vmBindExtUserFence);
+    auto xeBindExtUserFence = reinterpret_cast<XeFakeExtUserFence *>(vmBindExtUserFence);
     UNRECOVERABLE_IF(!xeBindExtUserFence);
     xeBindExtUserFence->tag = VMBIND_FENCE_TAG;
     xeBindExtUserFence->addr = fenceAddress;
@@ -895,7 +895,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         d->handle = userPtrHandle++ | XE_USERPTR_FAKE_FLAG;
         {
             std::unique_lock<std::mutex> lock(xeLock);
-            bind_info b = {d->handle, d->userPtr, 0, d->userSize};
+            BindInfo b = {d->handle, d->userPtr, 0, d->userSize};
             bindInfo.push_back(b);
         }
         ret = 0;
@@ -1189,7 +1189,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
         struct drm_xe_sync sync[1] = {};
         sync[0].flags = DRM_XE_SYNC_USER_FENCE | DRM_XE_SYNC_SIGNAL;
         extraBindFlag = XE_VM_BIND_FLAG_ASYNC;
-        auto xeBindExtUserFence = reinterpret_cast<xe_fake_ext_user_fence *>(vmBindParams.extensions);
+        auto xeBindExtUserFence = reinterpret_cast<XeFakeExtUserFence *>(vmBindParams.extensions);
         UNRECOVERABLE_IF(!xeBindExtUserFence);
         UNRECOVERABLE_IF(xeBindExtUserFence->tag != VMBIND_FENCE_TAG);
         sync[0].addr = xeBindExtUserFence->addr;

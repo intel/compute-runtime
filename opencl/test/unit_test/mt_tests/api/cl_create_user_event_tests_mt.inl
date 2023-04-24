@@ -10,11 +10,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateUserEventMtTests;
+using ClCreateUserEventMtTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clCreateUserEventMtTests, GivenClCompleteEventWhenWaitingForEventThenWaitForEventsIsCompleted) {
+TEST_F(ClCreateUserEventMtTests, GivenClCompleteEventWhenWaitingForEventThenWaitForEventsIsCompleted) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);

@@ -14,11 +14,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueWriteBufferTests;
+using ClEnqueueWriteBufferTests = ApiTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueWriteBufferTests, GivenCorrectArgumentsWhenWritingBufferThenSuccessIsReturned) {
+TEST_F(ClEnqueueWriteBufferTests, GivenCorrectArgumentsWhenWritingBufferThenSuccessIsReturned) {
     MockBuffer buffer{};
     auto data = 1;
     auto retVal = clEnqueueWriteBuffer(
@@ -35,7 +35,7 @@ TEST_F(clEnqueueWriteBufferTests, GivenCorrectArgumentsWhenWritingBufferThenSucc
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferTests, GivenQueueIncapableArgumentsWhenWritingBufferThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueWriteBufferTests, GivenQueueIncapableArgumentsWhenWritingBufferThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
     auto data = 1;
 
@@ -54,7 +54,7 @@ TEST_F(clEnqueueWriteBufferTests, GivenQueueIncapableArgumentsWhenWritingBufferT
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferTests, GivenNullCommandQueueWhenWritingBufferThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueWriteBufferTests, GivenNullCommandQueueWhenWritingBufferThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
 
     retVal = clEnqueueWriteBuffer(
@@ -71,7 +71,7 @@ TEST_F(clEnqueueWriteBufferTests, GivenNullCommandQueueWhenWritingBufferThenInva
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferTests, GivenNullBufferWhenWritingBufferThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueWriteBufferTests, GivenNullBufferWhenWritingBufferThenInvalidMemObjectErrorIsReturned) {
     void *ptr = nullptr;
 
     retVal = clEnqueueWriteBuffer(

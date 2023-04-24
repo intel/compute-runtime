@@ -13,9 +13,9 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueMigrateMemObjectsTests;
+using ClEnqueueMigrateMemObjectsTests = ApiTests;
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullCommandQueueWhenMigratingMemObjThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenNullCommandQueueWhenMigratingMemObjThenInvalidCommandQueueErrorIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -49,7 +49,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullCommandQueueWhenMigratingMemObj
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidInputsWhenMigratingMemObjThenSuccessIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenValidInputsWhenMigratingMemObjThenSuccessIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -83,7 +83,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidInputsWhenMigratingMemObjThenS
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullMemObjsWhenMigratingMemObjThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenNullMemObjsWhenMigratingMemObjThenInvalidValueErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
     auto result = clEnqueueMigrateMemObjects(
@@ -97,7 +97,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullMemObjsWhenMigratingMemObjThenI
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroMemObjectsWhenMigratingMemObjsThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenZeroMemObjectsWhenMigratingMemObjsThenInvalidValueErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
     auto result = clEnqueueMigrateMemObjects(
@@ -111,7 +111,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroMemObjectsWhenMigratingMemObjsT
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenNonZeroEventsAndNullWaitlistWhenMigratingMemObjThenInvalidWaitListErrorIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenNonZeroEventsAndNullWaitlistWhenMigratingMemObjThenInvalidWaitListErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
     auto result = clEnqueueMigrateMemObjects(
@@ -125,7 +125,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenNonZeroEventsAndNullWaitlistWhenMig
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, result);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroEventsAndNonNullWaitlistWhenMigratingMemObjsThenInvalidWaitListErrorIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenZeroEventsAndNonNullWaitlistWhenMigratingMemObjsThenInvalidWaitListErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
     Event event(pCommandQueue, CL_COMMAND_MIGRATE_MEM_OBJECTS, 0, 0);
@@ -141,7 +141,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroEventsAndNonNullWaitlistWhenMig
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, result);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidFlagsWhenMigratingMemObjsThenSuccessIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenValidFlagsWhenMigratingMemObjsThenSuccessIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -178,7 +178,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidFlagsWhenMigratingMemObjsThenS
     delete[] pHostMem;
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidFlagsWhenMigratingMemObjsThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenInvalidFlagsWhenMigratingMemObjsThenInvalidValueErrorIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -215,7 +215,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidFlagsWhenMigratingMemObjsThe
     delete[] pHostMem;
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidMemObjectWhenMigratingMemObjsThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueMigrateMemObjectsTests, GivenInvalidMemObjectWhenMigratingMemObjsThenInvalidMemObjectErrorIsReturned) {
     cl_event eventReturned = nullptr;
 
     auto result = clEnqueueMigrateMemObjects(

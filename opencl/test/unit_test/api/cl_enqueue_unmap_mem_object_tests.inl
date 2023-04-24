@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-typedef api_tests ClEnqueueUnmapMemObjTests;
+using ClEnqueueUnmapMemObjTests = ApiTests;
 
 TEST_F(ClEnqueueUnmapMemObjTests, givenValidAddressWhenUnmappingThenReturnSuccess) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
