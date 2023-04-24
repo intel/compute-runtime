@@ -2135,7 +2135,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenUnlockResourceIsCalledOnAl
             unlockResourceInLocalMemoryImplParam.bo = bo;
             unlockResourceInLocalMemoryImplParam.called = true;
         }
-        struct unlockResourceInLocalMemoryImplParamType {
+        struct UnlockResourceInLocalMemoryImplParamType {
             BufferObject *bo = nullptr;
             bool called = false;
         } unlockResourceInLocalMemoryImplParam;

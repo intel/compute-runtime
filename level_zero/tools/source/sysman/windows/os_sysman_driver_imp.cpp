@@ -18,7 +18,7 @@ namespace L0 {
 ze_result_t WddmSysmanDriverImp::eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
     bool gotSysmanEvent = false;
     memset(pEvents, 0, count * sizeof(zes_event_type_flags_t));
-    auto timeToExitLoop = L0::steadyClock::now() + std::chrono::duration<uint64_t, std::milli>(timeout);
+    auto timeToExitLoop = L0::SteadyClock::now() + std::chrono::duration<uint64_t, std::milli>(timeout);
     do {
         for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
             gotSysmanEvent = L0::SysmanDevice::fromHandle(phDevices[devIndex])->deviceEventListen(pEvents[devIndex], timeout);
@@ -31,7 +31,7 @@ ze_result_t WddmSysmanDriverImp::eventsListen(uint64_t timeout, uint32_t count, 
             break;
         }
         NEO::sleep(std::chrono::milliseconds(10)); // Sleep for 10 milliseconds before next check of events
-    } while ((L0::steadyClock::now() <= timeToExitLoop));
+    } while ((L0::SteadyClock::now() <= timeToExitLoop));
 
     return ZE_RESULT_SUCCESS;
 }

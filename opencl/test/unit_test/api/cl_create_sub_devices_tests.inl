@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct clCreateSubDevicesTests : ::testing::Test {
+struct ClCreateSubDevicesTests : ::testing::Test {
     DebugManagerStateRestore restorer;
     VariableBackup<bool> mockDeviceCreateSingleDeviceBackup{&MockDevice::createSingleDevice};
     std::unique_ptr<MockClDevice> device;
@@ -33,7 +33,7 @@ struct clCreateSubDevicesTests : ::testing::Test {
     }
 };
 
-TEST_F(clCreateSubDevicesTests, GivenInvalidDeviceWhenCreatingSubDevicesThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClCreateSubDevicesTests, GivenInvalidDeviceWhenCreatingSubDevicesThenInvalidDeviceErrorIsReturned) {
     auto retVal = clCreateSubDevices(
         nullptr,
         nullptr,
@@ -43,7 +43,7 @@ TEST_F(clCreateSubDevicesTests, GivenInvalidDeviceWhenCreatingSubDevicesThenInva
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clCreateSubDevicesTests, GivenDeviceWithoutSubDevicesWhenCreatingSubDevicesThenDevicePartitionFailedErrorIsReturned) {
+TEST_F(ClCreateSubDevicesTests, GivenDeviceWithoutSubDevicesWhenCreatingSubDevicesThenDevicePartitionFailedErrorIsReturned) {
     setup(1);
 
     EXPECT_EQ(0u, device->getNumGenericSubDevices());
@@ -59,7 +59,7 @@ TEST_F(clCreateSubDevicesTests, GivenDeviceWithoutSubDevicesWhenCreatingSubDevic
     EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
 }
 
-TEST_F(clCreateSubDevicesTests, GivenInvalidOrUnsupportedPropertiesWhenCreatingSubDevicesThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateSubDevicesTests, GivenInvalidOrUnsupportedPropertiesWhenCreatingSubDevicesThenInvalidValueErrorIsReturned) {
     setup(2);
 
     auto retVal = clCreateSubDevices(device.get(), nullptr, 0, nullptr, nullptr);
@@ -80,7 +80,7 @@ TEST_F(clCreateSubDevicesTests, GivenInvalidOrUnsupportedPropertiesWhenCreatingS
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateSubDevicesTests, GivenOutDevicesNullWhenCreatingSubDevicesThenSuccessIsReturned) {
+TEST_F(ClCreateSubDevicesTests, GivenOutDevicesNullWhenCreatingSubDevicesThenSuccessIsReturned) {
     setup(2);
 
     cl_uint returnedOutDeviceCount = 0;
@@ -89,7 +89,7 @@ TEST_F(clCreateSubDevicesTests, GivenOutDevicesNullWhenCreatingSubDevicesThenSuc
     EXPECT_EQ(2u, returnedOutDeviceCount);
 }
 
-TEST_F(clCreateSubDevicesTests, GivenOutDevicesTooSmallWhenCreatingSubDevicesThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateSubDevicesTests, GivenOutDevicesTooSmallWhenCreatingSubDevicesThenInvalidValueErrorIsReturned) {
     setup(2);
 
     outDevicesCount = 1;
@@ -97,7 +97,7 @@ TEST_F(clCreateSubDevicesTests, GivenOutDevicesTooSmallWhenCreatingSubDevicesThe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenSubDevicesAreReturned) {
+TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenSubDevicesAreReturned) {
     setup(2);
 
     auto retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
@@ -113,7 +113,7 @@ TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenSubDevi
     EXPECT_EQ(outDevices[1], outDevices2[1]);
 }
 
-TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceApiReferenceCountIsIncreasedEveryTime) {
+TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceApiReferenceCountIsIncreasedEveryTime) {
     setup(2);
 
     EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
@@ -130,9 +130,9 @@ TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceA
     EXPECT_EQ(2, device->getSubDevice(1)->getRefApiCount());
 }
 
-struct clCreateSubDevicesDeviceInfoTests : clCreateSubDevicesTests {
+struct ClCreateSubDevicesDeviceInfoTests : ClCreateSubDevicesTests {
     void setup(int numberOfDevices) {
-        clCreateSubDevicesTests::setup(numberOfDevices);
+        ClCreateSubDevicesTests::setup(numberOfDevices);
         expectedSubDeviceParentDevice = device.get();
         expectedRootDevicePartitionMaxSubDevices = numberOfDevices;
     }
@@ -165,7 +165,7 @@ struct clCreateSubDevicesDeviceInfoTests : clCreateSubDevicesTests {
     size_t returnValueSize;
 };
 
-TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoThenCorrectValuesAreSet) {
+TEST_F(ClCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoThenCorrectValuesAreSet) {
     setup(4);
 
     auto &rootDeviceInfo = device->getDeviceInfo();
@@ -211,7 +211,7 @@ TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoT
     }
 }
 
-TEST_F(clCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGettingSubDeviceRelatedDeviceInfoThenCorrectValuesAreSet) {
+TEST_F(ClCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGettingSubDeviceRelatedDeviceInfoThenCorrectValuesAreSet) {
     setup(1);
 
     auto &rootDeviceInfo = device->getDeviceInfo();
@@ -236,7 +236,7 @@ TEST_F(clCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGe
     }
 }
 
-TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
+TEST_F(ClCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
     setup(4);
 
     size_t partitionPropertiesReturnValueSize = 0;
@@ -347,7 +347,7 @@ TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoV
     }
 }
 
-TEST_F(clCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
+TEST_F(ClCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
     DebugManager.flags.EngineInstancedSubDevices.set(false);
     setup(1);
 

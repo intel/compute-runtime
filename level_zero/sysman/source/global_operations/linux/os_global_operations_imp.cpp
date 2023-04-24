@@ -313,13 +313,13 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
 // this engine 0 is used by process.
 ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
     std::vector<std::string> clientIds;
-    struct deviceMemStruct {
+    struct DeviceMemStruct {
         uint64_t deviceMemorySize;
         uint64_t deviceSharedMemorySize;
     };
-    struct engineMemoryPairType {
+    struct EngineMemoryPairType {
         int64_t engineTypeField;
-        deviceMemStruct deviceMemStructField;
+        DeviceMemStruct deviceMemStructField;
     };
 
     ze_result_t result = pSysfsAccess->scanDirEntries(clientsDir, clientIds);
@@ -328,7 +328,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
     }
 
     // Create a map with unique pid as key and engineType as value
-    std::map<uint64_t, engineMemoryPairType> pidClientMap;
+    std::map<uint64_t, EngineMemoryPairType> pidClientMap;
     for (const auto &clientId : clientIds) {
         // realClientPidPath will be something like: clients/<clientId>/pid
         std::string realClientPidPath = clientsDir + "/" + clientId + "/" + "pid";
@@ -416,13 +416,13 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
                 return result;
             }
         }
-        deviceMemStruct totalDeviceMem = {memSize, sharedMemSize};
-        engineMemoryPairType engineMemoryPair = {engineType, totalDeviceMem};
+        DeviceMemStruct totalDeviceMem = {memSize, sharedMemSize};
+        EngineMemoryPairType engineMemoryPair = {engineType, totalDeviceMem};
         auto ret = pidClientMap.insert(std::make_pair(pid, engineMemoryPair));
         if (ret.second == false) {
             // insertion failed as entry with same pid already exists in map
-            // Now update the engineMemoryPairType field for the existing pid entry
-            engineMemoryPairType updateEngineMemoryPair;
+            // Now update the EngineMemoryPairType field for the existing pid entry
+            EngineMemoryPairType updateEngineMemoryPair;
             auto pidEntryFromMap = pidClientMap.find(pid);
             auto existingEngineType = pidEntryFromMap->second.engineTypeField;
             auto existingdeviceMemorySize = pidEntryFromMap->second.deviceMemStructField.deviceMemorySize;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@
 
 using namespace NEO;
 
-struct clCreatePipeTests : api_tests {
+struct ClCreatePipeTests : api_tests {
     VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
 };
 
-namespace ClCreatePipeTests {
+namespace ULT {
 
 class ClCreatePipeWithParamTests : public ApiFixture<>, public testing::TestWithParam<uint64_t> {
     void SetUp() override {
@@ -101,7 +101,7 @@ INSTANTIATE_TEST_CASE_P(
     ClCreatePipeWithParamNegativeTests,
     testing::ValuesIn(invalidFlags));
 
-TEST_F(clCreatePipeTests, GivenValidFlagsAndNullReturnWhenCreatingPipeThenPipeIsCreated) {
+TEST_F(ClCreatePipeTests, GivenValidFlagsAndNullReturnWhenCreatingPipeThenPipeIsCreated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto pipe = clCreatePipe(pContext, flags, 1, 20, nullptr, nullptr);
 
@@ -110,7 +110,7 @@ TEST_F(clCreatePipeTests, GivenValidFlagsAndNullReturnWhenCreatingPipeThenPipeIs
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, GivenPipePacketSizeZeroWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
+TEST_F(ClCreatePipeTests, GivenPipePacketSizeZeroWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto pipe = clCreatePipe(pContext, flags, 0, 20, nullptr, &retVal);
 
@@ -120,7 +120,7 @@ TEST_F(clCreatePipeTests, GivenPipePacketSizeZeroWhenCreatingPipeThenInvalidPipe
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, GivenPipeMaxSizeZeroWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
+TEST_F(ClCreatePipeTests, GivenPipeMaxSizeZeroWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto pipe = clCreatePipe(pContext, flags, 1, 0, nullptr, &retVal);
 
@@ -130,7 +130,7 @@ TEST_F(clCreatePipeTests, GivenPipeMaxSizeZeroWhenCreatingPipeThenInvalidPipeSiz
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, GivenPipePropertiesNotNullWhenCreatingPipeThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreatePipeTests, GivenPipePropertiesNotNullWhenCreatingPipeThenInvalidValueErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     cl_pipe_properties properties = {0};
     auto pipe = clCreatePipe(pContext, flags, 1, 20, &properties, &retVal);
@@ -141,7 +141,7 @@ TEST_F(clCreatePipeTests, GivenPipePropertiesNotNullWhenCreatingPipeThenInvalidV
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, GivenDeviceNotSupportingPipesWhenCreatingPipeThenInvalidOperationErrorIsReturned) {
+TEST_F(ClCreatePipeTests, GivenDeviceNotSupportingPipesWhenCreatingPipeThenInvalidOperationErrorIsReturned) {
     auto hardwareInfo = *defaultHwInfo;
     hardwareInfo.capabilityTable.supportsPipes = false;
 
@@ -153,7 +153,7 @@ TEST_F(clCreatePipeTests, GivenDeviceNotSupportingPipesWhenCreatingPipeThenInval
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clCreatePipeTests, GivenPipePacketSizeGreaterThanAllowedWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
+TEST_F(ClCreatePipeTests, GivenPipePacketSizeGreaterThanAllowedWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
     cl_uint packetSize = pContext->getDevice(0)->getDeviceInfo().pipeMaxPacketSize;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
@@ -172,7 +172,7 @@ TEST_F(clCreatePipeTests, GivenPipePacketSizeGreaterThanAllowedWhenCreatingPipeT
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, GivenNullContextWhenCreatingPipeThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreatePipeTests, GivenNullContextWhenCreatingPipeThenInvalidContextErrorIsReturned) {
 
     auto pipe = clCreatePipe(nullptr, 0, 1, 20, nullptr, &retVal);
 
@@ -206,4 +206,4 @@ TEST(clCreatePipeTest, givenPlatformWithoutDevicesWhenClCreatePipeIsCalledThenDe
 
     clReleaseMemObject(pipe);
 }
-} // namespace ClCreatePipeTests
+} // namespace ULT

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,7 +124,7 @@ INSTANTIATE_TEST_CASE_P(Float2Half,
                         Float2HalfTest,
                         ::testing::ValuesIn(float2HalfParams));
 
-struct l3Config {
+struct L3Config {
     union {
         unsigned int RawValue;
         struct {
@@ -141,7 +141,7 @@ struct l3Config {
 };
 
 TEST(l3configsGenerator, givenInputValuesWhenPassedToL3ConfigThenRawValueIsProduced) {
-    l3Config config;
+    L3Config config;
     config.bits = {
         0,    // SLM Enabled
         0x30, // URB Allocation
@@ -154,7 +154,7 @@ TEST(l3configsGenerator, givenInputValuesWhenPassedToL3ConfigThenRawValueIsProdu
 
     EXPECT_EQ(config.RawValue, 0x60000160u);
 
-    l3Config config2;
+    L3Config config2;
     config2.RawValue = 0x80000140u;
     EXPECT_EQ(0x40u, config2.bits.AllL3WayAssignement);
     EXPECT_EQ(0x20u, config2.bits.UrbAllocation);

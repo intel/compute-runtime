@@ -348,7 +348,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
     pfd[1].events = POLLIN;
     pfd[1].revents = 0;
 
-    auto start = L0::steadyClock::now();
+    auto start = L0::SteadyClock::now();
     std::chrono::duration<double, std::milli> timeElapsed;
     getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath);
     eventsMutex.unlock();
@@ -374,7 +374,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
         }
 
         if (!eventReceived) {
-            timeElapsed = L0::steadyClock::now() - start;
+            timeElapsed = L0::SteadyClock::now() - start;
             if (timeout > timeElapsed.count()) {
                 timeout = timeout - timeElapsed.count();
                 continue;
@@ -386,7 +386,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
         void *dev = nullptr;
         dev = pUdevLib->allocateDeviceToReceiveData();
         if (dev == nullptr) {
-            timeElapsed = L0::steadyClock::now() - start;
+            timeElapsed = L0::SteadyClock::now() - start;
             if (timeout > timeElapsed.count()) {
                 timeout = timeout - timeElapsed.count();
                 continue;
@@ -407,7 +407,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
         if (retval) {
             break;
         }
-        timeElapsed = L0::steadyClock::now() - start;
+        timeElapsed = L0::SteadyClock::now() - start;
         if (timeout > timeElapsed.count()) {
             timeout = timeout - timeElapsed.count();
             continue;

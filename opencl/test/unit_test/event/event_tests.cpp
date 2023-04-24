@@ -72,7 +72,7 @@ TEST(Event, givenEventThatStatusChangeWhenPeekIsCalledThenEventIsNotUpdated) {
     MockContext ctx;
     MockCommandQueue cmdQ(&ctx, mockDevice.get(), 0, false);
 
-    struct mockEvent : public Event {
+    struct MockEvent : public Event {
         using Event::Event;
         void updateExecutionStatus() override {
             callCount++;
@@ -80,7 +80,7 @@ TEST(Event, givenEventThatStatusChangeWhenPeekIsCalledThenEventIsNotUpdated) {
         uint32_t callCount = 0u;
     };
 
-    mockEvent event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
+    MockEvent event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
     EXPECT_EQ(0u, event.callCount);
     event.peekExecutionStatus();
     EXPECT_EQ(0u, event.callCount);

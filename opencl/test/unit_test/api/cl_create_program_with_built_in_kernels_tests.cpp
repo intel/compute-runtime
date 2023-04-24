@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,11 +22,11 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateProgramWithBuiltInKernelsTests;
+typedef api_tests ClCreateProgramWithBuiltInKernelsTests;
 
-struct clCreateProgramWithBuiltInVmeKernelsTests : clCreateProgramWithBuiltInKernelsTests {
+struct ClCreateProgramWithBuiltInVmeKernelsTests : ClCreateProgramWithBuiltInKernelsTests {
     void SetUp() override {
-        clCreateProgramWithBuiltInKernelsTests::SetUp();
+        ClCreateProgramWithBuiltInKernelsTests::SetUp();
         if (!castToObject<ClDevice>(testedClDevice)->getHardwareInfo().capabilityTable.supportsVme) {
             GTEST_SKIP();
         }
@@ -39,7 +39,7 @@ struct clCreateProgramWithBuiltInVmeKernelsTests : clCreateProgramWithBuiltInKer
 
 namespace ULT {
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenInvalidContextWhenCreatingProgramWithBuiltInKernelsThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreateProgramWithBuiltInKernelsTests, GivenInvalidContextWhenCreatingProgramWithBuiltInKernelsThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto program = clCreateProgramWithBuiltInKernels(
         nullptr, // context
@@ -51,7 +51,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenInvalidContextWhenCreatingPr
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsWhenCreatingProgramWithBuiltInKernelsThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateProgramWithBuiltInKernelsTests, GivenNoKernelsWhenCreatingProgramWithBuiltInKernelsThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto program = clCreateProgramWithBuiltInKernels(
         pContext,        // context
@@ -63,7 +63,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsWhenCreatingProgram
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoDeviceWhenCreatingProgramWithBuiltInKernelsThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateProgramWithBuiltInKernelsTests, GivenNoDeviceWhenCreatingProgramWithBuiltInKernelsThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto program = clCreateProgramWithBuiltInKernels(
         pContext,        // context
@@ -75,7 +75,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoDeviceWhenCreatingProgramW
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsAndNoReturnWhenCreatingProgramWithBuiltInKernelsThenProgramIsNotCreated) {
+TEST_F(ClCreateProgramWithBuiltInKernelsTests, GivenNoKernelsAndNoReturnWhenCreatingProgramWithBuiltInKernelsThenProgramIsNotCreated) {
     auto program = clCreateProgramWithBuiltInKernels(
         pContext,        // context
         1,               // num_devices
@@ -85,7 +85,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsAndNoReturnWhenCrea
     EXPECT_EQ(nullptr, program);
 }
 
-TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenDeviceNotAssociatedWithContextWhenCreatingProgramWithBuiltInThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenDeviceNotAssociatedWithContextWhenCreatingProgramWithBuiltInThenInvalidDeviceErrorIsReturned) {
     cl_program pProgram = nullptr;
 
     const char *kernelNamesString = {
@@ -119,7 +119,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenDeviceNotAssociatedWithCo
     EXPECT_EQ(nullptr, pProgram);
 }
 
-TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWhenCreatingProgramWithBuiltInKernelsThenProgramIsSuccessfullyCreated) {
+TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWhenCreatingProgramWithBuiltInKernelsThenProgramIsSuccessfullyCreated) {
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName("media_kernels_frontend");
@@ -162,7 +162,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWhenCrea
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWithOptionsWhenCreatingProgramWithBuiltInKernelsThenProgramIsSuccessfullyCreatedWithThoseOptions) {
+TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWithOptionsWhenCreatingProgramWithBuiltInKernelsThenProgramIsSuccessfullyCreatedWithThoseOptions) {
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName("media_kernels_frontend");
@@ -187,7 +187,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWithOpti
     clReleaseProgram(program);
 }
 
-TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
+TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName("media_kernels_backend");
@@ -224,7 +224,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
     clReleaseProgram(program);
 }
 
-TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEstimateKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
+TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEstimateKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName("media_kernels_backend");
@@ -261,7 +261,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     clReleaseProgram(program);
 }
 
-TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEstimateBidirectionalCheckKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
+TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEstimateBidirectionalCheckKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName("media_kernels_backend");

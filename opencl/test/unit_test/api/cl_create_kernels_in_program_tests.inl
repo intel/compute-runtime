@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-struct clCreateKernelsInProgramTests : public api_tests {
+struct ClCreateKernelsInProgramTests : public api_tests {
     void SetUp() override {
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
@@ -66,7 +66,7 @@ struct clCreateKernelsInProgramTests : public api_tests {
     DebugManagerStateRestore restore;
 };
 
-TEST_F(clCreateKernelsInProgramTests, GivenValidParametersWhenCreatingKernelObjectsThenKernelsAndSuccessAreReturned) {
+TEST_F(ClCreateKernelsInProgramTests, GivenValidParametersWhenCreatingKernelObjectsThenKernelsAndSuccessAreReturned) {
     cl_uint numKernelsRet = 0;
     retVal = clCreateKernelsInProgram(
         program,
@@ -78,7 +78,7 @@ TEST_F(clCreateKernelsInProgramTests, GivenValidParametersWhenCreatingKernelObje
     EXPECT_NE(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelsInProgramTests, GivenNullKernelArgWhenCreatingKernelObjectsThenSuccessIsReturned) {
+TEST_F(ClCreateKernelsInProgramTests, GivenNullKernelArgWhenCreatingKernelObjectsThenSuccessIsReturned) {
     cl_uint numKernelsRet = 0;
     retVal = clCreateKernelsInProgram(
         program,
@@ -89,7 +89,7 @@ TEST_F(clCreateKernelsInProgramTests, GivenNullKernelArgWhenCreatingKernelObject
     EXPECT_EQ(1u, numKernelsRet);
 }
 
-TEST_F(clCreateKernelsInProgramTests, GivenNullPtrForNumKernelsReturnWhenCreatingKernelObjectsThenSuccessIsReturned) {
+TEST_F(ClCreateKernelsInProgramTests, GivenNullPtrForNumKernelsReturnWhenCreatingKernelObjectsThenSuccessIsReturned) {
     retVal = clCreateKernelsInProgram(
         program,
         1,
@@ -99,7 +99,7 @@ TEST_F(clCreateKernelsInProgramTests, GivenNullPtrForNumKernelsReturnWhenCreatin
     EXPECT_NE(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelsInProgramTests, GivenNullProgramWhenCreatingKernelObjectsThenInvalidProgramErrorIsReturn) {
+TEST_F(ClCreateKernelsInProgramTests, GivenNullProgramWhenCreatingKernelObjectsThenInvalidProgramErrorIsReturn) {
     retVal = clCreateKernelsInProgram(
         nullptr,
         1,
@@ -109,7 +109,7 @@ TEST_F(clCreateKernelsInProgramTests, GivenNullProgramWhenCreatingKernelObjectsT
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelsInProgramTests, GivenTooSmallOutputBufferWhenCreatingKernelObjectsThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateKernelsInProgramTests, GivenTooSmallOutputBufferWhenCreatingKernelObjectsThenInvalidValueErrorIsReturned) {
     retVal = clCreateKernelsInProgram(
         program,
         0,
@@ -119,7 +119,7 @@ TEST_F(clCreateKernelsInProgramTests, GivenTooSmallOutputBufferWhenCreatingKerne
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelsInProgramTests, whenKernelCreationFailsOnClCreateKernelsInProgramAPICallThenPropagateTheErrorToAPICallAndReturnNullptrForEachKernel) {
+TEST_F(ClCreateKernelsInProgramTests, whenKernelCreationFailsOnClCreateKernelsInProgramAPICallThenPropagateTheErrorToAPICallAndReturnNullptrForEachKernel) {
     const auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     auto &kernelInfoArray = pProgram->getKernelInfoArray(rootDeviceIndex);
     kernelInfoArray.push_back(new MockKernelInfo());

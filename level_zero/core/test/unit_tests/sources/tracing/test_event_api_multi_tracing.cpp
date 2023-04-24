@@ -80,7 +80,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_create_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -91,7 +91,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
     //
     epilogCbs0.Event.pfnCreateCb =
         [](ze_event_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_create_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_create_args.desc1, *params->pdesc);
@@ -114,7 +114,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_create_args.instanceData0);
             delete instanceData;
         };
@@ -205,7 +205,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_create_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -216,7 +216,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
     //
     epilogCbs3.Event.pfnCreateCb =
         [](ze_event_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_create_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_create_args.desc1, *params->pdesc);
@@ -239,7 +239,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_create_args.instanceData3);
             delete instanceData;
         };
@@ -289,7 +289,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventDestroyTracing
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_destroy_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -300,14 +300,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventDestroyTracing
     //
     epilogCbs0.Event.pfnDestroyCb =
         [](ze_event_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_destroy_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_destroy_args.instanceData0);
             delete instanceData;
         };
@@ -350,7 +350,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventDestroyTracing
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_destroy_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -361,14 +361,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventDestroyTracing
     //
     epilogCbs3.Event.pfnDestroyCb =
         [](ze_event_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_destroy_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_destroy_args.instanceData3);
             delete instanceData;
         };
@@ -418,7 +418,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSignalTrac
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_host_signal_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -429,14 +429,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSignalTrac
     //
     epilogCbs0.Event.pfnHostSignalCb =
         [](ze_event_host_signal_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_host_signal_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_host_signal_args.instanceData0);
             delete instanceData;
         };
@@ -479,7 +479,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSignalTrac
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_host_signal_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -490,14 +490,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSignalTrac
     //
     epilogCbs3.Event.pfnHostSignalCb =
         [](ze_event_host_signal_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_host_signal_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_host_signal_args.instanceData3);
             delete instanceData;
         };
@@ -554,7 +554,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_host_synchronize_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -565,7 +565,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
     //
     epilogCbs0.Event.pfnHostSynchronizeCb =
         [](ze_event_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_host_synchronize_args.hEvent1, *params->phEvent);
             EXPECT_EQ(event_host_synchronize_args.timeout1, *params->ptimeout);
@@ -573,7 +573,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_host_synchronize_args.instanceData0);
             delete instanceData;
         };
@@ -619,7 +619,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_host_synchronize_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -630,7 +630,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
     //
     epilogCbs3.Event.pfnHostSynchronizeCb =
         [](ze_event_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_host_synchronize_args.hEvent1, *params->phEvent);
             EXPECT_EQ(event_host_synchronize_args.timeout1, *params->ptimeout);
@@ -638,7 +638,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_host_synchronize_args.instanceData3);
             delete instanceData;
         };
@@ -688,7 +688,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventQueryStatusTra
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_query_status_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -699,14 +699,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventQueryStatusTra
     //
     epilogCbs0.Event.pfnQueryStatusCb =
         [](ze_event_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_query_status_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_query_status_args.instanceData0);
             delete instanceData;
         };
@@ -749,7 +749,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventQueryStatusTra
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_query_status_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -760,14 +760,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventQueryStatusTra
     //
     epilogCbs3.Event.pfnQueryStatusCb =
         [](ze_event_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_query_status_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_query_status_args.instanceData3);
             delete instanceData;
         };
@@ -817,7 +817,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostResetTraci
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_reset_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -828,14 +828,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostResetTraci
     //
     epilogCbs0.Event.pfnHostResetCb =
         [](ze_event_host_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_reset_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_reset_args.instanceData0);
             delete instanceData;
         };
@@ -878,7 +878,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostResetTraci
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_reset_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -889,14 +889,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostResetTraci
     //
     epilogCbs3.Event.pfnHostResetCb =
         [](ze_event_host_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_reset_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_reset_args.instanceData3);
             delete instanceData;
         };
@@ -1004,7 +1004,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_create_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1015,7 +1015,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
     //
     epilogCbs0.EventPool.pfnCreateCb =
         [](ze_event_pool_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_create_args.hContext1, *params->phContext);
             EXPECT_EQ(&event_pool_create_args.desc1, *params->pdesc);
@@ -1044,7 +1044,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_create_args.instanceData0);
             delete instanceData;
         };
@@ -1153,7 +1153,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_create_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1164,7 +1164,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
     //
     epilogCbs3.EventPool.pfnCreateCb =
         [](ze_event_pool_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_create_args.hContext1, *params->phContext);
             EXPECT_EQ(&event_pool_create_args.desc1, *params->pdesc);
@@ -1193,7 +1193,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_create_args.instanceData3);
             delete instanceData;
         };
@@ -1247,7 +1247,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolDestroyTra
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_pool_destroy_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1258,14 +1258,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolDestroyTra
     //
     epilogCbs0.EventPool.pfnDestroyCb =
         [](ze_event_pool_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_destroy_args.hEventPool1, *params->phEventPool);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_pool_destroy_args.instanceData0);
             delete instanceData;
         };
@@ -1308,7 +1308,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolDestroyTra
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_pool_destroy_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1319,14 +1319,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolDestroyTra
     //
     epilogCbs3.EventPool.pfnDestroyCb =
         [](ze_event_pool_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_destroy_args.hEventPool1, *params->phEventPool);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_pool_destroy_args.instanceData3);
             delete instanceData;
         };
@@ -1405,7 +1405,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_pool_get_ipc_handle_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1416,7 +1416,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
     //
     epilogCbs0.EventPool.pfnGetIpcHandleCb =
         [](ze_event_pool_get_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc);
@@ -1425,7 +1425,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_pool_get_ipc_handle_args.instanceData0);
             delete instanceData;
         };
@@ -1474,7 +1474,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_pool_get_ipc_handle_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1485,7 +1485,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
     //
     epilogCbs3.EventPool.pfnGetIpcHandleCb =
         [](ze_event_pool_get_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc);
@@ -1494,7 +1494,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_pool_get_ipc_handle_args.instanceData3);
             delete instanceData;
         };
@@ -1588,7 +1588,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_pool_open_ipc_handle_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1599,7 +1599,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
     //
     epilogCbs0.EventPool.pfnOpenIpcHandleCb =
         [](ze_event_pool_open_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, *params->phContext);
             EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
@@ -1622,7 +1622,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_pool_open_ipc_handle_args.instanceData0);
             delete instanceData;
         };
@@ -1713,7 +1713,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_pool_open_ipc_handle_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1724,7 +1724,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
     //
     epilogCbs3.EventPool.pfnOpenIpcHandleCb =
         [](ze_event_pool_open_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, *params->phContext);
             EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
@@ -1747,7 +1747,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_pool_open_ipc_handle_args.instanceData3);
             delete instanceData;
         };
@@ -1799,7 +1799,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCloseIpcHa
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_pool_close_ipc_handle_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1810,14 +1810,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCloseIpcHa
     //
     epilogCbs0.EventPool.pfnCloseIpcHandleCb =
         [](ze_event_pool_close_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_close_ipc_handle_args.hEventPool1, *params->phEventPool);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_pool_close_ipc_handle_args.instanceData0);
             delete instanceData;
         };
@@ -1860,7 +1860,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCloseIpcHa
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = event_pool_close_ipc_handle_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1871,14 +1871,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCloseIpcHa
     //
     epilogCbs3.EventPool.pfnCloseIpcHandleCb =
         [](ze_event_pool_close_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_close_ipc_handle_args.hEventPool1, *params->phEventPool);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, event_pool_close_ipc_handle_args.instanceData3);
             delete instanceData;
         };
@@ -1937,7 +1937,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendSi
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = command_list_append_signal_event_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -1948,14 +1948,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendSi
     //
     epilogCbs0.CommandList.pfnAppendSignalEventCb =
         [](ze_command_list_append_signal_event_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(command_list_append_signal_event_args.hCommandList1, *params->phCommandList);
             EXPECT_EQ(command_list_append_signal_event_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, command_list_append_signal_event_args.instanceData0);
             delete instanceData;
         };
@@ -2001,21 +2001,21 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendSi
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = command_list_append_signal_event_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
 
     epilogCbs3.CommandList.pfnAppendSignalEventCb =
         [](ze_command_list_append_signal_event_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(command_list_append_signal_event_args.hCommandList1, *params->phCommandList);
             EXPECT_EQ(command_list_append_signal_event_args.hEvent1, *params->phEvent);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, command_list_append_signal_event_args.instanceData0);
             delete instanceData;
         };
@@ -2089,7 +2089,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWa
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = command_list_append_wait_on_events_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -2100,7 +2100,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWa
     //
     epilogCbs0.CommandList.pfnAppendWaitOnEventsCb =
         [](ze_command_list_append_wait_on_events_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(command_list_append_wait_on_events_args.hCommandList1, *params->phCommandList);
             EXPECT_EQ((uint32_t)NUM_COMMAND_LIST_APPEND_WAIT_ON_EVENTS_1, *params->pnumEvents);
@@ -2111,7 +2111,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWa
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, command_list_append_wait_on_events_args.instanceData0);
             delete instanceData;
         };
@@ -2166,14 +2166,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWa
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = command_list_append_wait_on_events_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
 
     epilogCbs3.CommandList.pfnAppendWaitOnEventsCb =
         [](ze_command_list_append_wait_on_events_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(command_list_append_wait_on_events_args.hCommandList1, *params->phCommandList);
             EXPECT_EQ((uint32_t)NUM_COMMAND_LIST_APPEND_WAIT_ON_EVENTS_1, *params->pnumEvents);
@@ -2184,7 +2184,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWa
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, command_list_append_wait_on_events_args.instanceData0);
             delete instanceData;
         };

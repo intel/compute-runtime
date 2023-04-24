@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueCopyImageTests;
+typedef api_tests ClEnqueueCopyImageTests;
 
 namespace ULT {
 
-struct clEnqueueCopyImageTests : public ApiFixture<>,
+struct ClEnqueueCopyImageTests : public ApiFixture<>,
                                  public ::testing::Test {
     void SetUp() override {
         ApiFixture::setUp();
@@ -49,7 +49,7 @@ struct clEnqueueCopyImageTests : public ApiFixture<>,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueCopyImageTests, GivenNullCommandQueueWhenCopyingImageThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueCopyImageTests, GivenNullCommandQueueWhenCopyingImageThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
 
     retVal = clEnqueueCopyImage(
@@ -65,7 +65,7 @@ TEST_F(clEnqueueCopyImageTests, GivenNullCommandQueueWhenCopyingImageThenInvalid
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, GivenNullSrcBufferWhenCopyingImageThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueCopyImageTests, GivenNullSrcBufferWhenCopyingImageThenInvalidMemObjectErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
 
     retVal = clEnqueueCopyImage(
@@ -81,7 +81,7 @@ TEST_F(clEnqueueCopyImageTests, GivenNullSrcBufferWhenCopyingImageThenInvalidMem
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, GivenNullDstBufferWhenCopyingImageThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueCopyImageTests, GivenNullDstBufferWhenCopyingImageThenInvalidMemObjectErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
 
     retVal = clEnqueueCopyImage(
@@ -97,7 +97,7 @@ TEST_F(clEnqueueCopyImageTests, GivenNullDstBufferWhenCopyingImageThenInvalidMem
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, GivenDifferentSrcAndDstImageFormatsWhenCopyingImageThenImageFormatMismatchErrorIsReturned) {
+TEST_F(ClEnqueueCopyImageTests, GivenDifferentSrcAndDstImageFormatsWhenCopyingImageThenImageFormatMismatchErrorIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     imageFormat.image_channel_order = CL_BGRA;
@@ -125,7 +125,7 @@ TEST_F(clEnqueueCopyImageTests, GivenDifferentSrcAndDstImageFormatsWhenCopyingIm
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, GivenValidParametersWhenCopyingImageThenSuccessIsReturned) {
+TEST_F(ClEnqueueCopyImageTests, GivenValidParametersWhenCopyingImageThenSuccessIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     auto dstImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
@@ -152,7 +152,7 @@ TEST_F(clEnqueueCopyImageTests, GivenValidParametersWhenCopyingImageThenSuccessI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, GivenQueueIncapableWhenCopyingImageThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueCopyImageTests, GivenQueueIncapableWhenCopyingImageThenInvalidOperationIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     auto dstImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
@@ -177,9 +177,9 @@ TEST_F(clEnqueueCopyImageTests, GivenQueueIncapableWhenCopyingImageThenInvalidOp
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-typedef clEnqueueCopyImageTests clEnqueueCopyImageYUVTests;
+typedef ClEnqueueCopyImageTests ClEnqueueCopyImageYUVTests;
 
-TEST_F(clEnqueueCopyImageYUVTests, GivenValidParametersWhenCopyingYuvImageThenSuccessIsReturned) {
+TEST_F(ClEnqueueCopyImageYUVTests, GivenValidParametersWhenCopyingYuvImageThenSuccessIsReturned) {
     auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     auto dstImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -205,7 +205,7 @@ TEST_F(clEnqueueCopyImageYUVTests, GivenValidParametersWhenCopyingYuvImageThenSu
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageYUVTests, GivenInvalidSrcOriginWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueCopyImageYUVTests, GivenInvalidSrcOriginWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
     auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     auto dstImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -232,7 +232,7 @@ TEST_F(clEnqueueCopyImageYUVTests, GivenInvalidSrcOriginWhenCopyingYuvImageThenI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageYUVTests, GivenInvalidDstOriginWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueCopyImageYUVTests, GivenInvalidDstOriginWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
     auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     auto dstImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -259,7 +259,7 @@ TEST_F(clEnqueueCopyImageYUVTests, GivenInvalidDstOriginWhenCopyingYuvImageThenI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageYUVTests, GivenInvalidDstOriginFor2dImageWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueCopyImageYUVTests, GivenInvalidDstOriginFor2dImageWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
     auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     auto dstImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);

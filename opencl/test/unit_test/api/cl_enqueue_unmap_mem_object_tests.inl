@@ -15,9 +15,9 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueUnmapMemObjTests;
+typedef api_tests ClEnqueueUnmapMemObjTests;
 
-TEST_F(clEnqueueUnmapMemObjTests, givenValidAddressWhenUnmappingThenReturnSuccess) {
+TEST_F(ClEnqueueUnmapMemObjTests, givenValidAddressWhenUnmappingThenReturnSuccess) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     cl_int retVal = CL_SUCCESS;
 
@@ -34,7 +34,7 @@ TEST_F(clEnqueueUnmapMemObjTests, givenValidAddressWhenUnmappingThenReturnSucces
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueUnmapMemObjTests, GivenQueueIncapableWhenUnmappingBufferThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueUnmapMemObjTests, GivenQueueIncapableWhenUnmappingBufferThenInvalidOperationIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     cl_int retVal = CL_SUCCESS;
 
@@ -52,7 +52,7 @@ TEST_F(clEnqueueUnmapMemObjTests, GivenQueueIncapableWhenUnmappingBufferThenInva
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenReturnError) {
+TEST_F(ClEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenReturnError) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
     cl_int retVal = CL_SUCCESS;
@@ -70,7 +70,7 @@ TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenRetur
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnGpuThenReturnError) {
+TEST_F(ClEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnGpuThenReturnError) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     buffer->setSharingHandler(new SharingHandler());
     EXPECT_FALSE(buffer->mappingOnCpuAllowed());
@@ -89,7 +89,7 @@ TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnGpuThenRetur
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueUnmapMemObjTests, GivenInvalidMemObjectTypeWhenUnmappingImageThenInvalidMemObjectIsReturned) {
+TEST_F(ClEnqueueUnmapMemObjTests, GivenInvalidMemObjectTypeWhenUnmappingImageThenInvalidMemObjectIsReturned) {
     MockContext context{};
     MockGraphicsAllocation allocation{};
     MockBuffer buffer{&context, allocation};
@@ -109,10 +109,10 @@ TEST_F(clEnqueueUnmapMemObjTests, GivenInvalidMemObjectTypeWhenUnmappingImageThe
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-struct clEnqueueUnmapImageTests : clEnqueueUnmapMemObjTests,
+struct ClEnqueueUnmapImageTests : ClEnqueueUnmapMemObjTests,
                                   ::testing::WithParamInterface<uint32_t> {
     void SetUp() override {
-        clEnqueueUnmapMemObjTests::SetUp();
+        ClEnqueueUnmapMemObjTests::SetUp();
         const auto imageType = static_cast<cl_mem_object_type>(GetParam());
         this->image.reset(createImage(imageType));
         EXPECT_NE(nullptr, image.get());
@@ -145,7 +145,7 @@ struct clEnqueueUnmapImageTests : clEnqueueUnmapMemObjTests,
     size_t imageSlicePitch = 0;
 };
 
-TEST_P(clEnqueueUnmapImageTests, GivenValidParametersWhenUnmappingImageThenSuccessIsReturned) {
+TEST_P(ClEnqueueUnmapImageTests, GivenValidParametersWhenUnmappingImageThenSuccessIsReturned) {
     void *mappedImage = clEnqueueMapImage(
         pCommandQueue,
         image.get(),
@@ -171,7 +171,7 @@ TEST_P(clEnqueueUnmapImageTests, GivenValidParametersWhenUnmappingImageThenSucce
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(clEnqueueUnmapImageTests, GivenQueueIncapableParametersWhenUnmappingImageThenInvalidOperationIsReturned) {
+TEST_P(ClEnqueueUnmapImageTests, GivenQueueIncapableParametersWhenUnmappingImageThenInvalidOperationIsReturned) {
     void *mappedImage = clEnqueueMapImage(
         pCommandQueue,
         image.get(),
@@ -199,8 +199,8 @@ TEST_P(clEnqueueUnmapImageTests, GivenQueueIncapableParametersWhenUnmappingImage
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    clEnqueueUnmapImageTests,
-    clEnqueueUnmapImageTests,
+    ClEnqueueUnmapImageTests,
+    ClEnqueueUnmapImageTests,
     ::testing::Values(
         CL_MEM_OBJECT_IMAGE2D,
         CL_MEM_OBJECT_IMAGE3D,

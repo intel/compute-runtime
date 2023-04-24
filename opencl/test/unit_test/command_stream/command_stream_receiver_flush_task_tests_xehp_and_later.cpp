@@ -641,7 +641,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     configureCSRtoNonDirtyState<FamilyType>(true);
@@ -677,7 +677,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     configureCSRtoNonDirtyState<FamilyType>(true);

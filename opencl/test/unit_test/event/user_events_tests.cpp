@@ -372,14 +372,14 @@ TEST_F(MockEventTests, GivenTwoUserEvenstWhenCountOnNdr1IsInjectedThenItIsPropag
 }
 
 TEST_F(EventTests, givenQueueThatIsBlockedByUserEventWhenIsQueueBlockedIsCalledThenVirtualEventOnlyQueriesForExecutionStatus) {
-    struct mockEvent : public Event {
+    struct MockEvent : public Event {
         using Event::Event;
         void updateExecutionStatus() override {
             updateExecutionStatusCalled = true;
         }
         bool updateExecutionStatusCalled = false;
     };
-    mockEvent mockedVirtualEvent(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
+    MockEvent mockedVirtualEvent(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
     pCmdQ->virtualEvent = &mockedVirtualEvent;
 
     EXPECT_TRUE(pCmdQ->isQueueBlocked());
@@ -1095,7 +1095,7 @@ TEST_F(EventTests, WhenPassingBlockedUserEventToEnqueueNdRangeThenCommandQueueIs
 }
 
 TEST_F(EventTests, givenUserEventWhenSetStatusIsDoneThenDeviceMutextisAcquired) {
-    struct mockedEvent : public UserEvent {
+    struct MockedEvent : public UserEvent {
         using UserEvent::UserEvent;
         bool setStatus(cl_int status) override {
             auto commandStreamReceiverOwnership = ctx->getDevice(0)->getDefaultEngine().commandStreamReceiver->obtainUniqueOwnership();
@@ -1105,7 +1105,7 @@ TEST_F(EventTests, givenUserEventWhenSetStatusIsDoneThenDeviceMutextisAcquired) 
         bool mutexProperlyAcquired = false;
     };
 
-    mockedEvent mockEvent(this->context);
+    MockedEvent mockEvent(this->context);
     clSetUserEventStatus(&mockEvent, CL_COMPLETE);
     EXPECT_TRUE(mockEvent.mutexProperlyAcquired);
 }

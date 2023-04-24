@@ -22,7 +22,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     std::atomic<bool> startEnqueueProcess(false);

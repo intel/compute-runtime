@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-struct clCreateContextFromTypeTests : Test<PlatformFixture> {
+struct ClCreateContextFromTypeTests : Test<PlatformFixture> {
     cl_int retVal = CL_DEVICE_NOT_AVAILABLE;
 };
 
@@ -21,7 +21,7 @@ void CL_CALLBACK contextCallBack(const char *, const void *,
                                  size_t, void *) {
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeAndReturnValueWhenCreatingContextFromTypeThenContextWithSingleDeviceIsCreated) {
+TEST_F(ClCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeAndReturnValueWhenCreatingContextFromTypeThenContextWithSingleDeviceIsCreated) {
     auto context =
         clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
 
@@ -37,14 +37,14 @@ TEST_F(clCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeAndReturnValueWhenCre
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenCpuTypeWhenCreatingContextFromTypeThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateContextFromTypeTests, GivenCpuTypeWhenCreatingContextFromTypeThenInvalidValueErrorIsReturned) {
     auto context =
         clCreateContextFromType(nullptr, CL_DEVICE_TYPE_CPU, nullptr, nullptr, &retVal);
     ASSERT_EQ(nullptr, context);
     ASSERT_EQ(CL_DEVICE_NOT_FOUND, retVal);
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenNullCallbackFunctionAndNotNullUserDataWhenCreatingContextFromTypeThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateContextFromTypeTests, GivenNullCallbackFunctionAndNotNullUserDataWhenCreatingContextFromTypeThenInvalidValueErrorIsReturned) {
     cl_int a;
     auto context =
         clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, nullptr, &a, &retVal);
@@ -52,7 +52,7 @@ TEST_F(clCreateContextFromTypeTests, GivenNullCallbackFunctionAndNotNullUserData
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenCallbackFunctionWhenCreatingContextFromTypeThenCallSucceeds) {
+TEST_F(ClCreateContextFromTypeTests, GivenCallbackFunctionWhenCreatingContextFromTypeThenCallSucceeds) {
     auto context = clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, contextCallBack, nullptr, &retVal);
     ASSERT_NE(nullptr, context);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -61,7 +61,7 @@ TEST_F(clCreateContextFromTypeTests, GivenCallbackFunctionWhenCreatingContextFro
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeWhenCreatingContextFromTypeThenCallSucceeds) {
+TEST_F(ClCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeWhenCreatingContextFromTypeThenCallSucceeds) {
     auto context =
         clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, nullptr, nullptr, nullptr);
 
@@ -73,14 +73,14 @@ TEST_F(clCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeWhenCreatingContextFr
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenInvalidContextCreationPropertiesWhenCreatingContextFromTypeThenInvalidPlatformErrorIsReturned) {
+TEST_F(ClCreateContextFromTypeTests, GivenInvalidContextCreationPropertiesWhenCreatingContextFromTypeThenInvalidPlatformErrorIsReturned) {
     cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
     auto context = clCreateContextFromType(invalidProperties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
     EXPECT_EQ(nullptr, context);
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPropertiesWhenCreatingContextFromTypeThenSuccessIsReturned) {
+TEST_F(ClCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPropertiesWhenCreatingContextFromTypeThenSuccessIsReturned) {
     auto nonDefaultPlatform = std::make_unique<MockPlatform>();
     nonDefaultPlatform->initializeWithNewDevices();
     cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
@@ -95,7 +95,7 @@ TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPro
     clReleaseContext(clContext);
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispatchInContextCreationPropertiesWhenCreatingContextFromTypeThenInvalidPlatformErrorIsReturned) {
+TEST_F(ClCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispatchInContextCreationPropertiesWhenCreatingContextFromTypeThenInvalidPlatformErrorIsReturned) {
     auto nonDefaultPlatform = std::make_unique<MockPlatform>();
     nonDefaultPlatform->initializeWithNewDevices();
     cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();

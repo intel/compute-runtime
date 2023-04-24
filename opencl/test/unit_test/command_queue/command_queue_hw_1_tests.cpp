@@ -897,7 +897,7 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEve
 HWTEST_F(CommandQueueHwTest, givenEventWithRecordedCommandWhenSubmitCommandIsCalledThenTaskCountMustBeUpdatedFromOtherThread) {
     std::atomic_bool go{false};
 
-    struct mockEvent : public Event {
+    struct MockEvent : public Event {
         using Event::Event;
         using Event::eventWithoutCommand;
         using Event::submitCommand;
@@ -909,7 +909,7 @@ HWTEST_F(CommandQueueHwTest, givenEventWithRecordedCommandWhenSubmitCommandIsCal
         std::atomic_bool *atomicFence = nullptr;
     };
 
-    mockEvent neoEvent(this->pCmdQ, CL_COMMAND_MAP_BUFFER, CompletionStamp::notReady, CompletionStamp::notReady);
+    MockEvent neoEvent(this->pCmdQ, CL_COMMAND_MAP_BUFFER, CompletionStamp::notReady, CompletionStamp::notReady);
     neoEvent.atomicFence = &go;
     EXPECT_TRUE(neoEvent.eventWithoutCommand);
     neoEvent.eventWithoutCommand = false;

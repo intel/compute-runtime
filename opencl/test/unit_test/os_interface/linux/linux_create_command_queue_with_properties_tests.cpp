@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiverTest {
+struct ClCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiverTest {
     void SetUp() override {
         UltCommandStreamReceiverTest::SetUp();
         ExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
@@ -50,7 +50,7 @@ struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
 
 namespace ULT {
 
-TEST_F(clCreateCommandQueueWithPropertiesLinux, givenUnPossiblePropertiesWithClQueueSliceCountWhenCreateCommandQueueThenQueueNotCreated) {
+TEST_F(ClCreateCommandQueueWithPropertiesLinux, givenUnPossiblePropertiesWithClQueueSliceCountWhenCreateCommandQueueThenQueueNotCreated) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);
@@ -65,7 +65,7 @@ TEST_F(clCreateCommandQueueWithPropertiesLinux, givenUnPossiblePropertiesWithClQ
     EXPECT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesLinux, givenZeroWithClQueueSliceCountWhenCreateCommandQueueThenSliceCountEqualDefaultSliceCount) {
+TEST_F(ClCreateCommandQueueWithPropertiesLinux, givenZeroWithClQueueSliceCountWhenCreateCommandQueueThenSliceCountEqualDefaultSliceCount) {
 
     uint64_t newSliceCount = 0;
 
@@ -83,7 +83,7 @@ TEST_F(clCreateCommandQueueWithPropertiesLinux, givenZeroWithClQueueSliceCountWh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesLinux, givenPossiblePropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSliceCountIsSet) {
+TEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPossiblePropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSliceCountIsSet) {
 
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
@@ -106,7 +106,7 @@ TEST_F(clCreateCommandQueueWithPropertiesLinux, givenPossiblePropertiesWithClQue
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenCallFlushTaskAndSliceCountIsSet) {
+HWTEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenCallFlushTaskAndSliceCountIsSet) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);
@@ -151,7 +151,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSlic
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlySetWhenCreateCommandQueueThenSetQueueSliceCountNotCalled) {
+HWTEST_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlySetWhenCreateCommandQueueThenSetQueueSliceCountNotCalled) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
 
@@ -197,7 +197,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlyS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSetReturnFalseAndLastSliceCountNotModify) {
+HWTEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSetReturnFalseAndLastSliceCountNotModify) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);

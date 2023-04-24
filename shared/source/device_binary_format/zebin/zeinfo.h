@@ -704,7 +704,7 @@ struct InlineSamplerBaseT {
 } // namespace Kernel
 
 namespace GlobalHostAccessTable {
-struct globalHostAccessTableT {
+struct GlobalHostAccessTableT {
     std::string deviceName;
     std::string hostName;
 };

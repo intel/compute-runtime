@@ -182,7 +182,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
     mockCsr.useNewResourceImplicitFlush = false;
     mockCsr.useGpuIdleImplicitFlush = false;
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();

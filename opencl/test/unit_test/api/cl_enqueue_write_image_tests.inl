@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueWriteImageTests;
+typedef api_tests ClEnqueueWriteImageTests;
 
 namespace ULT {
 
-struct clEnqueueWriteImageTests : public ApiFixture<>,
+struct ClEnqueueWriteImageTests : public ApiFixture<>,
                                   public ::testing::Test {
     void SetUp() override {
         ApiFixture::setUp();
@@ -48,7 +48,7 @@ struct clEnqueueWriteImageTests : public ApiFixture<>,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueWriteImageTests, GivenNullCommandQueueWhenWritingImageThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueWriteImageTests, GivenNullCommandQueueWhenWritingImageThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueWriteImage(
         nullptr,
         nullptr,
@@ -65,7 +65,7 @@ TEST_F(clEnqueueWriteImageTests, GivenNullCommandQueueWhenWritingImageThenInvali
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueWriteImageTests, GivenNullImageWhenWritingImageThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueWriteImageTests, GivenNullImageWhenWritingImageThenInvalidMemObjectErrorIsReturned) {
     auto retVal = clEnqueueWriteImage(
         pCommandQueue,
         nullptr,
@@ -82,7 +82,7 @@ TEST_F(clEnqueueWriteImageTests, GivenNullImageWhenWritingImageThenInvalidMemObj
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueWriteImageTests, GivenValidParametersWhenWritingImageThenSuccessIsReturned) {
+TEST_F(ClEnqueueWriteImageTests, GivenValidParametersWhenWritingImageThenSuccessIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -107,7 +107,7 @@ TEST_F(clEnqueueWriteImageTests, GivenValidParametersWhenWritingImageThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadImageTests, GivenQueueIncapableParametersWhenWritingImageThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueReadImageTests, GivenQueueIncapableParametersWhenWritingImageThenInvalidOperationIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     const size_t origin[] = {2, 2, 0};
@@ -132,9 +132,9 @@ TEST_F(clEnqueueReadImageTests, GivenQueueIncapableParametersWhenWritingImageThe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-typedef clEnqueueWriteImageTests clEnqueueWriteImageYUV;
+typedef ClEnqueueWriteImageTests ClEnqueueWriteImageYUV;
 
-TEST_F(clEnqueueWriteImageYUV, GivenValidParametersWhenWritingYuvImageThenSuccessIsReturned) {
+TEST_F(ClEnqueueWriteImageYUV, GivenValidParametersWhenWritingYuvImageThenSuccessIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
@@ -158,7 +158,7 @@ TEST_F(clEnqueueWriteImageYUV, GivenValidParametersWhenWritingYuvImageThenSucces
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueWriteImageYUV, GivenInvalidOriginWhenWritingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueWriteImageYUV, GivenInvalidOriginWhenWritingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
@@ -181,7 +181,7 @@ TEST_F(clEnqueueWriteImageYUV, GivenInvalidOriginWhenWritingYuvImageThenInvalidV
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
-TEST_F(clEnqueueWriteImageYUV, GivenInvalidRegionWhenWritingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueWriteImageYUV, GivenInvalidRegionWhenWritingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);

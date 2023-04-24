@@ -21,10 +21,10 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
     using PIPE_CONTROL = typename Gen12LpFamily::PIPE_CONTROL;
     using PIPELINE_SELECT = typename Gen12LpFamily::PIPELINE_SELECT;
 
-    struct myCsr : public CommandStreamReceiverHw<Gen12LpFamily> {
+    struct MyCsr : public CommandStreamReceiverHw<Gen12LpFamily> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, 0, 1){};
+        MyCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, 0, 1){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 
@@ -44,7 +44,7 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
 
     void SetUp() override {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        csr = new myCsr(*device->executionEnvironment);
+        csr = new MyCsr(*device->executionEnvironment);
         device->resetCommandStreamReceiver(csr);
         AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
 
@@ -55,7 +55,7 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
         device->getMemoryManager()->freeGraphicsMemory(alloc);
     }
 
-    myCsr *csr = nullptr;
+    MyCsr *csr = nullptr;
     std::unique_ptr<MockDevice> device;
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     GraphicsAllocation *alloc = nullptr;

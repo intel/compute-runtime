@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct clGetImageInfoTests : public ApiFixture<>,
+struct ClGetImageInfoTests : public ApiFixture<>,
                              public ::testing::Test {
 
     void SetUp() override {
@@ -52,7 +52,7 @@ struct clGetImageInfoTests : public ApiFixture<>,
     cl_mem image;
 };
 
-TEST_F(clGetImageInfoTests, GivenBufferWhenGettingImageInfoThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenBufferWhenGettingImageInfoThenInvalidMemObjectErrorIsReturned) {
     size_t paramRetSize = 0;
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 42, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -62,14 +62,14 @@ TEST_F(clGetImageInfoTests, GivenBufferWhenGettingImageInfoThenInvalidMemObjectE
     clReleaseMemObject(buffer);
 }
 
-TEST_F(clGetImageInfoTests, GivenNullWhenGettingImageInfoThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenNullWhenGettingImageInfoThenInvalidMemObjectErrorIsReturned) {
     size_t paramRetSize = 0;
 
     retVal = clGetImageInfo(nullptr, CL_IMAGE_ELEMENT_SIZE, 0, nullptr, &paramRetSize);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clGetImageInfoTests, GivenInvalidParamNameWhenGettingImageInfoThenInvalidValueErrorIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenInvalidParamNameWhenGettingImageInfoThenInvalidValueErrorIsReturned) {
     size_t paramRetSize = 0;
 
     retVal = clGetImageInfo(image, CL_MEM_SIZE, 0, nullptr, &paramRetSize);
@@ -77,7 +77,7 @@ TEST_F(clGetImageInfoTests, GivenInvalidParamNameWhenGettingImageInfoThenInvalid
     ASSERT_EQ(0u, paramRetSize);
 }
 
-TEST_F(clGetImageInfoTests, GivenInvalidParametersWhenGettingImageInfoThenValueSizeRetIsNotUpdated) {
+TEST_F(ClGetImageInfoTests, GivenInvalidParametersWhenGettingImageInfoThenValueSizeRetIsNotUpdated) {
     size_t paramRetSize = 0x1234;
 
     retVal = clGetImageInfo(image, CL_MEM_SIZE, 0, nullptr, &paramRetSize);
@@ -85,7 +85,7 @@ TEST_F(clGetImageInfoTests, GivenInvalidParametersWhenGettingImageInfoThenValueS
     EXPECT_EQ(0x1234u, paramRetSize);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageFormatWhenGettingImageInfoThenImageFormatIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageFormatWhenGettingImageInfoThenImageFormatIsReturned) {
     cl_image_format imgFmtRet;
     size_t paramRetSize = 0;
 
@@ -99,7 +99,7 @@ TEST_F(clGetImageInfoTests, GivenClImageFormatWhenGettingImageInfoThenImageForma
     ASSERT_EQ(this->imageFormat.image_channel_order, imgFmtRet.image_channel_order);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageElementSizeWhenGettingImageInfoThenSizeOfImageElementIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageElementSizeWhenGettingImageInfoThenSizeOfImageElementIsReturned) {
     size_t elemSize = 4;
     size_t sizeRet = 0;
     size_t paramRetSize = 0;
@@ -113,7 +113,7 @@ TEST_F(clGetImageInfoTests, GivenClImageElementSizeWhenGettingImageInfoThenSizeO
     ASSERT_EQ(elemSize, sizeRet);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageRowPitchWhenGettingImageInfoThenSizeOfRowIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageRowPitchWhenGettingImageInfoThenSizeOfRowIsReturned) {
     size_t rowPitchRet = 0;
     size_t paramRetSize = 0;
 
@@ -126,7 +126,7 @@ TEST_F(clGetImageInfoTests, GivenClImageRowPitchWhenGettingImageInfoThenSizeOfRo
     ASSERT_NE(0u, rowPitchRet);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageSlicePitchAnd2dImageWhenGettingImageInfoThenZeroIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageSlicePitchAnd2dImageWhenGettingImageInfoThenZeroIsReturned) {
     size_t slicePitchRet = 0;
     size_t paramRetSize = 0;
 
@@ -139,7 +139,7 @@ TEST_F(clGetImageInfoTests, GivenClImageSlicePitchAnd2dImageWhenGettingImageInfo
     ASSERT_EQ(0u, slicePitchRet);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageWidthWhenGettingImageInfoThenWidthOfImageIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageWidthWhenGettingImageInfoThenWidthOfImageIsReturned) {
     size_t widthRet = 0;
     size_t paramRetSize = 0;
 
@@ -152,7 +152,7 @@ TEST_F(clGetImageInfoTests, GivenClImageWidthWhenGettingImageInfoThenWidthOfImag
     ASSERT_EQ(this->imageDesc.image_width, widthRet);
 }
 
-TEST_F(clGetImageInfoTests, GivenImageWithMipMapsWhenGettingImageInfoThenWidthAndHeightOfImageAreShifted) {
+TEST_F(ClGetImageInfoTests, GivenImageWithMipMapsWhenGettingImageInfoThenWidthAndHeightOfImageAreShifted) {
     auto initialWidth = this->imageDesc.image_width;
     auto initialHeight = this->imageDesc.image_height;
 
@@ -177,7 +177,7 @@ TEST_F(clGetImageInfoTests, GivenImageWithMipMapsWhenGettingImageInfoThenWidthAn
     }
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageHeightWhenGettingImageInfoThenHeightOfImageIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageHeightWhenGettingImageInfoThenHeightOfImageIsReturned) {
     size_t heightRet = 0;
     size_t paramRetSize = 0;
 
@@ -190,7 +190,7 @@ TEST_F(clGetImageInfoTests, GivenClImageHeightWhenGettingImageInfoThenHeightOfIm
     ASSERT_EQ(this->imageDesc.image_height, heightRet);
 }
 
-TEST_F(clGetImageInfoTests, Given3dImageWithMipMapsWhenGettingImageInfoThenWidthAndHeightOfImageAreShifted) {
+TEST_F(ClGetImageInfoTests, Given3dImageWithMipMapsWhenGettingImageInfoThenWidthAndHeightOfImageAreShifted) {
     size_t widthRet;
     size_t expectedWidth;
     size_t heightRet;
@@ -246,7 +246,7 @@ TEST_F(clGetImageInfoTests, Given3dImageWithMipMapsWhenGettingImageInfoThenWidth
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetImageInfoTests, Given1dImageWithMipMapsWhenGettingImageInfoThenWidthAndHeightOfImageAreShifted) {
+TEST_F(ClGetImageInfoTests, Given1dImageWithMipMapsWhenGettingImageInfoThenWidthAndHeightOfImageAreShifted) {
     size_t widthRet;
     size_t expectedWidth;
     size_t heightRet;
@@ -296,7 +296,7 @@ TEST_F(clGetImageInfoTests, Given1dImageWithMipMapsWhenGettingImageInfoThenWidth
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageDepthAnd2dImageWhenGettingImageInfoThenZeroIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageDepthAnd2dImageWhenGettingImageInfoThenZeroIsReturned) {
     size_t depthRet = 0;
     size_t paramRetSize = 0;
 
@@ -309,7 +309,7 @@ TEST_F(clGetImageInfoTests, GivenClImageDepthAnd2dImageWhenGettingImageInfoThenZ
     ASSERT_EQ(0U, depthRet);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageArraySizeAndNonArrayImageWhenGettingImageInfoThenZeroIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageArraySizeAndNonArrayImageWhenGettingImageInfoThenZeroIsReturned) {
     size_t arraySizeRet = 0;
     size_t paramRetSize = 0;
 
@@ -322,7 +322,7 @@ TEST_F(clGetImageInfoTests, GivenClImageArraySizeAndNonArrayImageWhenGettingImag
     ASSERT_EQ(0u, arraySizeRet);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageBufferWhenGettingImageInfoThenBufferIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageBufferWhenGettingImageInfoThenBufferIsReturned) {
     cl_mem bufferRet = nullptr;
     size_t paramRetSize = 0;
 
@@ -335,7 +335,7 @@ TEST_F(clGetImageInfoTests, GivenClImageBufferWhenGettingImageInfoThenBufferIsRe
     ASSERT_EQ(this->imageDesc.buffer, bufferRet);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageNumMipLevelsWhenGettingImageInfoThenCorrectMipMapLevelIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageNumMipLevelsWhenGettingImageInfoThenCorrectMipMapLevelIsReturned) {
     cl_uint numMipLevelRet = 0;
     size_t paramRetSize = 0;
 
@@ -348,7 +348,7 @@ TEST_F(clGetImageInfoTests, GivenClImageNumMipLevelsWhenGettingImageInfoThenCorr
     ASSERT_EQ(this->imageDesc.num_mip_levels, numMipLevelRet);
 }
 
-TEST_F(clGetImageInfoTests, GivenClImageNumSamplesWhenGettingImageInfoThenCorrectNumberOfSamplesIsReturned) {
+TEST_F(ClGetImageInfoTests, GivenClImageNumSamplesWhenGettingImageInfoThenCorrectNumberOfSamplesIsReturned) {
     cl_uint numSamplesRet = 0;
     size_t paramRetSize = 0;
 
@@ -361,7 +361,7 @@ TEST_F(clGetImageInfoTests, GivenClImageNumSamplesWhenGettingImageInfoThenCorrec
     ASSERT_EQ(this->imageDesc.num_samples, numSamplesRet);
 }
 
-TEST_F(clGetImageInfoTests, givenMultisampleCountForMcsWhenAskingForRowPitchThenReturnNewValueIfGreaterThanOne) {
+TEST_F(ClGetImageInfoTests, givenMultisampleCountForMcsWhenAskingForRowPitchThenReturnNewValueIfGreaterThanOne) {
     McsSurfaceInfo mcsInfo = {1, 1, 0};
     imageDesc.num_samples = 16;
     size_t receivedRowPitch = 0;

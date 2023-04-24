@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-struct clRetainReleaseDeviceTests : Test<PlatformFixture> {
+struct ClRetainReleaseDeviceTests : Test<PlatformFixture> {
     void SetUp() override {
         DebugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
         Test<PlatformFixture>::SetUp();
@@ -21,7 +21,7 @@ struct clRetainReleaseDeviceTests : Test<PlatformFixture> {
 };
 
 namespace ULT {
-TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenRetainingThenReferenceCountIsOne) {
+TEST_F(ClRetainReleaseDeviceTests, GivenRootDeviceWhenRetainingThenReferenceCountIsOne) {
     cl_uint numEntries = maxRootDeviceCount;
     cl_device_id devices[maxRootDeviceCount];
 
@@ -43,7 +43,7 @@ TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenRetainingThenReferenceCoun
     EXPECT_EQ(1u, theRef);
 }
 
-TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenReleasingThenReferenceCountIsOne) {
+TEST_F(ClRetainReleaseDeviceTests, GivenRootDeviceWhenReleasingThenReferenceCountIsOne) {
     constexpr cl_uint numEntries = maxRootDeviceCount;
     cl_device_id devices[maxRootDeviceCount];
 

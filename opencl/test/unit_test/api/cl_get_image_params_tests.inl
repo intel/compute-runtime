@@ -14,7 +14,7 @@ using namespace NEO;
 namespace ULT {
 
 template <typename T>
-struct clGetImageParams : public ApiFixture<>,
+struct ClGetImageParams : public ApiFixture<>,
                           public T {
 
     void SetUp() override {
@@ -45,9 +45,9 @@ struct clGetImageParams : public ApiFixture<>,
     cl_image_desc imageDesc;
 };
 
-typedef clGetImageParams<::testing::Test> clGetImageParamsTest;
+typedef ClGetImageParams<::testing::Test> ClGetImageParamsTest;
 
-TEST_F(clGetImageParamsTest, GivenValidParamsWhenGettingImageParamsThenSuccessIsReturned) {
+TEST_F(ClGetImageParamsTest, GivenValidParamsWhenGettingImageParamsThenSuccessIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     cl_int retVal = CL_INVALID_VALUE;
@@ -58,7 +58,7 @@ TEST_F(clGetImageParamsTest, GivenValidParamsWhenGettingImageParamsThenSuccessIs
     EXPECT_NE(imageSlicePitch, 0u);
 }
 
-TEST_F(clGetImageParamsTest, GivenDefaultAndSpecializedContextsWhenGettingImageParamsThenTheSameValuesAreReturned) {
+TEST_F(ClGetImageParamsTest, GivenDefaultAndSpecializedContextsWhenGettingImageParamsThenTheSameValuesAreReturned) {
     cl_int retVal = CL_INVALID_VALUE;
     MockDefaultContext defaultContext;
     size_t defaultContextImageRowPitch = 0;
@@ -80,7 +80,7 @@ TEST_F(clGetImageParamsTest, GivenDefaultAndSpecializedContextsWhenGettingImageP
     EXPECT_EQ(defaultContextImageSlicePitch, specializedContextImageSlicePitch);
 }
 
-TEST_F(clGetImageParamsTest, GivenNullContextWhenGettingImageParamsThenInvalidContextErrorIsReturned) {
+TEST_F(ClGetImageParamsTest, GivenNullContextWhenGettingImageParamsThenInvalidContextErrorIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     cl_int retVal = CL_SUCCESS;
@@ -91,7 +91,7 @@ TEST_F(clGetImageParamsTest, GivenNullContextWhenGettingImageParamsThenInvalidCo
     EXPECT_EQ(imageSlicePitch, 0u);
 }
 
-TEST_F(clGetImageParamsTest, GivenNullParamsWhenGettingImageParamsThenInvalidValueErrorIsReturned) {
+TEST_F(ClGetImageParamsTest, GivenNullParamsWhenGettingImageParamsThenInvalidValueErrorIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     cl_int retVal = CL_SUCCESS;
@@ -117,7 +117,7 @@ TEST_F(clGetImageParamsTest, GivenNullParamsWhenGettingImageParamsThenInvalidVal
     EXPECT_EQ(imageSlicePitch, 0u);
 }
 
-TEST_F(clGetImageParamsTest, GivenInvalidFormatWhenGettingImageParamsThenImageFormatNotSupportedErrorIsReturned) {
+TEST_F(ClGetImageParamsTest, GivenInvalidFormatWhenGettingImageParamsThenImageFormatNotSupportedErrorIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
 

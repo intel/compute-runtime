@@ -401,7 +401,7 @@ bool IpSamplingMetricGroupImp::stallIpDataMapUpdate(StallSumIpDataMap_t &stallSu
     stallSumData.syncCount += getCount();
     stallSumData.instFetchCount += getCount();
 
-    struct stallCntrInfo {
+    struct StallCntrInfo {
         uint16_t subslice;
         uint16_t flags;
     } stallCntrInfo = {};

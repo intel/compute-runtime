@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-struct clSetPerformanceConfigurationINTELTests : public DeviceInstrumentationFixture,
+struct ClSetPerformanceConfigurationINTELTests : public DeviceInstrumentationFixture,
                                                  public PerformanceCountersDeviceFixture,
                                                  ::testing::Test {
     void SetUp() override {
@@ -25,7 +25,7 @@ struct clSetPerformanceConfigurationINTELTests : public DeviceInstrumentationFix
 };
 namespace ULT {
 
-TEST_F(clSetPerformanceConfigurationINTELTests, GivenAnyArgumentsWhenSettingPerformanceConfigurationThenInvalidOperationErrorIsReturned) {
+TEST_F(ClSetPerformanceConfigurationINTELTests, GivenAnyArgumentsWhenSettingPerformanceConfigurationThenInvalidOperationErrorIsReturned) {
     cl_int ret = CL_OUT_OF_RESOURCES;
     cl_uint offsets[2];
     cl_uint values[2];

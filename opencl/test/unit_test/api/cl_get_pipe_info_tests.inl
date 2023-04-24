@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,13 +13,13 @@
 
 using namespace NEO;
 
-struct clGetPipeInfoTests : api_tests {
+struct ClGetPipeInfoTests : api_tests {
     VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
 };
 
 namespace ULT {
 
-TEST_F(clGetPipeInfoTests, GivenValidPipeWithPacketSizeOneWhenGettingPipeInfoThenPacketSizeReturnedIsOne) {
+TEST_F(ClGetPipeInfoTests, GivenValidPipeWithPacketSizeOneWhenGettingPipeInfoThenPacketSizeReturnedIsOne) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -36,7 +36,7 @@ TEST_F(clGetPipeInfoTests, GivenValidPipeWithPacketSizeOneWhenGettingPipeInfoThe
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, GivenValidPipeWithMaxPacketEqualTwentyWhenGettingPipeInfoThenMaxPacketReturnedIsTwenty) {
+TEST_F(ClGetPipeInfoTests, GivenValidPipeWithMaxPacketEqualTwentyWhenGettingPipeInfoThenMaxPacketReturnedIsTwenty) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -53,7 +53,7 @@ TEST_F(clGetPipeInfoTests, GivenValidPipeWithMaxPacketEqualTwentyWhenGettingPipe
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, GivenInvalidParamNameWhenGettingPipeInfoThenClInvalidValueErrorIsReturned) {
+TEST_F(ClGetPipeInfoTests, GivenInvalidParamNameWhenGettingPipeInfoThenClInvalidValueErrorIsReturned) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -68,7 +68,7 @@ TEST_F(clGetPipeInfoTests, GivenInvalidParamNameWhenGettingPipeInfoThenClInvalid
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, GivenInvalidParametersWhenGettingPipeInfoThenValueSizeRetIsNotUpdated) {
+TEST_F(ClGetPipeInfoTests, GivenInvalidParametersWhenGettingPipeInfoThenValueSizeRetIsNotUpdated) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -84,7 +84,7 @@ TEST_F(clGetPipeInfoTests, GivenInvalidParametersWhenGettingPipeInfoThenValueSiz
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, GivenInvalidMemoryObjectWhenGettingPipeInfoThenClInvalidMemObjectErrorIsReturned) {
+TEST_F(ClGetPipeInfoTests, GivenInvalidMemoryObjectWhenGettingPipeInfoThenClInvalidMemObjectErrorIsReturned) {
 
     cl_uint paramValue = 0;
     size_t paramValueRetSize = 0;
@@ -94,7 +94,7 @@ TEST_F(clGetPipeInfoTests, GivenInvalidMemoryObjectWhenGettingPipeInfoThenClInva
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clGetPipeInfoTests, GivenNullParamValueWhenGettingPipeInfoThenClSuccessIsReturned) {
+TEST_F(ClGetPipeInfoTests, GivenNullParamValueWhenGettingPipeInfoThenClSuccessIsReturned) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -109,7 +109,7 @@ TEST_F(clGetPipeInfoTests, GivenNullParamValueWhenGettingPipeInfoThenClSuccessIs
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, GivenNullParamValueSizeRetWhenGettingPipeInfoThenClSuccessIsReturned) {
+TEST_F(ClGetPipeInfoTests, GivenNullParamValueSizeRetWhenGettingPipeInfoThenClSuccessIsReturned) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -123,7 +123,7 @@ TEST_F(clGetPipeInfoTests, GivenNullParamValueSizeRetWhenGettingPipeInfoThenClSu
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, GivenParamValueSizeRetTooSmallWhenGettingPipeInfoThenClInvalidValueErrorIsReturned) {
+TEST_F(ClGetPipeInfoTests, GivenParamValueSizeRetTooSmallWhenGettingPipeInfoThenClInvalidValueErrorIsReturned) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -138,7 +138,7 @@ TEST_F(clGetPipeInfoTests, GivenParamValueSizeRetTooSmallWhenGettingPipeInfoThen
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, GivenBufferInsteadOfPipeWhenGettingPipeInfoThenClInvalidMemObjectErrorIsReturned) {
+TEST_F(ClGetPipeInfoTests, GivenBufferInsteadOfPipeWhenGettingPipeInfoThenClInvalidMemObjectErrorIsReturned) {
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, buffer);
@@ -153,7 +153,7 @@ TEST_F(clGetPipeInfoTests, GivenBufferInsteadOfPipeWhenGettingPipeInfoThenClInva
     clReleaseMemObject(buffer);
 }
 
-TEST_F(clGetPipeInfoTests, WhenQueryingPipePropertiesThenNothingIsCopied) {
+TEST_F(ClGetPipeInfoTests, WhenQueryingPipePropertiesThenNothingIsCopied) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);

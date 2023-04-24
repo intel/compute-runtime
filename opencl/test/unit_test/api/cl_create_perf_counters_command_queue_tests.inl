@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-struct clCreatePerfCountersCommandQueueINTELTests : public DeviceInstrumentationFixture,
+struct ClCreatePerfCountersCommandQueueINTELTests : public DeviceInstrumentationFixture,
                                                     public PerformanceCountersDeviceFixture,
                                                     ::testing::Test {
     void SetUp() override {
@@ -39,7 +39,7 @@ struct clCreatePerfCountersCommandQueueINTELTests : public DeviceInstrumentation
 
 namespace ULT {
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectParamatersWhenCreatingPerfCountersCmdQThenCmdQIsCreatedAndPerfCountersAreEnabled) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenCorrectParamatersWhenCreatingPerfCountersCmdQThenCmdQIsCreatedAndPerfCountersAreEnabled) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 0;
@@ -55,7 +55,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectParamatersWhenCre
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenNullPropertiesWhenCreatingPerfCountersCmdQThenInvalidQueuePropertiesErrorIsReturned) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenNullPropertiesWhenCreatingPerfCountersCmdQThenInvalidQueuePropertiesErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_uint configuration = 0;
@@ -66,7 +66,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenNullPropertiesWhenCreati
     ASSERT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenClQueueOnDevicePropertyWhenCreatingPerfCountersCmdQThenInvalidQueuePropertiesErrorIsReturned) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenClQueueOnDevicePropertyWhenCreatingPerfCountersCmdQThenInvalidQueuePropertiesErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_ON_DEVICE;
     cl_uint configuration = 0;
@@ -82,7 +82,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenClQueueOnDevicePropertyW
     ASSERT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenNullContextWhenCreatingPerfCountersCmdQThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenNullContextWhenCreatingPerfCountersCmdQThenInvalidContextErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 0;
@@ -93,7 +93,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenNullContextWhenCreatingP
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenMaximumGtdiConfigurationWhenCreatingPerfCountersCmdQThenOutOfResourcesErrorIsReturned) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenMaximumGtdiConfigurationWhenCreatingPerfCountersCmdQThenOutOfResourcesErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 4;
@@ -104,7 +104,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenMaximumGtdiConfiguration
     ASSERT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectCmdQWhenEventIsCreatedThenPerfCountersAreEnabled) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenCorrectCmdQWhenEventIsCreatedThenPerfCountersAreEnabled) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 0;
@@ -123,7 +123,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectCmdQWhenEventIsCr
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInstrumentationEnabledIsFalseWhenCreatingPerfCountersCmdQThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenInstrumentationEnabledIsFalseWhenCreatingPerfCountersCmdQThenInvalidDeviceErrorIsReturned) {
     hwInfo->capabilityTable.instrumentationEnabled = false;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
@@ -134,7 +134,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInstrumentationEnabledIs
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInvalidDeviceWhenCreatingPerfCountersCmdQThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenInvalidDeviceWhenCreatingPerfCountersCmdQThenInvalidDeviceErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 0;
@@ -145,7 +145,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInvalidDeviceWhenCreatin
     ASSERT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInvalidMetricsLibraryWhenCreatingPerfCountersThenPerfCountersReturnError) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, GivenInvalidMetricsLibraryWhenCreatingPerfCountersThenPerfCountersReturnError) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 0;
@@ -164,7 +164,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInvalidMetricsLibraryWhe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, givenInvalidMetricsLibraryWhenCreatingCommandQueueThenReturnError) {
+TEST_F(ClCreatePerfCountersCommandQueueINTELTests, givenInvalidMetricsLibraryWhenCreatingCommandQueueThenReturnError) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 0;
@@ -179,14 +179,14 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, givenInvalidMetricsLibraryWhe
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
 
-struct clCreateCommandQueueWithPropertiesMdapiTests : public clCreatePerfCountersCommandQueueINTELTests {
+struct ClCreateCommandQueueWithPropertiesMdapiTests : public ClCreatePerfCountersCommandQueueINTELTests {
     cl_queue_properties queueProperties[7] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE,
                                               CL_QUEUE_MDAPI_PROPERTIES_INTEL, CL_QUEUE_MDAPI_ENABLE_INTEL,
                                               CL_QUEUE_MDAPI_CONFIGURATION_INTEL, 0,
                                               0};
 };
 
-TEST_F(clCreateCommandQueueWithPropertiesMdapiTests, givenCorrectParamsWhenCreatingQueueWithPropertiesThenEnablePerfCounters) {
+TEST_F(ClCreateCommandQueueWithPropertiesMdapiTests, givenCorrectParamsWhenCreatingQueueWithPropertiesThenEnablePerfCounters) {
     auto cmdQ = clCreateCommandQueueWithProperties(context.get(), deviceId, queueProperties, &retVal);
 
     ASSERT_NE(nullptr, cmdQ);
@@ -198,7 +198,7 @@ TEST_F(clCreateCommandQueueWithPropertiesMdapiTests, givenCorrectParamsWhenCreat
     clReleaseCommandQueue(cmdQ);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesMdapiTests, givenParamsWithDisabledPerfCounterWhenCreatingQueueWithPropertiesThenCreateRegularQueue) {
+TEST_F(ClCreateCommandQueueWithPropertiesMdapiTests, givenParamsWithDisabledPerfCounterWhenCreatingQueueWithPropertiesThenCreateRegularQueue) {
     queueProperties[3] = 0;
     auto cmdQ = clCreateCommandQueueWithProperties(context.get(), deviceId, queueProperties, &retVal);
 
@@ -211,7 +211,7 @@ TEST_F(clCreateCommandQueueWithPropertiesMdapiTests, givenParamsWithDisabledPerf
     clReleaseCommandQueue(cmdQ);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesMdapiTests, givenIncorrectConfigurationWhenCreatingQueueWithPropertiesThenFail) {
+TEST_F(ClCreateCommandQueueWithPropertiesMdapiTests, givenIncorrectConfigurationWhenCreatingQueueWithPropertiesThenFail) {
     queueProperties[5] = 1;
 
     auto cmdQ = clCreateCommandQueueWithProperties(context.get(), deviceId, queueProperties, &retVal);
@@ -220,7 +220,7 @@ TEST_F(clCreateCommandQueueWithPropertiesMdapiTests, givenIncorrectConfiguration
     EXPECT_NE(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesMdapiTests, givenInvalidMdapiOpenWhenCreatingQueueWithPropertiesThenFail) {
+TEST_F(ClCreateCommandQueueWithPropertiesMdapiTests, givenInvalidMdapiOpenWhenCreatingQueueWithPropertiesThenFail) {
     auto performanceCounters = device->getPerformanceCounters();
 
     auto metricsLibary = static_cast<MockMetricsLibrary *>(performanceCounters->getMetricsLibraryInterface());

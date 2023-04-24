@@ -1214,7 +1214,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDi
 
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     configureCSRtoNonDirtyState<FamilyType>(false);

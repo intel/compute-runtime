@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,11 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueReadImageTests;
+typedef api_tests ClEnqueueReadImageTests;
 
 namespace ULT {
 
-struct clEnqueueReadImageTests : public ApiFixture<>,
+struct ClEnqueueReadImageTests : public ApiFixture<>,
                                  public ::testing::Test {
     void SetUp() override {
         ApiFixture::setUp();
@@ -48,7 +48,7 @@ struct clEnqueueReadImageTests : public ApiFixture<>,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueReadImageTests, GivenNullCommandQueueWhenReadingImageThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueReadImageTests, GivenNullCommandQueueWhenReadingImageThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueReadImage(
         nullptr,
         nullptr,
@@ -65,7 +65,7 @@ TEST_F(clEnqueueReadImageTests, GivenNullCommandQueueWhenReadingImageThenInvalid
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueReadImageTests, GivenNullImageWhenReadingImageThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClEnqueueReadImageTests, GivenNullImageWhenReadingImageThenInvalidMemObjectErrorIsReturned) {
     auto retVal = clEnqueueReadImage(
         pCommandQueue,
         nullptr,
@@ -82,7 +82,7 @@ TEST_F(clEnqueueReadImageTests, GivenNullImageWhenReadingImageThenInvalidMemObje
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueReadImageTests, GivenValidParametersWhenReadinImagesThenSuccessIsReturned) {
+TEST_F(ClEnqueueReadImageTests, GivenValidParametersWhenReadinImagesThenSuccessIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -107,7 +107,7 @@ TEST_F(clEnqueueReadImageTests, GivenValidParametersWhenReadinImagesThenSuccessI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadImageTests, GivenQueueIncapableParametersWhenReadingImageThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueReadImageTests, GivenQueueIncapableParametersWhenReadingImageThenInvalidOperationIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     const size_t origin[] = {2, 2, 0};
@@ -132,9 +132,9 @@ TEST_F(clEnqueueReadImageTests, GivenQueueIncapableParametersWhenReadingImageThe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-typedef clEnqueueReadImageTests clEnqueueReadImageYuv;
+typedef ClEnqueueReadImageTests ClEnqueueReadImageYuv;
 
-TEST_F(clEnqueueReadImageYuv, GivenValidYuvImageWhenReadingImageThenSuccessIsReturned) {
+TEST_F(ClEnqueueReadImageYuv, GivenValidYuvImageWhenReadingImageThenSuccessIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
@@ -158,7 +158,7 @@ TEST_F(clEnqueueReadImageYuv, GivenValidYuvImageWhenReadingImageThenSuccessIsRet
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadImageYuv, GivenInvalidOriginWhenReadingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueReadImageYuv, GivenInvalidOriginWhenReadingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
@@ -182,7 +182,7 @@ TEST_F(clEnqueueReadImageYuv, GivenInvalidOriginWhenReadingYuvImageThenInvalidVa
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadImageYuv, GivenInvalidRegionWhenReadingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueReadImageYuv, GivenInvalidRegionWhenReadingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);

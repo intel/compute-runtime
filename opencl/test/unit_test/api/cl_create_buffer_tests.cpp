@@ -16,9 +16,9 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateBufferTests;
+typedef api_tests ClCreateBufferTests;
 
-namespace ClCreateBufferTests {
+namespace ULT {
 
 class ClCreateBufferTemplateTests : public ApiFixture<>,
                                     public testing::TestWithParam<uint64_t> {
@@ -31,11 +31,11 @@ class ClCreateBufferTemplateTests : public ApiFixture<>,
     }
 };
 
-struct clCreateBufferValidFlagsTests : public ClCreateBufferTemplateTests {
+struct ClCreateBufferValidFlagsTests : public ClCreateBufferTemplateTests {
     cl_uchar pHostPtr[64];
 };
 
-TEST_P(clCreateBufferValidFlagsTests, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
+TEST_P(ClCreateBufferValidFlagsTests, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
     cl_mem_flags flags = GetParam() | CL_MEM_USE_HOST_PTR;
 
     auto buffer = clCreateBuffer(pContext, flags, 64, pHostPtr, &retVal);
@@ -66,7 +66,7 @@ static cl_mem_flags validFlags[] = {
 
 INSTANTIATE_TEST_CASE_P(
     CreateBufferCheckFlags,
-    clCreateBufferValidFlagsTests,
+    ClCreateBufferValidFlagsTests,
     testing::ValuesIn(validFlags));
 
 using clCreateBufferInvalidFlagsTests = ClCreateBufferTemplateTests;
@@ -156,7 +156,7 @@ TEST_F(clCreateBufferInvalidProperties, GivenInvalidPropertyKeyWhenCreatingBuffe
     EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
 };
 
-TEST_F(clCreateBufferTests, GivenValidParametersWhenCreatingBufferThenSuccessIsReturned) {
+TEST_F(ClCreateBufferTests, GivenValidParametersWhenCreatingBufferThenSuccessIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;
     cl_mem buffer = nullptr;
@@ -173,7 +173,7 @@ TEST_F(clCreateBufferTests, GivenValidParametersWhenCreatingBufferThenSuccessIsR
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenForceExtendedBufferSizeDebugFlagWhenBufferIsCreatedThenSizeIsProperlyExtended) {
+TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeDebugFlagWhenBufferIsCreatedThenSizeIsProperlyExtended) {
     DebugManagerStateRestore restorer;
 
     unsigned char *pHostMem = nullptr;
@@ -223,7 +223,7 @@ TEST_F(clCreateBufferTests, GivenForceExtendedBufferSizeDebugFlagWhenBufferIsCre
     clReleaseMemObject(buffer);
 }
 
-TEST_F(clCreateBufferTests, GivenNullContextWhenCreatingBufferThenInvalidContextErrorIsReturned) {
+TEST_F(ClCreateBufferTests, GivenNullContextWhenCreatingBufferThenInvalidContextErrorIsReturned) {
     unsigned char *pHostMem = nullptr;
     cl_mem_flags flags = 0;
     static const unsigned int bufferSize = 16;
@@ -235,38 +235,38 @@ TEST_F(clCreateBufferTests, GivenNullContextWhenCreatingBufferThenInvalidContext
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenBufferSizeZeroWhenCreatingBufferThenInvalidBufferSizeErrorIsReturned) {
+TEST_F(ClCreateBufferTests, GivenBufferSizeZeroWhenCreatingBufferThenInvalidBufferSizeErrorIsReturned) {
     uint8_t hostData = 0;
     clCreateBuffer(pContext, CL_MEM_USE_HOST_PTR, 0, &hostData, &retVal);
     ASSERT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenInvalidHostPointerWhenCreatingBufferThenInvalidHostPointerErrorIsReturned) {
+TEST_F(ClCreateBufferTests, GivenInvalidHostPointerWhenCreatingBufferThenInvalidHostPointerErrorIsReturned) {
     uint32_t hostData = 0;
     cl_mem_flags flags = 0;
     clCreateBuffer(pContext, flags, sizeof(uint32_t), &hostData, &retVal);
     ASSERT_EQ(CL_INVALID_HOST_PTR, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatingBufferThenInvalidHostPointerErrorIsReturned) {
+TEST_F(ClCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatingBufferThenInvalidHostPointerErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
     clCreateBuffer(pContext, flags, sizeof(uint32_t), nullptr, &retVal);
     ASSERT_EQ(CL_INVALID_HOST_PTR, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemUseHostPtrFlagWhenCreatingBufferThenInvalidHostPointerErrorIsReturned) {
+TEST_F(ClCreateBufferTests, GivenNullHostPointerAndMemUseHostPtrFlagWhenCreatingBufferThenInvalidHostPointerErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     clCreateBuffer(pContext, flags, sizeof(uint32_t), nullptr, &retVal);
     ASSERT_EQ(CL_INVALID_HOST_PTR, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenMemWriteOnlyFlagAndMemReadWriteFlagWhenCreatingBufferThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateBufferTests, GivenMemWriteOnlyFlagAndMemReadWriteFlagWhenCreatingBufferThenInvalidValueErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_READ_WRITE;
     clCreateBuffer(pContext, flags, 16, nullptr, &retVal);
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreatingBufferThenInvalidBufferSizeErrorIsReturned) {
+TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreatingBufferThenInvalidBufferSizeErrorIsReturned) {
     auto pDevice = pContext->getDevice(0);
     size_t size = static_cast<size_t>(pDevice->getDevice().getDeviceInfo().maxMemAllocSize) + 1;
 
@@ -275,7 +275,7 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreatingBuffer
     EXPECT_EQ(nullptr, buffer);
 }
 
-TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreateBufferWithPropertiesINTELThenInvalidBufferSizeErrorIsReturned) {
+TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreateBufferWithPropertiesINTELThenInvalidBufferSizeErrorIsReturned) {
     auto pDevice = pContext->getDevice(0);
     size_t size = static_cast<size_t>(pDevice->getDevice().getDeviceInfo().maxMemAllocSize) + 1;
 
@@ -284,7 +284,7 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreateBufferWi
     EXPECT_EQ(nullptr, buffer);
 }
 
-TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferThenClSuccessIsReturned) {
+TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferThenClSuccessIsReturned) {
     auto pDevice = pContext->getDevice(0);
     uint64_t bigSize = GB * 5;
     size_t size = static_cast<size_t>(bigSize);
@@ -304,7 +304,7 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnres
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferWithPropertiesINTELThenClSuccesssIsReturned) {
+TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferWithPropertiesINTELThenClSuccesssIsReturned) {
     auto pDevice = pContext->getDevice(0);
     uint64_t bigSize = GB * 5;
     size_t size = static_cast<size_t>(bigSize);
@@ -325,7 +325,7 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnres
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndDebugFlagSetWhenCreatingBufferThenClSuccessIsReturned) {
+TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndDebugFlagSetWhenCreatingBufferThenClSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.AllowUnrestrictedSize.set(1);
     auto pDevice = pContext->getDevice(0);
@@ -345,7 +345,7 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndDebugFlagSetWhe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatingBufferThenNullIsReturned) {
+TEST_F(ClCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatingBufferThenNullIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;
     cl_mem buffer = nullptr;
@@ -361,7 +361,7 @@ TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatin
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenParametersAreCorrectlyPassed) {
+TEST_F(ClCreateBufferTests, WhenCreatingBufferWithPropertiesThenParametersAreCorrectlyPassed) {
     VariableBackup<BufferFunctions::ValidateInputAndCreateBufferFunc> bufferCreateBackup{&BufferFunctions::validateInputAndCreateBuffer};
 
     cl_context context = pContext;
@@ -396,7 +396,7 @@ TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenParametersAreCor
     }
 }
 
-TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenErrorCodeIsCorrectlySet) {
+TEST_F(ClCreateBufferTests, WhenCreatingBufferWithPropertiesThenErrorCodeIsCorrectlySet) {
     VariableBackup<BufferFunctions::ValidateInputAndCreateBufferFunc> bufferCreateBackup{&BufferFunctions::validateInputAndCreateBuffer};
 
     cl_mem_properties *properties = nullptr;
@@ -425,7 +425,7 @@ TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenErrorCodeIsCorre
     }
 }
 
-TEST_F(clCreateBufferTests, GivenBufferCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
+TEST_F(ClCreateBufferTests, GivenBufferCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t size = 10;
     auto buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, 0, size, nullptr, &retVal);
@@ -440,7 +440,7 @@ TEST_F(clCreateBufferTests, GivenBufferCreatedWithNullPropertiesWhenQueryingProp
     clReleaseMemObject(buffer);
 }
 
-TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenPropertiesAreCorrectlyStored) {
+TEST_F(ClCreateBufferTests, WhenCreatingBufferWithPropertiesThenPropertiesAreCorrectlyStored) {
     cl_int retVal = CL_SUCCESS;
     size_t size = 10;
     cl_mem_properties properties[5];
@@ -610,4 +610,4 @@ TEST_F(clCreateBufferWithMultiDeviceContextFaillingAllocationTests, GivenContext
     alignedFree(hostBuffer);
 }
 
-} // namespace ClCreateBufferTests
+} // namespace ULT

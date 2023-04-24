@@ -22,10 +22,10 @@ struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
     typedef typename Gen11Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename Gen11Family::PIPE_CONTROL PIPE_CONTROL;
 
-    struct myCsr : public CommandStreamReceiverHw<Gen11Family> {
+    struct MyCsr : public CommandStreamReceiverHw<Gen11Family> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiverHw<Gen11Family>::programMediaSampler;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen11Family>(executionEnvironment, 0, 1){};
+        MyCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen11Family>(executionEnvironment, 0, 1){};
         void overrideLastVmeSubliceConfig(bool value) {
             lastVmeSubslicesConfig = value;
         }
@@ -38,7 +38,7 @@ struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
 
     void SetUp() override {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        csr = new myCsr(*device->executionEnvironment);
+        csr = new MyCsr(*device->executionEnvironment);
         device->resetCommandStreamReceiver(csr);
 
         stream.reset(new LinearStream(buff, MemoryConstants::pageSize));
@@ -52,7 +52,7 @@ struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
         return csr->getCmdSizeForMediaSampler(flags.pipelineSelectArgs.mediaSamplerRequired);
     }
 
-    myCsr *csr = nullptr;
+    MyCsr *csr = nullptr;
     std::unique_ptr<MockDevice> device;
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     char buff[MemoryConstants::pageSize];

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
-struct clGetKernelWorkGroupInfoTest : public ApiFixture<>,
+struct ClGetKernelWorkGroupInfoTest : public ApiFixture<>,
                                       public ::testing::Test {
     typedef ApiFixture BaseClass;
 
@@ -76,6 +76,6 @@ struct clGetKernelWorkGroupInfoTest : public ApiFixture<>,
     KernelBinaryHelper *kbHelper;
 };
 
-struct clGetKernelWorkGroupInfoTests : public clGetKernelWorkGroupInfoTest,
+struct ClGetKernelWorkGroupInfoTests : public ClGetKernelWorkGroupInfoTest,
                                        public ::testing::WithParamInterface<uint32_t> {
 };

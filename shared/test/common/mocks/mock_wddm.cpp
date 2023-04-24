@@ -22,7 +22,7 @@
 
 using namespace NEO;
 
-struct mockHwDeviceId : public HwDeviceIdWddm {
+struct MockHwDeviceId : public HwDeviceIdWddm {
     using HwDeviceIdWddm::osEnvironment;
 };
 
@@ -30,7 +30,7 @@ WddmMock::WddmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::mak
     if (!rootDeviceEnvironment.executionEnvironment.osEnvironment.get()) {
         rootDeviceEnvironment.executionEnvironment.osEnvironment = std::make_unique<OsEnvironmentWin>();
     }
-    static_cast<mockHwDeviceId *>(this->hwDeviceId.get())->osEnvironment = rootDeviceEnvironment.executionEnvironment.osEnvironment.get();
+    static_cast<MockHwDeviceId *>(this->hwDeviceId.get())->osEnvironment = rootDeviceEnvironment.executionEnvironment.osEnvironment.get();
     this->temporaryResources = std::make_unique<MockWddmResidentAllocationsContainer>(this);
 };
 

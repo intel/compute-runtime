@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateBufferTests;
+typedef api_tests ClCreateBufferTests;
 
 namespace ULT {
 
@@ -21,7 +21,7 @@ void CL_CALLBACK destructorCallback(cl_mem memObj, void *userData) {
     cbInvoked++;
 }
 
-struct clSetMemObjectDestructorCallbackTests : public ApiFixture<>,
+struct ClSetMemObjectDestructorCallbackTests : public ApiFixture<>,
                                                public ::testing::Test {
 
     void SetUp() override {
@@ -54,13 +54,13 @@ struct clSetMemObjectDestructorCallbackTests : public ApiFixture<>,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clSetMemObjectDestructorCallbackTests, GivenNullMemObjWhenSettingMemObjCallbackThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClSetMemObjectDestructorCallbackTests, GivenNullMemObjWhenSettingMemObjCallbackThenInvalidMemObjectErrorIsReturned) {
     retVal = clSetMemObjectDestructorCallback(nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
     EXPECT_EQ(0, cbInvoked);
 }
 
-TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndDestructorCallbackWhenSettingMemObjCallbackThenSuccessIsReturned) {
+TEST_F(ClSetMemObjectDestructorCallbackTests, GivenImageAndDestructorCallbackWhenSettingMemObjCallbackThenSuccessIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
 
     retVal = clSetMemObjectDestructorCallback(image, destructorCallback, nullptr);
@@ -71,7 +71,7 @@ TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndDestructorCallbackWhe
     EXPECT_EQ(1, cbInvoked);
 }
 
-TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndNullCallbackFunctionWhenSettingMemObjCallbackThenInvalidValueErrorIsReturned) {
+TEST_F(ClSetMemObjectDestructorCallbackTests, GivenImageAndNullCallbackFunctionWhenSettingMemObjCallbackThenInvalidValueErrorIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
 
     retVal = clSetMemObjectDestructorCallback(image, nullptr, nullptr);
@@ -82,7 +82,7 @@ TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndNullCallbackFunctionW
     EXPECT_EQ(0, cbInvoked);
 }
 
-TEST_F(clSetMemObjectDestructorCallbackTests, GivenBufferAndDestructorCallbackFunctionWhenSettingMemObjCallbackThenSuccessIsReturned) {
+TEST_F(ClSetMemObjectDestructorCallbackTests, GivenBufferAndDestructorCallbackFunctionWhenSettingMemObjCallbackThenSuccessIsReturned) {
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 42, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
@@ -95,7 +95,7 @@ TEST_F(clSetMemObjectDestructorCallbackTests, GivenBufferAndDestructorCallbackFu
     EXPECT_EQ(1, cbInvoked);
 }
 
-TEST_F(clSetMemObjectDestructorCallbackTests, GivenBufferAndNullCallbackFunctionWhenSettingMemObjCallbackThenInvalidValueErrorIsReturned) {
+TEST_F(ClSetMemObjectDestructorCallbackTests, GivenBufferAndNullCallbackFunctionWhenSettingMemObjCallbackThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 42, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);

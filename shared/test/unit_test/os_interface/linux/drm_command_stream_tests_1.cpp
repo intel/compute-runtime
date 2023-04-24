@@ -461,7 +461,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
 
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
     testedCsr->useNewResourceImplicitFlush = false;
@@ -528,7 +528,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     mock->reset();
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
     testedCsr->useNewResourceImplicitFlush = false;

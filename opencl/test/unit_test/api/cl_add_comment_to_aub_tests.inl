@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct clAddCommentToAubTest : api_tests {
+struct ClAddCommentToAubTest : api_tests {
     void SetUp() override {
         api_tests::SetUp();
         pDevice = pContext->getDevice(0);
@@ -31,29 +31,29 @@ struct clAddCommentToAubTest : api_tests {
     ClDevice *pDevice = nullptr;
 };
 
-TEST_F(clAddCommentToAubTest, givenProperCommentNullptrAubCenterWhenAddCommentToAubThenSuccessIsReturned) {
+TEST_F(ClAddCommentToAubTest, givenProperCommentNullptrAubCenterWhenAddCommentToAubThenSuccessIsReturned) {
     auto retVal = clAddCommentINTEL(pDevice, "comment");
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clAddCommentToAubTest, givenInvalidDeviceWhenAddCommentToAubThenErrorIsReturned) {
+TEST_F(ClAddCommentToAubTest, givenInvalidDeviceWhenAddCommentToAubThenErrorIsReturned) {
     auto retVal = clAddCommentINTEL(nullptr, "comment");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clAddCommentToAubTest, givenNullptrCommentWhenAddCommentToAubThenErrorIsReturned) {
+TEST_F(ClAddCommentToAubTest, givenNullptrCommentWhenAddCommentToAubThenErrorIsReturned) {
     auto retVal = clAddCommentINTEL(pDevice, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clAddCommentToAubTest, givenAubCenterAndProperCommentButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
+TEST_F(ClAddCommentToAubTest, givenAubCenterAndProperCommentButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->aubCenter.reset(new MockAubCenter());
 
     auto retVal = clAddCommentINTEL(pDevice, "comment");
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clAddCommentToAubTest, givenProperCommentAubCenterAndAubManagerWhenAddCommentToAubThenSuccessIsReturned) {
+TEST_F(ClAddCommentToAubTest, givenProperCommentAubCenterAndAubManagerWhenAddCommentToAubThenSuccessIsReturned) {
     struct AubManagerCommentMock : public MockAubManager {
         using MockAubManager::MockAubManager;
         void addComment(const char *message) override {

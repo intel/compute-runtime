@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ using namespace NEO;
 
 namespace ULT {
 
-TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkGroupInfoThenSuccessIsReturned) {
+TEST_P(ClGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkGroupInfoThenSuccessIsReturned) {
 
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
@@ -28,7 +28,7 @@ TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
     EXPECT_NE(0u, paramValueSizeRet);
 }
 
-TEST_F(clGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenInvalidDeviceErrorIsReturned) {
 
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
@@ -42,7 +42,7 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoF
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenSuccessIsReturned) {
+TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenSuccessIsReturned) {
 
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
@@ -56,7 +56,7 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromMultiDeviceKernelThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromMultiDeviceKernelThenInvalidDeviceErrorIsReturned) {
 
     size_t paramValueSizeRet;
     MockUnrestrictiveContext context;
@@ -74,7 +74,7 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
 
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
-TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
+TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
@@ -99,7 +99,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
 }
 
 using matcher = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
-HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned, matcher) {
+HWTEST2_F(ClGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned, matcher) {
     size_t paramValueSizeRet;
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
@@ -120,7 +120,7 @@ HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocatio
     EXPECT_EQ(1024U, paramValue);
 }
 
-TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenZeroIsReturned) {
+TEST_F(ClGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenZeroIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
@@ -150,6 +150,6 @@ static cl_kernel_work_group_info paramNames[] = {
 
 INSTANTIATE_TEST_CASE_P(
     api,
-    clGetKernelWorkGroupInfoTests,
+    ClGetKernelWorkGroupInfoTests,
     testing::ValuesIn(paramNames));
 } // namespace ULT

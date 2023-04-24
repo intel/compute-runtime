@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateBufferTests;
+typedef api_tests ClCreateBufferTests;
 
 namespace ULT {
 
@@ -19,7 +19,7 @@ void CL_CALLBACK destructorCallBackMt(cl_mem memObj, void *userData) {
     cbInvoked++;
 }
 
-struct clSetMemObjectDestructorCallbackMtTests : public ApiFixture<>,
+struct ClSetMemObjectDestructorCallbackMtTests : public ApiFixture<>,
                                                  public ::testing::Test {
 
     void SetUp() override {
@@ -37,13 +37,13 @@ struct clSetMemObjectDestructorCallbackMtTests : public ApiFixture<>,
     }
 };
 
-TEST_F(clSetMemObjectDestructorCallbackMtTests, GivenMultipleThreadsWhenSettingDestructorCallbackThenCallbackWasInvokedForEachThread) {
+TEST_F(ClSetMemObjectDestructorCallbackMtTests, GivenMultipleThreadsWhenSettingDestructorCallbackThenCallbackWasInvokedForEachThread) {
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 42, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
-    std::thread t1(clSetMemObjectDestructorCallbackMtTests::setMemCallbackThreadFunc, buffer);
-    std::thread t2(clSetMemObjectDestructorCallbackMtTests::setMemCallbackThreadFunc, buffer);
+    std::thread t1(ClSetMemObjectDestructorCallbackMtTests::setMemCallbackThreadFunc, buffer);
+    std::thread t2(ClSetMemObjectDestructorCallbackMtTests::setMemCallbackThreadFunc, buffer);
     retVal = clSetMemObjectDestructorCallback(buffer, destructorCallBackMt, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     t1.join();

@@ -52,7 +52,7 @@ DecodeError decodeAndPopulateKernelMiscInfo(size_t kernelMiscInfoOffset, std::ve
 void extractZeInfoKernelSections(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &kernelNd, ZeInfoKernelSections &outZeInfoKernelSections, ConstStringRef context, std::string &outWarning);
 DecodeError validateZeInfoKernelSectionsCount(const ZeInfoKernelSections &outZeInfoKernelSections, std::string &outErrReason, std::string &outWarning);
 
-using ZeInfoGlobalHostAccessTables = StackVec<Types::GlobalHostAccessTable::globalHostAccessTableT, 32>;
+using ZeInfoGlobalHostAccessTables = StackVec<Types::GlobalHostAccessTable::GlobalHostAccessTableT, 32>;
 DecodeError readZeInfoGlobalHostAceessTable(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                             ZeInfoGlobalHostAccessTables &outDeviceNameToHostTable,
                                             ConstStringRef context,

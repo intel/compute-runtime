@@ -776,7 +776,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -896,7 +896,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeAndBatchedKe
     mockCsrmockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsrmockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsrmockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -917,7 +917,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeAndBatchedKe
     mockCsrmockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsrmockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsrmockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -938,7 +938,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIs
     mockCsrmockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsrmockCsr.useNewResourceImplicitFlush = false;
     mockCsrmockCsr.useGpuIdleImplicitFlush = false;
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsrmockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -969,7 +969,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenFlushIsC
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -989,7 +989,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTwoEnqueueProgrammedWithinS
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     ClHardwareParse hwParse;
@@ -1013,7 +1013,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -1034,7 +1034,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenThressEnqueueKernelsAreCal
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -1056,7 +1056,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenWaitForEventsIsCalledThenB
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -1082,7 +1082,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandIsFlushedThenFlushS
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -1137,7 +1137,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandWithEventIsFollowed
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -1191,7 +1191,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenWaitForEventsIsCalledWithU
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -1215,7 +1215,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledWithUnflushe
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -1244,7 +1244,7 @@ HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelIsMadeTh
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1266,7 +1266,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelIsMadeThenP
     mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr.useNewResourceImplicitFlush = false;
     mockCsr.useGpuIdleImplicitFlush = false;
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1290,7 +1290,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasShar
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1330,7 +1330,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
     mockCsr->timestampPacketWriteEnabled = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1359,7 +1359,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->enableNTo1SubmissionModel();
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1384,7 +1384,7 @@ HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelReturnin
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};

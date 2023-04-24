@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -183,7 +183,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = MakeMemoryResident_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -194,7 +194,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs0.Context.pfnMakeMemoryResidentCb =
         [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
             EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
@@ -204,7 +204,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, MakeMemoryResident_args.instanceData0);
             delete instanceData;
         };
@@ -256,7 +256,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = MakeMemoryResident_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -267,7 +267,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs3.Context.pfnMakeMemoryResidentCb =
         [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
             EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
@@ -277,7 +277,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, MakeMemoryResident_args.instanceData3);
             delete instanceData;
         };
@@ -350,7 +350,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryT
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = EvictMemory_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -361,7 +361,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryT
     //
     epilogCbs0.Context.pfnEvictMemoryCb =
         [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
             EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
@@ -371,7 +371,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryT
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, EvictMemory_args.instanceData0);
             delete instanceData;
         };
@@ -423,14 +423,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryT
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = EvictMemory_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
 
     epilogCbs3.Context.pfnEvictMemoryCb =
         [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
             EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
@@ -440,7 +440,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryT
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, EvictMemory_args.instanceData3);
             delete instanceData;
         };
@@ -506,7 +506,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = MakeImageResident_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -517,7 +517,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs0.Context.pfnMakeImageResidentCb =
         [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
             EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
@@ -526,7 +526,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, MakeImageResident_args.instanceData0);
             delete instanceData;
         };
@@ -575,7 +575,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = MakeImageResident_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -586,7 +586,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs3.Context.pfnMakeImageResidentCb =
         [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
             EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
@@ -595,7 +595,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, MakeImageResident_args.instanceData3);
             delete instanceData;
         };
@@ -661,7 +661,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = EvictImage_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -672,7 +672,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs0.Context.pfnMakeImageResidentCb =
         [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
             EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
@@ -681,7 +681,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, EvictImage_args.instanceData0);
             delete instanceData;
         };
@@ -730,7 +730,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = EvictImage_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -741,7 +741,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs3.Context.pfnMakeImageResidentCb =
         [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
             EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
@@ -750,7 +750,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, EvictImage_args.instanceData3);
             delete instanceData;
         };

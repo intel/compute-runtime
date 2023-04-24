@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-struct clEnqueueCopyBufferRectTests : public ApiFixture<0>, ::testing::Test {
+struct ClEnqueueCopyBufferRectTests : public ApiFixture<0>, ::testing::Test {
     void SetUp() override {
         ApiFixture::setUp();
     }
@@ -25,7 +25,7 @@ struct clEnqueueCopyBufferRectTests : public ApiFixture<0>, ::testing::Test {
 
 namespace ULT {
 
-TEST_F(clEnqueueCopyBufferRectTests, GivenCorrectParametersWhenEnqueingCopyBufferRectThenSuccessIsReturned) {
+TEST_F(ClEnqueueCopyBufferRectTests, GivenCorrectParametersWhenEnqueingCopyBufferRectThenSuccessIsReturned) {
     MockBuffer srcBuffer;
     MockBuffer dstBuffer;
     size_t srcOrigin[] = {0, 0, 0};
@@ -50,7 +50,7 @@ TEST_F(clEnqueueCopyBufferRectTests, GivenCorrectParametersWhenEnqueingCopyBuffe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferRectTests, GivenNullCommandQueueWhenEnqueingCopyBufferRectThenInvalidCommandQueueErrorIsReturned) {
+TEST_F(ClEnqueueCopyBufferRectTests, GivenNullCommandQueueWhenEnqueingCopyBufferRectThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueCopyBufferRect(
         nullptr, // command_queue
         nullptr, // srcBuffer
@@ -69,7 +69,7 @@ TEST_F(clEnqueueCopyBufferRectTests, GivenNullCommandQueueWhenEnqueingCopyBuffer
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferRectTests, GivenQueueIncapableWhenEnqueingCopyBufferRectThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueCopyBufferRectTests, GivenQueueIncapableWhenEnqueingCopyBufferRectThenInvalidOperationIsReturned) {
     MockBuffer srcBuffer;
     MockBuffer dstBuffer;
     size_t srcOrigin[] = {0, 0, 0};
@@ -95,7 +95,7 @@ TEST_F(clEnqueueCopyBufferRectTests, GivenQueueIncapableWhenEnqueingCopyBufferRe
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferRectTests, givenPitchesEqualZeroAndZerosInRegionWhenCallClEnqueueCopyBufferRectThenClInvalidValueIsReturned) {
+TEST_F(ClEnqueueCopyBufferRectTests, givenPitchesEqualZeroAndZerosInRegionWhenCallClEnqueueCopyBufferRectThenClInvalidValueIsReturned) {
     MockBuffer srcBuffer;
     MockBuffer dstBuffer;
     size_t srcOrigin[] = {0, 0, 0};
@@ -120,7 +120,7 @@ TEST_F(clEnqueueCopyBufferRectTests, givenPitchesEqualZeroAndZerosInRegionWhenCa
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferRectTests, givenZeroInRegionWhenCallClEnqueueCopyBufferRectThenClInvalidValueIsReturned) {
+TEST_F(ClEnqueueCopyBufferRectTests, givenZeroInRegionWhenCallClEnqueueCopyBufferRectThenClInvalidValueIsReturned) {
     MockBuffer srcBuffer;
     MockBuffer dstBuffer;
     size_t srcOrigin[] = {0, 0, 0};
@@ -200,7 +200,7 @@ TEST_F(clEnqueueCopyBufferRectTests, givenZeroInRegionWhenCallClEnqueueCopyBuffe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferRectTests, givenNonProperSrcBufferSizeWhenCallClEnqueueCopyBufferRectThenClInvalidValueIsReturned) {
+TEST_F(ClEnqueueCopyBufferRectTests, givenNonProperSrcBufferSizeWhenCallClEnqueueCopyBufferRectThenClInvalidValueIsReturned) {
     MockBuffer srcBuffer;
     srcBuffer.size = 10;
     MockBuffer dstBuffer;
@@ -226,7 +226,7 @@ TEST_F(clEnqueueCopyBufferRectTests, givenNonProperSrcBufferSizeWhenCallClEnqueu
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferRectTests, givenNonProperDstBufferSizeWhenCallClEnqueueCopyBufferRectThenClInvalidValueIsReturned) {
+TEST_F(ClEnqueueCopyBufferRectTests, givenNonProperDstBufferSizeWhenCallClEnqueueCopyBufferRectThenClInvalidValueIsReturned) {
     MockBuffer srcBuffer;
     MockBuffer dstBuffer;
     dstBuffer.size = 10;
@@ -252,7 +252,7 @@ TEST_F(clEnqueueCopyBufferRectTests, givenNonProperDstBufferSizeWhenCallClEnqueu
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferRectTests, givenPitchesEqualZeroAndNotZeroRegionWhenCallClEnqueueCopyBufferRectThenPitchIsSetBasedOnRegionAndClSuccessIsReturned) {
+TEST_F(ClEnqueueCopyBufferRectTests, givenPitchesEqualZeroAndNotZeroRegionWhenCallClEnqueueCopyBufferRectThenPitchIsSetBasedOnRegionAndClSuccessIsReturned) {
     class CommandQueueMock : public MockCommandQueue {
       public:
         CommandQueueMock(Context *context, ClDevice *device, const cl_queue_properties *props) : MockCommandQueue(context, device, props, false) {}

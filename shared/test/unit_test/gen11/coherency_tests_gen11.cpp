@@ -21,10 +21,10 @@ using namespace NEO;
 struct Gen11CoherencyRequirements : public ::testing::Test {
     typedef typename Gen11Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
 
-    struct myCsr : public CommandStreamReceiverHw<Gen11Family> {
+    struct MyCsr : public CommandStreamReceiverHw<Gen11Family> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen11Family>(executionEnvironment, 0, 1){};
+        MyCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen11Family>(executionEnvironment, 0, 1){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 
@@ -36,11 +36,11 @@ struct Gen11CoherencyRequirements : public ::testing::Test {
 
     void SetUp() override {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        csr = new myCsr(*device->executionEnvironment);
+        csr = new MyCsr(*device->executionEnvironment);
         device->resetCommandStreamReceiver(csr);
     }
 
-    myCsr *csr = nullptr;
+    MyCsr *csr = nullptr;
     std::unique_ptr<MockDevice> device;
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 };

@@ -246,7 +246,7 @@ TSizeType generateRandomSize() {
     return static_cast<TSizeType>(rand());
 }
 
-struct instanceDataStruct {
+struct InstanceDataStruct {
     void *instanceDataValue;
 };
 

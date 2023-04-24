@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct clEnqueueMapImageTests : public ApiFixture<>,
+struct ClEnqueueMapImageTests : public ApiFixture<>,
                                 public ::testing::Test {
 
     void SetUp() override {
@@ -47,7 +47,7 @@ struct clEnqueueMapImageTests : public ApiFixture<>,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueMapImageTests, GivenValidParametersWhenMappingImageThenSuccessIsReturned) {
+TEST_F(ClEnqueueMapImageTests, GivenValidParametersWhenMappingImageThenSuccessIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
@@ -74,7 +74,7 @@ TEST_F(clEnqueueMapImageTests, GivenValidParametersWhenMappingImageThenSuccessIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueMapImageTests, GivenQueueIncapableWhenMappingImageThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueMapImageTests, GivenQueueIncapableWhenMappingImageThenInvalidOperationIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
@@ -102,7 +102,7 @@ TEST_F(clEnqueueMapImageTests, GivenQueueIncapableWhenMappingImageThenInvalidOpe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-struct clEnqueueMapImageYUVTests : public ApiFixture<>,
+struct ClEnqueueMapImageYUVTests : public ApiFixture<>,
                                    public ::testing::Test {
 
     void SetUp() override {
@@ -133,7 +133,7 @@ struct clEnqueueMapImageYUVTests : public ApiFixture<>,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueMapImageYUVTests, GivenValidYuvImageWhenMappingImageThenSuccessIsReturned) {
+TEST_F(ClEnqueueMapImageYUVTests, GivenValidYuvImageWhenMappingImageThenSuccessIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
@@ -158,7 +158,7 @@ TEST_F(clEnqueueMapImageYUVTests, GivenValidYuvImageWhenMappingImageThenSuccessI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueMapImageYUVTests, GivenInvalidOriginWhenMappingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueMapImageYUVTests, GivenInvalidOriginWhenMappingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
@@ -183,7 +183,7 @@ TEST_F(clEnqueueMapImageYUVTests, GivenInvalidOriginWhenMappingYuvImageThenInval
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueMapImageYUVTests, GivenInvalidRegionWhenMappingYuvImageThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueMapImageYUVTests, GivenInvalidRegionWhenMappingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);

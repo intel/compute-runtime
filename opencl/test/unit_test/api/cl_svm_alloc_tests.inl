@@ -34,7 +34,7 @@ class ClSvmAllocTemplateTests : public ApiFixture<>,
     }
 };
 
-struct clSVMAllocValidFlagsTests : public ClSvmAllocTemplateTests {
+struct ClSVMAllocValidFlagsTests : public ClSvmAllocTemplateTests {
     cl_uchar pHostPtr[64];
 };
 
@@ -59,7 +59,7 @@ TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDevice
     clSVMFree(context.get(), svmPtr);
 }
 
-TEST_P(clSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAllocated) {
+TEST_P(ClSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAllocated) {
     cl_mem_flags flags = GetParam();
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     // check for svm support
@@ -109,17 +109,17 @@ static cl_mem_flags SVMAllocValidFlags[] = {
 
 INSTANTIATE_TEST_CASE_P(
     SVMAllocCheckFlags,
-    clSVMAllocValidFlagsTests,
+    ClSVMAllocValidFlagsTests,
     testing::ValuesIn(SVMAllocValidFlags));
 
-using clSVMAllocFtrFlagsTests = ClSvmAllocTemplateTests;
+using ClSVMAllocFtrFlagsTests = ClSvmAllocTemplateTests;
 
 INSTANTIATE_TEST_CASE_P(
     SVMAllocCheckFlagsFtrFlags,
-    clSVMAllocFtrFlagsTests,
+    ClSVMAllocFtrFlagsTests,
     testing::ValuesIn(SVMAllocValidFlags));
 
-TEST_P(clSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAllocated) {
+TEST_P(ClSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAllocated) {
     HardwareInfo *pHwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
 
     cl_mem_flags flags = GetParam();
@@ -151,10 +151,10 @@ TEST_P(clSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAlloc
     clSVMFree(pContext, svmPtr);
 };
 
-struct clSVMAllocInvalidFlagsTests : public ClSvmAllocTemplateTests {
+struct ClSVMAllocInvalidFlagsTests : public ClSvmAllocTemplateTests {
 };
 
-TEST_P(clSVMAllocInvalidFlagsTests, GivenInvalidFlagsWhenAllocatingSvmThenSvmIsNotAllocated) {
+TEST_P(ClSVMAllocInvalidFlagsTests, GivenInvalidFlagsWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = GetParam();
 
     auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
@@ -169,7 +169,7 @@ cl_mem_flags SVMAllocInvalidFlags[] = {
 
 INSTANTIATE_TEST_CASE_P(
     SVMAllocCheckFlags,
-    clSVMAllocInvalidFlagsTests,
+    ClSVMAllocInvalidFlagsTests,
     testing::ValuesIn(SVMAllocInvalidFlags));
 
 TEST_F(clSVMAllocTests, GivenNullContextWhenAllocatingSvmThenSvmIsNotAllocated) {

@@ -163,24 +163,24 @@ TEST_F(DrmGemCloseWorkerTests, givenAllocationWhenAskedForUnreferenceWithForceFl
 }
 
 TEST_F(DrmGemCloseWorkerTests, givenDrmGemCloseWorkerWhenCloseIsCalledWithBlockingFlagThenThreadIsClosed) {
-    struct mockDrmGemCloseWorker : DrmGemCloseWorker {
+    struct MockDrmGemCloseWorker : DrmGemCloseWorker {
         using DrmGemCloseWorker::DrmGemCloseWorker;
         using DrmGemCloseWorker::thread;
     };
 
-    std::unique_ptr<mockDrmGemCloseWorker> worker(new mockDrmGemCloseWorker(*mm));
+    std::unique_ptr<MockDrmGemCloseWorker> worker(new MockDrmGemCloseWorker(*mm));
     EXPECT_NE(nullptr, worker->thread);
     worker->close(true);
     EXPECT_EQ(nullptr, worker->thread);
 }
 
 TEST_F(DrmGemCloseWorkerTests, givenDrmGemCloseWorkerWhenCloseIsCalledMultipleTimeWithBlockingFlagThenThreadIsClosed) {
-    struct mockDrmGemCloseWorker : DrmGemCloseWorker {
+    struct MockDrmGemCloseWorker : DrmGemCloseWorker {
         using DrmGemCloseWorker::DrmGemCloseWorker;
         using DrmGemCloseWorker::thread;
     };
 
-    std::unique_ptr<mockDrmGemCloseWorker> worker(new mockDrmGemCloseWorker(*mm));
+    std::unique_ptr<MockDrmGemCloseWorker> worker(new MockDrmGemCloseWorker(*mm));
     worker->close(true);
     worker->close(true);
     worker->close(true);

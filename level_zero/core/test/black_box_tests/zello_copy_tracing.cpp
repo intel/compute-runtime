@@ -280,7 +280,7 @@ uint32_t memAllocSharedCount = 0;
 uint32_t memAllocSharedPrologCount = 0;
 uint32_t memAllocSharedEpilogCount = 0;
 
-struct tmpMemAllocSharedParams {
+struct TmpMemAllocSharedParams {
     ze_context_handle_t context;
     ze_device_mem_alloc_desc_t *deviceDesc;
     ze_host_mem_alloc_desc_t *hostDesc;
@@ -290,7 +290,7 @@ struct tmpMemAllocSharedParams {
     void *buffer;
 };
 
-tmpMemAllocSharedParams memAllocSharedParams;
+TmpMemAllocSharedParams memAllocSharedParams;
 
 void setMemAllocSharedParams(ze_context_handle_t context, ze_device_mem_alloc_desc_t *deviceDesc,
                              ze_host_mem_alloc_desc_t *hostDesc, size_t allocSize, size_t alignment,
@@ -305,7 +305,7 @@ void setMemAllocSharedParams(ze_context_handle_t context, ze_device_mem_alloc_de
     memAllocSharedCount++;
 }
 
-void checkMemAllocShared(ze_mem_alloc_shared_params_t *traceParams, tmpMemAllocSharedParams *checkParams) {
+void checkMemAllocShared(ze_mem_alloc_shared_params_t *traceParams, TmpMemAllocSharedParams *checkParams) {
     SUCCESS_OR_WARNING_BOOL(*(traceParams->phContext) == checkParams->context);
     SUCCESS_OR_WARNING_BOOL(*(traceParams->pdevice_desc) == checkParams->deviceDesc);
     SUCCESS_OR_WARNING_BOOL(*(traceParams->phost_desc) == checkParams->hostDesc);

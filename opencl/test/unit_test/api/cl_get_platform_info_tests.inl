@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-struct clGetPlatformInfoTests : Test<PlatformFixture> {
+struct ClGetPlatformInfoTests : Test<PlatformFixture> {
     void SetUp() override {
         Test<PlatformFixture>::SetUp();
     }
@@ -43,20 +43,20 @@ struct clGetPlatformInfoTests : Test<PlatformFixture> {
 
 namespace ULT {
 
-TEST_F(clGetPlatformInfoTests, GivenClPlatformProfileWhenGettingPlatformInfoStringThenFullProfileIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenClPlatformProfileWhenGettingPlatformInfoStringThenFullProfileIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_PROFILE);
     EXPECT_STREQ(paramValue, "FULL_PROFILE");
 }
 
-class ClGetPlatformInfoParameterizedTests : public clGetPlatformInfoTests,
+class ClGetPlatformInfoParameterizedTests : public ClGetPlatformInfoTests,
                                             public ::testing::WithParamInterface<uint32_t> {
     void SetUp() override {
         DebugManager.flags.ForceOCLVersion.set(GetParam());
-        clGetPlatformInfoTests::SetUp();
+        ClGetPlatformInfoTests::SetUp();
     }
 
     void TearDown() override {
-        clGetPlatformInfoTests::TearDown();
+        ClGetPlatformInfoTests::TearDown();
         DebugManager.flags.ForceOCLVersion.set(0);
     }
 };
@@ -96,20 +96,20 @@ INSTANTIATE_TEST_CASE_P(OCLVersions,
                         ClGetPlatformInfoParameterizedTests,
                         ::testing::Values(12, 21, 30));
 
-TEST_F(clGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);
     EXPECT_STREQ(paramValue, "Intel(R) OpenCL Graphics");
 }
 
-class ClGetPlatformInfoOverridePlatformNameTests : public clGetPlatformInfoTests {
+class ClGetPlatformInfoOverridePlatformNameTests : public ClGetPlatformInfoTests {
   public:
     void SetUp() override {
         NEO::DebugManager.flags.OverridePlatformName.set(testPlatformName);
-        clGetPlatformInfoTests::SetUp();
+        ClGetPlatformInfoTests::SetUp();
     }
 
     void TearDown() override {
-        clGetPlatformInfoTests::TearDown();
+        ClGetPlatformInfoTests::TearDown();
     }
 
     DebugManagerStateRestore restorer;
@@ -121,24 +121,24 @@ TEST_F(ClGetPlatformInfoOverridePlatformNameTests, givenDebugVariableOverridePla
     EXPECT_STREQ(paramValue, testPlatformName.c_str());
 }
 
-TEST_F(clGetPlatformInfoTests, GivenClPlatformVendorWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenClPlatformVendorWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_VENDOR);
     EXPECT_STREQ(paramValue, "Intel(R) Corporation");
 }
 
-TEST_F(clGetPlatformInfoTests, GivenClPlatformExtensionsWhenGettingPlatformInfoStringThenExtensionStringIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenClPlatformExtensionsWhenGettingPlatformInfoStringThenExtensionStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_EXTENSIONS);
 
     EXPECT_NE(nullptr, strstr(paramValue, "cl_khr_icd "));
     EXPECT_NE(nullptr, strstr(paramValue, "cl_khr_fp16 "));
 }
 
-TEST_F(clGetPlatformInfoTests, GivenClPlatformIcdSuffixKhrWhenGettingPlatformInfoStringThenIntelIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenClPlatformIcdSuffixKhrWhenGettingPlatformInfoStringThenIntelIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_ICD_SUFFIX_KHR);
     EXPECT_STREQ(paramValue, "INTEL");
 }
 
-TEST_F(clGetPlatformInfoTests, GivenClPlatformHostTimerResolutionWhenGettingPlatformInfoStringThenCorrectResolutionIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenClPlatformHostTimerResolutionWhenGettingPlatformInfoStringThenCorrectResolutionIsReturned) {
     auto retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_HOST_TIMER_RESOLUTION, 0, nullptr, &retSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_GT(retSize, 0u);
@@ -152,7 +152,7 @@ TEST_F(clGetPlatformInfoTests, GivenClPlatformHostTimerResolutionWhenGettingPlat
     EXPECT_EQ(resolution, value);
 }
 
-TEST_F(clGetPlatformInfoTests, GivenNullPlatformWhenGettingPlatformInfoStringThenClInvalidPlatformErrorIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenNullPlatformWhenGettingPlatformInfoStringThenClInvalidPlatformErrorIsReturned) {
     char extensions[512];
     auto retVal = clGetPlatformInfo(
         nullptr, // invalid platform
@@ -164,7 +164,7 @@ TEST_F(clGetPlatformInfoTests, GivenNullPlatformWhenGettingPlatformInfoStringThe
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
 }
 
-TEST_F(clGetPlatformInfoTests, GivenInvalidParamNameWhenGettingPlatformInfoStringThenClInvalidValueErrorIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenInvalidParamNameWhenGettingPlatformInfoStringThenClInvalidValueErrorIsReturned) {
     char extensions[512];
     auto retVal = clGetPlatformInfo(
         pPlatform,
@@ -176,7 +176,7 @@ TEST_F(clGetPlatformInfoTests, GivenInvalidParamNameWhenGettingPlatformInfoStrin
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clGetPlatformInfoTests, GivenInvalidParametersWhenGettingPlatformInfoThenValueSizeRetIsNotUpdated) {
+TEST_F(ClGetPlatformInfoTests, GivenInvalidParametersWhenGettingPlatformInfoThenValueSizeRetIsNotUpdated) {
     char extensions[512];
     retSize = 0x1234;
     auto retVal = clGetPlatformInfo(
@@ -190,7 +190,7 @@ TEST_F(clGetPlatformInfoTests, GivenInvalidParametersWhenGettingPlatformInfoThen
     EXPECT_EQ(0x1234u, retSize);
 }
 
-TEST_F(clGetPlatformInfoTests, GivenInvalidParamSizeWhenGettingPlatformInfoStringThenClInvalidValueErrorIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenInvalidParamSizeWhenGettingPlatformInfoStringThenClInvalidValueErrorIsReturned) {
     char extensions[512];
     auto retVal = clGetPlatformInfo(
         pPlatform,
@@ -202,7 +202,7 @@ TEST_F(clGetPlatformInfoTests, GivenInvalidParamSizeWhenGettingPlatformInfoStrin
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clGetPlatformInfoTests, GivenDeviceWhenGettingIcdDispatchTableThenDeviceAndPlatformTablesMatch) {
+TEST_F(ClGetPlatformInfoTests, GivenDeviceWhenGettingIcdDispatchTableThenDeviceAndPlatformTablesMatch) {
     EXPECT_NE(pPlatform->dispatch.icdDispatch, nullptr);
     for (size_t deviceOrdinal = 0; deviceOrdinal < pPlatform->getNumDevices(); ++deviceOrdinal) {
         auto device = pPlatform->getClDevice(deviceOrdinal);
@@ -211,7 +211,7 @@ TEST_F(clGetPlatformInfoTests, GivenDeviceWhenGettingIcdDispatchTableThenDeviceA
     }
 }
 
-TEST_F(clGetPlatformInfoTests, WhenCheckingPlatformExtensionsWithVersionThenTheyMatchPlatformExtensions) {
+TEST_F(ClGetPlatformInfoTests, WhenCheckingPlatformExtensionsWithVersionThenTheyMatchPlatformExtensions) {
 
     auto retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_EXTENSIONS_WITH_VERSION, 0, nullptr, &retSize);
     EXPECT_EQ(CL_SUCCESS, retVal);

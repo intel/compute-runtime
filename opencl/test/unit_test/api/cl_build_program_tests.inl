@@ -20,7 +20,7 @@
 
 using namespace NEO;
 
-struct clBuildProgramTests : public api_tests {
+struct ClBuildProgramTests : public api_tests {
     void SetUp() override {
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         api_tests::setUp();
@@ -34,7 +34,7 @@ struct clBuildProgramTests : public api_tests {
 
 namespace ULT {
 
-TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
+TEST_F(ClBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -85,7 +85,7 @@ TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
     EXPECT_EQ(nullptr, pProgram);
 }
 
-TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
+TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
 
@@ -125,7 +125,7 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST2_F(clBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXeHpcCore) {
+HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXeHpcCore) {
 
     DebugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
 
@@ -168,7 +168,7 @@ HWTEST2_F(clBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreating
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMultipleDevicesThenProgramBuildSucceeds) {
+TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMultipleDevicesThenProgramBuildSucceeds) {
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
@@ -214,7 +214,7 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMu
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOptionsIsCalledThenStoredOptionsAreUsed) {
+TEST_F(ClBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOptionsIsCalledThenStoredOptionsAreUsed) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
 
@@ -263,7 +263,7 @@ TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildSucceeds) {
+TEST_F(ClBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
     unsigned char llvm[16] = "BC\xc0\xde_unique";
@@ -307,7 +307,7 @@ TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenPro
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgramErrorIsReturned) {
+TEST_F(ClBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgramErrorIsReturned) {
     retVal = clBuildProgram(
         nullptr,
         1,
@@ -318,7 +318,7 @@ TEST_F(clBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgra
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
-TEST_F(clBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalidValueErrorIsReturned) {
+TEST_F(ClBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalidValueErrorIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
     size_t binarySize = 0;
@@ -358,7 +358,7 @@ TEST_F(clBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalid
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackIsInvoked) {
+TEST_F(ClBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackIsInvoked) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
 
@@ -401,7 +401,7 @@ TEST_F(clBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clBuildProgramTests, givenProgramWhenBuildingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClBuildProgramTests, givenProgramWhenBuildingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;

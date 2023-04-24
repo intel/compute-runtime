@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,7 +115,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = sampler_create_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -126,7 +126,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs0.Sampler.pfnCreateCb =
         [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
             EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
@@ -150,7 +150,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, sampler_create_args.instanceData0);
             delete instanceData;
         };
@@ -244,7 +244,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = sampler_create_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -255,7 +255,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs3.Sampler.pfnCreateCb =
         [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
             EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
@@ -279,7 +279,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, sampler_create_args.instanceData3);
             delete instanceData;
         };
@@ -332,7 +332,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = sampler_destroy_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -343,14 +343,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs0.Sampler.pfnDestroyCb =
         [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, sampler_destroy_args.instanceData0);
             delete instanceData;
         };
@@ -393,7 +393,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = sampler_destroy_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -404,14 +404,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     //
     epilogCbs3.Sampler.pfnDestroyCb =
         [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, sampler_destroy_args.instanceData3);
             delete instanceData;
         };

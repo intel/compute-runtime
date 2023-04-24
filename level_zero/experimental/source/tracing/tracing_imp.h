@@ -46,7 +46,7 @@ typedef struct tracer_array_entry {
     void *pUserData;
 } tracer_array_entry_t;
 
-typedef struct tracerArray {
+typedef struct TracerArray {
     size_t tracerArrayCount;
     tracer_array_entry_t *tracerArrayEntries;
 } tracer_array_t;

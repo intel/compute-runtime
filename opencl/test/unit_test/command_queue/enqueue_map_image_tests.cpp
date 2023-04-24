@@ -186,7 +186,7 @@ INSTANTIATE_TEST_CASE_P(MipMapMapImageParamsTest_givenAllocatedMapPtrAndMapWithD
                         MipMapMapImageParamsTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
 
 template <typename GfxFamily>
-struct mockedImage : public ImageHw<GfxFamily> {
+struct MockedImage : public ImageHw<GfxFamily> {
     using ImageHw<GfxFamily>::ImageHw;
     void setAllocatedMapPtr(void *allocatedMapPtr) override {
         ownershipTaken = this->hasOwnership();
@@ -204,7 +204,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
     auto graphicsAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto surfaceFormatInfo = image->getSurfaceFormatInfo();
 
-    mockedImage<FamilyType> mockImage(context,
+    MockedImage<FamilyType> mockImage(context,
                                       {},
                                       0,
                                       0,

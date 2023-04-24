@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/submissions_aggregator.h"
 
 namespace NEO {
-struct mockSubmissionsAggregator : public SubmissionAggregator {
+struct MockSubmissionsAggregator : public SubmissionAggregator {
     CommandBufferList &peekCommandBuffers() {
         return this->cmdBuffers;
     }

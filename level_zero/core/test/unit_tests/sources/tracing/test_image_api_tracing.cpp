@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,7 +108,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = ImageGetProperties_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -119,7 +119,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     //
     epilogCbs0.Image.pfnGetPropertiesCb =
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
@@ -128,7 +128,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, ImageGetProperties_args.instanceData0);
             delete instanceData;
         };
@@ -177,7 +177,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = ImageGetProperties_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -188,7 +188,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     //
     epilogCbs3.Image.pfnGetPropertiesCb =
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
@@ -197,7 +197,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, ImageGetProperties_args.instanceData3);
             delete instanceData;
         };
@@ -289,7 +289,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = ImageCreate_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -300,7 +300,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
     //
     epilogCbs0.Image.pfnCreateCb =
         [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             ASSERT_NE(nullptr, params);
             ASSERT_NE(nullptr, params->phContext);
@@ -329,7 +329,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, ImageCreate_args.instanceData0);
             delete instanceData;
         };
@@ -423,7 +423,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = ImageCreate_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -434,7 +434,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
     //
     epilogCbs3.Image.pfnCreateCb =
         [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
             EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
@@ -458,7 +458,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, ImageCreate_args.instanceData3);
             delete instanceData;
         };
@@ -508,7 +508,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = ImageDestroy_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -519,14 +519,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     //
     epilogCbs0.Image.pfnDestroyCb =
         [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, ImageDestroy_args.instanceData0);
             delete instanceData;
         };
@@ -569,7 +569,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = ImageDestroy_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -580,14 +580,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     //
     epilogCbs3.Image.pfnDestroyCb =
         [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, ImageDestroy_args.instanceData3);
             delete instanceData;
         };

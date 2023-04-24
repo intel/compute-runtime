@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,11 +41,11 @@ class ClCreateSubBufferTemplateTests : public ApiFixture<>,
     cl_uchar pHostPtr[64];
 };
 
-struct clCreateSubBufferValidFlagsNoHostPtrTests
+struct ClCreateSubBufferValidFlagsNoHostPtrTests
     : public ClCreateSubBufferTemplateTests<false, CL_MEM_READ_WRITE> {
 };
 
-TEST_P(clCreateSubBufferValidFlagsNoHostPtrTests, GivenValidFlagsWhenCreatingSubBufferThenSubBufferIsCreatedAndSuccessIsReturned) {
+TEST_P(ClCreateSubBufferValidFlagsNoHostPtrTests, GivenValidFlagsWhenCreatingSubBufferThenSubBufferIsCreatedAndSuccessIsReturned) {
     cl_buffer_region region = {0, 12};
     cl_mem_flags flags = GetParam();
 
@@ -68,14 +68,14 @@ static cl_mem_flags validFlags[] = {
 
 INSTANTIATE_TEST_CASE_P(
     CreateSubBufferCheckFlags,
-    clCreateSubBufferValidFlagsNoHostPtrTests,
+    ClCreateSubBufferValidFlagsNoHostPtrTests,
     testing::ValuesIn(validFlags));
 
-struct clCreateSubBufferInvalidFlagsHostPtrTests
+struct ClCreateSubBufferInvalidFlagsHostPtrTests
     : public ClCreateSubBufferTemplateTests<true, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY> {
 };
 
-TEST_P(clCreateSubBufferInvalidFlagsHostPtrTests, GivenInvalidFlagsWhenCreatingSubBufferThenInvalidValueErrorIsReturned) {
+TEST_P(ClCreateSubBufferInvalidFlagsHostPtrTests, GivenInvalidFlagsWhenCreatingSubBufferThenInvalidValueErrorIsReturned) {
     cl_buffer_region region = {4, 12};
     cl_mem_flags flags = GetParam();
 
@@ -98,7 +98,7 @@ cl_mem_flags invalidFlags[] = {
 
 INSTANTIATE_TEST_CASE_P(
     CreateSubBufferCheckFlags,
-    clCreateSubBufferInvalidFlagsHostPtrTests,
+    ClCreateSubBufferInvalidFlagsHostPtrTests,
     testing::ValuesIn(invalidFlags));
 
 class ClCreateSubBufferTests : public api_tests {

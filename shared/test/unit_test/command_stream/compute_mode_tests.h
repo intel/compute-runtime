@@ -17,10 +17,10 @@ using namespace NEO;
 
 struct ComputeModeRequirements : public ::testing::Test {
     template <typename FamilyType>
-    struct myCsr : public UltCommandStreamReceiver<FamilyType> {
+    struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
-        myCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
+        MyCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
             : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &this->csrSizeRequestFlags; }
         bool hasSharedHandles() override {
@@ -67,8 +67,8 @@ struct ComputeModeRequirements : public ::testing::Test {
     }
 
     template <typename FamilyType>
-    myCsr<FamilyType> *getCsrHw() {
-        return static_cast<myCsr<FamilyType> *>(csr);
+    MyCsr<FamilyType> *getCsrHw() {
+        return static_cast<MyCsr<FamilyType> *>(csr);
     }
 
     template <typename FamilyType>
@@ -81,7 +81,7 @@ struct ComputeModeRequirements : public ::testing::Test {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo));
         device->executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hardwareInfo);
         device->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-        csr = new myCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
+        csr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
 
         device->resetCommandStreamReceiver(csr);
         AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,13 +23,13 @@ void populateFactoryTable<UltCommandStreamReceiver<Family>>() {
     commandStreamReceiverFactory[IGFX_MAX_CORE + gfxCore] = UltCommandStreamReceiver<Family>::create;
 }
 
-struct enableGen9 {
-    enableGen9() {
+struct EnableGen9 {
+    EnableGen9() {
         populateFactoryTable<UltCommandStreamReceiver<Family>>();
     }
 };
 
-static enableGen9 enable;
+static EnableGen9 enable;
 
 static MockDebuggerL0HwPopulateFactory<gfxCore, Family> mockDebuggerGen9;
 

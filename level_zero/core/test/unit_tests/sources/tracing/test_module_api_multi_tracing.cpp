@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -132,7 +132,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = module_create_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -143,7 +143,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
     //
     epilogCbs0.Module.pfnCreateCb =
         [](ze_module_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(module_create_args.hContext1, *params->phContext);
             EXPECT_EQ(module_create_args.hDevice1, *params->phDevice);
@@ -181,7 +181,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, module_create_args.instanceData0);
             delete instanceData;
         };
@@ -317,7 +317,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = module_create_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -328,7 +328,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
     //
     epilogCbs3.Module.pfnCreateCb =
         [](ze_module_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(module_create_args.hContext1, *params->phContext);
             EXPECT_EQ(module_create_args.hDevice1, *params->phDevice);
@@ -366,7 +366,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, module_create_args.instanceData3);
             delete instanceData;
         };
@@ -416,7 +416,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = module_destroy_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -427,14 +427,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
     //
     epilogCbs0.Module.pfnDestroyCb =
         [](ze_module_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(module_destroy_args.hModule1, *params->phModule);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, module_destroy_args.instanceData0);
             delete instanceData;
         };
@@ -477,7 +477,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = module_destroy_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -488,14 +488,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
     //
     epilogCbs3.Module.pfnDestroyCb =
         [](ze_module_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(module_destroy_args.hModule1, *params->phModule);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, module_destroy_args.instanceData3);
             delete instanceData;
         };
@@ -597,7 +597,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
             *val += 1;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = module_get_native_binary_args.instanceData0;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -608,7 +608,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
     //
     epilogCbs0.Module.pfnGetNativeBinaryCb =
         [](ze_module_get_native_binary_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(module_get_native_binary_args.hModule1, *params->phModule);
 
@@ -633,7 +633,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
             *val += 1;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, module_get_native_binary_args.instanceData0);
             delete instanceData;
         };
@@ -731,7 +731,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
             *val += 31;
-            struct instanceDataStruct *instanceData = new struct instanceDataStruct;
+            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
             instanceData->instanceDataValue = module_get_native_binary_args.instanceData3;
             *ppTracerInstanceUserData = instanceData;
         };
@@ -742,7 +742,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
     //
     epilogCbs3.Module.pfnGetNativeBinaryCb =
         [](ze_module_get_native_binary_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct instanceDataStruct *instanceData;
+            struct InstanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(module_get_native_binary_args.hModule1, *params->phModule);
 
@@ -767,7 +767,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
             *val += 31;
-            instanceData = (struct instanceDataStruct *)*ppTracerInstanceUserData;
+            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
             EXPECT_EQ(instanceData->instanceDataValue, module_get_native_binary_args.instanceData3);
             delete instanceData;
         };

@@ -726,7 +726,7 @@ INSTANTIATE_TEST_CASE_P(EnqueueKernel,
 using EnqueueKernelTests = ::testing::Test;
 
 HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy) {
-    struct myCsr : public UltCommandStreamReceiver<FamilyType> {
+    struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiverHw<FamilyType>::streamProperties;
     };
 
@@ -751,7 +751,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
 
     cl_int retVal;
     std::unique_ptr<CommandQueue> pCommandQueue{CommandQueue::create(&context, clDeviceFactory.rootDevices[0], nullptr, true, retVal)};
-    auto &csr = static_cast<myCsr &>(pCommandQueue->getGpgpuCommandStreamReceiver());
+    auto &csr = static_cast<MyCsr &>(pCommandQueue->getGpgpuCommandStreamReceiver());
 
     pCommandQueue->enqueueKernel(
         mockKernelWithInternalsWithIfpRequired.mockKernel,

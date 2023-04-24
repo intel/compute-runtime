@@ -2873,8 +2873,8 @@ struct SpecializationConstantRootDeviceEnvironment : public RootDeviceEnvironmen
     }
 };
 
-struct setProgramSpecializationConstantTests : public ::testing::Test {
-    setProgramSpecializationConstantTests() : device(new MockDevice()) {}
+struct SetProgramSpecializationConstantTests : public ::testing::Test {
+    SetProgramSpecializationConstantTests() : device(new MockDevice()) {}
     void SetUp() override {
         mockCompiler = new SpecializationConstantCompilerInterfaceMock();
         auto rootDeviceEnvironment = device.getExecutionEnvironment()->rootDeviceEnvironments[0].get();
@@ -2893,7 +2893,7 @@ struct setProgramSpecializationConstantTests : public ::testing::Test {
     int specValue = 1;
 };
 
-TEST_F(setProgramSpecializationConstantTests, whenSetProgramSpecializationConstantThenBinarySourceIsUsed) {
+TEST_F(SetProgramSpecializationConstantTests, whenSetProgramSpecializationConstantThenBinarySourceIsUsed) {
     auto retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);
 
     EXPECT_EQ(1, mockCompiler->counter);
@@ -2902,7 +2902,7 @@ TEST_F(setProgramSpecializationConstantTests, whenSetProgramSpecializationConsta
     EXPECT_EQ(mockProgram->irBinary.get(), mockCompiler->spirV);
 }
 
-TEST_F(setProgramSpecializationConstantTests, whenSetProgramSpecializationConstantMultipleTimesThenSpecializationConstantsAreInitializedOnce) {
+TEST_F(SetProgramSpecializationConstantTests, whenSetProgramSpecializationConstantMultipleTimesThenSpecializationConstantsAreInitializedOnce) {
     auto retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);
 
     EXPECT_EQ(1, mockCompiler->counter);
@@ -2916,7 +2916,7 @@ TEST_F(setProgramSpecializationConstantTests, whenSetProgramSpecializationConsta
     EXPECT_TRUE(mockProgram->areSpecializationConstantsInitialized);
 }
 
-TEST_F(setProgramSpecializationConstantTests, givenInvalidGetSpecConstantsInfoReturnValueWhenSetProgramSpecializationConstantThenErrorIsReturned) {
+TEST_F(SetProgramSpecializationConstantTests, givenInvalidGetSpecConstantsInfoReturnValueWhenSetProgramSpecializationConstantThenErrorIsReturned) {
     mockCompiler->returnError();
 
     auto retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);

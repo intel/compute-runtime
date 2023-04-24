@@ -23,7 +23,7 @@ TEST(CheckVerifyMemoryRelatedApiConstants, givenVerifyMemoryRelatedApiConstantsW
     EXPECT_EQ(AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual, CL_MEM_COMPARE_NOT_EQUAL);
 }
 
-struct clEnqueueVerifyMemoryINTELSettings {
+struct ClEnqueueVerifyMemoryINTELSettings {
     const cl_uint comparisonMode = CL_MEM_COMPARE_EQUAL;
     const size_t bufferSize = 1;
     static constexpr size_t expectedSize = 1;
@@ -32,7 +32,7 @@ struct clEnqueueVerifyMemoryINTELSettings {
 };
 
 class ClEnqueueVerifyMemoryIntelTests : public api_tests,
-                                        public clEnqueueVerifyMemoryINTELSettings {
+                                        public ClEnqueueVerifyMemoryINTELSettings {
 };
 
 TEST_F(ClEnqueueVerifyMemoryIntelTests, givenSizeOfComparisonEqualZeroWhenCallingVerifyMemoryThenErrorIsReturned) {

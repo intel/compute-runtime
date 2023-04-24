@@ -51,7 +51,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -109,7 +109,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTaskStreamWhenFlushingThenSto
 
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -142,7 +142,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndTwoRecord
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -210,7 +210,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -275,7 +275,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     auto memorySize = (size_t)pDevice->getDeviceInfo().globalMemSize;
@@ -344,7 +344,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -418,7 +418,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     configureCSRtoNonDirtyState<FamilyType>(false);
@@ -497,7 +497,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenBlocking
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     configureCSRtoNonDirtyState<FamilyType>(false);
@@ -727,7 +727,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenWaitForT
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -768,7 +768,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenEnqueueI
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -809,7 +809,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -875,7 +875,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -931,7 +931,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1250,7 +1250,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenDcFlushI
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1284,7 +1284,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEpiloguePipeControlThenDcFlus
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1332,7 +1332,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEpiloguePipeControlWhendDcFlu
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1369,7 +1369,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1428,7 +1428,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSe
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1468,7 +1468,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenPipeCont
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1531,7 +1531,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1673,7 +1673,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1706,7 +1706,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1756,7 +1756,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1838,7 +1838,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithNewSliceCoun
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     uint64_t newSliceCount = 1;

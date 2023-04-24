@@ -1739,7 +1739,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyC
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
 }
 
-struct createHostUnifiedMemoryAllocationTest : public ::testing::Test {
+struct CreateHostUnifiedMemoryAllocationTest : public ::testing::Test {
     void SetUp() override {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         device0 = context.pRootDevice0;
@@ -1757,7 +1757,7 @@ struct createHostUnifiedMemoryAllocationTest : public ::testing::Test {
     SVMAllocsManager *svmManager = nullptr;
 };
 
-HWTEST_F(createHostUnifiedMemoryAllocationTest,
+HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
          whenCreatingHostUnifiedMemoryAllocationThenOneAllocDataIsCreatedWithOneGraphicsAllocationPerDevice) {
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, context.getRootDeviceIndices(), context.getDeviceBitfields());
@@ -1779,7 +1779,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
 }
 
-HWTEST_F(createHostUnifiedMemoryAllocationTest,
+HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
          whenCreatingMultiGraphicsAllocationThenGraphicsAllocationPerDeviceIsCreated) {
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, context.getRootDeviceIndices(), context.getDeviceBitfields());
@@ -1825,7 +1825,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
     }
 }
 
-HWTEST_F(createHostUnifiedMemoryAllocationTest,
+HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
          whenCreatingMultiGraphicsAllocationForSpecificRootDeviceIndicesThenOnlyGraphicsAllocationPerSpecificRootDeviceIndexIsCreated) {
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, context.getRootDeviceIndices(), context.getDeviceBitfields());
