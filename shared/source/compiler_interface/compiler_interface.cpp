@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -369,20 +370,24 @@ CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> CompilerInterface::getIg
 }
 
 bool CompilerInterface::loadFcl() {
-    return NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
+    return NEO::loadCompiler(Os::frontEndDllName, fclLib, fclMain);
 }
 
 bool CompilerInterface::loadIgc() {
-    return NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
+    return NEO::loadCompiler(Os::igcDllName, igcLib, igcMain);
 }
 
 bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
     bool fclAvailable = requireFcl ? this->loadFcl() : false;
     bool igcAvailable = this->loadIgc();
+    bool compilerVersionCorrect = true;
+    if (!DebugManager.flags.ZebinIgnoreIcbeVersion.get()) {
+        compilerVersionCorrect = verifyIcbeVersion();
+    }
 
     this->cache.swap(cache);
 
-    return this->cache && igcAvailable && (fclAvailable || (false == requireFcl));
+    return this->cache && igcAvailable && (fclAvailable || (false == requireFcl)) && compilerVersionCorrect;
 }
 
 IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &device) {
@@ -492,4 +497,62 @@ CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcT
     return deviceCtx->CreateTranslationCtx(inType, outType);
 }
 
+template <template <CIF::Version_t> class EntryPointT>
+void checkIcbeVersion(CIF::CIFMain *main, const char *libName, bool &ret) {
+    if (false == main->IsCompatible<EntryPointT>()) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
+        DEBUG_BREAK_IF(true); // given compiler library is not compatible
+        ret = false;
+        return;
+    }
+    ret = true;
+}
+
+template <>
+std::once_flag &CompilerInterface::getIcbeVersionCallOnceFlag<IGC::IgcOclDeviceCtx>() {
+    return igcIcbeCheckVersionCallOnce;
+}
+
+template <>
+std::once_flag &CompilerInterface::getIcbeVersionCallOnceFlag<IGC::FclOclDeviceCtx>() {
+    return fclIcbeCheckVersionCallOnce;
+}
+
+template <template <CIF::Version_t> class EntryPointT>
+bool CompilerInterface::checkIcbeVersionOnce(CIF::CIFMain *main, const char *libName) {
+    bool ret = true;
+    std::call_once(getIcbeVersionCallOnceFlag<EntryPointT>(), checkIcbeVersion<EntryPointT>, main, libName, ret);
+    return ret;
+}
+
+bool CompilerInterface::verifyIcbeVersion() {
+    bool versionIsCorrect = true;
+    if (isFclAvailable()) {
+        versionIsCorrect = checkIcbeVersionOnce<IGC::FclOclDeviceCtx>(fclMain.get(), Os::frontEndDllName);
+    }
+    if (isIgcAvailable()) {
+        versionIsCorrect &= checkIcbeVersionOnce<IGC::IgcOclDeviceCtx>(igcMain.get(), Os::igcDllName);
+    }
+    return versionIsCorrect;
+}
+
+bool CompilerInterface::addOptionDisableZebin(std::string &options, std::string &internalOptions) {
+    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
+    auto pos = options.find(NEO::CompilerOptions::enableZebin.str());
+    if (pos != std::string::npos || !verifyIcbeVersion()) {
+        return false;
+    }
+    return true;
+}
+
+bool CompilerInterface::disableZebin(std::string &options, std::string &internalOptions) {
+    auto pos = options.find(NEO::CompilerOptions::enableZebin.str());
+    if (pos != std::string::npos) {
+        options.erase(pos, pos + CompilerOptions::enableZebin.length());
+    }
+    return addOptionDisableZebin(options, internalOptions);
+}
+
+template bool CompilerInterface::checkIcbeVersionOnce<IGC::FclOclDeviceCtx>(CIF::CIFMain *main, const char *libName);
+template bool CompilerInterface::checkIcbeVersionOnce<IGC::IgcOclDeviceCtx>(CIF::CIFMain *main, const char *libName);
 } // namespace NEO

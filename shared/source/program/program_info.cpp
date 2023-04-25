@@ -7,6 +7,7 @@
 
 #include "shared/source/program/program_info.h"
 
+#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/linker.h"
@@ -52,10 +53,7 @@ bool isRebuiltToPatchtokensRequired(Device *neoDevice, ArrayRef<const uint8_t> a
     auto isSourceLevelDebuggerActive = (nullptr != neoDevice->getSourceLevelDebugger());
     auto isZebinFormat = NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(archive);
     if ((isSourceLevelDebuggerActive || isVmeUsed) && isZebinFormat) {
-        auto pos = optionsString.find(NEO::CompilerOptions::enableZebin.str());
-        optionsString.erase(pos, pos + NEO::CompilerOptions::enableZebin.length());
-        optionsString += " " + NEO::CompilerOptions::disableZebin.str();
-        return true;
+        return neoDevice->getCompilerInterface()->disableZebin(optionsString, optionsString);
     }
     return false;
 }

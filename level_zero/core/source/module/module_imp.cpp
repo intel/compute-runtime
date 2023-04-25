@@ -251,7 +251,8 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inp
 
 ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
                                                   const ze_module_constants_t *pConstants) {
-    auto compilerInterface = device->getNEODevice()->getCompilerInterface();
+    const auto &neoDevice = device->getNEODevice();
+    auto compilerInterface = neoDevice->getCompilerInterface();
     if (!compilerInterface) {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
@@ -261,16 +262,15 @@ ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t in
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
-    auto &l0GfxCoreHelper = this->device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
-    auto isZebinAllowed = l0GfxCoreHelper.isZebinAllowed(this->device->getNEODevice()->getDebugger());
+    auto isZebinAllowed = l0GfxCoreHelper.isZebinAllowed(neoDevice->getDebugger());
     if (isZebinAllowed == false) {
-        auto pos = this->options.find(NEO::CompilerOptions::enableZebin.str());
-        if (pos != std::string::npos) {
-            updateBuildLog("Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-enable-zebin\" build flag.");
+        const auto &rootDevice = neoDevice->getRootDevice();
+        if (!rootDevice->getCompilerInterface()->addOptionDisableZebin(this->options, internalOptions)) {
+            updateBuildLog("Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-enable-zebin\" build flag");
             return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         }
-        internalOptions += " " + NEO::CompilerOptions::disableZebin.str();
     }
 
     NEO::TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};

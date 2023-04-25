@@ -486,11 +486,8 @@ void Program::disableZebinIfVmeEnabled(std::string &options, std::string &intern
     }
 
     if (containsVme(options, vmeOptions) || containsVme(sourceCode, vmeEnabledExtensions)) {
-        auto pos = options.find(CompilerOptions::enableZebin.str());
-        if (pos != std::string::npos) {
-            options.erase(pos, pos + CompilerOptions::enableZebin.length());
-        }
-        internalOptions += " " + CompilerOptions::disableZebin.str();
+        const auto &rootDevice = getDevices()[0]->getDevice().getRootDevice();
+        rootDevice->getCompilerInterface()->disableZebin(options, internalOptions);
     }
 }
 

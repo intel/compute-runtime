@@ -8,9 +8,11 @@
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -621,7 +623,7 @@ TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvok
 TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
+    bool retVal = loadCompiler("", retLib, retMain);
     EXPECT_TRUE(retVal);
     EXPECT_NE(nullptr, retLib.get());
     EXPECT_NE(nullptr, retMain.get());
@@ -630,7 +632,7 @@ TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
 TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("_falseName.notRealLib", retLib, retMain);
+    bool retVal = loadCompiler("_falseName.notRealLib", retLib, retMain);
     EXPECT_FALSE(retVal);
     EXPECT_EQ(nullptr, retLib.get());
     EXPECT_EQ(nullptr, retMain.get());
@@ -641,34 +643,12 @@ TEST(LoadCompilerTest, whenCreateMainFailsThenReturnFalseAndNullOutputs) {
 
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
+    bool retVal = loadCompiler("", retLib, retMain);
     EXPECT_FALSE(retVal);
     EXPECT_EQ(nullptr, retLib.get());
     EXPECT_EQ(nullptr, retMain.get());
 
     NEO::failCreateCifMain = false;
-}
-
-TEST(LoadCompilerTest, whenEntrypointInterfaceIsNotCompatibleThenReturnFalseAndNullOutputs) {
-
-    std::unique_ptr<NEO::OsLibrary> retLib;
-    CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler<IGC::GTSystemInfo>("", retLib, retMain);
-    EXPECT_FALSE(retVal);
-    EXPECT_EQ(nullptr, retLib.get());
-    EXPECT_EQ(nullptr, retMain.get());
-}
-
-TEST(LoadCompilerTest, GivenZebinIgnoreIcbeVersionDebugFlagThenIgnoreIgcsIcbeVersion) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(true);
-
-    std::unique_ptr<NEO::OsLibrary> retLib;
-    CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
-    EXPECT_TRUE(retVal);
-    EXPECT_NE(nullptr, retLib.get());
-    EXPECT_NE(nullptr, retMain.get());
 }
 
 template <typename DeviceCtxBase, typename TranslationCtx>
@@ -1212,6 +1192,331 @@ TEST_F(CompilerInterfaceTest, givenCompilerInterfaceWhenGetSpecializationConstan
     NEO::SpecConstantInfo specConstInfo;
     auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, inputArgs.src, specConstInfo);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+}
+
+struct UnknownInterfaceCIFMain : MockCIFMain {
+    CIF::InterfaceId_t FindIncompatibleImpl(CIF::InterfaceId_t entryPointInterface, CIF::CompatibilityDataHandle handle) const override {
+        return CIF::UnknownInterface;
+    }
+};
+struct MockCompilerInterfaceWithUnknownInterfaceCIFMain : MockCompilerInterface {
+    bool loadFcl() override {
+        CompilerInterface::loadFcl();
+        fclMain.reset(new UnknownInterfaceCIFMain());
+        if (failLoadFcl) {
+            return false;
+        }
+        return true;
+    }
+
+    bool loadIgc() override {
+        CompilerInterface::loadIgc();
+        igcMain.reset(new UnknownInterfaceCIFMain());
+        if (failLoadIgc) {
+            return false;
+        }
+        return true;
+    }
+};
+
+TEST(TestCompilerInterface, givenNullCompilerCacheAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    ci.failLoadFcl = false;
+    ci.failLoadIgc = false;
+    bool initSuccess = ci.initialize(nullptr, true);
+    EXPECT_FALSE(initSuccess);
+}
+
+TEST(TestCompilerInterface, givenRequiredFclAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    bool requireFcl = true;
+    ci.failLoadFcl = false;
+    ci.failLoadIgc = false;
+
+    EXPECT_FALSE(ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl));
+}
+
+TEST(TestCompilerInterface, givenNotRequiredFclAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    bool requireFcl = false;
+    ci.failLoadFcl = false;
+    ci.failLoadIgc = false;
+
+    EXPECT_FALSE(ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl));
+}
+
+TEST(TestCompilerInterface, givenNotRequiredFclAndFclLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    bool requireFcl = false;
+    ci.failLoadFcl = true;
+    ci.failLoadIgc = false;
+
+    EXPECT_FALSE(ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl));
+}
+
+TEST(TestCompilerInterface, givenRequiredFclAndFclLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    bool requireFcl = true;
+    ci.failLoadFcl = true;
+    ci.failLoadIgc = false;
+
+    EXPECT_FALSE(ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl));
+}
+
+TEST(TestCompilerInterface, givenRequiredFclAndIgcLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    bool requireFcl = true;
+    ci.failLoadFcl = false;
+    ci.failLoadIgc = true;
+
+    EXPECT_FALSE(ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl));
+}
+
+TEST(TestCompilerInterface, givenNotRequiredFclAndIgcLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    bool requireFcl = false;
+    ci.failLoadFcl = false;
+    ci.failLoadIgc = true;
+
+    EXPECT_FALSE(ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl));
+}
+
+TEST(TestCompilerInterface, givenNotRequiredFclAndFclAndIgcLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    bool requireFcl = false;
+    ci.failLoadFcl = true;
+    ci.failLoadIgc = true;
+
+    EXPECT_FALSE(ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl));
+}
+
+TEST(TestCompilerInterface, givenRequiredFclAndFclAndIgcLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+
+    MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
+
+    bool requireFcl = true;
+    ci.failLoadFcl = true;
+    ci.failLoadIgc = true;
+
+    EXPECT_FALSE(ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl));
+}
+
+TEST(TestCompilerInterface, givenZebinIgnoreIcbeVersionFlagWhenVerifyIcbeVersionFailThenInitializationReturnProperValues) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(1);
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(1);
+
+    auto mockCompilerInterface = std::make_unique<MockCompilerInterfaceWithUnknownInterfaceCIFMain>();
+
+    testing::internal::CaptureStderr();
+    bool initializationOfCompilerInterfaceSuccessed = mockCompilerInterface->initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), true);
+    EXPECT_TRUE(initializationOfCompilerInterfaceSuccessed);
+    std::string stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_TRUE(stderrString.empty());
+
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    testing::internal::CaptureStderr();
+    initializationOfCompilerInterfaceSuccessed = mockCompilerInterface->initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), true);
+    EXPECT_FALSE(initializationOfCompilerInterfaceSuccessed);
+    stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_FALSE(stderrString.empty());
+}
+
+TEST(TestCompilerInterface, givenUnknownInterfaceForIgcAndFclWhenCheckIcbeVersionThenPrintProperDebugMessageOnce) {
+    auto dummy = std::make_unique<UnknownInterfaceCIFMain>();
+    auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(1);
+
+    std::string dummyString = "dummy";
+    std::string expectedError = "Installed Compiler Library " + dummyString + " is incompatible\n";
+
+    testing::internal::CaptureStderr();
+    auto err = mockCompilerInterface->checkIcbeVersionOnce<IGC::FclOclDeviceCtx>(dummy.get(), dummyString.c_str());
+    EXPECT_FALSE(err);
+    std::string stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(expectedError, stderrString);
+
+    testing::internal::CaptureStderr();
+    err = mockCompilerInterface->checkIcbeVersionOnce<IGC::IgcOclDeviceCtx>(dummy.get(), dummyString.c_str());
+    EXPECT_FALSE(err);
+    stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(expectedError, stderrString);
+
+    // second check for the same EntryPointTs
+    testing::internal::CaptureStderr();
+    mockCompilerInterface->checkIcbeVersionOnce<IGC::FclOclDeviceCtx>(dummy.get(), dummyString.c_str());
+    stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_TRUE(stderrString.empty());
+
+    testing::internal::CaptureStderr();
+    mockCompilerInterface->checkIcbeVersionOnce<IGC::IgcOclDeviceCtx>(dummy.get(), dummyString.c_str());
+    stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_TRUE(stderrString.empty());
+}
+
+TEST(TestCompilerInterface, givenUnknownInterfaceAndFclMainWhenverifyIcbeVersionThenPrintProperDebugMessage) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(1);
+
+    auto dummy = new UnknownInterfaceCIFMain();
+    auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
+
+    mockCompilerInterface->fclMain.reset(dummy);
+    mockCompilerInterface->igcMain.reset(nullptr);
+    std::string expectedError = "Installed Compiler Library " + std::string(Os::frontEndDllName) + " is incompatible\n";
+
+    testing::internal::CaptureStderr();
+    auto err = mockCompilerInterface->verifyIcbeVersion();
+    EXPECT_FALSE(err);
+    std::string stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_FALSE(stderrString.empty());
+}
+
+TEST(TestCompilerInterface, givenUnknownInterfaceAndIgcMainWhenverifyIcbeVersionThenPrintProperDebugMessage) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(1);
+
+    auto dummy = new UnknownInterfaceCIFMain();
+    auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
+
+    mockCompilerInterface->igcMain.reset(dummy);
+    mockCompilerInterface->fclMain.reset(nullptr);
+
+    std::string expectedError = "Installed Compiler Library " + std::string(Os::igcDllName) + " is incompatible\n";
+    testing::internal::CaptureStderr();
+    EXPECT_FALSE(mockCompilerInterface->verifyIcbeVersion());
+    std::string stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(expectedError, stderrString);
+}
+
+TEST(TestCompilerInterface, givenUnknownInterfaceAndFclMainAndIgcMainWhenVerifyIcbeVersionThenPrintProperDebugMessage) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(1);
+
+    auto dummyIgc = new UnknownInterfaceCIFMain();
+    auto dummyFcl = new UnknownInterfaceCIFMain();
+    auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
+
+    mockCompilerInterface->igcMain.reset(dummyIgc);
+    mockCompilerInterface->fclMain.reset(dummyFcl);
+
+    std::string expectedError = "Installed Compiler Library " + std::string(Os::frontEndDllName) + " is incompatible\n" + "Installed Compiler Library " + std::string(Os::igcDllName) + " is incompatible\n";
+    testing::internal::CaptureStderr();
+    EXPECT_FALSE(mockCompilerInterface->verifyIcbeVersion());
+    std::string stderrString = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(expectedError, stderrString);
+}
+
+TEST(TestCompilerInterface, givenInvalidIcbeVersionWhenAddOptionDisableZebinThenFalseIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+
+    auto dummyInValid = new UnknownInterfaceCIFMain();
+    auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
+
+    mockCompilerInterface->igcMain.reset(dummyInValid);
+
+    std::string option = "";
+    std::string internalOption = "";
+    EXPECT_FALSE(mockCompilerInterface->addOptionDisableZebin(option, internalOption));
+}
+
+TEST(TestCompilerInterface, givenOptionsWhenCallAddOptionDisableZebinThenProperValueIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+
+    auto dummyValid = new MockCIFMain();
+    auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
+
+    mockCompilerInterface->igcMain.reset(dummyValid);
+
+    std::string options = NEO::CompilerOptions::enableZebin.str();
+    std::string internalOptions = "";
+    EXPECT_FALSE(mockCompilerInterface->addOptionDisableZebin(options, internalOptions));
+
+    options = "";
+    EXPECT_TRUE(mockCompilerInterface->addOptionDisableZebin(options, internalOptions));
+}
+
+TEST(TestCompilerInterface, givenOptionsWhenCallDisableZebinThenProperOptionsAreSet) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDebugBreak.set(0);
+    DebugManager.flags.PrintDebugMessages.set(0);
+
+    auto dummyValid = new MockCIFMain();
+    auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
+
+    mockCompilerInterface->igcMain.reset(dummyValid);
+
+    std::string options = "";
+    std::string internalOptions = "";
+    EXPECT_TRUE(mockCompilerInterface->disableZebin(options, internalOptions));
+    EXPECT_FALSE(CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin.str()));
+
+    options = NEO::CompilerOptions::enableZebin.str();
+    EXPECT_TRUE(mockCompilerInterface->disableZebin(options, internalOptions));
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::disableZebin.str()));
+    EXPECT_FALSE(CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin.str()));
 }
 
 TEST(TranslationOutput, givenNonEmptyPointerAndSizeWhenMakingCopyThenCloneInputData) {

@@ -57,7 +57,7 @@ DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "Default t
 DECLARE_DEBUG_VARIABLE(bool, ForceImplicitFlush, false, "Flush after each enqueue; useful for debugging batched submission logic")
 DECLARE_DEBUG_VARIABLE(bool, ForcePipeControlPriorToWalker, false, "Force pipe control prior to walker")
 DECLARE_DEBUG_VARIABLE(bool, ZebinAppendElws, false, "Append cross-thread data with enqueue local work size")
-DECLARE_DEBUG_VARIABLE(bool, ZebinIgnoreIcbeVersion, false, "Ignore IGC\'s ICBE version")
+DECLARE_DEBUG_VARIABLE(bool, ZebinIgnoreIcbeVersion, true, "Ignore IGC\'s ICBE version")
 DECLARE_DEBUG_VARIABLE(bool, UseExternalAllocatorForSshAndDsh, false, "Use 32 bit external allocator for ssh and dsh in Level Zero")
 DECLARE_DEBUG_VARIABLE(bool, UseBindlessDebugSip, false, "Use bindless debug system routine")
 DECLARE_DEBUG_VARIABLE(bool, CleanStateInPreamble, false, "Ensures clean state in preamble")

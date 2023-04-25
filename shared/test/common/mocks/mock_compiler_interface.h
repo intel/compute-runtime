@@ -21,12 +21,14 @@ namespace NEO {
 
 class MockCompilerInterface : public CompilerInterface {
   public:
+    using CompilerInterface::checkIcbeVersionOnce;
     using CompilerInterface::fclBaseTranslationCtx;
     using CompilerInterface::fclDeviceContexts;
     using CompilerInterface::initialize;
     using CompilerInterface::isCompilerAvailable;
     using CompilerInterface::isFclAvailable;
     using CompilerInterface::isIgcAvailable;
+    using CompilerInterface::verifyIcbeVersion;
 
     using CompilerInterface::fclMain;
     using CompilerInterface::igcMain;

@@ -119,7 +119,8 @@ cl_int Program::build(
 
             if (nullptr != this->getContextPtr()) {
                 if (this->getContext().checkIfContextIsNonZebin()) {
-                    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
+                    const auto &rootDevice = defaultDevice.getRootDevice();
+                    rootDevice->getCompilerInterface()->addOptionDisableZebin(options, internalOptions);
                 }
             }
 

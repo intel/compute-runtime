@@ -128,10 +128,21 @@ class CompilerInterface {
 
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
 
+    bool addOptionDisableZebin(std::string &options, std::string &internalOptions);
+    bool disableZebin(std::string &options, std::string &internalOptions);
+
   protected:
     MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl);
     MOCKABLE_VIRTUAL bool loadFcl();
     MOCKABLE_VIRTUAL bool loadIgc();
+
+    template <template <CIF::Version_t> class EntryPointT>
+    std::once_flag &getIcbeVersionCallOnceFlag();
+
+    template <template <CIF::Version_t> class EntryPointT>
+    bool checkIcbeVersionOnce(CIF::CIFMain *main, const char *libName);
+
+    bool verifyIcbeVersion();
 
     static SpinLock spinlock;
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> lock() {
@@ -161,7 +172,6 @@ class CompilerInterface {
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createIgcTranslationCtx(const Device &device,
                                                                                                 IGC::CodeType::CodeType_t inType,
                                                                                                 IGC::CodeType::CodeType_t outType);
-
     bool isFclAvailable() const {
         return (fclMain != nullptr);
     }
@@ -175,5 +185,8 @@ class CompilerInterface {
         bool requiresIgc = (IGC::CodeType::oclC != translationSrc) || ((IGC::CodeType::spirV != translationDst) && (IGC::CodeType::llvmBc != translationDst) && (IGC::CodeType::llvmLl != translationDst));
         return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable() || (false == requiresIgc));
     }
+
+    std::once_flag igcIcbeCheckVersionCallOnce;
+    std::once_flag fclIcbeCheckVersionCallOnce;
 };
 } // namespace NEO
