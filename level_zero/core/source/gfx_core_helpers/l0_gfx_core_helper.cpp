@@ -103,9 +103,9 @@ NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDevice
     return l0GfxCoreHelper.getPlatformHeapAddressModel();
 }
 
-bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(bool allowPrimary) {
-    constexpr bool defaultValue = false;
-    bool value = defaultValue;
+bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool allowPrimary) {
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    bool value = l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList();
     if (NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get() != -1) {
         value = !!(NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get());
     }

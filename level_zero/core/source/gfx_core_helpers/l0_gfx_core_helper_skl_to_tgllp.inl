@@ -64,4 +64,9 @@ std::vector<uint32_t> L0GfxCoreHelperHw<Family>::getSupportedNumGrfs() const {
     return {128u};
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::platformSupportsPrimaryBatchBufferCmdList() const {
+    return false;
+}
+
 } // namespace L0

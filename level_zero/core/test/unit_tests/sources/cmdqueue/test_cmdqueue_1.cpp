@@ -2052,7 +2052,7 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
     auto expectedHeapAddressModel = l0GfxCoreHelper.getPlatformHeapAddressModel();
     EXPECT_EQ(expectedHeapAddressModel, commandQueue->cmdListHeapAddressModel);
 
-    auto expectedDispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true);
+    auto expectedDispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true);
     EXPECT_EQ(expectedDispatchCmdListBatchBufferAsPrimary, commandQueue->dispatchCmdListBatchBufferAsPrimary);
 
     commandQueue->destroy();

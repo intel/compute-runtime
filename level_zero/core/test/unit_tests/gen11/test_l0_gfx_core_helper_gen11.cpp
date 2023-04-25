@@ -51,5 +51,10 @@ GEN11TEST_F(L0GfxCoreHelperTestGen11, GivenGen11WhenGettingPlatformDefaultHeapAd
     EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel());
 }
 
+GEN11TEST_F(L0GfxCoreHelperTestGen11, GivenGen11WhenCheckingL0HelperForCmdlistPrimaryBufferSupportThenReturnFalse) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList());
+}
+
 } // namespace ult
 } // namespace L0

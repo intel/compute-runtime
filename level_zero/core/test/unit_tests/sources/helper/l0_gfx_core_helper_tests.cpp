@@ -859,22 +859,34 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingSupportedNumGrfsTh
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDispatchCmdListCmdBufferPrimaryThenUseDbgKeyValue) {
     DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment;
+    const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
 
     DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
-    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true));
+    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true));
 
     DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
 
-    EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true));
+    EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true));
 }
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDispatchCmdListCmdBufferPrimaryAndNotAllowPrimaryThenOverrideDbgKeyValueAndDisallow) {
     DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment;
+    const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
 
     DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
 
-    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(false));
+    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, false));
+}
+
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultCmdlistPrimaryBatchBufferThenUsePlatformDefaultSetting) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList(), L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true));
 }
 
 } // namespace ult
