@@ -186,7 +186,6 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenIniti
 
 TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {
     const std::unordered_map<std::string, int32_t> config = {
-        {"UseDrmVirtualEnginesForBcs", 0},
         {"EnableCmdQRoundRobindBcsEngineAssignLimit", 6},
         {"EnableCmdQRoundRobindBcsEngineAssign", 1},
         {"ForceBCSForInternalCopyEngine", 7},

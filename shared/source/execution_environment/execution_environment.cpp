@@ -308,7 +308,6 @@ void ExecutionEnvironment::parseCcsCountLimitations() {
 
 void ExecutionEnvironment::configureNeoEnvironment() {
     if (DebugManager.flags.NEO_CAL_ENABLED.get()) {
-        DebugManager.flags.UseDrmVirtualEnginesForBcs.setIfDefault(0);
         DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.setIfDefault(6);
         DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.setIfDefault(1);
         DebugManager.flags.ForceBCSForInternalCopyEngine.setIfDefault(7);
