@@ -1332,10 +1332,14 @@ bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector
     if (deviceIndex >= devices.size()) {
         return false;
     }
-    uint32_t count = 0;
-    VALIDATECALL(zeDeviceGetSubDevices(devices[deviceIndex], &count, nullptr));
+
+    uint32_t subDeviceCount = 0;
+    zes_device_properties_t properties = {};
+    VALIDATECALL(zesDeviceGetProperties(devices[deviceIndex], &properties));
+    subDeviceCount = properties.numSubdevices;
+
     uint32_t subDeviceIndex = static_cast<uint32_t>(std::stoi(buf[2]));
-    if (count > 0 && subDeviceIndex >= count) {
+    if (subDeviceCount > 0 && subDeviceIndex >= subDeviceCount) {
         return false;
     }
     zes_engine_type_flags_t engineTypeFlag = getEngineFlagType(buf[3]);

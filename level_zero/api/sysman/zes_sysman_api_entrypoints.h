@@ -954,25 +954,41 @@ ze_result_t zesDeviceEnumPerformanceFactorDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_perf_handle_t *phPerf) {
-    return L0::SysmanDevice::performanceGet(hDevice, pCount, phPerf);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::performanceGet(hDevice, pCount, phPerf);
+    } else {
+        return L0::Sysman::SysmanDevice::performanceGet(hDevice, pCount, phPerf);
+    }
 }
 
 ze_result_t zesPerformanceFactorGetProperties(
     zes_perf_handle_t hPerf,
     zes_perf_properties_t *pProperties) {
-    return L0::Performance::fromHandle(hPerf)->performanceGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Performance::fromHandle(hPerf)->performanceGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Performance::fromHandle(hPerf)->performanceGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesPerformanceFactorGetConfig(
     zes_perf_handle_t hPerf,
     double *pFactor) {
-    return L0::Performance::fromHandle(hPerf)->performanceGetConfig(pFactor);
+    if (L0::sysmanInitFromCore) {
+        return L0::Performance::fromHandle(hPerf)->performanceGetConfig(pFactor);
+    } else {
+        return L0::Sysman::Performance::fromHandle(hPerf)->performanceGetConfig(pFactor);
+    }
 }
 
 ze_result_t zesPerformanceFactorSetConfig(
     zes_perf_handle_t hPerf,
     double factor) {
-    return L0::Performance::fromHandle(hPerf)->performanceSetConfig(factor);
+    if (L0::sysmanInitFromCore) {
+        return L0::Performance::fromHandle(hPerf)->performanceSetConfig(factor);
+    } else {
+        return L0::Sysman::Performance::fromHandle(hPerf)->performanceSetConfig(factor);
+    }
 }
 
 ze_result_t zesDeviceEccAvailable(

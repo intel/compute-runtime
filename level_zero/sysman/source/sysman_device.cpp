@@ -124,5 +124,10 @@ ze_result_t SysmanDevice::temperatureGet(zes_device_handle_t hDevice, uint32_t *
     return pSysmanDevice->temperatureGet(pCount, phTemperature);
 }
 
+ze_result_t SysmanDevice::performanceGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_perf_handle_t *phPerformance) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->performanceGet(pCount, phPerformance);
+}
+
 } // namespace Sysman
 } // namespace L0

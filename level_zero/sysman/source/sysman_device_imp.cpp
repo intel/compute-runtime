@@ -34,6 +34,7 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pDiagnosticsHandleContext = new DiagnosticsHandleContext(pOsSysman);
     pGlobalOperations = new GlobalOperationsImp(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
+    pPerformanceHandleContext = new PerformanceHandleContext(pOsSysman);
     pEcc = new EccImp(pOsSysman);
     pTempHandleContext = new TemperatureHandleContext(pOsSysman);
 }
@@ -50,6 +51,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pMemoryHandleContext);
     freeResource(pFabricPortHandleContext);
     freeResource(pStandbyHandleContext);
+    freeResource(pPerformanceHandleContext);
     freeResource(pEcc);
     freeResource(pTempHandleContext);
     freeResource(pOsSysman);
@@ -142,6 +144,10 @@ ze_result_t SysmanDeviceImp::standbyGet(uint32_t *pCount, zes_standby_handle_t *
 
 ze_result_t SysmanDeviceImp::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {
     return pTempHandleContext->temperatureGet(pCount, phTemperature);
+}
+
+ze_result_t SysmanDeviceImp::performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) {
+    return pPerformanceHandleContext->performanceGet(pCount, phPerformance);
 }
 
 } // namespace Sysman

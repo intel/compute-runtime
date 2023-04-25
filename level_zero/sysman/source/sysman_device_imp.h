@@ -48,6 +48,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     DiagnosticsHandleContext *pDiagnosticsHandleContext = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     StandbyHandleContext *pStandbyHandleContext = nullptr;
+    PerformanceHandleContext *pPerformanceHandleContext = nullptr;
     Ecc *pEcc = nullptr;
     TemperatureHandleContext *pTempHandleContext = nullptr;
 
@@ -71,6 +72,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t deviceGetEccState(zes_device_ecc_properties_t *pState) override;
     ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) override;
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) override;
+    ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) override;
 
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,13 @@
 
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <mutex>
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 
 struct OsSysman;
 
@@ -36,16 +36,17 @@ struct PerformanceHandleContext {
     PerformanceHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~PerformanceHandleContext();
 
-    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles, ze_device_handle_t coreDevice);
+    ze_result_t init(uint32_t subDeviceCount);
 
     ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<std::unique_ptr<Performance>> handleList = {};
+    std::vector<Performance *> handleList = {};
 
   private:
-    void createHandle(ze_device_handle_t deviceHandle, zes_engine_type_flag_t domain);
+    void createHandle(bool onSubdevice, uint32_t subDeviceId, zes_engine_type_flag_t domain);
     std::once_flag initPerformanceOnce;
 };
 
+} // namespace Sysman
 } // namespace L0

@@ -17,6 +17,7 @@
 #include "level_zero/sysman/source/frequency/frequency.h"
 #include "level_zero/sysman/source/global_operations/global_operations.h"
 #include "level_zero/sysman/source/memory/memory.h"
+#include "level_zero/sysman/source/performance/performance.h"
 #include "level_zero/sysman/source/power/power.h"
 #include "level_zero/sysman/source/ras/ras.h"
 #include "level_zero/sysman/source/scheduler/scheduler.h"
@@ -94,6 +95,9 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t temperatureGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_temp_handle_t *phTemperature);
     virtual ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) = 0;
+
+    static ze_result_t performanceGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_perf_handle_t *phPerformance);
+    virtual ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) = 0;
 };
 
 } // namespace Sysman

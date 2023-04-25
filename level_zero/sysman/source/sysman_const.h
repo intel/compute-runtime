@@ -15,6 +15,10 @@ constexpr uint32_t MbpsToBytesPerSecond = 125000;
 constexpr double milliVoltsFactor = 1000.0;
 constexpr uint32_t maxRasErrorCategoryCount = 7;
 
+constexpr double maxPerformanceFactor = 100;
+constexpr double halfOfMaxPerformanceFactor = 50;
+constexpr double minPerformanceFactor = 0;
+
 namespace L0 {
 namespace Sysman {
 struct SteadyClock {
