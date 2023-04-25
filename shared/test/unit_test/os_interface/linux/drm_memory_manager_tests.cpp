@@ -6466,6 +6466,30 @@ TEST_F(DrmMemoryManagerTest, given48bAddressSpaceCpuAnd57bGpuWhenAllocatingHostU
     memoryManager->freeGraphicsMemory(hostUSM);
 }
 
+TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuAndDisabledHeapExtendedUsageForUsmHostWhenAllocatingHostUSMThenAddressFromExtendedHeapIsNotUsed) {
+    if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateHostAllocationsInHeapExtended.set(false);
+    VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
+    VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
+    SysCalls::mmapCapturedExtendedPointers.clear();
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
+    AllocationProperties allocationProperties(mockRootDeviceIndex, MemoryConstants::cacheLineSize, AllocationType::SVM_CPU, {});
+    allocationProperties.flags.isUSMHostAllocation = true;
+    auto hostUSM = memoryManager->allocateGraphicsMemoryInPreferredPool(allocationProperties, nullptr);
+    EXPECT_NE(nullptr, hostUSM);
+
+    EXPECT_EQ(0u, SysCalls::mmapCapturedExtendedPointers.size());
+    memoryManager->freeGraphicsMemory(hostUSM);
+}
+
 TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocatingSharedUSMThenAddressFromExtendedHeapIsPassedAsHintAndSetAsGpuAddressAndReservedAddress) {
     if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
         GTEST_SKIP();
