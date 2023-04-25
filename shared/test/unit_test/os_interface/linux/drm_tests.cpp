@@ -905,6 +905,28 @@ TEST(DrmTest, givenPrintIoctlDebugFlagNotSetWhenGettingTimestampFrequencyThenCap
     EXPECT_EQ(std::string::npos, outputString.find(expectedString));
 }
 
+TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingOATimestampFrequencyThenCaptureExpectedOutput) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintIoctlEntries.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    int frequency = 0;
+
+    testing::internal::CaptureStdout(); // start capturing
+
+    int ret = drm.getOATimestampFrequency(frequency);
+    DebugManager.flags.PrintIoctlEntries.set(false);
+    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(123456, frequency);
+
+    std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_OA_TIMESTAMP_FREQUENCY, output value: 123456, retCode: 0";
+    EXPECT_NE(std::string::npos, outputString.find(expectedString));
+}
+
 TEST(DrmTest, givenProgramDebuggingWhenCreatingContextThenUnrecoverableContextIsSet) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);

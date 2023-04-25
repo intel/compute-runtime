@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 using ::testing::_;
 using ::testing::Return;
@@ -31,7 +31,7 @@ class MetricIpSamplingWindowsTest : public DeviceFixture,
 };
 
 TEST_F(MetricIpSamplingWindowsTest, WhenIpSamplingOsInterfaceIsUsedReturnUnsupported) {
-
+    uint64_t timerResolution;
     EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
     EXPECT_FALSE(metricIpSamplingOsInterface->isNReportsAvailable());
     EXPECT_EQ(metricIpSamplingOsInterface->getRequiredBufferSize(0), 0);
@@ -40,6 +40,7 @@ TEST_F(MetricIpSamplingWindowsTest, WhenIpSamplingOsInterfaceIsUsedReturnUnsuppo
     uint32_t dummy;
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(dummy, dummy), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     EXPECT_EQ(metricIpSamplingOsInterface->stopMeasurement(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(metricIpSamplingOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 } // namespace ult

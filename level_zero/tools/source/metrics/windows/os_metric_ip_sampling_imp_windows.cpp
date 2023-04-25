@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 namespace L0 {
 
@@ -33,6 +33,9 @@ class MetricIpSamplingWindowsImp : public MetricIpSamplingOsInterface {
     }
     bool isDependencyAvailable() override {
         return false;
+    }
+    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 };
 

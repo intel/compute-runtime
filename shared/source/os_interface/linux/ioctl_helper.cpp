@@ -289,6 +289,8 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_TILING_NONE;
     case DrmParam::TilingY:
         return I915_TILING_Y;
+    case DrmParam::ParamOATimestampFrequency:
+        return I915_PARAM_OA_TIMESTAMP_FREQUENCY;
     default:
         UNRECOVERABLE_IF(true);
         return 0;
@@ -315,6 +317,8 @@ std::string IoctlHelper::getDrmParamStringBase(DrmParam drmParam) const {
         return "I915_PARAM_MIN_EU_IN_POOL";
     case DrmParam::ParamCsTimestampFrequency:
         return "I915_PARAM_CS_TIMESTAMP_FREQUENCY";
+    case DrmParam::ParamOATimestampFrequency:
+        return "I915_PARAM_OA_TIMESTAMP_FREQUENCY";
     default:
         UNRECOVERABLE_IF(true);
         return "";

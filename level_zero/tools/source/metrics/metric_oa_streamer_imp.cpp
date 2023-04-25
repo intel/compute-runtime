@@ -258,7 +258,7 @@ ze_result_t OaMetricGroupImp::openForDevice(Device *pDevice, zet_metric_streamer
     }
 
     // Check metric group sampling type.
-    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES};
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     getProperties(&metricGroupProperties);
     if (metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

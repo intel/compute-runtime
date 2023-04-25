@@ -143,6 +143,45 @@ struct Mock<MetricQuery> : public MetricQuery {
     MOCK_METHOD(ze_result_t, destroy, (), (override));
 };
 
+class MockIpSamplingOsInterface : public MetricIpSamplingOsInterface {
+
+  public:
+    ze_result_t getMetricsTimerResolutionReturn = ZE_RESULT_SUCCESS;
+    ~MockIpSamplingOsInterface() override = default;
+    ze_result_t startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) override {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    ze_result_t stopMeasurement() override { return ZE_RESULT_ERROR_UNKNOWN; }
+    ze_result_t readData(uint8_t *pRawData, size_t *pRawDataSize) override { return ZE_RESULT_ERROR_UNKNOWN; }
+    uint32_t getRequiredBufferSize(const uint32_t maxReportCount) override { return 0; }
+    uint32_t getUnitReportSize() override { return 0; }
+    bool isNReportsAvailable() override { return false; }
+    bool isDependencyAvailable() override { return false; }
+    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override {
+        timerResolution = 12500000UL;
+        return getMetricsTimerResolutionReturn;
+    }
+};
+class MockOAOsInterface : public MetricOAOsInterface {
+  public:
+    ~MockOAOsInterface() override = default;
+    ze_result_t getMetricsTimerResolutionReturn = ZE_RESULT_SUCCESS;
+    uint8_t failGetResolutionOnCall = 0;
+    uint8_t getResolutionCallCount = 0;
+    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override {
+        ze_result_t retVal;
+        getResolutionCallCount++;
+        if ((failGetResolutionOnCall) && (getResolutionCallCount >= failGetResolutionOnCall)) {
+            timerResolution = 0UL;
+            retVal = getMetricsTimerResolutionReturn;
+        } else {
+            timerResolution = 25000000UL; // PVC as reference
+            retVal = ZE_RESULT_SUCCESS;
+        }
+        return retVal;
+    }
+};
+
 class MetricContextFixture : public DeviceFixture {
 
   protected:
@@ -167,6 +206,8 @@ class MetricContextFixture : public DeviceFixture {
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
     MetricsDiscovery::TTypedValue_1_0 defaultMaximumOaBufferSize = {};
     void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice);
+    MockOAOsInterface *mockOAOsInterface;
+    MockIpSamplingOsInterface *mockIpSamplingOsInterface;
 };
 
 class MetricMultiDeviceFixture : public MultiDeviceFixture {
@@ -198,7 +239,7 @@ class MetricMultiDeviceFixture : public MultiDeviceFixture {
     Mock<IAdapter_1_9> adapter;
     Mock<IMetricsDevice_1_5> metricsDevice;
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
-    MetricsDiscovery::TTypedValue_1_0 defaultMaximumOaBufferSize = {};
+    //    MetricsDiscovery::TTypedValue_1_0 defaultMaximumOaBufferSize = {};
     void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice);
 };
 

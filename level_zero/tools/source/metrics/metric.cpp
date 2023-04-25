@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,7 @@ void MetricDeviceContext::activateMetricGroupsDeferred(uint32_t count, zet_metri
     for (auto index = 0u; index < count; index++) {
 
         zet_metric_group_handle_t hMetricGroup = MetricGroup::fromHandle(phMetricGroups[index])->getMetricGroupForSubDevice(subDeviceIndex);
-        zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES};
+        zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         MetricGroup::fromHandle(hMetricGroup)->getProperties(&properties);
         auto domain = properties.domain;
         // Domain already associated with the same handle.
@@ -257,6 +257,38 @@ ze_result_t metricStreamerOpen(zet_context_handle_t hContext, zet_device_handle_
                                zet_metric_streamer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                                zet_metric_streamer_handle_t *phMetricStreamer) {
     return MetricGroup::fromHandle(hMetricGroup)->streamerOpen(hContext, hDevice, pDesc, hNotificationEvent, phMetricStreamer);
+}
+
+ze_result_t MetricGroup::getMetricGroupExtendedProperties(MetricSource &metricSource, void *pNext) {
+    ze_result_t retVal = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+
+    while (pNext) {
+        zet_base_desc_t *extendedProperties = reinterpret_cast<zet_base_desc_t *>(pNext);
+
+        if (extendedProperties->stype == ZET_STRUCTURE_TYPE_GLOBAL_METRICS_TIMESTAMPS_EXP_PROPERTIES) {
+
+            zet_metric_global_timestamps_resolution_exp_t *metricsTimestampProperties =
+                reinterpret_cast<zet_metric_global_timestamps_resolution_exp_t *>(extendedProperties);
+
+            retVal = metricSource.getTimerResolution(metricsTimestampProperties->timerResolution);
+            if (retVal != ZE_RESULT_SUCCESS) {
+                metricsTimestampProperties->timerResolution = 0;
+                metricsTimestampProperties->timestampValidBits = 0;
+                return retVal;
+            }
+
+            retVal = metricSource.getTimestampValidBits(metricsTimestampProperties->timestampValidBits);
+            if (retVal != ZE_RESULT_SUCCESS) {
+                metricsTimestampProperties->timerResolution = 0;
+                metricsTimestampProperties->timestampValidBits = 0;
+                return retVal;
+            }
+        }
+
+        pNext = const_cast<void *>(extendedProperties->pNext);
+    }
+
+    return retVal;
 }
 
 } // namespace L0

@@ -8,7 +8,7 @@
 #pragma once
 
 #include "level_zero/tools/source/metrics/metric.h"
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 namespace L0 {
 
@@ -25,18 +25,20 @@ class IpSamplingMetricSourceImp : public MetricSource {
     bool isAvailable() override;
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) override;
     ze_result_t appendMetricMemoryBarrier(CommandList &commandList) override;
-    void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricOsInterface);
+    void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingOsInterface);
     static std::unique_ptr<IpSamplingMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
-    MetricIpSamplingOsInterface *getMetricOsInterface() { return metricOsInterface.get(); }
+    MetricIpSamplingOsInterface *getMetricOsInterface() { return metricIPSamplingOsInterface.get(); }
     IpSamplingMetricStreamerImp *pActiveStreamer = nullptr;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
+    ze_result_t getTimerResolution(uint64_t &resolution) override;
+    ze_result_t getTimestampValidBits(uint64_t &validBits) override;
 
   protected:
     void cacheMetricGroup();
     bool isEnabled = false;
 
     const MetricDeviceContext &metricDeviceContext;
-    std::unique_ptr<MetricIpSamplingOsInterface> metricOsInterface = nullptr;
+    std::unique_ptr<MetricIpSamplingOsInterface> metricIPSamplingOsInterface = nullptr;
     std::unique_ptr<MetricGroup> cachedMetricGroup = nullptr;
 };
 
@@ -95,7 +97,7 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
 
   private:
     std::vector<std::unique_ptr<IpSamplingMetricImp>> metrics = {};
-    zet_metric_group_properties_t properties = {};
+    zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     ze_result_t getCalculatedMetricCount(const size_t rawDataSize, uint32_t &metricValueCount);
     ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pRawData,
                                           uint32_t &metricValueCount,

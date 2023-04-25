@@ -8,7 +8,7 @@
 #pragma once
 
 #include "level_zero/tools/source/metrics/metric.h"
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 namespace L0 {
 

@@ -397,7 +397,8 @@ ConfigurationHandle_1_0 MetricsLibrary::addConfiguration(zet_metric_group_handle
 
     // Create metrics library configuration.
     auto metricGroup = MetricGroup::fromHandle(handle);
-    auto properties = OaMetricGroupImp::getProperties(handle);
+    zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    OaMetricGroupImp::getProperties(handle, &properties);
     auto configuration = createConfiguration(metricGroup, properties);
 
     // Cache configuration if valid.
@@ -604,7 +605,8 @@ bool OaMetricQueryPoolImp::allocateGpuMemory() {
 
 bool OaMetricQueryPoolImp::createMetricQueryPool() {
     // Validate metric group query - only event based is supported.
-    auto metricGroupProperites = OaMetricGroupImp::getProperties(hMetricGroup);
+    zet_metric_group_properties_t metricGroupProperites = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    OaMetricGroupImp::getProperties(hMetricGroup, &metricGroupProperites);
     const bool validMetricGroup = metricGroupProperites.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     if (!validMetricGroup) {

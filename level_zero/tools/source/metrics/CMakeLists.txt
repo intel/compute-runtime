@@ -20,7 +20,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_source.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_streamer.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_streamer.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_ip_sampling.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_metric.h
 )
 
 add_subdirectories()

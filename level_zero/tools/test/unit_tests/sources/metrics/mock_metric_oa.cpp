@@ -13,7 +13,7 @@
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_streamer_imp.h"
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 using namespace MetricsLibraryApi;
 
@@ -23,32 +23,22 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
-class MockIpSamplingOsInterface : public MetricIpSamplingOsInterface {
-
-  public:
-    ~MockIpSamplingOsInterface() override = default;
-    ze_result_t startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) override {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    ze_result_t stopMeasurement() override { return ZE_RESULT_ERROR_UNKNOWN; }
-    ze_result_t readData(uint8_t *pRawData, size_t *pRawDataSize) override { return ZE_RESULT_ERROR_UNKNOWN; }
-    uint32_t getRequiredBufferSize(const uint32_t maxReportCount) override { return 0; }
-    uint32_t getUnitReportSize() override { return 0; }
-    bool isNReportsAvailable() override { return false; }
-    bool isDependencyAvailable() override { return false; }
-};
-
 void MetricContextFixture::setUp() {
 
     // Call base class.
     DeviceFixture::setUp();
 
     // Initialize metric api.
+    mockOAOsInterface = new MockOAOsInterface();
+    std::unique_ptr<MetricOAOsInterface> metricOAOsInterface =
+        std::unique_ptr<MetricOAOsInterface>(mockOAOsInterface);
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    metricSource.setMetricOsInterface(metricOAOsInterface);
     metricSource.setInitializationState(ZE_RESULT_SUCCESS);
 
+    mockIpSamplingOsInterface = new MockIpSamplingOsInterface();
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface =
-        std::unique_ptr<MetricIpSamplingOsInterface>(new MockIpSamplingOsInterface());
+        std::unique_ptr<MetricIpSamplingOsInterface>(mockIpSamplingOsInterface);
     auto &ipMetricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
     ipMetricSource.setMetricOsInterface(metricIpSamplingOsInterface);
 
@@ -136,11 +126,6 @@ void MetricContextFixture::openMetricsAdapterGroup() {
 void MetricContextFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice) {
     EXPECT_CALL(metricDevice, GetParams())
         .WillRepeatedly(testing::Return(&metricsDeviceParams));
-
-    defaultMaximumOaBufferSize.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT32;
-    defaultMaximumOaBufferSize.ValueUInt32 = 1024;
-    EXPECT_CALL(metricDevice, GetGlobalSymbolValueByName(_))
-        .WillRepeatedly(testing::Return(&defaultMaximumOaBufferSize));
 }
 
 void MetricMultiDeviceFixture::setUp() {
@@ -336,11 +321,6 @@ void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
 void MetricMultiDeviceFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice) {
     EXPECT_CALL(metricDevice, GetParams())
         .WillRepeatedly(testing::Return(&metricsDeviceParams));
-
-    defaultMaximumOaBufferSize.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT32;
-    defaultMaximumOaBufferSize.ValueUInt32 = 1024;
-    EXPECT_CALL(metricDevice, GetGlobalSymbolValueByName(_))
-        .WillRepeatedly(testing::Return(&defaultMaximumOaBufferSize));
 }
 
 void MetricStreamerMultiDeviceFixture::cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer) {

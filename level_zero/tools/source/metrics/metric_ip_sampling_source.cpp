@@ -8,12 +8,14 @@
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include <level_zero/zet_api.h>
 
 #include <cstring>
@@ -27,11 +29,21 @@ std::unique_ptr<IpSamplingMetricSourceImp> IpSamplingMetricSourceImp::create(con
 }
 
 IpSamplingMetricSourceImp::IpSamplingMetricSourceImp(const MetricDeviceContext &metricDeviceContext) : metricDeviceContext(metricDeviceContext) {
-    metricOsInterface = MetricIpSamplingOsInterface::create(metricDeviceContext.getDevice());
+    metricIPSamplingOsInterface = MetricIpSamplingOsInterface::create(metricDeviceContext.getDevice());
+}
+
+ze_result_t IpSamplingMetricSourceImp::getTimerResolution(uint64_t &resolution) {
+    resolution = metricDeviceContext.getDevice().getNEODevice()->getDeviceInfo().outProfilingTimerClock;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t IpSamplingMetricSourceImp::getTimestampValidBits(uint64_t &validBits) {
+    validBits = metricDeviceContext.getDevice().getNEODevice()->getHardwareInfo().capabilityTable.timestampValidBits;
+    return ZE_RESULT_SUCCESS;
 }
 
 void IpSamplingMetricSourceImp::enable() {
-    isEnabled = metricOsInterface->isDependencyAvailable();
+    isEnabled = metricIPSamplingOsInterface->isDependencyAvailable();
 }
 
 bool IpSamplingMetricSourceImp::isAvailable() {
@@ -132,8 +144,8 @@ ze_result_t IpSamplingMetricSourceImp::appendMetricMemoryBarrier(CommandList &co
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricOsInterface) {
-    this->metricOsInterface = std::move(metricOsInterface);
+void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingOsInterface) {
+    this->metricIPSamplingOsInterface = std::move(metricIPSamplingOsInterface);
 }
 
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
@@ -153,7 +165,14 @@ IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &me
 }
 
 ze_result_t IpSamplingMetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
+    void *pNext = pProperties->pNext;
     *pProperties = properties;
+    pProperties->pNext = pNext;
+
+    if (pNext) {
+        return getMetricGroupExtendedProperties(metricSource, pNext);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

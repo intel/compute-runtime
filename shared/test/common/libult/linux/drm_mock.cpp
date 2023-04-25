@@ -101,6 +101,10 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
             *gp->value = this->storedCsTimestampFrequency;
             return this->storedRetVal;
         }
+        if (gp->param == I915_PARAM_OA_TIMESTAMP_FREQUENCY) {
+            *gp->value = this->storedOaTimestampFrequency;
+            return this->storedRetVal;
+        }
     }
 
     if ((request == DrmIoctl::GemContextCreateExt) && (arg != nullptr)) {

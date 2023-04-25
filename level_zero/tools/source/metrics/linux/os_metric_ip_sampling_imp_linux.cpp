@@ -18,7 +18,8 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 #include <algorithm>
 
@@ -39,6 +40,7 @@ class MetricIpSamplingLinuxImp : public MetricIpSamplingOsInterface {
     uint32_t getUnitReportSize() override;
     bool isNReportsAvailable() override;
     bool isDependencyAvailable() override;
+    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
 
   private:
     int32_t stream = -1;
@@ -51,18 +53,17 @@ MetricIpSamplingLinuxImp::MetricIpSamplingLinuxImp(Device &device) : device(devi
 
 ze_result_t MetricIpSamplingLinuxImp::getNearestSupportedSamplingUnit(uint32_t &samplingPeriodNs, uint32_t &samplingUnit) {
 
-    static constexpr uint64_t nsecPerSec = 1000000000ull;
     static constexpr uint32_t samplingClockGranularity = 251u;
     static constexpr uint32_t minSamplingUnit = 1u;
     static constexpr uint32_t maxSamplingUnit = 7u;
-    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
-    int32_t gpuTimeStampfrequency = 0;
-    int32_t ret = drm->getTimestampFrequency(gpuTimeStampfrequency);
-    if (ret < 0 || gpuTimeStampfrequency == 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+
+    uint64_t gpuTimeStampfrequency = 0;
+    ze_result_t ret = getMetricsTimerResolution(gpuTimeStampfrequency);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
     }
 
-    uint64_t gpuClockPeriodNs = nsecPerSec / static_cast<uint64_t>(gpuTimeStampfrequency);
+    uint64_t gpuClockPeriodNs = nsecPerSec / gpuTimeStampfrequency;
     uint64_t numberOfClocks = samplingPeriodNs / gpuClockPeriodNs;
 
     samplingUnit = std::clamp(static_cast<uint32_t>(numberOfClocks / samplingClockGranularity), minSamplingUnit, maxSamplingUnit);
@@ -203,6 +204,24 @@ bool MetricIpSamplingLinuxImp::isDependencyAvailable() {
         stopMeasurement();
     }
     return status == ZE_RESULT_SUCCESS ? true : false;
+}
+
+ze_result_t MetricIpSamplingLinuxImp::getMetricsTimerResolution(uint64_t &timerResolution) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    int32_t gpuTimeStampfrequency = 0;
+    int32_t ret = drm->getTimestampFrequency(gpuTimeStampfrequency);
+    if (ret < 0 || gpuTimeStampfrequency == 0) {
+        timerResolution = 0;
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "getTimestampFrequency() failed errno = %d | ret = %d \n",
+                           errno, ret);
+    } else {
+        timerResolution = static_cast<uint64_t>(gpuTimeStampfrequency);
+    }
+
+    return result;
 }
 
 std::unique_ptr<MetricIpSamplingOsInterface> MetricIpSamplingOsInterface::create(Device &device) {

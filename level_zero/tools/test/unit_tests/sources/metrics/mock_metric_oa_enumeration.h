@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,7 +109,29 @@ class Mock<IMetricsDevice_1_5> : public IMetricsDevice_1_5 {
     MOCK_METHOD(IOverride_1_2 *, GetOverrideByName, (const char *symbolName), (override));
     MOCK_METHOD(IConcurrentGroup_1_5 *, GetConcurrentGroup, (uint32_t index), (override));
     MOCK_METHOD(TGlobalSymbol_1_0 *, GetGlobalSymbol, (uint32_t index), (override));
-    MOCK_METHOD(TTypedValue_1_0 *, GetGlobalSymbolValueByName, (const char *name), (override));
+
+    MetricsDiscovery::TTypedValue_1_0 symbolValue = {};
+    bool forceGetSymbolByNameFail = false;
+    TTypedValue_1_0 *GetGlobalSymbolValueByName(const char *name) override {
+        bool found = false;
+        if (forceGetSymbolByNameFail) {
+            return nullptr;
+        } else if (std::strcmp(name, "OABufferMaxSize") == 0) {
+            symbolValue.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT32;
+            symbolValue.ValueUInt32 = 1024;
+            found = true;
+        } else if (std::strcmp(name, "MaxTimestamp") == 0) {
+            symbolValue.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
+            symbolValue.ValueUInt64 = 171798691800UL; // PVC as refference
+            found = true;
+        }
+        if (found) {
+            return &symbolValue;
+        }
+
+        return nullptr;
+    }
+
     MOCK_METHOD(TCompletionCode, GetLastError, (), (override));
     MOCK_METHOD(TCompletionCode, GetGpuCpuTimestamps, (uint64_t * gpuTimestampNs, uint64_t *cpuTimestampNs, uint32_t *cpuId), (override));
 };

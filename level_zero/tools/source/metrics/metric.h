@@ -7,6 +7,7 @@
 
 #pragma once
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include <level_zero/zet_api.h>
 
 #include "metrics_discovery_api.h"
@@ -24,6 +25,8 @@ namespace L0 {
 struct CommandList;
 struct MetricStreamer;
 
+static constexpr uint64_t nsecPerSec = 1000000000ull;
+
 class MetricSource {
   public:
     enum class SourceType {
@@ -35,7 +38,11 @@ class MetricSource {
     virtual bool isAvailable() = 0;
     virtual ze_result_t appendMetricMemoryBarrier(CommandList &commandList) = 0;
     virtual ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) = 0;
+    virtual ze_result_t getTimerResolution(uint64_t &resolution) = 0;
+    virtual ze_result_t getTimestampValidBits(uint64_t &validBits) = 0;
     virtual ~MetricSource() = default;
+
+  private:
 };
 
 class MetricDeviceContext {
@@ -109,6 +116,7 @@ struct MetricGroup : _zet_metric_group_handle_t {
         zet_device_handle_t hDevice,
         const zet_metric_query_pool_desc_t *desc,
         zet_metric_query_pool_handle_t *phMetricQueryPool) = 0;
+    ze_result_t getMetricGroupExtendedProperties(MetricSource &metricSource, void *pnext);
 };
 
 struct MetricGroupCalculateHeader {

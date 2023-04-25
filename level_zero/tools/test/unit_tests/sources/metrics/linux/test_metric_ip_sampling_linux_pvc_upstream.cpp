@@ -9,7 +9,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
 namespace L0 {

@@ -68,11 +68,22 @@ bool MetricEnumeration::isInitialized() {
     return initializationState == ZE_RESULT_SUCCESS;
 }
 
-void MetricEnumeration::readGlobalSymbols() {
-    auto symbolValue = pMetricsDevice->GetGlobalSymbolValueByName(globalSymbolOaMaxBufferSize.data());
-    if (symbolValue != nullptr) {
-        maximumOaBufferSize = symbolValue->ValueUInt32;
+bool MetricEnumeration::readGlobalSymbol(const char *name, uint32_t &symbolValue) {
+    auto tempValue = pMetricsDevice->GetGlobalSymbolValueByName(name);
+    if (tempValue != nullptr) {
+        symbolValue = tempValue->ValueUInt32;
+        return true;
     }
+    return false;
+}
+
+bool MetricEnumeration::readGlobalSymbol(const char *name, uint64_t &symbolValue) {
+    auto tempValue = pMetricsDevice->GetGlobalSymbolValueByName(name);
+    if (tempValue != nullptr) {
+        symbolValue = tempValue->ValueUInt64;
+        return true;
+    }
+    return false;
 }
 
 ze_result_t MetricEnumeration::initialize() {
@@ -169,7 +180,8 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
                 cleanupMetricsDiscovery();
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
-            subDeviceMetricEnumeraion.readGlobalSymbols();
+
+            subDeviceMetricEnumeraion.readGlobalSymbol(globalSymbolOaMaxBufferSize.data(), maximumOaBufferSize);
         }
     } else {
         auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
@@ -188,7 +200,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
 
-        readGlobalSymbols();
+        readGlobalSymbol(globalSymbolOaMaxBufferSize.data(), maximumOaBufferSize);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -334,8 +346,7 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
         // Obtain params once again - updated after SetApiFiltering
         pMetricSetParams = metricSet.GetParams();
 
-        zet_metric_group_properties_t properties = {};
-        properties.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES;
+        zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         snprintf(properties.name, sizeof(properties.name), "%s",
                  pMetricSetParams->SymbolName); // To always have null-terminated string
         snprintf(properties.description, sizeof(properties.description), "%s",
@@ -519,22 +530,28 @@ OaMetricGroupImp ::~OaMetricGroupImp() {
 };
 
 ze_result_t OaMetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
+
+    ze_result_t status = ZE_RESULT_SUCCESS;
     if (metricGroups.size() > 0) {
-        *pProperties = OaMetricGroupImp::getProperties(metricGroups[0]);
+        status = OaMetricGroupImp::getProperties(metricGroups[0], pProperties);
     } else {
+
+        void *pNext = pProperties->pNext;
         copyProperties(properties, *pProperties);
+        pProperties->pNext = pNext;
+        if (pNext) {
+            status = getMetricGroupExtendedProperties(*metricSource, pNext);
+        }
     }
-    return ZE_RESULT_SUCCESS;
+
+    return status;
 }
 
-zet_metric_group_properties_t OaMetricGroupImp::getProperties(const zet_metric_group_handle_t handle) {
+ze_result_t OaMetricGroupImp::getProperties(const zet_metric_group_handle_t handle, zet_metric_group_properties_t *pProperties) {
     auto metricGroup = MetricGroup::fromHandle(handle);
     UNRECOVERABLE_IF(!metricGroup);
 
-    zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES};
-    metricGroup->getProperties(&properties);
-
-    return properties;
+    return metricGroup->getProperties(pProperties);
 }
 
 ze_result_t OaMetricGroupImp::metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) {

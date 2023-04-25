@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -12,6 +13,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
@@ -80,6 +82,39 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
     }
 
     return nullptr;
+}
+class MetricOALinuxImp : public MetricOAOsInterface {
+  public:
+    MetricOALinuxImp(Device &device);
+    ~MetricOALinuxImp() override = default;
+    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
+
+  private:
+    Device &device;
+};
+
+MetricOALinuxImp::MetricOALinuxImp(Device &device) : device(device) {}
+
+std::unique_ptr<MetricOAOsInterface> MetricOAOsInterface::create(Device &device) {
+    return std::make_unique<MetricOALinuxImp>(device);
+}
+
+ze_result_t MetricOALinuxImp::getMetricsTimerResolution(uint64_t &timerResolution) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    int32_t timestampFrequency;
+    int32_t ret = drm->getOATimestampFrequency(timestampFrequency);
+    if (ret < 0 || timestampFrequency == 0) {
+        timerResolution = 0;
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "getOATimestampFrequenc() failed errno = %d | ret = %d \n",
+                           errno, ret);
+    } else {
+        timerResolution = static_cast<uint64_t>(timestampFrequency);
+    }
+
+    return result;
 }
 
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,9 @@ class OaMetricSourceImp : public MetricSource {
     void setMetricsLibrary(MetricsLibrary &metricsLibrary);
     void setMetricEnumeration(MetricEnumeration &metricEnumeration);
 
+    ze_result_t getTimerResolution(uint64_t &resolution) override;
+    ze_result_t getTimestampValidBits(uint64_t &validBits) override;
+
     ze_result_t activateMetricGroups();
     ze_result_t activateMetricGroupsDeferred(const uint32_t count,
                                              zet_metric_group_handle_t *phMetricGroups);
@@ -49,6 +52,8 @@ class OaMetricSourceImp : public MetricSource {
     bool isImplicitScalingCapable() const;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
     static std::unique_ptr<OaMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
+    void setMetricOsInterface(std::unique_ptr<MetricOAOsInterface> &metricOAOsInterface);
+    MetricOAOsInterface *getMetricOsInterface() { return metricOAOsInterface.get(); }
     using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
     static OsLibraryLoadPtr osLibraryLoadFunction;
 
@@ -59,6 +64,7 @@ class OaMetricSourceImp : public MetricSource {
     std::unique_ptr<MetricsLibrary> metricsLibrary = nullptr;
     MetricStreamer *pMetricStreamer = nullptr;
     bool useCompute = false;
+    std::unique_ptr<MetricOAOsInterface> metricOAOsInterface = nullptr;
 };
 
 template <>

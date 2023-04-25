@@ -26,12 +26,46 @@ std::unique_ptr<OaMetricSourceImp> OaMetricSourceImp::create(const MetricDeviceC
 OaMetricSourceImp::OaMetricSourceImp(const MetricDeviceContext &metricDeviceContext) : metricDeviceContext(metricDeviceContext),
                                                                                        metricEnumeration(std::unique_ptr<MetricEnumeration>(new(std::nothrow) MetricEnumeration(*this))),
                                                                                        metricsLibrary(std::unique_ptr<MetricsLibrary>(new(std::nothrow) MetricsLibrary(*this))) {
+    metricOAOsInterface = MetricOAOsInterface::create(metricDeviceContext.getDevice());
 }
 
 OaMetricSourceImp::~OaMetricSourceImp() = default;
 
 void OaMetricSourceImp::enable() {
     loadDependencies();
+}
+
+ze_result_t OaMetricSourceImp::getTimerResolution(uint64_t &resolution) {
+
+    ze_result_t result = getMetricOsInterface()->getMetricsTimerResolution(resolution);
+    if (result != ZE_RESULT_SUCCESS) {
+        resolution = 0;
+    }
+
+    return result;
+}
+
+ze_result_t OaMetricSourceImp::getTimestampValidBits(uint64_t &validBits) {
+    ze_result_t retVal = ZE_RESULT_SUCCESS;
+
+    uint64_t maxNanoSeconds = 0;
+    if (!metricEnumeration->readGlobalSymbol(globalSymbolOaMaxTimestamp.data(), maxNanoSeconds)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint64_t timerFreqquency;
+    retVal = getTimerResolution(timerFreqquency);
+    if (retVal != ZE_RESULT_SUCCESS) {
+        validBits = 0;
+        return retVal;
+    }
+
+    uint64_t maxTimeStamp = maxNanoSeconds * timerFreqquency / nsecPerSec;
+
+    auto bits = std::bitset<64>(maxTimeStamp);
+    validBits = bits.count();
+
+    return retVal;
 }
 
 bool OaMetricSourceImp::isAvailable() {
@@ -141,6 +175,10 @@ bool OaMetricSourceImp::isMetricGroupActivated() const {
 
 bool OaMetricSourceImp::isImplicitScalingCapable() const {
     return metricDeviceContext.isImplicitScalingCapable();
+}
+
+void OaMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricOAOsInterface> &metricOAOsInterface) {
+    this->metricOAOsInterface = std::move(metricOAOsInterface);
 }
 
 template <>

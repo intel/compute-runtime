@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 namespace L0 {
 namespace ult {
@@ -19,6 +19,7 @@ class MockMetricIpSamplingOsInterface : public MetricIpSamplingOsInterface {
     ze_result_t startMeasurementReturn = ZE_RESULT_SUCCESS;
     ze_result_t stopMeasurementReturn = ZE_RESULT_SUCCESS;
     ze_result_t readDataReturn = ZE_RESULT_SUCCESS;
+    ze_result_t getMetricsTimerResolutionReturn = ZE_RESULT_SUCCESS;
     uint32_t getUnitReportSizeReturn = 64;
     bool isNReportsAvailableReturn = true;
     bool isDependencyAvailableReturn = true;
@@ -52,6 +53,11 @@ class MockMetricIpSamplingOsInterface : public MetricIpSamplingOsInterface {
     }
     bool isDependencyAvailable() override {
         return isDependencyAvailableReturn;
+    }
+
+    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override {
+        timerResolution = 1000;
+        return getMetricsTimerResolutionReturn;
     }
 };
 

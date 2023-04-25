@@ -200,6 +200,7 @@ class DrmMock : public Drm {
     int storedExecSoftPin = 0;
     int storedRetValForVmId = 1;
     int storedCsTimestampFrequency = 1000;
+    int storedOaTimestampFrequency = 123456;
     bool disableSomeTopology = false;
     bool allowDebugAttach = false;
     bool allowDebugAttachCallBase = false;

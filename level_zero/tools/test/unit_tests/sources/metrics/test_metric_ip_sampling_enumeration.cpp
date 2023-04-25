@@ -11,7 +11,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
-#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling.h"
 #include <level_zero/zet_api.h>
@@ -104,7 +104,7 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGrou
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
 
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricGroupProperties.domain, 100u);
         EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
@@ -150,7 +150,7 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGrou
         zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data());
         ASSERT_NE(metricGroups[0], nullptr);
 
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties);
 
         uint32_t metricCount = 0;
@@ -188,7 +188,7 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummyAct
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -197,6 +197,37 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummyAct
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
     }
 }
+
+TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyAndValidBitsThenConfirmAreTheSameAsDevice) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+
+        ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
+        device->getProperties(&deviceProps);
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_EQ(metricGroupCount, 1u);
+
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+
+        zet_metric_global_timestamps_resolution_exp_t metricTimestampProperties = {ZET_STRUCTURE_TYPE_GLOBAL_METRICS_TIMESTAMPS_EXP_PROPERTIES, nullptr};
+
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricTimestampProperties};
+        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(strcmp(metricGroupProperties.description, "EU stall sampling"), 0);
+        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+        EXPECT_EQ(metricTimestampProperties.timerResolution, deviceProps.timerResolution);
+        EXPECT_EQ(metricTimestampProperties.timestampValidBits, deviceProps.timestampValidBits);
+    }
+}
+
 using MetricIpSamplingCalculateMetricsTest = MetricIpSamplingCalculateMetricsFixture;
 
 TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned) {
@@ -207,7 +238,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
     for (auto device : testDevices) {
 
         auto expectedSetCount = 2u;
-        ze_device_properties_t props{};
+        ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
@@ -220,7 +251,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -258,7 +289,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
 
     for (auto device : testDevices) {
 
-        ze_device_properties_t props{};
+        ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if ((props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) == 0) {
@@ -269,7 +300,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
             metricGroups.resize(metricGroupCount);
             ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
             ASSERT_NE(metricGroups[0], nullptr);
-            zet_metric_group_properties_t metricGroupProperties;
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
             EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
             EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -298,7 +329,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
     for (auto device : testDevices) {
 
         auto expectedSetCount = 2u;
-        ze_device_properties_t props{};
+        ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
@@ -310,7 +341,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
             metricGroups.resize(metricGroupCount);
             ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
             ASSERT_NE(metricGroups[0], nullptr);
-            zet_metric_group_properties_t metricGroupProperties;
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
             EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
             EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -345,7 +376,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
-        ze_device_properties_t props{};
+        ze_device_properties_t props = {};
         device->getProperties(&props);
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
             uint32_t metricGroupCount = 0;
@@ -354,7 +385,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
             metricGroups.resize(metricGroupCount);
             ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
             ASSERT_NE(metricGroups[0], nullptr);
-            zet_metric_group_properties_t metricGroupProperties;
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
             EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
             EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -378,7 +409,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
     for (auto device : testDevices) {
 
         auto expectedSetCount = 2u;
-        ze_device_properties_t props{};
+        ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
@@ -391,7 +422,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -440,7 +471,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -470,7 +501,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValuesEx
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -506,7 +537,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValuesEx
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -535,7 +566,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValuesEx
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -562,7 +593,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
     for (auto device : testDevices) {
 
         auto expectedSetCount = 2u;
-        ze_device_properties_t props{};
+        ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
@@ -575,7 +606,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -612,7 +643,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -646,7 +677,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -674,7 +705,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -707,7 +738,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWithBad
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -732,7 +763,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -755,7 +786,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStream
     for (auto device : testDevices) {
 
         auto expectedSetCount = 2u;
-        ze_device_properties_t props{};
+        ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
@@ -767,7 +798,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStream
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -811,7 +842,7 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWithCAL
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
@@ -837,7 +868,7 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQueryPoo
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 

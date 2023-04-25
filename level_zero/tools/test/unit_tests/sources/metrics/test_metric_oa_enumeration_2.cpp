@@ -256,8 +256,7 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenSubDeviceWhenOpenMetricsDiscoveryI
         .Times(1)
         .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&mockDevice), Return(TCompletionCode::CC_OK)));
 
-    EXPECT_CALL(mockDevice, GetGlobalSymbolValueByName(_))
-        .WillRepeatedly(testing::Return(nullptr));
+    mockDevice.forceGetSymbolByNameFail = true;
 
     EXPECT_EQ(mockMetricEnumerationSubDevices[1]->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(mockMetricEnumerationSubDevices[1]->getMaxOaBufferSize(), 0u);

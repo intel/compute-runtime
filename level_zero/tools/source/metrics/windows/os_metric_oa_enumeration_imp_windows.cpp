@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,26 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
     }
 
     return nullptr;
+}
+
+class MetricOAWindowsImp : public MetricOAOsInterface {
+  public:
+    MetricOAWindowsImp(Device &device);
+    ~MetricOAWindowsImp() override = default;
+    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
+
+  private:
+    Device &device;
+};
+
+MetricOAWindowsImp::MetricOAWindowsImp(Device &device) : device(device) {}
+
+std::unique_ptr<MetricOAOsInterface> MetricOAOsInterface::create(Device &device) {
+    return std::make_unique<MetricOAWindowsImp>(device);
+}
+
+ze_result_t MetricOAWindowsImp::getMetricsTimerResolution(uint64_t &timerResolution) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0

@@ -16,6 +16,7 @@
 namespace L0 {
 
 static constexpr std::string_view globalSymbolOaMaxBufferSize = "OABufferMaxSize";
+static constexpr std::string_view globalSymbolOaMaxTimestamp = "MaxTimestamp";
 
 class OaMetricSourceImp;
 
@@ -32,6 +33,8 @@ struct MetricEnumeration {
     virtual ze_result_t loadMetricsDiscovery();
     void getMetricsDiscoveryFilename(std::vector<const char *> &names) const;
     uint32_t getMaxOaBufferSize() const { return maximumOaBufferSize; }
+    bool readGlobalSymbol(const char *name, uint32_t &symbolValue);
+    bool readGlobalSymbol(const char *name, uint64_t &symbolValue);
 
   protected:
     ze_result_t initialize();
@@ -56,7 +59,6 @@ struct MetricEnumeration {
     getMetricType(const MetricsDiscovery::TInformationType sourceInformationType) const;
     zet_value_type_t
     getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType) const;
-    void readGlobalSymbols();
 
   protected:
     OaMetricSourceImp &metricSource;
@@ -129,7 +131,7 @@ struct OaMetricGroupImp : MetricGroup {
                                MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                const std::vector<Metric *> &metrics,
                                MetricSource &metricSource);
-    static zet_metric_group_properties_t getProperties(const zet_metric_group_handle_t handle);
+    static ze_result_t getProperties(const zet_metric_group_handle_t handle, zet_metric_group_properties_t *pProperties);
     uint32_t getRawReportSize();
     const MetricEnumeration &getMetricEnumeration() const;
 
@@ -148,9 +150,7 @@ struct OaMetricGroupImp : MetricGroup {
 
     // Cached metrics.
     std::vector<Metric *> metrics;
-    zet_metric_group_properties_t properties{
-        ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES,
-    };
+    zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     MetricsDiscovery::IMetricSet_1_5 *pReferenceMetricSet = nullptr;
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
 
