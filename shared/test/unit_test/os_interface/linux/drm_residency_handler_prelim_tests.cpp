@@ -52,6 +52,10 @@ struct MockDrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandlerBin
 
         return MemoryOperationsStatus::SUCCESS;
     }
+    int evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) override {
+        EXPECT_EQ(this->rootDeviceIndex, gfxAllocation.getRootDeviceIndex());
+        return DrmMemoryOperationsHandlerBind::evictImpl(osContext, gfxAllocation, deviceBitfield);
+    }
 };
 
 template <uint32_t numRootDevices>
@@ -208,7 +212,8 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
         memoryManager = std::make_unique<TestedDrmMemoryManager>(*executionEnvironment);
         deviceDefault = devices[0].get();
         device = devices[1].get();
-        mock = executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmQueryMock>();
+        mockDefault = executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmQueryMock>();
+        mock = executionEnvironment->rootDeviceEnvironments[1]->osInterface->getDriverModel()->as<DrmQueryMock>();
         operationHandlerDefault = static_cast<DrmMemoryOperationsHandlerDefault *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
         operationHandler = static_cast<MockDrmMemoryOperationsHandlerBind *>(executionEnvironment->rootDeviceEnvironments[1]->memoryOperationsInterface.get());
         memoryManagerBackup = executionEnvironment->memoryManager.release();
@@ -227,27 +232,28 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
 
   protected:
     ExecutionEnvironment *executionEnvironment = nullptr;
-    MockDevice *device;
-    MockDevice *deviceDefault;
+    MockDevice *device = nullptr;
+    MockDevice *deviceDefault = nullptr;
     std::vector<std::unique_ptr<MockDevice>> devices;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager;
     DrmMemoryOperationsHandlerDefault *operationHandlerDefault = nullptr;
     MockDrmMemoryOperationsHandlerBind *operationHandler = nullptr;
     DebugManagerStateRestore restorer;
-    DrmQueryMock *mock;
-    MemoryManager *memoryManagerBackup;
+    DrmQueryMock *mock = nullptr;
+    DrmQueryMock *mockDefault = nullptr;
+    MemoryManager *memoryManagerBackup = nullptr;
 };
 
 using DrmMemoryOperationsHandlerBindMultiRootDeviceTest2 = DrmMemoryOperationsHandlerBindFixture2<2u>;
 
 TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, givenOperationHandlersWhenRootDeviceIndexIsChangedThenEvictSucceeds) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
-    auto allocationDefult = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{deviceDefault->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto allocationDefault = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{deviceDefault->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     EXPECT_EQ(operationHandlerDefault->getRootDeviceIndex(), 0u);
     EXPECT_EQ(operationHandler->getRootDeviceIndex(), 1u);
 
-    operationHandlerDefault->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationDefult, 1));
+    operationHandlerDefault->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationDefault, 1));
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
 
     operationHandlerDefault->setRootDeviceIndex(1u);
@@ -255,28 +261,38 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, givenOperationHandler
     EXPECT_EQ(operationHandlerDefault->getRootDeviceIndex(), 1u);
     EXPECT_EQ(operationHandler->getRootDeviceIndex(), 0u);
 
-    EXPECT_EQ(operationHandlerDefault->evict(device, *allocationDefult), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandlerDefault->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->evict(device, *allocationDefault), MemoryOperationsStatus::SUCCESS);
 
-    memoryManager->freeGraphicsMemory(allocationDefult);
+    operationHandlerDefault->setRootDeviceIndex(0u);
+    operationHandler->setRootDeviceIndex(1u);
+
+    memoryManager->freeGraphicsMemory(allocationDefault);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-using DrmMemoryOperationsHandlerBindTest = DrmMemoryOperationsHandlerBindFixture<1u>;
-
-TEST_F(DrmMemoryOperationsHandlerBindTest, whenNoSpaceLeftOnDeviceThenEvictUnusedAllocations) {
+TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, whenNoSpaceLeftOnDeviceThenEvictUnusedAllocations) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto allocationDefault = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{deviceDefault->getRootDeviceIndex(), MemoryConstants::pageSize});
     mock->context.vmBindReturn = -1;
     mock->baseErrno = false;
     mock->errnoRetVal = ENOSPC;
-    operationHandler->useBaseEvictUnused = false;
+    operationHandler->useBaseEvictUnused = true;
+
+    auto registeredAllocations = memoryManager->getSysMemAllocs();
+    EXPECT_EQ(2u, registeredAllocations.size());
+
+    EXPECT_EQ(allocation, registeredAllocations[0]);
+    EXPECT_EQ(allocationDefault, registeredAllocations[1]);
 
     EXPECT_EQ(operationHandler->evictUnusedCalled, 0u);
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
     EXPECT_EQ(operationHandler->evictUnusedCalled, 1u);
 
     memoryManager->freeGraphicsMemory(allocation);
+    memoryManager->freeGraphicsMemory(allocationDefault);
 }
+using DrmMemoryOperationsHandlerBindTest = DrmMemoryOperationsHandlerBindFixture<1u>;
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenObjectAlwaysResidentAndNotUsedWhenRunningOutOfMemoryThenUnusedAllocationIsNotUnbound) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
