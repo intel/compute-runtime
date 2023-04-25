@@ -44,15 +44,16 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
     size_t size = PoolAllocator::smallBufferThreshold;
     void *hostPtr = nullptr;
     cl_int retVal = CL_SUCCESS;
+    static const auto rootDeviceIndex = 1u;
 
     DebugManagerStateRestore restore;
 
     void setUpImpl() {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
-        this->deviceFactory = std::make_unique<UltClDeviceFactory>(1, 0);
-        this->device = deviceFactory->rootDevices[0];
+        this->deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
+        this->device = deviceFactory->rootDevices[rootDeviceIndex];
         this->mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
-        this->mockMemoryManager->localMemorySupported[mockRootDeviceIndex] = true;
+        this->mockMemoryManager->localMemorySupported[rootDeviceIndex] = true;
         this->setAllocationToFail(failMainStorageAllocation);
         cl_device_id devices[] = {device};
         this->context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
@@ -248,7 +249,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndB
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(1u, poolAllocator->bufferPools.size());
-    EXPECT_EQ(poolAllocator->bufferPools[0].mainStorage->getMultiGraphicsAllocation().getGraphicsAllocations().size(), mockMemoryManager->allocInUseCalled);
+    EXPECT_EQ(1u, mockMemoryManager->allocInUseCalled);
     EXPECT_EQ(size * buffersToCreate, poolAllocator->bufferPools[0].chunkAllocator->getUsedSize());
 }
 
@@ -271,7 +272,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndB
     std::unique_ptr<Buffer> bufferAfterExhaustMustSucceed(Buffer::create(context.get(), flags, size, hostPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(2u, poolAllocator->bufferPools.size());
-    EXPECT_EQ(poolAllocator->bufferPools[0].mainStorage->getMultiGraphicsAllocation().getGraphicsAllocations().size(), mockMemoryManager->allocInUseCalled);
+    EXPECT_EQ(1u, mockMemoryManager->allocInUseCalled);
     EXPECT_EQ(size * buffersToCreate, poolAllocator->bufferPools[0].chunkAllocator->getUsedSize());
     EXPECT_EQ(size, poolAllocator->bufferPools[1].chunkAllocator->getUsedSize());
 }
@@ -295,7 +296,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndB
     std::unique_ptr<Buffer> bufferAfterExhaustMustSucceed(Buffer::create(context.get(), flags, size, hostPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(2u, poolAllocator->bufferPools.size());
-    EXPECT_EQ(poolAllocator->bufferPools[0].mainStorage->getMultiGraphicsAllocation().getGraphicsAllocations().size(), mockMemoryManager->allocInUseCalled);
+    EXPECT_EQ(1u, mockMemoryManager->allocInUseCalled);
     EXPECT_EQ(size * buffersToCreate, poolAllocator->bufferPools[0].chunkAllocator->getUsedSize());
     EXPECT_EQ(size, poolAllocator->bufferPools[1].chunkAllocator->getUsedSize());
 }
@@ -316,8 +317,8 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenCopyHostPointerWhenCreatingBuffer
     DebugManager.flags.CopyHostPtrOnCpu.set(0);
 
     auto commandQueue = new MockCommandQueueFailFirstEnqueueWrite();
-    context->getSpecialQueue(mockRootDeviceIndex)->decRefInternal();
-    context->setSpecialQueue(commandQueue, mockRootDeviceIndex);
+    context->getSpecialQueue(rootDeviceIndex)->decRefInternal();
+    context->setSpecialQueue(commandQueue, rootDeviceIndex);
 
     flags = CL_MEM_COPY_HOST_PTR;
     unsigned char dataToCopy[PoolAllocator::smallBufferThreshold];
