@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
@@ -29,6 +31,7 @@ ze_result_t LinuxRasImp::osRasSetConfig(const zes_ras_config_t *config) {
         memcpy(categoryThreshold, config->detailedThresholds.category, maxRasErrorCategoryCount * sizeof(uint64_t));
         return ZE_RESULT_SUCCESS;
     }
+    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
