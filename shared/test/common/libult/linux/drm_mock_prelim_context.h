@@ -78,6 +78,11 @@ struct VmAdvise {
     MemoryClassInstance memoryRegions{0};
 };
 
+struct VmPrefetch {
+    uint32_t vmId{0};
+    uint32_t region{0};
+};
+
 struct UuidVmBindExt {
     uint32_t handle{0};
     uint64_t nextExtension{0};
@@ -129,6 +134,9 @@ struct DrmMockPrelimContext {
 
     std::optional<VmAdvise> receivedVmAdvise[2]{};
     int vmAdviseReturn{0};
+
+    size_t vmPrefetchCalled{0};
+    std::vector<VmPrefetch> receivedVmPrefetch{};
 
     int mmapOffsetReturn{0};
 

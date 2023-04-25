@@ -240,6 +240,12 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         }
         return vmAdviseReturn;
     } break;
+    case DrmIoctl::GemVmPrefetch: {
+        const auto req = static_cast<prelim_drm_i915_gem_vm_prefetch *>(arg);
+        vmPrefetchCalled++;
+        receivedVmPrefetch.push_back(VmPrefetch{req->vm_id, req->region});
+        return 0;
+    } break;
     case DrmIoctl::UuidRegister: {
         auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
 

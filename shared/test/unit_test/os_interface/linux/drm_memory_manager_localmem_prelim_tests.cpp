@@ -776,6 +776,58 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrati
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
+using DrmMemoryManagerWithSingleSubDevicePrelimTest = DrmMemoryManagerWithSubDevicesPrelimTest<false>;
+TEST_F(DrmMemoryManagerWithSingleSubDevicePrelimTest, givenUnifiedMemoryAllocationOnSingleSubDeviceWhenCreatedWithInitialPlacementOnGpuThenCallMemoryPrefetch) {
+    DeviceBitfield subDevices = 0b01;
+    AllocationProperties gpuProperties{0u,
+                                       MemoryConstants::pageSize64k,
+                                       AllocationType::UNIFIED_SHARED_MEMORY,
+                                       subDevices};
+    gpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    gpuProperties.usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::GPU;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
+    ASSERT_NE(allocation, nullptr);
+
+    EXPECT_EQ(mock->context.vmBindCalled, 1u);
+    EXPECT_EQ(mock->context.vmPrefetchCalled, 1u);
+
+    ASSERT_EQ(mock->context.receivedVmPrefetch.size(), 1u);
+    EXPECT_EQ(mock->context.receivedVmPrefetch[0].vmId, 1u);
+    EXPECT_EQ(mock->context.receivedVmPrefetch[0].region, static_cast<uint32_t>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE << 16 | 0u));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+using DrmMemoryManagerWithMultipleSubDevicesPrelimTest = DrmMemoryManagerWithSubDevicesPrelimTest<true>;
+TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenUnifiedMemoryAllocationOnMultipleSubdevicesWhenCreatedWithInitialPlacementIsOnGpuThenCallVmPrefetchCorrectly) {
+    DeviceBitfield subDevices = 0b11;
+    AllocationProperties gpuProperties{0u,
+                                       2 * MemoryConstants::pageSize64k,
+                                       AllocationType::UNIFIED_SHARED_MEMORY,
+                                       subDevices};
+    gpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    gpuProperties.usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::GPU;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
+    ASSERT_NE(allocation, nullptr);
+
+    EXPECT_EQ(mock->context.vmBindCalled, 4u);
+    EXPECT_EQ(mock->context.vmPrefetchCalled, 4u);
+
+    ASSERT_EQ(mock->context.receivedVmPrefetch.size(), 4u);
+    EXPECT_EQ(mock->context.receivedVmPrefetch[0].vmId, 1u);
+    EXPECT_EQ(mock->context.receivedVmPrefetch[0].region, static_cast<uint32_t>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE << 16 | 0u));
+    EXPECT_EQ(mock->context.receivedVmPrefetch[1].vmId, 2u);
+    EXPECT_EQ(mock->context.receivedVmPrefetch[1].region, static_cast<uint32_t>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE << 16 | 0u));
+    EXPECT_EQ(mock->context.receivedVmPrefetch[2].vmId, 1u);
+    EXPECT_EQ(mock->context.receivedVmPrefetch[2].region, static_cast<uint32_t>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE << 16 | 1u));
+    EXPECT_EQ(mock->context.receivedVmPrefetch[3].vmId, 2u);
+    EXPECT_EQ(mock->context.receivedVmPrefetch[3].region, static_cast<uint32_t>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE << 16 | 1u));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSharedUnifiedMemoryAllocationReturnsNullptr) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);

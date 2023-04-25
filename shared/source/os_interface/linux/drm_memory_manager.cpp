@@ -2217,6 +2217,21 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     [[maybe_unused]] auto success = allocation->setMemAdvise(&drm, memAdviseFlags);
     DEBUG_BREAK_IF(!success);
 
+    if (allocationData.usmInitialPlacement == GraphicsAllocation::UsmInitialPlacement::GPU) {
+        auto getSubDeviceIds = [](const DeviceBitfield &subDeviceBitfield) {
+            SubDeviceIdsVec subDeviceIds;
+            for (auto subDeviceId = 0u; subDeviceId < subDeviceBitfield.size(); subDeviceId++) {
+                if (subDeviceBitfield.test(subDeviceId)) {
+                    subDeviceIds.push_back(subDeviceId);
+                }
+            }
+            return subDeviceIds;
+        };
+        auto subDeviceIds = getSubDeviceIds(allocationData.storageInfo.subDeviceBitfield);
+        success = setMemPrefetch(allocation.get(), subDeviceIds, allocationData.rootDeviceIndex);
+        DEBUG_BREAK_IF(!success);
+    }
+
     return allocation.release();
 }
 

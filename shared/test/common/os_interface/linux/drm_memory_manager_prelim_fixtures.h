@@ -18,6 +18,42 @@
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 
+template <bool multipleSubDevices>
+class DrmMemoryManagerWithSubDevicesPrelimTest : public ::testing::Test {
+  public:
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(multipleSubDevices ? 2 : 1);
+
+        executionEnvironment = new ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(1);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+
+        mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+        auto memoryInfo = new MockExtendedMemoryInfo(*mock);
+        mock->memoryInfo.reset(memoryInfo);
+
+        mock->queryEngineInfo();
+
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+
+        memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+
+        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex));
+    }
+
+  protected:
+    DebugManagerStateRestore restorer{};
+    ExecutionEnvironment *executionEnvironment{nullptr};
+    DrmQueryMock *mock{nullptr};
+    std::unique_ptr<MockDevice> device;
+    TestedDrmMemoryManager *memoryManager{nullptr};
+
+    constexpr static uint32_t rootDeviceIndex{0u};
+};
+
 class DrmMemoryManagerLocalMemoryPrelimTest : public ::testing::Test {
   public:
     void SetUp() override {
