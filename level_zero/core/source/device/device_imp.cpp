@@ -883,10 +883,7 @@ ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *de
         return ZE_RESULT_ERROR_DEVICE_LOST;
 
     *deviceTimestamp = queueTimeStamp.GPUTimeStamp;
-
-    retVal = this->neoDevice->getOSTime()->getCpuTime(hostTimestamp);
-    if (!retVal)
-        return ZE_RESULT_ERROR_DEVICE_LOST;
+    *hostTimestamp = queueTimeStamp.CPUTimeinNS;
 
     return ZE_RESULT_SUCCESS;
 }

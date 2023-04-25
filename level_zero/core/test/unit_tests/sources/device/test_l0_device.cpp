@@ -1648,6 +1648,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecond
 class FalseCpuDeviceTime : public NEO::DeviceTime {
   public:
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime, NEO::OSTime *) override {
+        pGpuCpuTime->CPUTimeinNS = 0u;
         return true;
     }
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
@@ -1677,7 +1678,7 @@ class FalseCpuTime : public NEO::OSTime {
     }
 };
 
-TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseReturnError) {
+TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseReturnArbitraryValues) {
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
@@ -1689,7 +1690,9 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseRetu
     device = driverHandle->devices[0];
 
     ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, hostTs);
+    EXPECT_NE(0u, deviceTs);
 }
 
 using DeviceGetMemoryTests = DeviceTest;
