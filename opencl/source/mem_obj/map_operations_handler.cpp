@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,6 +105,7 @@ MapOperationsHandler *NEO::MapOperationsStorage::getHandlerIfExists(cl_mem memOb
 }
 
 bool NEO::MapOperationsStorage::getInfoForHostPtr(const void *ptr, size_t size, MapInfo &outInfo) {
+    std::lock_guard<std::mutex> lock(mutex);
     for (auto &entry : handlers) {
         if (entry.second.findInfoForHostPtr(ptr, size, outInfo)) {
             return true;
