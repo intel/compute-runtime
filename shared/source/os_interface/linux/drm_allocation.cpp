@@ -376,19 +376,16 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
     UNRECOVERABLE_IF(subDeviceIds.size() == 0);
 
     bool success = true;
-    auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(storageInfo.getNumBanks());
 
     if (numHandles > 1) {
-        for (uint8_t handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
-            if (storageInfo.memoryBanks.test(handleId)) {
-                auto bo = this->getBOs()[handleId];
-                auto subDeviceId = handleId;
-                if (DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0) {
-                    subDeviceId = subDeviceIds[handleId % subDeviceIds.size()];
-                }
-                for (auto vmHandleId : subDeviceIds) {
-                    success &= prefetchBO(bo, vmHandleId, subDeviceId);
-                }
+        for (uint8_t handleId = 0u; handleId < numHandles; handleId++) {
+            auto bo = this->getBOs()[handleId];
+            auto subDeviceId = handleId;
+            if (DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0) {
+                subDeviceId = subDeviceIds[handleId % subDeviceIds.size()];
+            }
+            for (auto vmHandleId : subDeviceIds) {
+                success &= prefetchBO(bo, vmHandleId, subDeviceId);
             }
         }
     } else {

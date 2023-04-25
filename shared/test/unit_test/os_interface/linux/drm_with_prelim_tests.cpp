@@ -302,6 +302,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchFailsThenRe
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
     MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
+    allocation.setNumHandles(1);
 
     drm->ioctlRetVal = EINVAL;
     EXPECT_FALSE(allocation.setMemPrefetch(drm.get(), subDeviceIds));

@@ -4778,6 +4778,7 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhen
 
     MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory, bos);
     drmAllocation.storageInfo.memoryBanks = 0x3;
+    drmAllocation.setNumHandles(2);
 
     memoryManager.allRegisteredEngines[this->device->getRootDeviceIndex()] = EngineControlContainer{this->device->allEngines};
     for (auto &engine : memoryManager.getRegisteredEngines(this->device->getRootDeviceIndex())) {
@@ -4814,6 +4815,7 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhen
 
     MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory, bos);
     drmAllocation.storageInfo.memoryBanks = 0x3;
+    drmAllocation.setNumHandles(2);
 
     memoryManager.allRegisteredEngines[this->device->getRootDeviceIndex()] = EngineControlContainer{this->device->allEngines};
     for (auto &engine : memoryManager.getRegisteredEngines(this->device->getRootDeviceIndex())) {
@@ -4847,6 +4849,7 @@ TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMig
 
     MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory, bos);
     drmAllocation.storageInfo.memoryBanks = 0x3;
+    drmAllocation.setNumHandles(2);
 
     memoryManager.allRegisteredEngines[this->device->getRootDeviceIndex()] = EngineControlContainer{this->device->allEngines};
     for (auto &engine : memoryManager.getRegisteredEngines(this->device->getRootDeviceIndex())) {
@@ -4880,6 +4883,7 @@ TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMig
 
     MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory, bos);
     drmAllocation.storageInfo.memoryBanks = 0x3;
+    drmAllocation.setNumHandles(2);
 
     memoryManager.allRegisteredEngines[this->device->getRootDeviceIndex()] = EngineControlContainer{this->device->allEngines};
     for (auto &engine : memoryManager.getRegisteredEngines(this->device->getRootDeviceIndex())) {
@@ -4915,6 +4919,7 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithSingleBOWhenSet
 
     MockDrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
     drmAllocation.bufferObjects[0] = &bo;
+    drmAllocation.setNumHandles(1);
 
     memoryManager.allRegisteredEngines[this->device->getRootDeviceIndex()] = EngineControlContainer{this->device->allEngines};
     for (auto &engine : memoryManager.getRegisteredEngines(this->device->getRootDeviceIndex())) {
