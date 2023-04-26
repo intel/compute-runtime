@@ -24,7 +24,7 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
   public:
     void SetUp() override {
         DeviceFixture::setUp();
-
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
         const auto &src = zebinData->storage;
 
@@ -42,6 +42,7 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
         DeviceFixture::tearDown();
     }
     std::unique_ptr<WhiteBox<L0::Module>> module;
+    DebugManagerStateRestore restore;
 };
 
 using ModuleTests = Test<DeviceFixture>;
