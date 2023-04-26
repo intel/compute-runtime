@@ -225,7 +225,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierWhenCreateDirectSubmissionThenP
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
 
     EXPECT_NE(nullptr, directSubmission.pciBarrierPtr);
-    EXPECT_EQ(DirectSubmissionSfenceMode::Disabled, directSubmission.sfenceMode);
+    EXPECT_NE(DirectSubmissionSfenceMode::Disabled, directSubmission.sfenceMode);
     EXPECT_FALSE(directSubmission.miMemFenceRequired);
 
     SysCalls::munmap(ptr, MemoryConstants::pageSize);
