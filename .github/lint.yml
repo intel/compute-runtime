@@ -85,3 +85,9 @@ lint:
         - ocl
         - wa
         - internal
+    mandatory_tracker:
+      types:
+        - feature
+      scopes:
+        - wa
+
