@@ -754,7 +754,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
     auto &csr = static_cast<MyCsr &>(pCommandQueue->getGpgpuCommandStreamReceiver());
 
     pCommandQueue->enqueueKernel(
-        mockKernelWithInternalsWithIfpRequired.mockKernel,
+        mockKernelWithInternalsWithIfpNotRequired.mockKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -769,7 +769,70 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     pCommandQueue->enqueueKernel(
+        mockKernelWithInternalsWithIfpRequired.mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    pCommandQueue->flush();
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
+              csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+
+    pCommandQueue->enqueueKernel(
         mockKernelWithInternalsWithIfpNotRequired.mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    pCommandQueue->flush();
+
+    EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(),
+              csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+}
+
+HWTEST_F(EnqueueKernelTests, givenAgeBasedThreadArbitrationPolicyWhenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy) {
+    struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
+        using CommandStreamReceiverHw<FamilyType>::streamProperties;
+    };
+
+    struct MockKernelWithAgeBasedTAP : public MockKernelWithInternals {
+        MockKernelWithAgeBasedTAP(ClDevice &deviceArg, SPatchExecutionEnvironment execEnv) : MockKernelWithInternals(deviceArg, nullptr, false, execEnv) {
+            kernelInfo.kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
+            mockKernel->initialize();
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+
+    UltClDeviceFactory clDeviceFactory{1, 0};
+    MockContext context{clDeviceFactory.rootDevices[0]};
+
+    SPatchExecutionEnvironment sPatchExecEnv = {};
+
+    sPatchExecEnv.SubgroupIndependentForwardProgressRequired = true;
+    MockKernelWithAgeBasedTAP mockKernelWithAgeBasedTAPAndIfpRequired{*clDeviceFactory.rootDevices[0], sPatchExecEnv};
+
+    sPatchExecEnv.SubgroupIndependentForwardProgressRequired = false;
+    MockKernelWithAgeBasedTAP mockKernelWithAgeBasedTAPAndIfpNotRequired{*clDeviceFactory.rootDevices[0], sPatchExecEnv};
+
+    cl_int retVal;
+    std::unique_ptr<CommandQueue> pCommandQueue{CommandQueue::create(&context, clDeviceFactory.rootDevices[0], nullptr, true, retVal)};
+    auto &csr = static_cast<MyCsr &>(pCommandQueue->getGpgpuCommandStreamReceiver());
+
+    pCommandQueue->enqueueKernel(
+        mockKernelWithAgeBasedTAPAndIfpNotRequired.mockKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -782,7 +845,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     pCommandQueue->enqueueKernel(
-        mockKernelWithInternalsWithIfpRequired.mockKernel,
+        mockKernelWithAgeBasedTAPAndIfpRequired.mockKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -791,8 +854,20 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr,
         nullptr);
     pCommandQueue->flush();
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
+              csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
-    EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(),
+    pCommandQueue->enqueueKernel(
+        mockKernelWithAgeBasedTAPAndIfpNotRequired.mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    pCommandQueue->flush();
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased,
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 

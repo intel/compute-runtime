@@ -22,8 +22,8 @@
 namespace NEO {
 
 using Gen11EnqueueTest = Test<ClDeviceFixture>;
-GEN11TEST_F(Gen11EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKernelIsSubmittedThenDefaultPolicyIsProgrammed) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+GEN11TEST_F(Gen11EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKernelIsSubmittedThenRoundRobinPolicyIsProgrammed) {
     MockContext mc;
     CommandQueueHw<FamilyType> cmdQ{&mc, pClDevice, 0, false};
 
@@ -38,11 +38,12 @@ GEN11TEST_F(Gen11EnqueueTest, givenKernelRequiringIndependentForwardProgressWhen
 
     auto cmd = findMmioCmd<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address);
     ASSERT_NE(nullptr, cmd);
-    EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[gfxCoreHelper.getDefaultThreadArbitrationPolicy()], cmd->getDataDword());
+    EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[ThreadArbitrationPolicy::RoundRobin], cmd->getDataDword());
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address));
 }
 
-GEN11TEST_F(Gen11EnqueueTest, givenKernelNotRequiringIndependentForwardProgressWhenKernelIsSubmittedThenAgeBasedPolicyIsProgrammed) {
+GEN11TEST_F(Gen11EnqueueTest, givenKernelNotRequiringIndependentForwardProgressWhenKernelIsSubmittedThenDefaultPolicyIsProgrammed) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     MockContext mc;
     CommandQueueHw<FamilyType> cmdQ{&mc, pClDevice, 0, false};
 
@@ -57,7 +58,8 @@ GEN11TEST_F(Gen11EnqueueTest, givenKernelNotRequiringIndependentForwardProgressW
 
     auto cmd = findMmioCmd<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address);
     ASSERT_NE(nullptr, cmd);
-    EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[ThreadArbitrationPolicy::AgeBased], cmd->getDataDword());
+    EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[gfxCoreHelper.getDefaultThreadArbitrationPolicy()], cmd->getDataDword());
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address));
 }
+
 } // namespace NEO

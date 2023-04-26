@@ -266,8 +266,8 @@ cl_int Kernel::initialize() {
     if (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
         threadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(gfxCoreHelper.getDefaultThreadArbitrationPolicy());
     }
-    if (false == kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress) {
-        threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
+    if (kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress == true) {
+        threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
     }
 
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
