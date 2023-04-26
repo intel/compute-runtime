@@ -45,12 +45,12 @@ struct ProductHelperTestLinux : public ProductHelperTest {
         drm->storedEUVal = pInHwInfo.gtSystemInfo.EUCount;
         drm->storedSSVal = pInHwInfo.gtSystemInfo.SubSliceCount;
 
-        rt_cpuidex_func = CpuInfo::cpuidexFunc;
+        rtCpuidexFunc = CpuInfo::cpuidexFunc;
         CpuInfo::cpuidexFunc = mockCpuidex;
     }
 
     void TearDown() override {
-        CpuInfo::cpuidexFunc = rt_cpuidex_func;
+        CpuInfo::cpuidexFunc = rtCpuidexFunc;
 
         ProductHelperTest::TearDown();
     }
@@ -69,5 +69,5 @@ struct ProductHelperTestLinux : public ProductHelperTest {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     DrmMock *drm;
 
-    void (*rt_cpuidex_func)(int *, int, int);
+    void (*rtCpuidexFunc)(int *, int, int);
 };

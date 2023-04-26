@@ -67,9 +67,9 @@ struct ClDrmMemoryManagerTest : public DrmMemoryManagerTest {
 
 TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
@@ -97,9 +97,9 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationTh
 
 TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHostPtrThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
@@ -155,11 +155,11 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
     DebugManagerStateRestore dbgRestorer;
     {
         if (is32bit) {
-            mock->ioctl_expected.total = -1;
+            mock->ioctlExpected.total = -1;
         } else {
-            mock->ioctl_expected.gemUserptr = 1;
-            mock->ioctl_expected.gemWait = 1;
-            mock->ioctl_expected.gemClose = 1;
+            mock->ioctlExpected.gemUserptr = 1;
+            mock->ioctlExpected.gemWait = 1;
+            mock->ioctlExpected.gemClose = 1;
 
             DebugManager.flags.Force32bitAddressing.set(true);
             MockContext context(pClDevice);
@@ -206,7 +206,7 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
 
 TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
     DebugManagerStateRestore dbgRestorer;
-    mock->ioctl_expected.total = -1;
+    mock->ioctlExpected.total = -1;
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
@@ -247,7 +247,7 @@ TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAre
 
 TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
     DebugManagerStateRestore dbgRestorer;
-    mock->ioctl_expected.total = -1;
+    mock->ioctlExpected.total = -1;
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
@@ -287,7 +287,7 @@ TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAre
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocationThenBoIsReturned) {
-    mock->ioctl_expected.total = -1;
+    mock->ioctlExpected.total = -1;
     mock->outputFd = 1337;
     MockContext context(pClDevice);
 
@@ -315,10 +315,10 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCount
     if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
-    mock->ioctl_expected.gemCreate = 1;
-    mock->ioctl_expected.gemSetTiling = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.gemCreate = 1;
+    mock->ioctlExpected.gemSetTiling = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     MockContext context(pClDevice);
 
@@ -363,10 +363,10 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCount
     if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
-    mock->ioctl_expected.gemCreate = 1;
-    mock->ioctl_expected.gemSetTiling = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.gemCreate = 1;
+    mock->ioctlExpected.gemSetTiling = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     MockContext context(pClDevice);
 
@@ -451,34 +451,34 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreat
     auto csr = static_cast<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(device->getDefaultEngine().commandStreamReceiver);
     csr->flushInternalCallBase = false;
 
-    mock->ioctl_expected.gemCreate = 1;
-    mock->ioctl_expected.gemSetTiling = 1;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 2;
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.execbuffer2 = 0;
+    mock->ioctlExpected.gemCreate = 1;
+    mock->ioctlExpected.gemSetTiling = 1;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.execbuffer2 = 0;
 
     // builtins kernels
-    mock->ioctl_expected.gemUserptr += 5;
+    mock->ioctlExpected.gemUserptr += 5;
 
     // command buffers
-    mock->ioctl_expected.gemUserptr += 2;
+    mock->ioctlExpected.gemUserptr += 2;
     additionalDestroyDeviceIoctls.gemClose += 2;
     additionalDestroyDeviceIoctls.gemWait += 2;
 
     // indirect heaps
-    mock->ioctl_expected.gemUserptr += 3;
+    mock->ioctlExpected.gemUserptr += 3;
     additionalDestroyDeviceIoctls.gemClose += 3;
     additionalDestroyDeviceIoctls.gemWait += 3;
 
     if (device->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
-        mock->ioctl_expected.gemUserptr++;
+        mock->ioctlExpected.gemUserptr++;
         additionalDestroyDeviceIoctls.gemClose++;
         additionalDestroyDeviceIoctls.gemWait++;
     }
 
     if (device->getDefaultEngine().commandStreamReceiver->getClearColorAllocation() != nullptr) {
-        mock->ioctl_expected.gemUserptr++;
+        mock->ioctlExpected.gemUserptr++;
         additionalDestroyDeviceIoctls.gemClose++;
         additionalDestroyDeviceIoctls.gemWait++;
     }
@@ -530,9 +530,9 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreat
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThenUnmapSizeCorrectlySetWhenLimitedRangeAllocationUsedOrNotUsed) {
-    mock->ioctl_expected.gemUserptr = 2;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 2;
+    mock->ioctlExpected.gemUserptr = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
 
     MockContext context(pClDevice);
 
@@ -563,9 +563,9 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageT
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
-    mock->ioctl_expected.gemUserptr = 2;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 2;
+    mock->ioctlExpected.gemUserptr = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
 
     MockContext context(pClDevice);
 
@@ -610,9 +610,9 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZ
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNonZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     MockContext context(pClDevice);
 
@@ -660,9 +660,9 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountN
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreatedFromHostPtrThenTilingIsNotCalled) {
-    mock->ioctl_expected.gemUserptr = 2;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 2;
+    mock->ioctlExpected.gemUserptr = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
 
     MockContext context(pClDevice);
 
@@ -703,9 +703,9 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreat
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     ImageDescriptor imgDesc = {};
     imgDesc.imageType = ImageType::Image1D;
@@ -744,10 +744,10 @@ TEST_F(ClDrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraph
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromSharedHandleIsCalledThenNonTiledGmmIsCreatedAndSetInAllocation) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    mock->ioctl_expected.gemGetTiling = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.gemGetTiling = 1;
     auto ioctlHelper = this->mock->getIoctlHelper();
     mock->getTilingModeOut = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
 
@@ -787,10 +787,10 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShar
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedHandleIsCalledThenTileYGmmIsCreatedAndSetInAllocation) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    mock->ioctl_expected.gemGetTiling = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.gemGetTiling = 1;
     auto ioctlHelper = this->mock->getIoctlHelper();
     mock->getTilingModeOut = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
 
@@ -829,12 +829,12 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedH
 }
 
 TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSharedHandleFailsToCallGetTilingThenNonLinearStorageIsAssumed) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemGetTiling = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    this->ioctlResExt = {mock->ioctl_cnt.total + 1, -1};
-    mock->ioctl_res_ext = &ioctlResExt;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemGetTiling = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    this->ioctlResExt = {mock->ioctlCnt.total + 1, -1};
+    mock->ioctlResExt = &ioctlResExt;
 
     osHandle handle = 1u;
     uint32_t boHandle = 2u;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,7 +165,7 @@ TEST_F(DrmTimeTest, WhenGettingTimeThenTimeIsCorrect) {
     }
 
     {
-        drm->ioctl_res = -1;
+        drm->ioctlRes = -1;
         osTime->getDeviceTime()->timestampTypeDetect();
         auto p = osTime->getDeviceTime()->getGpuTime;
         EXPECT_EQ(p, &DeviceTimeDrm::getGpuTime32);
@@ -174,12 +174,12 @@ TEST_F(DrmTimeTest, WhenGettingTimeThenTimeIsCorrect) {
     DrmMockCustom::IoctlResExt ioctlToPass = {1, 0};
     {
         drm->reset();
-        drm->ioctl_res = -1;
-        drm->ioctl_res_ext = &ioctlToPass; // 2nd ioctl is successful
+        drm->ioctlRes = -1;
+        drm->ioctlResExt = &ioctlToPass; // 2nd ioctl is successful
         osTime->getDeviceTime()->timestampTypeDetect();
         auto p = osTime->getDeviceTime()->getGpuTime;
         EXPECT_EQ(p, &DeviceTimeDrm::getGpuTimeSplitted);
-        drm->ioctl_res_ext = &drm->NONE;
+        drm->ioctlResExt = &drm->none;
     }
 }
 
@@ -190,7 +190,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultRes
     osTime->updateDrm(drm);
 
     drm->getParamRetValue = 0;
-    drm->ioctl_res = -1;
+    drm->ioctlRes = -1;
 
     auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, defaultResolution);
@@ -203,7 +203,7 @@ TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultCloc
     osTime->updateDrm(drm);
 
     drm->getParamRetValue = 0;
-    drm->ioctl_res = -1;
+    drm->ioctlRes = -1;
 
     auto result = osTime->getDynamicDeviceTimerClock(*defaultHwInfo);
     auto expectedResult = static_cast<uint64_t>(1000000000.0 / defaultResolution);
@@ -236,7 +236,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectR
 
     // 19200000 is frequency yelding 52.083ns resolution
     drm->getParamRetValue = 19200000;
-    drm->ioctl_res = 0;
+    drm->ioctlRes = 0;
 
     auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, 52.08333333333333);

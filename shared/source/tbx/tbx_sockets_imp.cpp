@@ -37,17 +37,17 @@ TbxSocketsImp::TbxSocketsImp(std::ostream &err)
 }
 
 void TbxSocketsImp::close() {
-    if (0 != m_socket) {
+    if (0 != socket) {
 #ifdef WIN32
-        ::shutdown(m_socket, 0x02 /*SD_BOTH*/);
+        ::shutdown(socket, 0x02 /*SD_BOTH*/);
 
-        ::closesocket(m_socket);
+        ::closesocket(socket);
         ::WSACleanup();
 #else
-        ::shutdown(m_socket, SHUT_RDWR);
-        ::close(m_socket);
+        ::shutdown(socket, SHUT_RDWR);
+        ::close(socket);
 #endif
-        m_socket = 0;
+        socket = 0;
     }
 }
 
@@ -71,8 +71,8 @@ bool TbxSocketsImp::init(const std::string &hostNameOrIp, uint16_t port) {
         }
 #endif
 
-        m_socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (m_socket == INVALID_SOCKET) {
+        socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (socket == INVALID_SOCKET) {
             logErrorInfo("Error at socket(): ");
             break;
         }
@@ -83,23 +83,23 @@ bool TbxSocketsImp::init(const std::string &hostNameOrIp, uint16_t port) {
 
         HasMsg cmd;
         memset(&cmd, 0, sizeof(cmd));
-        cmd.hdr.msg_type = HAS_CONTROL_REQ_TYPE;
+        cmd.hdr.msgType = HAS_CONTROL_REQ_TYPE;
         cmd.hdr.size = sizeof(HasControlReq);
-        cmd.hdr.trans_id = transID++;
+        cmd.hdr.transID = transID++;
 
-        cmd.u.control_req.time_adv_mask = 1;
-        cmd.u.control_req.time_adv = 0;
+        cmd.u.controlReq.timeAdvMask = 1;
+        cmd.u.controlReq.timeAdv = 0;
 
-        cmd.u.control_req.async_msg_mask = 1;
-        cmd.u.control_req.async_msg = 0;
+        cmd.u.controlReq.asyncMsgMask = 1;
+        cmd.u.controlReq.asyncMsg = 0;
 
-        cmd.u.control_req.has_mask = 1;
-        cmd.u.control_req.has = 1;
+        cmd.u.controlReq.hasMask = 1;
+        cmd.u.controlReq.has = 1;
 
         sendWriteData(&cmd, sizeof(HasHdr) + cmd.hdr.size);
     } while (false);
 
-    return m_socket != INVALID_SOCKET;
+    return socket != INVALID_SOCKET;
 }
 
 bool TbxSocketsImp::connectToServer(const std::string &hostNameOrIp, uint16_t port) {
@@ -120,7 +120,7 @@ bool TbxSocketsImp::connectToServer(const std::string &hostNameOrIp, uint16_t po
         clientService.sin_family = AF_INET;
         clientService.sin_port = htons(port);
 
-        if (::connect(m_socket, (SOCKADDR *)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
+        if (::connect(socket, (SOCKADDR *)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
             logErrorInfo("Failed to connect: ");
             cerrStream << "Is TBX server process running on host system [ " << hostNameOrIp.c_str()
                        << ", port " << port << "]?" << std::endl;
@@ -128,7 +128,7 @@ bool TbxSocketsImp::connectToServer(const std::string &hostNameOrIp, uint16_t po
         }
     } while (false);
 
-    return !!m_socket;
+    return !!socket;
 }
 
 bool TbxSocketsImp::readMMIO(uint32_t offset, uint32_t *data) {
@@ -136,15 +136,15 @@ bool TbxSocketsImp::readMMIO(uint32_t offset, uint32_t *data) {
     do {
         HasMsg cmd;
         memset(&cmd, 0, sizeof(cmd));
-        cmd.hdr.msg_type = HAS_MMIO_REQ_TYPE;
+        cmd.hdr.msgType = HAS_MMIO_REQ_TYPE;
         cmd.hdr.size = sizeof(HasMmioReq);
-        cmd.hdr.trans_id = transID++;
-        cmd.u.mmio_req.offset = offset;
-        cmd.u.mmio_req.data = 0;
-        cmd.u.mmio_req.write = 0;
-        cmd.u.mmio_req.delay = 0;
-        cmd.u.mmio_req.msg_type = MSG_TYPE_MMIO;
-        cmd.u.mmio_req.size = sizeof(uint32_t);
+        cmd.hdr.transID = transID++;
+        cmd.u.mmioReq.offset = offset;
+        cmd.u.mmioReq.data = 0;
+        cmd.u.mmioReq.write = 0;
+        cmd.u.mmioReq.delay = 0;
+        cmd.u.mmioReq.msgType = MSG_TYPE_MMIO;
+        cmd.u.mmioReq.size = sizeof(uint32_t);
 
         success = sendWriteData(&cmd, sizeof(HasHdr) + cmd.hdr.size);
         if (!success) {
@@ -157,13 +157,13 @@ bool TbxSocketsImp::readMMIO(uint32_t offset, uint32_t *data) {
             break;
         }
 
-        if (resp.hdr.msg_type != HAS_MMIO_RES_TYPE || cmd.hdr.trans_id != resp.hdr.trans_id) {
+        if (resp.hdr.msgType != HAS_MMIO_RES_TYPE || cmd.hdr.transID != resp.hdr.transID) {
             *data = 0xdeadbeef;
             success = false;
             break;
         }
 
-        *data = resp.u.mmio_res.data;
+        *data = resp.u.mmioRes.data;
         success = true;
     } while (false);
 
@@ -174,14 +174,14 @@ bool TbxSocketsImp::readMMIO(uint32_t offset, uint32_t *data) {
 bool TbxSocketsImp::writeMMIO(uint32_t offset, uint32_t value) {
     HasMsg cmd;
     memset(&cmd, 0, sizeof(cmd));
-    cmd.hdr.msg_type = HAS_MMIO_REQ_TYPE;
+    cmd.hdr.msgType = HAS_MMIO_REQ_TYPE;
     cmd.hdr.size = sizeof(HasMmioReq);
-    cmd.hdr.trans_id = transID++;
-    cmd.u.mmio_req.msg_type = MSG_TYPE_MMIO;
-    cmd.u.mmio_req.offset = offset;
-    cmd.u.mmio_req.data = value;
-    cmd.u.mmio_req.write = 1;
-    cmd.u.mmio_req.size = sizeof(uint32_t);
+    cmd.hdr.transID = transID++;
+    cmd.u.mmioReq.msgType = MSG_TYPE_MMIO;
+    cmd.u.mmioReq.offset = offset;
+    cmd.u.mmioReq.data = value;
+    cmd.u.mmioReq.write = 1;
+    cmd.u.mmioReq.size = sizeof(uint32_t);
 
     return sendWriteData(&cmd, sizeof(HasHdr) + cmd.hdr.size);
 }
@@ -189,16 +189,16 @@ bool TbxSocketsImp::writeMMIO(uint32_t offset, uint32_t value) {
 bool TbxSocketsImp::readMemory(uint64_t addrOffset, void *data, size_t size) {
     HasMsg cmd;
     memset(&cmd, 0, sizeof(cmd));
-    cmd.hdr.msg_type = HAS_READ_DATA_REQ_TYPE;
-    cmd.hdr.trans_id = transID++;
+    cmd.hdr.msgType = HAS_READ_DATA_REQ_TYPE;
+    cmd.hdr.transID = transID++;
     cmd.hdr.size = sizeof(HasReadDataReq);
-    cmd.u.read_req.address = static_cast<uint32_t>(addrOffset);
-    cmd.u.read_req.address_h = static_cast<uint32_t>(addrOffset >> 32);
-    cmd.u.read_req.addr_type = 0;
-    cmd.u.read_req.size = static_cast<uint32_t>(size);
-    cmd.u.read_req.ownership_req = 0;
-    cmd.u.read_req.frontdoor = 0;
-    cmd.u.read_req.cacheline_disable = cmd.u.read_req.frontdoor;
+    cmd.u.readReq.address = static_cast<uint32_t>(addrOffset);
+    cmd.u.readReq.addressH = static_cast<uint32_t>(addrOffset >> 32);
+    cmd.u.readReq.addrType = 0;
+    cmd.u.readReq.size = static_cast<uint32_t>(size);
+    cmd.u.readReq.ownershipReq = 0;
+    cmd.u.readReq.frontdoor = 0;
+    cmd.u.readReq.cachelineDisable = cmd.u.readReq.frontdoor;
 
     bool success;
     do {
@@ -213,7 +213,7 @@ bool TbxSocketsImp::readMemory(uint64_t addrOffset, void *data, size_t size) {
             break;
         }
 
-        if (resp.hdr.msg_type != HAS_READ_DATA_RES_TYPE || resp.hdr.trans_id != cmd.hdr.trans_id) {
+        if (resp.hdr.msgType != HAS_READ_DATA_RES_TYPE || resp.hdr.transID != cmd.hdr.transID) {
             cerrStream << "Out of sequence read data packet?" << std::endl;
             success = false;
             break;
@@ -229,18 +229,18 @@ bool TbxSocketsImp::readMemory(uint64_t addrOffset, void *data, size_t size) {
 bool TbxSocketsImp::writeMemory(uint64_t physAddr, const void *data, size_t size, uint32_t type) {
     HasMsg cmd;
     memset(&cmd, 0, sizeof(cmd));
-    cmd.hdr.msg_type = HAS_WRITE_DATA_REQ_TYPE;
-    cmd.hdr.trans_id = transID++;
+    cmd.hdr.msgType = HAS_WRITE_DATA_REQ_TYPE;
+    cmd.hdr.transID = transID++;
     cmd.hdr.size = sizeof(HasWriteDataReq);
 
-    cmd.u.write_req.address = static_cast<uint32_t>(physAddr);
-    cmd.u.write_req.address_h = static_cast<uint32_t>(physAddr >> 32);
-    cmd.u.write_req.addr_type = 0;
-    cmd.u.write_req.size = static_cast<uint32_t>(size);
-    cmd.u.write_req.take_ownership = 0;
-    cmd.u.write_req.frontdoor = 0;
-    cmd.u.write_req.cacheline_disable = cmd.u.write_req.frontdoor;
-    cmd.u.write_req.memory_type = type;
+    cmd.u.writeReq.address = static_cast<uint32_t>(physAddr);
+    cmd.u.writeReq.addressH = static_cast<uint32_t>(physAddr >> 32);
+    cmd.u.writeReq.addrType = 0;
+    cmd.u.writeReq.size = static_cast<uint32_t>(size);
+    cmd.u.writeReq.takeOwnership = 0;
+    cmd.u.writeReq.frontdoor = 0;
+    cmd.u.writeReq.cachelineDisable = cmd.u.writeReq.frontdoor;
+    cmd.u.writeReq.memoryType = type;
 
     bool success;
     do {
@@ -263,13 +263,13 @@ bool TbxSocketsImp::writeMemory(uint64_t physAddr, const void *data, size_t size
 bool TbxSocketsImp::writeGTT(uint32_t offset, uint64_t entry) {
     HasMsg cmd;
     memset(&cmd, 0, sizeof(cmd));
-    cmd.hdr.msg_type = HAS_GTT_REQ_TYPE;
+    cmd.hdr.msgType = HAS_GTT_REQ_TYPE;
     cmd.hdr.size = sizeof(HasGtt64Req);
-    cmd.hdr.trans_id = transID++;
-    cmd.u.gtt64_req.write = 1;
-    cmd.u.gtt64_req.offset = offset / sizeof(uint64_t); // the TBX server expects GTT index here, not offset
-    cmd.u.gtt64_req.data = static_cast<uint32_t>(entry & 0xffffffff);
-    cmd.u.gtt64_req.data_h = static_cast<uint32_t>(entry >> 32);
+    cmd.hdr.transID = transID++;
+    cmd.u.gtt64Req.write = 1;
+    cmd.u.gtt64Req.offset = offset / sizeof(uint64_t); // the TBX server expects GTT index here, not offset
+    cmd.u.gtt64Req.data = static_cast<uint32_t>(entry & 0xffffffff);
+    cmd.u.gtt64Req.dataH = static_cast<uint32_t>(entry >> 32);
 
     return sendWriteData(&cmd, sizeof(HasHdr) + cmd.hdr.size);
 }
@@ -279,7 +279,7 @@ bool TbxSocketsImp::sendWriteData(const void *buffer, size_t sizeInBytes) {
     auto dataBuffer = reinterpret_cast<const char *>(buffer);
 
     do {
-        auto bytesSent = ::send(m_socket, &dataBuffer[totalSent], static_cast<int>(sizeInBytes - totalSent), 0);
+        auto bytesSent = ::send(socket, &dataBuffer[totalSent], static_cast<int>(sizeInBytes - totalSent), 0);
         if (bytesSent == 0 || bytesSent == WSAECONNRESET) {
             logErrorInfo("Connection Closed.");
             return false;
@@ -300,7 +300,7 @@ bool TbxSocketsImp::getResponseData(void *buffer, size_t sizeInBytes) {
     auto dataBuffer = static_cast<char *>(buffer);
 
     do {
-        auto bytesRecv = ::recv(m_socket, &dataBuffer[totalRecv], static_cast<int>(sizeInBytes - totalRecv), 0);
+        auto bytesRecv = ::recv(socket, &dataBuffer[totalRecv], static_cast<int>(sizeInBytes - totalRecv), 0);
         if (bytesRecv == 0 || bytesRecv == WSAECONNRESET) {
             logErrorInfo("Connection Closed.");
             return false;

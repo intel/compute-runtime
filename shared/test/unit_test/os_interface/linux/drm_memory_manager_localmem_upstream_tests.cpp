@@ -656,7 +656,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithL
 using DrmMemoryManagerFailInjectionTest = Test<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation, NonDefaultIoctlsSupported) {
-    mock->ioctl_expected.total = -1; // don't care
+    mock->ioctlExpected.total = -1; // don't care
     class MockGfxPartition : public GfxPartition {
       public:
         MockGfxPartition() : GfxPartition(reservedCpuAddressRange) {
@@ -804,10 +804,10 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
 using DrmMemoryManagerTestImpl = Test<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryThenCallIoctlGemMapOffsetAndReturnLockedPtr, NonDefaultIoctlsSupported) {
-    mockExp->ioctl_expected.gemCreateExt = 1;
-    mockExp->ioctl_expected.gemWait = 1;
-    mockExp->ioctl_expected.gemClose = 1;
-    mockExp->ioctl_expected.gemMmapOffset = 1;
+    mockExp->ioctlExpected.gemCreateExt = 1;
+    mockExp->ioctlExpected.gemWait = 1;
+    mockExp->ioctlExpected.gemClose = 1;
+    mockExp->ioctlExpected.gemMmapOffset = 1;
     mockExp->memoryInfo.reset(new MockMemoryInfo(*mockExp));
 
     AllocationData allocData;
@@ -840,9 +840,9 @@ HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledO
 }
 
 TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapThenReturnNullPtr) {
-    mockExp->ioctl_expected.gemMmapOffset = 2;
-    this->ioctlResExt = {mockExp->ioctl_cnt.total, -1};
-    mockExp->ioctl_res_ext = &ioctlResExt;
+    mockExp->ioctlExpected.gemMmapOffset = 2;
+    this->ioctlResExt = {mockExp->ioctlCnt.total, -1};
+    mockExp->ioctlResExt = &ioctlResExt;
 
     BufferObject bo(mockExp, 3, 1, 0, 0);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
@@ -852,11 +852,11 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     EXPECT_EQ(nullptr, ptr);
 
     memoryManager->unlockResource(&drmAllocation);
-    mockExp->ioctl_res_ext = &mockExp->NONE;
+    mockExp->ioctlResExt = &mockExp->none;
 }
 
 TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapFunctionOffsetThenReturnNullPtr) {
-    mockExp->ioctl_expected.gemMmapOffset = 2;
+    mockExp->ioctlExpected.gemMmapOffset = 2;
     mockExp->returnIoctlExtraErrorValue = true;
     mockExp->failOnMmapOffset = true;
 
@@ -868,7 +868,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     EXPECT_EQ(nullptr, ptr);
 
     memoryManager->unlockResource(&drmAllocation);
-    mockExp->ioctl_res_ext = &mockExp->NONE;
+    mockExp->ioctlResExt = &mockExp->none;
 }
 
 TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {

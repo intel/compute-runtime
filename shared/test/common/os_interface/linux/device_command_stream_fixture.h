@@ -146,26 +146,26 @@ class DrmMockCustom : public Drm {
     }
 
     void reset() {
-        ioctl_res = 0;
-        ioctl_cnt.reset();
-        ioctl_expected.reset();
-        ioctl_res_ext = &NONE;
+        ioctlRes = 0;
+        ioctlCnt.reset();
+        ioctlExpected.reset();
+        ioctlResExt = &none;
     }
 
     virtual void execBufferExtensions(void *execbuf) {
     }
 
-    Ioctls ioctl_cnt{};
-    Ioctls ioctl_expected{};
+    Ioctls ioctlCnt{};
+    Ioctls ioctlExpected{};
 
-    IoctlResExt NONE = {-1, 0};
+    IoctlResExt none = {-1, 0};
 
     WaitUserFenceCall waitUserFenceCall{};
     IsVmBindAvailableCall getSetPairAvailableCall{};
     IsVmBindAvailableCall isVmBindAvailableCall{};
 
-    std::atomic<int> ioctl_res;
-    std::atomic<IoctlResExt *> ioctl_res_ext;
+    std::atomic<int> ioctlRes;
+    std::atomic<IoctlResExt *> ioctlResExt;
 
     // DRM_IOCTL_I915_GEM_EXECBUFFER2
     NEO::MockExecBuffer execBuffer{};

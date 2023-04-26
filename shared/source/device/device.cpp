@@ -798,26 +798,26 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
          */
 
         struct DeviceUUID {
-            uint16_t vendor_id;
-            uint16_t device_id;
-            uint16_t revision_id;
-            uint16_t pci_domain;
-            uint8_t pci_bus;
-            uint8_t pci_dev;
-            uint8_t pci_func;
+            uint16_t vendorID;
+            uint16_t deviceID;
+            uint16_t revisionID;
+            uint16_t pciDomain;
+            uint8_t pciBus;
+            uint8_t pciDev;
+            uint8_t pciFunc;
             uint8_t reserved[4];
-            uint8_t sub_device_id;
+            uint8_t subDeviceID;
         };
 
         DeviceUUID deviceUUID = {};
-        deviceUUID.vendor_id = 0x8086; // Intel
-        deviceUUID.device_id = getHardwareInfo().platform.usDeviceID;
-        deviceUUID.revision_id = getHardwareInfo().platform.usRevId;
-        deviceUUID.pci_domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
-        deviceUUID.pci_bus = static_cast<uint8_t>(pciBusInfo.pciBus);
-        deviceUUID.pci_dev = static_cast<uint8_t>(pciBusInfo.pciDevice);
-        deviceUUID.pci_func = static_cast<uint8_t>(pciBusInfo.pciFunction);
-        deviceUUID.sub_device_id = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+        deviceUUID.vendorID = 0x8086; // Intel
+        deviceUUID.deviceID = getHardwareInfo().platform.usDeviceID;
+        deviceUUID.revisionID = getHardwareInfo().platform.usRevId;
+        deviceUUID.pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+        deviceUUID.pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+        deviceUUID.pciDev = static_cast<uint8_t>(pciBusInfo.pciDevice);
+        deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
+        deviceUUID.subDeviceID = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
 
         static_assert(sizeof(DeviceUUID) == ProductHelper::uuidSize);
 

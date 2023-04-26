@@ -65,7 +65,7 @@ class CreateFromGlTexture : public ::testing::Test {
         tempMM.forceAllocationSize = imgInfo.size;
         tempMM.forceGmm = gmm.get();
 
-        if (glSharing->m_textureInfoOutput.globalShareHandleMCS != 0) {
+        if (glSharing->textureInfoOutput.globalShareHandleMCS != 0) {
             ImageDescriptor mcsImgDesc = {};
             mcsImgDesc.imageHeight = 128;
             mcsImgDesc.imageRowPitch = 256;
@@ -121,15 +121,15 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
 
     if (target == GL_TEXTURE_BUFFER) {
         // size and width for texture buffer are queried from textureInfo - not from gmm
-        glSharing->m_textureInfoOutput.textureBufferWidth = 64;
-        glSharing->m_textureInfoOutput.textureBufferSize = 1024;
+        glSharing->textureInfoOutput.textureBufferWidth = 64;
+        glSharing->textureInfoOutput.textureBufferSize = 1024;
         glSharing->uploadDataToTextureInfo();
     }
 
     if (target == GL_TEXTURE_2D_MULTISAMPLE || target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
         imgDesc.numSamples = 16;
-        glSharing->m_textureInfoOutput.numberOfSamples = 16;
-        glSharing->m_textureInfoOutput.globalShareHandleMCS = CreateFromGlTexture::mcsHandle;
+        glSharing->textureInfoOutput.numberOfSamples = 16;
+        glSharing->textureInfoOutput.globalShareHandleMCS = CreateFromGlTexture::mcsHandle;
         glSharing->uploadDataToTextureInfo();
     }
 

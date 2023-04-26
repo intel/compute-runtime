@@ -7335,7 +7335,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenVmHandleNotFoundWhenReadSbaBufferCalled
 
 struct MockRenderSurfaceState {
     uint32_t unused0[8];
-    uint64_t SurfaceBaseAddress;
+    uint64_t surfaceBaseAddress;
     uint32_t unused1[6];
 };
 static_assert(64 == sizeof(MockRenderSurfaceState));
@@ -7360,7 +7360,7 @@ void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaT
     char *sbaCpuPtr = stateSaveArea.data() + maxDbgSurfaceSize;
     char *rssCpuPtr = sbaCpuPtr + sizeof(SbaTrackedAddresses) + renderSurfaceStateOffset;
     memcpy(sbaCpuPtr, &sba, sizeof(sba));
-    reinterpret_cast<MockRenderSurfaceState *>(rssCpuPtr)->SurfaceBaseAddress = 0xBA5EBA5E;
+    reinterpret_cast<MockRenderSurfaceState *>(rssCpuPtr)->surfaceBaseAddress = 0xBA5EBA5E;
 }
 
 TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead) {
@@ -7484,7 +7484,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
     char *sbaCpuPtr = session->stateSaveAreaHeader.data() + maxDbgSurfaceSize;
     char *rssCpuPtr = sbaCpuPtr + sizeof(SbaTrackedAddresses) + renderSurfaceStateOffset;
     memcpy(sbaCpuPtr, &sbaExpected, sizeof(sbaExpected));
-    reinterpret_cast<MockRenderSurfaceState *>(rssCpuPtr)->SurfaceBaseAddress = 0;
+    reinterpret_cast<MockRenderSurfaceState *>(rssCpuPtr)->surfaceBaseAddress = 0;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), thread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0));
 

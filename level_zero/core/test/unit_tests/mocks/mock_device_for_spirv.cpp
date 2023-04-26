@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const
                                                                            ze_module_build_log_handle_t *buildLog, ModuleType type) {
     const std::string builtinCopyfill("builtin_copyfill");
     const std::string builtinImages("builtin_images");
-    if ((wasModuleCreated) && ((useImagesBuiltins != useImagesBuiltins_prev) || (isStateless != isStateless_prev)))
+    if ((wasModuleCreated) && ((useImagesBuiltins != useImagesBuiltinsPrev) || (isStateless != isStatelessPrev)))
         wasModuleCreated = false;
 
     if (!wasModuleCreated) {
@@ -44,8 +44,8 @@ ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const
         ze_result_t result = ZE_RESULT_SUCCESS;
         mockModulePtr.reset(Module::create(this, &moduleDesc, moduleBuildLog, ModuleType::Builtin, &result));
         wasModuleCreated = true;
-        useImagesBuiltins_prev = useImagesBuiltins;
-        isStateless_prev = isStateless;
+        useImagesBuiltinsPrev = useImagesBuiltins;
+        isStatelessPrev = isStateless;
     }
     *module = mockModulePtr.get();
     return ZE_RESULT_SUCCESS;

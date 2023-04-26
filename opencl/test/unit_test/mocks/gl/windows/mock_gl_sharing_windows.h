@@ -138,24 +138,24 @@ class MockGlSharing {
     MockGlSharing() {}
     MockGlSharing(GLType GLHDCType, GLContext GLHGLRCHandle, GLContext GLHGLRCHandleBkpCtx, GLDisplay GLHDCHandle);
     void uploadDataToBufferInfo() {
-        dllParam->loadBuffer(m_bufferInfoOutput);
+        dllParam->loadBuffer(bufferInfoOutput);
     }
     void uploadDataToBufferInfo(unsigned int sharedHandle, int bufferOffset, GMM_RESOURCE_INFO *gmmResInfo) {
-        m_bufferInfoOutput.globalShareHandle = sharedHandle;
-        m_bufferInfoOutput.bufferOffset = bufferOffset;
-        m_bufferInfoOutput.pGmmResInfo = gmmResInfo;
-        dllParam->loadBuffer(m_bufferInfoOutput);
+        bufferInfoOutput.globalShareHandle = sharedHandle;
+        bufferInfoOutput.bufferOffset = bufferOffset;
+        bufferInfoOutput.pGmmResInfo = gmmResInfo;
+        dllParam->loadBuffer(bufferInfoOutput);
     }
     void uploadDataToTextureInfo() {
-        dllParam->loadTexture(m_textureInfoOutput);
+        dllParam->loadTexture(textureInfoOutput);
     }
     void uploadDataToTextureInfo(unsigned int sharedHandle) {
-        m_textureInfoOutput.globalShareHandle = sharedHandle;
-        dllParam->loadTexture(m_textureInfoOutput);
+        textureInfoOutput.globalShareHandle = sharedHandle;
+        dllParam->loadTexture(textureInfoOutput);
     }
     void uploadTextureBufferOffsetToTextureInfo(int texBufOffset) {
-        m_textureInfoOutput.textureBufferOffset = texBufOffset;
-        dllParam->loadTexture(m_textureInfoOutput);
+        textureInfoOutput.textureBufferOffset = texBufOffset;
+        dllParam->loadTexture(textureInfoOutput);
     }
     void overrideGetCurrentValues(GLContext ctx, GLDisplay display, bool forceMakeCurrentFail = false, int numberOfFails = 0) {
         glMockReturnedValues.currentContext = ctx;
@@ -172,10 +172,10 @@ class MockGlSharing {
 
     std::unique_ptr<GlSharingFunctionsMock> sharingFunctions = std::make_unique<GlSharingFunctionsMock>();
     std::unique_ptr<GlDllHelper> dllParam = std::make_unique<GlDllHelper>();
-    CL_GL_RESOURCE_INFO m_clGlResourceInfo = {0};
-    GL_CL_RESOURCE_INFO m_glClResourceInfo = {0};
-    CL_GL_BUFFER_INFO m_bufferInfoOutput = {0};
-    CL_GL_RESOURCE_INFO m_textureInfoOutput = {0};
+    CL_GL_RESOURCE_INFO clGlResourceInfo = {0};
+    GL_CL_RESOURCE_INFO glClResourceInfo = {0};
+    CL_GL_BUFFER_INFO bufferInfoOutput = {0};
+    CL_GL_RESOURCE_INFO textureInfoOutput = {0};
     GLMockReturnedValues glMockReturnedValues = {0};
 };
 

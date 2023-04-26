@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -660,7 +660,7 @@ TEST(EventsTracker, givenEventsFromDifferentThreadsThenDumpingProperly) {
             auto trackedEventsMock = std::shared_ptr<IFList<TrackedEvent, true, true>>{new IFList<TrackedEvent, true, true>};
             return trackedEventsMock->detachNodes();
         }
-        std::shared_ptr<IFList<TrackedEvent, true, true>> *TrackedEventsMock;
+        std::shared_ptr<IFList<TrackedEvent, true, true>> *trackedEventsMock;
     };
 
     auto evTrackerMockMT = std::shared_ptr<EventsTrackerMockMT>{new EventsTrackerMockMT()};

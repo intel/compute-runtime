@@ -213,7 +213,7 @@ void const *TagNode<TagType>::getContextEndAddress([[maybe_unused]] uint32_t pac
 template <typename TagType>
 uint64_t &TagNode<TagType>::getContextCompleteRef() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::HwTimeStamps) {
-        return tagForCpuAccess->ContextCompleteTS;
+        return tagForCpuAccess->contextCompleteTS;
     } else {
         UNRECOVERABLE_IF(true);
     }
@@ -222,7 +222,7 @@ uint64_t &TagNode<TagType>::getContextCompleteRef() const {
 template <typename TagType>
 uint64_t &TagNode<TagType>::getGlobalEndRef() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::HwTimeStamps) {
-        return tagForCpuAccess->GlobalEndTS;
+        return tagForCpuAccess->globalEndTS;
     } else {
         UNRECOVERABLE_IF(true);
     }

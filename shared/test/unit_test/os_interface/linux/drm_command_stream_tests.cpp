@@ -379,7 +379,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenFragmentStorageWhenMakingR
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithResuedFragmentsWhenTheyAreMadeResidentThenFragmentsDoNotDuplicate) {
-    mock->ioctl_expected.total = 9;
+    mock->ioctlExpected.total = 9;
     // 3 fragments
     auto ptr = (void *)0x1001;
     auto size = MemoryConstants::pageSize * 10;
@@ -1064,12 +1064,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
     EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
-    mock->ioctl_cnt.gemWait = 0;
+    mock->ioctlCnt.gemWait = 0;
 
     FlushStamp handleToWait = 123;
     testedCsr->waitForFlushStamp(handleToWait);
 
-    EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(1, mock->ioctlCnt.gemWait);
     EXPECT_EQ(-1, mock->gemWaitTimeout);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 }
@@ -1087,12 +1087,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutU
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
     EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
-    mock->ioctl_cnt.gemWait = 0;
+    mock->ioctlCnt.gemWait = 0;
 
     FlushStamp handleToWait = 123;
     testedCsr->waitForFlushStamp(handleToWait);
 
-    EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(1, mock->ioctlCnt.gemWait);
     EXPECT_EQ(1000, mock->gemWaitTimeout);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 }
@@ -1114,7 +1114,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
     EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
-    mock->ioctl_cnt.gemWait = 0;
+    mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
 
     auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
@@ -1127,7 +1127,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     FlushStamp handleToWait = 123;
     testedCsr->waitForFlushStamp(handleToWait);
 
-    EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(0, mock->ioctlCnt.gemWait);
     EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
     EXPECT_EQ(123u, testedCsr->waitUserFenceResult.waitValue);
 
@@ -1155,13 +1155,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
     EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
-    mock->ioctl_cnt.gemWait = 0;
+    mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
     testedCsr->waitForFlushStamp(handleToWait);
 
-    EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(1, mock->ioctlCnt.gemWait);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 
     EXPECT_EQ(2u, mock->isVmBindAvailableCall.called);
@@ -1184,13 +1184,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
     EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
-    mock->ioctl_cnt.gemWait = 0;
+    mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
     EXPECT_ANY_THROW(testedCsr->waitForFlushStamp(handleToWait));
 
-    EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(0, mock->ioctlCnt.gemWait);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 
     EXPECT_EQ(2u, mock->isVmBindAvailableCall.called);
@@ -1215,13 +1215,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
     EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
-    mock->ioctl_cnt.gemWait = 0;
+    mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
     testedCsr->waitForFlushStamp(handleToWait);
 
-    EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(0, mock->ioctlCnt.gemWait);
     EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
     EXPECT_EQ(123u, testedCsr->waitUserFenceResult.waitValue);
 

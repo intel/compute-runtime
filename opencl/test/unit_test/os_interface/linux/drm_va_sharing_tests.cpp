@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ namespace NEO {
 using DrmVaSharingTest = Test<DrmMemoryManagerFixture>;
 
 TEST_F(DrmVaSharingTest, givenDrmMemoryManagerWhenSharedVaSurfaceIsImportedWithDrmPrimeFdToHandleThenDrmPrimeFdCanBeClosed) {
-    mock->ioctl_expected.total = -1;
+    mock->ioctlExpected.total = -1;
     device->incRefInternal();
     MockClDevice clDevice{device};
     MockContext context(&clDevice);

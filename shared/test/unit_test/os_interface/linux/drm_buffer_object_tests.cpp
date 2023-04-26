@@ -26,26 +26,26 @@ using DrmMockBufferObjectFixture = DrmBufferObjectFixture<DrmMockCustom>;
 using DrmBufferObjectTest = Test<DrmMockBufferObjectFixture>;
 
 TEST_F(DrmBufferObjectTest, WhenCallingExecThenReturnIsCorrect) {
-    mock->ioctl_expected.total = 1;
-    mock->ioctl_res = 0;
+    mock->ioctlExpected.total = 1;
+    mock->ioctlRes = 0;
 
     ExecObject execObjectsStorage = {};
     auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
-    EXPECT_EQ(mock->ioctl_res, ret);
+    EXPECT_EQ(mock->ioctlRes, ret);
     EXPECT_EQ(0u, mock->execBuffer.getFlags());
 }
 
 TEST_F(DrmBufferObjectTest, GivenInvalidParamsWhenCallingExecThenEfaultIsReturned) {
-    mock->ioctl_expected.total = 3;
-    mock->ioctl_res = -1;
+    mock->ioctlExpected.total = 3;
+    mock->ioctlRes = -1;
     mock->errnoValue = EFAULT;
     ExecObject execObjectsStorage = {};
     EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0));
 }
 
 TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhenCallingExecGpuHangErrorCodeIsRetrurned) {
-    mock->ioctl_expected.total = 2;
-    mock->ioctl_res = -1;
+    mock->ioctlExpected.total = 2;
+    mock->ioctlRes = -1;
     mock->errnoValue = EFAULT;
 
     bo->callBaseEvictUnusedAllocations = false;
@@ -57,14 +57,14 @@ TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhen
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingTilingThenCallSucceeds) {
-    mock->ioctl_expected.total = 1; // set_tiling
+    mock->ioctlExpected.total = 1; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     auto ret = bo->setTiling(tilingY, 0);
     EXPECT_TRUE(ret);
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingSameTilingThenCallSucceeds) {
-    mock->ioctl_expected.total = 0; // set_tiling
+    mock->ioctlExpected.total = 0; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     bo->tilingMode = tilingY;
     auto ret = bo->setTiling(tilingY, 0);
@@ -72,16 +72,16 @@ TEST_F(DrmBufferObjectTest, WhenSettingSameTilingThenCallSucceeds) {
 }
 
 TEST_F(DrmBufferObjectTest, GivenInvalidTilingWhenSettingTilingThenCallFails) {
-    mock->ioctl_expected.total = 1; // set_tiling
+    mock->ioctlExpected.total = 1; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
-    mock->ioctl_res = -1;
+    mock->ioctlRes = -1;
     auto ret = bo->setTiling(tilingY, 0);
     EXPECT_FALSE(ret);
 }
 
 TEST_F(DrmBufferObjectTest, givenBindAvailableWhenCallWaitThenNoIoctlIsCalled) {
     mock->bindAvailable = true;
-    mock->ioctl_expected.total = 0;
+    mock->ioctlExpected.total = 0;
     auto ret = bo->wait(-1);
     EXPECT_FALSE(ret);
 }
@@ -111,8 +111,8 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWh
 TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
 
-    mock->ioctl_expected.total = 3;
-    mock->ioctl_res = -1;
+    mock->ioctlExpected.total = 3;
+    mock->ioctlRes = -1;
     this->mock->errnoValue = EINVAL;
 
     std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(this->mock.get()));
@@ -127,8 +127,8 @@ TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
 TEST_F(DrmBufferObjectTest, whenExecFailsThenValidateHostPtrFails) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
 
-    mock->ioctl_expected.total = 3;
-    mock->ioctl_res = -1;
+    mock->ioctlExpected.total = 3;
+    mock->ioctlRes = -1;
     this->mock->errnoValue = EINVAL;
 
     std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(this->mock.get()));
@@ -141,7 +141,7 @@ TEST_F(DrmBufferObjectTest, whenExecFailsThenValidateHostPtrFails) {
 }
 
 TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueThenDebugInformationAboutBOIsPrinted) {
-    mock->ioctl_expected.total = 1;
+    mock->ioctlExpected.total = 1;
     DebugManagerStateRestore restore;
     DebugManager.flags.PrintExecutionBuffer.set(true);
 
@@ -168,7 +168,7 @@ TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueTh
 }
 
 TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCalledOnBOThenDebugInfromationIsPrinted) {
-    mock->ioctl_expected.total = 1;
+    mock->ioctlExpected.total = 1;
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.PrintBOCreateDestroyResult.set(true);
 
@@ -183,7 +183,7 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
 }
 
 TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCalledButHandleIsSharedThenDebugInfromationIsPrintedThatCloseIsSkipped) {
-    mock->ioctl_expected.total = 1;
+    mock->ioctlExpected.total = 1;
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.PrintBOCreateDestroyResult.set(true);
 
@@ -212,7 +212,7 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
 }
 
 TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundInStdStream) {
-    mock->ioctl_expected.total = 1;
+    mock->ioctlExpected.total = 1;
     DebugManagerStateRestore restore;
     DebugManager.flags.PrintExecutionBuffer.set(true);
     ExecObject execObjectsStorage = {};
@@ -238,7 +238,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenValidateHostptrIsCalledThenErr
     ASSERT_NE(nullptr, bo.get());
 
     // fail DRM_IOCTL_I915_GEM_EXECBUFFER2 in pin
-    mock->ioctl_res = -1;
+    mock->ioctlRes = -1;
 
     std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, boToPin.get());
@@ -249,7 +249,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenValidateHostptrIsCalledThenErr
     BufferObject *boArray[1] = {boToPin.get()};
     auto ret = bo->pin(boArray, 1, &osContext, 0, 1);
     EXPECT_EQ(EFAULT, ret);
-    mock->ioctl_res = 0;
+    mock->ioctlRes = 0;
 }
 
 TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned) {
@@ -263,7 +263,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     ASSERT_NE(nullptr, bo.get());
 
     // fail DRM_IOCTL_I915_GEM_EXECBUFFER2 in pin
-    mock->ioctl_res = -1;
+    mock->ioctlRes = -1;
 
     std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, boToPin.get());
@@ -274,7 +274,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     BufferObject *boArray[1] = {boToPin.get()};
     auto ret = bo->validateHostPtr(boArray, 1, &osContext, 0, 1);
     EXPECT_EQ(EFAULT, ret);
-    mock->ioctl_res = 0;
+    mock->ioctlRes = 0;
 }
 
 TEST(DrmBufferObjectSimpleTest, givenBufferObjectWhenConstructedWithASizeThenTheSizeIsInitialized) {
@@ -294,7 +294,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
 
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
-    mock->ioctl_res = 0;
+    mock->ioctlRes = 0;
 
     std::unique_ptr<TestedBufferObject> boToPin(new TestedBufferObject(mock.get()));
     std::unique_ptr<TestedBufferObject> boToPin2(new TestedBufferObject(mock.get()));
@@ -308,7 +308,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
     auto ret = bo->pin(array, 3, &osContext, 0, 1);
-    EXPECT_EQ(mock->ioctl_res, ret);
+    EXPECT_EQ(mock->ioctlRes, ret);
 
     EXPECT_LT(0u, mock->execBuffer.getBatchLen());
     EXPECT_EQ(4u, mock->execBuffer.getBufferCount()); // 3 bos to pin plus 1 exec bo
@@ -328,7 +328,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenValidatedThenAllBosArePinned)
 
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
-    mock->ioctl_res = 0;
+    mock->ioctlRes = 0;
 
     std::unique_ptr<TestedBufferObject> boToPin(new TestedBufferObject(mock.get()));
     std::unique_ptr<TestedBufferObject> boToPin2(new TestedBufferObject(mock.get()));
@@ -342,7 +342,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenValidatedThenAllBosArePinned)
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
     auto ret = bo->validateHostPtr(array, 3, &osContext, 0, 1);
-    EXPECT_EQ(mock->ioctl_res, ret);
+    EXPECT_EQ(mock->ioctlRes, ret);
 
     EXPECT_LT(0u, mock->execBuffer.getBatchLen());
     EXPECT_EQ(4u, mock->execBuffer.getBufferCount()); // 3 bos to pin plus 1 exec bo
@@ -354,16 +354,16 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenValidatedThenAllBosArePinned)
 }
 
 TEST_F(DrmBufferObjectTest, givenDeleterWhenBufferObjectIsCreatedAndDeletedThenCloseIsCalled) {
-    mock->ioctl_cnt.reset();
-    mock->ioctl_expected.reset();
+    mock->ioctlCnt.reset();
+    mock->ioctlExpected.reset();
 
     {
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(mock.get(), 3, 1, 0x1000, 1));
     }
 
-    EXPECT_EQ(1, mock->ioctl_cnt.gemClose);
-    mock->ioctl_cnt.reset();
-    mock->ioctl_expected.reset();
+    EXPECT_EQ(1, mock->ioctlCnt.gemClose);
+    mock->ioctlCnt.reset();
+    mock->ioctlExpected.reset();
 }
 
 TEST(DrmBufferObject, givenOfflineDebuggingModeWhenQueryingIsPerContextVMRequiredThenPerContextVMIsDisabled) {

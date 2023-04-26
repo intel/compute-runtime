@@ -14,10 +14,10 @@ struct KernelSubGroupInfoKhrFixture : HelloWorldFixture<HelloWorldFixtureFactory
 
     void setUp() {
         ParentClass::setUp();
-        MaxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
-        ASSERT_GE(MaxSimdSize, 8u);
-        MaxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
-        ASSERT_EQ(MaxWorkDim, 3u);
+        maxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
+        ASSERT_GE(maxSimdSize, 8u);
+        maxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
+        ASSERT_EQ(maxWorkDim, 3u);
     }
 
     void tearDown() {
@@ -27,9 +27,9 @@ struct KernelSubGroupInfoKhrFixture : HelloWorldFixture<HelloWorldFixtureFactory
     size_t inputValue[3];
     size_t paramValue;
     size_t paramValueSizeRet;
-    size_t MaxSimdSize;
-    size_t CalculatedWGS;
-    size_t MaxWorkDim;
+    size_t maxSimdSize;
+    size_t calculatedWGS;
+    size_t maxWorkDim;
 };
 
 namespace ULT {
@@ -86,7 +86,7 @@ TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGr
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
-    EXPECT_EQ(paramValue, MaxSimdSize);
+    EXPECT_EQ(paramValue, maxSimdSize);
 }
 
 typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturnCountTest;
@@ -100,7 +100,7 @@ TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGrou
     inputValue[0] = GetParam().gwsX;
     inputValue[1] = GetParam().gwsY;
     inputValue[2] = GetParam().gwsZ;
-    CalculatedWGS = inputValue[0] * inputValue[1] * inputValue[2];
+    calculatedWGS = inputValue[0] * inputValue[1] * inputValue[2];
 
     retVal = clGetKernelSubGroupInfoKHR(
         pMultiDeviceKernel,
@@ -115,10 +115,10 @@ TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGrou
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
-    if (CalculatedWGS % MaxSimdSize == 0) {
-        EXPECT_EQ(paramValue, CalculatedWGS / MaxSimdSize);
+    if (calculatedWGS % maxSimdSize == 0) {
+        EXPECT_EQ(paramValue, calculatedWGS / maxSimdSize);
     } else {
-        EXPECT_EQ(paramValue, (CalculatedWGS / MaxSimdSize) + 1);
+        EXPECT_EQ(paramValue, (calculatedWGS / maxSimdSize) + 1);
     }
 }
 
@@ -249,7 +249,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
         pMultiDeviceKernel,
         pClDevice,
         GetParam(),
-        (sizeof(size_t) * MaxWorkDim) - 1,
+        (sizeof(size_t) * maxWorkDim) - 1,
         inputValue,
         0,
         nullptr,
@@ -257,12 +257,12 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 
-    // work dim > MaxWorkDim
+    // work dim > maxWorkDim
     retVal = clGetKernelSubGroupInfoKHR(
         pMultiDeviceKernel,
         pClDevice,
         GetParam(),
-        sizeof(size_t) * (MaxWorkDim + 1),
+        sizeof(size_t) * (maxWorkDim + 1),
         inputValue,
         0,
         nullptr,
@@ -275,7 +275,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
         pMultiDeviceKernel,
         pClDevice,
         GetParam(),
-        sizeof(size_t) * (MaxWorkDim),
+        sizeof(size_t) * (maxWorkDim),
         nullptr,
         0,
         nullptr,

@@ -160,11 +160,11 @@ TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitalize
       public:
         ~IFRmockOsLibrary() override = default;
         void *getProcAddress(const std::string &procName) override {
-            IFRfuncMap["igsc_ifr_get_status_ext"] = reinterpret_cast<void *>(&mockDeviceIfrGetStatusExt);
-            IFRfuncMap["igsc_ifr_run_array_scan_test"] = reinterpret_cast<void *>(&mockDeviceIfrRunArrayScanTest);
-            IFRfuncMap["igsc_ifr_run_mem_ppr_test"] = reinterpret_cast<void *>(&mockDeviceIfrRunMemPPRTest);
-            auto it = IFRfuncMap.find(procName);
-            if (IFRfuncMap.end() == it) {
+            ifrFuncMap["igsc_ifr_get_status_ext"] = reinterpret_cast<void *>(&mockDeviceIfrGetStatusExt);
+            ifrFuncMap["igsc_ifr_run_array_scan_test"] = reinterpret_cast<void *>(&mockDeviceIfrRunArrayScanTest);
+            ifrFuncMap["igsc_ifr_run_mem_ppr_test"] = reinterpret_cast<void *>(&mockDeviceIfrRunMemPPRTest);
+            auto it = ifrFuncMap.find(procName);
+            if (ifrFuncMap.end() == it) {
                 return nullptr;
             } else {
                 return it->second;
@@ -172,7 +172,7 @@ TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitalize
             return nullptr;
         }
         bool isLoaded() override { return true; }
-        std::map<std::string, void *> IFRfuncMap;
+        std::map<std::string, void *> ifrFuncMap;
     };
     uint16_t domain = 0;
     uint8_t bus = 0;

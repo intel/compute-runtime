@@ -30,16 +30,16 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
         cl_image_format imageFormat;
         cl_image_desc imageDesc;
 
-        std::tie(indexImageFormat, ImageType) = this->GetParam();
+        std::tie(indexImageFormat, imageType) = this->GetParam();
 
         ArrayRef<const ClSurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
         auto &surfaceFormatInfo = readWriteSurfaceFormats[indexImageFormat];
         imageFormat = surfaceFormatInfo.OCLImageFormat;
 
-        auto imageHeight = ImageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 0 : 32;
-        auto imageArrays = ImageType == CL_MEM_OBJECT_IMAGE1D_ARRAY || ImageType == CL_MEM_OBJECT_IMAGE2D_ARRAY ? 7 : 1;
+        auto imageHeight = imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 0 : 32;
+        auto imageArrays = imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY || imageType == CL_MEM_OBJECT_IMAGE2D_ARRAY ? 7 : 1;
 
-        imageDesc.image_type = ImageType;
+        imageDesc.image_type = imageType;
         imageDesc.image_width = 32;
         imageDesc.image_height = imageHeight;
         imageDesc.image_depth = 1;
@@ -70,7 +70,7 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
     MockContext context;
     std::unique_ptr<Image> image;
     size_t indexImageFormat = 0;
-    uint32_t ImageType;
+    uint32_t imageType;
 };
 
 TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenItContainsProperFormatFlagsAddressAndSameElementSizeInBytes) {
@@ -159,11 +159,11 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
 
     auto imageWidth = 1;
     auto imageHeight = 1;
-    auto imageArrays = ImageType == CL_MEM_OBJECT_IMAGE1D_ARRAY || ImageType == CL_MEM_OBJECT_IMAGE2D_ARRAY ? 7 : 1;
+    auto imageArrays = imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY || imageType == CL_MEM_OBJECT_IMAGE2D_ARRAY ? 7 : 1;
 
     size_t maxImageWidth = 0;
     size_t maxImageHeight = 0;
-    switch (ImageType) {
+    switch (imageType) {
     case CL_MEM_OBJECT_IMAGE1D:
     case CL_MEM_OBJECT_IMAGE1D_ARRAY:
         imageWidth = 16384;
@@ -183,7 +183,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
         break;
     }
 
-    imageDesc.image_type = ImageType;
+    imageDesc.image_type = imageType;
     imageDesc.image_width = imageWidth;
     imageDesc.image_height = imageHeight;
     imageDesc.image_depth = 1;

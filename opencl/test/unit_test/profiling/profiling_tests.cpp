@@ -549,12 +549,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenEventWhenCompleteIsZeroThen
     cmdQ.device = device.get();
 
     HwTimeStamps timestamp;
-    timestamp.GlobalStartTS = 10;
-    timestamp.ContextStartTS = 20;
-    timestamp.GlobalEndTS = 80;
-    timestamp.ContextEndTS = 56;
-    timestamp.GlobalCompleteTS = 0;
-    timestamp.ContextCompleteTS = 0;
+    timestamp.globalStartTS = 10;
+    timestamp.contextStartTS = 20;
+    timestamp.globalEndTS = 80;
+    timestamp.contextEndTS = 56;
+    timestamp.globalCompleteTS = 0;
+    timestamp.contextCompleteTS = 0;
 
     MockTagNode<HwTimeStamps> timestampNode;
     timestampNode.tagForCpuAccess = &timestamp;
@@ -565,7 +565,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenEventWhenCompleteIsZeroThen
     event.timeStampNode = &timestampNode;
     event.calcProfilingData();
 
-    EXPECT_EQ(timestamp.ContextEndTS, timestamp.ContextCompleteTS);
+    EXPECT_EQ(timestamp.contextEndTS, timestamp.contextCompleteTS);
     cmdQ.device = nullptr;
     event.timeStampNode = nullptr;
 }
@@ -586,12 +586,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhen
     cmdQ.device = device.get();
 
     HwTimeStamps timestamp;
-    timestamp.GlobalStartTS = 10;
-    timestamp.ContextStartTS = 20;
-    timestamp.GlobalEndTS = 80;
-    timestamp.ContextEndTS = 56;
-    timestamp.GlobalCompleteTS = 0;
-    timestamp.ContextCompleteTS = 70;
+    timestamp.globalStartTS = 10;
+    timestamp.contextStartTS = 20;
+    timestamp.globalEndTS = 80;
+    timestamp.contextEndTS = 56;
+    timestamp.globalCompleteTS = 0;
+    timestamp.contextCompleteTS = 70;
 
     MockTagNode<HwTimeStamps> timestampNode;
     timestampNode.tagForCpuAccess = &timestamp;
@@ -617,9 +617,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhen
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_COMPLETE, sizeof(cl_ulong), &complete, nullptr);
 
-    EXPECT_EQ(timestamp.ContextCompleteTS, complete);
-    EXPECT_EQ(timestamp.ContextEndTS, end);
-    EXPECT_EQ(timestamp.ContextStartTS, start);
+    EXPECT_EQ(timestamp.contextCompleteTS, complete);
+    EXPECT_EQ(timestamp.contextEndTS, end);
+    EXPECT_EQ(timestamp.contextStartTS, start);
     EXPECT_EQ(event.submitTimeStamp.GPUTimeStamp, submited);
     EXPECT_EQ(event.queueTimeStamp.GPUTimeStamp, queued);
     event.timeStampNode = nullptr;
@@ -638,12 +638,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenS
     cmdQ.device = device.get();
 
     HwTimeStamps timestamp;
-    timestamp.GlobalStartTS = 0;
-    timestamp.ContextStartTS = 20;
-    timestamp.GlobalEndTS = 80;
-    timestamp.ContextEndTS = 56;
-    timestamp.GlobalCompleteTS = 0;
-    timestamp.ContextCompleteTS = 70;
+    timestamp.globalStartTS = 0;
+    timestamp.contextStartTS = 20;
+    timestamp.globalEndTS = 80;
+    timestamp.contextEndTS = 56;
+    timestamp.globalCompleteTS = 0;
+    timestamp.contextCompleteTS = 70;
 
     MockTagNode<HwTimeStamps> timestampNode;
     timestampNode.tagForCpuAccess = &timestamp;
@@ -1001,10 +1001,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
     auto &cmdList = parse.cmdList;
     parse.parseCommands<FamilyType>(*pCmdQ);
 
-    auto itor = expectStoreRegister<FamilyType>(cmdList, cmdList.begin(), timeStampGpuAddress + offsetof(HwTimeStamps, ContextStartTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    auto itor = expectStoreRegister<FamilyType>(cmdList, cmdList.begin(), timeStampGpuAddress + offsetof(HwTimeStamps, contextStartTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     // after WALKER:
 
-    itor = expectStoreRegister<FamilyType>(cmdList, itor, timeStampGpuAddress + offsetof(HwTimeStamps, ContextEndTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    itor = expectStoreRegister<FamilyType>(cmdList, itor, timeStampGpuAddress + offsetof(HwTimeStamps, contextEndTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
 
     EXPECT_TRUE(pEvent->calcProfilingData());
 
@@ -1207,9 +1207,9 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneEleme
     addTimestampNode(10, 11, 12, 13);
 
     HwTimeStamps hwTimestamps;
-    hwTimestamps.ContextStartTS = 100;
-    hwTimestamps.ContextEndTS = 110;
-    hwTimestamps.GlobalStartTS = 120;
+    hwTimestamps.contextStartTS = 100;
+    hwTimestamps.contextEndTS = 110;
+    hwTimestamps.globalStartTS = 120;
 
     MockTagNode<HwTimeStamps> hwTimestampsNode;
     hwTimestampsNode.tagForCpuAccess = &hwTimestamps;

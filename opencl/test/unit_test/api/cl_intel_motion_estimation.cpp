@@ -207,8 +207,8 @@ TEST_F(IntelMotionEstimationTest, GivenValidAcceleratorWhenRetainingAndReleasing
 
 struct IntelMotionEstimationGetInfoTest : public IntelMotionEstimationTest {
   public:
-    IntelMotionEstimationGetInfoTest() : type_returned(static_cast<cl_accelerator_type_intel>(-1)),
-                                         param_value_size_ret(static_cast<size_t>(-1)) {}
+    IntelMotionEstimationGetInfoTest() : typeReturned(static_cast<cl_accelerator_type_intel>(-1)),
+                                         paramValueSizeRet(static_cast<size_t>(-1)) {}
 
     void SetUp() override {
         IntelMotionEstimationTest::SetUp();
@@ -238,8 +238,8 @@ struct IntelMotionEstimationGetInfoTest : public IntelMotionEstimationTest {
 
   protected:
     cl_motion_estimation_desc_intel descReturn;
-    cl_accelerator_type_intel type_returned;
-    size_t param_value_size_ret;
+    cl_accelerator_type_intel typeReturned;
+    size_t paramValueSizeRet;
 };
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenValidParamsWhenGettingAcceleratorInfoThenDescriptorContainsCorrectInformation) {
@@ -248,10 +248,10 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenValidParamsWhenGettingAcceleratorI
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
         sizeof(cl_motion_estimation_desc_intel), // exact
         &descReturn,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), paramValueSizeRet);
 
     EXPECT_EQ(static_cast<cl_uint>(CL_ME_MB_TYPE_16x16_INTEL), descReturn.mb_block_type);
     EXPECT_EQ(static_cast<cl_uint>(CL_ME_SUBPIXEL_MODE_QPEL_INTEL), descReturn.subpixel_mode);
@@ -265,7 +265,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenTooShortDescriptorLengthWhenGettin
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
         sizeof(cl_motion_estimation_desc_intel) - 1, // short
         &descReturn,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
@@ -276,23 +276,23 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroWhenGettingAcc
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
         0,
         &descReturn,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenInvalidParametersWhenGettingAcceleratorInfoThenValueSizeRetIsNotUpdated) {
-    param_value_size_ret = 0x1234;
+    paramValueSizeRet = 0x1234;
 
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
         0,
         &descReturn,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
-    EXPECT_EQ(0x1234u, param_value_size_ret);
+    EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenLongerDescriptorLengthWhenGettingAcceleratorInfoThenCorrectDescriptorLengthIsReturned) {
@@ -301,10 +301,10 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenLongerDescriptorLengthWhenGettingA
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
         sizeof(cl_motion_estimation_desc_intel) + 1, // long
         &descReturn,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), paramValueSizeRet);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroAndDescriptorNullWhenGettingAcceleratorInfoThenCorrectDescriptorLengthIsReturned) {
@@ -313,10 +313,10 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroAndDescriptorN
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
         0, // query required size w/nullptr return
         nullptr,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), paramValueSizeRet);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeWhenGettingAcceleratorInfoThenAcceleratorTypeMotionEstimationIntelIsReturned) {
@@ -326,13 +326,13 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeWhenGettingAccelera
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
         sizeof(cl_uint),
-        &type_returned,
-        &param_value_size_ret);
+        &typeReturned,
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_accelerator_type_intel), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_accelerator_type_intel), paramValueSizeRet);
 
-    EXPECT_EQ(static_cast<cl_accelerator_type_intel>(CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL), type_returned);
+    EXPECT_EQ(static_cast<cl_accelerator_type_intel>(CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL), typeReturned);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelWhenGettingAcceleratorInfoThenClAcceleratorTypeMotionEstimationIntelIsReturned) {
@@ -340,13 +340,13 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelWhenGettingAcc
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
         sizeof(cl_uint), // exact
-        &type_returned,
-        &param_value_size_ret);
+        &typeReturned,
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_accelerator_type_intel), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_accelerator_type_intel), paramValueSizeRet);
 
-    EXPECT_EQ(static_cast<cl_accelerator_type_intel>(CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL), type_returned);
+    EXPECT_EQ(static_cast<cl_accelerator_type_intel>(CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL), typeReturned);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooShortTypeLengthWhenGettingAcceleratorInfoThenClInvalidValueIsReturned) {
@@ -354,8 +354,8 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooShortTyp
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
         sizeof(cl_uint) - 1, // short
-        &type_returned,
-        &param_value_size_ret);
+        &typeReturned,
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
@@ -365,8 +365,8 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTypeLengthZ
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
         0, // very short
-        &type_returned,
-        &param_value_size_ret);
+        &typeReturned,
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
@@ -376,11 +376,11 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooLongType
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
         sizeof(cl_uint) + 1, // long
-        &type_returned,
-        &param_value_size_ret);
+        &typeReturned,
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_accelerator_type_intel), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_accelerator_type_intel), paramValueSizeRet);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndNullTypeWhenGettingAcceleratorInfoThenCorrectLengthIsReturned) {
@@ -389,10 +389,10 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndNullTypeWhe
         CL_ACCELERATOR_TYPE_INTEL,
         0,
         nullptr,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_accelerator_type_intel), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_accelerator_type_intel), paramValueSizeRet);
 }
 
 TEST_F(IntelMotionEstimationTest, GivenDescriptor8x8IntegerNone2x2WhenCreatingAcceleratorThenSuccessIsReturned) {

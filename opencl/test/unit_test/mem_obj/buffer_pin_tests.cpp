@@ -36,26 +36,26 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
         return nullptr;
     };
     GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &properties) override {
-        EXPECT_NE(0u, HPExpectedSize);
-        if (HPExpectedSize == properties.size) {
+        EXPECT_NE(0u, hpExpectedSize);
+        if (hpExpectedSize == properties.size) {
             EXPECT_TRUE(properties.flags.forcePin);
-            HPAllocCount++;
+            hpAllocCount++;
         }
         return OsAgnosticMemoryManager::allocateGraphicsMemoryWithHostPtr(properties);
     }
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &properties) override {
-        EXPECT_NE(0u, HPExpectedSize);
-        if (HPExpectedSize == properties.size) {
+        EXPECT_NE(0u, hpExpectedSize);
+        if (hpExpectedSize == properties.size) {
             EXPECT_TRUE(properties.flags.forcePin);
-            HPAllocCount++;
+            hpAllocCount++;
         }
         return OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(properties);
     }
 
     size_t expectedSize = 0;
     uint32_t allocCount = 0;
-    size_t HPExpectedSize = 0;
-    uint32_t HPAllocCount = 0;
+    size_t hpExpectedSize = 0;
+    uint32_t hpAllocCount = 0;
 };
 
 TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
@@ -69,7 +69,7 @@ TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
         auto size = MemoryConstants::pageSize * 32;
         auto retVal = CL_INVALID_OPERATION;
         mm->expectedSize = size;
-        mm->HPExpectedSize = 0u;
+        mm->hpExpectedSize = 0u;
         context.memoryManager = mm.get();
 
         auto buffer = Buffer::create(
@@ -96,7 +96,7 @@ TEST(BufferTests, GivenHostPtrWhenBufferIsCreatedThenPinIsSet) {
         auto retVal = CL_INVALID_OPERATION;
         auto size = MemoryConstants::pageSize * 32;
         mm->expectedSize = 0u;
-        mm->HPExpectedSize = size;
+        mm->hpExpectedSize = size;
         context.memoryManager = mm.get();
 
         // memory must be aligned to use zero-copy
@@ -109,7 +109,7 @@ TEST(BufferTests, GivenHostPtrWhenBufferIsCreatedThenPinIsSet) {
             bff,
             retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(1u, mm->HPAllocCount);
+        EXPECT_EQ(1u, mm->hpAllocCount);
 
         delete buffer;
         alignedFree(bff);

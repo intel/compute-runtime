@@ -112,7 +112,7 @@ struct IntelAcceleratorGetInfoTest : IntelAcceleratorTestWithValidDescriptor {
     }
 
   protected:
-    size_t param_value_size_ret = 0;
+    size_t paramValueSizeRet = 0;
 };
 
 TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWhenGettingAcceleratorInfoThenClInvalidAcceleratorIntelErrorIsReturned) {
@@ -154,10 +154,10 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenClAcceleratorReferenceCountIntelWhenGet
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint),
         nullptr,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_uint), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_uint), paramValueSizeRet);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GivenClAcceleratorReferenceCountIntelWhenGettingAcceleratorInfoThenParamValueIsOne) {
@@ -182,10 +182,10 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenLongForDescriptorSizeWhenGettingAcceler
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint) + 1,
         &paramValue,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_uint), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_uint), paramValueSizeRet);
     EXPECT_EQ(1u, paramValue);
 }
 
@@ -197,7 +197,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenShortForDescriptorSizeWhenGettingAccele
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint) - 1,
         &paramValue,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
@@ -208,10 +208,10 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenZeroForDescriptorSizeGivenLongForDescri
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         0,
         nullptr,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_uint), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_uint), paramValueSizeRet);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GivenCallToRetainAcceleratorWhenGettingAcceleratorInfoThenParamValueIsTwo) {
@@ -225,7 +225,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenCallToRetainAcceleratorWhenGettingAccel
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint),
         &paramValue,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(2u, paramValue);
@@ -239,7 +239,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenCallToRetainAcceleratorWhenGettingAccel
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint),
         &paramValue,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(1u, paramValue);
@@ -251,10 +251,10 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenNullPtrForParamValueWhenGettingAccelera
         CL_ACCELERATOR_CONTEXT_INTEL,
         sizeof(cl_context),
         nullptr,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_context), paramValueSizeRet);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GivenLongForDescriptorSizeWhenGettingAcceleratorContextInfoThenCorrectValuesAreReturned) {
@@ -265,10 +265,10 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenLongForDescriptorSizeWhenGettingAcceler
         CL_ACCELERATOR_CONTEXT_INTEL,
         sizeof(cl_context) + 1,
         &paramValue,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_context), paramValueSizeRet);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GivenAcceleratorContextIntelWhenGettingAcceleratorInfoThenCorrectValuesAreReturned) {
@@ -279,10 +279,10 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenAcceleratorContextIntelWhenGettingAccel
         CL_ACCELERATOR_CONTEXT_INTEL,
         sizeof(cl_context),
         &paramValue,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_context), paramValueSizeRet);
 
     cl_context referenceContext = static_cast<cl_context>(pContext);
     EXPECT_EQ(referenceContext, paramValue);
@@ -296,7 +296,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenShortForDescriptorSizeWhenGettingAccele
         CL_ACCELERATOR_CONTEXT_INTEL,
         sizeof(cl_context) - 1,
         &paramValue,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
@@ -307,9 +307,9 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenZeroForDescriptorSizeGivenLongForDescri
         CL_ACCELERATOR_CONTEXT_INTEL,
         0,
         nullptr,
-        &param_value_size_ret);
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
+    EXPECT_EQ(sizeof(cl_context), paramValueSizeRet);
 }
 } // namespace ULT

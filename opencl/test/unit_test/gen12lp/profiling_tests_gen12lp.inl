@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,12 +137,12 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQuerie
     cmdQ.device = device.get();
 
     HwTimeStamps timestamp;
-    timestamp.GlobalStartTS = 10;
-    timestamp.ContextStartTS = 20;
-    timestamp.GlobalEndTS = 80;
-    timestamp.ContextEndTS = 56;
-    timestamp.GlobalCompleteTS = 0;
-    timestamp.ContextCompleteTS = 70;
+    timestamp.globalStartTS = 10;
+    timestamp.contextStartTS = 20;
+    timestamp.globalEndTS = 80;
+    timestamp.contextEndTS = 56;
+    timestamp.globalCompleteTS = 0;
+    timestamp.contextCompleteTS = 70;
 
     MockTagNode<HwTimeStamps> timestampNode;
     timestampNode.tagForCpuAccess = &timestamp;
@@ -168,9 +168,9 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQuerie
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_COMPLETE, sizeof(cl_ulong), &complete, nullptr);
 
-    EXPECT_EQ(timestamp.GlobalEndTS, complete);
-    EXPECT_EQ(timestamp.GlobalEndTS, end);
-    EXPECT_EQ(timestamp.GlobalStartTS, start);
+    EXPECT_EQ(timestamp.globalEndTS, complete);
+    EXPECT_EQ(timestamp.globalEndTS, end);
+    EXPECT_EQ(timestamp.globalStartTS, start);
     EXPECT_EQ(event.submitTimeStamp.GPUTimeStamp, submited);
     EXPECT_EQ(event.queueTimeStamp.GPUTimeStamp, queued);
     event.timeStampNode = nullptr;

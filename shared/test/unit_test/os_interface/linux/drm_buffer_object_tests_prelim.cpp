@@ -15,8 +15,8 @@ using DrmBufferObjectPrelimFixture = DrmBufferObjectFixture<DrmMockCustomPrelim>
 using DrmBufferObjectPrelimTest = Test<DrmBufferObjectPrelimFixture>;
 
 TEST_F(DrmBufferObjectPrelimTest, GivenCompletionAddressWhenCallingExecThenReturnIsCorrect) {
-    mock->ioctl_expected.total = 1;
-    mock->ioctl_res = 0;
+    mock->ioctlExpected.total = 1;
+    mock->ioctlRes = 0;
 
     constexpr uint64_t completionAddress = 0x1230;
     constexpr uint32_t completionValue = 33;

@@ -280,29 +280,29 @@ class Drm : public DriverModel {
 
 #pragma pack(1)
     struct PCIConfig {
-        uint16_t VendorID;
-        uint16_t DeviceID;
-        uint16_t Command;
-        uint16_t Status;
-        uint8_t Revision;
-        uint8_t ProgIF;
-        uint8_t Subclass;
-        uint8_t ClassCode;
+        uint16_t vendorID;
+        uint16_t deviceID;
+        uint16_t command;
+        uint16_t status;
+        uint8_t revision;
+        uint8_t progIF;
+        uint8_t subclass;
+        uint8_t classCode;
         uint8_t cacheLineSize;
-        uint8_t LatencyTimer;
-        uint8_t HeaderType;
-        uint8_t BIST;
-        uint32_t BAR0[6];
-        uint32_t CardbusCISPointer;
-        uint16_t SubsystemVendorID;
-        uint16_t SubsystemDeviceID;
-        uint32_t ROM;
-        uint8_t Capabilities;
-        uint8_t Reserved[7];
-        uint8_t InterruptLine;
-        uint8_t InterruptPIN;
-        uint8_t MinGrant;
-        uint8_t MaxLatency;
+        uint8_t latencyTimer;
+        uint8_t headerType;
+        uint8_t bist;
+        uint32_t bar0[6];
+        uint32_t cardbusCISPointer;
+        uint16_t subsystemVendorID;
+        uint16_t subsystemDeviceID;
+        uint32_t rom;
+        uint8_t capabilities;
+        uint8_t reserved[7];
+        uint8_t interruptLine;
+        uint8_t interruptPIN;
+        uint8_t minGrant;
+        uint8_t maxLatency;
     };
 #pragma pack()
 

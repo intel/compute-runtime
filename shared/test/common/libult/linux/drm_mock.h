@@ -71,7 +71,7 @@ class DrmMock : public Drm {
         std::ofstream tempfile(name, std::ios::binary);
         if (tempfile.is_open()) {
             PCIConfig config;
-            config.DeviceID = deviceID;
+            config.deviceID = deviceID;
             tempfile.write(reinterpret_cast<char *>(&config), sizeof(config));
             tempfile.close();
         }

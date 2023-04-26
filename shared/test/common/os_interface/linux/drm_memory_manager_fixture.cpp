@@ -76,25 +76,25 @@ void DrmMemoryManagerFixture::tearDown() {
 
     int enginesCount = static_cast<int>(device->getMemoryManager()->getRegisteredEnginesCount());
 
-    mock->ioctl_expected.contextDestroy = enginesCount;
-    mock->ioctl_expected.gemClose = enginesCount;
-    mock->ioctl_expected.gemWait = enginesCount;
+    mock->ioctlExpected.contextDestroy = enginesCount;
+    mock->ioctlExpected.gemClose = enginesCount;
+    mock->ioctlExpected.gemWait = enginesCount;
 
     auto csr = static_cast<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(device->getDefaultEngine().commandStreamReceiver);
     if (csr->globalFenceAllocation) {
-        mock->ioctl_expected.gemClose += enginesCount;
-        mock->ioctl_expected.gemWait += enginesCount;
+        mock->ioctlExpected.gemClose += enginesCount;
+        mock->ioctlExpected.gemWait += enginesCount;
     }
     if (csr->getPreemptionAllocation()) {
-        mock->ioctl_expected.gemClose += enginesCount;
-        mock->ioctl_expected.gemWait += enginesCount;
+        mock->ioctlExpected.gemClose += enginesCount;
+        mock->ioctlExpected.gemWait += enginesCount;
     }
     if (csr->getKernelArgsBufferAllocation()) {
-        mock->ioctl_expected.gemClose += enginesCount;
-        mock->ioctl_expected.gemWait += enginesCount;
+        mock->ioctlExpected.gemClose += enginesCount;
+        mock->ioctlExpected.gemWait += enginesCount;
     }
-    mock->ioctl_expected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
-    mock->ioctl_expected.gemClose += additionalDestroyDeviceIoctls.gemClose.load();
+    mock->ioctlExpected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
+    mock->ioctlExpected.gemClose += additionalDestroyDeviceIoctls.gemClose.load();
     delete device;
     if (dontTestIoctlInTearDown) {
         mock->reset();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,12 @@ namespace NEO {
 class HwTimeStamps : public TagTypeBase {
   public:
     void initialize() {
-        GlobalStartTS = 0;
-        ContextStartTS = 0;
-        GlobalEndTS = 0;
-        ContextEndTS = 0;
-        GlobalCompleteTS = 0;
-        ContextCompleteTS = 0;
+        globalStartTS = 0;
+        contextStartTS = 0;
+        globalEndTS = 0;
+        contextEndTS = 0;
+        globalCompleteTS = 0;
+        contextCompleteTS = 0;
     }
 
     static constexpr AllocationType getAllocationType() {
@@ -29,17 +29,17 @@ class HwTimeStamps : public TagTypeBase {
 
     static constexpr TagNodeType getTagNodeType() { return TagNodeType::HwTimeStamps; }
 
-    uint64_t getContextStartValue(uint32_t) const { return ContextStartTS; }
-    uint64_t getGlobalStartValue(uint32_t) const { return GlobalStartTS; }
-    uint64_t getContextEndValue(uint32_t) const { return ContextEndTS; }
-    uint64_t getGlobalEndValue(uint32_t) const { return GlobalEndTS; }
+    uint64_t getContextStartValue(uint32_t) const { return contextStartTS; }
+    uint64_t getGlobalStartValue(uint32_t) const { return globalStartTS; }
+    uint64_t getContextEndValue(uint32_t) const { return contextEndTS; }
+    uint64_t getGlobalEndValue(uint32_t) const { return globalEndTS; }
 
-    uint64_t GlobalStartTS;
-    uint64_t ContextStartTS;
-    uint64_t GlobalEndTS;
-    uint64_t ContextEndTS;
-    uint64_t GlobalCompleteTS;
-    uint64_t ContextCompleteTS;
+    uint64_t globalStartTS;
+    uint64_t contextStartTS;
+    uint64_t globalEndTS;
+    uint64_t contextEndTS;
+    uint64_t globalCompleteTS;
+    uint64_t contextCompleteTS;
 };
 
 static_assert((6 * sizeof(uint64_t)) == sizeof(HwTimeStamps),

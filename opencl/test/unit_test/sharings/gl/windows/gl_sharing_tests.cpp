@@ -48,8 +48,8 @@ class glSharingTests : public ::testing::Test {
         mockGlSharingFunctions = mockGlSharing->sharingFunctions.release();
         context.setSharingFunctions(mockGlSharingFunctions);
 
-        mockGlSharing->m_bufferInfoOutput.globalShareHandle = bufferId;
-        mockGlSharing->m_bufferInfoOutput.bufferSize = 4096u;
+        mockGlSharing->bufferInfoOutput.globalShareHandle = bufferId;
+        mockGlSharing->bufferInfoOutput.bufferSize = 4096u;
         mockGlSharing->uploadDataToBufferInfo();
     }
 
@@ -62,8 +62,8 @@ class glSharingTests : public ::testing::Test {
 
 TEST_F(glSharingTests, givenGlMockWhenItIsCreatedThenNonZeroObjectIsReturned) {
     EXPECT_NE(nullptr, &mockGlSharing);
-    EXPECT_NE(nullptr, &mockGlSharing->m_clGlResourceInfo);
-    EXPECT_NE(nullptr, &mockGlSharing->m_glClResourceInfo);
+    EXPECT_NE(nullptr, &mockGlSharing->clGlResourceInfo);
+    EXPECT_NE(nullptr, &mockGlSharing->glClResourceInfo);
 }
 
 TEST_F(glSharingTests, givenGLSharingFunctionsWhenAskedForIdThenClGlSharingIdIsReturned) {
@@ -256,7 +256,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsCreatedAndGmmIsAvailableThenItIsUs
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), ptr, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
 
-    mockGlSharing->m_bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
+    mockGlSharing->bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
     mockGlSharing->uploadDataToBufferInfo();
 
     auto retVal = CL_SUCCESS;
@@ -314,14 +314,14 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredWithDifferentOffsetThenGra
 
     auto graphicsAddress = memObject->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
-    mockGlSharing->m_bufferInfoOutput.bufferOffset = 50u;
+    mockGlSharing->bufferInfoOutput.bufferOffset = 50u;
     mockGlSharing->uploadDataToBufferInfo();
 
     memObject->peekSharingHandler()->acquire(memObject, rootDeviceIndex);
 
     auto offsetedGraphicsAddress = memObject->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
-    EXPECT_EQ(offsetedGraphicsAddress, graphicsAddress + mockGlSharing->m_bufferInfoOutput.bufferOffset);
+    EXPECT_EQ(offsetedGraphicsAddress, graphicsAddress + mockGlSharing->bufferInfoOutput.bufferOffset);
 
     retVal = clReleaseMemObject(glBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -609,7 +609,7 @@ HWTEST_F(glSharingTests, givenCommandQueueWhenReleaseGlObjectIsCalledThenFinishI
 }
 
 TEST_F(glSharingTests, givenMockGLWhenFunctionsAreCalledThenCallsAreReceived) {
-    auto ptrToStruct = &mockGlSharing->m_clGlResourceInfo;
+    auto ptrToStruct = &mockGlSharing->clGlResourceInfo;
     auto glDisplay = (GLDisplay)1;
     auto glContext = (GLContext)1;
     mockGlSharing->overrideGetCurrentValues(glContext, glDisplay);

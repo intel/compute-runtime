@@ -43,12 +43,12 @@ void Ioctls::reset() {
 }
 
 void DrmMockCustom::testIoctls() {
-    if (this->ioctl_expected.total == -1)
+    if (this->ioctlExpected.total == -1)
         return;
 
-#define NEO_IOCTL_EXPECT_EQ(PARAM)                                    \
-    if (this->ioctl_expected.PARAM >= 0) {                            \
-        EXPECT_EQ(this->ioctl_expected.PARAM, this->ioctl_cnt.PARAM); \
+#define NEO_IOCTL_EXPECT_EQ(PARAM)                                  \
+    if (this->ioctlExpected.PARAM >= 0) {                           \
+        EXPECT_EQ(this->ioctlExpected.PARAM, this->ioctlCnt.PARAM); \
     }
     NEO_IOCTL_EXPECT_EQ(execbuffer2);
     NEO_IOCTL_EXPECT_EQ(gemUserptr);
@@ -71,7 +71,7 @@ void DrmMockCustom::testIoctls() {
 }
 
 int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
-    auto ext = ioctl_res_ext.load();
+    auto ext = ioctlResExt.load();
 
     // store flags
     switch (request) {
@@ -80,7 +80,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         this->execBuffer = *execbuf;
         this->execBufferBufferObjects =
             *reinterpret_cast<NEO::MockExecObject *>(this->execBuffer.getBuffersPtr());
-        ioctl_cnt.execbuffer2++;
+        ioctlCnt.execbuffer2++;
         execBufferExtensions(execbuf);
     } break;
 
@@ -88,34 +88,34 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         auto *userPtrParams = static_cast<NEO::GemUserPtr *>(arg);
         userPtrParams->handle = returnHandle;
         returnHandle++;
-        ioctl_cnt.gemUserptr++;
+        ioctlCnt.gemUserptr++;
     } break;
 
     case DrmIoctl::GemCreate: {
         auto *createParams = static_cast<NEO::GemCreate *>(arg);
         this->createParamsSize = createParams->size;
         this->createParamsHandle = createParams->handle = 1u;
-        ioctl_cnt.gemCreate++;
+        ioctlCnt.gemCreate++;
     } break;
     case DrmIoctl::GemSetTiling: {
         auto *setTilingParams = static_cast<NEO::GemSetTiling *>(arg);
         setTilingMode = setTilingParams->tilingMode;
         setTilingHandle = setTilingParams->handle;
         setTilingStride = setTilingParams->stride;
-        ioctl_cnt.gemSetTiling++;
+        ioctlCnt.gemSetTiling++;
     } break;
     case DrmIoctl::GemGetTiling: {
         auto *getTilingParams = static_cast<NEO::GemGetTiling *>(arg);
         getTilingParams->tilingMode = getTilingModeOut;
         getTilingHandleIn = getTilingParams->handle;
-        ioctl_cnt.gemGetTiling++;
+        ioctlCnt.gemGetTiling++;
     } break;
     case DrmIoctl::PrimeFdToHandle: {
         auto *primeToHandleParams = static_cast<NEO::PrimeHandle *>(arg);
         // return BO
         primeToHandleParams->handle = outputHandle;
         inputFd = primeToHandleParams->fileDescriptor;
-        ioctl_cnt.primeFdToHandle++;
+        ioctlCnt.primeFdToHandle++;
         if (failOnPrimeFdToHandle == true) {
             return -1;
         }
@@ -129,32 +129,32 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         if (incrementOutputFdAfterCall) {
             outputFd++;
         }
-        ioctl_cnt.handleToPrimeFd++;
+        ioctlCnt.handleToPrimeFd++;
     } break;
     case DrmIoctl::GemSetDomain: {
         auto setDomainParams = static_cast<NEO::GemSetDomain *>(arg);
         setDomainHandle = setDomainParams->handle;
         setDomainReadDomains = setDomainParams->readDomains;
         setDomainWriteDomain = setDomainParams->writeDomain;
-        ioctl_cnt.gemSetDomain++;
+        ioctlCnt.gemSetDomain++;
     } break;
 
     case DrmIoctl::GemWait: {
         auto gemWaitParams = static_cast<NEO::GemWait *>(arg);
         gemWaitTimeout = gemWaitParams->timeoutNs;
-        ioctl_cnt.gemWait++;
+        ioctlCnt.gemWait++;
     } break;
 
     case DrmIoctl::GemClose:
-        ioctl_cnt.gemClose++;
+        ioctlCnt.gemClose++;
         break;
 
     case DrmIoctl::RegRead:
-        ioctl_cnt.regRead++;
+        ioctlCnt.regRead++;
         break;
 
     case DrmIoctl::Getparam: {
-        ioctl_cnt.contextGetParam++;
+        ioctlCnt.contextGetParam++;
         auto getParam = static_cast<NEO::GetParam *>(arg);
         recordedGetParam = *getParam;
         *getParam->value = getParamRetValue;
@@ -164,7 +164,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     } break;
 
     case DrmIoctl::GemContextGetparam: {
-        ioctl_cnt.contextGetParam++;
+        ioctlCnt.contextGetParam++;
         auto getContextParam = static_cast<NEO::GemContextParam *>(arg);
         recordedGetContextParam = *getContextParam;
         getContextParam->value = getContextParamRetValue;
@@ -172,17 +172,17 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
 
     case DrmIoctl::GemContextCreateExt: {
         auto contextCreateParam = static_cast<NEO::GemContextCreateExt *>(arg);
-        contextCreateParam->contextId = ++ioctl_cnt.contextCreate;
+        contextCreateParam->contextId = ++ioctlCnt.contextCreate;
     } break;
     case DrmIoctl::GemContextDestroy: {
-        ioctl_cnt.contextDestroy++;
+        ioctlCnt.contextDestroy++;
     } break;
     case DrmIoctl::GemMmapOffset: {
         auto mmapOffsetParams = reinterpret_cast<NEO::GemMmapOffset *>(arg);
         mmapOffsetHandle = mmapOffsetParams->handle;
         mmapOffsetParams->offset = mmapOffsetExpected;
         mmapOffsetFlags = mmapOffsetParams->flags;
-        ioctl_cnt.gemMmapOffset++;
+        ioctlCnt.gemMmapOffset++;
         if (failOnMmapOffset == true) {
             return -1;
         }
@@ -192,7 +192,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         createExtSize = createExtParams->size;
         createExtHandle = createExtParams->handle;
         createExtExtensions = createExtParams->extensions;
-        ioctl_cnt.gemCreateExt++;
+        ioctlCnt.gemCreateExt++;
     } break;
     case DrmIoctl::GemVmBind: {
     } break;
@@ -210,20 +210,20 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
     }
 
-    if (!ext->no.empty() && std::find(ext->no.begin(), ext->no.end(), ioctl_cnt.total.load()) != ext->no.end()) {
-        ioctl_cnt.total.fetch_add(1);
+    if (!ext->no.empty() && std::find(ext->no.begin(), ext->no.end(), ioctlCnt.total.load()) != ext->no.end()) {
+        ioctlCnt.total.fetch_add(1);
         return ext->res;
     }
-    ioctl_cnt.total.fetch_add(1);
-    return ioctl_res.load();
+    ioctlCnt.total.fetch_add(1);
+    return ioctlRes.load();
 }
 
 DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
     : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     reset();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-    ioctl_expected.contextCreate = static_cast<int>(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment).size());
-    ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
+    ioctlExpected.contextCreate = static_cast<int>(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment).size());
+    ioctlExpected.contextDestroy = ioctlExpected.contextCreate.load();
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     createVirtualMemoryAddressSpace(NEO::GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
     isVmBindAvailable(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)

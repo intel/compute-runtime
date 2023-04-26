@@ -519,9 +519,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenFlushIsCalledThenP
 
     auto engineFlag = static_cast<OsContextLinux &>(csr->getOsContext()).getEngineFlag();
 
-    EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
-    EXPECT_EQ(ioctlExecCnt, this->mock->ioctl_cnt.execbuffer2);
-    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
+    EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctlCnt.total);
+    EXPECT_EQ(ioctlExecCnt, this->mock->ioctlCnt.execbuffer2);
+    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctlCnt.gemUserptr);
     uint64_t flags = engineFlag | I915_EXEC_NO_RELOC;
     EXPECT_EQ(flags, this->mock->execBuffer.getFlags());
 
@@ -586,8 +586,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     int ioctlUserPtrCnt = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 4 : 3;
     ioctlUserPtrCnt += testedCsr->clearColorAllocation ? 1 : 0;
 
-    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
-    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
+    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctlCnt.total);
+    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctlCnt.gemUserptr);
 
     EXPECT_EQ(0u, this->mock->execBuffer.getFlags());
 
@@ -666,9 +666,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     int ioctlExecCnt = 1;
     int ioctlUserPtrCnt = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 3 : 2;
     ioctlUserPtrCnt += testedCsr->clearColorAllocation ? 1 : 0;
-    EXPECT_EQ(ioctlExecCnt, this->mock->ioctl_cnt.execbuffer2);
-    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
-    EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(ioctlExecCnt, this->mock->ioctlCnt.execbuffer2);
+    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctlCnt.gemUserptr);
+    EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctlCnt.total);
 
     mm->freeGraphicsMemory(commandBuffer);
 }

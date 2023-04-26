@@ -33,7 +33,7 @@ class TbxSocketsImp : public TbxSockets {
 
   protected:
     std::ostream &cerrStream;
-    SOCKET m_socket = 0;
+    SOCKET socket = 0;
 
     bool connectToServer(const std::string &hostNameOrIp, uint16_t port);
     bool sendWriteData(const void *buffer, size_t sizeInBytes);

@@ -66,8 +66,8 @@ struct TimeStamps {
     uint64_t start;
     uint64_t end;
 
-    uint64_t ContextCompleteTS;
-    uint64_t GlobalEndTS;
+    uint64_t contextCompleteTS;
+    uint64_t globalEndTS;
 };
 
 template <typename TagType>

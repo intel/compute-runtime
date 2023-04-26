@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,11 +36,11 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateDebugSurfaceAndAlignedM
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurfaceAndAllocUserptrFailedThenNullptrReturned) {
-    mock->ioctl_res = -1;
+    mock->ioctlRes = -1;
     AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
     auto debugSurface = memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties);
-    mock->ioctl_res = 0;
-    EXPECT_EQ(1, mock->ioctl_cnt.gemUserptr);
+    mock->ioctlRes = 0;
+    EXPECT_EQ(1, mock->ioctlCnt.gemUserptr);
     EXPECT_EQ(nullptr, debugSurface);
 }
 
@@ -52,7 +52,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurf
 
     EXPECT_EQ(MemoryPool::System4KBPages, debugSurface->getMemoryPool());
     EXPECT_EQ(3u, debugSurface->getNumGmms());
-    EXPECT_EQ(3, mock->ioctl_cnt.gemUserptr);
+    EXPECT_EQ(3, mock->ioctlCnt.gemUserptr);
 
     EXPECT_NE(nullptr, debugSurface->getUnderlyingBuffer());
     EXPECT_EQ(MemoryConstants::pageSize, debugSurface->getUnderlyingBufferSize());

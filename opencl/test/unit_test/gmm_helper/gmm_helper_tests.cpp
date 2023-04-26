@@ -638,9 +638,9 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
 
 TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
     struct GmmGetOffsetOutput {
-        uint32_t Offset;
-        uint32_t XOffset;
-        uint32_t YOffset;
+        uint32_t offset;
+        uint32_t xOffset;
+        uint32_t yOffset;
     };
 
     struct MyMockGmmResourceInfo : MockGmmResourceInfo {
@@ -651,9 +651,9 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
             EXPECT_EQ(expectedArrayIndex, reqOffsetInfo.ArrayIndex);
             EXPECT_EQ(expectedGmmPlane, reqOffsetInfo.Plane);
 
-            reqOffsetInfo.Render.Offset = gmmGetOffsetOutput.Offset;
-            reqOffsetInfo.Render.XOffset = gmmGetOffsetOutput.XOffset;
-            reqOffsetInfo.Render.YOffset = gmmGetOffsetOutput.YOffset;
+            reqOffsetInfo.Render.Offset = gmmGetOffsetOutput.offset;
+            reqOffsetInfo.Render.XOffset = gmmGetOffsetOutput.xOffset;
+            reqOffsetInfo.Render.YOffset = gmmGetOffsetOutput.yOffset;
             return GMM_SUCCESS;
         }
 
@@ -684,10 +684,10 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
     mockGmmResourceInfo->gmmGetOffsetOutput = {10, 111, 120};
     mockGmmResourceInfo->gmmGetBitsPerPixelOutput = 24;
     gmm->updateOffsetsInImgInfo(imgInfo, mockGmmResourceInfo->expectedArrayIndex);
-    EXPECT_EQ(mockGmmResourceInfo->gmmGetOffsetOutput.Offset, imgInfo.offset);
-    const auto expectedXOffset = mockGmmResourceInfo->gmmGetOffsetOutput.XOffset / (mockGmmResourceInfo->gmmGetBitsPerPixelOutput / 8);
+    EXPECT_EQ(mockGmmResourceInfo->gmmGetOffsetOutput.offset, imgInfo.offset);
+    const auto expectedXOffset = mockGmmResourceInfo->gmmGetOffsetOutput.xOffset / (mockGmmResourceInfo->gmmGetBitsPerPixelOutput / 8);
     EXPECT_EQ(expectedXOffset, imgInfo.xOffset);
-    EXPECT_EQ(mockGmmResourceInfo->gmmGetOffsetOutput.YOffset, imgInfo.yOffset);
+    EXPECT_EQ(mockGmmResourceInfo->gmmGetOffsetOutput.yOffset, imgInfo.yOffset);
 }
 
 TEST_F(GmmTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorrectly) {

@@ -822,7 +822,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
 
     HwTimeStamps timestamp{};
-    timestamp.GlobalStartTS = 2;
+    timestamp.globalStartTS = 2;
     event.queueTimeStamp.GPUTimeStamp = 1;
     event.queueTimeStamp.CPUTimeinNS = 100;
     TagNode<HwTimeStamps> timestampNode{};
@@ -835,7 +835,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     auto c0 = event.queueTimeStamp.CPUTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(event.queueTimeStamp.GPUTimeStamp, resolution);
-    EXPECT_EQ(start, static_cast<uint64_t>(timestamp.GlobalStartTS * resolution) + c0);
+    EXPECT_EQ(start, static_cast<uint64_t>(timestamp.globalStartTS * resolution) + c0);
 
     event.timeStampNode = nullptr;
 }
@@ -862,7 +862,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenCalculateStartTime
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
 
     HwTimeStamps timestamp{};
-    timestamp.GlobalStartTS = 2;
+    timestamp.globalStartTS = 2;
     event.queueTimeStamp.GPUTimeStamp = 1;
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
@@ -872,7 +872,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenCalculateStartTime
     event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
 
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
-    EXPECT_EQ(start, static_cast<uint64_t>(timestamp.GlobalStartTS * resolution));
+    EXPECT_EQ(start, static_cast<uint64_t>(timestamp.globalStartTS * resolution));
 
     event.timeStampNode = nullptr;
 }
@@ -883,7 +883,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
 
     HwTimeStamps timestamp{};
-    timestamp.GlobalStartTS = 1;
+    timestamp.globalStartTS = 1;
     event.queueTimeStamp.GPUTimeStamp = 2;
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
@@ -894,7 +894,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
 
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
-    auto refStartTime = static_cast<uint64_t>(timestamp.GlobalStartTS * resolution + (1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
+    auto refStartTime = static_cast<uint64_t>(timestamp.globalStartTS * resolution + (1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
     EXPECT_EQ(start, refStartTime);
 
     event.timeStampNode = nullptr;
@@ -1369,12 +1369,12 @@ HWTEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
     ASSERT_NE(nullptr, timeStamps);
 
     // this should not cause any heap corruptions
-    ASSERT_EQ(0ULL, timeStamps->GlobalStartTS);
-    ASSERT_EQ(0ULL, timeStamps->ContextStartTS);
-    ASSERT_EQ(0ULL, timeStamps->GlobalEndTS);
-    ASSERT_EQ(0ULL, timeStamps->ContextEndTS);
-    ASSERT_EQ(0ULL, timeStamps->GlobalCompleteTS);
-    ASSERT_EQ(0ULL, timeStamps->ContextCompleteTS);
+    ASSERT_EQ(0ULL, timeStamps->globalStartTS);
+    ASSERT_EQ(0ULL, timeStamps->contextStartTS);
+    ASSERT_EQ(0ULL, timeStamps->globalEndTS);
+    ASSERT_EQ(0ULL, timeStamps->contextEndTS);
+    ASSERT_EQ(0ULL, timeStamps->globalCompleteTS);
+    ASSERT_EQ(0ULL, timeStamps->contextCompleteTS);
 
     HwTimeStamps *timeStamps2 = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode())->tagForCpuAccess;
     ASSERT_EQ(timeStamps, timeStamps2);

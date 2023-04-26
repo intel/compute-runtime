@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct IgaLibrary {
     pIGAContextRelease contextRelease = nullptr;
     pIGADisassemble disassemble = nullptr;
     pIGAStatusToString statusToString = nullptr;
-    iga_context_options_t OptsContext = {};
+    iga_context_options_t optsContext = {};
 
     std::unique_ptr<NEO::OsLibrary> library;
 
@@ -40,8 +40,8 @@ struct IgaWrapper::Impl {
 
     void loadIga() {
         IgaLibrary iga;
-        iga.OptsContext.cb = sizeof(igaLib.OptsContext);
-        iga.OptsContext.gen = igaGen;
+        iga.optsContext.cb = sizeof(igaLib.optsContext);
+        iga.optsContext.gen = igaGen;
 
         iga.library.reset(NEO::OsLibrary::load(Os::igaDllName));
         if (iga.library == nullptr) {
@@ -106,7 +106,7 @@ bool IgaWrapper::tryDisassembleGenISA(const void *kernelPtr, uint32_t kernelSize
     iga_disassemble_options_t disassembleOptions = IGA_DISASSEMBLE_OPTIONS_INIT();
     iga_status_t stat;
 
-    stat = pimpl->igaLib.contextCreate(&pimpl->igaLib.OptsContext, &context);
+    stat = pimpl->igaLib.contextCreate(&pimpl->igaLib.optsContext, &context);
     if (stat != 0) {
         messagePrinter->printf("Error while creating IGA Context! Error msg: %s", pimpl->igaLib.statusToString(stat));
         return false;
@@ -141,7 +141,7 @@ bool IgaWrapper::tryAssembleGenISA(const std::string &inAsm, std::string &outBin
     iga_status_t stat;
     iga_assemble_options_t assembleOptions = IGA_ASSEMBLE_OPTIONS_INIT();
 
-    stat = pimpl->igaLib.contextCreate(&pimpl->igaLib.OptsContext, &context);
+    stat = pimpl->igaLib.contextCreate(&pimpl->igaLib.optsContext, &context);
     if (stat != 0) {
         messagePrinter->printf("Error while creating IGA Context! Error msg: %s", pimpl->igaLib.statusToString(stat));
         return false;

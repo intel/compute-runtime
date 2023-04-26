@@ -77,7 +77,7 @@ class EnqueueReadBufferFlagsTest : public ApiFixture<>,
   protected:
     void SetUp() override {
         ApiFixture::setUp();
-        buffer_flags = GetParam();
+        bufferFlags = GetParam();
 
         unsigned int bufferSize = 16;
         pHostMem = new unsigned char[bufferSize];
@@ -85,7 +85,7 @@ class EnqueueReadBufferFlagsTest : public ApiFixture<>,
 
         buffer = clCreateBuffer(
             pContext,
-            buffer_flags,
+            bufferFlags,
             bufferSize,
             pHostMem,
             &retVal);
@@ -101,7 +101,7 @@ class EnqueueReadBufferFlagsTest : public ApiFixture<>,
     }
 
     cl_int retVal = CL_SUCCESS;
-    cl_mem_flags buffer_flags = 0;
+    cl_mem_flags bufferFlags = 0;
     unsigned char *pHostMem;
     cl_mem buffer;
 };

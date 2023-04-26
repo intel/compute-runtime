@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,45 +15,45 @@ namespace NEO {
 class Timer::TimerImpl {
   public:
     TimerImpl() {
-        memset(&m_startTime, 0, sizeof(LARGE_INTEGER));
-        memset(&m_endTime, 0, sizeof(LARGE_INTEGER));
+        memset(&startTime, 0, sizeof(LARGE_INTEGER));
+        memset(&endTime, 0, sizeof(LARGE_INTEGER));
     }
 
     ~TimerImpl() {
     }
 
     LARGE_INTEGER start() {
-        QueryPerformanceCounter((LARGE_INTEGER *)&m_startTime);
-        return m_startTime;
+        QueryPerformanceCounter((LARGE_INTEGER *)&startTime);
+        return startTime;
     }
 
     LARGE_INTEGER end() {
-        QueryPerformanceCounter((LARGE_INTEGER *)&m_endTime);
-        return m_endTime;
+        QueryPerformanceCounter((LARGE_INTEGER *)&endTime);
+        return endTime;
     }
 
     long long int get() {
-        auto timeDelta = (double)(m_endTime.QuadPart - m_startTime.QuadPart);
+        auto timeDelta = (double)(endTime.QuadPart - startTime.QuadPart);
         timeDelta /= (double)mFrequency.QuadPart;
         timeDelta *= 1000000000.0;
 
-        if (m_endTime.QuadPart < m_startTime.QuadPart) {
+        if (endTime.QuadPart < startTime.QuadPart) {
             DEBUG_BREAK_IF(true);
         }
         return (long long)timeDelta;
     }
 
     long long getStart() {
-        return (long long)(((LARGE_INTEGER *)&m_startTime)->QuadPart);
+        return (long long)(((LARGE_INTEGER *)&startTime)->QuadPart);
     }
 
     long long getEnd() {
 
-        return (long long)(((LARGE_INTEGER *)&m_endTime)->QuadPart);
+        return (long long)(((LARGE_INTEGER *)&endTime)->QuadPart);
     }
 
     TimerImpl &operator=(const TimerImpl &t) {
-        m_startTime = t.m_startTime;
+        startTime = t.startTime;
         return *this;
     }
 
@@ -65,8 +65,8 @@ class Timer::TimerImpl {
     static LARGE_INTEGER mFrequency;
 
   private:
-    LARGE_INTEGER m_startTime;
-    LARGE_INTEGER m_endTime;
+    LARGE_INTEGER startTime;
+    LARGE_INTEGER endTime;
 };
 
 LARGE_INTEGER Timer::TimerImpl::mFrequency = {

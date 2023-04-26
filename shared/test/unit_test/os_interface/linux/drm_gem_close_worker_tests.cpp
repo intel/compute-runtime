@@ -33,16 +33,16 @@ class DrmMockForWorker : public Drm {
   public:
     using Drm::setupIoctlHelper;
     std::mutex mutex;
-    std::atomic<int> gem_close_cnt;
-    std::atomic<int> gem_close_expected;
-    std::atomic<std::thread::id> ioctl_caller_thread_id;
+    std::atomic<int> gemCloseCnt;
+    std::atomic<int> gemCloseExpected;
+    std::atomic<std::thread::id> ioctlCallerThreadId;
     DrmMockForWorker(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     }
     int ioctl(DrmIoctl request, void *arg) override {
         if (request == DrmIoctl::GemClose)
-            gem_close_cnt++;
+            gemCloseCnt++;
 
-        ioctl_caller_thread_id = std::this_thread::get_id();
+        ioctlCallerThreadId = std::this_thread::get_id();
 
         return 0;
     };
@@ -73,13 +73,13 @@ class DrmGemCloseWorkerFixture {
                                         false,
                                         executionEnvironment);
 
-        this->drmMock->gem_close_cnt = 0;
-        this->drmMock->gem_close_expected = 0;
+        this->drmMock->gemCloseCnt = 0;
+        this->drmMock->gemCloseExpected = 0;
     }
 
     void tearDown() {
-        if (this->drmMock->gem_close_expected >= 0) {
-            EXPECT_EQ(this->drmMock->gem_close_expected, this->drmMock->gem_close_cnt);
+        if (this->drmMock->gemCloseExpected >= 0) {
+            EXPECT_EQ(this->drmMock->gemCloseExpected, this->drmMock->gemCloseCnt);
         }
 
         delete this->mm;
@@ -98,7 +98,7 @@ class DrmGemCloseWorkerFixture {
 typedef Test<DrmGemCloseWorkerFixture> DrmGemCloseWorkerTests;
 
 TEST_F(DrmGemCloseWorkerTests, WhenClosingGemThenSucceeds) {
-    this->drmMock->gem_close_expected = 1;
+    this->drmMock->gemCloseExpected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
     auto bo = new BufferObject(this->drmMock, 3, 1, 0, 1);
@@ -109,7 +109,7 @@ TEST_F(DrmGemCloseWorkerTests, WhenClosingGemThenSucceeds) {
 }
 
 TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsWhenClosingGemThenSucceeds) {
-    this->drmMock->gem_close_expected = -1;
+    this->drmMock->gemCloseExpected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
     auto bo = new BufferObject(this->drmMock, 3, 1, 0, 1);
@@ -123,13 +123,13 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsWhenClosingGemThenSucceeds) {
     worker->close(false);
 
     // and check if GEM was closed
-    EXPECT_EQ(1, this->drmMock->gem_close_cnt.load());
+    EXPECT_EQ(1, this->drmMock->gemCloseCnt.load());
 
     delete worker;
 }
 
 TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsAndCloseFalseWhenClosingGemThenSucceeds) {
-    this->drmMock->gem_close_expected = -1;
+    this->drmMock->gemCloseExpected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
     auto bo = new BufferObject(this->drmMock, 3, 1, 0, 1);
@@ -142,12 +142,12 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsAndCloseFalseWhenClosingGemTh
         sched_yield(); // yield to another threads
 
     // and check if GEM was closed
-    EXPECT_EQ(1, this->drmMock->gem_close_cnt.load());
+    EXPECT_EQ(1, this->drmMock->gemCloseCnt.load());
 
     delete worker;
 }
 TEST_F(DrmGemCloseWorkerTests, givenAllocationWhenAskedForUnreferenceWithForceFlagSetThenAllocationIsReleasedFromCallingThread) {
-    this->drmMock->gem_close_expected = 1;
+    this->drmMock->gemCloseExpected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
     auto bo = new BufferObject(this->drmMock, 3, 1, 0, 1);
@@ -157,7 +157,7 @@ TEST_F(DrmGemCloseWorkerTests, givenAllocationWhenAskedForUnreferenceWithForceFl
 
     auto r = mm->unreference(bo, true);
     EXPECT_EQ(1u, r);
-    EXPECT_EQ(drmMock->ioctl_caller_thread_id, std::this_thread::get_id());
+    EXPECT_EQ(drmMock->ioctlCallerThreadId, std::this_thread::get_id());
 
     delete worker;
 }

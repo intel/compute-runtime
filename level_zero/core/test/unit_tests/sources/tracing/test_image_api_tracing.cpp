@@ -63,10 +63,10 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageDestroyTracingWrapperWithOneSet
 struct {
     ze_device_handle_t hDevice0;
     ze_image_desc_t desc0;
-    ze_image_properties_t ImageProperties0;
+    ze_image_properties_t imageProperties0;
     ze_device_handle_t hDevice1;
     ze_image_desc_t desc1;
-    ze_image_properties_t ImageProperties1;
+    ze_image_properties_t imageProperties1;
     void *instanceData0;
     void *instanceData3;
 } ImageGetProperties_args;
@@ -88,7 +88,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
         [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) {
             EXPECT_EQ(ImageGetProperties_args.hDevice1, hDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, desc);
-            EXPECT_EQ(&ImageGetProperties_args.ImageProperties1, pImageProperties);
+            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, pImageProperties);
             return ZE_RESULT_SUCCESS;
         };
 
@@ -100,10 +100,10 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(ImageGetProperties_args.hDevice0, *params->phDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc0, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.ImageProperties0, *params->ppImageProperties);
+            EXPECT_EQ(&ImageGetProperties_args.imageProperties0, *params->ppImageProperties);
             *params->phDevice = ImageGetProperties_args.hDevice1;
             *params->pdesc = &ImageGetProperties_args.desc1;
-            *params->ppImageProperties = &ImageGetProperties_args.ImageProperties1;
+            *params->ppImageProperties = &ImageGetProperties_args.imageProperties1;
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 1);
@@ -123,7 +123,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.ImageProperties1, *params->ppImageProperties);
+            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
@@ -141,7 +141,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.ImageProperties1, *params->ppImageProperties);
+            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 11);
@@ -157,7 +157,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.ImageProperties1, *params->ppImageProperties);
+            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 21);
@@ -172,7 +172,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.ImageProperties1, *params->ppImageProperties);
+            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
@@ -192,7 +192,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.ImageProperties1, *params->ppImageProperties);
+            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
@@ -204,7 +204,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageGetPropertiesTracing(ImageGetProperties_args.hDevice0, &ImageGetProperties_args.desc0, &ImageGetProperties_args.ImageProperties0);
+    result = zeImageGetPropertiesTracing(ImageGetProperties_args.hDevice0, &ImageGetProperties_args.desc0, &ImageGetProperties_args.imageProperties0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

@@ -1749,7 +1749,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDebugVariableSetWhenAllocatin
 using DrmMemoryManagerFailInjectionPrelimTest = Test<DrmMemoryManagerFixturePrelim>;
 
 TEST_F(DrmMemoryManagerFailInjectionPrelimTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation) {
-    mock->ioctl_expected.total = -1; // don't care
+    mock->ioctlExpected.total = -1; // don't care
     class MockGfxPartition : public GfxPartition {
       public:
         MockGfxPartition() : GfxPartition(reservedCpuAddressRange) {
@@ -1982,9 +1982,9 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWh
 typedef Test<DrmMemoryManagerFixturePrelim> DrmMemoryManagerTestPrelim;
 
 TEST_F(DrmMemoryManagerTestPrelim, whenSettingNumHandlesThenTheyAreRetrievedCorrectly) {
-    mock->ioctl_expected.primeFdToHandle = 2;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 2;
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
     size_t size = 65536u * 2;
@@ -2003,9 +2003,9 @@ TEST_F(DrmMemoryManagerTestPrelim, whenSettingNumHandlesThenTheyAreRetrievedCorr
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesWithSharingResourcesThenDifferentAllocationsAreReturned) {
-    mock->ioctl_expected.primeFdToHandle = 4;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 2;
+    mock->ioctlExpected.primeFdToHandle = 4;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
     size_t size = 65536u * 2;
@@ -2036,9 +2036,9 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesWithNoSharingResourcesThenDifferentAllocationsAreReturned) {
-    mock->ioctl_expected.primeFdToHandle = 4;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 4;
+    mock->ioctlExpected.primeFdToHandle = 4;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 4;
 
     std::vector<NEO::osHandle> handles{6, 7};
     size_t size = 65536u * 2;
@@ -2069,9 +2069,9 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesAndFindAndReferenceSharedBufferObjectReturnsNonNullThenAllocationSucceeds) {
-    mock->ioctl_expected.primeFdToHandle = 4;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 2;
+    mock->ioctlExpected.primeFdToHandle = 4;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
     size_t size = 65536u * 2;
@@ -2099,9 +2099,9 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesWithOneHandleThenAllocationSucceedsAndGpuAddressIsFromTheExpectedHeap) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     std::vector<NEO::osHandle> handles{6};
     size_t size = 65536u * 2;
@@ -2130,9 +2130,9 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesAndIoctlFailsThenNullIsReturned) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 0;
-    mock->ioctl_expected.gemClose = 0;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 0;
+    mock->ioctlExpected.gemClose = 0;
     mock->failOnPrimeFdToHandle = true;
 
     std::vector<NEO::osHandle> handles{6, 7};
@@ -2145,9 +2145,9 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesThenAllocationSucceeds) {
-    mock->ioctl_expected.primeFdToHandle = 2;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 2;
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
     size_t size = 65536u * 2;
@@ -2166,9 +2166,9 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapFunctionThenReturnNullPtr) {
-    mock->ioctl_expected.gemMmapOffset = 2;
-    this->ioctlResExt = {mock->ioctl_cnt.total, -1};
-    mock->ioctl_res_ext = &ioctlResExt;
+    mock->ioctlExpected.gemMmapOffset = 2;
+    this->ioctlResExt = {mock->ioctlCnt.total, -1};
+    mock->ioctlResExt = &ioctlResExt;
 
     BufferObject bo(mock, 3, 1, 0, 1);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
@@ -2178,11 +2178,11 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     EXPECT_EQ(nullptr, ptr);
 
     memoryManager->unlockResource(&drmAllocation);
-    mock->ioctl_res_ext = &mock->NONE;
+    mock->ioctlResExt = &mock->none;
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapOffsetThenReturnNullPtr) {
-    mock->ioctl_expected.gemMmapOffset = 2;
+    mock->ioctlExpected.gemMmapOffset = 2;
     mock->failOnMmapOffset = true;
 
     BufferObject bo(mock, 3, 1, 0, 1);
@@ -2193,14 +2193,14 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     EXPECT_EQ(nullptr, ptr);
 
     memoryManager->unlockResource(&drmAllocation);
-    mock->ioctl_res_ext = &mock->NONE;
+    mock->ioctlResExt = &mock->none;
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledThenGraphicsAllocationIsReturned2) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    mock->ioctl_expected.gemMmapOffset = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
 
     osHandle handle = 1u;
     size_t size = 4096u;
@@ -2225,10 +2225,10 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsC
 
 TEST_F(DrmMemoryManagerTestPrelim,
        whenPrintBOCreateDestroyResultFlagIsSetAndCallToCreateSharedAllocationForHostAllocationThenExpectedMessageIsPrinted) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    mock->ioctl_expected.gemMmapOffset = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
 
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.PrintBOCreateDestroyResult.set(true);
@@ -2268,10 +2268,10 @@ TEST_F(DrmMemoryManagerTestPrelim,
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledWithBufferHostMemoryAllocationTypeThenGraphicsAllocationIsReturned) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    mock->ioctl_expected.gemMmapOffset = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
 
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
@@ -2297,10 +2297,10 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsC
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledForAnExistingAllocationGraphicsAllocationIsReturned) {
-    mock->ioctl_expected.primeFdToHandle = 2;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 1;
-    mock->ioctl_expected.gemMmapOffset = 1;
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
 
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
@@ -2340,8 +2340,8 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsC
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledAndMmapOffsetIoctlFailsThenNullAllocationIsReturned) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemMmapOffset = 2;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemMmapOffset = 2;
 
     osHandle handle = 1u;
     size_t size = 4096u;
@@ -2356,9 +2356,9 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsC
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndUseMmapObjectSetToFalseThenDrmAllocationWithoutMappingIsReturned) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     osHandle handle = 99u;
     this->mock->outputHandle = handle;
@@ -2374,9 +2374,9 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndUseMmapObjectSetToFal
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWithoutMemoryInfoThenDrmAllocationWithoutMappingIsReturned) {
-    mock->ioctl_expected.primeFdToHandle = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     mock->memoryInfo.reset();
 
@@ -2393,7 +2393,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWithoutMemoryInfoThenDrm
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, MmapFailWhenUSMHostAllocationFromSharedHandleThenNullPtrReturned) {
-    mock->ioctl_expected.primeFdToHandle = 1;
+    mock->ioctlExpected.primeFdToHandle = 1;
 
     osHandle handle = 1u;
     size_t size = 4096u;

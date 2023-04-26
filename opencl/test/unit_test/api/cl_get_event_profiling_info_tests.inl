@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -285,7 +285,7 @@ class ClEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
         event = std::make_unique<Event>(commandQueue.get(), 0, 0, 0);
         event->setStatus(CL_COMPLETE);
         event->setProfilingEnabled(true);
-        commandQueue->getPerfCounters()->getApiReport(event->getHwPerfCounterNode(), 0, nullptr, &param_value_size, true);
+        commandQueue->getPerfCounters()->getApiReport(event->getHwPerfCounterNode(), 0, nullptr, &paramValueSize, true);
 
         eventCl = static_cast<cl_event>(event.get());
     }
@@ -297,19 +297,19 @@ class ClEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
     std::unique_ptr<Context> context;
     std::unique_ptr<CommandQueue> commandQueue;
     std::unique_ptr<Event> event;
-    size_t param_value_size = 0;
+    size_t paramValueSize = 0;
     cl_event eventCl = nullptr;
-    cl_ulong param_value = 0;
-    size_t param_value_size_ret = 0;
+    cl_ulong paramValue = 0;
+    size_t paramValueSizeRet = 0;
 };
 
 TEST_F(ClEventProfilingWithPerfCountersTests, GivenDisabledPerfCountersWhenGettingEventProfilingInfoThenInvalidValueErrorIsReturned) {
     event->setPerfCountersEnabled(false);
     cl_int retVal = clGetEventProfilingInfo(eventCl,
                                             CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
-                                            param_value_size,
-                                            &param_value,
-                                            &param_value_size_ret);
+                                            paramValueSize,
+                                            &paramValue,
+                                            &paramValueSizeRet);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -317,9 +317,9 @@ TEST_F(ClEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersWhenGettin
     event->setPerfCountersEnabled(true);
     cl_int retVal = clGetEventProfilingInfo(eventCl,
                                             CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
-                                            param_value_size,
-                                            &param_value,
-                                            &param_value_size_ret);
+                                            paramValueSize,
+                                            &paramValue,
+                                            &paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -327,8 +327,8 @@ TEST_F(ClEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersAndIncorre
     event->setPerfCountersEnabled(true);
     cl_int retVal = clGetEventProfilingInfo(eventCl,
                                             CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
-                                            param_value_size - 1,
-                                            &param_value,
-                                            &param_value_size_ret);
+                                            paramValueSize - 1,
+                                            &paramValue,
+                                            &paramValueSizeRet);
     EXPECT_EQ(CL_PROFILING_INFO_NOT_AVAILABLE, retVal);
 }

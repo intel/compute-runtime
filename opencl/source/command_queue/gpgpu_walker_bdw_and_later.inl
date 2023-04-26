@@ -110,7 +110,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
-    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
+    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, globalStartTS);
     PipeControlArgs args;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
@@ -123,7 +123,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
         // MI_STORE_REGISTER_MEM for context local timestamp
-        timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);
+        timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, contextStartTS);
 
         // low part
         auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
@@ -143,7 +143,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
-    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalEndTS);
+    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, globalEndTS);
     PipeControlArgs args;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
@@ -156,7 +156,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
         // MI_STORE_REGISTER_MEM for context local timestamp
-        uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
+        uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, contextEndTS);
 
         // low part
         auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();

@@ -29,26 +29,26 @@ class ZeroCopyBufferTest : public ClDeviceFixture,
     void SetUp() override {
         size_t sizeToAlloc;
         size_t alignment;
-        host_ptr = nullptr;
-        std::tie(flags, sizeToAlloc, alignment, size, ShouldBeZeroCopy, MisalignPointer) = GetParam();
+        hostPtr = nullptr;
+        std::tie(flags, sizeToAlloc, alignment, size, shouldBeZeroCopy, misalignPointer) = GetParam();
         if (sizeToAlloc > 0) {
-            host_ptr = (void *)alignedMalloc(sizeToAlloc, alignment);
+            hostPtr = (void *)alignedMalloc(sizeToAlloc, alignment);
         }
         ClDeviceFixture::setUp();
     }
 
     void TearDown() override {
         ClDeviceFixture::tearDown();
-        alignedFree(host_ptr);
+        alignedFree(hostPtr);
     }
 
     cl_int retVal = CL_SUCCESS;
     MockContext context;
     cl_mem_flags flags = 0;
-    void *host_ptr;
-    bool ShouldBeZeroCopy;
+    void *hostPtr;
+    bool shouldBeZeroCopy;
     cl_int size;
-    bool MisalignPointer;
+    bool misalignPointer;
 };
 
 static const int Multiplier = 1000;
@@ -57,7 +57,7 @@ static const int CacheLinedMisAlignedSize = CacheLinedAlignedSize - 1;
 static const int PageAlignSize = MemoryConstants::preferredAlignment * Multiplier;
 
 // clang-format off
-//flags, size to alloc, alignment, size, ZeroCopy, MisalignPointer
+//flags, size to alloc, alignment, size, ZeroCopy, misalignPointer
 std::tuple<uint64_t , size_t, size_t, int, bool, bool> Inputs[] = {std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, CacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, CacheLinedMisAlignedSize, false, true),
                                                                            std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, CacheLinedAlignedSize, MemoryConstants::preferredAlignment, CacheLinedAlignedSize, false, true),
                                                                            std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, CacheLinedAlignedSize, MemoryConstants::preferredAlignment, CacheLinedAlignedSize, true, false),
@@ -72,9 +72,9 @@ std::tuple<uint64_t , size_t, size_t, int, bool, bool> Inputs[] = {std::make_tup
 
 TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCopy) {
 
-    char *passedPtr = (char *)host_ptr;
+    char *passedPtr = (char *)hostPtr;
     // misalign the pointer
-    if (MisalignPointer && passedPtr) {
+    if (misalignPointer && passedPtr) {
         passedPtr += 1;
     }
 
@@ -85,9 +85,9 @@ TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCop
         passedPtr,
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(ShouldBeZeroCopy, buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
-    if (!ShouldBeZeroCopy && flags & CL_MEM_USE_HOST_PTR) {
-        EXPECT_NE(buffer->getCpuAddress(), host_ptr);
+    EXPECT_EQ(shouldBeZeroCopy, buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
+    if (!shouldBeZeroCopy && flags & CL_MEM_USE_HOST_PTR) {
+        EXPECT_NE(buffer->getCpuAddress(), hostPtr);
     }
 
     EXPECT_NE(nullptr, buffer->getCpuAddress());

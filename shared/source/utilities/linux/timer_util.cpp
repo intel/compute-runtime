@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,32 +21,32 @@ class Timer::TimerImpl {
     }
 
     void start() {
-        *((std::chrono::high_resolution_clock::time_point *)&m_startTime) = std::chrono::high_resolution_clock::now();
+        *((std::chrono::high_resolution_clock::time_point *)&startTime) = std::chrono::high_resolution_clock::now();
     }
 
     void end() {
-        *((std::chrono::high_resolution_clock::time_point *)&m_endTime) = std::chrono::high_resolution_clock::now();
+        *((std::chrono::high_resolution_clock::time_point *)&endTime) = std::chrono::high_resolution_clock::now();
     }
 
     long long int get() {
         long long int nanosecondTime = 0;
-        std::chrono::duration<double> diffTime = std::chrono::duration_cast<std::chrono::duration<double>>(*(reinterpret_cast<std::chrono::high_resolution_clock::time_point *>(&m_endTime)) - *(reinterpret_cast<std::chrono::high_resolution_clock::time_point *>(&m_startTime)));
+        std::chrono::duration<double> diffTime = std::chrono::duration_cast<std::chrono::duration<double>>(*(reinterpret_cast<std::chrono::high_resolution_clock::time_point *>(&endTime)) - *(reinterpret_cast<std::chrono::high_resolution_clock::time_point *>(&startTime)));
         nanosecondTime = (long long int)(diffTime.count() * (double)1000000000.0);
         return nanosecondTime;
     }
 
     long long getStart() {
-        long long ret = (long long)(reinterpret_cast<std::chrono::high_resolution_clock::time_point *>(&m_startTime)->time_since_epoch().count());
+        long long ret = (long long)(reinterpret_cast<std::chrono::high_resolution_clock::time_point *>(&startTime)->time_since_epoch().count());
         return ret;
     }
 
     long long getEnd() {
-        long long ret = (long long)(reinterpret_cast<std::chrono::high_resolution_clock::time_point *>(&m_endTime)->time_since_epoch().count());
+        long long ret = (long long)(reinterpret_cast<std::chrono::high_resolution_clock::time_point *>(&endTime)->time_since_epoch().count());
         return ret;
     }
 
     TimerImpl &operator=(const TimerImpl &t) {
-        m_startTime = t.m_startTime;
+        startTime = t.startTime;
         return *this;
     }
 
@@ -54,8 +54,8 @@ class Timer::TimerImpl {
     }
 
   private:
-    std::chrono::high_resolution_clock::time_point m_startTime;
-    std::chrono::high_resolution_clock::time_point m_endTime;
+    std::chrono::high_resolution_clock::time_point startTime;
+    std::chrono::high_resolution_clock::time_point endTime;
 };
 
 Timer::Timer() {

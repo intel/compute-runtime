@@ -174,10 +174,10 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromIncorrectForm
 TEST_F(GlSharingTextureTests, givenGmmResourceAsInputWhenTextureIsCreatedThenItHasGmmSet) {
     cl_int retVal = CL_INVALID_VALUE;
 
-    glSharing->m_textureInfoOutput.globalShareHandle = textureId;
-    glSharing->m_textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
+    glSharing->textureInfoOutput.globalShareHandle = textureId;
+    glSharing->textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
     this->tempMM->useForcedGmm = false;
-    glSharing->m_textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
+    glSharing->textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
 
     glSharing->uploadDataToTextureInfo();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,8 +86,8 @@ class DrmBufferObjectFixture {
 
     void tearDown() {
         delete bo;
-        if (this->mock->ioctl_expected.total >= 0) {
-            EXPECT_EQ(this->mock->ioctl_expected.total, this->mock->ioctl_cnt.total);
+        if (this->mock->ioctlExpected.total >= 0) {
+            EXPECT_EQ(this->mock->ioctlExpected.total, this->mock->ioctlCnt.total);
         }
         mock->reset();
         osContext.reset(nullptr);

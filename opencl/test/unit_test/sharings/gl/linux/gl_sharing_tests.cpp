@@ -47,8 +47,8 @@ class GlSharingTests : public ::testing::Test {
         mockGlSharingFunctions = mockGlSharing->sharingFunctions.release();
         context.setSharingFunctions(mockGlSharingFunctions);
 
-        mockGlSharing->m_bufferInfoOutput.globalShareHandle = bufferId;
-        mockGlSharing->m_bufferInfoOutput.bufferSize = 4096u;
+        mockGlSharing->bufferInfoOutput.globalShareHandle = bufferId;
+        mockGlSharing->bufferInfoOutput.bufferSize = 4096u;
         mockGlSharing->uploadDataToBufferInfo();
     }
 

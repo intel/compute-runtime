@@ -192,10 +192,10 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenRenderBufferTextureIsCreatedThenMem
 TEST_F(GlSharingTextureTests, givenGmmResourceAsInputWhenTextureIsCreatedThenItHasGmmSet) {
     cl_int retVal = CL_INVALID_VALUE;
 
-    glSharing->m_textureInfoOutput.globalShareHandle = textureId;
-    glSharing->m_textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
+    glSharing->textureInfoOutput.globalShareHandle = textureId;
+    glSharing->textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
     this->tempMM->useForcedGmm = false;
-    glSharing->m_textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
+    glSharing->textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
 
     glSharing->uploadDataToTextureInfo();
 
@@ -220,8 +220,8 @@ TEST_F(GlSharingTextureTests, givenDifferentHwFormatWhenSurfaceFormatInfoIsSetTh
 
     EXPECT_TRUE(format->surfaceFormat.GenxSurfaceFormat != newHwFormat);
 
-    glSharing->m_textureInfoOutput.glHWFormat = newHwFormat;
-    glSharing->m_textureInfoOutput.glInternalFormat = GL_DEPTH32F_STENCIL8;
+    glSharing->textureInfoOutput.glHWFormat = newHwFormat;
+    glSharing->textureInfoOutput.glInternalFormat = GL_DEPTH32F_STENCIL8;
 
     glSharing->uploadDataToTextureInfo();
 
@@ -234,8 +234,8 @@ TEST_F(GlSharingTextureTests, givenDifferentHwFormatWhenSurfaceFormatInfoIsSetTh
 
 TEST_F(GlSharingTextureTests, givenGLRGB10FormatWhenSharedGlTextureIsCreatedThenItHasCorrectGenxSurfaceFormatAssigned) {
     cl_int retVal = CL_INVALID_VALUE;
-    glSharing->m_textureInfoOutput.glInternalFormat = GL_RGB10;
-    glSharing->m_textureInfoOutput.glHWFormat = GFX3DSTATE_SURFACEFORMAT_R16G16B16X16_UNORM;
+    glSharing->textureInfoOutput.glInternalFormat = GL_RGB10;
+    glSharing->textureInfoOutput.glHWFormat = GFX3DSTATE_SURFACEFORMAT_R16G16B16X16_UNORM;
     glSharing->uploadDataToTextureInfo();
 
     std::unique_ptr<Image> glTexture(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_ONLY, GL_TEXTURE_2D, 0, textureId, &retVal));
@@ -479,7 +479,7 @@ TEST_F(GlSharingTextureTests, givenSharedRenderBufferWhenItIsAcquireCountIsDecre
 
 TEST_F(GlSharingTextureTests, givenMultisampleTextureWithMoreThanOneSampleWhenAskedForNumSamplesThenReturnCorrectValue) {
     GLsizei expectedNumSamples = 2;
-    glSharing->m_textureInfoOutput.numberOfSamples = expectedNumSamples;
+    glSharing->textureInfoOutput.numberOfSamples = expectedNumSamples;
     glSharing->uploadDataToTextureInfo();
     std::unique_ptr<Image> image(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_WRITE, GL_TEXTURE_2D_MULTISAMPLE, 0, textureId, nullptr));
 
@@ -493,7 +493,7 @@ TEST_F(GlSharingTextureTests, givenMultisampleTextureWithMoreThanOneSampleWhenAs
 }
 
 TEST_F(GlSharingTextureTests, givenTextureWithOneSampleWhenAskedForNumSamplesThenReturnZero) {
-    glSharing->m_textureInfoOutput.numberOfSamples = 1;
+    glSharing->textureInfoOutput.numberOfSamples = 1;
     glSharing->uploadDataToTextureInfo();
     std::unique_ptr<Image> image(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_WRITE, GL_TEXTURE_2D_MULTISAMPLE, 0, textureId, nullptr));
 
@@ -507,7 +507,7 @@ TEST_F(GlSharingTextureTests, givenTextureWithOneSampleWhenAskedForNumSamplesThe
 }
 
 TEST_F(GlSharingTextureTests, givenTextureWithZeroSamplesWhenAskedForNumSamplesThenReturnZero) {
-    glSharing->m_textureInfoOutput.numberOfSamples = 0;
+    glSharing->textureInfoOutput.numberOfSamples = 0;
     glSharing->uploadDataToTextureInfo();
     std::unique_ptr<Image> image(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_WRITE, GL_TEXTURE_2D_MULTISAMPLE, 0, textureId, nullptr));
 

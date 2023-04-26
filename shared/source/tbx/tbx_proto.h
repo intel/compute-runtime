@@ -49,10 +49,10 @@ enum HAS_MSG_TYPE {
 
 struct HasHdr {
     union {
-        uint32_t msg_type;
+        uint32_t msgType;
         HAS_MSG_TYPE type;
     };
-    uint32_t trans_id;
+    uint32_t transID;
     uint32_t size;
 };
 
@@ -65,8 +65,8 @@ enum {
 struct HasMmioReq {
     uint32_t write : 1;
     uint32_t size : 3;
-    uint32_t dev_idx : 2;
-    uint32_t msg_type : 3;
+    uint32_t devIdx : 2;
+    uint32_t msgType : 3;
     uint32_t reserved : 7;
     uint32_t delay : 16;
 
@@ -79,7 +79,7 @@ struct HasMmioReq {
 };
 
 struct HasMmioExtReq {
-    struct HasMmioReq mmio_req;
+    struct HasMmioReq mmioReq;
     uint32_t sourceid : 8;
     uint32_t reserved1 : 24;
     enum {
@@ -121,7 +121,7 @@ struct HasGtt64Req {
 
     uint32_t offset;
     uint32_t data;
-    uint32_t data_h;
+    uint32_t dataH;
 
     enum {
         HAS_MSG_TYPE = HAS_GTT_REQ_TYPE
@@ -130,7 +130,7 @@ struct HasGtt64Req {
 
 struct HasGtt64Res {
     uint32_t data;
-    uint32_t data_h;
+    uint32_t dataH;
 
     enum {
         HAS_MSG_TYPE = HAS_GTT_RES_TYPE
@@ -138,15 +138,15 @@ struct HasGtt64Res {
 };
 
 struct HasWriteDataReq {
-    uint32_t addr_type : 1;
-    uint32_t mask_exist : 1;
+    uint32_t addrType : 1;
+    uint32_t maskExist : 1;
     uint32_t frontdoor : 1;
-    uint32_t take_ownership : 1;
-    uint32_t model_owned : 1;
-    uint32_t cacheline_disable : 1;
-    uint32_t memory_type : 2;
+    uint32_t takeOwnership : 1;
+    uint32_t modelOwned : 1;
+    uint32_t cachelineDisable : 1;
+    uint32_t memoryType : 2;
     uint32_t reserved : 16;
-    uint32_t address_h : 8;
+    uint32_t addressH : 8;
     uint32_t address;
     uint32_t size;
 
@@ -156,13 +156,13 @@ struct HasWriteDataReq {
 };
 
 struct HasReadDataReq {
-    uint32_t addr_type : 1;
+    uint32_t addrType : 1;
     uint32_t frontdoor : 1;
-    uint32_t ownership_req : 1;
-    uint32_t model_owned : 1;
-    uint32_t cacheline_disable : 1;
+    uint32_t ownershipReq : 1;
+    uint32_t modelOwned : 1;
+    uint32_t cachelineDisable : 1;
     uint32_t reserved : 19;
-    uint32_t address_h : 8;
+    uint32_t addressH : 8;
     uint32_t address;
     uint32_t size;
 
@@ -172,12 +172,12 @@ struct HasReadDataReq {
 };
 
 struct HasReadDataRes {
-    uint32_t addr_type : 1;
-    uint32_t mask_exist : 1;
-    uint32_t last_page : 1;
-    uint32_t ownership_res : 1;
+    uint32_t addrType : 1;
+    uint32_t maskExist : 1;
+    uint32_t lastPage : 1;
+    uint32_t ownershipRes : 1;
     uint32_t reserved : 20;
-    uint32_t address_h : 8;
+    uint32_t addressH : 8;
     uint32_t address;
     uint32_t size;
 
@@ -187,35 +187,35 @@ struct HasReadDataRes {
 };
 
 struct HasControlReq {
-    uint32_t reset : 1;          // [0:0]
-    uint32_t has : 1;            // [1:1]
-    uint32_t rd_on_demand : 1;   // [2:2]
-    uint32_t write_mask : 1;     // [3:3]
-    uint32_t time_adv : 1;       // [4:4]
-    uint32_t async_msg : 1;      // [5:5]
-    uint32_t quit : 1;           // [6:6]
-    uint32_t cncry_enb : 1;      // [7:7]
-    uint32_t stime_enb : 1;      // [8:8]
-    uint32_t full_reset : 1;     // [9:9]
-    uint32_t auto_ownership : 1; // [10:10]
-    uint32_t backdoor_model : 1; // [11:11]
-    uint32_t flush : 1;          // [12:12]
-    uint32_t reserved : 3;       // [15:13]
+    uint32_t reset : 1;         // [0:0]
+    uint32_t has : 1;           // [1:1]
+    uint32_t rdOnDemand : 1;    // [2:2]
+    uint32_t writeMask : 1;     // [3:3]
+    uint32_t timeAdv : 1;       // [4:4]
+    uint32_t asyncMsg : 1;      // [5:5]
+    uint32_t quit : 1;          // [6:6]
+    uint32_t cncryEnb : 1;      // [7:7]
+    uint32_t stimeEnb : 1;      // [8:8]
+    uint32_t fullReset : 1;     // [9:9]
+    uint32_t autoOwnership : 1; // [10:10]
+    uint32_t backdoorModel : 1; // [11:11]
+    uint32_t flush : 1;         // [12:12]
+    uint32_t reserved : 3;      // [15:13]
 
-    uint32_t reset_mask : 1;          // [16:16]
-    uint32_t has_mask : 1;            // [17:17]
-    uint32_t rd_on_demand_mask : 1;   // [18:18]
-    uint32_t write_mask_mask : 1;     // [19:19]
-    uint32_t time_adv_mask : 1;       // [20:20]
-    uint32_t async_msg_mask : 1;      // [21:21]
-    uint32_t quit_mask : 1;           // [22:22]
-    uint32_t cncry_enb_mask : 1;      // [23:23]
-    uint32_t stime_enb_mask : 1;      // [24:24]
-    uint32_t full_reset_mask : 1;     // [25:25]
-    uint32_t auto_ownership_mask : 1; // [26:26]
-    uint32_t backdoor_model_mask : 1; // [27:27]
-    uint32_t flush_mask : 1;          // [28:28]
-    uint32_t reserved_mask : 3;       // [31:29]
+    uint32_t resetMask : 1;         // [16:16]
+    uint32_t hasMask : 1;           // [17:17]
+    uint32_t rdOnDemandMask : 1;    // [18:18]
+    uint32_t writeMaskMask : 1;     // [19:19]
+    uint32_t timeAdvMask : 1;       // [20:20]
+    uint32_t asyncMsgMask : 1;      // [21:21]
+    uint32_t quitMask : 1;          // [22:22]
+    uint32_t cncryEnbMask : 1;      // [23:23]
+    uint32_t stimeEnbMask : 1;      // [24:24]
+    uint32_t fullResetMask : 1;     // [25:25]
+    uint32_t autoOwnershipMask : 1; // [26:26]
+    uint32_t backdoorModelMask : 1; // [27:27]
+    uint32_t flushMask : 1;         // [28:28]
+    uint32_t reservedMask : 3;      // [31:29]
 
     enum {
         HAS_MSG_TYPE = HAS_CONTROL_REQ_TYPE
@@ -260,7 +260,7 @@ struct HasPcicfgRes {
 
 struct HasGttParamsReq {
     uint32_t base;
-    uint32_t base_h : 8;
+    uint32_t baseH : 8;
     uint32_t size : 24;
 
     enum {
@@ -280,7 +280,7 @@ struct HasEventObsoleteReq {
 struct HasEventReq {
     uint32_t offset;
     uint32_t data;
-    uint32_t dev_idx : 2;
+    uint32_t devIdx : 2;
     uint32_t reserved : 30;
 
     enum {
@@ -290,7 +290,7 @@ struct HasEventReq {
 
 struct HasInnerVarReq {
     uint32_t write : 1;
-    uint32_t non_dword : 16;
+    uint32_t nonDword : 16;
     uint32_t reserved : 15;
     uint32_t id;
     uint32_t data;
@@ -320,7 +320,7 @@ struct HasInternalVarListEntryRes {
     uint32_t id;
     uint32_t min;
     uint32_t max;
-    uint32_t desc_size;
+    uint32_t descSize;
 };
 
 struct HasFunnyIoReq {
@@ -345,7 +345,7 @@ struct HasFunnyIoRes {
 
 struct HasIoReq {
     uint32_t write : 1;
-    uint32_t dev_idx : 2;
+    uint32_t devIdx : 2;
     uint32_t reserved : 26;
     uint32_t size : 3;
     uint32_t offset;
@@ -384,7 +384,7 @@ struct HasRpcRes {
 struct HasClFlushReq {
     uint32_t reserved : 23;
     uint32_t ignore : 1;
-    uint32_t address_h : 8;
+    uint32_t addressH : 8;
     uint32_t address;
     uint32_t size;
     uint32_t delay;
@@ -403,8 +403,8 @@ struct HasClFlushRes {
 };
 
 struct HasSimtimeRes {
-    uint32_t data_l;
-    uint32_t data_h;
+    uint32_t dataL;
+    uint32_t dataH;
 
     enum {
         HAS_MSG_TYPE = HAS_SIMTIME_RES_TYPE
@@ -421,35 +421,35 @@ struct HasGd2Message {
 };
 
 union HasMsgBody {
-    struct HasMmioReq mmio_req;
-    struct HasMmioExtReq mmio_req_ext;
-    struct HasMmioRes mmio_res;
-    struct HasGtt32Req gtt32_req;
-    struct HasGtt32Res gtt32_res;
-    struct HasGtt64Req gtt64_req;
-    struct HasGtt64Res gtt64_res;
-    struct HasWriteDataReq write_req;
-    struct HasReadDataReq read_req;
-    struct HasReadDataRes read_res;
-    struct HasControlReq control_req;
-    struct HasReportRendEndReq render_req;
-    struct HasReportRendEndRes render_res;
-    struct HasPcicfgReq pcicfg_req;
-    struct HasPcicfgRes pcicfg_res;
-    struct HasGttParamsReq gtt_params_req;
-    struct HasEventReq event_req;
-    struct HasEventObsoleteReq event_obsolete_req;
-    struct HasInnerVarReq inner_var_req;
-    struct HasInnerVarRes inner_var_res;
-    struct HasInnerVarListRes inner_var_list_res;
-    struct HasIoReq io_req;
-    struct HasIoRes io_res;
-    struct HasRpcReq rpc_req;
-    struct HasRpcRes rpc_res;
-    struct HasClFlushReq flush_req;
-    struct HasClFlushRes flush_res;
-    struct HasSimtimeRes stime_res;
-    struct HasGd2Message gd2_message_req;
+    struct HasMmioReq mmioReq;
+    struct HasMmioExtReq mmioReqExt;
+    struct HasMmioRes mmioRes;
+    struct HasGtt32Req gtt32Req;
+    struct HasGtt32Res gtt32Res;
+    struct HasGtt64Req gtt64Req;
+    struct HasGtt64Res gtt64Res;
+    struct HasWriteDataReq writeReq;
+    struct HasReadDataReq readReq;
+    struct HasReadDataRes readRes;
+    struct HasControlReq controlReq;
+    struct HasReportRendEndReq renderReq;
+    struct HasReportRendEndRes renderRes;
+    struct HasPcicfgReq pcicfgReq;
+    struct HasPcicfgRes pcicfgRes;
+    struct HasGttParamsReq gttParamsReq;
+    struct HasEventReq eventReq;
+    struct HasEventObsoleteReq eventObsoleteReq;
+    struct HasInnerVarReq innerVarReq;
+    struct HasInnerVarRes innerVarRes;
+    struct HasInnerVarListRes innerVarListRes;
+    struct HasIoReq ioReq;
+    struct HasIoRes ioRes;
+    struct HasRpcReq rpcReq;
+    struct HasRpcRes rpcRes;
+    struct HasClFlushReq flushReq;
+    struct HasClFlushRes flushRes;
+    struct HasSimtimeRes stimeRes;
+    struct HasGd2Message gd2MessageReq;
 };
 
 struct HasMsg {

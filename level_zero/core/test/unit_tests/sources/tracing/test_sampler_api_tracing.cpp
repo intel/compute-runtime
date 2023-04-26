@@ -41,11 +41,11 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerDestroyTracingWrapperWithOneS
 struct {
     ze_context_handle_t hContext0;
     ze_device_handle_t hDevice0;
-    ze_sampler_desc_t Desc0;
+    ze_sampler_desc_t desc0;
     ze_sampler_handle_t hSampler0;
     ze_context_handle_t hContext1;
     ze_device_handle_t hDevice1;
-    ze_sampler_desc_t Desc1;
+    ze_sampler_desc_t desc1;
     ze_sampler_handle_t hSampler1;
     ze_sampler_handle_t hSamplerAPI;
     void *instanceData0;
@@ -75,7 +75,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) {
             EXPECT_EQ(sampler_create_args.hContext1, hContext);
             EXPECT_EQ(sampler_create_args.hDevice1, hDevice);
-            EXPECT_EQ(&sampler_create_args.Desc1, pDesc);
+            EXPECT_EQ(&sampler_create_args.desc1, pDesc);
             EXPECT_EQ(&sampler_create_args.hSampler1, phSampler);
             EXPECT_EQ(sampler_create_args.hSampler1, *phSampler);
             sampler_create_args.hSamplerAPI = generateRandomHandle<ze_sampler_handle_t>();
@@ -91,7 +91,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
         [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(sampler_create_args.hContext0, *params->phContext);
             EXPECT_EQ(sampler_create_args.hDevice0, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.Desc0, *params->pdesc);
+            EXPECT_EQ(&sampler_create_args.desc0, *params->pdesc);
             EXPECT_EQ(&sampler_create_args.hSampler0, *params->pphSampler);
 
             ze_sampler_handle_t **ppHandle;
@@ -109,7 +109,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             EXPECT_EQ(sampler_create_args.hSampler0, handle);
             *params->phContext = sampler_create_args.hContext1;
             *params->phDevice = sampler_create_args.hDevice1;
-            *params->pdesc = &sampler_create_args.Desc1;
+            *params->pdesc = &sampler_create_args.desc1;
             *params->pphSampler = &sampler_create_args.hSampler1;
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
@@ -130,7 +130,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
             EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.Desc1, *params->pdesc);
+            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
             EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
             ze_sampler_handle_t **ppHandle;
@@ -163,7 +163,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
         [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
             EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.Desc1, *params->pdesc);
+            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
             EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
             ze_sampler_handle_t **ppHandle;
@@ -194,7 +194,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
             EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.Desc1, *params->pdesc);
+            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
             EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
             ze_sampler_handle_t **ppHandle;
@@ -224,7 +224,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
         [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
             EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.Desc1, *params->pdesc);
+            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
             EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
             ze_sampler_handle_t **ppHandle;
@@ -259,7 +259,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
             EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.Desc1, *params->pdesc);
+            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
             EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
             ze_sampler_handle_t **ppHandle;
@@ -286,7 +286,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeSamplerCreateTracing(sampler_create_args.hContext0, sampler_create_args.hDevice0, &sampler_create_args.Desc0, &sampler_create_args.hSampler0);
+    result = zeSamplerCreateTracing(sampler_create_args.hContext0, sampler_create_args.hDevice0, &sampler_create_args.desc0, &sampler_create_args.hSampler0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(sampler_create_args.hSampler1, sampler_create_args.hSamplerAPI);
     validateDefaultUserDataFinal();

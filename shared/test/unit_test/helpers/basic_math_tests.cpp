@@ -126,16 +126,16 @@ INSTANTIATE_TEST_CASE_P(Float2Half,
 
 struct L3Config {
     union {
-        unsigned int RawValue;
+        unsigned int rawValue;
         struct {
-            unsigned int SlmModeEnable : 1;
-            unsigned int UrbAllocation : 7;
-            unsigned int GpGpuCreditEnable : 1;
-            unsigned int ErrorDetectionBehaviour : 1;
-            unsigned int Reserved : 1;
-            unsigned int ReadOnlyClientPool : 7;
-            unsigned int DCWayAssignement : 7;
-            unsigned int AllL3WayAssignement : 7;
+            unsigned int slmModeEnable : 1;
+            unsigned int urbAllocation : 7;
+            unsigned int gpGpuCreditEnable : 1;
+            unsigned int errorDetectionBehaviour : 1;
+            unsigned int reserved : 1;
+            unsigned int readOnlyClientPool : 7;
+            unsigned int dcWayAssignement : 7;
+            unsigned int allL3WayAssignement : 7;
         } bits;
     };
 };
@@ -152,12 +152,12 @@ TEST(l3configsGenerator, givenInputValuesWhenPassedToL3ConfigThenRawValueIsProdu
         0,    // DC-Way Assignment
         0x30};
 
-    EXPECT_EQ(config.RawValue, 0x60000160u);
+    EXPECT_EQ(config.rawValue, 0x60000160u);
 
     L3Config config2;
-    config2.RawValue = 0x80000140u;
-    EXPECT_EQ(0x40u, config2.bits.AllL3WayAssignement);
-    EXPECT_EQ(0x20u, config2.bits.UrbAllocation);
+    config2.rawValue = 0x80000140u;
+    EXPECT_EQ(0x40u, config2.bits.allL3WayAssignement);
+    EXPECT_EQ(0x20u, config2.bits.urbAllocation);
 }
 
 struct ElementCountsTestData {

@@ -125,7 +125,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t addressWidth = 48;
     int numberHwEngines = 0;
     std::unique_ptr<struct drm_xe_engine_class_instance[]> hwEngines;
-    int xe_fileHandle = 0;
+    int xeFileHandle = 0;
     std::mutex xeLock;
     std::vector<BindInfo> bindInfo;
     int instance = 0;

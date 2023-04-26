@@ -22,7 +22,7 @@ struct SamplerWithPropertiesTest : public ApiFixture<>,
     }
 
     void SetUp() override {
-        std::tie(NormalizdProperties, AddressingProperties, FilterProperties) = GetParam();
+        std::tie(normalizdProperties, addressingProperties, filterProperties) = GetParam();
         ApiFixture::setUp();
     }
 
@@ -30,9 +30,9 @@ struct SamplerWithPropertiesTest : public ApiFixture<>,
         ApiFixture::tearDown();
     }
 
-    cl_sampler_properties NormalizdProperties = 0;
-    cl_sampler_properties AddressingProperties = 0;
-    cl_sampler_properties FilterProperties = 0;
+    cl_sampler_properties normalizdProperties = 0;
+    cl_sampler_properties addressingProperties = 0;
+    cl_sampler_properties filterProperties = 0;
 };
 
 using ClCreateSamplerWithPropertiesTests = ApiTests;
@@ -124,19 +124,19 @@ TEST_P(ClCreateSamplerWithPropertiesTests2, GivenCorrectParametersWhenCreatingSa
             0};
 
     cl_queue_properties *pProp = &properties[0];
-    if (NormalizdProperties) {
+    if (normalizdProperties) {
         *pProp++ = CL_SAMPLER_NORMALIZED_COORDS;
-        *pProp++ = (cl_queue_properties)NormalizdProperties;
+        *pProp++ = (cl_queue_properties)normalizdProperties;
     }
 
-    if (AddressingProperties) {
+    if (addressingProperties) {
         *pProp++ = CL_SAMPLER_ADDRESSING_MODE;
-        *pProp++ = (cl_queue_properties)AddressingProperties;
+        *pProp++ = (cl_queue_properties)addressingProperties;
     }
 
-    if (FilterProperties) {
+    if (filterProperties) {
         *pProp++ = CL_SAMPLER_FILTER_MODE;
-        *pProp++ = (cl_queue_properties)FilterProperties;
+        *pProp++ = (cl_queue_properties)filterProperties;
     }
 
     *pProp++ = 0;
@@ -161,11 +161,11 @@ TEST_P(ClCreateSamplerWithPropertiesTests2, GivenInvalidPropertiesWhenCreatingSa
             0};
 
     cl_queue_properties *pProp = &properties[0];
-    if (NormalizdProperties) {
+    if (normalizdProperties) {
         *pProp++ = CL_SAMPLER_NORMALIZED_COORDS;
-        *pProp++ = (cl_queue_properties)NormalizdProperties;
+        *pProp++ = (cl_queue_properties)normalizdProperties;
         *pProp++ = CL_SAMPLER_NORMALIZED_COORDS;
-        *pProp++ = (cl_queue_properties)NormalizdProperties;
+        *pProp++ = (cl_queue_properties)normalizdProperties;
 
         *pProp++ = 0;
 
@@ -178,11 +178,11 @@ TEST_P(ClCreateSamplerWithPropertiesTests2, GivenInvalidPropertiesWhenCreatingSa
     }
 
     pProp = &properties[0];
-    if (AddressingProperties) {
+    if (addressingProperties) {
         *pProp++ = CL_SAMPLER_ADDRESSING_MODE;
-        *pProp++ = (cl_queue_properties)AddressingProperties;
+        *pProp++ = (cl_queue_properties)addressingProperties;
         *pProp++ = CL_SAMPLER_ADDRESSING_MODE;
-        *pProp++ = (cl_queue_properties)AddressingProperties;
+        *pProp++ = (cl_queue_properties)addressingProperties;
 
         *pProp++ = 0;
 
@@ -195,11 +195,11 @@ TEST_P(ClCreateSamplerWithPropertiesTests2, GivenInvalidPropertiesWhenCreatingSa
     }
 
     pProp = &properties[0];
-    if (FilterProperties) {
+    if (filterProperties) {
         *pProp++ = CL_SAMPLER_FILTER_MODE;
-        *pProp++ = (cl_queue_properties)FilterProperties;
+        *pProp++ = (cl_queue_properties)filterProperties;
         *pProp++ = CL_SAMPLER_FILTER_MODE;
-        *pProp++ = (cl_queue_properties)FilterProperties;
+        *pProp++ = (cl_queue_properties)filterProperties;
 
         *pProp++ = 0;
 
@@ -212,13 +212,13 @@ TEST_P(ClCreateSamplerWithPropertiesTests2, GivenInvalidPropertiesWhenCreatingSa
     }
 }
 
-static cl_sampler_properties NormalizdProperties[] =
+static cl_sampler_properties normalizdProperties[] =
     {
         CL_TRUE,
         CL_FALSE,
 };
 
-static cl_sampler_properties AddressingProperties[] =
+static cl_sampler_properties addressingProperties[] =
     {
         CL_ADDRESS_NONE,
         CL_ADDRESS_CLAMP_TO_EDGE,
@@ -227,7 +227,7 @@ static cl_sampler_properties AddressingProperties[] =
         CL_ADDRESS_MIRRORED_REPEAT,
 };
 
-static cl_sampler_properties FilterProperties[] =
+static cl_sampler_properties filterProperties[] =
     {
         CL_FILTER_NEAREST,
         CL_FILTER_LINEAR,
@@ -236,9 +236,9 @@ static cl_sampler_properties FilterProperties[] =
 INSTANTIATE_TEST_CASE_P(api,
                         ClCreateSamplerWithPropertiesTests2,
                         ::testing::Combine(
-                            ::testing::ValuesIn(NormalizdProperties),
-                            ::testing::ValuesIn(AddressingProperties),
-                            ::testing::ValuesIn(FilterProperties)));
+                            ::testing::ValuesIn(normalizdProperties),
+                            ::testing::ValuesIn(addressingProperties),
+                            ::testing::ValuesIn(filterProperties)));
 
 TEST_F(ClCreateSamplerWithPropertiesTests, GivenMipMapDataWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndCorrectlyPopulated) {
     SamplerLodProperty minLodProperty;

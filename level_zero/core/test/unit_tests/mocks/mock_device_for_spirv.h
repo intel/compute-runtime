@@ -18,8 +18,8 @@ template <bool useImagesBuiltins, bool isStateless>
 class MockDeviceForSpv : public Mock<DeviceImp> {
   protected:
     bool wasModuleCreated = false;
-    bool useImagesBuiltins_prev = false;
-    bool isStateless_prev = false;
+    bool useImagesBuiltinsPrev = false;
+    bool isStatelessPrev = false;
     std::unique_ptr<L0::Module> mockModulePtr;
 
   public:
