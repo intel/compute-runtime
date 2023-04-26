@@ -19,14 +19,14 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) 
 
 ze_result_t LinuxRasImp::osRasGetConfig(zes_ras_config_t *config) {
     config->totalThreshold = totalThreshold;
-    memcpy(config->detailedThresholds.category, categoryThreshold, sizeof(config->detailedThresholds.category));
+    memcpy(config->detailedThresholds.category, categoryThreshold, maxRasErrorCategoryCount * sizeof(uint64_t));
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxRasImp::osRasSetConfig(const zes_ras_config_t *config) {
     if (pFsAccess->isRootUser() == true) {
         totalThreshold = config->totalThreshold;
-        memcpy(categoryThreshold, config->detailedThresholds.category, sizeof(config->detailedThresholds.category));
+        memcpy(categoryThreshold, config->detailedThresholds.category, maxRasErrorCategoryCount * sizeof(uint64_t));
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;

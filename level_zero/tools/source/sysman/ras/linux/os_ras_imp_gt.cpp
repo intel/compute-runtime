@@ -32,8 +32,7 @@ static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToL
     {ZES_RAS_ERROR_CAT_DRIVER_ERRORS,
      {"driver-object-migration", "driver-engine-other", "driver-ggtt",
       "driver-gt-interrupt", "driver-gt-other", "driver-guc-communication",
-      "driver-rps"}},
-    {ZES_RAS_ERROR_CAT_L3FABRIC_ERRORS, {"soc-fatal-mdfi-east", "soc-fatal-mdfi-south", "soc-fatal-mdfi-west", "fatal-l3-fabric", "soc-fatal-cd0-mdfi"}}};
+      "driver-rps"}}};
 
 static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEventsCorrectable = {
     {ZES_RAS_ERROR_CAT_CACHE_ERRORS,
@@ -145,8 +144,8 @@ ze_result_t LinuxRasSourceGt::osRasGetState(zes_ras_state_t &state, ze_bool_t cl
     if (clear == true) {
         closeFds();
         totalEventCount = 0;
-        memset(state.category, 0, sizeof(state.category));
-        memset(initialErrorCount, 0, sizeof(initialErrorCount));
+        memset(state.category, 0, maxRasErrorCategoryCount * sizeof(uint64_t));
+        memset(initialErrorCount, 0, maxRasErrorCategoryCount * sizeof(uint64_t));
     }
     initRasErrors(clear);
     // Iterate over all the file descriptor values present in vector which is mapped to given ras error category

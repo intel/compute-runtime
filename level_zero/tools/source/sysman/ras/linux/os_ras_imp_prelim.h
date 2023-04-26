@@ -9,6 +9,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/ras/os_ras.h"
+#include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include <map>
 #include <memory>
@@ -45,7 +46,7 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     uint64_t totalThreshold = 0;
-    uint64_t categoryThreshold[ZES_MAX_RAS_ERROR_CATEGORY_COUNT] = {0};
+    uint64_t categoryThreshold[maxRasErrorCategoryCount] = {0};
 };
 
 class LinuxRasSources : NEO::NonCopyableOrMovableClass {
@@ -83,7 +84,7 @@ class LinuxRasSourceGt : public LinuxRasSources {
     void closeFds();
     int64_t groupFd = -1;
     std::vector<int64_t> memberFds = {};
-    uint64_t initialErrorCount[ZES_MAX_RAS_ERROR_CATEGORY_COUNT] = {0};
+    uint64_t initialErrorCount[maxRasErrorCategoryCount] = {0};
     std::map<zes_ras_error_cat_t, uint64_t> errorCategoryToEventCount;
     uint64_t totalEventCount = 0;
     bool isSubdevice = false;

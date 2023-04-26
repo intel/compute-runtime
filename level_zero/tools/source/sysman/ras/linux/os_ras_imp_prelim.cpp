@@ -38,14 +38,14 @@ void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType,
 
 ze_result_t LinuxRasImp::osRasGetConfig(zes_ras_config_t *config) {
     config->totalThreshold = totalThreshold;
-    memcpy_s(config->detailedThresholds.category, sizeof(config->detailedThresholds.category), categoryThreshold, sizeof(config->detailedThresholds.category));
+    memcpy_s(config->detailedThresholds.category, maxRasErrorCategoryCount * sizeof(uint64_t), categoryThreshold, maxRasErrorCategoryCount * sizeof(uint64_t));
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxRasImp::osRasSetConfig(const zes_ras_config_t *config) {
     if (pFsAccess->isRootUser() == true) {
         totalThreshold = config->totalThreshold;
-        memcpy_s(categoryThreshold, sizeof(config->detailedThresholds.category), config->detailedThresholds.category, sizeof(config->detailedThresholds.category));
+        memcpy_s(categoryThreshold, maxRasErrorCategoryCount * sizeof(uint64_t), config->detailedThresholds.category, maxRasErrorCategoryCount * sizeof(uint64_t));
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
@@ -73,7 +73,7 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) 
         if (localResult != ZE_RESULT_SUCCESS) {
             continue;
         }
-        for (int i = 0; i < ZES_MAX_RAS_ERROR_CATEGORY_COUNT; i++) {
+        for (uint32_t i = 0; i < maxRasErrorCategoryCount; i++) {
             state.category[i] += localState.category[i];
         }
         result = ZE_RESULT_SUCCESS;

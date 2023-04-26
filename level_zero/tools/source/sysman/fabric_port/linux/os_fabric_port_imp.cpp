@@ -56,10 +56,6 @@ ze_result_t LinuxFabricPortImp::getThroughput(zes_fabric_port_throughput_t *pThr
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxFabricPortImp::getErrorCounters(zes_fabric_port_error_counters_t *pErrors) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 ze_result_t LinuxFabricPortImp::getProperties(zes_fabric_port_properties_t *pProperties) {
     ::snprintf(pProperties->model, ZES_MAX_FABRIC_PORT_MODEL_SIZE, "%s", this->model.c_str());
     pProperties->onSubdevice = false;

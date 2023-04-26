@@ -53,10 +53,6 @@ ze_result_t FabricPortImp::fabricPortGetState(zes_fabric_port_state_t *pState) {
     return pOsFabricPort->getState(pState);
 }
 
-ze_result_t FabricPortImp::fabricPortGetErrorCounters(zes_fabric_port_error_counters_t *pErrors) {
-    return pOsFabricPort->getErrorCounters(pErrors);
-}
-
 ze_result_t FabricPortImp::fabricPortGetThroughput(zes_fabric_port_throughput_t *pThroughput) {
     fabricPortGetTimestamp(pThroughput->timestamp);
     return pOsFabricPort->getThroughput(pThroughput);

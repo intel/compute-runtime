@@ -34,7 +34,6 @@ class WddmFabricPortImp : public OsFabricPort, NEO::NonCopyableOrMovableClass {
     ze_result_t setConfig(const zes_fabric_port_config_t *pConfig) override;
     ze_result_t getState(zes_fabric_port_state_t *pState) override;
     ze_result_t getThroughput(zes_fabric_port_throughput_t *pThroughput) override;
-    ze_result_t getErrorCounters(zes_fabric_port_error_counters_t *pErrors) override;
 
     WddmFabricPortImp() = delete;
     WddmFabricPortImp(OsFabricDevice *pOsFabricDevice, uint32_t portNum);
