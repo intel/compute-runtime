@@ -277,7 +277,7 @@ OsContext *MockMemoryManagerOsAgnosticContext::createAndRegisterOsContext(Comman
                                                                           const EngineDescriptor &engineDescriptor) {
     auto osContext = new OsContext(commandStreamReceiver->getRootDeviceIndex(), 0, engineDescriptor);
     osContext->incRefInternal();
-    registeredEngines.emplace_back(commandStreamReceiver, osContext);
+    allRegisteredEngines[commandStreamReceiver->getRootDeviceIndex()].emplace_back(commandStreamReceiver, osContext);
     return osContext;
 }
 
@@ -286,7 +286,7 @@ OsContext *MockMemoryManagerWithDebuggableOsContext::createAndRegisterOsContext(
     auto osContext = new MockOsContext(0, engineDescriptor);
     osContext->debuggableContext = true;
     osContext->incRefInternal();
-    registeredEngines.emplace_back(commandStreamReceiver, osContext);
+    allRegisteredEngines[commandStreamReceiver->getRootDeviceIndex()].emplace_back(commandStreamReceiver, osContext);
     return osContext;
 }
 

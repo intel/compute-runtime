@@ -32,6 +32,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::allocateGraphicsMemoryWithAlignment;
     using MemoryManager::allocateGraphicsMemoryWithProperties;
+    using MemoryManager::allRegisteredEngines;
     using MemoryManager::createGraphicsAllocation;
     using MemoryManager::createStorageInfoFromProperties;
     using MemoryManager::defaultEngineIndex;
@@ -44,7 +45,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::overrideAllocationData;
     using MemoryManager::pageFaultManager;
     using MemoryManager::prefetchManager;
-    using MemoryManager::registeredEngines;
     using MemoryManager::supportsMultiStorageResources;
     using MemoryManager::useNonSvmHostPtrAlloc;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;

@@ -81,8 +81,8 @@ class BufferObjectHandleWrapper {
 
 class BufferObject {
   public:
-    BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount);
-    BufferObject(Drm *drm, uint64_t patIndex, BufferObjectHandleWrapper &&handle, size_t size, size_t maxOsContextCount);
+    BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount);
+    BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex, BufferObjectHandleWrapper &&handle, size_t size, size_t maxOsContextCount);
 
     MOCKABLE_VIRTUAL ~BufferObject() = default;
 
@@ -167,9 +167,6 @@ class BufferObject {
     }
     void requireExplicitResidency(bool required) {
         requiresExplicitResidency = required;
-    }
-    void setRootDeviceIndex(uint32_t index) {
-        rootDeviceIndex = index;
     }
     uint32_t getRootDeviceIndex() {
         return rootDeviceIndex;

@@ -45,7 +45,7 @@ void DebuggerL0::initialize() {
         setSingleAddressSpaceSbaTracking(NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.get());
     }
 
-    auto &engines = device->getMemoryManager()->getRegisteredEngines();
+    auto &engines = device->getMemoryManager()->getRegisteredEngines(device->getRootDeviceIndex());
 
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
                                          NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER,

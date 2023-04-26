@@ -160,7 +160,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bo
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion) {
-    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
+    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(this->rootDeviceIndex);
     std::vector<GraphicsAllocation *> evictCandidates;
 
     for (auto subdeviceIndex = 0u; subdeviceIndex < GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()); subdeviceIndex++) {
@@ -172,8 +172,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImp
             }
 
             for (const auto &engine : engines) {
-                if (this->rootDeviceIndex == engine.commandStreamReceiver->getRootDeviceIndex() &&
-                    engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {
+                if (engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {
                     if (allocation->isAlwaysResident(engine.osContext->getContextId())) {
                         evict = false;
                         break;
@@ -200,8 +199,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImp
 
         for (auto &allocationToEvict : evictCandidates) {
             for (const auto &engine : engines) {
-                if (this->rootDeviceIndex == engine.commandStreamReceiver->getRootDeviceIndex() &&
-                    engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {
+                if (engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {
                     DeviceBitfield deviceBitfield;
                     deviceBitfield.set(subdeviceIndex);
                     this->evictImpl(engine.osContext, *allocationToEvict, deviceBitfield);

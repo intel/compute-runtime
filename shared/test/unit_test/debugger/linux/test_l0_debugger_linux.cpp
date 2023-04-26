@@ -75,8 +75,8 @@ TEST_F(L0DebuggerSharedLinuxTest, givenNoOSInterfaceThenRegisterElfAndLinkWithAl
     debugData.vIsaSize = 10;
     drmMock->registeredDataSize = 0;
 
-    MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    MockBufferObject bo(drmMock, 3, 0, 0, 1);
+    MockDrmAllocation isaAllocation(neoDevice->getRootDeviceIndex(), AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockBufferObject bo(neoDevice->getRootDeviceIndex(), drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
 
     neoDevice->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);

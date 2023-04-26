@@ -8,11 +8,13 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace NEO {
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
+using MultiDeviceEngineControlContainer = std::unordered_map<uint32_t, EngineControlContainer>;
 class Device;
 using DeviceVector = std::vector<std::unique_ptr<Device>>;
 

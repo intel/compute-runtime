@@ -87,8 +87,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::unMapPhysicalToVirtualMemory;
     using DrmMemoryManager::waitOnCompletionFence;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
+    using MemoryManager::allRegisteredEngines;
     using MemoryManager::heapAssigner;
-    using MemoryManager::registeredEngines;
 
     TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment);
     TestedDrmMemoryManager(bool enableLocalMemory,

@@ -19,6 +19,7 @@ class BufferObject;
 class Drm;
 class DrmGemCloseWorker;
 class DrmAllocation;
+class OsContextLinux;
 
 enum class gemCloseWorkerMode;
 
@@ -68,7 +69,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL int obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex);
     AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) override;
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
-    MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(Drm *drm, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
+    MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
                                                                     uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle);
 
     bool hasPageFaultsEnabled(const Device &neoDevice) override;
@@ -106,6 +107,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
+    OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
     size_t getUserptrAlignment();
 
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;

@@ -1035,7 +1035,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
     setCompressionEnabled(false, false);
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
     MockWddmCsr<FamilyType> mockWddmCsr(*executionEnvironment, 1, device->getDeviceBitfield());
-    for (auto engine : executionEnvironment->memoryManager->getRegisteredEngines()) {
+    for (auto engine : executionEnvironment->memoryManager->getRegisteredEngines(device->getRootDeviceIndex())) {
         EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
     }
 }
@@ -1059,14 +1059,14 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     device->resetCommandStreamReceiver(mockWddmCsr);
 
     auto memoryManager = executionEnvironment->memoryManager.get();
-    for (auto engine : memoryManager->getRegisteredEngines()) {
+    for (auto engine : memoryManager->getRegisteredEngines(device->getRootDeviceIndex())) {
         EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
     }
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockWddmCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(graphicsAllocation);
 
-    for (auto engine : memoryManager->getRegisteredEngines()) {
+    for (auto engine : memoryManager->getRegisteredEngines(device->getRootDeviceIndex())) {
         EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
     }
 
@@ -1074,7 +1074,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
 
     mockWddmCsr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *device);
 
-    for (auto engine : memoryManager->getRegisteredEngines()) {
+    for (auto engine : memoryManager->getRegisteredEngines(device->getRootDeviceIndex())) {
         EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
     }
 

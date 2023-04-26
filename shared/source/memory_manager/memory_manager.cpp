@@ -81,10 +81,13 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 }
 
 MemoryManager::~MemoryManager() {
-    for (auto &engine : registeredEngines) {
-        engine.osContext->decRefInternal();
+    for (auto &engineContainer : allRegisteredEngines) {
+        for (auto &engine : engineContainer.second) {
+            engine.osContext->decRefInternal();
+        }
+        engineContainer.second.clear();
     }
-    registeredEngines.clear();
+    allRegisteredEngines.clear();
     if (reservedMemory) {
         MemoryManager::alignedFreeWrapper(reservedMemory);
     }
@@ -267,7 +270,7 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
             multiContextResourceDestructor->drain(false);
             return;
         }
-        for (auto &engine : getRegisteredEngines()) {
+        for (auto &engine : getRegisteredEngines(gfxAllocation->getRootDeviceIndex())) {
             auto osContextId = engine.osContext->getContextId();
             auto allocationTaskCount = gfxAllocation->getTaskCount(osContextId);
             if (gfxAllocation->isUsedByOsContext(osContextId) &&
@@ -336,7 +339,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
 
     UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 
-    registeredEngines.emplace_back(commandStreamReceiver, osContext);
+    allRegisteredEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
 
     return osContext;
 }
@@ -603,7 +606,7 @@ GraphicsAllocation *MemoryManager::allocateInternalGraphicsMemoryWithHostCopy(ui
 
 bool MemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
     bool ret = false;
-    for (auto engine : registeredEngines) {
+    for (auto engine : getRegisteredEngines(graphicsAllocation->getRootDeviceIndex())) {
         if (engine.commandStreamReceiver->pageTableManager.get()) {
             ret = engine.commandStreamReceiver->pageTableManager->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
             if (!ret) {
@@ -673,10 +676,6 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImage(const Allocati
     return allocateGraphicsMemoryForImageImpl(allocationDataWithSize, std::move(gmm));
 }
 
-EngineControlContainer &MemoryManager::getRegisteredEngines() {
-    return registeredEngines;
-}
-
 bool MemoryManager::isExternalAllocation(AllocationType allocationType) {
     if (allocationType == AllocationType::BUFFER ||
         allocationType == AllocationType::BUFFER_HOST_MEMORY ||
@@ -706,9 +705,9 @@ LocalMemoryUsageBankSelector *MemoryManager::getLocalMemoryUsageBankSelector(All
     return internalLocalMemoryUsageBankSelector[rootDeviceIndex].get();
 }
 
-EngineControl *MemoryManager::getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver) {
-    EngineControl *engineCtrl = nullptr;
-    for (auto &engine : registeredEngines) {
+const EngineControl *MemoryManager::getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver) {
+    const EngineControl *engineCtrl = nullptr;
+    for (auto &engine : getRegisteredEngines(commandStreamReceiver->getRootDeviceIndex())) {
         if (engine.commandStreamReceiver == commandStreamReceiver) {
             engineCtrl = &engine;
             break;
@@ -718,6 +717,7 @@ EngineControl *MemoryManager::getRegisteredEngineForCsr(CommandStreamReceiver *c
 }
 
 void MemoryManager::unregisterEngineForCsr(CommandStreamReceiver *commandStreamReceiver) {
+    auto &registeredEngines = allRegisteredEngines[commandStreamReceiver->getRootDeviceIndex()];
     auto numRegisteredEngines = registeredEngines.size();
     for (auto i = 0u; i < numRegisteredEngines; i++) {
         if (registeredEngines[i].commandStreamReceiver == commandStreamReceiver) {
@@ -799,41 +799,39 @@ bool MemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllo
     return true;
 }
 void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) {
-    for (auto &engine : getRegisteredEngines()) {
-        if (graphicsAllocation.getRootDeviceIndex() == engine.osContext->getRootDeviceIndex()) {
-            auto osContextId = engine.osContext->getContextId();
-            auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
-            if (graphicsAllocation.isUsedByOsContext(osContextId) &&
-                engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-                allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
-                engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, TimeoutControls::maxTimeout}, allocationTaskCount);
-            }
+    for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
+        auto osContextId = engine.osContext->getContextId();
+        auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
+        if (graphicsAllocation.isUsedByOsContext(osContextId) &&
+            engine.commandStreamReceiver->getTagAllocation() != nullptr &&
+            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+            engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, TimeoutControls::maxTimeout}, allocationTaskCount);
         }
     }
 }
 
 bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
-    for (auto &engine : getRegisteredEngines()) {
-        if (graphicsAllocation.getRootDeviceIndex() == engine.osContext->getRootDeviceIndex()) {
-            auto osContextId = engine.osContext->getContextId();
-            auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
-            if (graphicsAllocation.isUsedByOsContext(osContextId) &&
-                engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-                allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
-                return true;
-            }
+    for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
+        auto osContextId = engine.osContext->getContextId();
+        auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
+        if (graphicsAllocation.isUsedByOsContext(osContextId) &&
+            engine.commandStreamReceiver->getTagAllocation() != nullptr &&
+            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+            return true;
         }
     }
     return false;
 }
 
 void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion) {
-    for (auto &engine : getRegisteredEngines()) {
-        auto csr = engine.commandStreamReceiver;
-        if (waitForCompletion) {
-            csr->waitForCompletionWithTimeout(WaitParams{false, false, 0}, csr->peekLatestSentTaskCount());
+    for (auto &engineContainer : allRegisteredEngines) {
+        for (auto &engine : engineContainer.second) {
+            auto csr = engine.commandStreamReceiver;
+            if (waitForCompletion) {
+                csr->waitForCompletionWithTimeout(WaitParams{false, false, 0}, csr->peekLatestSentTaskCount());
+            }
+            csr->getInternalAllocationStorage()->cleanAllocationList(*csr->getTagAddress(), AllocationUsage::TEMPORARY_ALLOCATION);
         }
-        csr->getInternalAllocationStorage()->cleanAllocationList(*csr->getTagAddress(), AllocationUsage::TEMPORARY_ALLOCATION);
     }
 }
 
@@ -997,16 +995,15 @@ bool MemoryManager::isKernelBinaryReuseEnabled() {
 
 OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, DeviceBitfield subdevicesBitfield) {
     OsContext *defaultContext = nullptr;
-    for (auto engineIndex = 0u; engineIndex < this->getRegisteredEnginesCount(); engineIndex++) {
-        OsContext *engine = this->getRegisteredEngines()[engineIndex].osContext;
-        if ((engine->getRootDeviceIndex() == rootDeviceIndex) &&
-            (engine->isDefaultContext() && engine->getDeviceBitfield() == subdevicesBitfield)) {
-            defaultContext = engine;
+    for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
+        auto osContext = engine.osContext;
+        if (osContext->isDefaultContext() && osContext->getDeviceBitfield() == subdevicesBitfield) {
+            defaultContext = osContext;
             break;
         }
     }
     if (!defaultContext) {
-        defaultContext = registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext;
+        defaultContext = getRegisteredEngines(rootDeviceIndex)[defaultEngineIndex[rootDeviceIndex]].osContext;
     }
     return defaultContext;
 }

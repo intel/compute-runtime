@@ -310,7 +310,7 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
     for (auto &kernelInfo : buildInfo.kernelInfoArray) {
         if (kernelInfo->kernelAllocation) {
             // register cache flush in all csrs where kernel allocation was used
-            for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines()) {
+            for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
                 auto contextId = engine.osContext->getContextId();
                 if (kernelInfo->kernelAllocation->isUsedByOsContext(contextId)) {
                     engine.commandStreamReceiver->registerInstructionCacheFlush();

@@ -63,7 +63,7 @@ HWTEST_F(SingleAddressSpaceFixture, givenSingleAddressSpaceWhenDebuggerIsCreated
     EXPECT_EQ(0u, debugger->getSbaTrackingGpuVa());
     std::vector<NEO::GraphicsAllocation *> allocations;
 
-    auto &allEngines = pDevice->getMemoryManager()->getRegisteredEngines();
+    auto &allEngines = pDevice->getMemoryManager()->getRegisteredEngines(rootDeviceIndex);
 
     for (auto &engine : allEngines) {
         auto sbaAllocation = debugger->getSbaTrackingBuffer(engine.osContext->getContextId());

@@ -215,14 +215,14 @@ struct DeviceTimestampPacketTests : public ::testing::Test, DeviceFixture {
 };
 
 HWTEST_F(DeviceTimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferredTagPoolSizeThenReturnCorrectValue) {
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].osContext;
 
     CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
     EXPECT_EQ(2048u, csr.getPreferredTagPoolSize());
 }
 
 HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenUseCorrectSize) {
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].osContext;
 
     {
         CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
@@ -269,14 +269,14 @@ HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenU
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTimestampPacketTests, givenInvalidDebugFlagSetWhenCreatingCsrThenExceptionIsThrown) {
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].osContext;
     DebugManager.flags.OverrideTimestampPacketSize.set(12);
 
     EXPECT_ANY_THROW(CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield()));
 }
 
 HWTEST_F(DeviceTimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenGpuAddressIsAligned) {
-    auto csr = executionEnvironment->memoryManager->getRegisteredEngines()[0].commandStreamReceiver;
+    auto csr = executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].commandStreamReceiver;
 
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
 
@@ -292,7 +292,7 @@ HWTEST_F(DeviceTimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenG
 HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableTimestampPacketOptimizations.set(true);
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].osContext;
 
     CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
     csr.setupContext(osContext);

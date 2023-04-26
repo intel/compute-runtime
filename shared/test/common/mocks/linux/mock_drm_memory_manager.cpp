@@ -62,7 +62,7 @@ BufferObject *TestedDrmMemoryManager::findAndReferenceSharedBufferObject(int boH
     if (failOnfindAndReferenceSharedBufferObject) {
         DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         auto patIndex = drmMock.getPatIndex(nullptr, AllocationType::BUFFER, CacheRegion::Default, CachePolicy::WriteBack, false);
-        return new (std::nothrow) BufferObject(&drmMock, patIndex, boHandle, 4096u, 2u);
+        return new (std::nothrow) BufferObject(rootDeviceIndex, &drmMock, patIndex, boHandle, 4096u, 2u);
     }
     return MemoryManagerCreate<DrmMemoryManager>::findAndReferenceSharedBufferObject(boHandle, rootDeviceIndex);
 }

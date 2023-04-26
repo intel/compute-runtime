@@ -58,7 +58,8 @@ ze_result_t CommandListImp::destroy() {
             auto heapAllocation = surfaceStateHeap->getGraphicsAllocation();
             NEO::WaitParams defaultWaitParams{false, false, NEO::TimeoutControls::maxTimeout};
 
-            auto &deviceEngines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines();
+            auto rootDeviceIndex = device->getRootDeviceIndex();
+            auto &deviceEngines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines(rootDeviceIndex);
             for (auto &engine : deviceEngines) {
                 if (NEO::EngineHelpers::isComputeEngine(engine.getEngineType())) {
                     auto contextId = engine.osContext->getContextId();

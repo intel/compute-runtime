@@ -27,6 +27,7 @@ struct DrmDebugPrelimTest : public ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->initializeMemoryManager();
     }
+    const uint32_t rootDeviceIndex = 0u;
 
   protected:
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
@@ -242,7 +243,7 @@ TEST(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIs
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultEngineContextThenExtensionsArePassedToVmBindIoctl) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
@@ -262,7 +263,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultE
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternalContextThenExtensionsAreNotPassedToVmBindIoctl) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
@@ -276,7 +277,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternal
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngineContextThenExtensionsAreNotPassedToVmBindIoctl) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
@@ -293,7 +294,7 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.queryAndSetVmBindPatIndexProgrammingSupport();
 
-    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 

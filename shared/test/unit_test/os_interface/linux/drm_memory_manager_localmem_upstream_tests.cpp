@@ -119,7 +119,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize64k;
 
-    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(rootDeviceIndex,
                                                                                             nullptr,
                                                                                             AllocationType::BUFFER,
                                                                                             gpuAddress,
@@ -440,7 +440,7 @@ class DrmMemoryManagerLocalMemoryMemoryBankMock : public TestedDrmMemoryManager 
                                               ExecutionEnvironment &executionEnvironment) : TestedDrmMemoryManager(enableLocalMemory, allowForcePin, validateHostPtrMemory, executionEnvironment) {
     }
 
-    BufferObject *createBufferObjectInMemoryRegion(Drm *drm,
+    BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex,
                                                    Gmm *gmm,
                                                    AllocationType allocationType,
                                                    uint64_t gpuAddress,
@@ -640,7 +640,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhen
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnBufferObjectThenReturnPtr) {
-    BufferObject bo(mock, 3, 1, 1024, 0);
+    BufferObject bo(0, mock, 3, 1, 1024, 0);
 
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
@@ -844,7 +844,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     this->ioctlResExt = {mockExp->ioctlCnt.total, -1};
     mockExp->ioctlResExt = &ioctlResExt;
 
-    BufferObject bo(mockExp, 3, 1, 0, 0);
+    BufferObject bo(0, mockExp, 3, 1, 0, 0);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
@@ -860,7 +860,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     mockExp->returnIoctlExtraErrorValue = true;
     mockExp->failOnMmapOffset = true;
 
-    BufferObject bo(mockExp, 3, 1, 0, 0);
+    BufferObject bo(0, mockExp, 3, 1, 0, 0);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 

@@ -239,9 +239,10 @@ bool Device::createDeviceImpl() {
         commandStreamReceiver->postInitFlagsSetup();
     }
 
+    auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines(rootDeviceIndex);
     uint32_t defaultEngineIndexWithinMemoryManager = 0;
-    for (auto engineIndex = 0u; engineIndex < executionEnvironment->memoryManager->getRegisteredEnginesCount(); engineIndex++) {
-        OsContext *engine = executionEnvironment->memoryManager->getRegisteredEngines()[engineIndex].osContext;
+    for (auto engineIndex = 0u; engineIndex < registeredEngines.size(); engineIndex++) {
+        OsContext *engine = registeredEngines[engineIndex].osContext;
         if (engine == getDefaultEngine().osContext) {
             defaultEngineIndexWithinMemoryManager = engineIndex;
             break;

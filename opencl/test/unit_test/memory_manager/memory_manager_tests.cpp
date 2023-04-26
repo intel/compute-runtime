@@ -2122,19 +2122,6 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
     EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
 }
 
-TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
-    executionEnvironment.memoryManager.reset(memoryManager);
-    DeviceBitfield deviceBitfield(1);
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
-    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
-                                                                                                      PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-    EXPECT_EQ(1u, memoryManager->getRegisteredEnginesCount());
-    EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
-}
-
 TEST(MemoryManagerRegisteredEnginesTest, givenOsContextWhenItIsUnregisteredFromMemoryManagerThenRefCountDecreases) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto memoryManager = device->getMemoryManager();
@@ -2160,9 +2147,10 @@ TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValu
     memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                       preemptionMode,
                                                                                                       deviceBitfield));
-    EXPECT_EQ(2u, memoryManager->registeredEngines[0].osContext->getNumSupportedDevices());
-    EXPECT_EQ(deviceBitfield, memoryManager->registeredEngines[0].osContext->getDeviceBitfield());
-    EXPECT_EQ(preemptionMode, memoryManager->registeredEngines[0].osContext->getPreemptionMode());
+    auto &engine = memoryManager->getRegisteredEngines(0u)[0];
+    EXPECT_EQ(2u, engine.osContext->getNumSupportedDevices());
+    EXPECT_EQ(deviceBitfield, engine.osContext->getDeviceBitfield());
+    EXPECT_EQ(preemptionMode, engine.osContext->getPreemptionMode());
 }
 
 TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLowerThenProperSizeIsReturned) {
@@ -2177,9 +2165,11 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                        PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-    EXPECT_EQ(2u, memoryManager->getRegisteredEnginesCount());
-    EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
-    EXPECT_EQ(1, memoryManager->registeredEngines[1].osContext->getRefInternalCount());
+    EXPECT_EQ(2u, memoryManager->allRegisteredEngines.size());
+    EXPECT_EQ(1u, memoryManager->allRegisteredEngines[0].size());
+    EXPECT_EQ(1u, memoryManager->allRegisteredEngines[1].size());
+    EXPECT_EQ(1, memoryManager->allRegisteredEngines[0][0].osContext->getRefInternalCount());
+    EXPECT_EQ(1, memoryManager->allRegisteredEngines[1][0].osContext->getRefInternalCount());
 }
 
 TEST(ResidencyDataTest, givenGpgpuEnginesWhenAskedForMaxOsContextCountThenValueIsGreaterOrEqual) {
@@ -2587,8 +2577,8 @@ TEST_F(MemoryAllocatorTest, whenCommandStreamerIsRegisteredThenReturnAssociatedE
 }
 
 TEST_F(MemoryAllocatorTest, whenCommandStreamerIsNotRegisteredThenReturnNullEngineControl) {
-    CommandStreamReceiver *dummyCsr = reinterpret_cast<CommandStreamReceiver *>(0x1);
-    auto engineControl = memoryManager->getRegisteredEngineForCsr(dummyCsr);
+    MockCommandStreamReceiver csr{*executionEnvironment, 0u, {}};
+    auto engineControl = memoryManager->getRegisteredEngineForCsr(&csr);
     EXPECT_EQ(nullptr, engineControl);
 }
 
@@ -2808,8 +2798,8 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     auto mockMngr = new MockGmmPageTableMngr();
     auto mockMngr2 = new MockGmmPageTableMngr();
 
-    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
-    memoryManager->getRegisteredEngines()[1].commandStreamReceiver->pageTableManager.reset(mockMngr2);
+    memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
+    memoryManager->getRegisteredEngines(1)[1].commandStreamReceiver->pageTableManager.reset(mockMngr2);
 
     MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
@@ -2853,7 +2843,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
     auto mockMngr = new MockGmmPageTableMngr();
     mockMngr->updateAuxTableResult = GMM_ERROR;
 
-    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
+    memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
 
     MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
@@ -2885,7 +2875,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThr
     memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(nullptr);
+    memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(nullptr);
 
     MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
@@ -2912,7 +2902,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenRetur
     memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    for (auto engine : memoryManager->getRegisteredEngines()) {
+    for (auto engine : memoryManager->getRegisteredEngines(1)) {
         engine.commandStreamReceiver->pageTableManager.reset(nullptr);
     }
 

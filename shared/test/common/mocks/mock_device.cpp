@@ -89,7 +89,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
 
     registeredEngine.commandStreamReceiver = newCsr;
     allEngines[engineIndex].commandStreamReceiver = newCsr;
-    memoryManager->getRegisteredEngines().emplace_back(registeredEngine);
+    memoryManager->getRegisteredEngines(rootDeviceIndex).emplace_back(registeredEngine);
     osContext->incRefInternal();
     newCsr->setupContext(*osContext);
     osContext->ensureContextInitialized();

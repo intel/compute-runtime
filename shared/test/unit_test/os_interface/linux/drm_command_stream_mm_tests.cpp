@@ -104,8 +104,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndComplet
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
 
-    TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    TestedBufferObject bo(rootDeviceIndex, mock, 128);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 
@@ -138,8 +138,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndNotComp
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
 
-    TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    TestedBufferObject bo(rootDeviceIndex, mock, 128);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 
@@ -173,8 +173,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsCompletionFenceA
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = false;
 
-    TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    TestedBufferObject bo(rootDeviceIndex, mock, 128);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 

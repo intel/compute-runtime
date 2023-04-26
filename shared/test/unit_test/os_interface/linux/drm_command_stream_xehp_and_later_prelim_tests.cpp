@@ -442,15 +442,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenTwoTilesW
     auto csr = createCsr<FamilyType>();
 
     auto size = 1024u;
-    auto multiStorageBo0 = new BufferObject(drm, 3, 30, 0, 1);
-    auto multiStorageBo1 = new BufferObject(drm, 3, 31, 0, 1);
+    auto multiStorageBo0 = new BufferObject(0u, drm, 3, 30, 0, 1);
+    auto multiStorageBo1 = new BufferObject(0u, drm, 3, 31, 0, 1);
     BufferObjects multiStorageBos{multiStorageBo0, multiStorageBo1};
     auto multiStorageAllocation = new DrmAllocation(0, AllocationType::UNKNOWN, multiStorageBos, nullptr, 0u, size, MemoryPool::LocalMemory);
     multiStorageAllocation->storageInfo.memoryBanks = 0b11;
     csr->CommandStreamReceiver::makeResident(*multiStorageAllocation);
 
-    auto tileInstancedBo0 = new BufferObject(drm, 3, 40, 0, 1);
-    auto tileInstancedBo1 = new BufferObject(drm, 3, 41, 0, 1);
+    auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
+    auto tileInstancedBo1 = new BufferObject(0u, drm, 3, 41, 0, 1);
     BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1};
     auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::UNKNOWN, tileInstancedBos, nullptr, 0u, size, MemoryPool::LocalMemory);
     tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
@@ -514,10 +514,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
                                          gemCloseWorkerMode::gemCloseWorkerActive);
     csr->setupContext(*osContext);
 
-    auto tileInstancedBo0 = new BufferObject(drm, 3, 40, 0, 1);
-    auto tileInstancedBo1 = new BufferObject(drm, 3, 41, 0, 1);
-    auto tileInstancedBo2 = new BufferObject(drm, 3, 42, 0, 1);
-    auto tileInstancedBo3 = new BufferObject(drm, 3, 43, 0, 1);
+    auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
+    auto tileInstancedBo1 = new BufferObject(0u, drm, 3, 41, 0, 1);
+    auto tileInstancedBo2 = new BufferObject(0u, drm, 3, 42, 0, 1);
+    auto tileInstancedBo3 = new BufferObject(0u, drm, 3, 43, 0, 1);
     BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1, tileInstancedBo2, tileInstancedBo3};
     auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::UNKNOWN, tileInstancedBos, nullptr, 0u, 1024u, MemoryPool::LocalMemory);
     tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
@@ -557,10 +557,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
                                          gemCloseWorkerMode::gemCloseWorkerActive);
     csr->setupContext(*osContext);
 
-    auto tileInstancedBo0 = new BufferObject(drm, 3, 40, 0, 1);
-    auto tileInstancedBo1 = new BufferObject(drm, 3, 41, 0, 1);
-    auto tileInstancedBo2 = new BufferObject(drm, 3, 42, 0, 1);
-    auto tileInstancedBo3 = new BufferObject(drm, 3, 43, 0, 1);
+    auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
+    auto tileInstancedBo1 = new BufferObject(0u, drm, 3, 41, 0, 1);
+    auto tileInstancedBo2 = new BufferObject(0u, drm, 3, 42, 0, 1);
+    auto tileInstancedBo3 = new BufferObject(0u, drm, 3, 43, 0, 1);
     BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1, tileInstancedBo2, tileInstancedBo3};
     auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::UNKNOWN, tileInstancedBos, nullptr, 0u, 1024u, MemoryPool::LocalMemory);
     tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
@@ -606,7 +606,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
     csr->setupContext(*osContext);
 
     const auto size = 1024u;
-    BufferObject *bufferObject = new BufferObject(drm, 3, 30, 0, 1);
+    BufferObject *bufferObject = new BufferObject(0u, drm, 3, 30, 0, 1);
     BufferObjects bufferObjects{bufferObject};
     auto allocation = new DrmAllocation(0, AllocationType::UNKNOWN, bufferObjects, nullptr, 0u, size, MemoryPool::LocalMemory);
     csr->CommandStreamReceiver::makeResident(*allocation);
@@ -640,7 +640,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
     csr->setupContext(*osContext);
 
     const auto size = 1024u;
-    BufferObject *bufferObject = new BufferObject(drm, 3, 30, 0, 1);
+    BufferObject *bufferObject = new BufferObject(0u, drm, 3, 30, 0, 1);
     BufferObjects bufferObjects{bufferObject};
     auto allocation = new DrmAllocation(0, AllocationType::UNKNOWN, bufferObjects, nullptr, 0u, size, MemoryPool::LocalMemory);
     csr->CommandStreamReceiver::makeResident(*allocation);

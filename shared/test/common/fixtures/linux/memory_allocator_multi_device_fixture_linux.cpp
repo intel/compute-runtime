@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ using namespace NEO;
 
 void MemoryAllocatorMultiDeviceSystemSpecificFixture::setUp(ExecutionEnvironment &executionEnvironment) {
     auto memoryManager = static_cast<TestedDrmMemoryManager *>(executionEnvironment.memoryManager.get());
-    auto bufferObject = new (std::nothrow) BufferObject(&memoryManager->getDrm(0u), 3, 0, 10, MemoryManager::maxOsContextCount);
+    auto bufferObject = new (std::nothrow) BufferObject(0u, &memoryManager->getDrm(0u), 3, 0, 10, MemoryManager::maxOsContextCount);
     memoryManager->pushSharedBufferObject(bufferObject);
 }
 

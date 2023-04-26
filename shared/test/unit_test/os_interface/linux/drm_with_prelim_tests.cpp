@@ -238,8 +238,8 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
     drm->ioctlCallsCount = 0;
     drm->ioctlRetVal = -1;
 
-    MockBufferObject bo(drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
@@ -252,9 +252,9 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
-    MockBufferObject bo(drm.get(), 3, 0, 0, 1);
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
     drm->ioctlCallsCount = 0;
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
@@ -270,8 +270,8 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomic
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     drm->ioctlCallsCount = 0;
-    MockBufferObject bo(drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x1;
     allocation.setNumHandles(1);
@@ -289,8 +289,8 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThenReturnTrue) {
     SubDeviceIdsVec subDeviceIds{0};
-    MockBufferObject bo(drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     drm->ioctlRetVal = 0;
@@ -299,8 +299,8 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThe
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchFailsThenReturnFalse) {
     SubDeviceIdsVec subDeviceIds{0};
-    MockBufferObject bo(drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     drm->ioctlRetVal = EINVAL;

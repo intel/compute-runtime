@@ -82,8 +82,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
 
-    TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    TestedBufferObject bo(0, mock, 128);
+    MockDrmAllocation cmdBuffer(0u, AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 

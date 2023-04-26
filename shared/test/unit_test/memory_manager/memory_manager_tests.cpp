@@ -85,7 +85,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGettingDefaultContextThenCorrectCo
     EXPECT_NE(nullptr, osContext2);
     EXPECT_EQ(osContext1, executionEnvironment.memoryManager->getDefaultEngineContext(0, 1));
     EXPECT_EQ(osContext2, executionEnvironment.memoryManager->getDefaultEngineContext(0, 3));
-    EXPECT_EQ(mockMemoryManager->getRegisteredEngines()[mockMemoryManager->defaultEngineIndex[0]].osContext,
+    EXPECT_EQ(mockMemoryManager->getRegisteredEngines(0)[mockMemoryManager->defaultEngineIndex[0]].osContext,
               executionEnvironment.memoryManager->getDefaultEngineContext(0, 2));
 }
 
@@ -124,8 +124,8 @@ TEST(MemoryManagerTest, givenMultipleDevicesMemoryManagerWhenGettingDefaultConte
 
     EXPECT_EQ(osContext3, executionEnvironment.memoryManager->getDefaultEngineContext(1, 1));
     EXPECT_EQ(osContext4, executionEnvironment.memoryManager->getDefaultEngineContext(1, 3));
-    EXPECT_EQ(mockMemoryManager->getRegisteredEngines()[mockMemoryManager->defaultEngineIndex[1]].osContext,
-              executionEnvironment.memoryManager->getDefaultEngineContext(0, 2));
+    EXPECT_EQ(mockMemoryManager->getRegisteredEngines(1)[mockMemoryManager->defaultEngineIndex[1]].osContext,
+              executionEnvironment.memoryManager->getDefaultEngineContext(1, 2));
 }
 
 TEST(MemoryManagerTest, givenFailureOnRegisterSystemMemoryAllocationWhenAllocatingMemoryThenNullptrIsReturned) {

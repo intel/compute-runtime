@@ -603,7 +603,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     WddmAllocation *input = static_cast<WddmAllocation *>(gfxAllocation);
     DEBUG_BREAK_IF(!validateAllocation(input));
 
-    for (auto &engine : this->registeredEngines) {
+    auto &registeredEngines = getRegisteredEngines(gfxAllocation->getRootDeviceIndex());
+    for (auto &engine : registeredEngines) {
         auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
         auto lock = residencyController.acquireLock();
         residencyController.removeFromTrimCandidateListIfUsed(input, true);
@@ -613,7 +614,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHardwareInfo();
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHelper<ProductHelper>();
     if (gfxAllocation->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*hwInfo)) {
-        for (auto engine : registeredEngines) {
+        for (auto &engine : registeredEngines) {
             if (engine.commandStreamReceiver->pageTableManager.get()) {
                 [[maybe_unused]] auto status = engine.commandStreamReceiver->pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
                 DEBUG_BREAK_IF(!status);
@@ -658,7 +659,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
 void WddmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
     auto wddmAllocation = static_cast<WddmAllocation *>(allocation);
-    for (auto &engine : this->registeredEngines) {
+    for (auto &engine : getRegisteredEngines(allocation->getRootDeviceIndex())) {
         const auto lastFenceValue = wddmAllocation->getResidencyData().getFenceValueForContextId(engine.osContext->getContextId());
         if (lastFenceValue != 0u) {
             const auto &monitoredFence = static_cast<OsContextWin *>(engine.osContext)->getResidencyController().getMonitoredFence();
@@ -679,9 +680,11 @@ bool WddmMemoryManager::tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t
 }
 
 bool WddmMemoryManager::isMemoryBudgetExhausted() const {
-    for (auto &engine : this->registeredEngines) {
-        if (static_cast<OsContextWin *>(engine.osContext)->getResidencyController().isMemoryBudgetExhausted()) {
-            return true;
+    for (auto &engineContainer : allRegisteredEngines) {
+        for (auto &engine : engineContainer.second) {
+            if (static_cast<OsContextWin *>(engine.osContext)->getResidencyController().isMemoryBudgetExhausted()) {
+                return true;
+            }
         }
     }
     return false;

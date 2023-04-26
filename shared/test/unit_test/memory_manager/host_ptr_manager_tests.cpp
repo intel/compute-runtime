@@ -904,7 +904,7 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     TaskCountType taskCountReady = 2;
     TaskCountType taskCountNotReady = 1;
 
-    auto &engines = memoryManager->getRegisteredEngines();
+    auto &engines = memoryManager->getRegisteredEngines(mockRootDeviceIndex);
     EXPECT_EQ(1u, engines.size());
 
     auto csr0 = static_cast<MockCommandStreamReceiver *>(engines[0].commandStreamReceiver);

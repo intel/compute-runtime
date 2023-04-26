@@ -216,14 +216,15 @@ TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenDeletionIsApp
 }
 
 TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByUnregisteredEngineWhenDeletionIsAppliedThenReturnTrue) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
     allocation->updateTaskCount(2u, defaultOsContextId);
     EXPECT_TRUE(allocation->isUsed());
     DeferrableAllocationDeletion deletion{*memoryManager, *allocation};
 
     device.reset();
     executionEnvironment->rootDeviceEnvironments.clear();
-    EXPECT_EQ(0u, memoryManager->registeredEngines.size());
+    EXPECT_EQ(0u, memoryManager->getRegisteredEngines(rootDeviceIndex).size());
     EXPECT_TRUE(allocation->isUsed());
 
     memoryManager->freeGraphicsMemoryCalled = 0u;

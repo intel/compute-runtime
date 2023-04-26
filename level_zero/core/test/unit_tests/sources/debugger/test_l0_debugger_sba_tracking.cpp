@@ -48,7 +48,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextS
     }
     std::vector<NEO::GraphicsAllocation *> allocations;
 
-    auto &allEngines = neoDevice->getMemoryManager()->getRegisteredEngines();
+    auto &allEngines = neoDevice->getMemoryManager()->getRegisteredEngines(neoDevice->getRootDeviceIndex());
 
     for (auto &engine : allEngines) {
         auto sbaAllocation = debugger->getSbaTrackingBuffer(engine.osContext->getContextId());

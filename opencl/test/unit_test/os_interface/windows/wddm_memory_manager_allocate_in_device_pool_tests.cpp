@@ -19,7 +19,7 @@ using namespace NEO;
 using namespace ::testing;
 
 TEST_F(WddmMemoryManagerSimpleTest, givenUseSystemMemorySetToTrueWhenAllocateInDevicePoolIsCalledThenNullptrIsReturned) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
     allocData.size = MemoryConstants::pageSize;
@@ -34,7 +34,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenUseSystemMemorySetToTrueWhenAllocateInD
 TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenLocalMemoryAllocationIsReturned) {
     const bool localMemoryEnabled = true;
 
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -55,10 +55,10 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevice
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
 
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -90,10 +90,10 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
 
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
     AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::SVM_GPU, mockDeviceBitfield};
     properties.allFlags = 0;
     properties.size = MemoryConstants::pageSize;
@@ -118,7 +118,7 @@ struct WddmMemoryManagerDevicePoolAlignmentTests : WddmMemoryManagerSimpleTest {
     void testAlignment(uint32_t allocationSize, uint32_t expectedAlignment) {
         const bool enable64kbPages = false;
         const bool localMemoryEnabled = true;
-        memoryManager = std::make_unique<MockWddmMemoryManager>(enable64kbPages, localMemoryEnabled, *executionEnvironment);
+        memoryManager = std::make_unique<MockWddmMemoryManager>(enable64kbPages, localMemoryEnabled, executionEnvironment);
 
         MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
         AllocationData allocData;
@@ -229,7 +229,7 @@ TEST_F(WddmMemoryManagerDevicePoolAlignmentTests, givenAtLeast2MbAllocationWhenA
 }
 
 HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIsInLocalMemoryHasCpuPointerAndHasStandardHeap64kbAsGpuAddress) {
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::LINEAR_STREAM, mockDeviceBitfield});
 
@@ -243,7 +243,7 @@ HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIs
 
     if (is64bit) {
         auto gmmHelper = memoryManager->getGmmHelper(graphicsAllocation->getRootDeviceIndex());
-        if (executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->isFullRangeSvm()) {
+        if (executionEnvironment.rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->isFullRangeSvm()) {
             EXPECT_GE(gpuAddress, gmmHelper->canonize(partition.Standard64KB.Base));
             EXPECT_LE(gpuAddressEnd, gmmHelper->canonize(partition.Standard64KB.Limit));
         } else {
@@ -251,7 +251,7 @@ HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIs
             EXPECT_LE(gpuAddressEnd, gmmHelper->canonize(partition.Standard.Limit));
         }
     } else {
-        if (executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->isFullRangeSvm()) {
+        if (executionEnvironment.rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->isFullRangeSvm()) {
             EXPECT_GE(gpuAddress, 0ull);
             EXPECT_LE(gpuAddress, UINT32_MAX);
 
@@ -266,8 +266,7 @@ HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIs
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenLocalMemoryAllocationHasCorrectStorageInfoAndFlushL3IsSet) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -290,8 +289,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAlloca
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndUseSytemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -305,8 +303,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndUseSytemMemoryWhen
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndAllowed32BitAndForce32BitWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
     memoryManager->setForce32BitAllocations(true);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
@@ -324,8 +321,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndAllowed32BitAndFor
 TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndAllowed32BitWhen32BitIsNotForcedThenGraphicsAllocationInDevicePoolReturnsLocalMemoryAllocation) {
     const bool localMemoryEnabled = true;
 
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
     memoryManager->setForce32BitAllocations(false);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
@@ -346,8 +342,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndAllowed32BitWhen32
 
 TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocateFailsThenGraphicsAllocationInDevicePoolReturnsError) {
     const bool localMemoryEnabled = true;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
@@ -367,8 +362,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocateFailsThen
 
 TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocateFailsThenGraphicsAllocationInPhysicalLocalDeviceMemoryReturnsError) {
     const bool localMemoryEnabled = true;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
@@ -387,8 +381,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocateFailsThen
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryThenLocalMemoryAllocationHasCorrectStorageInfoAndNoGpuAddress) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -411,8 +404,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryThenLo
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryWithMultiStorageThenLocalMemoryAllocationHasCorrectStorageInfoAndNoGpuAddress) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -436,8 +428,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryWithMu
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryWithMultiBanksThenLocalMemoryAllocationHasCorrectStorageInfoAndNoGpuAddress) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -462,7 +453,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryWithMu
 
 TEST_F(WddmMemoryManagerTest, givenLocalMemoryAllocationWhenCpuPointerNotMeetRestrictionsThenDontReserveMemRangeForMap) {
     const bool localMemoryEnabled = true;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
     void *cpuPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     size_t size = 0x1000;
@@ -483,8 +473,7 @@ TEST_F(WddmMemoryManagerTest, givenLocalMemoryAllocationWhenCpuPointerNotMeetRes
 
 TEST_F(WddmMemoryManagerSimpleTest, whenMemoryIsAllocatedInLocalMemoryThenTheAllocationNeedsMakeResidentBeforeLock) {
     const bool localMemoryEnabled = true;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -503,8 +492,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenMemoryIsAllocatedInLocalMemoryThenTheAll
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithHighPriorityWhenMemoryIsAllocatedInLocalMemoryThenSetAllocationPriorityIsCalledWithHighPriority) {
     const bool localMemoryEnabled = true;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
 
     AllocationType highPriorityTypes[] = {
         AllocationType::KERNEL_ISA,
@@ -536,8 +524,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithHighPriorityWhenMemoryIsA
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithoutHighPriorityWhenMemoryIsAllocatedInLocalMemoryThenSetAllocationPriorityIsCalledWithNormalPriority) {
     const bool localMemoryEnabled = true;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -557,8 +544,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithoutHighPriorityWhenMemory
 
 TEST_F(WddmMemoryManagerSimpleTest, givenSetAllocationPriorityFailureWhenMemoryIsAllocatedInLocalMemoryThenNullptrIsReturned) {
     const bool localMemoryEnabled = true;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -576,8 +562,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSetAllocationPriorityFailureWhenMemoryI
 
 TEST_F(WddmMemoryManagerSimpleTest, givenSetAllocationPriorityFailureWhenMemoryIsAllocatedInLocalPhysicalMemoryThenNullptrIsReturned) {
     const bool localMemoryEnabled = true;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -598,12 +583,7 @@ class WddmMemoryManagerSimpleTestWithLocalMemory : public MockWddmMemoryManagerF
     void SetUp() override {
         HardwareInfo localPlatformDevice = *defaultHwInfo;
         localPlatformDevice.featureTable.flags.ftrLocalMemory = true;
-
-        platformsImpl->clear();
-        auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localPlatformDevice);
-        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+        executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localPlatformDevice);
 
         MockWddmMemoryManagerFixture::SetUp();
         wddm->init();
@@ -616,7 +596,7 @@ class WddmMemoryManagerSimpleTestWithLocalMemory : public MockWddmMemoryManagerF
 };
 
 TEST_F(WddmMemoryManagerSimpleTestWithLocalMemory, givenLocalMemoryAndImageOrSharedResourceWhenAllocateInDevicePoolIsCalledThenLocalMemoryAllocationAndAndStatusSuccessIsReturned) {
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
 
     ImageDescriptor imgDesc = {};
@@ -660,7 +640,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmGpuAllocationWhenHostPtrProvidedThen
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(nullptr, allocation->getDriverAllocatedCpuPtr());
     // limited platforms will not use heap HeapIndex::HEAP_SVM
-    if (executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm()) {
+    if (executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
         EXPECT_EQ(svmPtr, reinterpret_cast<void *>(allocation->getGpuAddress()));
     }
     EXPECT_EQ(nullptr, allocation->getReservedAddressPtr());
@@ -767,7 +747,7 @@ struct WddmMemoryManagerSimple64BitTest : public WddmMemoryManagerSimpleTest {
             wddm->mapGpuVaStatus = true;
             VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
 
-            memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+            memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
             AllocationData allocData;
             allocData.allFlags = 0;
             allocData.size = static_cast<size_t>(MemoryConstants::gigaByte * 13);

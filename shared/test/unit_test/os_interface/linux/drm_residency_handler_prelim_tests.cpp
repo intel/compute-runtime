@@ -93,7 +93,7 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
         operationHandler = static_cast<MockDrmMemoryOperationsHandlerBind *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
         memoryManagerBackup = executionEnvironment->memoryManager.release();
         executionEnvironment->memoryManager.reset(memoryManager.get());
-        memoryManager->registeredEngines = memoryManagerBackup->getRegisteredEngines();
+        memoryManager->allRegisteredEngines = memoryManagerBackup->getRegisteredEngines();
     }
     void SetUp() override {
         setUp(false);
@@ -102,7 +102,9 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
     void TearDown() override {
         executionEnvironment->memoryManager.release();
         executionEnvironment->memoryManager.reset(memoryManagerBackup);
-        memoryManager->getRegisteredEngines().clear();
+        for (auto &engineContainer : memoryManager->allRegisteredEngines) {
+            engineContainer.second.clear();
+        }
     }
 
   protected:
@@ -123,7 +125,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
         using OsContextLinux::lastFlushedTlbFlushCounter;
     };
 
-    BufferObject mockBo(mock, 3, 1, 0, 1);
+    BufferObject mockBo(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
     mock->setNewResourceBoundToVM(&mockBo, 1u);
 
     for (const auto &engine : device->getAllEngines()) {
@@ -142,7 +144,8 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
     }
 
     auto mock2 = executionEnvironment->rootDeviceEnvironments[1u]->osInterface->getDriverModel()->as<DrmQueryMock>();
-    mock2->setNewResourceBoundToVM(&mockBo, 0u);
+    BufferObject mockBo2(devices[1]->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    mock2->setNewResourceBoundToVM(&mockBo2, 0u);
 
     for (const auto &engine : devices[1]->getAllEngines()) {
         auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
@@ -218,7 +221,7 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
         operationHandler = static_cast<MockDrmMemoryOperationsHandlerBind *>(executionEnvironment->rootDeviceEnvironments[1]->memoryOperationsInterface.get());
         memoryManagerBackup = executionEnvironment->memoryManager.release();
         executionEnvironment->memoryManager.reset(memoryManager.get());
-        memoryManager->registeredEngines = memoryManagerBackup->getRegisteredEngines();
+        memoryManager->allRegisteredEngines = memoryManagerBackup->getRegisteredEngines();
     }
     void SetUp() override {
         setUp(false);
@@ -227,7 +230,9 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
     void TearDown() override {
         executionEnvironment->memoryManager.release();
         executionEnvironment->memoryManager.reset(memoryManagerBackup);
-        memoryManager->getRegisteredEngines().clear();
+        for (auto &engineContainer : memoryManager->allRegisteredEngines) {
+            engineContainer.second.clear();
+        }
     }
 
   protected:
@@ -537,7 +542,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeBOsResidentFailsThenMakeResi
 
     auto size = 1024u;
     BufferObjects bos;
-    BufferObject mockBo(mock, 3, 1, 0, 1);
+    BufferObject mockBo(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
     bos.push_back(&mockBo);
 
     auto allocation = new MockDrmAllocationBOsResident(0, AllocationType::UNKNOWN, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
@@ -682,8 +687,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
-    BufferObject pinBB(mock, 3, 1, 0, 1);
-    BufferObject boToPin(mock, 3, 2, 0, 1);
+    BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    BufferObject boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -696,8 +701,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
-    BufferObject pinBB(mock, 3, 1, 0, 1);
-    BufferObject boToPin(mock, 3, 2, 0, 1);
+    BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    BufferObject boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -710,8 +715,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
-    BufferObject pinBB(mock, 3, 1, 0, 1);
-    BufferObject boToPin(mock, 3, 2, 0, 1);
+    BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    BufferObject boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
     uint32_t vmHandleId = 1u;
 
@@ -727,9 +732,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     mock->bindAvailable = true;
     mock->context.vmBindReturn = -1;
 
-    BufferObject pinBB(mock, 3, 1, 0, 1);
-    BufferObject boToPin(mock, 3, 2, 0, 1);
-    BufferObject boToPin2(mock, 3, 3, 0, 1);
+    BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    BufferObject boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
+    BufferObject boToPin2(device->getRootDeviceIndex(), mock, 3, 3, 0, 1);
     BufferObject *boToPinPtr[] = {&boToPin, &boToPin2};
 
     auto ret = pinBB.validateHostPtr(boToPinPtr, 2u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -763,10 +768,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleSub
     uint32_t vmIdForContext0 = 0;
     uint32_t vmIdForContext1 = 0;
 
-    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
-    memoryManager->registeredEngines.insert(memoryManager->registeredEngines.end(), this->device->getSubDevice(0)->getAllEngines().begin(), this->device->getSubDevice(0)->getAllEngines().end());
-    memoryManager->registeredEngines.insert(memoryManager->registeredEngines.end(), this->device->getSubDevice(1)->getAllEngines().begin(), this->device->getSubDevice(1)->getAllEngines().end());
-    for (auto engine : memoryManager->registeredEngines) {
+    auto &engines = memoryManager->allRegisteredEngines[this->device->getRootDeviceIndex()];
+    engines = EngineControlContainer{this->device->allEngines};
+    engines.insert(engines.end(), this->device->getSubDevice(0)->getAllEngines().begin(), this->device->getSubDevice(0)->getAllEngines().end());
+    engines.insert(engines.end(), this->device->getSubDevice(1)->getAllEngines().begin(), this->device->getSubDevice(1)->getAllEngines().end());
+    for (auto &engine : engines) {
         engine.osContext->incRefInternal();
         if (engine.osContext->isDefaultContext()) {
 
@@ -844,17 +850,17 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
     uint32_t vmIdForDevice0 = 0;
     uint32_t vmIdForDevice0Subdevice0 = 0;
     uint32_t vmIdForDevice1 = 0;
+    uint32_t vmIdForDevice1Subdevice0 = 0;
 
-    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
-    memoryManager->registeredEngines.insert(memoryManager->registeredEngines.end(), this->device->getSubDevice(0)->getAllEngines().begin(), this->device->getSubDevice(0)->getAllEngines().end());
-    memoryManager->registeredEngines.insert(memoryManager->registeredEngines.end(), device1->getAllEngines().begin(), device1->getAllEngines().end());
+    {
 
-    for (auto engine : memoryManager->registeredEngines) {
-        engine.osContext->incRefInternal();
-        if (engine.osContext->isDefaultContext()) {
-
-            if (engine.osContext->getRootDeviceIndex() == 0) {
-
+        auto &engines = memoryManager->allRegisteredEngines[this->device->getRootDeviceIndex()];
+        engines = EngineControlContainer{this->device->allEngines};
+        engines.insert(engines.end(), this->device->getSubDevice(0)->getAllEngines().begin(), this->device->getSubDevice(0)->getAllEngines().end());
+        engines.insert(engines.end(), this->device->getSubDevice(1)->getAllEngines().begin(), this->device->getSubDevice(1)->getAllEngines().end());
+        for (auto &engine : engines) {
+            engine.osContext->incRefInternal();
+            if (engine.osContext->isDefaultContext()) {
                 if (engine.osContext->getDeviceBitfield().to_ulong() == 3) {
                     auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
                     vmIdForDevice0 = osContexLinux->getDrmVmIds()[0];
@@ -862,18 +868,34 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
                     auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
                     vmIdForDevice0Subdevice0 = osContexLinux->getDrmVmIds()[0];
                 }
-            } else {
-                if (engine.osContext->getDeviceBitfield().to_ulong() == 3) {
-                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-                    vmIdForDevice1 = osContexLinux->getDrmVmIds()[0];
-                }
             }
         }
     }
 
+    {
+        auto &engines = memoryManager->allRegisteredEngines[device1->getRootDeviceIndex()];
+        engines = EngineControlContainer{this->device->allEngines};
+        engines.insert(engines.end(), device1->getSubDevice(0)->getAllEngines().begin(), device1->getSubDevice(0)->getAllEngines().end());
+        engines.insert(engines.end(), device1->getSubDevice(1)->getAllEngines().begin(), device1->getSubDevice(1)->getAllEngines().end());
+        for (auto &engine : engines) {
+            engine.osContext->incRefInternal();
+            if (engine.osContext->isDefaultContext()) {
+
+                if (engine.osContext->getDeviceBitfield().to_ulong() == 3) {
+                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
+                    vmIdForDevice1 = osContexLinux->getDrmVmIds()[0];
+
+                } else if (engine.osContext->getDeviceBitfield().to_ulong() == 1) {
+                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
+                    vmIdForDevice1Subdevice0 = osContexLinux->getDrmVmIds()[0];
+                }
+            }
+        }
+    }
     EXPECT_NE(0u, vmIdForDevice0);
     EXPECT_NE(0u, vmIdForDevice0Subdevice0);
     EXPECT_NE(0u, vmIdForDevice1);
+    EXPECT_NE(0u, vmIdForDevice1Subdevice0);
 
     AllocationData allocationData;
     allocationData.size = 13u;
@@ -905,7 +927,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
     EXPECT_EQ(vmBindCalledBefore + 1, mock1->context.vmBindCalled);
 
     EXPECT_FALSE(mock->context.receivedVmBind.has_value());
-    EXPECT_EQ(vmIdForDevice1, mock1->context.receivedVmBind->vmId);
+    EXPECT_EQ(vmIdForDevice1Subdevice0, mock1->context.receivedVmBind->vmId);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenVmBindIsCalledInsteadOfExec) {
@@ -913,8 +935,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenV
     mock->bindAvailable = true;
     device->getDefaultEngine().osContext->setDirectSubmissionActive();
 
-    BufferObject pinBB(mock, 3, 1, 0, 1);
-    BufferObject boToPin(mock, 3, 2, 0, 1);
+    BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    BufferObject boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -928,8 +950,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionAndValidateHos
     mock->bindAvailable = true;
     device->getDefaultEngine().osContext->setDirectSubmissionActive();
 
-    BufferObject pinBB(mock, 3, 1, 0, 1);
-    BufferObject boToPin(mock, 3, 2, 0, 1);
+    BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    BufferObject boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -946,8 +968,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOThenAllo
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
-    BufferObject pinBB(mock, 3, 1, 0, 1);
-    MockBO boToPin(mock, 3, 2, 0, 1);
+    BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    MockBO boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     auto ret = pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -965,8 +987,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOAndVmBin
     mock->bindAvailable = true;
     mock->context.vmBindReturn = -1;
 
-    BufferObject pinBB(mock, 3, 1, 0, 1);
-    MockBO boToPin(mock, 3, 2, 0, 1);
+    BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
+    MockBO boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     auto ret = pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -1011,7 +1033,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 
     uint64_t gpuAddress = 0x123000;
     size_t size = 1;
-    BufferObject bo(mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
+    BufferObject bo(0, mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
     DrmAllocation allocation(0, 1, AllocationType::BUFFER, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
 
     auto allocationPtr = static_cast<GraphicsAllocation *>(&allocation);
@@ -1074,7 +1096,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
 
     uint64_t gpuAddress = 0x123000;
     size_t size = 1;
-    BufferObject bo(mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
+    BufferObject bo(0, mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
     DrmAllocation allocation(0, 1, AllocationType::BUFFER, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
 
     EXPECT_ANY_THROW(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false));

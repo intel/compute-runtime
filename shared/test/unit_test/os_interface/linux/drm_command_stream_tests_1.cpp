@@ -1066,9 +1066,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrint
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintBOsForSubmit.set(true);
 
-    MockDrmAllocation allocation1(AllocationType::BUFFER, MemoryPool::System4KBPages);
-    MockDrmAllocation allocation2(AllocationType::BUFFER, MemoryPool::System4KBPages);
-    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation1(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
 
     csr->makeResident(allocation1);
     csr->makeResident(allocation2);
@@ -1102,9 +1102,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailur
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintBOsForSubmit.set(true);
 
-    MockDrmAllocation allocation1(AllocationType::BUFFER, MemoryPool::System4KBPages);
-    MockDrmAllocation allocation2(AllocationType::BUFFER, MemoryPool::System4KBPages);
-    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation1(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
 
     cmdBuffer.makeBOsResidentResult = ENOSPC;
 
@@ -1127,9 +1127,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailur
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintBOsForSubmit.set(true);
 
-    MockDrmAllocation allocation1(AllocationType::BUFFER, MemoryPool::System4KBPages);
-    MockDrmAllocation allocation2(AllocationType::BUFFER, MemoryPool::System4KBPages);
-    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation1(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
 
     allocation1.makeBOsResidentResult = ENOSPC;
 

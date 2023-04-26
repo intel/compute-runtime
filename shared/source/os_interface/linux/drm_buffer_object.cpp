@@ -77,11 +77,11 @@ bool BufferObjectHandleWrapper::canCloseBoHandle() {
     return controlBlock->refCount == 1;
 }
 
-BufferObject::BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount)
-    : BufferObject(drm, patIndex, BufferObjectHandleWrapper{handle}, size, maxOsContextCount) {}
+BufferObject::BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount)
+    : BufferObject(rootDeviceIndex, drm, patIndex, BufferObjectHandleWrapper{handle}, size, maxOsContextCount) {}
 
-BufferObject::BufferObject(Drm *drm, uint64_t patIndex, BufferObjectHandleWrapper &&handle, size_t size, size_t maxOsContextCount)
-    : drm(drm), refCount(1), handle(std::move(handle)), size(size) {
+BufferObject::BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex, BufferObjectHandleWrapper &&handle, size_t size, size_t maxOsContextCount)
+    : drm(drm), refCount(1), rootDeviceIndex(rootDeviceIndex), handle(std::move(handle)), size(size) {
 
     auto ioctlHelper = drm->getIoctlHelper();
     this->tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);

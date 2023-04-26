@@ -216,7 +216,7 @@ HWTEST_F(DeviceTest, givenDeviceWithoutSubDevicesWhenCreatingContextsThenMemoryM
     auto rootDeviceIndex = device.getRootDeviceIndex();
     MockMemoryManager *memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
 
-    OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex[rootDeviceIndex]].osContext;
+    OsContext *defaultOsContextMemoryManager = memoryManager->getRegisteredEngines(rootDeviceIndex)[memoryManager->defaultEngineIndex[rootDeviceIndex]].osContext;
     OsContext *defaultOsContextRootDevice = device.getDefaultEngine().osContext;
     EXPECT_EQ(defaultOsContextRootDevice, defaultOsContextMemoryManager);
 }
@@ -227,7 +227,7 @@ HWTEST_F(DeviceTest, givenDeviceWithSubDevicesWhenCreatingContextsThenMemoryMana
     auto rootDeviceIndex = device.getRootDeviceIndex();
     MockMemoryManager *memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
 
-    OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex[rootDeviceIndex]].osContext;
+    OsContext *defaultOsContextMemoryManager = memoryManager->getRegisteredEngines(rootDeviceIndex)[memoryManager->defaultEngineIndex[rootDeviceIndex]].osContext;
     OsContext *defaultOsContextRootDevice = device.getDefaultEngine().osContext;
     EXPECT_EQ(defaultOsContextRootDevice, defaultOsContextMemoryManager);
 }
@@ -238,7 +238,8 @@ HWTEST_F(DeviceTest, givenMultiDeviceWhenCreatingContextsThenMemoryManagerDefaul
     MockMemoryManager *memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
 
     for (auto &pRootDevice : factory.rootDevices) {
-        OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex[pRootDevice->getRootDeviceIndex()]].osContext;
+        auto rootDeviceIndex = pRootDevice->getRootDeviceIndex();
+        OsContext *defaultOsContextMemoryManager = memoryManager->getRegisteredEngines(rootDeviceIndex)[memoryManager->defaultEngineIndex[rootDeviceIndex]].osContext;
         OsContext *defaultOsContextRootDevice = pRootDevice->getDefaultEngine().osContext;
         EXPECT_EQ(defaultOsContextRootDevice, defaultOsContextMemoryManager);
     }
@@ -283,7 +284,7 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
     } else if (device->getNumSubDevices() > 0) {
         numEnginesForDevice += device->getNumSubDevices();
     }
-    EXPECT_EQ(numEnginesForDevice, memoryManager->getRegisteredEnginesCount());
+    EXPECT_EQ(numEnginesForDevice, memoryManager->getRegisteredEngines(device->getRootDeviceIndex()).size());
 }
 
 TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
@@ -301,7 +302,6 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
 
     MockDevice *devices[] = {device1.get(), device2.get()};
 
-    auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines();
     auto &gfxCoreHelper = device1->getGfxCoreHelper();
     const auto &numGpgpuEngines = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(device1->getRootDeviceEnvironment()).size());
 
@@ -311,13 +311,14 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
         numExpectedEngineInstancedEnginesPerDevice = device1->getNumSubDevices();
     }
 
-    auto expectedTotalRegisteredEngines = (numExpectedGenericEnginesPerDevice + numExpectedEngineInstancedEnginesPerDevice) * numDevices;
-
-    EXPECT_EQ(expectedTotalRegisteredEngines, registeredEngines.size());
+    auto expectedTotalRegisteredEnginesPerRootDevice = numExpectedGenericEnginesPerDevice + numExpectedEngineInstancedEnginesPerDevice;
 
     uint32_t contextId = 0;
-
     for (uint32_t i = 0; i < numDevices; i++) {
+        uint32_t contextWithinRootDevice = 0;
+        auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines(i);
+
+        EXPECT_EQ(expectedTotalRegisteredEnginesPerRootDevice, registeredEngines.size());
         auto device = devices[i];
 
         for (uint32_t j = 0; j < numExpectedEngineInstancedEnginesPerDevice; j++) {
@@ -326,10 +327,11 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
             EXPECT_EQ(contextId, engine.osContext->getContextId());
             EXPECT_EQ(1u, engine.osContext->getDeviceBitfield().to_ulong());
 
-            EXPECT_EQ(registeredEngines[contextId].commandStreamReceiver,
+            EXPECT_EQ(registeredEngines[contextWithinRootDevice].commandStreamReceiver,
                       engine.commandStreamReceiver);
 
             contextId++;
+            contextWithinRootDevice++;
         }
 
         for (uint32_t j = 0; j < numExpectedGenericEnginesPerDevice; j++) {
@@ -338,14 +340,13 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
             EXPECT_EQ(contextId, engine.osContext->getContextId());
             EXPECT_EQ(1u, engine.osContext->getDeviceBitfield().to_ulong());
 
-            EXPECT_EQ(registeredEngines[contextId].commandStreamReceiver,
+            EXPECT_EQ(registeredEngines[contextWithinRootDevice].commandStreamReceiver,
                       engine.commandStreamReceiver);
 
             contextId++;
+            contextWithinRootDevice++;
         }
     }
-
-    EXPECT_EQ(expectedTotalRegisteredEngines, executionEnvironment->memoryManager->getRegisteredEnginesCount());
 }
 
 TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {

@@ -24,10 +24,10 @@ class TestedBufferObject : public BufferObject {
     using BufferObject::handle;
     using BufferObject::tilingMode;
 
-    TestedBufferObject(Drm *drm) : BufferObject(drm, 3, 1, 0, 1) {
+    TestedBufferObject(uint32_t rootDeviceIndex, Drm *drm) : TestedBufferObject(rootDeviceIndex, drm, 0) {
     }
 
-    TestedBufferObject(Drm *drm, size_t size) : BufferObject(drm, 3, 1, size, 1) {
+    TestedBufferObject(uint32_t rootDeviceIndex, Drm *drm, size_t size) : BufferObject(rootDeviceIndex, drm, 3, 1, size, 1) {
     }
 
     void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) override {
@@ -73,6 +73,7 @@ class DrmBufferObjectFixture {
     TestedBufferObject *bo = nullptr;
     ExecObject execObjectsStorage[256]{};
     std::unique_ptr<OsContextLinux> osContext;
+    const uint32_t rootDeviceIndex = 0u;
 
     void setUp() {
         this->mock = std::make_unique<DrmClass>(*executionEnvironment.rootDeviceEnvironments[0]);
@@ -80,7 +81,7 @@ class DrmBufferObjectFixture {
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
         osContext.reset(new OsContextLinux(*this->mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
         this->mock->reset();
-        bo = new TestedBufferObject(this->mock.get());
+        bo = new TestedBufferObject(0, this->mock.get());
         ASSERT_NE(nullptr, bo);
     }
 

@@ -38,7 +38,7 @@ class MockBufferObject : public BufferObject {
 
     std::optional<int> execReturnValue;
     std::vector<ExecParams> passedExecParams{};
-    MockBufferObject(Drm *drm) : BufferObject(drm, CommonConstants::unsupportedPatIndex, 0, 0, 1) {
+    MockBufferObject(uint32_t rootDeviceIndex, Drm *drm) : BufferObject(rootDeviceIndex, drm, CommonConstants::unsupportedPatIndex, 0, 0, 1) {
     }
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
              BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue) override {
@@ -58,8 +58,8 @@ class MockDrmAllocation : public DrmAllocation {
     using DrmAllocation::memoryPool;
     using DrmAllocation::registeredBoBindHandles;
 
-    MockDrmAllocation(AllocationType allocationType, MemoryPool pool)
-        : DrmAllocation(0, allocationType, nullptr, nullptr, 0, static_cast<size_t>(0), pool) {
+    MockDrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, MemoryPool pool)
+        : DrmAllocation(rootDeviceIndex, allocationType, nullptr, nullptr, 0, static_cast<size_t>(0), pool) {
     }
 
     MockDrmAllocation(AllocationType allocationType, MemoryPool pool, BufferObjects &bos)

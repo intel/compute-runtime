@@ -432,7 +432,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenSubmittingThe
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
-    MockBufferObject mockBO(drm);
+    MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
     for (auto i = 0; i < 2; i++) {
@@ -459,7 +459,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportAndExecFailureWhe
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
-    MockBufferObject mockBO(drm);
+    MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
     mockBO.execReturnValue = ENXIO;
@@ -484,7 +484,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndExecFailureWhenS
     auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
-    MockBufferObject mockBO(drm);
+    MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
     mockBO.execReturnValue = 1;
@@ -518,7 +518,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
     auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
-    MockBufferObject mockBO(drm);
+    MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
     for (auto i = 0u; i < 2; i++) {
@@ -557,7 +557,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
     auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
-    MockBufferObject mockBO(drm);
+    MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
     for (auto i = 0u; i < 2; i++) {
@@ -602,7 +602,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
     auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
-    MockBufferObject mockBO(drm);
+    MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
     for (auto i = 0u; i < 2; i++) {

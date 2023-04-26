@@ -45,7 +45,7 @@ struct L0DebuggerLinuxFixture {
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
 
-        neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+        neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, rootDeviceIndex);
 
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
@@ -61,7 +61,7 @@ struct L0DebuggerLinuxFixture {
         device = nullptr;
         neoDevice = nullptr;
     };
-
+    const uint32_t rootDeviceIndex = 0u;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -180,8 +180,8 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledThenItRe
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    MockBufferObject bo(drmMock, 3, 0, 0, 1);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
     device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
 
@@ -200,7 +200,7 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledInAlloca
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
     device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
 
     EXPECT_EQ(static_cast<size_t>(10u), drmMock->registeredDataSize);
@@ -210,8 +210,8 @@ HWTEST_F(L0DebuggerLinuxTest, givenFailureToRegisterElfWhenRegisterElfAndLinkWit
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    MockBufferObject bo(drmMock, 3, 0, 0, 1);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
 
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
@@ -228,12 +228,12 @@ HWTEST_F(L0DebuggerLinuxTest, givenFailureToRegisterElfWhenRegisterElfAndLinkWit
 }
 
 TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAllocationsHaveRegisteredHandles) {
-    MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    MockBufferObject bo(drmMock, 3, 0, 0, 1);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
 
-    MockDrmAllocation isaAllocation2(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    MockBufferObject bo2(drmMock, 3, 0, 0, 1);
+    MockDrmAllocation isaAllocation2(rootDeviceIndex, AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockBufferObject bo2(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation2.bufferObjects[0] = &bo2;
 
     uint32_t handle = 0;

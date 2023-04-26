@@ -57,6 +57,7 @@ class DrmGemCloseWorkerFixture {
     DrmMemoryManager *mm;
     DrmMockForWorker *drmMock;
     uint32_t deadCnt = deadCntInit;
+    const uint32_t rootDeviceIndex = 0u;
 
     void setUp() {
         this->drmMock = new DrmMockForWorker(*executionEnvironment.rootDeviceEnvironments[0]);
@@ -64,9 +65,9 @@ class DrmGemCloseWorkerFixture {
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
         drmMock->setupIoctlHelper(hwInfo->platform.eProductFamily);
 
-        executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
-        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drmMock, 0u);
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drmMock, 0u);
 
         this->mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
                                         false,
@@ -101,7 +102,7 @@ TEST_F(DrmGemCloseWorkerTests, WhenClosingGemThenSucceeds) {
     this->drmMock->gemCloseExpected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObject(this->drmMock, 3, 1, 0, 1);
+    auto bo = new BufferObject(rootDeviceIndex, this->drmMock, 3, 1, 0, 1);
 
     worker->push(bo);
 
@@ -112,7 +113,7 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsWhenClosingGemThenSucceeds) {
     this->drmMock->gemCloseExpected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObject(this->drmMock, 3, 1, 0, 1);
+    auto bo = new BufferObject(rootDeviceIndex, this->drmMock, 3, 1, 0, 1);
 
     worker->push(bo);
 
@@ -132,7 +133,7 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsAndCloseFalseWhenClosingGemTh
     this->drmMock->gemCloseExpected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObject(this->drmMock, 3, 1, 0, 1);
+    auto bo = new BufferObject(rootDeviceIndex, this->drmMock, 3, 1, 0, 1);
 
     worker->push(bo);
     worker->close(false);
@@ -150,7 +151,7 @@ TEST_F(DrmGemCloseWorkerTests, givenAllocationWhenAskedForUnreferenceWithForceFl
     this->drmMock->gemCloseExpected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObject(this->drmMock, 3, 1, 0, 1);
+    auto bo = new BufferObject(rootDeviceIndex, this->drmMock, 3, 1, 0, 1);
 
     bo->reference();
     worker->push(bo);

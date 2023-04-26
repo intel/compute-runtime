@@ -82,8 +82,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenExecBufferErrorWhenFlushInternalTh
     mock->execBufferResult = -1;
     mock->baseErrno = false;
     mock->errnoRetVal = EWOULDBLOCK;
-    TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    auto rootDeviceIndex = csr->getRootDeviceIndex();
+    TestedBufferObject bo(rootDeviceIndex, mock, 128);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128]{};
 

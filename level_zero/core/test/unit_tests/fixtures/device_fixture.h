@@ -44,6 +44,7 @@ struct DeviceFixture {
     MockBuiltins *mockBuiltIns = nullptr;
     NEO::ExecutionEnvironment *execEnv = nullptr;
 
+    const uint32_t rootDeviceIndex = 0u;
     template <typename HelperType>
     HelperType &getHelper() const;
 };

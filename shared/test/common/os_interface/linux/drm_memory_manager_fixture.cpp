@@ -74,7 +74,11 @@ void DrmMemoryManagerFixture::tearDown() {
     mock->testIoctls();
     mock->reset();
 
-    int enginesCount = static_cast<int>(device->getMemoryManager()->getRegisteredEnginesCount());
+    int enginesCount = 0;
+
+    for (auto &engineContainer : memoryManager->getRegisteredEngines()) {
+        enginesCount += engineContainer.second.size();
+    }
 
     mock->ioctlExpected.contextDestroy = enginesCount;
     mock->ioctlExpected.gemClose = enginesCount;

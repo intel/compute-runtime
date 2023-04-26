@@ -27,13 +27,13 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::System64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
     allocation.setCpuPtrAndGpuAddress(&allocation, canonizedGpuAddress);
 
-    MockBufferObject bo(&drm);
+    MockBufferObject bo(0u, &drm);
     bo.handle.setBoHandle(4);
 
     allocation.bufferObjects[0] = &bo;
@@ -78,13 +78,13 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::System64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
     allocation.setCpuPtrAndGpuAddress(&allocation, canonizedGpuAddress);
 
-    MockBufferObject bo(&drm);
+    MockBufferObject bo(0u, &drm);
     bo.handle.setBoHandle(4);
 
     allocation.bufferObjects[0] = &bo;
@@ -128,7 +128,7 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     fileLogger.logAllocation(&allocation);
 
@@ -159,7 +159,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     fileLogger.logAllocation(&allocation);
 

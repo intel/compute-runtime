@@ -364,11 +364,11 @@ TEST(DrmQueryTest, givenUseKmdMigrationWhenShouldAllocationFaultIsCalledOnFaulta
         AllocationType::UNIFIED_SHARED_MEMORY};
 
     for (auto allocationType : allocationTypesThatShouldFault) {
-        MockDrmAllocation allocation(allocationType, MemoryPool::MemoryNull);
+        MockDrmAllocation allocation(0u, allocationType, MemoryPool::MemoryNull);
         EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
     }
 
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::MemoryNull);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::MemoryNull);
     EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
 }
 
@@ -388,7 +388,7 @@ TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledOnNonFault
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.pageFaultSupported = false;
 
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::MemoryNull);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::MemoryNull);
     EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
 }
 
@@ -400,6 +400,6 @@ TEST(DrmQueryTest, givenEnableImplicitMigrationOnFaultableHardwareWhenShouldAllo
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.pageFaultSupported = true;
 
-    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::MemoryNull);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::MemoryNull);
     EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
 }

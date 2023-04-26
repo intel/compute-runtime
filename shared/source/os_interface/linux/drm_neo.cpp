@@ -666,14 +666,11 @@ void Drm::setNewResourceBoundToVM(BufferObject *bo, uint32_t vmHandleId) {
     if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired() && isAligned(bo->peekAddress(), MemoryConstants::pageSize2Mb)) {
         return;
     }
-    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
+    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(bo->getRootDeviceIndex());
     for (const auto &engine : engines) {
         if (engine.osContext->getDeviceBitfield().test(vmHandleId)) {
             auto osContextLinux = static_cast<OsContextLinux *>(engine.osContext);
-
-            if (&osContextLinux->getDrm() == this) {
-                osContextLinux->setNewResourceBound();
-            }
+            osContextLinux->setNewResourceBound();
         }
     }
 }

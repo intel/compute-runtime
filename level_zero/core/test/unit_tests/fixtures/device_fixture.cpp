@@ -30,7 +30,7 @@ void DeviceFixture::setUp() {
 }
 void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment) {
     execEnv = &executionEnvironment;
-    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), &executionEnvironment, 0u);
+    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), &executionEnvironment, rootDeviceIndex);
     mockBuiltIns = new MockBuiltins();
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     NEO::DeviceVector devices;

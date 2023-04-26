@@ -103,28 +103,8 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
                                                                           MemoryPool::System4KBPages,
                                                                           canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
-        alloc->bufferObjects[1] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
-
-    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        size_t size = 0x1000;
-        auto alloc = new IpcImplicitScalingObtainFdMockGraphicsAllocation(0u,
-                                                                          NEO::AllocationType::BUFFER,
-                                                                          nullptr,
-                                                                          ptr,
-                                                                          size,
-                                                                          0u,
-                                                                          MemoryPool::System4KBPages,
-                                                                          canonizedGpuAddress);
-        auto &drm = this->getDrm(0u);
-        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
-        alloc->bufferObjects[1] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
+        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
+        alloc->bufferObjects[1] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -150,8 +130,8 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
                                                                           MemoryPool::System4KBPages,
                                                                           canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
-        alloc->bufferObjects[1] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
+        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
+        alloc->bufferObjects[1] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -531,27 +511,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
                                                            MemoryPool::System4KBPages,
                                                            canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        MockBufferObject bo0(&drm);
-        alloc->bufferObjects[0] = &bo0;
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
-
-    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        size_t size = 0x1000;
-        auto alloc = new IpcObtainFdMockGraphicsAllocation(0u,
-                                                           NEO::AllocationType::BUFFER,
-                                                           nullptr,
-                                                           ptr,
-                                                           size,
-                                                           0u,
-                                                           MemoryPool::System4KBPages,
-                                                           canonizedGpuAddress);
-        auto &drm = this->getDrm(0u);
-        MockBufferObject bo0(&drm);
+        MockBufferObject bo0(properties.rootDeviceIndex, &drm);
         alloc->bufferObjects[0] = &bo0;
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
@@ -578,7 +538,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
                                                            MemoryPool::System4KBPages,
                                                            canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        MockBufferObject bo0(&drm);
+        MockBufferObject bo0(properties.rootDeviceIndex, &drm);
         alloc->bufferObjects[0] = &bo0;
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;

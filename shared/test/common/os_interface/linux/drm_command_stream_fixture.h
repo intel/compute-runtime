@@ -171,13 +171,13 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         friend DrmCommandStreamEnhancedTemplate<DrmType>;
 
       protected:
-        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, CommonConstants::unsupportedPatIndex, 1, 0, 16u) {
+        MockBufferObject(uint32_t rootDeviceIndex, Drm *drm, size_t size) : BufferObject(rootDeviceIndex, drm, CommonConstants::unsupportedPatIndex, 1, 0, 16u) {
             this->size = alignUp(size, 4096);
         }
     };
 
     MockBufferObject *createBO(size_t size) {
-        return new MockBufferObject(this->mock, size);
+        return new MockBufferObject(0, this->mock, size);
     }
 };
 
@@ -244,20 +244,6 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
     template <typename GfxFamily>
     const std::vector<BufferObject *> &getResidencyVector() const {
         return static_cast<const TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency;
-    }
-
-  protected:
-    class MockBufferObject : public BufferObject {
-        friend DrmCommandStreamEnhancedTemplate<T>;
-
-      protected:
-        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, CommonConstants::unsupportedPatIndex, 1, 0, 16u) {
-            this->size = alignUp(size, 4096);
-        }
-    };
-
-    MockBufferObject *createBO(size_t size) {
-        return new MockBufferObject(this->mock, size);
     }
 };
 
