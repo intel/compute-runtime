@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/string.h"
 
+#include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <cstring>
@@ -29,7 +30,7 @@ ze_result_t RasImp::rasSetConfig(const zes_ras_config_t *pConfig) {
 }
 
 ze_result_t RasImp::rasGetState(zes_ras_state_t *pState, ze_bool_t clear) {
-    memset(pState->category, 0, sizeof(pState->category));
+    memset(pState->category, 0, maxRasErrorCategoryCount * sizeof(uint64_t));
     return pOsRas->osRasGetState(*pState, clear);
 }
 

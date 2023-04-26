@@ -58,11 +58,6 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingFabricPortG
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFabricPortImp->fabricPortGetThroughput(&pThroughput));
 }
 
-TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingFabricPortGetErrorCountersThenFailureIsReturned) {
-    zes_fabric_port_error_counters_t pErrors = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFabricPortImp->fabricPortGetErrorCounters(&pErrors));
-}
-
 TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingFabricPortGetLinkTupeThenFailureIsReturned) {
     zes_fabric_link_type_t pLinkType = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFabricPortImp->fabricPortGetLinkType(&pLinkType));

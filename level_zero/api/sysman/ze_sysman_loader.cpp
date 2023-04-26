@@ -205,7 +205,6 @@ zesGetFabricPortProcAddrTable(
     pDdiTable->pfnSetConfig = L0::zesFabricPortSetConfig;
     pDdiTable->pfnGetState = L0::zesFabricPortGetState;
     pDdiTable->pfnGetThroughput = L0::zesFabricPortGetThroughput;
-    pDdiTable->pfnGetFabricErrorCounters = L0::zesFabricPortGetFabricErrorCounters;
 
     return result;
 }

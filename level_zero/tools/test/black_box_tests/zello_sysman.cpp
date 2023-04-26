@@ -1175,7 +1175,6 @@ void testSysmanFabricPort(ze_device_handle_t &device) {
         zes_fabric_port_config_t fabricPortConfig = {};
         zes_fabric_port_state_t fabricPortState = {};
         zes_fabric_port_throughput_t fabricPortThroughput = {};
-        zes_fabric_port_error_counters_t fabricPortErrorCounters = {};
 
         VALIDATECALL(zesFabricPortGetProperties(handle, &fabricPortProperties));
         if (verbose) {
@@ -1223,14 +1222,6 @@ void testSysmanFabricPort(ze_device_handle_t &device) {
             std::cout << "Timestamp = " << fabricPortThroughput.timestamp << std::endl;
             std::cout << "RX Counter = " << fabricPortThroughput.rxCounter << std::endl;
             std::cout << "TX Counter = " << fabricPortThroughput.txCounter << std::endl;
-        }
-
-        VALIDATECALL(zesFabricPortGetFabricErrorCounters(handle, &fabricPortErrorCounters));
-        if (verbose) {
-            std::cout << "Link Failures = " << fabricPortErrorCounters.linkFailureCount << std::endl;
-            std::cout << "Link Degrades = " << fabricPortErrorCounters.linkDegradeCount << std::endl;
-            std::cout << "Fw Errors = " << fabricPortErrorCounters.fwErrorCount << std::endl;
-            std::cout << "Fw comm Errors = " << fabricPortErrorCounters.fwCommErrorCount << std::endl;
         }
     }
 }
