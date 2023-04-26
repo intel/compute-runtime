@@ -209,6 +209,8 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             commandList->numThreads = NEO::SysCalls::getNumThreads();
         }
 
+        commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, device->getProductHelper());
+
         return commandList;
     }
 

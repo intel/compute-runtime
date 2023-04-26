@@ -421,6 +421,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool dynamicHeapRequired = false;
     bool kernelWithAssertAppended = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
+    bool copyThroughLockedPtrEnabled = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

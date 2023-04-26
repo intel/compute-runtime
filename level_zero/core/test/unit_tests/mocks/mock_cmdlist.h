@@ -208,6 +208,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::commandsToPatch;
+    using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::csr;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;
@@ -560,6 +561,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     MockCommandListImmediateHw() : BaseClass() {}
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::cmdListType;
+    using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;
     using BaseClass::eventWaitlistSyncRequired;

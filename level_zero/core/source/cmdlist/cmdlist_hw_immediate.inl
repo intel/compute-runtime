@@ -717,8 +717,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         return true;
     }
 
-    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-    if (!gfxCoreHelper.copyThroughLockedPtrEnabled(this->device->getHwInfo(), this->device->getProductHelper())) {
+    if (!this->copyThroughLockedPtrEnabled) {
         return false;
     }
 
