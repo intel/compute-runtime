@@ -22,6 +22,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -657,6 +658,115 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenRetur
     CmdListKernelLaunchParams launchParams = {};
     returnValue = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+}
+
+struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
+    struct MockEvent : public EventImp<uint32_t> {
+        using EventImp<uint32_t>::latestUsedInOrderCmdList;
+    };
+
+    void SetUp() override {
+        NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.set(1);
+
+        CommandListAppendLaunchKernel::SetUp();
+        createKernel();
+    }
+
+    std::unique_ptr<L0::EventPool> createEvents(uint32_t numEvents) {
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        eventPoolDesc.count = numEvents;
+
+        ze_event_desc_t eventDesc = {};
+
+        auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+
+        for (uint32_t i = 0; i < numEvents; i++) {
+            eventDesc.index = i;
+            events.emplace_back(std::unique_ptr<MockEvent>(static_cast<MockEvent *>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device))));
+        }
+
+        return eventPool;
+    }
+
+    DebugManagerStateRestore restorer;
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_group_count_t groupCount = {3, 2, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    std::vector<std::unique_ptr<MockEvent>> events;
+};
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAppendCalledThenHandleEventAssignment, MatchAny) {
+    ze_command_list_handle_t cmdListHandle;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
+    auto cmdList = static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle));
+    auto immCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(cmdList);
+
+    EXPECT_TRUE(immCmdList->isInOrderExecutionEnabled());
+
+    auto eventPool = createEvents(1);
+
+    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(events[0]->toHandle(), immCmdList->latestSentInOrderEvent);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+
+    CommandList::fromHandle(cmdListHandle)->destroy();
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetCmdList, MatchAny) {
+    ze_command_list_handle_t cmdListHandle;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
+    auto cmdList = static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle));
+    auto immCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(cmdList);
+
+    auto eventPool = createEvents(3);
+
+    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(events[0]->toHandle(), immCmdList->latestSentInOrderEvent);
+
+    events[0]->reset();
+
+    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[2]->toHandle(), 0, nullptr, launchParams, false);
+
+    // reset unused event
+    events[1]->reset();
+    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(events[2]->toHandle(), immCmdList->latestSentInOrderEvent);
+
+    // destroy
+    events[2]->destroy();
+    events[2].release();
+
+    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+
+    CommandList::fromHandle(cmdListHandle)->destroy();
 }
 
 struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {

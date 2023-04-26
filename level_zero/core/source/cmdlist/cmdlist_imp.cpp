@@ -164,6 +164,11 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->internalUsage = internalUsage;
         commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
         commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
+
+        if (NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1) {
+            commandList->setInOrderExecution(true);
+        }
+
         if (!internalUsage) {
             auto &productHelper = device->getProductHelper();
             commandList->isFlushTaskSubmissionEnabled = gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper);
@@ -217,6 +222,13 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
     streamProperties.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, true);
     streamProperties.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, true);
     streamProperties.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, true);
+}
+
+void CommandListImp::unsetLastInOrderOutEvent(ze_event_handle_t outEvent) {
+    if (latestSentInOrderEvent == outEvent) {
+        latestSentInOrderEvent = nullptr;
+        latestInOrderOperationCompleted = true;
+    }
 }
 
 } // namespace L0

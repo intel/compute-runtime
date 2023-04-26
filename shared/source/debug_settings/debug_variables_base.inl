@@ -234,6 +234,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DisableScratchPages, -1, "-1: default, 0: do not
 DECLARE_DEBUG_VARIABLE(int32_t, OptimizeIoqBarriersHandling, -1, "-1: default, 0: disable, 1: enable. If enabled, dont dispatch stalling commands for IOQ. Instead, inherit TimestampPackets from previous enqueue.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExitOnSubmissionNumber, -1, "Call exit(0) on X submission. >=0: submission count (start from 0)")
 DECLARE_DEBUG_VARIABLE(int32_t, ExitOnSubmissionMode, 0, "Exit on X submission mode. 0: Any context type, 1: Compute context only, 2: Copy context only ")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceInOrderImmediateCmdListExecution, -1, "-1: default, 0: disabled, 1: all Immediate Command Lists are switched to in-order execution")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideEventSynchronizeTimeout, -1, "-1: default - user provided timeout value,  >0: timeout in nanoseconds")
 
 /*LOGGING FLAGS*/

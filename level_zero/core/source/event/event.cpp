@@ -24,6 +24,7 @@
 #include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
@@ -334,6 +335,10 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 }
 
 ze_result_t Event::destroy() {
+    if (latestUsedInOrderCmdList) {
+        latestUsedInOrderCmdList->unsetLastInOrderOutEvent(this->toHandle());
+    }
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }

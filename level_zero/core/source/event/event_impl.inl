@@ -346,6 +346,10 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
+    if (latestUsedInOrderCmdList) {
+        latestUsedInOrderCmdList->unsetLastInOrderOutEvent(this->toHandle());
+        latestUsedInOrderCmdList = nullptr;
+    }
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();

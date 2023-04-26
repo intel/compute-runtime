@@ -39,6 +39,7 @@ struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
 struct Kernel;
+struct CommandListImp;
 
 #pragma pack(1)
 struct IpcEventPoolData {
@@ -200,6 +201,10 @@ struct Event : _ze_event_handle_t {
         this->metricStreamer = metricStreamer;
     }
 
+    void setLatestUsedInOrderCmdList(CommandListImp *newCmdList) {
+        latestUsedInOrderCmdList = newCmdList;
+    }
+
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
 
@@ -230,6 +235,7 @@ struct Event : _ze_event_handle_t {
     Device *device = nullptr;
     EventPool *eventPool = nullptr;
     Kernel *kernelWithPrintf = nullptr;
+    CommandListImp *latestUsedInOrderCmdList = nullptr;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;

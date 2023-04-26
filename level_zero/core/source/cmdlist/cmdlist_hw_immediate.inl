@@ -700,6 +700,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     if (hSignalEvent) {
         Event::fromHandle(hSignalEvent)->setCsr(this->csr);
     }
+
+    if (isInOrderExecutionEnabled()) {
+        latestInOrderOperationCompleted = false;
+        this->latestSentInOrderEvent = hSignalEvent;
+        if (hSignalEvent) {
+            Event::fromHandle(hSignalEvent)->setLatestUsedInOrderCmdList(this);
+        }
+    }
     return inputRet;
 }
 

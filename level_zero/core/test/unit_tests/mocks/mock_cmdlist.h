@@ -163,6 +163,8 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
+    using BaseClass::latestInOrderOperationCompleted;
+    using BaseClass::latestSentInOrderEvent;
     using BaseClass::partitionCount;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;

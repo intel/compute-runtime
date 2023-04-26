@@ -42,6 +42,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::BaseClass;
     using BaseClass::executeCommandListImmediate;
     using BaseClass::isCopyOnly;
+    using BaseClass::isInOrderExecutionEnabled;
 
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                    const ze_group_count_t *threadGroupDimensions,
@@ -168,6 +169,9 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool isBarrierRequired();
 
   protected:
+    using BaseClass::latestInOrderOperationCompleted;
+    using BaseClass::latestSentInOrderEvent;
+
     void printKernelsPrintfOutput(bool hangDetected);
     MOCKABLE_VIRTUAL void checkAssert();
     std::atomic<bool> dependenciesPresent{false};
