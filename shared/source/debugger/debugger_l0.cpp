@@ -57,6 +57,7 @@ void DebuggerL0::initialize() {
         rootDevices.push_back(device->getRootDeviceIndex());
         uint32_t rootDeviceIndexReserved = 0;
         sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDevices, &rootDeviceIndexReserved);
+        UNRECOVERABLE_IF(sbaTrackingGpuVa.address == 0u);
         properties.gpuAddress = sbaTrackingGpuVa.address;
     }
 

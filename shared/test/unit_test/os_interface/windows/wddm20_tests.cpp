@@ -251,11 +251,50 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 
 TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamtersThenAddressInRangeIsReturend) {
     auto sizeAlignedTo64Kb = 64 * KB;
+    D3DGPU_VIRTUAL_ADDRESS reservationAddress;
+    auto status = wddm->reserveGpuVirtualAddress(0ull, wddm->getGfxPartition().Heap32[0].Base,
+                                                 wddm->getGfxPartition().Heap32[0].Limit,
+                                                 sizeAlignedTo64Kb, &reservationAddress);
 
-    auto reservationAddress = wddm->reserveGpuVirtualAddress(0ull, wddm->getGfxPartition().Heap32[0].Base,
-                                                             wddm->getGfxPartition().Heap32[0].Limit,
-                                                             sizeAlignedTo64Kb);
+    EXPECT_EQ(STATUS_SUCCESS, status);
+    EXPECT_GE(reservationAddress, wddm->getGfxPartition().Heap32[0].Base);
+    auto programmedReserved = getLastCallReserveGpuVaArgFcn();
+    EXPECT_EQ(0llu, programmedReserved->BaseAddress);
+    EXPECT_EQ(wddm->getGfxPartition().Heap32[0].Base, programmedReserved->MinimumAddress);
+    EXPECT_EQ(wddm->getGfxPartition().Heap32[0].Limit, programmedReserved->MaximumAddress);
+    EXPECT_EQ(sizeAlignedTo64Kb, programmedReserved->Size);
 
+    auto pagingQueue = wddm->getPagingQueue();
+    EXPECT_NE(0llu, pagingQueue);
+    EXPECT_EQ(pagingQueue, programmedReserved->hPagingQueue);
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithInvalidBaseThenFailureIsReturned) {
+    auto sizeAlignedTo64Kb = 64 * KB;
+    D3DGPU_VIRTUAL_ADDRESS reservationAddress;
+    auto status = wddm->reserveGpuVirtualAddress(0x1234, wddm->getGfxPartition().Heap32[0].Base,
+                                                 wddm->getGfxPartition().Heap32[0].Limit,
+                                                 sizeAlignedTo64Kb, &reservationAddress);
+    EXPECT_NE(STATUS_SUCCESS, status);
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithAttemptBaseAddressWithValidBaseThenAddressInRangeIsReturned) {
+    auto sizeAlignedTo64Kb = 64 * KB;
+    D3DGPU_VIRTUAL_ADDRESS previousReservationAddress;
+    D3DGPU_VIRTUAL_ADDRESS reservationAddress;
+    NTSTATUS status;
+    status = wddm->reserveGpuVirtualAddress(0ull, wddm->getGfxPartition().Heap32[0].Base,
+                                            wddm->getGfxPartition().Heap32[0].Limit,
+                                            sizeAlignedTo64Kb, &previousReservationAddress);
+
+    EXPECT_EQ(STATUS_SUCCESS, status);
+    EXPECT_TRUE(wddm->freeGpuVirtualAddress(previousReservationAddress, sizeAlignedTo64Kb));
+
+    status = wddm->reserveGpuVirtualAddress(previousReservationAddress, wddm->getGfxPartition().Heap32[0].Base,
+                                            wddm->getGfxPartition().Heap32[0].Limit,
+                                            sizeAlignedTo64Kb, &reservationAddress);
+
+    EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_GE(reservationAddress, wddm->getGfxPartition().Heap32[0].Base);
     auto programmedReserved = getLastCallReserveGpuVaArgFcn();
     EXPECT_EQ(0llu, programmedReserved->BaseAddress);

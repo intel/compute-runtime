@@ -76,7 +76,9 @@ void WddmMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physica
     const auto wddm = static_cast<OsContextWin *>(osContext)->getWddm();
     wddm->freeGpuVirtualAddress(gpuRange, bufferSize);
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
-    wddm->reserveGpuVirtualAddress(gpuRange, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), bufferSize);
+    uint64_t reservedAddress = 0u;
+    auto status = wddm->reserveGpuVirtualAddress(gpuRange, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), bufferSize, &reservedAddress);
+    UNRECOVERABLE_IF(status != STATUS_SUCCESS);
     physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
     physicalAllocation->setReservedAddressRange(nullptr, 0u);
     WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
@@ -834,14 +836,21 @@ AddressRange WddmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAd
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
     size_t reservedSize = 0;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
-        gpuVa = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(requiredStartAddress, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size);
-        if (gpuVa != 0u) {
+        status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(requiredStartAddress, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size, &gpuVa);
+        if (requiredStartAddress != 0ull && status != STATUS_SUCCESS) {
+            status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size, &gpuVa);
+        }
+        if (status == STATUS_SUCCESS) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;
             reservedSize = size;
             break;
         }
+    }
+    if (status != STATUS_SUCCESS) {
+        return AddressRange{0u, 0};
     }
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[*reservedOnRootDeviceIndex]->getGmmHelper();
     gpuVa = gmmHelper->canonize(gpuVa);
@@ -898,8 +907,9 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
         allocation->getGpuAddressToModify() = addressToMap;
     } else {
         allocation->reservedSizeForGpuVirtualAddress = alignUp(alignedSize, MemoryConstants::pageSize64k);
-        allocation->reservedGpuVirtualAddress = wddm.reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
-                                                                              allocation->reservedSizeForGpuVirtualAddress);
+        auto status = wddm.reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
+                                                    allocation->reservedSizeForGpuVirtualAddress, &allocation->reservedGpuVirtualAddress);
+        UNRECOVERABLE_IF(status != STATUS_SUCCESS);
         auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
         allocation->getGpuAddressToModify() = gmmHelper->canonize(allocation->reservedGpuVirtualAddress);
         addressToMap = allocation->reservedGpuVirtualAddress;

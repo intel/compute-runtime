@@ -59,6 +59,38 @@ TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReserve
     memManager->freeGpuAddress(addressRange, 0);
 }
 
+TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReservedWithInvalidStartAddresThenDifferentAddressReserved) {
+    RootDeviceIndicesContainer rootDevices;
+    rootDevices.push_back(0);
+    uint32_t rootDeviceIndexReserved = 1;
+    uint64_t invalidAddress = 0x1234;
+    auto addressRange = memManager->reserveGpuAddress(invalidAddress, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto gmmHelper = memManager->getGmmHelper(0);
+    EXPECT_NE(invalidAddress, addressRange.address);
+
+    EXPECT_EQ(rootDeviceIndexReserved, 0u);
+    EXPECT_LE(memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    memManager->freeGpuAddress(addressRange, 0);
+}
+
+TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReservedWithValidStartAddresThenSameAddressReserved) {
+    RootDeviceIndicesContainer rootDevices;
+    rootDevices.push_back(0);
+    uint32_t rootDeviceIndexReserved = 1;
+    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto previousAddress = addressRange.address;
+    memManager->freeGpuAddress(addressRange, 0);
+    auto newAddressRange = memManager->reserveGpuAddress(previousAddress, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto gmmHelper = memManager->getGmmHelper(0);
+    EXPECT_EQ(previousAddress, addressRange.address);
+
+    EXPECT_EQ(rootDeviceIndexReserved, 0u);
+    EXPECT_LE(memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    memManager->freeGpuAddress(addressRange, 0);
+}
+
 TEST(WddmMemoryReservationFailTest, givenWddmMemoryManagerWhenGpuAddressReservationIsAttemptedThenNullPtrAndSizeReturned) {
     std::unique_ptr<MemoryReservationMock> memManager;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;

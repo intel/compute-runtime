@@ -259,6 +259,9 @@ NTSTATUS __stdcall mockD3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADD
 NTSTATUS __stdcall mockD3DKMTReserveGpuVirtualAddress(IN OUT D3DDDI_RESERVEGPUVIRTUALADDRESS *reserveGpuVirtualAddress) {
     gLastCallReserveGpuVaArg = *reserveGpuVirtualAddress;
     reserveGpuVirtualAddress->VirtualAddress = reserveGpuVirtualAddress->MinimumAddress;
+    if (reserveGpuVirtualAddress->BaseAddress == 0x1234) {
+        return STATUS_INVALID_PARAMETER;
+    }
     return STATUS_SUCCESS;
 }
 

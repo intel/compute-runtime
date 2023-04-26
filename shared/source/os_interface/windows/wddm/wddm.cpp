@@ -568,10 +568,11 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     return ret;
 }
 
-D3DGPU_VIRTUAL_ADDRESS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress,
-                                                      D3DGPU_VIRTUAL_ADDRESS minimumAddress,
-                                                      D3DGPU_VIRTUAL_ADDRESS maximumAddress,
-                                                      D3DGPU_SIZE_T size) {
+NTSTATUS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress,
+                                        D3DGPU_VIRTUAL_ADDRESS minimumAddress,
+                                        D3DGPU_VIRTUAL_ADDRESS maximumAddress,
+                                        D3DGPU_SIZE_T size,
+                                        D3DGPU_VIRTUAL_ADDRESS *reservedAddress) {
     UNRECOVERABLE_IF(size % MemoryConstants::pageSize64k);
     D3DDDI_RESERVEGPUVIRTUALADDRESS reserveGpuVirtualAddress = {};
     reserveGpuVirtualAddress.BaseAddress = baseAddress;
@@ -581,8 +582,8 @@ D3DGPU_VIRTUAL_ADDRESS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS bas
     reserveGpuVirtualAddress.Size = size;
 
     NTSTATUS status = getGdi()->reserveGpuVirtualAddress(&reserveGpuVirtualAddress);
-    UNRECOVERABLE_IF(status != STATUS_SUCCESS);
-    return reserveGpuVirtualAddress.VirtualAddress;
+    *reservedAddress = reserveGpuVirtualAddress.VirtualAddress;
+    return status;
 }
 
 bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
