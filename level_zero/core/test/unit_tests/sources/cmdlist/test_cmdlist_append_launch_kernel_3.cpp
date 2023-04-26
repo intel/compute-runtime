@@ -689,8 +689,30 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         return eventPool;
     }
 
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    std::unique_ptr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdList() {
+        auto cmdList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+
+        auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+        ze_command_queue_desc_t desc = {};
+
+        mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
+
+        cmdList->cmdQImmediate = mockCmdQ.get();
+        cmdList->isFlushTaskSubmissionEnabled = true;
+        cmdList->setInOrderExecution(true);
+        cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+        cmdList->csr = csr;
+        cmdList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+        cmdList->commandContainer.setImmediateCmdListCsr(csr);
+
+        return cmdList;
+    }
+
     DebugManagerStateRestore restorer;
 
+    std::unique_ptr<Mock<CommandQueue>> mockCmdQ;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -698,14 +720,8 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     std::vector<std::unique_ptr<MockEvent>> events;
 };
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAppendCalledThenHandleEventAssignment, MatchAny) {
-    ze_command_list_handle_t cmdListHandle;
-    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    queueDesc.ordinal = 0;
-    queueDesc.index = 0;
-    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
-    auto cmdList = static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle));
-    auto immCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(cmdList);
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAppendCalledThenHandleEventAssignment, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     EXPECT_TRUE(immCmdList->isInOrderExecutionEnabled());
 
@@ -723,18 +739,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAppendCalledThenHandleEventAs
 
     EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
     EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
-
-    CommandList::fromHandle(cmdListHandle)->destroy();
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetCmdList, MatchAny) {
-    ze_command_list_handle_t cmdListHandle;
-    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    queueDesc.ordinal = 0;
-    queueDesc.index = 0;
-    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
-    auto cmdList = static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle));
-    auto immCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(cmdList);
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetCmdList, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents(3);
 
@@ -765,8 +773,55 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetCmdL
 
     EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
     EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+}
 
-    CommandList::fromHandle(cmdListHandle)->destroy();
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSynchronizeEventCalledThenResetCmdList, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents(1);
+
+    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(events[0]->toHandle(), immCmdList->latestSentInOrderEvent);
+
+    uint32_t *hostAddr = static_cast<uint32_t *>(events[0]->getHostAddress());
+    *hostAddr = Event::STATE_SIGNALED;
+    events[0]->hostSynchronize(-1);
+
+    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+    EXPECT_EQ(nullptr, events[0]->latestUsedInOrderCmdList);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphoreForPreviousDispatch, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents(1);
+
+    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
+    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), offset),
+        cmdStream->getUsed() - offset));
+
+    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_NE(cmdList.end(), itor);
 }
 
 struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {

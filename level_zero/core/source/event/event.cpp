@@ -387,4 +387,15 @@ void Event::resetPackets(bool resetAllPackets) {
     this->csr = this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 }
 
+void Event::setIsCompleted() {
+    if (this->isCompleted.load() == STATE_CLEARED) {
+        this->isCompleted = STATE_SIGNALED;
+
+        if (latestUsedInOrderCmdList) {
+            latestUsedInOrderCmdList->unsetLastInOrderOutEvent(this->toHandle());
+            latestUsedInOrderCmdList = nullptr;
+        }
+    }
+}
+
 } // namespace L0

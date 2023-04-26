@@ -327,7 +327,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
     const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) {
 
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -351,7 +351,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelIndirect(
     ze_kernel_handle_t kernelHandle, const ze_group_count_t *pDispatchArgumentsBuffer,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -388,7 +388,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -409,7 +409,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     NEO::TransferDirection direction;
     auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size, direction);
     if (isSplitNeeded) {
-        relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, 1); // split generates more than 1 event
+        relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1); // split generates more than 1 event
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, relaxedOrderingDispatch, direction, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, relaxedOrderingDispatch);
         });
@@ -433,7 +433,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -445,7 +445,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     NEO::TransferDirection direction;
     auto isSplitNeeded = this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch), direction);
     if (isSplitNeeded) {
-        relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, 1); // split generates more than 1 event
+        relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1); // split generates more than 1 event
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, numWaitEvents, phWaitEvents, true, relaxedOrderingDispatch, direction, [&](uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             ze_copy_region_t dstRegionLocal = {};
             ze_copy_region_t srcRegionLocal = {};
@@ -474,7 +474,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
                                                                             ze_event_handle_t hSignalEvent,
                                                                             uint32_t numWaitEvents,
                                                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -527,7 +527,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
     bool relaxedOrdering = false;
 
     if (isSplitNeeded) {
-        relaxedOrdering = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, 1); // split generates more than 1 event
+        relaxedOrdering = isRelaxedOrderingDispatchAllowed(1); // split generates more than 1 event
         uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
         uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, relaxedOrdering, direction, [&](uintptr_t dstAddressParam, uintptr_t srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
@@ -601,7 +601,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyRegion
                                                                                  ze_event_handle_t hSignalEvent,
                                                                                  uint32_t numWaitEvents,
                                                                                  ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -621,7 +621,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -642,7 +642,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -676,7 +676,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperati
                                                                                          ze_event_handle_t hSignalEvent,
                                                                                          uint32_t numWaitEvents,
                                                                                          ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) {
-    relaxedOrderingDispatch = NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numWaitEvents);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch);
@@ -1018,6 +1018,13 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
         UNRECOVERABLE_IF(this->device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get() == nullptr);
         this->device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const {
+    auto numEvents = numWaitEvents + (latestSentInOrderEvent ? 1 : 0);
+
+    return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numEvents);
 }
 
 } // namespace L0

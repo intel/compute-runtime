@@ -2024,6 +2024,9 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies) {
+    if (latestSentInOrderEvent) {
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(1, &latestSentInOrderEvent, relaxedOrderingAllowed, trackDependencies);
+    }
 
     if (numWaitEvents > 0) {
         if (phWaitEvents) {

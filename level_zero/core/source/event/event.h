@@ -162,11 +162,7 @@ struct Event : _ze_event_handle_t {
         this->isCompleted.store(disableFromRegularList ? HOST_CACHING_DISABLED_PERMANENT : HOST_CACHING_DISABLED);
     }
 
-    void setIsCompleted() {
-        if (this->isCompleted.load() == STATE_CLEARED) {
-            this->isCompleted = STATE_SIGNALED;
-        }
-    }
+    void setIsCompleted();
 
     bool isAlreadyCompleted() {
         return this->isCompleted == STATE_SIGNALED;

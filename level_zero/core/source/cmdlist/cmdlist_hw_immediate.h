@@ -167,6 +167,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     TransferType getTransferType(NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc);
     size_t getTransferThreshold(TransferType transferType);
     bool isBarrierRequired();
+    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const;
 
   protected:
     using BaseClass::latestInOrderOperationCompleted;
