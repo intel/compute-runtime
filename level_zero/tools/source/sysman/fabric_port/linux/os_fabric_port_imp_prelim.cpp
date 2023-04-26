@@ -39,78 +39,6 @@ ze_result_t LinuxFabricDeviceImp::getThroughput(const zes_fabric_port_id_t portI
     return pFabricDeviceAccess->getThroughput(portId, *pThroughput);
 }
 
-ze_result_t LinuxFabricDeviceImp::getErrorCounters(const zes_fabric_port_id_t portId, zes_fabric_port_error_counters_t *pErrors) {
-    FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    SysfsAccess *pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    std::string devicePciPath("");
-    ze_result_t result = pSysfsAccess->getRealPath("device/", devicePciPath);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to get device path> <result: 0x%x>\n", __func__, result);
-        return result;
-    }
-    std::string path("");
-    std::vector<std::string> list;
-    result = pFsAccess->listDirectory(devicePciPath, list);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to get list of files in device directory> <result: 0x%x>\n", __func__, result);
-        return result;
-    }
-
-    for (auto entry : list) {
-        if ((entry.find("i915.iaf.") != std::string::npos) ||
-            (entry.find("iaf.") != std::string::npos)) {
-            path = devicePciPath + "/" + entry;
-            break;
-        }
-    }
-    if (path.empty()) {
-        // This device does not have a fabric
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <Device does not have fabric>\n", __func__);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-    std::string fabricFwErrorPath = path + "/sd." + std::to_string(portId.attachId);
-    std::string fabricLinkErrorPath = path + "/sd." + std::to_string(portId.attachId) + "/port." + std::to_string(portId.portNumber);
-    uint64_t linkErrorCount = 0;
-    std::string linkFailureFile = fabricLinkErrorPath + "/link_failures";
-    result = pFsAccess->read(linkFailureFile, linkErrorCount);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, linkFailureFile.c_str(), result);
-        linkErrorCount = 0;
-    }
-    uint64_t linkDegradeCount = 0;
-    std::string linkDegradeFile = fabricLinkErrorPath + "/link_degrades";
-    result = pFsAccess->read(linkDegradeFile, linkDegradeCount);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, linkDegradeFile.c_str(), result);
-        linkDegradeCount = 0;
-    }
-    uint64_t fwErrorCount = 0;
-    std::string fwErrorFile = fabricFwErrorPath + "/fw_error";
-    result = pFsAccess->read(fwErrorFile, fwErrorCount);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, fwErrorFile.c_str(), result);
-        fwErrorCount = 0;
-    }
-    uint64_t fwCommErrorCount = 0;
-    std::string fwCommErrorFile = fabricFwErrorPath + "/fw_comm_errors";
-    result = pFsAccess->read(fwCommErrorFile, fwCommErrorCount);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, fwCommErrorFile.c_str(), result);
-        fwCommErrorCount = 0;
-    }
-    pErrors->linkFailureCount = linkErrorCount;
-    pErrors->linkDegradeCount = linkDegradeCount;
-    pErrors->fwErrorCount = fwErrorCount;
-    pErrors->fwCommErrorCount = fwCommErrorCount;
-    return ZE_RESULT_SUCCESS;
-}
 ze_result_t LinuxFabricDeviceImp::performSweep() {
     uint32_t start = 0U;
     uint32_t end = 0U;
@@ -280,10 +208,6 @@ ze_result_t LinuxFabricPortImp::getState(zes_fabric_port_state_t *pState) {
 
 ze_result_t LinuxFabricPortImp::getThroughput(zes_fabric_port_throughput_t *pThroughput) {
     return pLinuxFabricDeviceImp->getThroughput(portId, pThroughput);
-}
-
-ze_result_t LinuxFabricPortImp::getErrorCounters(zes_fabric_port_error_counters_t *pErrors) {
-    return pLinuxFabricDeviceImp->getErrorCounters(portId, pErrors);
 }
 
 ze_result_t LinuxFabricPortImp::getProperties(zes_fabric_port_properties_t *pProperties) {

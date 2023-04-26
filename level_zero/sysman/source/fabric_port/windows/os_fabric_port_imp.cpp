@@ -42,10 +42,6 @@ ze_result_t WddmFabricPortImp::getThroughput(zes_fabric_port_throughput_t *pThro
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmFabricPortImp::getErrorCounters(zes_fabric_port_error_counters_t *pErrors) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 ze_result_t WddmFabricPortImp::getProperties(zes_fabric_port_properties_t *pProperties) {
     ::memset(pProperties->model, '\0', ZES_MAX_FABRIC_PORT_MODEL_SIZE);
     pProperties->onSubdevice = false;

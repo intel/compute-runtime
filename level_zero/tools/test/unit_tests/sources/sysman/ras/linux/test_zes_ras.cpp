@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 #include "mock_fs_ras.h"
@@ -137,11 +138,11 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRa
         zes_ras_config_t setConfig = {};
         zes_ras_config_t getConfig = {};
         setConfig.totalThreshold = 50;
-        memset(setConfig.detailedThresholds.category, 1, sizeof(setConfig.detailedThresholds.category));
+        memset(setConfig.detailedThresholds.category, 1, maxRasErrorCategoryCount * sizeof(uint64_t));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasSetConfig(handle, &setConfig));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetConfig(handle, &getConfig));
         EXPECT_EQ(setConfig.totalThreshold, getConfig.totalThreshold);
-        int compare = std::memcmp(setConfig.detailedThresholds.category, getConfig.detailedThresholds.category, sizeof(setConfig.detailedThresholds.category));
+        int compare = std::memcmp(setConfig.detailedThresholds.category, getConfig.detailedThresholds.category, maxRasErrorCategoryCount * sizeof(uint64_t));
         EXPECT_EQ(0, compare);
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.pop_back();
@@ -158,7 +159,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPer
     for (auto handle : handles) {
         zes_ras_config_t setConfig = {};
         setConfig.totalThreshold = 50;
-        memset(setConfig.detailedThresholds.category, 1, sizeof(setConfig.detailedThresholds.category));
+        memset(setConfig.detailedThresholds.category, 1, maxRasErrorCategoryCount * sizeof(uint64_t));
         EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasSetConfig(handle, &setConfig));
     }
     pSysmanDeviceImp->pRasHandleContext->releaseRasHandles();

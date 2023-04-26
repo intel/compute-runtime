@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/ras/os_ras.h"
+#include "level_zero/tools/source/sysman/sysman_const.h"
 
 namespace L0 {
 class FsAccess;
@@ -32,7 +33,7 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     uint64_t totalThreshold = 0;
-    uint64_t categoryThreshold[ZES_MAX_RAS_ERROR_CATEGORY_COUNT] = {0};
+    uint64_t categoryThreshold[maxRasErrorCategoryCount] = {0};
 };
 
 } // namespace L0

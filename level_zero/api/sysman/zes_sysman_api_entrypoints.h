@@ -1026,12 +1026,6 @@ ze_result_t zesOverclockSetVFPointValues(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesFabricPortGetFabricErrorCounters(
-    zes_fabric_port_handle_t hPort,
-    zes_fabric_port_error_counters_t *pErrors) {
-    return L0::FabricPort::fromHandle(hPort)->fabricPortGetErrorCounters(pErrors);
-}
-
 ze_result_t zesDeviceSetOverclockWaiver(
     zes_device_handle_t hDevice) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -2106,14 +2100,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockSetVFPointValues(
         vfType,
         pointIndex,
         pointValue);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zesFabricPortGetFabricErrorCounters(
-    zes_fabric_port_handle_t hPort,
-    zes_fabric_port_error_counters_t *pErrors) {
-    return L0::zesFabricPortGetFabricErrorCounters(
-        hPort,
-        pErrors);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesInit(
