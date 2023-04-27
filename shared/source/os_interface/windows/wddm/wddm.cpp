@@ -553,9 +553,9 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     bool ret = true;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (gmm->isCompressionEnabled && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
-        for (auto &engineContainer : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines()) {
-            if (rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments[engineContainer.first].get() == &rootDeviceEnvironment) {
-                for (auto &engine : engineContainer.second) {
+        for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+            if (rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get() == &rootDeviceEnvironment) {
+                for (auto &engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
                     if (engine.commandStreamReceiver->pageTableManager.get()) {
                         ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
                     }

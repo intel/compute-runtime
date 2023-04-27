@@ -2165,7 +2165,7 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                        PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-    EXPECT_EQ(2u, memoryManager->allRegisteredEngines.size());
+    EXPECT_EQ(3u, memoryManager->allRegisteredEngines.size());
     EXPECT_EQ(1u, memoryManager->allRegisteredEngines[0].size());
     EXPECT_EQ(1u, memoryManager->allRegisteredEngines[1].size());
     EXPECT_EQ(1, memoryManager->allRegisteredEngines[0][0].osContext->getRefInternalCount());

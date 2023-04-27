@@ -1980,6 +1980,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenC
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->initializeMemoryManager();
+    memoryManager->allRegisteredEngines.resize(3);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset();
         auto wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[i].get()));
@@ -2005,6 +2006,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithE
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->initializeMemoryManager();
+    memoryManager->allRegisteredEngines.resize(3);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset();
         auto wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[i].get()));

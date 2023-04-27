@@ -25,6 +25,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateMemoryByKMD;
     using BaseClass::allocatePhysicalDeviceMemory;
     using BaseClass::allocatePhysicalLocalDeviceMemory;
+    using BaseClass::allRegisteredEngines;
     using BaseClass::createGraphicsAllocation;
     using BaseClass::createPhysicalAllocation;
     using BaseClass::createWddmAllocation;

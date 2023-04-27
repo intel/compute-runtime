@@ -681,7 +681,7 @@ bool WddmMemoryManager::tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t
 
 bool WddmMemoryManager::isMemoryBudgetExhausted() const {
     for (auto &engineContainer : allRegisteredEngines) {
-        for (auto &engine : engineContainer.second) {
+        for (auto &engine : engineContainer) {
             if (static_cast<OsContextWin *>(engine.osContext)->getResidencyController().isMemoryBudgetExhausted()) {
                 return true;
             }

@@ -103,7 +103,7 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
         executionEnvironment->memoryManager.release();
         executionEnvironment->memoryManager.reset(memoryManagerBackup);
         for (auto &engineContainer : memoryManager->allRegisteredEngines) {
-            engineContainer.second.clear();
+            engineContainer.clear();
         }
     }
 
@@ -231,7 +231,7 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
         executionEnvironment->memoryManager.release();
         executionEnvironment->memoryManager.reset(memoryManagerBackup);
         for (auto &engineContainer : memoryManager->allRegisteredEngines) {
-            engineContainer.second.clear();
+            engineContainer.clear();
         }
     }
 

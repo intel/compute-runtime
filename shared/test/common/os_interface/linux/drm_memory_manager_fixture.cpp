@@ -77,7 +77,7 @@ void DrmMemoryManagerFixture::tearDown() {
     int enginesCount = 0;
 
     for (auto &engineContainer : memoryManager->getRegisteredEngines()) {
-        enginesCount += engineContainer.second.size();
+        enginesCount += engineContainer.size();
     }
 
     mock->ioctlExpected.contextDestroy = enginesCount;

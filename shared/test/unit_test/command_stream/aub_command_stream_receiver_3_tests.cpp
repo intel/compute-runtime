@@ -578,9 +578,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenUsmAllocationWhenDumpAllocationIsCa
 using SimulatedCsrTest = ::testing::Test;
 HWTEST_F(SimulatedCsrTest, givenAubCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitalized) {
     uint32_t expectedRootDeviceIndex = 10;
-    MockExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, expectedRootDeviceIndex + 2);
     executionEnvironment.initializeMemoryManager();
-    executionEnvironment.prepareRootDeviceEnvironments(expectedRootDeviceIndex + 2);
 
     auto rootDeviceEnvironment = new MockRootDeviceEnvironment(executionEnvironment);
     executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex].reset(rootDeviceEnvironment);

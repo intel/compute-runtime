@@ -54,6 +54,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     defaultEngineIndex.resize(rootEnvCount);
     checkIsaPlacementOnceFlags = std::make_unique<std::once_flag[]>(rootEnvCount);
     isaInLocalMemory.resize(rootEnvCount);
+    allRegisteredEngines.resize(rootEnvCount + 1);
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
@@ -82,10 +83,10 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
 MemoryManager::~MemoryManager() {
     for (auto &engineContainer : allRegisteredEngines) {
-        for (auto &engine : engineContainer.second) {
+        for (auto &engine : engineContainer) {
             engine.osContext->decRefInternal();
         }
-        engineContainer.second.clear();
+        engineContainer.clear();
     }
     allRegisteredEngines.clear();
     if (reservedMemory) {
@@ -825,7 +826,7 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
 
 void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion) {
     for (auto &engineContainer : allRegisteredEngines) {
-        for (auto &engine : engineContainer.second) {
+        for (auto &engine : engineContainer) {
             auto csr = engine.commandStreamReceiver;
             if (waitForCompletion) {
                 csr->waitForCompletionWithTimeout(WaitParams{false, false, 0}, csr->peekLatestSentTaskCount());

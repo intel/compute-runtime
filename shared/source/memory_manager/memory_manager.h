@@ -213,7 +213,7 @@ class MemoryManager {
 
     MOCKABLE_VIRTUAL OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
                                                            const EngineDescriptor &engineDescriptor);
-    EngineControlContainer &getRegisteredEngines(uint32_t rootDeviceIndex) { return allRegisteredEngines[rootDeviceIndex]; }
+    const EngineControlContainer &getRegisteredEngines(uint32_t rootDeviceIndex) const { return allRegisteredEngines[rootDeviceIndex]; }
     const MultiDeviceEngineControlContainer &getRegisteredEngines() const { return allRegisteredEngines; }
     const EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     void unregisterEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
