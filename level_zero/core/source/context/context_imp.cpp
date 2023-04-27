@@ -921,6 +921,10 @@ ze_result_t ContextImp::freeVirtualMem(const void *ptr,
     auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
     it = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().find(const_cast<void *>(ptr));
     if (it != this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().end()) {
+        for (auto &pairDevice : this->devices) {
+            this->freePeerAllocations(ptr, false, Device::fromHandle(pairDevice.second));
+        }
+
         NEO::VirtualMemoryReservation *virtualMemoryReservation = it->second;
         if (virtualMemoryReservation->virtualAddressRange.size != size) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
