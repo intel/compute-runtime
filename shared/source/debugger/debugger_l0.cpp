@@ -121,8 +121,8 @@ void DebuggerL0::printTrackedAddresses(uint32_t contextId) {
                             " ioba =  %" SCNx64
                             " iba =  %" SCNx64
                             " bsurfsba =  %" SCNx64 "\n",
-                            sba->SurfaceStateBaseAddress, sba->GeneralStateBaseAddress, sba->DynamicStateBaseAddress,
-                            sba->IndirectObjectBaseAddress, sba->InstructionBaseAddress, sba->BindlessSurfaceStateBaseAddress);
+                            sba->surfaceStateBaseAddress, sba->generalStateBaseAddress, sba->dynamicStateBaseAddress,
+                            sba->indirectObjectBaseAddress, sba->instructionBaseAddress, sba->bindlessSurfaceStateBaseAddress);
 }
 
 DebuggerL0 ::~DebuggerL0() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,16 +18,16 @@ extern "C" {
 typedef struct _ze_gpu_driver_dditable_t {
     ze_dditable_t ddiTable;
 
-    ze_dditable_t core_ddiTable;
-    ze_dditable_t tracing_ddiTable;
-    zet_dditable_t tools_ddiTable;
-    zes_dditable_t sysman_ddiTable;
+    ze_dditable_t coreDdiTable;
+    ze_dditable_t tracingDdiTable;
+    zet_dditable_t toolsDdiTable;
+    zes_dditable_t sysmanDdiTable;
 
     ze_api_version_t version = ZE_API_VERSION_1_0;
 
     bool enableTracing;
 } ze_gpu_driver_dditable_t;
 
-extern ze_gpu_driver_dditable_t driver_ddiTable;
+extern ze_gpu_driver_dditable_t driverDdiTable;
 
 } // extern "C"

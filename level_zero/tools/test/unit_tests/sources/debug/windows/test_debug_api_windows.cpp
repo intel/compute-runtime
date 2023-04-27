@@ -527,8 +527,8 @@ TEST_F(DebugApiWindowsTest, GivenSbaBufferGpuVaAvailableWhenReadingSbaBufferThen
     session->wddm = mockWddm;
     session->allContexts.insert(0x12345);
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaBuffer(session->convertToThreadId(thread), sbaBuffer));
-    EXPECT_EQ(sbaBuffer.Version, 0xaa);
-    EXPECT_EQ(sbaBuffer.BindlessSamplerStateBaseAddress, 0xaaaaaaaaaaaaaaaa);
+    EXPECT_EQ(sbaBuffer.version, 0xaa);
+    EXPECT_EQ(sbaBuffer.bindlessSamplerStateBaseAddress, 0xaaaaaaaaaaaaaaaa);
 }
 
 TEST_F(DebugApiWindowsTest, GivenEscapeCallToReadMMIOReturnsSuccessWhenReadingSbaBufferGpuVaThenValidGpuVaIsObtained) {

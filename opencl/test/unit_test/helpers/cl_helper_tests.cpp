@@ -151,7 +151,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ClGfxCoreHelperTest, givenCLImageFormatsWhenCallingI
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     auto formats = SurfaceFormats::readWrite();
     for (const auto &format : formats) {
-        const cl_image_format oclFormat = format.OCLImageFormat;
+        const cl_image_format oclFormat = format.oclImageFormat;
         bool expectedResult = true;
         for (const auto &nonRedescribableFormat : redescribeFormats) {
             expectedResult &= (memcmp(&oclFormat, &nonRedescribableFormat, sizeof(cl_image_format)) != 0);

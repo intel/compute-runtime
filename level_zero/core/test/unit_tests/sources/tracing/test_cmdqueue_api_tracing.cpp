@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandQueue.pfnCreate =
+    driverDdiTable.coreDdiTable.CommandQueue.pfnCreate =
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
            const ze_command_queue_desc_t *desc,
@@ -32,7 +32,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueCreateTracingWrapperWith
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandQueue.pfnDestroy =
+    driverDdiTable.coreDdiTable.CommandQueue.pfnDestroy =
         [](ze_command_queue_handle_t hCommandQueue) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandQueue.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.CommandQueue.pfnDestroyCb = genericEpilogCallbackPtr;
@@ -51,7 +51,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueExecuteCommandListsTraci
     ze_command_list_handle_t phCommandLists = {};
     ze_fence_handle_t hFence = nullptr;
 
-    driver_ddiTable.core_ddiTable.CommandQueue.pfnExecuteCommandLists =
+    driverDdiTable.coreDdiTable.CommandQueue.pfnExecuteCommandLists =
         [](ze_command_queue_handle_t hCommandQueue, uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
            ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
 
@@ -67,7 +67,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueExecuteCommandListsTraci
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandQueue.pfnSynchronize =
+    driverDdiTable.coreDdiTable.CommandQueue.pfnSynchronize =
         [](ze_command_queue_handle_t hCommandQueue, uint64_t timeout) { return ZE_RESULT_SUCCESS; };
     uint64_t timeout = 100;
 

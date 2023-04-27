@@ -71,7 +71,7 @@ struct PerformanceHintTest : public DriverDiagnosticsTest,
     void SetUp() override {
         DriverDiagnosticsTest::SetUp();
         cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-        context = Context::create<NEO::MockContext>(validProperties, ClDeviceVector(devices, num_devices), callbackFunction, (void *)userData, retVal);
+        context = Context::create<NEO::MockContext>(validProperties, ClDeviceVector(devices, numDevices), callbackFunction, (void *)userData, retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 

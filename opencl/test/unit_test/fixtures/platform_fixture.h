@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class PlatformFixture {
 
     Platform *pPlatform = nullptr;
 
-    cl_uint num_devices = 0u;
+    cl_uint numDevices = 0u;
     cl_device_id *devices = nullptr;
 };
 } // namespace NEO

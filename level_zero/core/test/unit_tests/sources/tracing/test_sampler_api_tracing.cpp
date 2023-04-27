@@ -12,7 +12,7 @@ namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Sampler.pfnCreate = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Sampler.pfnCreate = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Sampler.pfnCreateCb = genericPrologCallbackPtr;
     epilogCbs.Sampler.pfnCreateCb = genericEpilogCallbackPtr;
@@ -26,7 +26,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSe
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Sampler.pfnDestroy = [](ze_sampler_handle_t hSampler) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Sampler.pfnDestroy = [](ze_sampler_handle_t hSampler) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Sampler.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.Sampler.pfnDestroyCb = genericEpilogCallbackPtr;
@@ -71,7 +71,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     sampler_create_args.instanceData3 = generateRandomHandle<void *>();
 
     // Arguments are expected to be passed in by the first prolog callback
-    driver_ddiTable.core_ddiTable.Sampler.pfnCreate =
+    driverDdiTable.coreDdiTable.Sampler.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) {
             EXPECT_EQ(sampler_create_args.hContext1, hContext);
             EXPECT_EQ(sampler_create_args.hDevice1, hDevice);
@@ -314,7 +314,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     sampler_destroy_args.instanceData3 = generateRandomHandle<void *>();
 
     // Arguments are expected to be passed in by the first prolog callback
-    driver_ddiTable.core_ddiTable.Sampler.pfnDestroy =
+    driverDdiTable.coreDdiTable.Sampler.pfnDestroy =
         [](ze_sampler_handle_t hSampler) {
             EXPECT_EQ(sampler_destroy_args.hSampler1, hSampler);
             return ZE_RESULT_SUCCESS;

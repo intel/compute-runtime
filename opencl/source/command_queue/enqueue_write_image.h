@@ -43,7 +43,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
 
     if (dstImage->isMemObjZeroCopy()) {
         size_t hostOffset;
-        Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, dstImage->getImageDesc().image_type, dstImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
+        Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, dstImage->getImageDesc().image_type, dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes);
         isMemTransferNeeded = dstImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, cmdType);
     }
     if (!isMemTransferNeeded) {

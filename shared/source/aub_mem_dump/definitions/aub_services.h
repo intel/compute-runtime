@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@
 
 struct CmdServicesMemTraceVersion {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -160,7 +160,7 @@ struct CmdServicesMemTraceVersion {
 
 struct CmdServicesMemTraceRegisterCompare {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -230,7 +230,7 @@ struct CmdServicesMemTraceRegisterCompare {
 
 struct CmdServicesMemTraceRegisterPoll {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -308,7 +308,7 @@ struct CmdServicesMemTraceRegisterPoll {
 
 struct CmdServicesMemTraceRegisterWrite {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -382,7 +382,7 @@ struct CmdServicesMemTraceRegisterWrite {
 
 struct CmdServicesMemTraceMemoryCompare {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -527,7 +527,7 @@ struct CmdServicesMemTraceMemoryCompare {
 
 struct CmdServicesMemTraceMemoryPoll {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -665,7 +665,7 @@ struct CmdServicesMemTraceMemoryPoll {
 
 struct CmdServicesMemTraceMemoryWrite {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -816,7 +816,7 @@ struct CmdServicesMemTraceMemoryWrite {
 
 struct CmdServicesMemTraceMemoryWriteDiscontiguous {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -835,7 +835,7 @@ struct CmdServicesMemTraceMemoryWriteDiscontiguous {
     struct {
         uint64_t address;
         uint32_t dataSizeInBytes;
-    } Dword_2_To_190[63];
+    } dword2To190[63];
     int32_t getDword2To190Length() const {
         return 190 - (2) + 1;
     }
@@ -960,7 +960,7 @@ struct CmdServicesMemTraceMemoryWriteDiscontiguous {
 
 struct CmdServicesMemTraceFrameBegin {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -1002,7 +1002,7 @@ struct CmdServicesMemTraceFrameBegin {
 
 struct CmdServicesMemTraceComment {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -1049,7 +1049,7 @@ struct CmdServicesMemTraceComment {
 
 struct CmdServicesMemTraceDelay {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -1088,7 +1088,7 @@ struct CmdServicesMemTraceDelay {
 
 struct CmdServicesMemTraceMemoryDump {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -1151,7 +1151,7 @@ struct CmdServicesMemTraceMemoryDump {
 
 struct CmdServicesMemTraceTestPhaseMarker {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -1202,7 +1202,7 @@ struct CmdServicesMemTraceTestPhaseMarker {
 
 struct CmdServicesMemTraceMemoryContinuousRegion {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -1248,7 +1248,7 @@ struct CmdServicesMemTraceMemoryContinuousRegion {
 
 struct CmdServicesMemTracePredicate {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;
@@ -1308,7 +1308,7 @@ struct CmdServicesMemTracePredicate {
 
 struct CmdServicesMemTraceDumpCompress {
     union {
-        AubCmdHdr Header;
+        AubCmdHdr header;
         struct {
             uint32_t dwordCount : 16;
             uint32_t instructionSubOpcode : 7;

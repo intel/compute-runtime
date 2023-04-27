@@ -12,7 +12,7 @@ namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Image.pfnGetProperties =
+    driverDdiTable.coreDdiTable.Image.pfnGetProperties =
         [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) { return ZE_RESULT_SUCCESS; };
     const ze_image_desc_t desc = {};
     ze_image_properties_t pImageProperties = {};
@@ -29,7 +29,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWith
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Image.pfnCreate =
+    driverDdiTable.coreDdiTable.Image.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) { return ZE_RESULT_SUCCESS; };
     const ze_image_desc_t desc = {};
     ze_image_handle_t phImage = {};
@@ -46,7 +46,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetO
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Image.pfnDestroy =
+    driverDdiTable.coreDdiTable.Image.pfnDestroy =
         [](ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
     prologCbs.Image.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.Image.pfnDestroyCb = genericEpilogCallbackPtr;
@@ -84,7 +84,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     ImageGetProperties_args.instanceData0 = generateRandomHandle<void *>();
     ImageGetProperties_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Image.pfnGetProperties =
+    driverDdiTable.coreDdiTable.Image.pfnGetProperties =
         [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) {
             EXPECT_EQ(ImageGetProperties_args.hDevice1, hDevice);
             EXPECT_EQ(&ImageGetProperties_args.desc1, desc);
@@ -240,7 +240,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
     ImageCreate_args.instanceData0 = generateRandomHandle<void *>();
     ImageCreate_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Image.pfnCreate =
+    driverDdiTable.coreDdiTable.Image.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) {
             EXPECT_EQ(ImageCreate_args.hContext1, hContext);
             EXPECT_EQ(ImageCreate_args.hDevice1, hDevice);
@@ -490,7 +490,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     ImageDestroy_args.instanceData0 = generateRandomHandle<void *>();
     ImageDestroy_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Image.pfnDestroy =
+    driverDdiTable.coreDdiTable.Image.pfnDestroy =
         [](ze_image_handle_t hImage) {
             EXPECT_EQ(ImageDestroy_args.hImage1, hImage);
             return ZE_RESULT_SUCCESS;

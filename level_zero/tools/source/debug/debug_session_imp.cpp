@@ -1109,7 +1109,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
         return ret;
     }
 
-    uint64_t bindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaBuffer.SurfaceStateBaseAddress;
+    uint64_t bindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaBuffer.surfaceStateBaseAddress;
     uint64_t scratchSpaceBaseAddress = 0;
 
     auto &gfxCoreHelper = connectedDevice->getGfxCoreHelper();
@@ -1117,7 +1117,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
         auto surfaceStateForScratch = ((r0[5] >> 10) << 6);
 
         if (surfaceStateForScratch > 0) {
-            uint64_t renderSurfaceStateGpuVa = surfaceStateForScratch + sbaBuffer.SurfaceStateBaseAddress;
+            uint64_t renderSurfaceStateGpuVa = surfaceStateForScratch + sbaBuffer.surfaceStateBaseAddress;
             constexpr size_t renderSurfaceStateSize = 64;
             std::vector<char> renderSurfaceState(renderSurfaceStateSize, 0);
 
@@ -1138,18 +1138,18 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
     } else {
         auto scratchPointer = ((r0[5] >> 10) << 10);
         if (scratchPointer != 0) {
-            scratchSpaceBaseAddress = scratchPointer + sbaBuffer.GeneralStateBaseAddress;
+            scratchSpaceBaseAddress = scratchPointer + sbaBuffer.generalStateBaseAddress;
         }
     }
 
     std::vector<uint64_t> packed;
-    packed.push_back(sbaBuffer.GeneralStateBaseAddress);
-    packed.push_back(sbaBuffer.SurfaceStateBaseAddress);
-    packed.push_back(sbaBuffer.DynamicStateBaseAddress);
-    packed.push_back(sbaBuffer.IndirectObjectBaseAddress);
-    packed.push_back(sbaBuffer.InstructionBaseAddress);
-    packed.push_back(sbaBuffer.BindlessSurfaceStateBaseAddress);
-    packed.push_back(sbaBuffer.BindlessSamplerStateBaseAddress);
+    packed.push_back(sbaBuffer.generalStateBaseAddress);
+    packed.push_back(sbaBuffer.surfaceStateBaseAddress);
+    packed.push_back(sbaBuffer.dynamicStateBaseAddress);
+    packed.push_back(sbaBuffer.indirectObjectBaseAddress);
+    packed.push_back(sbaBuffer.instructionBaseAddress);
+    packed.push_back(sbaBuffer.bindlessSurfaceStateBaseAddress);
+    packed.push_back(sbaBuffer.bindlessSamplerStateBaseAddress);
     packed.push_back(bindingTableBaseAddress);
     packed.push_back(scratchSpaceBaseAddress);
 

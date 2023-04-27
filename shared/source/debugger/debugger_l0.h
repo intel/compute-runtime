@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,16 +24,16 @@ class OSInterface;
 #pragma pack(1)
 struct SbaTrackedAddresses {
     char magic[8] = "sbaarea";
-    uint64_t Reserved1 = 0;
-    uint8_t Version = 0;
-    uint8_t Reserved2[7];
-    uint64_t GeneralStateBaseAddress = 0;
-    uint64_t SurfaceStateBaseAddress = 0;
-    uint64_t DynamicStateBaseAddress = 0;
-    uint64_t IndirectObjectBaseAddress = 0;
-    uint64_t InstructionBaseAddress = 0;
-    uint64_t BindlessSurfaceStateBaseAddress = 0;
-    uint64_t BindlessSamplerStateBaseAddress = 0;
+    uint64_t reserved1 = 0;
+    uint8_t version = 0;
+    uint8_t reserved2[7];
+    uint64_t generalStateBaseAddress = 0;
+    uint64_t surfaceStateBaseAddress = 0;
+    uint64_t dynamicStateBaseAddress = 0;
+    uint64_t indirectObjectBaseAddress = 0;
+    uint64_t instructionBaseAddress = 0;
+    uint64_t bindlessSurfaceStateBaseAddress = 0;
+    uint64_t bindlessSamplerStateBaseAddress = 0;
 };
 
 struct DebugAreaHeader {

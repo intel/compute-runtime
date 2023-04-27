@@ -84,17 +84,17 @@ template <typename GfxFamily>
 void dumpBufferInBinFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context) {
     AubMemDump::AubCaptureBinaryDumpHD cmd;
     memset(&cmd, 0, sizeof(cmd));
-    cmd.Header.Type = 0x7;
-    cmd.Header.Opcode = 0x1;
-    cmd.Header.SubOp = 0x15;
-    cmd.Header.DwordLength = ((sizeof(cmd) - sizeof(cmd.Header)) / sizeof(uint32_t)) - 1;
+    cmd.header.type = 0x7;
+    cmd.header.opcode = 0x1;
+    cmd.header.subOp = 0x15;
+    cmd.header.dwordLength = ((sizeof(cmd) - sizeof(cmd.header)) / sizeof(uint32_t)) - 1;
 
     cmd.setHeight(1);
     cmd.setWidth(gfxAllocation.getUnderlyingBufferSize());
     cmd.setBaseAddr(gfxAllocation.getGpuAddress());
     cmd.setPitch(gfxAllocation.getUnderlyingBufferSize());
-    cmd.GttType = 1;
-    cmd.DirectoryHandle = context;
+    cmd.gttType = 1;
+    cmd.directoryHandle = context;
 
     stream->write(reinterpret_cast<char *>(&cmd), sizeof(cmd));
 }
@@ -105,31 +105,31 @@ void dumpImageInBmpFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFile
 
     AubMemDump::AubCmdDumpBmpHd cmd;
     memset(&cmd, 0, sizeof(cmd));
-    cmd.Header.Type = 0x7;
-    cmd.Header.Opcode = 0x1;
-    cmd.Header.SubOp = 0x44;
-    cmd.Header.DwordLength = ((sizeof(cmd) - sizeof(cmd.Header)) / sizeof(uint32_t)) - 1;
+    cmd.header.type = 0x7;
+    cmd.header.opcode = 0x1;
+    cmd.header.subOp = 0x44;
+    cmd.header.dwordLength = ((sizeof(cmd) - sizeof(cmd.header)) / sizeof(uint32_t)) - 1;
 
-    cmd.Xmin = 0;
-    cmd.Ymin = 0;
+    cmd.xMin = 0;
+    cmd.yMin = 0;
     auto pitch = gmm->gmmResourceInfo->getRenderPitch();
     auto bitsPerPixel = gmm->gmmResourceInfo->getBitsPerPixel();
     auto pitchInPixels = static_cast<uint32_t>(8 * pitch / bitsPerPixel);
-    cmd.BufferPitch = pitchInPixels;
-    cmd.BitsPerPixel = bitsPerPixel;
-    cmd.Format = gmm->gmmResourceInfo->getResourceFormatSurfaceState();
-    cmd.Xsize = static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth());
-    cmd.Ysize = static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight());
+    cmd.bufferPitch = pitchInPixels;
+    cmd.bitsPerPixel = bitsPerPixel;
+    cmd.format = gmm->gmmResourceInfo->getResourceFormatSurfaceState();
+    cmd.xSize = static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth());
+    cmd.ySize = static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight());
     cmd.setBaseAddr(gfxAllocation.getGpuAddress());
-    cmd.Secure = 0;
-    cmd.UseFence = 0;
+    cmd.secure = 0;
+    cmd.useFence = 0;
     auto flagInfo = gmm->gmmResourceInfo->getResourceFlags()->Info;
-    cmd.TileOn = flagInfo.TiledW || flagInfo.TiledX || flagInfo.TiledY || flagInfo.TiledYf || flagInfo.TiledYs;
-    cmd.WalkY = flagInfo.TiledY;
-    cmd.UsePPGTT = 1;
-    cmd.Use32BitDump = 1; // Dump out in 32bpp vs 24bpp
-    cmd.UseFullFormat = 1;
-    cmd.DirectoryHandle = context;
+    cmd.tileOn = flagInfo.TiledW || flagInfo.TiledX || flagInfo.TiledY || flagInfo.TiledYf || flagInfo.TiledYs;
+    cmd.walkY = flagInfo.TiledY;
+    cmd.usePPGTT = 1;
+    cmd.use32BitDump = 1; // Dump out in 32bpp vs 24bpp
+    cmd.useFullFormat = 1;
+    cmd.directoryHandle = context;
 
     stream->write(reinterpret_cast<char *>(&cmd), sizeof(cmd));
 }

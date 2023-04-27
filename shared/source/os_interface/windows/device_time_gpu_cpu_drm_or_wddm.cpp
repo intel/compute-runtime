@@ -15,17 +15,17 @@ namespace NEO {
 bool DeviceTimeWddm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     bool retVal = false;
 
-    pGpuCpuTime->CPUTimeinNS = 0;
-    pGpuCpuTime->GPUTimeStamp = 0;
+    pGpuCpuTime->cpuTimeinNS = 0;
+    pGpuCpuTime->gpuTimeStamp = 0;
 
     TimeStampDataHeader escapeInfo = {};
 
     if (runEscape(wddm, escapeInfo)) {
         auto &gfxCoreHelper = wddm->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-        convertTimestampsFromOaToCsDomain(gfxCoreHelper, escapeInfo.m_Data.m_Out.gpuPerfTicks, escapeInfo.m_Data.m_Out.gpuPerfFreq, static_cast<uint64_t>(wddm->getTimestampFrequency()));
+        convertTimestampsFromOaToCsDomain(gfxCoreHelper, escapeInfo.data.out.gpuPerfTicks, escapeInfo.data.out.gpuPerfFreq, static_cast<uint64_t>(wddm->getTimestampFrequency()));
 
-        osTime->getCpuTime(&pGpuCpuTime->CPUTimeinNS);
-        pGpuCpuTime->GPUTimeStamp = (unsigned long long)escapeInfo.m_Data.m_Out.gpuPerfTicks;
+        osTime->getCpuTime(&pGpuCpuTime->cpuTimeinNS);
+        pGpuCpuTime->gpuTimeStamp = (unsigned long long)escapeInfo.data.out.gpuPerfTicks;
         retVal = true;
     }
 

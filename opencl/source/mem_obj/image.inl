@@ -24,12 +24,12 @@
 namespace NEO {
 
 union SURFACE_STATE_BUFFER_LENGTH {
-    uint32_t Length;
+    uint32_t length;
     struct SurfaceState {
-        uint32_t Width : BITFIELD_RANGE(0, 6);
-        uint32_t Height : BITFIELD_RANGE(7, 20);
-        uint32_t Depth : BITFIELD_RANGE(21, 31);
-    } SurfaceState;
+        uint32_t width : BITFIELD_RANGE(0, 6);
+        uint32_t height : BITFIELD_RANGE(7, 20);
+        uint32_t depth : BITFIELD_RANGE(21, 31);
+    } surfaceState;
 };
 
 template <typename GfxFamily>
@@ -53,12 +53,12 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         // image1d_buffer is image1d created from buffer. The length of buffer could be larger
         // than the maximal image width. Mock image1d_buffer with SURFACE_TYPE_SURFTYPE_BUFFER.
         SURFACE_STATE_BUFFER_LENGTH length = {0};
-        length.Length = static_cast<uint32_t>(getImageDesc().image_width - 1);
+        length.length = static_cast<uint32_t>(getImageDesc().image_width - 1);
 
-        surfaceState->setWidth(static_cast<uint32_t>(length.SurfaceState.Width + 1));
-        surfaceState->setHeight(static_cast<uint32_t>(length.SurfaceState.Height + 1));
-        surfaceState->setDepth(static_cast<uint32_t>(length.SurfaceState.Depth + 1));
-        surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes));
+        surfaceState->setWidth(static_cast<uint32_t>(length.surfaceState.width + 1));
+        surfaceState->setHeight(static_cast<uint32_t>(length.surfaceState.height + 1));
+        surfaceState->setDepth(static_cast<uint32_t>(length.surfaceState.depth + 1));
+        surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes));
         surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
     } else {
         setImageSurfaceStateDimensions<GfxFamily>(surfaceState, imgInfo, cubeFaceIndex, surfaceType);
@@ -71,7 +71,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     surfaceState->setMipCountLod((this->mipCount > 0) ? (this->mipCount - 1) : 0);
     setMipTailStartLod<GfxFamily>(surfaceState, gmm);
 
-    cl_channel_order imgChannelOrder = getSurfaceFormatInfo().OCLImageFormat.image_channel_order;
+    cl_channel_order imgChannelOrder = getSurfaceFormatInfo().oclImageFormat.image_channel_order;
     int shaderChannelValue = ImageHw<GfxFamily>::getShaderChannelValue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, imgChannelOrder);
     surfaceState->setShaderChannelSelectRed(static_cast<typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(shaderChannelValue));
 

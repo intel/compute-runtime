@@ -823,8 +823,8 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
 
     HwTimeStamps timestamp{};
     timestamp.globalStartTS = 2;
-    event.queueTimeStamp.GPUTimeStamp = 1;
-    event.queueTimeStamp.CPUTimeinNS = 100;
+    event.queueTimeStamp.gpuTimeStamp = 1;
+    event.queueTimeStamp.cpuTimeinNS = 100;
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
     event.timeStampNode = &timestampNode;
@@ -834,7 +834,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
 
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto c0 = event.queueTimeStamp.CPUTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(event.queueTimeStamp.GPUTimeStamp, resolution);
+    auto c0 = event.queueTimeStamp.cpuTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(event.queueTimeStamp.gpuTimeStamp, resolution);
     EXPECT_EQ(start, static_cast<uint64_t>(timestamp.globalStartTS * resolution) + c0);
 
     event.timeStampNode = nullptr;
@@ -845,7 +845,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenGetEventProfilingI
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMMAND_MARKER, 0, 0);
-    event.queueTimeStamp.GPUTimeStamp = MockDeviceTimeWithConstTimestamp::gpuTimestamp;
+    event.queueTimeStamp.gpuTimeStamp = MockDeviceTimeWithConstTimestamp::gpuTimestamp;
 
     event.setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(cmdQ)));
     event.submitCommand(false);
@@ -863,7 +863,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenCalculateStartTime
 
     HwTimeStamps timestamp{};
     timestamp.globalStartTS = 2;
-    event.queueTimeStamp.GPUTimeStamp = 1;
+    event.queueTimeStamp.gpuTimeStamp = 1;
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
     event.timeStampNode = &timestampNode;
@@ -884,7 +884,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
 
     HwTimeStamps timestamp{};
     timestamp.globalStartTS = 1;
-    event.queueTimeStamp.GPUTimeStamp = 2;
+    event.queueTimeStamp.gpuTimeStamp = 2;
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
     event.timeStampNode = &timestampNode;
@@ -1311,13 +1311,13 @@ TEST_F(EventTest, WhenSettingCpuTimeStampThenCorrectTimeIsSet) {
     ev.setQueueTimeStamp();
     TimeStampData outtimeStamp = {0, 0};
     outtimeStamp = ev.getQueueTimeStamp();
-    EXPECT_NE(0ULL, outtimeStamp.CPUTimeinNS);
-    EXPECT_EQ(0ULL, outtimeStamp.GPUTimeStamp);
+    EXPECT_NE(0ULL, outtimeStamp.cpuTimeinNS);
+    EXPECT_EQ(0ULL, outtimeStamp.gpuTimeStamp);
 
     ev.setSubmitTimeStamp();
     outtimeStamp = ev.getSubmitTimeStamp();
-    EXPECT_NE(0ULL, outtimeStamp.CPUTimeinNS);
-    EXPECT_EQ(0ULL, outtimeStamp.GPUTimeStamp);
+    EXPECT_NE(0ULL, outtimeStamp.cpuTimeinNS);
+    EXPECT_EQ(0ULL, outtimeStamp.gpuTimeStamp);
 
     ev.setStartTimeStamp();
     uint64_t outCPUtimeStamp = ev.getStartTimeStamp();
@@ -1337,13 +1337,13 @@ TEST_F(EventTest, GivenNoQueueWhenSettingCpuTimeStampThenTimesIsNotSet) {
     ev.setQueueTimeStamp();
     TimeStampData outtimeStamp = {0, 0};
     outtimeStamp = ev.getQueueTimeStamp();
-    EXPECT_EQ(0ULL, outtimeStamp.CPUTimeinNS);
-    EXPECT_EQ(0ULL, outtimeStamp.GPUTimeStamp);
+    EXPECT_EQ(0ULL, outtimeStamp.cpuTimeinNS);
+    EXPECT_EQ(0ULL, outtimeStamp.gpuTimeStamp);
 
     ev.setSubmitTimeStamp();
     outtimeStamp = ev.getSubmitTimeStamp();
-    EXPECT_EQ(0ULL, outtimeStamp.CPUTimeinNS);
-    EXPECT_EQ(0ULL, outtimeStamp.GPUTimeStamp);
+    EXPECT_EQ(0ULL, outtimeStamp.cpuTimeinNS);
+    EXPECT_EQ(0ULL, outtimeStamp.gpuTimeStamp);
 
     ev.setStartTimeStamp();
     uint64_t outCPUtimeStamp = ev.getStartTimeStamp();

@@ -29,7 +29,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     imageInfo.imgDesc.numSamples = 9u;
     imageInfo.imgDesc.imageType = ImageType::Image2DArray;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.GenxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
     SurfaceOffsets surfaceOffsets;
     surfaceOffsets.offset = 0u;
@@ -68,7 +68,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     EXPECT_EQ(castSurfaceState->getYOffsetForUOrUvPlane(), surfaceOffsets.yOffsetForUVplane);
     EXPECT_EQ(castSurfaceState->getXOffsetForUOrUvPlane(), surfaceOffsets.xOffset);
 
-    EXPECT_EQ(castSurfaceState->getSurfaceFormat(), static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->GenxSurfaceFormat));
+    EXPECT_EQ(castSurfaceState->getSurfaceFormat(), static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->genxSurfaceFormat));
 
     surfaceState = std::make_unique<char[]>(size);
     castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
@@ -124,7 +124,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsEnabledThenArrayFlag
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.GenxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -147,7 +147,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsDisabledThenArrayFla
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.GenxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -170,7 +170,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsEnabledT
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.GenxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -193,7 +193,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsDisabled
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.GenxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -216,7 +216,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage1DWhen2dImageWAIsEnabledThenArrayFlag
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.GenxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -248,7 +248,7 @@ HWTEST_F(ImageWidthTest, givenMediaBlockWhenProgrammingWidthInSurfaceStateThenCo
 
     auto renderSurfaceState = FamilyType::cmdInitRenderSurfaceState;
     {
-        surfaceFormatInfo.ImageElementSizeInBytes = 1u;
+        surfaceFormatInfo.imageElementSizeInBytes = 1u;
         constexpr std::array<ImageWidthParams, 6> params = {{
             {1, 1},
             {2, 1},
@@ -260,7 +260,7 @@ HWTEST_F(ImageWidthTest, givenMediaBlockWhenProgrammingWidthInSurfaceStateThenCo
         verifyProgramming<FamilyType>(renderSurfaceState, params);
     }
     {
-        surfaceFormatInfo.ImageElementSizeInBytes = 2u;
+        surfaceFormatInfo.imageElementSizeInBytes = 2u;
         constexpr std::array<ImageWidthParams, 6> params = {{
             {1, 1},
             {2, 1},
@@ -272,7 +272,7 @@ HWTEST_F(ImageWidthTest, givenMediaBlockWhenProgrammingWidthInSurfaceStateThenCo
         verifyProgramming<FamilyType>(renderSurfaceState, params);
     }
     {
-        surfaceFormatInfo.ImageElementSizeInBytes = 4u;
+        surfaceFormatInfo.imageElementSizeInBytes = 4u;
         constexpr std::array<ImageWidthParams, 6> params = {{
             {1, 1},
             {2, 2},

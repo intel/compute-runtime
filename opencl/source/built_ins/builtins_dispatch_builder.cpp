@@ -432,7 +432,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(dstImageRedescribed)); // life range same as mdi's
 
         // Calculate srcRowPitch and srcSlicePitch
-        auto bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+        auto bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
 
         size_t region[] = {operationParams.size.x, operationParams.size.y, operationParams.size.z};
 
@@ -548,7 +548,7 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(srcImageRedescribed)); // life range same as mdi's
 
         // Calculate dstRowPitch and dstSlicePitch
-        auto bytesPerPixel = srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+        auto bytesPerPixel = srcImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
 
         size_t region[] = {operationParams.size.x, operationParams.size.y, operationParams.size.z};
 
@@ -727,8 +727,8 @@ class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
         const void *fillColor = operationParams.srcPtr;
         convertFillColor(fillColor,
                          iFillColor,
-                         image->getSurfaceFormatInfo().OCLImageFormat,
-                         imageRedescribed->getSurfaceFormatInfo().OCLImageFormat);
+                         image->getSurfaceFormatInfo().oclImageFormat,
+                         imageRedescribed->getSurfaceFormatInfo().oclImageFormat);
         kernelNoSplit3DBuilder.setArg(1, 4 * sizeof(int32_t), iFillColor);
 
         // Set-up dstOffset

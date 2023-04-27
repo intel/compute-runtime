@@ -22,11 +22,11 @@ ADAPTER_BDF gAdapterBDF{};
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int perfTicks = 0;
     ++perfTicks;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.RetCode = NEO::GTDI_RET_OK;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.gpuPerfTicks = ++perfTicks;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.cpuPerfTicks = perfTicks;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.gpuPerfFreq = 1;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.cpuPerfFreq = 1;
+    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.retCode = NEO::GTDI_RET_OK;
+    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.gpuPerfTicks = ++perfTicks;
+    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.cpuPerfTicks = perfTicks;
+    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.gpuPerfFreq = 1;
+    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.cpuPerfFreq = 1;
 
     return STATUS_SUCCESS;
 }

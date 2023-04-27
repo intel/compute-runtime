@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,8 @@ namespace NEO {
 class Context;
 
 typedef struct TagAcceleratorObjParams {
-    cl_uint AcceleratorType;
-    cl_uint AcceleratorFlags;
+    cl_uint acceleratorType;
+    cl_uint acceleratorFlags;
 } OCLRT_ACCELERATOR_OBJECT_PARAMS, *POCLRT_ACCELERATOR_OBJECT_PARAMS;
 
 template <>

@@ -482,7 +482,7 @@ HWTEST_P(MipMapWriteImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalle
     EXPECT_NE(nullptr, image.get());
 
     auto hostPtrSize = Image::calculateHostPtrSize(region, image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
-                                                   image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes, imageType);
+                                                   image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes, imageType);
     std::unique_ptr<uint32_t[]> ptr = std::unique_ptr<uint32_t[]>(new uint32_t[hostPtrSize]);
 
     retVal = pCmdQ->enqueueWriteImage(image.get(),

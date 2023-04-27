@@ -43,22 +43,22 @@ inline void setAddress(CmdServicesMemTraceMemoryCompare &cmd, uint64_t address) 
 union IAPageTableEntry {
     struct
     {
-        uint64_t Present : 1;          //[0]
-        uint64_t Writable : 1;         //[1]
-        uint64_t UserSupervisor : 1;   //[2]
-        uint64_t PWT : 1;              //[3]
-        uint64_t PCD : 1;              //[4]
-        uint64_t Accessed : 1;         //[5]
-        uint64_t Dirty : 1;            //[6]
-        uint64_t PAT : 1;              //[7]
-        uint64_t Global : 1;           //[8]
-        uint64_t Reserved_9 : 1;       //[9]
-        uint64_t Reserved_10 : 1;      //[10]
-        uint64_t Reserved_11 : 1;      //[11]
-        uint64_t PhysicalAddress : 27; //[38:12]
-        uint64_t Reserved_51_39 : 13;  //[51:39]
-        uint64_t Ignored : 11;         //[62:52]
-        uint64_t ExecuteDisable : 1;   //[63]
+        uint64_t present : 1;          //[0]
+        uint64_t writable : 1;         //[1]
+        uint64_t userSupervisor : 1;   //[2]
+        uint64_t pwt : 1;              //[3]
+        uint64_t pcd : 1;              //[4]
+        uint64_t accessed : 1;         //[5]
+        uint64_t dirty : 1;            //[6]
+        uint64_t pat : 1;              //[7]
+        uint64_t global : 1;           //[8]
+        uint64_t reserved_9 : 1;       //[9]
+        uint64_t reserved_10 : 1;      //[10]
+        uint64_t reserved_11 : 1;      //[11]
+        uint64_t physicalAddress : 27; //[38:12]
+        uint64_t reserved_51_39 : 13;  //[51:39]
+        uint64_t ignored : 11;         //[62:52]
+        uint64_t executeDisable : 1;   //[63]
     } pageConfig;
     uint32_t dwordData[2];
     uint64_t uiData;
@@ -67,11 +67,11 @@ union IAPageTableEntry {
 union MiGttEntry {
     struct
     {
-        uint64_t Present : 1;          //[0]
-        uint64_t LocalMemory : 1;      //[1]
-        uint64_t FunctionNumber : 10;  //[11:2]
-        uint64_t PhysicalAddress : 35; //[46:12]
-        uint64_t Ignored : 17;         //[63:47]
+        uint64_t present : 1;          //[0]
+        uint64_t localMemory : 1;      //[1]
+        uint64_t functionNumber : 10;  //[11:2]
+        uint64_t physicalAddress : 35; //[46:12]
+        uint64_t ignored : 17;         //[63:47]
     } pageConfig;
     uint32_t dwordData[2];
     uint64_t uiData;
@@ -272,17 +272,17 @@ struct AubDump : public std::conditional<TraitsIn::addressingBits == 32, AubPage
 
     typedef union _MiContextDescriptorReg_ {
         struct {
-            uint64_t Valid : 1;                  //[0]
-            uint64_t ForcePageDirRestore : 1;    //[1]
-            uint64_t ForceRestore : 1;           //[2]
-            uint64_t Legacy : 1;                 //[3]
-            uint64_t ADor64bitSupport : 1;       //[4] Selects 64-bit PPGTT in Legacy mode
-            uint64_t LlcCoherencySupport : 1;    //[5]
-            uint64_t FaultSupport : 2;           //[7:6]
-            uint64_t PrivilegeAccessOrPPGTT : 1; //[8] Selects PPGTT in Legacy mode
-            uint64_t FunctionType : 3;           //[11:9]
-            uint64_t LogicalRingCtxAddress : 20; //[31:12]
-            uint64_t ContextID : 32;             //[63:32]
+            uint64_t valid : 1;                  //[0]
+            uint64_t forcePageDirRestore : 1;    //[1]
+            uint64_t forceRestore : 1;           //[2]
+            uint64_t legacy : 1;                 //[3]
+            uint64_t aDor64bitSupport : 1;       //[4] Selects 64-bit PPGTT in Legacy mode
+            uint64_t llcCoherencySupport : 1;    //[5]
+            uint64_t faultSupport : 2;           //[7:6]
+            uint64_t privilegeAccessOrPPGTT : 1; //[8] Selects PPGTT in Legacy mode
+            uint64_t functionType : 3;           //[11:9]
+            uint64_t logicalRingCtxAddress : 20; //[31:12]
+            uint64_t contextID : 32;             //[63:32]
         } sData;
         uint32_t ulData[2];
         uint64_t qwordData[2 / 2];

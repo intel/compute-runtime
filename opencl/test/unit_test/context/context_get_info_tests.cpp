@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct ContextGetInfoTest : public PlatformFixture,
 
     void SetUp() override {
         PlatformFixture::setUp();
-        ContextFixture::setUp(num_devices, devices);
+        ContextFixture::setUp(numDevices, devices);
     }
 
     void TearDown() override {
@@ -69,7 +69,7 @@ TEST_F(ContextGetInfoTest, GivenNumDevicesParamNameWhenGettingInfoThenNumberOfDe
         &numDevices,
         nullptr);
 
-    EXPECT_EQ(this->num_devices, numDevices);
+    EXPECT_EQ(this->numDevices, numDevices);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = pContext->getInfo(
@@ -84,15 +84,15 @@ TEST_F(ContextGetInfoTest, GivenNumDevicesParamNameWhenGettingInfoThenNumberOfDe
 }
 
 TEST_F(ContextGetInfoTest, GivenContextDevicesParamNameWhenGettingInfoThenCorrectDeviceIdsAreReturned) {
-    auto devicesReturned = new cl_device_id[this->num_devices];
+    auto devicesReturned = new cl_device_id[this->numDevices];
     retVal = pContext->getInfo(
         CL_CONTEXT_DEVICES,
-        this->num_devices * sizeof(cl_device_id),
+        this->numDevices * sizeof(cl_device_id),
         devicesReturned,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    for (size_t deviceOrdinal = 0; deviceOrdinal < this->num_devices; ++deviceOrdinal) {
+    for (size_t deviceOrdinal = 0; deviceOrdinal < this->numDevices; ++deviceOrdinal) {
         EXPECT_EQ(devices[deviceOrdinal], devicesReturned[deviceOrdinal]);
     }
 

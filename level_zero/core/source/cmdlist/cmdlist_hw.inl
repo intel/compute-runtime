@@ -502,7 +502,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
                                                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
     auto image = Image::fromHandle(hDstImage);
-    auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
+    auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
 
     Vec3<size_t> imgSize = {image->getImageDesc().width,
                             image->getImageDesc().height,
@@ -645,7 +645,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
                                                                           ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
     auto image = Image::fromHandle(hSrcImage);
-    auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
+    auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
 
     Vec3<size_t> imgSize = {image->getImageDesc().width,
                             image->getImageDesc().height,
@@ -863,7 +863,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     }
 
     if (isCopyOnly()) {
-        auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
+        auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->imageElementSizeInBytes);
 
         Vec3<size_t> srcImgSize = {srcImage->getImageInfo().imgDesc.imageWidth,
                                    srcImage->getImageInfo().imgDesc.imageHeight,

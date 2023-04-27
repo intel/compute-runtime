@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -132,16 +132,16 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
 
     typename AUB::MiContextDescriptorReg contextDescriptor = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-    contextDescriptor.sData.Valid = true;
-    contextDescriptor.sData.ForcePageDirRestore = false;
-    contextDescriptor.sData.ForceRestore = false;
-    contextDescriptor.sData.Legacy = true;
-    contextDescriptor.sData.FaultSupport = 0;
-    contextDescriptor.sData.PrivilegeAccessOrPPGTT = true;
-    contextDescriptor.sData.ADor64bitSupport = AUB::Traits::addressingBits > 32;
+    contextDescriptor.sData.valid = true;
+    contextDescriptor.sData.forcePageDirRestore = false;
+    contextDescriptor.sData.forceRestore = false;
+    contextDescriptor.sData.legacy = true;
+    contextDescriptor.sData.faultSupport = 0;
+    contextDescriptor.sData.privilegeAccessOrPPGTT = true;
+    contextDescriptor.sData.aDor64bitSupport = AUB::Traits::addressingBits > 32;
 
-    contextDescriptor.sData.LogicalRingCtxAddress = (uintptr_t)pLRCABase / 4096;
-    contextDescriptor.sData.ContextID = 0;
+    contextDescriptor.sData.logicalRingCtxAddress = (uintptr_t)pLRCABase / 4096;
+    contextDescriptor.sData.contextID = 0;
 
     aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2510), contextDescriptor.ulData[0]);
     aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2514), contextDescriptor.ulData[1]);

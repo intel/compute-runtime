@@ -14,7 +14,7 @@
 namespace NEO {
 
 struct ClSurfaceFormatInfo {
-    cl_image_format OCLImageFormat;
+    cl_image_format oclImageFormat;
     SurfaceFormatInfo surfaceFormat;
 };
 

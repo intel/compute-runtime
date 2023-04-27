@@ -160,19 +160,19 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     CsrDependencies csrDeps;
     EnqueueProperties enqueueProperties(false, false, false, true, false, nullptr);
 
-    EXPECT_EQ(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.cpuTimeinNS, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr, false);
 
-    EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
+    EXPECT_NE(ev->submitTimeStamp.cpuTimeinNS, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
-    ev->queueTimeStamp.GPUTimeStamp = 1000;
+    ev->queueTimeStamp.gpuTimeStamp = 1000;
     ev->calculateSubmitTimestampData();
 
-    EXPECT_NE(ev->submitTimeStamp.GPUTimeStamp, 0u);
+    EXPECT_NE(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
     delete ev;
 }
@@ -198,19 +198,19 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     CsrDependencies csrDeps;
     EnqueueProperties enqueueProperties(false, false, false, true, false, nullptr);
 
-    EXPECT_EQ(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.cpuTimeinNS, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr, false);
 
-    EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
+    EXPECT_NE(ev->submitTimeStamp.cpuTimeinNS, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
-    ev->queueTimeStamp.GPUTimeStamp = 1000;
+    ev->queueTimeStamp.gpuTimeStamp = 1000;
     ev->calculateSubmitTimestampData();
 
-    EXPECT_NE(ev->submitTimeStamp.GPUTimeStamp, 0u);
+    EXPECT_NE(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
     delete ev;
 }

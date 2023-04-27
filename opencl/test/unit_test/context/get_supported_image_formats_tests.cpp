@@ -33,7 +33,7 @@ struct GetSupportedImageFormatsTest : public PlatformFixture,
 
     void SetUp() override {
         PlatformFixture::setUp();
-        ContextFixture::setUp(num_devices, devices);
+        ContextFixture::setUp(numDevices, devices);
     }
 
     void TearDown() override {
@@ -159,11 +159,11 @@ TEST_P(GetSupportedImageFormatsTest, WhenRetrievingImageFormatsSRGBThenListIsNon
 
 TEST(ImageFormats, WhenCheckingIsDepthFormatThenCorrectValueReturned) {
     for (auto &format : SurfaceFormats::readOnly20()) {
-        EXPECT_FALSE(Image::isDepthFormat(format.OCLImageFormat));
+        EXPECT_FALSE(Image::isDepthFormat(format.oclImageFormat));
     }
 
     for (auto &format : SurfaceFormats::readOnlyDepth()) {
-        EXPECT_TRUE(Image::isDepthFormat(format.OCLImageFormat));
+        EXPECT_TRUE(Image::isDepthFormat(format.oclImageFormat));
     }
 }
 

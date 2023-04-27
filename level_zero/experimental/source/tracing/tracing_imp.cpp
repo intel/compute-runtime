@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -132,7 +132,7 @@ bool ThreadPrivateTracerData::testAndSetThreadTracerDataInitializedAndOnList(voi
     return onList;
 }
 
-bool APITracerContextImp::isTracingEnabled() { return driver_ddiTable.enableTracing; }
+bool APITracerContextImp::isTracingEnabled() { return driverDdiTable.enableTracing; }
 
 //
 // Walk the list of per-thread private data structures, testing

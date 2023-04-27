@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ struct VAContextTest : public PlatformFixture,
         properties[1] = (cl_context_properties)platform;
         properties[2] = 0;
 
-        context = Context::create<Context>(properties, ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
+        context = Context::create<Context>(properties, ClDeviceVector(devices, numDevices), nullptr, nullptr, retVal);
         ASSERT_NE(nullptr, context);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ zeContextCreateTracing(ze_driver_handle_t hDriver,
                        const ze_context_desc_t *desc,
                        ze_context_handle_t *phContext) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnCreate,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Context.pfnCreate,
                                hDriver,
                                desc,
                                phContext);
@@ -26,7 +26,7 @@ zeContextCreateTracing(ze_driver_handle_t hDriver,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextCreateCb_t, Context, pfnCreateCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnCreate,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Context.pfnCreate,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -39,7 +39,7 @@ zeContextCreateTracing(ze_driver_handle_t hDriver,
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeContextDestroyTracing(ze_context_handle_t hContext) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnDestroy,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Context.pfnDestroy,
                                hContext);
 
     ze_context_destroy_params_t tracerParams;
@@ -49,7 +49,7 @@ zeContextDestroyTracing(ze_context_handle_t hContext) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextDestroyCb_t, Context, pfnDestroyCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnDestroy,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Context.pfnDestroy,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -60,7 +60,7 @@ zeContextDestroyTracing(ze_context_handle_t hContext) {
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeContextGetStatusTracing(ze_context_handle_t hContext) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnGetStatus,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Context.pfnGetStatus,
                                hContext);
 
     ze_context_get_status_params_t tracerParams;
@@ -70,7 +70,7 @@ zeContextGetStatusTracing(ze_context_handle_t hContext) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextGetStatusCb_t, Context, pfnGetStatusCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnGetStatus,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Context.pfnGetStatus,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -82,7 +82,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeContextSystemBarrierTracing(ze_context_handle_t hContext,
                               ze_device_handle_t hDevice) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnSystemBarrier,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Context.pfnSystemBarrier,
                                hContext,
                                hDevice);
 
@@ -94,7 +94,7 @@ zeContextSystemBarrierTracing(ze_context_handle_t hContext,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextSystemBarrierCb_t, Context, pfnSystemBarrierCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnSystemBarrier,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Context.pfnSystemBarrier,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -109,7 +109,7 @@ zeContextMakeMemoryResidentTracing(ze_context_handle_t hContext,
                                    void *ptr,
                                    size_t size) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnMakeMemoryResident,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Context.pfnMakeMemoryResident,
                                hContext,
                                hDevice,
                                ptr,
@@ -125,7 +125,7 @@ zeContextMakeMemoryResidentTracing(ze_context_handle_t hContext,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextMakeMemoryResidentCb_t, Context, pfnMakeMemoryResidentCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnMakeMemoryResident,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Context.pfnMakeMemoryResident,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -142,7 +142,7 @@ zeContextEvictMemoryTracing(ze_context_handle_t hContext,
                             void *ptr,
                             size_t size) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnEvictMemory,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Context.pfnEvictMemory,
                                hContext,
                                hDevice,
                                ptr,
@@ -158,7 +158,7 @@ zeContextEvictMemoryTracing(ze_context_handle_t hContext,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextEvictMemoryCb_t, Context, pfnEvictMemoryCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnEvictMemory,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Context.pfnEvictMemory,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -174,7 +174,7 @@ zeContextMakeImageResidentTracing(ze_context_handle_t hContext,
                                   ze_device_handle_t hDevice,
                                   ze_image_handle_t hImage) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnMakeImageResident,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Context.pfnMakeImageResident,
                                hContext,
                                hDevice,
                                hImage);
@@ -188,7 +188,7 @@ zeContextMakeImageResidentTracing(ze_context_handle_t hContext,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextMakeImageResidentCb_t, Context, pfnMakeImageResidentCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnMakeImageResident,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Context.pfnMakeImageResident,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -203,7 +203,7 @@ zeContextEvictImageTracing(ze_context_handle_t hContext,
                            ze_device_handle_t hDevice,
                            ze_image_handle_t hImage) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnEvictImage,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Context.pfnEvictImage,
                                hContext,
                                hDevice,
                                hImage);
@@ -217,7 +217,7 @@ zeContextEvictImageTracing(ze_context_handle_t hContext,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextEvictImageCb_t, Context, pfnEvictImageCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnEvictImage,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Context.pfnEvictImage,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

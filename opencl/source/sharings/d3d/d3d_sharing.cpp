@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,14 +87,14 @@ template <typename D3D>
 const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported) {
     ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, supportsOcl20Features);
     for (auto &format : formats) {
-        if (gmmFormat == format.surfaceFormat.GMMSurfaceFormat) {
+        if (gmmFormat == format.surfaceFormat.gmmSurfaceFormat) {
             return &format;
         }
     }
     if (packedSupported) {
         formats = SurfaceFormats::packed();
         for (auto &format : formats) {
-            if (gmmFormat == format.surfaceFormat.GMMSurfaceFormat) {
+            if (gmmFormat == format.surfaceFormat.gmmSurfaceFormat) {
                 return &format;
             }
         }

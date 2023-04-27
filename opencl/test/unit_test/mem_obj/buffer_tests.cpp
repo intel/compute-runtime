@@ -2061,11 +2061,11 @@ HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseNonBl
     auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 1, 0, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(0u, cmdQ.EnqueueWriteBufferCounter);
+    EXPECT_EQ(0u, cmdQ.enqueueWriteBufferCounter);
     retVal = clEnqueueUnmapMemObject(&cmdQ, buffer.get(), mappedPtr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, cmdQ.EnqueueWriteBufferCounter);
+    EXPECT_EQ(1u, cmdQ.enqueueWriteBufferCounter);
     EXPECT_FALSE(cmdQ.blockingWriteBuffer);
 }
 
@@ -2085,7 +2085,7 @@ HWTEST_F(BufferUnmapTest, givenBufferWithoutSharingHandlerWhenUnmappingThenDontU
     retVal = clEnqueueUnmapMemObject(&cmdQ, buffer.get(), mappedPtr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(0u, cmdQ.EnqueueWriteBufferCounter);
+    EXPECT_EQ(0u, cmdQ.enqueueWriteBufferCounter);
 }
 
 using BufferTransferTests = BufferUnmapTest;

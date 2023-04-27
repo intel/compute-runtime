@@ -50,7 +50,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     UNRECOVERABLE_IF(device == nullptr);
     this->device = device;
 
-    if (imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_INVALID) {
+    if (imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_INVALID) {
         return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
     }
 
@@ -151,7 +151,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
     {
-        const uint32_t exponent = Math::log2(imgInfo.surfaceFormat->ImageElementSizeInBytes);
+        const uint32_t exponent = Math::log2(imgInfo.surfaceFormat->imageElementSizeInBytes);
         DEBUG_BREAK_IF(exponent >= 5u);
 
         NEO::ImageInfo imgInfoRedescirebed;
@@ -169,13 +169,13 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         redescribedSurfaceState.setMipCountLod(0u);
         NEO::setMipTailStartLod<GfxFamily>(&redescribedSurfaceState, gmm);
 
-        if (imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R8_UINT_TYPE ||
-            imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R16_UINT_TYPE ||
-            imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R32_UINT_TYPE) {
+        if (imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R8_UINT_TYPE ||
+            imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R16_UINT_TYPE ||
+            imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R32_UINT_TYPE) {
             redescribedSurfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
             redescribedSurfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
             redescribedSurfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
-        } else if (imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R32G32_UINT_TYPE) {
+        } else if (imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R32G32_UINT_TYPE) {
             redescribedSurfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
             redescribedSurfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
             redescribedSurfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);

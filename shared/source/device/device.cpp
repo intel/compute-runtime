@@ -521,10 +521,10 @@ bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTime
     TimeStampData timeStamp;
     auto retVal = getOSTime()->getCpuGpuTime(&timeStamp);
     if (retVal) {
-        *hostTimestamp = timeStamp.CPUTimeinNS;
+        *hostTimestamp = timeStamp.cpuTimeinNS;
         if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
             auto resolution = getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
-            *deviceTimestamp = static_cast<uint64_t>(timeStamp.GPUTimeStamp * resolution);
+            *deviceTimestamp = static_cast<uint64_t>(timeStamp.gpuTimeStamp * resolution);
         } else
             *deviceTimestamp = *hostTimestamp;
     }

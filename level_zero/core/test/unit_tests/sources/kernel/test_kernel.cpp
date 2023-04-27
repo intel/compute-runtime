@@ -440,7 +440,7 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
 
     auto handle = imageHW->toHandle();
     auto imgInfo = imageHW->getImageInfo();
-    auto pixelSize = imgInfo.surfaceFormat->ImageElementSizeInBytes;
+    auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
 
     kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
 

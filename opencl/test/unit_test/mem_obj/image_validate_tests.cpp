@@ -25,7 +25,7 @@ typedef decltype(&Image::redescribe) RedescribeMethod;
 class ImageValidateTest : public testing::TestWithParam<cl_image_desc> {
   public:
     ImageValidateTest() {
-        imageFormat = &surfaceFormat.OCLImageFormat;
+        imageFormat = &surfaceFormat.oclImageFormat;
         imageFormat->image_channel_data_type = CL_UNSIGNED_INT8;
         imageFormat->image_channel_order = CL_RGBA;
     }
@@ -114,12 +114,12 @@ TEST(ImageDepthFormatTest, GivenDepthFormatsWhenGettingSurfaceFormatThenCorrectS
 
     auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
 
     imgFormat.image_channel_data_type = CL_UNORM_INT16;
     surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
 }
 
 TEST(ImageDepthFormatTest, GivenWriteOnlyDepthFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
@@ -129,12 +129,12 @@ TEST(ImageDepthFormatTest, GivenWriteOnlyDepthFormatsWhenGettingSurfaceFormatThe
 
     auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
 
     imgFormat.image_channel_data_type = CL_UNORM_INT16;
     surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
 }
 
 TEST(ImageDepthFormatTest, GivenDepthStencilFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
@@ -144,13 +144,13 @@ TEST(ImageDepthFormatTest, GivenDepthStencilFormatsWhenGettingSurfaceFormatThenC
 
     auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_GENERIC_32BIT);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_GENERIC_32BIT);
 
     imgFormat.image_channel_order = CL_DEPTH_STENCIL;
     imgFormat.image_channel_data_type = CL_FLOAT;
     surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R32G32_FLOAT_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32G32_FLOAT_TYPE);
 }
 
 static cl_image_desc validImageDesc[] = {
@@ -901,7 +901,7 @@ TEST(ImageValidatorTest, givenPackedYUVImage2dAsParentImageWhenValidateImageZero
 
     void *dummyPtr = reinterpret_cast<void *>(0x17);
     ClSurfaceFormatInfo surfaceFormat = {};
-    surfaceFormat.OCLImageFormat.image_channel_order = CL_RGBA;
+    surfaceFormat.oclImageFormat.image_channel_order = CL_RGBA;
     image.imageFormat.image_channel_order = CL_YUYV_INTEL;
 
     descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -920,7 +920,7 @@ TEST(ImageValidatorTest, givenPackedYUVImage2dAsParentImageWhenValidateImageTwoC
 
     void *dummyPtr = reinterpret_cast<void *>(0x17);
     ClSurfaceFormatInfo surfaceFormat = {};
-    surfaceFormat.OCLImageFormat.image_channel_order = CL_RG;
+    surfaceFormat.oclImageFormat.image_channel_order = CL_RG;
     image.imageFormat.image_channel_order = CL_YUYV_INTEL;
 
     descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -941,7 +941,7 @@ TEST(ImageValidatorTest, givenPackedYUVImage2dAsParentImageWhenValidateImageInva
     ClSurfaceFormatInfo surfaceFormat = {};
     image.imageDesc.image_width = 4u;
     image.imageDesc.image_height = 4u;
-    surfaceFormat.OCLImageFormat.image_channel_order = CL_RGBA;
+    surfaceFormat.oclImageFormat.image_channel_order = CL_RGBA;
     image.imageFormat.image_channel_order = CL_YUYV_INTEL;
 
     descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -962,7 +962,7 @@ TEST(ImageValidatorTest, givenPackedYUVImage2dAsParentImageWhenValidateImageInva
     ClSurfaceFormatInfo surfaceFormat = {};
     image.imageDesc.image_width = 4u;
     image.imageDesc.image_height = 4u;
-    surfaceFormat.OCLImageFormat.image_channel_order = CL_RG;
+    surfaceFormat.oclImageFormat.image_channel_order = CL_RG;
     image.imageFormat.image_channel_order = CL_YUYV_INTEL;
 
     descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -1002,8 +1002,8 @@ TEST(ImageValidatorTest, givenNonNV12Image2dAsParentImageWhenValidateImageZeroSi
     image.imageFormat.image_channel_order = CL_BGRA;
     image.imageFormat.image_channel_data_type = CL_UNORM_INT8;
 
-    surfaceFormat.OCLImageFormat.image_channel_order = CL_sBGRA;
-    surfaceFormat.OCLImageFormat.image_channel_data_type = CL_UNORM_INT8;
+    surfaceFormat.oclImageFormat.image_channel_order = CL_sBGRA;
+    surfaceFormat.oclImageFormat.image_channel_data_type = CL_UNORM_INT8;
     descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
     descriptor.image_height = 0;
     descriptor.image_width = 0;

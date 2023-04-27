@@ -564,17 +564,17 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBufferAub(uint64_t batchB
     {
         typename AUB::MiContextDescriptorReg contextDescriptor = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-        contextDescriptor.sData.Valid = true;
-        contextDescriptor.sData.ForcePageDirRestore = false;
-        contextDescriptor.sData.ForceRestore = false;
-        contextDescriptor.sData.Legacy = true;
-        contextDescriptor.sData.FaultSupport = 0;
-        contextDescriptor.sData.PrivilegeAccessOrPPGTT = true;
-        contextDescriptor.sData.ADor64bitSupport = AUB::Traits::addressingBits > 32;
+        contextDescriptor.sData.valid = true;
+        contextDescriptor.sData.forcePageDirRestore = false;
+        contextDescriptor.sData.forceRestore = false;
+        contextDescriptor.sData.legacy = true;
+        contextDescriptor.sData.faultSupport = 0;
+        contextDescriptor.sData.privilegeAccessOrPPGTT = true;
+        contextDescriptor.sData.aDor64bitSupport = AUB::Traits::addressingBits > 32;
 
         auto ggttLRCA = engineInfo.ggttLRCA;
-        contextDescriptor.sData.LogicalRingCtxAddress = ggttLRCA / 4096;
-        contextDescriptor.sData.ContextID = 0;
+        contextDescriptor.sData.logicalRingCtxAddress = ggttLRCA / 4096;
+        contextDescriptor.sData.contextID = 0;
 
         this->submitLRCA(contextDescriptor);
     }

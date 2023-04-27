@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ zeCommandListAppendMemoryCopyTracing(ze_command_list_handle_t hCommandList,
                                      uint32_t numWaitEvents,
                                      ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopy,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryCopy,
                                hCommandList,
                                dstptr,
                                srcptr,
@@ -38,7 +38,7 @@ zeCommandListAppendMemoryCopyTracing(ze_command_list_handle_t hCommandList,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendMemoryCopyCb_t, CommandList, pfnAppendMemoryCopyCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopy,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryCopy,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -62,7 +62,7 @@ zeCommandListAppendMemoryFillTracing(ze_command_list_handle_t hCommandList,
                                      uint32_t numWaitEvents,
                                      ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryFill,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryFill,
                                hCommandList,
                                ptr,
                                pattern,
@@ -86,7 +86,7 @@ zeCommandListAppendMemoryFillTracing(ze_command_list_handle_t hCommandList,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendMemoryFillCb_t, CommandList, pfnAppendMemoryFillCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryFill,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryFill,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -115,7 +115,7 @@ zeCommandListAppendMemoryCopyRegionTracing(ze_command_list_handle_t hCommandList
                                            uint32_t numWaitEvents,
                                            ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyRegion,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryCopyRegion,
                                hCommandList,
                                dstptr,
                                dstRegion,
@@ -147,7 +147,7 @@ zeCommandListAppendMemoryCopyRegionTracing(ze_command_list_handle_t hCommandList
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendMemoryCopyRegionCb_t, CommandList, pfnAppendMemoryCopyRegionCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyRegion,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryCopyRegion,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -176,7 +176,7 @@ zeCommandListAppendMemoryCopyFromContextTracing(ze_command_list_handle_t hComman
                                                 uint32_t numWaitEvents,
                                                 ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyFromContext,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryCopyFromContext,
                                hCommandList,
                                dstptr,
                                hContextSrc,
@@ -200,7 +200,7 @@ zeCommandListAppendMemoryCopyFromContextTracing(ze_command_list_handle_t hComman
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendMemoryCopyFromContextCb_t, CommandList, pfnAppendMemoryCopyFromContextCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyFromContext,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryCopyFromContext,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -223,7 +223,7 @@ zeCommandListAppendImageCopyTracing(ze_command_list_handle_t hCommandList,
                                     uint32_t numWaitEvents,
                                     ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopy,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendImageCopy,
                                hCommandList,
                                hDstImage,
                                hSrcImage,
@@ -243,7 +243,7 @@ zeCommandListAppendImageCopyTracing(ze_command_list_handle_t hCommandList,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendImageCopyCb_t, CommandList, pfnAppendImageCopyCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopy,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendImageCopy,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -266,7 +266,7 @@ zeCommandListAppendImageCopyRegionTracing(ze_command_list_handle_t hCommandList,
                                           uint32_t numWaitEvents,
                                           ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyRegion,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendImageCopyRegion,
                                hCommandList,
                                hDstImage,
                                hSrcImage,
@@ -290,7 +290,7 @@ zeCommandListAppendImageCopyRegionTracing(ze_command_list_handle_t hCommandList,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendImageCopyRegionCb_t, CommandList, pfnAppendImageCopyRegionCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyRegion,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendImageCopyRegion,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -314,7 +314,7 @@ zeCommandListAppendImageCopyToMemoryTracing(ze_command_list_handle_t hCommandLis
                                             uint32_t numWaitEvents,
                                             ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyToMemory,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendImageCopyToMemory,
                                hCommandList,
                                dstptr,
                                hSrcImage,
@@ -336,7 +336,7 @@ zeCommandListAppendImageCopyToMemoryTracing(ze_command_list_handle_t hCommandLis
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendImageCopyToMemoryCb_t, CommandList, pfnAppendImageCopyToMemoryCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyToMemory,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendImageCopyToMemory,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -359,7 +359,7 @@ zeCommandListAppendImageCopyFromMemoryTracing(ze_command_list_handle_t hCommandL
                                               uint32_t numWaitEvents,
                                               ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyFromMemory,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendImageCopyFromMemory,
                                hCommandList,
                                hDstImage,
                                srcptr,
@@ -381,7 +381,7 @@ zeCommandListAppendImageCopyFromMemoryTracing(ze_command_list_handle_t hCommandL
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendImageCopyFromMemoryCb_t, CommandList, pfnAppendImageCopyFromMemoryCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyFromMemory,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendImageCopyFromMemory,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -400,7 +400,7 @@ zeCommandListAppendMemoryPrefetchTracing(ze_command_list_handle_t hCommandList,
                                          const void *ptr,
                                          size_t size) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryPrefetch,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryPrefetch,
                                hCommandList,
                                ptr,
                                size);
@@ -414,7 +414,7 @@ zeCommandListAppendMemoryPrefetchTracing(ze_command_list_handle_t hCommandList,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendMemoryPrefetchCb_t, CommandList, pfnAppendMemoryPrefetchCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryPrefetch,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryPrefetch,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -431,7 +431,7 @@ zeCommandListAppendMemAdviseTracing(ze_command_list_handle_t hCommandList,
                                     size_t size,
                                     ze_memory_advice_t advice) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemAdvise,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemAdvise,
                                hCommandList,
                                hDevice,
                                ptr,
@@ -449,7 +449,7 @@ zeCommandListAppendMemAdviseTracing(ze_command_list_handle_t hCommandList,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendMemAdviseCb_t, CommandList, pfnAppendMemAdviseCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemAdvise,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemAdvise,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

@@ -16,9 +16,9 @@ typedef struct GFX_ESCAPE_HEADER { // NOLINT(readability-identifier-naming)
     union {
         struct
         {
-            unsigned int Size;
-            unsigned int CheckSum;
-            unsigned int EscapeCode;
+            unsigned int Size;       // NOLINT(readability-identifier-naming)
+            unsigned int CheckSum;   // NOLINT(readability-identifier-naming)
+            unsigned int EscapeCode; // NOLINT(readability-identifier-naming)
 
             unsigned int ulReserved;
         };

@@ -87,17 +87,17 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
     AubMemDump::AubCaptureBinaryDumpHD cmd;
     memcpy(&cmd, mockAubFileStream->getData(), mockAubFileStream->getSize());
 
-    EXPECT_EQ(0x7u, cmd.Header.Type);
-    EXPECT_EQ(0x1u, cmd.Header.Opcode);
-    EXPECT_EQ(0x15u, cmd.Header.SubOp);
-    EXPECT_EQ(((sizeof(cmd) - sizeof(cmd.Header)) / sizeof(uint32_t)) - 1, cmd.Header.DwordLength);
+    EXPECT_EQ(0x7u, cmd.header.type);
+    EXPECT_EQ(0x1u, cmd.header.opcode);
+    EXPECT_EQ(0x15u, cmd.header.subOp);
+    EXPECT_EQ(((sizeof(cmd) - sizeof(cmd.header)) / sizeof(uint32_t)) - 1, cmd.header.dwordLength);
 
     EXPECT_EQ(gfxAllocation->getGpuAddress(), cmd.getBaseAddr());
     EXPECT_EQ(static_cast<uint32_t>(gfxAllocation->getUnderlyingBufferSize()), cmd.getWidth());
     EXPECT_EQ(1u, cmd.getHeight());
     EXPECT_EQ(static_cast<uint32_t>(gfxAllocation->getUnderlyingBufferSize()), cmd.getPitch());
-    EXPECT_EQ(1u, cmd.GttType);
-    EXPECT_EQ(handle, cmd.DirectoryHandle);
+    EXPECT_EQ(1u, cmd.gttType);
+    EXPECT_EQ(handle, cmd.directoryHandle);
 }
 
 HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubDumpBufferFormatIsSetToTreThenBufferShouldBeDumpedInTreFormat) {
@@ -160,29 +160,29 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     AubMemDump::AubCmdDumpBmpHd cmd;
     memcpy(&cmd, mockAubFileStream->getData(), mockAubFileStream->getSize());
 
-    EXPECT_EQ(0x7u, cmd.Header.Type);
-    EXPECT_EQ(0x1u, cmd.Header.Opcode);
-    EXPECT_EQ(0x44u, cmd.Header.SubOp);
-    EXPECT_EQ(((sizeof(cmd) - sizeof(cmd.Header)) / sizeof(uint32_t)) - 1, cmd.Header.DwordLength);
+    EXPECT_EQ(0x7u, cmd.header.type);
+    EXPECT_EQ(0x1u, cmd.header.opcode);
+    EXPECT_EQ(0x44u, cmd.header.subOp);
+    EXPECT_EQ(((sizeof(cmd) - sizeof(cmd.header)) / sizeof(uint32_t)) - 1, cmd.header.dwordLength);
 
-    EXPECT_EQ(0u, cmd.Xmin);
-    EXPECT_EQ(0u, cmd.Ymin);
+    EXPECT_EQ(0u, cmd.xMin);
+    EXPECT_EQ(0u, cmd.yMin);
     auto gmm = gfxAllocation->getDefaultGmm();
-    EXPECT_EQ((8 * gmm->gmmResourceInfo->getRenderPitch()) / gmm->gmmResourceInfo->getBitsPerPixel(), cmd.BufferPitch);
-    EXPECT_EQ(gmm->gmmResourceInfo->getBitsPerPixel(), cmd.BitsPerPixel);
-    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getResourceFormatSurfaceState()), cmd.Format);
-    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth()), cmd.Xsize);
-    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight()), cmd.Ysize);
+    EXPECT_EQ((8 * gmm->gmmResourceInfo->getRenderPitch()) / gmm->gmmResourceInfo->getBitsPerPixel(), cmd.bufferPitch);
+    EXPECT_EQ(gmm->gmmResourceInfo->getBitsPerPixel(), cmd.bitsPerPixel);
+    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getResourceFormatSurfaceState()), cmd.format);
+    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth()), cmd.xSize);
+    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight()), cmd.ySize);
     EXPECT_EQ(gfxAllocation->getGpuAddress(), cmd.getBaseAddr());
-    EXPECT_EQ(0u, cmd.Secure);
-    EXPECT_EQ(0u, cmd.UseFence);
+    EXPECT_EQ(0u, cmd.secure);
+    EXPECT_EQ(0u, cmd.useFence);
     auto flagInfo = gmm->gmmResourceInfo->getResourceFlags()->Info;
-    EXPECT_EQ(static_cast<uint32_t>(flagInfo.TiledW || flagInfo.TiledX || flagInfo.TiledY || flagInfo.TiledYf || flagInfo.TiledYs), cmd.TileOn);
-    EXPECT_EQ(flagInfo.TiledY, cmd.WalkY);
-    EXPECT_EQ(1u, cmd.UsePPGTT);
-    EXPECT_EQ(1u, cmd.Use32BitDump);
-    EXPECT_EQ(1u, cmd.UseFullFormat);
-    EXPECT_EQ(handle, cmd.DirectoryHandle);
+    EXPECT_EQ(static_cast<uint32_t>(flagInfo.TiledW || flagInfo.TiledX || flagInfo.TiledY || flagInfo.TiledYf || flagInfo.TiledYs), cmd.tileOn);
+    EXPECT_EQ(flagInfo.TiledY, cmd.walkY);
+    EXPECT_EQ(1u, cmd.usePPGTT);
+    EXPECT_EQ(1u, cmd.use32BitDump);
+    EXPECT_EQ(1u, cmd.useFullFormat);
+    EXPECT_EQ(handle, cmd.directoryHandle);
 }
 
 HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDumpImageFormatIsSetToTreThenImageShouldBeDumpedInTreFormat) {

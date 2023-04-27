@@ -1596,7 +1596,7 @@ HWTEST_F(BcsTestsImages, givenImage1DWhenAdjustBlitPropertiesForImageIsCalledThe
     imgDesc.image_height = 0u;
     imgDesc.image_depth = 0u;
     std::unique_ptr<Image> image(Image1dHelper<>::create(context.get(), &imgDesc));
-    size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
     size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
     BlitProperties blitProperties{};
@@ -1624,7 +1624,7 @@ HWTEST_F(BcsTestsImages, givenImage1DBufferWhenAdjustBlitPropertiesForImageIsCal
     imgFormat.image_channel_order = CL_RGBA;
     imgFormat.image_channel_data_type = CL_UNSIGNED_INT8;
     std::unique_ptr<Image> image(Image1dHelper<>::create(context.get(), &imgDesc, &imgFormat));
-    size_t originalBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    size_t originalBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     size_t expectedBytesPerPixel = 1;
     BlitProperties blitProperties{};
     blitProperties.srcGpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
@@ -1656,7 +1656,7 @@ HWTEST_F(BcsTestsImages, givenImage2DArrayWhenAdjustBlitPropertiesForImageIsCall
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
 
     std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
-    size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
     size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
     BlitProperties blitProperties{};
@@ -1729,7 +1729,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesA
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto expectedDstPtr = image->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
-    auto expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    auto expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto srcRowPitchExpected = expectedBytesPerPixel * builtinOpParams.size.x;
     auto dstRowPitchExpected = image->getImageDesc().image_row_pitch;
     auto srcSlicePitchExpected = srcRowPitchExpected * builtinOpParams.size.y;
@@ -1767,7 +1767,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesA
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto expectedSrcPtr = image->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
-    auto expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    auto expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto srcRowPitchExpected = image->getImageDesc().image_row_pitch;
     auto dstRowPitchExpected = expectedBytesPerPixel * builtinOpParams.size.x;
     auto srcSlicePitchExpected = image->getImageDesc().image_slice_pitch;

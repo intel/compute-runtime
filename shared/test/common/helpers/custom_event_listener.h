@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,17 +22,15 @@ extern const char *executionName;
 
 class CCustomEventListener : public ::testing::TestEventListener {
   public:
-    CCustomEventListener(::testing::TestEventListener *listener) : hardwarePrefix("---") {
-        _listener = listener;
-    }
+    CCustomEventListener(::testing::TestEventListener *listener) : listener(listener), hardwarePrefix("---") {}
 
-    CCustomEventListener(::testing::TestEventListener *listener, const char *hardwarePrefix) : _listener(listener), hardwarePrefix(hardwarePrefix) {
+    CCustomEventListener(::testing::TestEventListener *listener, const char *hardwarePrefix) : listener(listener), hardwarePrefix(hardwarePrefix) {
         std::transform(this->hardwarePrefix.begin(), this->hardwarePrefix.end(), this->hardwarePrefix.begin(),
                        [](unsigned char c) { return std::toupper(c); });
     }
 
     ~CCustomEventListener() override {
-        delete _listener;
+        delete listener;
     }
 
   private:
@@ -75,7 +73,7 @@ class CCustomEventListener : public ::testing::TestEventListener {
         if (testPartResult.failed()) {
             printf("\n");
         }
-        _listener->OnTestPartResult(testPartResult);
+        listener->OnTestPartResult(testPartResult);
     }
 
     void OnTestEnd(const ::testing::TestInfo &testCase) override {
@@ -162,7 +160,7 @@ class CCustomEventListener : public ::testing::TestEventListener {
         fflush(stdout);
     }
 
-    ::testing::TestEventListener *_listener;
+    ::testing::TestEventListener *listener;
     std::vector<std::pair<std::string, int>> testFailures;
 
     int currentSeed = -1;

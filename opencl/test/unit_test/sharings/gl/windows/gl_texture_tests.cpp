@@ -218,7 +218,7 @@ TEST_F(GlSharingTextureTests, givenDifferentHwFormatWhenSurfaceFormatInfoIsSetTh
     ASSERT_NE(format, nullptr);
     auto newHwFormat = 217u;
 
-    EXPECT_TRUE(format->surfaceFormat.GenxSurfaceFormat != newHwFormat);
+    EXPECT_TRUE(format->surfaceFormat.genxSurfaceFormat != newHwFormat);
 
     glSharing->textureInfoOutput.glHWFormat = newHwFormat;
     glSharing->textureInfoOutput.glInternalFormat = GL_DEPTH32F_STENCIL8;
@@ -227,7 +227,7 @@ TEST_F(GlSharingTextureTests, givenDifferentHwFormatWhenSurfaceFormatInfoIsSetTh
 
     auto glTexture = GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_ONLY, GL_TEXTURE_2D, 0, textureId, &retVal);
     ASSERT_NE(nullptr, glTexture);
-    EXPECT_TRUE(newHwFormat == glTexture->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat);
+    EXPECT_TRUE(newHwFormat == glTexture->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat);
 
     delete glTexture;
 }
@@ -240,7 +240,7 @@ TEST_F(GlSharingTextureTests, givenGLRGB10FormatWhenSharedGlTextureIsCreatedThen
 
     std::unique_ptr<Image> glTexture(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_ONLY, GL_TEXTURE_2D, 0, textureId, &retVal));
     ASSERT_NE(nullptr, glTexture);
-    EXPECT_EQ(glTexture->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat, GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM);
+    EXPECT_EQ(glTexture->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat, GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM);
 }
 
 TEST_F(GlSharingTextureTests, givenContextAnd1dTextureWhenClCreateFromGlTextureIsCalledThenImageIsReturned) {

@@ -82,8 +82,8 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
     auto osTime(OSTime::create(nullptr));
     auto success = osTime->getCpuGpuTime(&CPUGPUTime);
     EXPECT_TRUE(success);
-    EXPECT_EQ(0u, CPUGPUTime.CPUTimeinNS);
-    EXPECT_EQ(0u, CPUGPUTime.GPUTimeStamp);
+    EXPECT_EQ(0u, CPUGPUTime.cpuTimeinNS);
+    EXPECT_EQ(0u, CPUGPUTime.gpuTimeStamp);
 }
 
 TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
@@ -98,12 +98,12 @@ TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
     auto osTime = OSTime::create(osInterface.get());
     auto success = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_TRUE(success);
-    EXPECT_NE(0u, CPUGPUTime01.CPUTimeinNS);
-    EXPECT_NE(0u, CPUGPUTime01.GPUTimeStamp);
+    EXPECT_NE(0u, CPUGPUTime01.cpuTimeinNS);
+    EXPECT_NE(0u, CPUGPUTime01.gpuTimeStamp);
     success = osTime->getCpuGpuTime(&CPUGPUTime02);
     EXPECT_TRUE(success);
-    EXPECT_NE(0u, CPUGPUTime02.CPUTimeinNS);
-    EXPECT_NE(0u, CPUGPUTime02.GPUTimeStamp);
-    EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
-    EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
+    EXPECT_NE(0u, CPUGPUTime02.cpuTimeinNS);
+    EXPECT_NE(0u, CPUGPUTime02.gpuTimeStamp);
+    EXPECT_GT(CPUGPUTime02.gpuTimeStamp, CPUGPUTime01.gpuTimeStamp);
+    EXPECT_GT(CPUGPUTime02.cpuTimeinNS, CPUGPUTime01.cpuTimeinNS);
 }

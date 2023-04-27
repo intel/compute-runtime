@@ -882,8 +882,8 @@ ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *de
     if (!retVal)
         return ZE_RESULT_ERROR_DEVICE_LOST;
 
-    *deviceTimestamp = queueTimeStamp.GPUTimeStamp;
-    *hostTimestamp = queueTimeStamp.CPUTimeinNS;
+    *deviceTimestamp = queueTimeStamp.gpuTimeStamp;
+    *hostTimestamp = queueTimeStamp.cpuTimeinNS;
 
     return ZE_RESULT_SUCCESS;
 }

@@ -202,10 +202,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNo
         &event);
 
     auto mockEvent = static_cast<MockEvent<Event> *>(event);
-    EXPECT_NE(0u, mockEvent->queueTimeStamp.GPUTimeStamp);
-    EXPECT_NE(0u, mockEvent->queueTimeStamp.CPUTimeinNS);
-    EXPECT_LT(mockEvent->queueTimeStamp.CPUTimeinNS, mockEvent->submitTimeStamp.CPUTimeinNS);
-    EXPECT_EQ(0u, mockEvent->submitTimeStamp.GPUTimeStamp);
+    EXPECT_NE(0u, mockEvent->queueTimeStamp.gpuTimeStamp);
+    EXPECT_NE(0u, mockEvent->queueTimeStamp.cpuTimeinNS);
+    EXPECT_LT(mockEvent->queueTimeStamp.cpuTimeinNS, mockEvent->submitTimeStamp.cpuTimeinNS);
+    EXPECT_EQ(0u, mockEvent->submitTimeStamp.gpuTimeStamp);
 
     clReleaseEvent(event);
 }
@@ -599,11 +599,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhen
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     cl_event clEvent = &event;
 
-    event.queueTimeStamp.CPUTimeinNS = 1;
-    event.queueTimeStamp.GPUTimeStamp = 2;
+    event.queueTimeStamp.cpuTimeinNS = 1;
+    event.queueTimeStamp.gpuTimeStamp = 2;
 
-    event.submitTimeStamp.CPUTimeinNS = 3;
-    event.submitTimeStamp.GPUTimeStamp = 4;
+    event.submitTimeStamp.cpuTimeinNS = 3;
+    event.submitTimeStamp.gpuTimeStamp = 4;
 
     event.setCPUProfilingPath(false);
     event.timeStampNode = &timestampNode;
@@ -620,8 +620,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhen
     EXPECT_EQ(timestamp.contextCompleteTS, complete);
     EXPECT_EQ(timestamp.contextEndTS, end);
     EXPECT_EQ(timestamp.contextStartTS, start);
-    EXPECT_EQ(event.submitTimeStamp.GPUTimeStamp, submited);
-    EXPECT_EQ(event.queueTimeStamp.GPUTimeStamp, queued);
+    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submited);
+    EXPECT_EQ(event.queueTimeStamp.gpuTimeStamp, queued);
     event.timeStampNode = nullptr;
 }
 
@@ -651,8 +651,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenS
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     cl_event clEvent = &event;
 
-    event.queueTimeStamp.CPUTimeinNS = 83;
-    event.queueTimeStamp.GPUTimeStamp = 1;
+    event.queueTimeStamp.cpuTimeinNS = 83;
+    event.queueTimeStamp.gpuTimeStamp = 1;
 
     event.setCPUProfilingPath(false);
     event.timeStampNode = &timestampNode;

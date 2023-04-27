@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ struct GlContextTest : public PlatformFixture, public ::testing::Test {
         properties[1] = reinterpret_cast<cl_context_properties>(static_cast<cl_platform_id>(pPlatform));
         properties[2] = 0;
 
-        context = Context::create<MockContext>(properties, ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
+        context = Context::create<MockContext>(properties, ClDeviceVector(devices, numDevices), nullptr, nullptr, retVal);
         ASSERT_NE(nullptr, context);
     }
 

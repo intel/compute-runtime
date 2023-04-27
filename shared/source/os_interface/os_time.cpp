@@ -16,8 +16,8 @@ double OSTime::getDeviceTimerResolution(HardwareInfo const &hwInfo) {
 };
 
 bool DeviceTime::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
-    pGpuCpuTime->CPUTimeinNS = 0;
-    pGpuCpuTime->GPUTimeStamp = 0;
+    pGpuCpuTime->cpuTimeinNS = 0;
+    pGpuCpuTime->gpuTimeStamp = 0;
 
     return true;
 }

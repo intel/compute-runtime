@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,12 +40,12 @@ TEST_P(SnormSurfaceFormatAccessFlagsTests, givenSnormFormatWhenGetSurfaceFormatF
     cl_mem_flags flags = GetParam();
 
     for (const auto &snormSurfaceFormat : referenceSnormSurfaceFormats) {
-        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.OCLImageFormat, false /* supportsOcl20Features */);
+        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.oclImageFormat, false /* supportsOcl20Features */);
         EXPECT_NE(nullptr, format);
         EXPECT_TRUE(memcmp(&snormSurfaceFormat, format, sizeof(ClSurfaceFormatInfo)) == 0);
     }
     for (const auto &snormSurfaceFormat : referenceSnormSurfaceFormats) {
-        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.OCLImageFormat, true /* supportsOcl20Features */);
+        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.oclImageFormat, true /* supportsOcl20Features */);
         EXPECT_NE(nullptr, format);
         EXPECT_TRUE(memcmp(&snormSurfaceFormat, format, sizeof(ClSurfaceFormatInfo)) == 0);
     }
@@ -58,7 +58,7 @@ TEST_P(SnormSurfaceFormatTests, givenSnormOclFormatWhenCheckingrReadOnlySurfaceF
 
     size_t snormFormatsFound = 0;
     for (const auto &format : formatsTable) {
-        auto oclFormat = format.OCLImageFormat;
+        auto oclFormat = format.oclImageFormat;
         if (CL_SNORM_INT8 == oclFormat.image_channel_data_type || CL_SNORM_INT16 == oclFormat.image_channel_data_type) {
             EXPECT_TRUE(oclFormat.image_channel_order == CL_R || oclFormat.image_channel_order == CL_RG || oclFormat.image_channel_order == CL_RGBA);
             snormFormatsFound++;

@@ -93,7 +93,7 @@ TEST_P(CreateTiledImageTest, GivenSharedTiledImageWhenCheckingIsTiledThenTrueRet
     ImageInfo info = {};
     McsSurfaceInfo msi = {};
     ClSurfaceFormatInfo surfaceFormat;
-    surfaceFormat.surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
+    surfaceFormat.surfaceFormat.gmmSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
     info.surfaceFormat = &surfaceFormat.surfaceFormat;
 
     info.imgDesc = Image::convertDescriptor(imageDesc);
@@ -133,7 +133,7 @@ TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
 
     imageDesc.image_height = 1;
 
-    surfaceFormat.surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
+    surfaceFormat.surfaceFormat.gmmSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
     info.surfaceFormat = &surfaceFormat.surfaceFormat;
 
     info.imgDesc = Image::convertDescriptor(imageDesc);

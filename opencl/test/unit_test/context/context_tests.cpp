@@ -62,7 +62,7 @@ struct ContextTest : public PlatformFixture,
         properties.push_back(reinterpret_cast<cl_context_properties>(pPlatform));
         properties.push_back(0);
 
-        context = Context::create<WhiteBoxContext>(properties.data(), ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
+        context = Context::create<WhiteBoxContext>(properties.data(), ClDeviceVector(devices, numDevices), nullptr, nullptr, retVal);
         ASSERT_NE(nullptr, context);
     }
 

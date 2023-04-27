@@ -53,7 +53,7 @@ void PerfProfiler::destroyAll() {
 }
 
 PerfProfiler::PerfProfiler(int id, std::unique_ptr<std::ostream> &&logOut, std::unique_ptr<std::ostream> &&sysLogOut) {
-    ApiTimer.setFreq();
+    apiTimer.setFreq();
 
     systemLogs.reserve(20);
 

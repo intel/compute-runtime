@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -193,12 +193,12 @@ enum class ImagePlane {
 };
 
 struct SurfaceFormatInfo {
-    GMM_RESOURCE_FORMAT GMMSurfaceFormat;
-    GFX3DSTATE_SURFACEFORMAT GenxSurfaceFormat;
-    uint32_t GMMTileWalk;
-    uint32_t NumChannels;
-    uint32_t PerChannelSizeInBytes;
-    size_t ImageElementSizeInBytes;
+    GMM_RESOURCE_FORMAT gmmSurfaceFormat;
+    GFX3DSTATE_SURFACEFORMAT genxSurfaceFormat;
+    uint32_t gmmTileWalk;
+    uint32_t numChannels;
+    uint32_t perChannelSizeInBytes;
+    size_t imageElementSizeInBytes;
 };
 
 enum class ImageType {

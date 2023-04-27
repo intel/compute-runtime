@@ -42,8 +42,8 @@ GLboolean GLSharingFunctionsLinux::setSharedOCLContextState() {
     if (retVal == GL_FALSE) {
         return GL_FALSE;
     }
-    glContextHandle = contextInfo.ContextHandle;
-    glDeviceHandle = contextInfo.DeviceHandle;
+    glContextHandle = contextInfo.contextHandle;
+    glDeviceHandle = contextInfo.deviceHandle;
 
     return retVal;
 }

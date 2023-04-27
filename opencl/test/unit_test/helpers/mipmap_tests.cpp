@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ TEST(MipmapHelper, givenBufferWhenIsMipMappedIsCalledThenFalseIsReturned) {
 struct MockImage : MockImageBase {
 
     MockImage() : MockImageBase() {
-        surfaceFormatInfo.surfaceFormat.ImageElementSizeInBytes = 4u;
+        surfaceFormatInfo.surfaceFormat.imageElementSizeInBytes = 4u;
     }
 };
 

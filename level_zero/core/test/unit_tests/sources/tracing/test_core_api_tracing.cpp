@@ -204,7 +204,7 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOnePrologAndNoEpilogWi
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> prologCallbacks;
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> prologCallback;
-    prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
+    prologCallback.currentApiCallback = prologCbs.CommandList.pfnCloseCb;
     prologCallback.pUserData = &userData;
     prologCallbacks.push_back(prologCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
@@ -231,8 +231,8 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> prologCallback;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> epilogCallback;
-    prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
-    epilogCallback.current_api_callback = epilogCbs.CommandList.pfnCloseCb;
+    prologCallback.currentApiCallback = prologCbs.CommandList.pfnCloseCb;
+    epilogCallback.currentApiCallback = epilogCbs.CommandList.pfnCloseCb;
     prologCallback.pUserData = &userData;
     epilogCallback.pUserData = &userData;
     prologCallbacks.push_back(prologCallback);
@@ -261,8 +261,8 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> prologCallback;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> epilogCallback;
-    prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
-    epilogCallback.current_api_callback = epilogCbs.CommandList.pfnCloseCb;
+    prologCallback.currentApiCallback = prologCbs.CommandList.pfnCloseCb;
+    epilogCallback.currentApiCallback = epilogCbs.CommandList.pfnCloseCb;
     prologCallback.pUserData = &userData;
     epilogCallback.pUserData = &userData;
     prologCallbacks.push_back(prologCallback);
@@ -290,8 +290,8 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> prologCallback;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> epilogCallback;
-    prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
-    epilogCallback.current_api_callback = epilogCbs.CommandList.pfnCloseCb;
+    prologCallback.currentApiCallback = prologCbs.CommandList.pfnCloseCb;
+    epilogCallback.currentApiCallback = epilogCbs.CommandList.pfnCloseCb;
     prologCallback.pUserData = nullptr;
     epilogCallback.pUserData = nullptr;
     prologCallbacks.push_back(prologCallback);
@@ -320,8 +320,8 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> prologCallback;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> epilogCallback;
-    prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
-    epilogCallback.current_api_callback = epilogCbs.CommandList.pfnCloseCb;
+    prologCallback.currentApiCallback = prologCbs.CommandList.pfnCloseCb;
+    epilogCallback.currentApiCallback = epilogCbs.CommandList.pfnCloseCb;
     prologCallback.pUserData = &userData;
     epilogCallback.pUserData = &userData;
     prologCallbacks.push_back(prologCallback);

@@ -371,7 +371,7 @@ cl_int Context::getSupportedImageFormats(
         if (imageFormats) {
             size_t offset = numImageFormats;
             for (size_t i = 0; i < formats.size() && offset < numEntries; ++i) {
-                imageFormats[offset++] = formats[i].OCLImageFormat;
+                imageFormats[offset++] = formats[i].oclImageFormat;
             }
         }
         numImageFormats += formats.size();

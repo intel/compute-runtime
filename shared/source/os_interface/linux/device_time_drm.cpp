@@ -102,10 +102,10 @@ bool DeviceTimeDrm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     if (nullptr == this->getGpuTime) {
         return false;
     }
-    if (!(this->*getGpuTime)(&pGpuCpuTime->GPUTimeStamp)) {
+    if (!(this->*getGpuTime)(&pGpuCpuTime->gpuTimeStamp)) {
         return false;
     }
-    if (!osTime->getCpuTime(&pGpuCpuTime->CPUTimeinNS)) {
+    if (!osTime->getCpuTime(&pGpuCpuTime->cpuTimeinNS)) {
         return false;
     }
 

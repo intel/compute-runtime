@@ -150,11 +150,11 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQuerie
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     cl_event clEvent = &event;
 
-    event.queueTimeStamp.CPUTimeinNS = 1;
-    event.queueTimeStamp.GPUTimeStamp = 2;
+    event.queueTimeStamp.cpuTimeinNS = 1;
+    event.queueTimeStamp.gpuTimeStamp = 2;
 
-    event.submitTimeStamp.CPUTimeinNS = 3;
-    event.submitTimeStamp.GPUTimeStamp = 4;
+    event.submitTimeStamp.cpuTimeinNS = 3;
+    event.submitTimeStamp.gpuTimeStamp = 4;
 
     event.setCPUProfilingPath(false);
     event.timeStampNode = &timestampNode;
@@ -171,7 +171,7 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQuerie
     EXPECT_EQ(timestamp.globalEndTS, complete);
     EXPECT_EQ(timestamp.globalEndTS, end);
     EXPECT_EQ(timestamp.globalStartTS, start);
-    EXPECT_EQ(event.submitTimeStamp.GPUTimeStamp, submited);
-    EXPECT_EQ(event.queueTimeStamp.GPUTimeStamp, queued);
+    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submited);
+    EXPECT_EQ(event.queueTimeStamp.gpuTimeStamp, queued);
     event.timeStampNode = nullptr;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ MTLTEST_F(ImageSurfaceStateTestsMtl, givenMtlWhenCallSetImageSurfaceStateThenDis
     const uint32_t cubeFaceIndex = 2u;
 
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.GenxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
     SurfaceOffsets surfaceOffsets;
     surfaceOffsets.offset = 0u;

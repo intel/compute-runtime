@@ -33,8 +33,8 @@ class DriverModel;
 typedef unsigned int OS_HANDLE;
 
 typedef struct CLGLContextInfo {
-    OS_HANDLE DeviceHandle;
-    OS_HANDLE ContextHandle;
+    OS_HANDLE deviceHandle;
+    OS_HANDLE contextHandle;
 } ContextInfo;
 
 class GLSharingFunctions : public SharingFunctions {

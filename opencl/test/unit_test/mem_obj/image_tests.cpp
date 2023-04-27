@@ -637,7 +637,7 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    auto hostPtr = alignedMalloc(imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes,
+    auto hostPtr = alignedMalloc(imageDesc.image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes,
                                  MemoryConstants::cacheLineSize);
 
     auto image = std::unique_ptr<Image>(Image::create(
@@ -1278,7 +1278,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorre
     MemObjOffsetArray origin = {{4, 5, 6}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1304,7 +1304,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
     MemObjOffsetArray origin = {{4, 5, 6}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getImageDesc().image_row_pitch * origin[1] +
                             image->getImageDesc().image_slice_pitch * origin[2];
 
@@ -1318,7 +1318,7 @@ TEST(ImageTest, given1DArrayImageWhenAskedForPtrOffsetForMappingThenReturnCorrec
     MemObjOffsetArray origin = {{4, 5, 0}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getImageDesc().image_slice_pitch * origin[1];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1335,7 +1335,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorre
     MemObjSizeArray region = {{4, 5, 6}};
 
     auto retLength = image->calculateMappedPtrLength(region);
-    size_t expectedLength = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * region[0] +
+    size_t expectedLength = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * region[0] +
                             image->getHostPtrRowPitch() * region[1] + image->getHostPtrSlicePitch() * region[2];
 
     EXPECT_EQ(expectedLength, retLength);
@@ -1351,7 +1351,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectVal
     MemObjSizeArray region = {{4, 5, 6}};
 
     auto retLength = image->calculateMappedPtrLength(region);
-    size_t expectedLength = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * region[0] +
+    size_t expectedLength = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * region[0] +
                             image->getImageDesc().image_row_pitch * region[1] +
                             image->getImageDesc().image_slice_pitch * region[2];
 
@@ -1373,7 +1373,7 @@ TEST(ImageTest, givenMipMapImage3DWhenAskedForPtrOffsetForGpuMappingThenReturnOf
     MemObjOffsetArray origin{{1, 1, 1}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1394,7 +1394,7 @@ TEST(ImageTest, givenMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
     MemObjOffsetArray origin{{1, 1, 1}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1415,7 +1415,7 @@ TEST(ImageTest, givenNonMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThen
     MemObjOffsetArray origin{{1, 1, 1}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1435,7 +1435,7 @@ TEST(ImageTest, givenMipMapImage1DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
     MemObjOffsetArray origin{{1, 1, 0}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] + image->getHostPtrSlicePitch() * origin[1];
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] + image->getHostPtrSlicePitch() * origin[1];
 
     EXPECT_EQ(expectedOffset, retOffset);
 }

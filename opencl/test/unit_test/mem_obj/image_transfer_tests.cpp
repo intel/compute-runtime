@@ -34,7 +34,7 @@ class ImageHostPtrTransferTests : public testing::Test {
         hostPtrRowPitch = image->getHostPtrRowPitch();
         imageSlicePitch = image->getImageDesc().image_slice_pitch;
         imageRowPitch = image->getImageDesc().image_row_pitch;
-        pixelSize = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+        pixelSize = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     }
 
     void setExpectedData(uint8_t *dstPtr, size_t slicePitch, size_t rowPitch, std::array<size_t, 3> copyOrigin, std::array<size_t, 3> copyRegion) {

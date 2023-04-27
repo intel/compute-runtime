@@ -35,16 +35,16 @@ using MetricsLibraryApi::QueryHandle_1_0;
 // MI_REPORT_PERF_COUNT definition for all GENs
 //////////////////////////////////////////////////////
 struct MI_REPORT_PERF_COUNT { // NOLINT(readability-identifier-naming)
-    uint32_t DwordLength : BITFIELD_RANGE(0, 5);
-    uint32_t Reserved_6 : BITFIELD_RANGE(6, 22);
-    uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
-    uint32_t CommandType : BITFIELD_RANGE(29, 31);
-    uint64_t UseGlobalGtt : BITFIELD_RANGE(0, 0);
-    uint64_t Reserved_33 : BITFIELD_RANGE(1, 3);
-    uint64_t CoreModeEnable : BITFIELD_RANGE(4, 4);
-    uint64_t Reserved_37 : BITFIELD_RANGE(5, 5);
-    uint64_t MemoryAddress : BITFIELD_RANGE(6, 63);
-    uint32_t ReportId;
+    uint32_t dwordLength : BITFIELD_RANGE(0, 5);
+    uint32_t reserved6 : BITFIELD_RANGE(6, 22);
+    uint32_t miCommandOpcode : BITFIELD_RANGE(23, 28);
+    uint32_t commandType : BITFIELD_RANGE(29, 31);
+    uint64_t useGlobalGtt : BITFIELD_RANGE(0, 0);
+    uint64_t reserved33 : BITFIELD_RANGE(1, 3);
+    uint64_t coreModeEnable : BITFIELD_RANGE(4, 4);
+    uint64_t reserved37 : BITFIELD_RANGE(5, 5);
+    uint64_t memoryAddress : BITFIELD_RANGE(6, 63);
+    uint32_t reportId;
 
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x2,
@@ -60,9 +60,9 @@ struct MI_REPORT_PERF_COUNT { // NOLINT(readability-identifier-naming)
 
     inline void init(void) {
         memset(this, 0, sizeof(MI_REPORT_PERF_COUNT));
-        DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        MiCommandOpcode = MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT;
-        CommandType = COMMAND_TYPE_MI_COMMAND;
+        dwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        miCommandOpcode = MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT;
+        commandType = COMMAND_TYPE_MI_COMMAND;
     }
 };
 

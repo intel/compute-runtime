@@ -751,7 +751,7 @@ TEST_F(MemoryExportImportWSLTest,
     void *ptr = nullptr;
 
     MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
-    fixtureMemoryManager->NTHandle = true;
+    fixtureMemoryManager->ntHandle = true;
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_external_memory_export_desc_t extendedDesc = {};

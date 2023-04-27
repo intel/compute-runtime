@@ -372,7 +372,7 @@ TEST_F(ClGetImageInfoTests, givenMultisampleCountForMcsWhenAskingForRowPitchThen
     auto imageObj = castToObject<Image>(image);
     auto formatInfo = imageObj->getSurfaceFormatInfo();
 
-    size_t multisampleRowPitch = imageDesc.image_width * formatInfo.surfaceFormat.ImageElementSizeInBytes * imageDesc.num_samples;
+    size_t multisampleRowPitch = imageDesc.image_width * formatInfo.surfaceFormat.imageElementSizeInBytes * imageDesc.num_samples;
     EXPECT_NE(multisampleRowPitch, imageObj->getHostPtrRowPitch());
 
     for (uint32_t multisampleCount = 0; multisampleCount <= 4; multisampleCount++) {

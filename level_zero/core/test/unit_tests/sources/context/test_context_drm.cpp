@@ -52,7 +52,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidHandleThenSuccess
     uint64_t handle = 57;
 
     // Test Successfully returning fd Handle
-    fixtureMemoryManager->NTHandle = false;
+    fixtureMemoryManager->ntHandle = false;
     EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::BUFFER, 0));
 }
 
@@ -64,7 +64,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullp
     driverHandle->failHandleLookup = true;
 
     // Test Failing returning fd Handle
-    fixtureMemoryManager->NTHandle = false;
+    fixtureMemoryManager->ntHandle = false;
     EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::BUFFER, 0));
 }
 

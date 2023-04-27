@@ -193,7 +193,7 @@ struct ClBlitProperties {
         size.x = imageWidth;
         size.y = imageHeight ? imageHeight : 1;
         size.z = imageDepth ? imageDepth : 1;
-        bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+        bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
         rowPitch = imageDesc.image_row_pitch;
         slicePitch = imageDesc.image_slice_pitch;
         plane = image->getPlane();

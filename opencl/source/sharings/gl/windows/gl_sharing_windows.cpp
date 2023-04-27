@@ -46,8 +46,8 @@ GLboolean GLSharingFunctionsWindows::setSharedOCLContextState() {
     if (retVal == GL_FALSE) {
         return GL_FALSE;
     }
-    GLContextHandle = CtxInfo.ContextHandle;
-    GLDeviceHandle = CtxInfo.DeviceHandle;
+    GLContextHandle = CtxInfo.contextHandle;
+    GLDeviceHandle = CtxInfo.deviceHandle;
 
     return retVal;
 }

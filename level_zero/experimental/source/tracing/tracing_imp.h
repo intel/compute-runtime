@@ -32,7 +32,7 @@
 #include <mutex>
 #include <vector>
 
-extern ze_gpu_driver_dditable_t driver_ddiTable;
+extern ze_gpu_driver_dditable_t driverDdiTable;
 
 namespace L0 {
 
@@ -136,7 +136,7 @@ extern thread_local ThreadPrivateTracerData myThreadPrivateTracerData;
 template <class T>
 class APITracerCallbackStateImp {
   public:
-    T current_api_callback;
+    T currentApiCallback;
     void *pUserData;
 };
 
@@ -172,12 +172,12 @@ class APITracerCallbackDataImp {
             ZE_GEN_TRACER_ARRAY_ENTRY(epilogue_callback_ptr, currentTracerArray, i, coreEpilogues, callbackCategory, callbackFunctionType); \
                                                                                                                                             \
             L0::APITracerCallbackStateImp<tracerType> prologCallback;                                                                       \
-            prologCallback.current_api_callback = prologueCallbackPtr;                                                                      \
+            prologCallback.currentApiCallback = prologueCallbackPtr;                                                                        \
             prologCallback.pUserData = currentTracerArray->tracerArrayEntries[i].pUserData;                                                 \
             perApiCallbackData.prologCallbacks.push_back(prologCallback);                                                                   \
                                                                                                                                             \
             L0::APITracerCallbackStateImp<tracerType> epilogCallback;                                                                       \
-            epilogCallback.current_api_callback = epilogue_callback_ptr;                                                                    \
+            epilogCallback.currentApiCallback = epilogue_callback_ptr;                                                                      \
             epilogCallback.pUserData = currentTracerArray->tracerArrayEntries[i].pUserData;                                                 \
             perApiCallbackData.epilogCallbacks.push_back(epilogCallback);                                                                   \
         }                                                                                                                                   \
@@ -197,14 +197,14 @@ ze_result_t apiTracerWrapperImp(TFunction_pointer zeApiPtr,
     ppTracerInstanceUserData.resize(callbacksPrologs->size());
 
     for (size_t i = 0; i < callbacksPrologs->size(); i++) {
-        if (callbacksPrologs->at(i).current_api_callback != nullptr)
-            callbacksPrologs->at(i).current_api_callback(paramsStruct, ret, callbacksPrologs->at(i).pUserData, &ppTracerInstanceUserData[i]);
+        if (callbacksPrologs->at(i).currentApiCallback != nullptr)
+            callbacksPrologs->at(i).currentApiCallback(paramsStruct, ret, callbacksPrologs->at(i).pUserData, &ppTracerInstanceUserData[i]);
     }
     ret = zeApiPtr(args...);
     std::vector<APITracerCallbackStateImp<TTracer>> *callbacksEpilogs = &epilogCallbacks;
     for (size_t i = 0; i < callbacksEpilogs->size(); i++) {
-        if (callbacksEpilogs->at(i).current_api_callback != nullptr)
-            callbacksEpilogs->at(i).current_api_callback(paramsStruct, ret, callbacksEpilogs->at(i).pUserData, &ppTracerInstanceUserData[i]);
+        if (callbacksEpilogs->at(i).currentApiCallback != nullptr)
+            callbacksEpilogs->at(i).currentApiCallback(paramsStruct, ret, callbacksEpilogs->at(i).pUserData, &ppTracerInstanceUserData[i]);
     }
     L0::tracingInProgress = 0;
     L0::pGlobalAPITracerContextImp->releaseActivetracersList();

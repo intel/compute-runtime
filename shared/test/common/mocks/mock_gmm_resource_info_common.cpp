@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,12 +74,12 @@ GMM_STATUS MockGmmResourceInfo::getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
 }
 
 void MockGmmResourceInfo::computeRowPitch() {
-    rowPitch = static_cast<size_t>(mockResourceCreateParams.BaseWidth64 * (surfaceFormatInfo->ImageElementSizeInBytes));
+    rowPitch = static_cast<size_t>(mockResourceCreateParams.BaseWidth64 * (surfaceFormatInfo->imageElementSizeInBytes));
     rowPitch = alignUp(rowPitch, 64);
 }
 
 uint32_t MockGmmResourceInfo::getBitsPerPixel() {
-    return static_cast<uint32_t>(surfaceFormatInfo->ImageElementSizeInBytes * 8);
+    return static_cast<uint32_t>(surfaceFormatInfo->imageElementSizeInBytes * 8);
 }
 
 void MockGmmResourceInfo::setUnifiedAuxTranslationCapable() {

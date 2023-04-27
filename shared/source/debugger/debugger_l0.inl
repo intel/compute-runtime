@@ -47,7 +47,7 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
         if (sbaCanonized.GeneralStateBaseAddress) {
             auto generalStateBaseAddress = sbaCanonized.GeneralStateBaseAddress;
             NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
-                                                                   gpuAddress + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress),
+                                                                   gpuAddress + offsetof(SbaTrackedAddresses, generalStateBaseAddress),
                                                                    static_cast<uint32_t>(generalStateBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(generalStateBaseAddress >> 32),
                                                                    true,
@@ -56,7 +56,7 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
         if (sbaCanonized.SurfaceStateBaseAddress) {
             auto surfaceStateBaseAddress = sbaCanonized.SurfaceStateBaseAddress;
             NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
-                                                                   gpuAddress + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress),
+                                                                   gpuAddress + offsetof(SbaTrackedAddresses, surfaceStateBaseAddress),
                                                                    static_cast<uint32_t>(surfaceStateBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(surfaceStateBaseAddress >> 32),
                                                                    true,
@@ -65,7 +65,7 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
         if (sbaCanonized.DynamicStateBaseAddress) {
             auto dynamicStateBaseAddress = sbaCanonized.DynamicStateBaseAddress;
             NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
-                                                                   gpuAddress + offsetof(SbaTrackedAddresses, DynamicStateBaseAddress),
+                                                                   gpuAddress + offsetof(SbaTrackedAddresses, dynamicStateBaseAddress),
                                                                    static_cast<uint32_t>(dynamicStateBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(dynamicStateBaseAddress >> 32),
                                                                    true,
@@ -74,7 +74,7 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
         if (sbaCanonized.IndirectObjectBaseAddress) {
             auto indirectObjectBaseAddress = sbaCanonized.IndirectObjectBaseAddress;
             NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
-                                                                   gpuAddress + offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress),
+                                                                   gpuAddress + offsetof(SbaTrackedAddresses, indirectObjectBaseAddress),
                                                                    static_cast<uint32_t>(indirectObjectBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(indirectObjectBaseAddress >> 32),
                                                                    true,
@@ -83,7 +83,7 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
         if (sbaCanonized.InstructionBaseAddress) {
             auto instructionBaseAddress = sbaCanonized.InstructionBaseAddress;
             NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
-                                                                   gpuAddress + offsetof(SbaTrackedAddresses, InstructionBaseAddress),
+                                                                   gpuAddress + offsetof(SbaTrackedAddresses, instructionBaseAddress),
                                                                    static_cast<uint32_t>(instructionBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(instructionBaseAddress >> 32),
                                                                    true,
@@ -92,7 +92,7 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
         if (sbaCanonized.BindlessSurfaceStateBaseAddress) {
             auto bindlessSurfaceStateBaseAddress = sbaCanonized.BindlessSurfaceStateBaseAddress;
             NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
-                                                                   gpuAddress + offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress),
+                                                                   gpuAddress + offsetof(SbaTrackedAddresses, bindlessSurfaceStateBaseAddress),
                                                                    static_cast<uint32_t>(bindlessSurfaceStateBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(bindlessSurfaceStateBaseAddress >> 32),
                                                                    true,

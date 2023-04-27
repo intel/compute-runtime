@@ -674,9 +674,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenPhysicalAddressWhenSetGttEntryIsCal
     AubGTTData data = {true, false};
     AUB::setGttEntry(entry, address, data);
 
-    EXPECT_EQ(entry.pageConfig.PhysicalAddress, address / 4096);
-    EXPECT_TRUE(entry.pageConfig.Present);
-    EXPECT_FALSE(entry.pageConfig.LocalMemory);
+    EXPECT_EQ(entry.pageConfig.physicalAddress, address / 4096);
+    EXPECT_TRUE(entry.pageConfig.present);
+    EXPECT_FALSE(entry.pageConfig.localMemory);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorrectBankIsReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ bool Gdi::setupHwQueueProcAddresses() {
 
 bool Gdi::getAllProcAddresses() {
     openAdapterFromLuid = gdiDll->getProcAddress("D3DKMTOpenAdapterFromLuid");
-    createAllocation_ = gdiDll->getProcAddress("D3DKMTCreateAllocation");
+    createAllocation = gdiDll->getProcAddress("D3DKMTCreateAllocation");
     shareObjects = reinterpret_cast<decltype(shareObjects)>(gdiDll->getProcAddress("D3DKMTShareObjects"));
     createAllocation2 = gdiDll->getProcAddress("D3DKMTCreateAllocation2");
     destroyAllocation2 = gdiDll->getProcAddress("D3DKMTDestroyAllocation2");

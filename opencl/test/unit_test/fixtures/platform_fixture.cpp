@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,14 +21,14 @@ void PlatformFixture::setUp() {
     bool isInitialized = initPlatform();
     ASSERT_EQ(true, isInitialized);
 
-    num_devices = static_cast<cl_uint>(pPlatform->getNumDevices());
-    ASSERT_GT(num_devices, 0u);
+    numDevices = static_cast<cl_uint>(pPlatform->getNumDevices());
+    ASSERT_GT(numDevices, 0u);
 
     auto allDev = pPlatform->getClDevices();
     ASSERT_NE(nullptr, allDev);
 
-    devices = new cl_device_id[num_devices];
-    for (cl_uint deviceOrdinal = 0; deviceOrdinal < num_devices; ++deviceOrdinal) {
+    devices = new cl_device_id[numDevices];
+    for (cl_uint deviceOrdinal = 0; deviceOrdinal < numDevices; ++deviceOrdinal) {
         auto device = allDev[deviceOrdinal];
         ASSERT_NE(nullptr, device);
         devices[deviceOrdinal] = device;

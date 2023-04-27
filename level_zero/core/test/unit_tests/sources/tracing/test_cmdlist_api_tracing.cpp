@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandList.pfnCreate =
+    driverDdiTable.coreDdiTable.CommandList.pfnCreate =
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
            const ze_command_list_desc_t *desc,
@@ -32,7 +32,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateTracingWrapperWithO
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateImmediateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandList.pfnCreateImmediate =
+    driverDdiTable.coreDdiTable.CommandList.pfnCreateImmediate =
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
            const ze_command_queue_desc_t *desc,
@@ -52,7 +52,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateImmediateTracingWra
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandList.pfnDestroy =
+    driverDdiTable.coreDdiTable.CommandList.pfnDestroy =
         [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnDestroyCb = genericEpilogCallbackPtr;
@@ -66,7 +66,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListDestroyTracingWrapperWith
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandList.pfnReset =
+    driverDdiTable.coreDdiTable.CommandList.pfnReset =
         [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnResetCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnResetCb = genericEpilogCallbackPtr;
@@ -80,7 +80,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListResetTracingWrapperWithOn
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryPrefetchTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryPrefetch =
+    driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryPrefetch =
         [](ze_command_list_handle_t hCommandList, const void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnAppendMemoryPrefetchCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnAppendMemoryPrefetchCb = genericEpilogCallbackPtr;
@@ -94,7 +94,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryPrefetchTraci
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCloseTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandList.pfnClose =
+    driverDdiTable.coreDdiTable.CommandList.pfnClose =
         [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnCloseCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnCloseCb = genericEpilogCallbackPtr;
@@ -109,7 +109,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCloseTracingWrapperWithOn
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendQueryKernelTimestampsTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    driver_ddiTable.core_ddiTable.CommandList.pfnAppendQueryKernelTimestamps =
+    driverDdiTable.coreDdiTable.CommandList.pfnAppendQueryKernelTimestamps =
         [](ze_command_list_handle_t hCommandList,
            uint32_t numEvents,
            ze_event_handle_t *phEvents,
@@ -131,7 +131,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendQueryKernelTimestam
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendWriteGlobalTimestampTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.CommandList.pfnAppendWriteGlobalTimestamp =
+    driverDdiTable.coreDdiTable.CommandList.pfnAppendWriteGlobalTimestamp =
         [](ze_command_list_handle_t hCommandList,
            uint64_t *dstptr,
            ze_event_handle_t hSignalEvent,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ void MockGmmResourceInfo::setSurfaceFormat() {
     auto iterate = [&](ArrayRef<const ClSurfaceFormatInfo> formats) {
         if (!surfaceFormatInfo) {
             for (auto &format : formats) {
-                if (mockResourceCreateParams.Format == format.surfaceFormat.GMMSurfaceFormat) {
+                if (mockResourceCreateParams.Format == format.surfaceFormat.gmmSurfaceFormat) {
                     surfaceFormatInfo = &format.surfaceFormat;
                     break;
                 }
@@ -26,19 +26,19 @@ void MockGmmResourceInfo::setSurfaceFormat() {
     };
 
     if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_P010 || mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_P016) {
-        tempSurface.GMMSurfaceFormat = mockResourceCreateParams.Format;
-        tempSurface.NumChannels = 1;
-        tempSurface.ImageElementSizeInBytes = 16;
-        tempSurface.PerChannelSizeInBytes = 16;
+        tempSurface.gmmSurfaceFormat = mockResourceCreateParams.Format;
+        tempSurface.numChannels = 1;
+        tempSurface.imageElementSizeInBytes = 16;
+        tempSurface.perChannelSizeInBytes = 16;
 
         surfaceFormatInfo = &tempSurface;
     }
 
     if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP) {
-        tempSurface.GMMSurfaceFormat = GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP;
-        tempSurface.NumChannels = 1;
-        tempSurface.ImageElementSizeInBytes = 8;
-        tempSurface.PerChannelSizeInBytes = 8;
+        tempSurface.gmmSurfaceFormat = GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP;
+        tempSurface.numChannels = 1;
+        tempSurface.imageElementSizeInBytes = 8;
+        tempSurface.perChannelSizeInBytes = 8;
 
         surfaceFormatInfo = &tempSurface;
     }

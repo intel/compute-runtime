@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ zeSamplerCreateTracing(ze_context_handle_t hContext,
                        const ze_sampler_desc_t *pDesc,
                        ze_sampler_handle_t *phSampler) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Sampler.pfnCreate,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Sampler.pfnCreate,
                                hContext,
                                hDevice,
                                pDesc,
@@ -29,7 +29,7 @@ zeSamplerCreateTracing(ze_context_handle_t hContext,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnSamplerCreateCb_t, Sampler, pfnCreateCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Sampler.pfnCreate,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Sampler.pfnCreate,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -43,7 +43,7 @@ zeSamplerCreateTracing(ze_context_handle_t hContext,
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeSamplerDestroyTracing(ze_sampler_handle_t hSampler) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Sampler.pfnDestroy,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.Sampler.pfnDestroy,
                                hSampler);
 
     ze_sampler_destroy_params_t tracerParams;
@@ -53,7 +53,7 @@ zeSamplerDestroyTracing(ze_sampler_handle_t hSampler) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnSamplerDestroyCb_t, Sampler, pfnDestroyCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Sampler.pfnDestroy,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.Sampler.pfnDestroy,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

@@ -51,7 +51,7 @@ struct BaseTag {
                                         reserved(0),
                                         component(static_cast<uint32_t>(Component::COMMON)),
                                         driverDebug(1),
-                                        DWORDCount(static_cast<uint32_t>(size / sizeof(uint32_t) - 2)) {}
+                                        dwordCount(static_cast<uint32_t>(size / sizeof(uint32_t) - 2)) {}
 
     OpCode getOpCode() const { return static_cast<OpCode>(opcode); }
     static uint32_t getMarkerNoopID(OpCode opcode);
@@ -61,17 +61,17 @@ struct BaseTag {
   protected:
     union MarkerNoopID {
         struct {
-            uint32_t OpCode : 20;
-            uint32_t Reserved : 12;
+            uint32_t opCode : 20;
+            uint32_t reserved : 12;
         };
         uint32_t value;
     };
     union OffsetNoopID {
         struct {
-            uint32_t Offset : 20;
-            uint32_t SubTag : 1;
-            uint32_t MagicBit : 1;
-            uint32_t Reserved : 10;
+            uint32_t offset : 20;
+            uint32_t subTag : 1;
+            uint32_t magicBit : 1;
+            uint32_t reserved : 10;
         };
         uint32_t value;
     };
@@ -80,7 +80,7 @@ struct BaseTag {
     const uint32_t reserved : 4;
     const uint32_t component : 7;
     const uint32_t driverDebug : 1; // always 0x1
-    const uint32_t DWORDCount;
+    const uint32_t dwordCount;
 };
 
 struct KernelNameTag : public BaseTag {

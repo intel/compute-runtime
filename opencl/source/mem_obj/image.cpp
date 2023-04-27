@@ -95,7 +95,7 @@ void Image::transferData(void *dest, size_t destRowPitch, size_t destSlicePitch,
                          void *src, size_t srcRowPitch, size_t srcSlicePitch,
                          std::array<size_t, 3> copyRegion, std::array<size_t, 3> copyOrigin) {
 
-    size_t pixelSize = surfaceFormatInfo.surfaceFormat.ImageElementSizeInBytes;
+    size_t pixelSize = surfaceFormatInfo.surfaceFormat.imageElementSizeInBytes;
     size_t lineWidth = copyRegion[0] * pixelSize;
 
     DBG_LOG(LogMemoryObject, __FUNCTION__, "memcpy dest:", dest, "sizeRowToCopy:", lineWidth, "src:", src);
@@ -149,7 +149,7 @@ Image *Image::create(Context *context,
 
     // Driver needs to store rowPitch passed by the app in order to synchronize the host_ptr later on map call
     const auto hostPtrRowPitch = imageDesc->image_row_pitch ? imageDesc->image_row_pitch
-                                                            : imageWidth * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
+                                                            : imageWidth * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
     const auto hostPtrSlicePitch = getHostPtrSlicePitch(*imageDesc, hostPtrRowPitch, imageHeight);
 
     auto defaultClDevice = context->getDevice(0);
@@ -167,11 +167,11 @@ Image *Image::create(Context *context,
     auto &clGfxCoreHelper = defaultClDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
                                                                     *context, true);
-    preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
-    preferCompression &= !clGfxCoreHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
+    preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->oclImageFormat);
+    preferCompression &= !clGfxCoreHelper.isFormatRedescribable(surfaceFormat->oclImageFormat);
 
     MemoryManager *memoryManager = context->getMemoryManager();
-    size_t hostPtrMinSize = getHostPtrMinSize(imageDesc->image_type, surfaceFormat->OCLImageFormat,
+    size_t hostPtrMinSize = getHostPtrMinSize(imageDesc->image_type, surfaceFormat->oclImageFormat,
                                               hostPtrRowPitch, hostPtrSlicePitch, imageHeight, imageDepth, imageCount);
     void *hostPtrToSet = memoryProperties.flags.useHostPtr ? const_cast<void *>(hostPtr) : nullptr;
 
@@ -253,7 +253,7 @@ Image *Image::create(Context *context,
         multiGraphicsAllocation.setMultiStorage(!MemoryPoolHelper::isSystemMemoryPool(allocationInfos[defaultRootDeviceIndex].memory->getMemoryPool()));
     }
 
-    Image *image = createImageHw(context, memoryProperties, flags, flagsIntel, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
+    Image *image = createImageHw(context, memoryProperties, flags, flagsIntel, imgInfo.size, hostPtrToSet, surfaceFormat->oclImageFormat,
                                  imageDescriptor, allocationInfos[defaultRootDeviceIndex].zeroCopyAllowed, std::move(multiGraphicsAllocation), false, 0, 0, surfaceFormat);
 
     setImageProperties(image, *imageDesc, imgInfo, parentImage, parentBuffer, hostPtrRowPitch, hostPtrSlicePitch, imageCount, hostPtrMinSize);
@@ -353,7 +353,7 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
     auto sharedImage = createImageHw(
         context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags, flagsIntel, size, nullptr,
-        surfaceFormat->OCLImageFormat, Image::convertDescriptor(imgInfo.imgDesc), false,
+        surfaceFormat->oclImageFormat, Image::convertDescriptor(imgInfo.imgDesc), false,
         std::move(multiGraphicsAllocation), false, baseMipLevel, mipCount, surfaceFormat);
     sharedImage->setSharingHandler(sharingHandler);
     sharedImage->setMcsAllocation(mcsAllocation);
@@ -400,7 +400,7 @@ cl_int Image::validate(Context *context,
             pClDevice->getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(reinterpret_cast<const void *&>(pitchAlignment), srcSize, retSize);
             pClDevice->getCap<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT>(reinterpret_cast<const void *&>(baseAddressAlignment), srcSize, retSize);
 
-            const auto rowSize = imageDesc->image_row_pitch != 0 ? imageDesc->image_row_pitch : alignUp(imageDesc->image_width * surfaceFormat->surfaceFormat.NumChannels * surfaceFormat->surfaceFormat.PerChannelSizeInBytes, *pitchAlignment);
+            const auto rowSize = imageDesc->image_row_pitch != 0 ? imageDesc->image_row_pitch : alignUp(imageDesc->image_width * surfaceFormat->surfaceFormat.numChannels * surfaceFormat->surfaceFormat.perChannelSizeInBytes, *pitchAlignment);
             const auto minimumBufferSize = imageDesc->image_height * rowSize;
 
             if ((imageDesc->image_row_pitch % (*pitchAlignment)) ||
@@ -412,12 +412,12 @@ cl_int Image::validate(Context *context,
             }
         }
         if (parentImage && (!isNV12Image(&parentImage->getImageFormat()) && !isPackedYuvImage(&parentImage->getImageFormat()))) { // Image 2d from image 2d
-            if (!parentImage->hasSameDescriptor(*imageDesc) || !parentImage->hasValidParentImageFormat(surfaceFormat->OCLImageFormat)) {
+            if (!parentImage->hasSameDescriptor(*imageDesc) || !parentImage->hasValidParentImageFormat(surfaceFormat->oclImageFormat)) {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             }
         }
         if (parentImage && isPackedYuvImage(&parentImage->getImageFormat())) {
-            if (!parentImage->hasValidParentImageFormat(surfaceFormat->OCLImageFormat) || imageDesc->image_width != parentImage->getImageDesc().image_width / 2) {
+            if (!parentImage->hasValidParentImageFormat(surfaceFormat->oclImageFormat) || imageDesc->image_width != parentImage->getImageDesc().image_width / 2) {
                 return CL_INVALID_IMAGE_DESCRIPTOR;
             }
         }
@@ -432,8 +432,8 @@ cl_int Image::validate(Context *context,
         }
     } else {
         if (imageDesc->image_row_pitch != 0) {
-            if (imageDesc->image_row_pitch % surfaceFormat->surfaceFormat.ImageElementSizeInBytes != 0 ||
-                imageDesc->image_row_pitch < imageDesc->image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes) {
+            if (imageDesc->image_row_pitch % surfaceFormat->surfaceFormat.imageElementSizeInBytes != 0 ||
+                imageDesc->image_row_pitch < imageDesc->image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes) {
                 return CL_INVALID_IMAGE_DESCRIPTOR;
             }
         }
@@ -447,7 +447,7 @@ cl_int Image::validate(Context *context,
         return CL_INVALID_IMAGE_DESCRIPTOR;
     }
 
-    return validateImageTraits(context, memoryProperties, &surfaceFormat->OCLImageFormat, imageDesc, hostPtr);
+    return validateImageTraits(context, memoryProperties, &surfaceFormat->oclImageFormat, imageDesc, hostPtr);
 }
 
 cl_int Image::validateImageFormat(const cl_image_format *imageFormat) {
@@ -723,18 +723,18 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     switch (paramName) {
     case CL_IMAGE_FORMAT:
         srcParamSize = sizeof(cl_image_format);
-        srcParam = &(surfFmtInfo.OCLImageFormat);
+        srcParam = &(surfFmtInfo.oclImageFormat);
         break;
 
     case CL_IMAGE_ELEMENT_SIZE:
         srcParamSize = sizeof(size_t);
-        srcParam = &(surfFmtInfo.surfaceFormat.ImageElementSizeInBytes);
+        srcParam = &(surfFmtInfo.surfaceFormat.imageElementSizeInBytes);
         break;
 
     case CL_IMAGE_ROW_PITCH:
         srcParamSize = sizeof(size_t);
         if (mcsSurfaceInfo.multisampleCount > 1) {
-            retParam = imageDesc.image_width * surfFmtInfo.surfaceFormat.ImageElementSizeInBytes * imageDesc.num_samples;
+            retParam = imageDesc.image_width * surfFmtInfo.surfaceFormat.imageElementSizeInBytes * imageDesc.num_samples;
         } else {
             retParam = hostPtrRowPitch;
         }
@@ -818,16 +818,16 @@ Image *Image::redescribeFillImage() {
     auto imageFormatNew = this->imageFormat;
     auto imageDescNew = this->imageDesc;
     const ClSurfaceFormatInfo *surfaceFormat = nullptr;
-    uint32_t redescribeTableCol = this->surfaceFormatInfo.surfaceFormat.NumChannels / 2;
-    uint32_t redescribeTableRow = this->surfaceFormatInfo.surfaceFormat.PerChannelSizeInBytes / 2;
+    uint32_t redescribeTableCol = this->surfaceFormatInfo.surfaceFormat.numChannels / 2;
+    uint32_t redescribeTableRow = this->surfaceFormatInfo.surfaceFormat.perChannelSizeInBytes / 2;
 
     ArrayRef<const ClSurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
 
     uint32_t surfaceFormatIdx = redescribeTable[redescribeTableRow][redescribeTableCol];
     surfaceFormat = &readWriteSurfaceFormats[surfaceFormatIdx];
 
-    imageFormatNew.image_channel_order = surfaceFormat->OCLImageFormat.image_channel_order;
-    imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
+    imageFormatNew.image_channel_order = surfaceFormat->oclImageFormat.image_channel_order;
+    imageFormatNew.image_channel_data_type = surfaceFormat->oclImageFormat.image_channel_data_type;
 
     DEBUG_BREAK_IF(nullptr == createFunction);
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0,
@@ -862,7 +862,7 @@ static const uint32_t redescribeTableBytes[] = {
 };
 
 Image *Image::redescribe() {
-    const uint32_t bytesPerPixel = this->surfaceFormatInfo.surfaceFormat.NumChannels * surfaceFormatInfo.surfaceFormat.PerChannelSizeInBytes;
+    const uint32_t bytesPerPixel = this->surfaceFormatInfo.surfaceFormat.numChannels * surfaceFormatInfo.surfaceFormat.perChannelSizeInBytes;
     const uint32_t exponent = Math::log2(bytesPerPixel);
     DEBUG_BREAK_IF(exponent >= 5u);
     const uint32_t surfaceFormatIdx = redescribeTableBytes[exponent % 5];
@@ -870,8 +870,8 @@ Image *Image::redescribe() {
     const ClSurfaceFormatInfo *surfaceFormat = &readWriteSurfaceFormats[surfaceFormatIdx];
 
     auto imageFormatNew = this->imageFormat;
-    imageFormatNew.image_channel_order = surfaceFormat->OCLImageFormat.image_channel_order;
-    imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
+    imageFormatNew.image_channel_order = surfaceFormat->oclImageFormat.image_channel_order;
+    imageFormatNew.image_channel_data_type = surfaceFormat->oclImageFormat.image_channel_data_type;
 
     DEBUG_BREAK_IF(nullptr == createFunction);
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0,
@@ -984,8 +984,8 @@ const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, 
     ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, imageFormat, supportsOcl20Features);
 
     for (auto &format : formats) {
-        if (format.OCLImageFormat.image_channel_data_type == imageFormat->image_channel_data_type &&
-            format.OCLImageFormat.image_channel_order == imageFormat->image_channel_order) {
+        if (format.oclImageFormat.image_channel_data_type == imageFormat->image_channel_data_type &&
+            format.oclImageFormat.image_channel_order == imageFormat->image_channel_order) {
             return &format;
         }
     }
@@ -1503,7 +1503,7 @@ size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
     size_t rowPitch = mappingOnCpuAllowed() ? imageDesc.image_row_pitch : getHostPtrRowPitch();
     size_t slicePitch = mappingOnCpuAllowed() ? imageDesc.image_slice_pitch : getHostPtrSlicePitch();
 
-    size_t offset = getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0];
+    size_t offset = getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0];
 
     switch (imageDesc.image_type) {
     case CL_MEM_OBJECT_IMAGE1D_ARRAY:

@@ -67,7 +67,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
     module_create_args.instanceData0 = generateRandomHandle<void *>();
     module_create_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Module.pfnCreate =
+    driverDdiTable.coreDdiTable.Module.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_module_desc_t *desc, ze_module_handle_t *phModule, ze_module_build_log_handle_t *phBuildLog) {
             EXPECT_EQ(module_create_args.hContext1, hContext);
             EXPECT_EQ(module_create_args.hDevice1, hDevice);
@@ -398,7 +398,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
     module_destroy_args.instanceData0 = generateRandomHandle<void *>();
     module_destroy_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Module.pfnDestroy =
+    driverDdiTable.coreDdiTable.Module.pfnDestroy =
         [](ze_module_handle_t hModule) {
             EXPECT_EQ(module_destroy_args.hModule1, hModule);
             return ZE_RESULT_SUCCESS;
@@ -553,7 +553,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
     module_get_native_binary_args.instanceData0 = generateRandomHandle<void *>();
     module_get_native_binary_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Module.pfnGetNativeBinary =
+    driverDdiTable.coreDdiTable.Module.pfnGetNativeBinary =
         [](ze_module_handle_t hModule, size_t *pSize, uint8_t *pModuleNativeBinary) {
             EXPECT_EQ(module_get_native_binary_args.hModule1, hModule);
             EXPECT_EQ(&module_get_native_binary_args.size1, pSize);

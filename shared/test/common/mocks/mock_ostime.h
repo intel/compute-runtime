@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@ static int PerfTicks = 0;
 constexpr uint64_t convertToNs = 100;
 class MockDeviceTime : public DeviceTime {
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
-        pGpuCpuTime->GPUTimeStamp = ++PerfTicks;
-        pGpuCpuTime->CPUTimeinNS = PerfTicks * convertToNs;
+        pGpuCpuTime->gpuTimeStamp = ++PerfTicks;
+        pGpuCpuTime->cpuTimeinNS = PerfTicks * convertToNs;
         return true;
     }
 
@@ -55,8 +55,8 @@ class MockDeviceTimeWithConstTimestamp : public DeviceTime {
     static constexpr uint64_t gpuTimestamp = 2u;
 
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
-        pGpuCpuTime->GPUTimeStamp = gpuTimestamp;
-        pGpuCpuTime->CPUTimeinNS = cpuTimeInNs;
+        pGpuCpuTime->gpuTimeStamp = gpuTimestamp;
+        pGpuCpuTime->cpuTimeinNS = cpuTimeInNs;
         return true;
     }
 

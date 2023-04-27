@@ -115,7 +115,7 @@ HWTEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCal
     EXPECT_NE(ptr1, ptr2);
     EXPECT_NE(nullptr, img->getAllocatedMapPtr());
 
-    size_t mapOffset = img->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin2[0] +
+    size_t mapOffset = img->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin2[0] +
                        img->getHostPtrRowPitch() * origin2[1];
     EXPECT_EQ(ptr2, ptrOffset(ptr1, mapOffset));
 }

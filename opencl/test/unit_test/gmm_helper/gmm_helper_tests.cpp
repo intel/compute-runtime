@@ -329,7 +329,7 @@ TEST_F(GmmTests, givenZeroRowPitchWhenQueryImgFromBufferParamsThenCalculate) {
     imgDesc.imageRowPitch = 0;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    size_t expectedRowPitch = imgDesc.imageWidth * imgInfo.surfaceFormat->ImageElementSizeInBytes;
+    size_t expectedRowPitch = imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes;
     GmmTypesConverter::queryImgFromBufferParams(imgInfo, &bufferAllocation);
 
     EXPECT_EQ(imgInfo.rowPitch, expectedRowPitch);
@@ -1211,7 +1211,7 @@ TEST_F(GmmCompressionTests, givenDisabledAndPreferredE2ECWhenApplyingForBuffersT
 
 HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateFlags) {
     EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
-    EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
+    EXPECT_TRUE(imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
     EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
 
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
@@ -1230,7 +1230,7 @@ HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateF
 
 TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryingThenRenderCompressionFlagsAreNotSet) {
     EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
-    EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
+    EXPECT_TRUE(imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
     EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
 
     imgInfo.useLocalMemory = false;
@@ -1291,7 +1291,7 @@ TEST_F(GmmCompressionTests, givenNotPreferredCompressionFlagWhenQueryingThenDisa
 
 TEST_F(GmmCompressionTests, givenNV12FormatWhenQueryingThenDisallow) {
     imgInfo.surfaceFormat = &SurfaceFormats::planarYuv()[0].surfaceFormat;
-    EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
+    EXPECT_TRUE(imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();

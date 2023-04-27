@@ -33,7 +33,7 @@ class ZeAPITracingCoreTestsFixture {
 
   protected:
     void setUp() {
-        driver_ddiTable.enableTracing = true;
+        driverDdiTable.enableTracing = true;
         myThreadPrivateTracerData.onList = false;
         myThreadPrivateTracerData.isInitialized = false;
         myThreadPrivateTracerData.testAndSetThreadTracerDataInitializedAndOnList();
@@ -41,7 +41,7 @@ class ZeAPITracingCoreTestsFixture {
 
     void tearDown() {
         myThreadPrivateTracerData.removeThreadTracerDataFromList();
-        driver_ddiTable.enableTracing = false;
+        driverDdiTable.enableTracing = false;
     }
 };
 

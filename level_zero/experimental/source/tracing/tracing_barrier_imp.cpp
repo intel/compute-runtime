@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ zeCommandListAppendBarrierTracing(ze_command_list_handle_t hCommandList,
                                   uint32_t numWaitEvents,
                                   ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendBarrier,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendBarrier,
                                hCommandList,
                                hSignalEvent,
                                numWaitEvents,
@@ -29,7 +29,7 @@ zeCommandListAppendBarrierTracing(ze_command_list_handle_t hCommandList,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendBarrierCb_t, CommandList, pfnAppendBarrierCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendBarrier,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendBarrier,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -49,7 +49,7 @@ zeCommandListAppendMemoryRangesBarrierTracing(ze_command_list_handle_t hCommandL
                                               uint32_t numWaitEvents,
                                               ze_event_handle_t *phWaitEvents) {
 
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryRangesBarrier,
+    ZE_HANDLE_TRACER_RECURSION(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryRangesBarrier,
                                hCommandList,
                                numRanges,
                                pRangeSizes,
@@ -71,7 +71,7 @@ zeCommandListAppendMemoryRangesBarrierTracing(ze_command_list_handle_t hCommandL
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendMemoryRangesBarrierCb_t, CommandList, pfnAppendMemoryRangesBarrierCb);
 
-    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryRangesBarrier,
+    return L0::apiTracerWrapperImp(driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryRangesBarrier,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

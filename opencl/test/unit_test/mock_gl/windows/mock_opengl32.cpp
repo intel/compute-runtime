@@ -52,8 +52,8 @@ const unsigned char *WINAPI glGetString(unsigned int name) {
 };
 GLboolean WINAPI wglSetSharedOCLContextStateINTELMock(HDC HDCHandle, HGLRC ContextHandle, unsigned char State,
                                                       void *pContextInfo) {
-    ((NEO::ContextInfo *)pContextInfo)->ContextHandle = 1;
-    ((NEO::ContextInfo *)pContextInfo)->DeviceHandle = 2;
+    ((NEO::ContextInfo *)pContextInfo)->contextHandle = 1;
+    ((NEO::ContextInfo *)pContextInfo)->deviceHandle = 2;
     return GLSetSharedOCLContextStateReturnedValue;
 };
 GLboolean WINAPI mockGLAcquireSharedBuffer(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {

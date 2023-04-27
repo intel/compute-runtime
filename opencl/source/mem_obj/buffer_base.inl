@@ -18,12 +18,12 @@
 namespace NEO {
 
 union SURFACE_STATE_BUFFER_LENGTH {
-    uint32_t Length;
+    uint32_t length;
     struct SurfaceState {
-        uint32_t Width : 7;
-        uint32_t Height : 14;
-        uint32_t Depth : 11;
-    } SurfaceState;
+        uint32_t width : 7;
+        uint32_t height : 14;
+        uint32_t depth : 11;
+    } surfaceState;
 };
 
 template <typename GfxFamily>

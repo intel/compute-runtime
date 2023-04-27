@@ -32,7 +32,7 @@ struct ImageImp : public Image {
     ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) override {
         pMemoryProperties->rowPitch = imgInfo.rowPitch;
         pMemoryProperties->slicePitch = imgInfo.slicePitch;
-        pMemoryProperties->size = imgInfo.surfaceFormat->ImageElementSizeInBytes;
+        pMemoryProperties->size = imgInfo.surfaceFormat->imageElementSizeInBytes;
 
         return ZE_RESULT_SUCCESS;
     }

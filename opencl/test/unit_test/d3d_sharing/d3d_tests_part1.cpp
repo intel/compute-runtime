@@ -712,7 +712,7 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFai
 TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedNotSupportedThenReturnNull) {
     EXPECT_GT(SurfaceFormats::packed().size(), 0u);
     for (auto &format : SurfaceFormats::packed()) {
-        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, false /* packedSupported */);
+        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, false /* packedSupported */);
         ASSERT_EQ(nullptr, surfaceFormat);
     }
 }
@@ -721,7 +721,7 @@ TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedSup
     EXPECT_GT(SurfaceFormats::packed().size(), 0u);
     uint32_t counter = 0;
     for (auto &format : SurfaceFormats::packed()) {
-        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, true /* packedSupported */);
+        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, true /* packedSupported */);
         ASSERT_NE(nullptr, surfaceFormat);
         counter++;
         EXPECT_EQ(&format, surfaceFormat);
@@ -733,11 +733,11 @@ TYPED_TEST_P(D3DTests, givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnV
     EXPECT_GT(SurfaceFormats::readOnly12().size(), 0u);
     for (auto &format : SurfaceFormats::readOnly12()) {
         // only RGBA, BGRA, RG, R allowed for D3D
-        if (format.OCLImageFormat.image_channel_order == CL_RGBA ||
-            format.OCLImageFormat.image_channel_order == CL_BGRA ||
-            format.OCLImageFormat.image_channel_order == CL_RG ||
-            format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, true);
+        if (format.oclImageFormat.image_channel_order == CL_RGBA ||
+            format.oclImageFormat.image_channel_order == CL_BGRA ||
+            format.oclImageFormat.image_channel_order == CL_RG ||
+            format.oclImageFormat.image_channel_order == CL_R) {
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -748,11 +748,11 @@ TYPED_TEST_P(D3DTests, givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturn
     EXPECT_GT(SurfaceFormats::writeOnly().size(), 0u);
     for (auto &format : SurfaceFormats::writeOnly()) {
         // only RGBA, BGRA, RG, R allowed for D3D
-        if (format.OCLImageFormat.image_channel_order == CL_RGBA ||
-            format.OCLImageFormat.image_channel_order == CL_BGRA ||
-            format.OCLImageFormat.image_channel_order == CL_RG ||
-            format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_WRITE_ONLY, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
+        if (format.oclImageFormat.image_channel_order == CL_RGBA ||
+            format.oclImageFormat.image_channel_order == CL_BGRA ||
+            format.oclImageFormat.image_channel_order == CL_RG ||
+            format.oclImageFormat.image_channel_order == CL_R) {
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_WRITE_ONLY, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -763,11 +763,11 @@ TYPED_TEST_P(D3DTests, givenReadWriteFormatWhenLookingForSurfaceFormatThenReturn
     EXPECT_GT(SurfaceFormats::readWrite().size(), 0u);
     for (auto &format : SurfaceFormats::readWrite()) {
         // only RGBA, BGRA, RG, R allowed for D3D
-        if (format.OCLImageFormat.image_channel_order == CL_RGBA ||
-            format.OCLImageFormat.image_channel_order == CL_BGRA ||
-            format.OCLImageFormat.image_channel_order == CL_RG ||
-            format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_WRITE, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
+        if (format.oclImageFormat.image_channel_order == CL_RGBA ||
+            format.oclImageFormat.image_channel_order == CL_BGRA ||
+            format.oclImageFormat.image_channel_order == CL_RG ||
+            format.oclImageFormat.image_channel_order == CL_R) {
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_WRITE, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }

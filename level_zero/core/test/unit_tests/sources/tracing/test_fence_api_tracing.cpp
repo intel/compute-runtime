@@ -12,7 +12,7 @@ namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Fence.pfnCreate =
+    driverDdiTable.coreDdiTable.Fence.pfnCreate =
         [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) { return ZE_RESULT_SUCCESS; };
     ze_fence_handle_t fence = {};
     ze_fence_desc_t desc = {};
@@ -29,7 +29,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetO
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Fence.pfnDestroy =
+    driverDdiTable.coreDdiTable.Fence.pfnDestroy =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Fence.pfnDestroyCb = genericPrologCallbackPtr;
@@ -44,7 +44,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSet
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Fence.pfnHostSynchronize =
+    driverDdiTable.coreDdiTable.Fence.pfnHostSynchronize =
         [](ze_fence_handle_t hFence, uint64_t timeout) { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnHostSynchronizeCb = genericPrologCallbackPtr;
     epilogCbs.Fence.pfnHostSynchronizeCb = genericEpilogCallbackPtr;
@@ -58,7 +58,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWi
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Fence.pfnQueryStatus =
+    driverDdiTable.coreDdiTable.Fence.pfnQueryStatus =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnQueryStatusCb = genericPrologCallbackPtr;
     epilogCbs.Fence.pfnQueryStatusCb = genericEpilogCallbackPtr;
@@ -72,7 +72,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOn
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Fence.pfnReset =
+    driverDdiTable.coreDdiTable.Fence.pfnReset =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnResetCb = genericPrologCallbackPtr;
     epilogCbs.Fence.pfnResetCb = genericEpilogCallbackPtr;
@@ -111,7 +111,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
     fence_create_args.instanceData0 = generateRandomHandle<void *>();
     fence_create_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Fence.pfnCreate =
+    driverDdiTable.coreDdiTable.Fence.pfnCreate =
         [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) {
             EXPECT_EQ(fence_create_args.hCommandQueue1, hCommandQueue);
             EXPECT_EQ(&fence_create_args.desc1, desc);
@@ -345,7 +345,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
     fence_destroy_args.instanceData0 = generateRandomHandle<void *>();
     fence_destroy_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Fence.pfnDestroy =
+    driverDdiTable.coreDdiTable.Fence.pfnDestroy =
         [](ze_fence_handle_t hFence) {
             EXPECT_EQ(fence_destroy_args.hFence1, hFence);
             return ZE_RESULT_SUCCESS;
@@ -478,7 +478,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
     fence_host_synchronize_args.instanceData0 = generateRandomHandle<void *>();
     fence_host_synchronize_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Fence.pfnHostSynchronize =
+    driverDdiTable.coreDdiTable.Fence.pfnHostSynchronize =
         [](ze_fence_handle_t hFence, uint64_t timeout) {
             EXPECT_EQ(fence_host_synchronize_args.hFence1, hFence);
             EXPECT_EQ(fence_host_synchronize_args.timeout1, timeout);
@@ -615,7 +615,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
     fence_query_status_args.instanceData0 = generateRandomHandle<void *>();
     fence_query_status_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Fence.pfnQueryStatus =
+    driverDdiTable.coreDdiTable.Fence.pfnQueryStatus =
         [](ze_fence_handle_t hFence) {
             EXPECT_EQ(fence_query_status_args.hFence1, hFence);
             return ZE_RESULT_SUCCESS;
@@ -744,7 +744,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
     fence_reset_args.instanceData0 = generateRandomHandle<void *>();
     fence_reset_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Fence.pfnReset =
+    driverDdiTable.coreDdiTable.Fence.pfnReset =
         [](ze_fence_handle_t hFence) {
             EXPECT_EQ(fence_reset_args.hFence1, hFence);
             return ZE_RESULT_SUCCESS;

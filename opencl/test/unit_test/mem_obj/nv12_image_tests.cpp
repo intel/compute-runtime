@@ -356,7 +356,7 @@ HWTEST_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten) {
                                                    ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                                                    flags, 0, surfaceFormat, &imageDesc, hostPtr, retVal)};
 
-    EXPECT_EQ(imageNV12->isTiledAllocation() ? 2u : 0u, cmdQ->EnqueueWriteImageCounter);
+    EXPECT_EQ(imageNV12->isTiledAllocation() ? 2u : 0u, cmdQ->enqueueWriteImageCounter);
     ASSERT_NE(nullptr, imageNV12);
     contextWithMockCmdQ->release();
 }

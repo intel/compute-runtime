@@ -62,7 +62,7 @@ TEST_F(KernelImageArgTest, givenKernelWithFlatImageTokensWhenArgIsSetThenPatchAl
 
     pKernel->setArg(0, sizeof(memObj), &memObj);
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
-    auto pixelSize = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    auto pixelSize = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
 
     const auto &metadata = pKernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescImage>().metadataPayload;
     auto offsetFlatBaseOffset = ptrOffset(crossThreadData, metadata.flatBaseOffset);

@@ -38,22 +38,22 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
     std::vector<std::pair<size_t, uint64_t>> fieldOffsetAndValue;
 
     if (sba.GeneralStateBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, GeneralStateBaseAddress), sba.GeneralStateBaseAddress});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, generalStateBaseAddress), sba.GeneralStateBaseAddress});
     }
     if (sba.SurfaceStateBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress), sba.SurfaceStateBaseAddress});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, surfaceStateBaseAddress), sba.SurfaceStateBaseAddress});
     }
     if (sba.DynamicStateBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, DynamicStateBaseAddress), sba.DynamicStateBaseAddress});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, dynamicStateBaseAddress), sba.DynamicStateBaseAddress});
     }
     if (sba.IndirectObjectBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress), sba.IndirectObjectBaseAddress});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, indirectObjectBaseAddress), sba.IndirectObjectBaseAddress});
     }
     if (sba.InstructionBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, InstructionBaseAddress), sba.InstructionBaseAddress});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, instructionBaseAddress), sba.InstructionBaseAddress});
     }
     if (sba.BindlessSurfaceStateBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress), sba.BindlessSurfaceStateBaseAddress});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, bindlessSurfaceStateBaseAddress), sba.BindlessSurfaceStateBaseAddress});
     }
     const auto cmdStreamGpuBase = cmdStream.getGpuBase();
     const auto cmdStreamCpuBase = reinterpret_cast<uint64_t>(cmdStream.getCpuBase());

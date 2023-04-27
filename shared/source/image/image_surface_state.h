@@ -91,7 +91,7 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
         surfaceState->setXOffsetForUOrUvPlane(0);
     }
 
-    surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->GenxSurfaceFormat));
+    surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->genxSurfaceFormat));
     setFilterMode<GfxFamily>(surfaceState, gmmHelper.getHardwareInfo());
 }
 
@@ -125,7 +125,7 @@ inline void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_ST
 
 template <typename GfxFamily>
 inline void setWidthForMediaBlockSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo) {
-    auto elSize = imageInfo.surfaceFormat->ImageElementSizeInBytes;
+    auto elSize = imageInfo.surfaceFormat->imageElementSizeInBytes;
     auto numDwords = static_cast<uint32_t>(Math::divideAndRoundUp(imageInfo.imgDesc.imageWidth * elSize, sizeof(uint32_t)));
     surfaceState->setWidth(numDwords);
 }

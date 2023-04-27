@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGet =
+    driverDdiTable.coreDdiTable.Device.pfnGet =
         [](ze_driver_handle_t hDriver, uint32_t *pCount, ze_device_handle_t *phDevices) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Device.pfnGetCb = genericPrologCallbackPtr;
@@ -27,7 +27,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetTracingWrapperWithOneSetOfP
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetProperties =
         [](ze_device_handle_t hDevice, ze_device_properties_t *pDeviceProperties) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Device.pfnGetPropertiesCb = genericPrologCallbackPtr;
@@ -42,7 +42,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetPropertiesTracingWrapperWit
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetComputePropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetComputeProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetComputeProperties =
         [](ze_device_handle_t hDevice, ze_device_compute_properties_t *pComputeProperties) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Device.pfnGetComputePropertiesCb = genericPrologCallbackPtr;
@@ -57,7 +57,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetComputePropertiesTracingWra
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetMemoryPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetMemoryProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetMemoryProperties =
         [](ze_device_handle_t hDevice, uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Device.pfnGetMemoryPropertiesCb = genericPrologCallbackPtr;
@@ -72,7 +72,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetMemoryPropertiesTracingWrap
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetCachePropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetCacheProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetCacheProperties =
         [](ze_device_handle_t hDevice,
            uint32_t *pCount,
            ze_device_cache_properties_t *pCacheProperties) { return ZE_RESULT_SUCCESS; };
@@ -89,7 +89,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetCachePropertiesTracingWrapp
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetImagePropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetImageProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetImageProperties =
         [](ze_device_handle_t hDevice,
            ze_device_image_properties_t *pImageProperties) { return ZE_RESULT_SUCCESS; };
 
@@ -105,7 +105,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetImagePropertiesTracingWrapp
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetSubDevicesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetSubDevices =
+    driverDdiTable.coreDdiTable.Device.pfnGetSubDevices =
         [](ze_device_handle_t hDevice,
            uint32_t *pCount,
            ze_device_handle_t *phSubdevices) { return ZE_RESULT_SUCCESS; };
@@ -124,7 +124,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetSubDevicesTracingWrapperWit
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetP2PPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetP2PProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetP2PProperties =
         [](ze_device_handle_t hDevice,
            ze_device_handle_t hPeerDevice,
            ze_device_p2p_properties_t *pP2PProperties) { return ZE_RESULT_SUCCESS; };
@@ -143,7 +143,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetP2PPropertiesTracingWrapper
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceCanAccessPeerTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnCanAccessPeer =
+    driverDdiTable.coreDdiTable.Device.pfnCanAccessPeer =
         [](ze_device_handle_t hDevice,
            ze_device_handle_t hPeerDevice,
            ze_bool_t *value) { return ZE_RESULT_SUCCESS; };
@@ -162,7 +162,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceCanAccessPeerTracingWrapperWit
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelSetCacheConfigTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Kernel.pfnSetCacheConfig =
+    driverDdiTable.coreDdiTable.Kernel.pfnSetCacheConfig =
         [](ze_kernel_handle_t hKernel,
            ze_cache_config_flags_t flags) { return ZE_RESULT_SUCCESS; };
 
@@ -180,7 +180,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelSetCacheConfigTracingWrapperWi
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetModulePropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetModuleProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetModuleProperties =
         [](ze_device_handle_t hDevice,
            ze_device_module_properties_t *pModuleProperties) { return ZE_RESULT_SUCCESS; };
 
@@ -196,7 +196,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetModulePropertiesTracingWrap
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetMemoryAccessPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetMemoryAccessProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetMemoryAccessProperties =
         [](ze_device_handle_t hDevice,
            ze_device_memory_access_properties_t *pMemAccessProperties) { return ZE_RESULT_SUCCESS; };
 
@@ -212,7 +212,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetMemoryAccessPropertiesTraci
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetCommandQueueGroupPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetCommandQueueGroupProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetCommandQueueGroupProperties =
         [](ze_device_handle_t hDevice, uint32_t *pCount, ze_command_queue_group_properties_t *pCommandQueueGroupProperties) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Device.pfnGetCommandQueueGroupPropertiesCb = genericPrologCallbackPtr;
@@ -227,7 +227,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetCommandQueueGroupProperties
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetExternalMemoryPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetExternalMemoryProperties =
+    driverDdiTable.coreDdiTable.Device.pfnGetExternalMemoryProperties =
         [](ze_device_handle_t hDevice, ze_device_external_memory_properties_t *pExternalMemoryProperties) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Device.pfnGetExternalMemoryPropertiesCb = genericPrologCallbackPtr;
@@ -242,7 +242,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetExternalMemoryPropertiesTra
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingDeviceGetStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driver_ddiTable.core_ddiTable.Device.pfnGetStatus =
+    driverDdiTable.coreDdiTable.Device.pfnGetStatus =
         [](ze_device_handle_t hDevice) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Device.pfnGetStatusCb = genericPrologCallbackPtr;

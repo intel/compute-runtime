@@ -34,7 +34,7 @@ typedef enum GTDI_ESCAPE_FUNCTION_ENUM {
 } GTDI_ESCAPE_FUNCTION;
 
 typedef struct GTDIBaseInStruct {
-    GTDI_ESCAPE_FUNCTION Function;
+    GTDI_ESCAPE_FUNCTION function;
 } GTDIHeaderIn;
 
 typedef GTDIHeaderIn GTDIGetGpuCpuTimestampsIn;
@@ -55,7 +55,7 @@ typedef enum GTDI_RETURN_CODE_ENUM {
 } GTDI_RETURN_CODE;
 
 typedef struct GTDIGetGpuCpuTimestampsOutStruct {
-    GTDI_RETURN_CODE RetCode; // Result of the call
+    GTDI_RETURN_CODE retCode; // Result of the call
     uint64_t gpuPerfTicks;    // in GPU_timestamp_ticks
     uint64_t cpuPerfTicks;    // in CPU_timestamp_ticks
     uint64_t gpuPerfFreq;     // in GPU_timestamp_ticks/s
@@ -63,11 +63,11 @@ typedef struct GTDIGetGpuCpuTimestampsOutStruct {
 } GTDIGetGpuCpuTimestampsOut;
 
 struct TimeStampDataHeader {
-    GFX_ESCAPE_HEADER_T m_Header;
+    GFX_ESCAPE_HEADER_T header;
     union {
-        GTDIGetGpuCpuTimestampsIn m_In;
-        GTDIGetGpuCpuTimestampsOut m_Out;
-    } m_Data;
+        GTDIGetGpuCpuTimestampsIn in;
+        GTDIGetGpuCpuTimestampsOut out;
+    } data;
 };
 
 } // namespace NEO

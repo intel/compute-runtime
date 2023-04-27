@@ -39,7 +39,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
     event_create_args.instanceData0 = generateRandomHandle<void *>();
     event_create_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Event.pfnCreate =
+    driverDdiTable.coreDdiTable.Event.pfnCreate =
         [](ze_event_pool_handle_t hEventPool, const ze_event_desc_t *desc, ze_event_handle_t *phEvent) {
             EXPECT_EQ(event_create_args.hEventPool1, hEventPool);
             EXPECT_EQ(&event_create_args.desc1, desc);
@@ -271,7 +271,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventDestroyTracing
     event_destroy_args.instanceData0 = generateRandomHandle<void *>();
     event_destroy_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Event.pfnDestroy =
+    driverDdiTable.coreDdiTable.Event.pfnDestroy =
         [](ze_event_handle_t hEvent) {
             EXPECT_EQ(event_destroy_args.hEvent1, hEvent);
             return ZE_RESULT_SUCCESS;
@@ -400,7 +400,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSignalTrac
     event_host_signal_args.instanceData0 = generateRandomHandle<void *>();
     event_host_signal_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Event.pfnHostSignal =
+    driverDdiTable.coreDdiTable.Event.pfnHostSignal =
         [](ze_event_handle_t hEvent) {
             EXPECT_EQ(event_host_signal_args.hEvent1, hEvent);
             return ZE_RESULT_SUCCESS;
@@ -533,7 +533,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
     event_host_synchronize_args.instanceData0 = generateRandomHandle<void *>();
     event_host_synchronize_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Event.pfnHostSynchronize =
+    driverDdiTable.coreDdiTable.Event.pfnHostSynchronize =
         [](ze_event_handle_t hEvent, uint64_t timeout) {
             EXPECT_EQ(event_host_synchronize_args.hEvent1, hEvent);
             EXPECT_EQ(event_host_synchronize_args.timeout1, timeout);
@@ -670,7 +670,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventQueryStatusTra
     event_query_status_args.instanceData0 = generateRandomHandle<void *>();
     event_query_status_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Event.pfnQueryStatus =
+    driverDdiTable.coreDdiTable.Event.pfnQueryStatus =
         [](ze_event_handle_t hEvent) {
             EXPECT_EQ(event_query_status_args.hEvent1, hEvent);
             return ZE_RESULT_SUCCESS;
@@ -799,7 +799,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostResetTraci
     event_reset_args.instanceData0 = generateRandomHandle<void *>();
     event_reset_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.Event.pfnHostReset =
+    driverDdiTable.coreDdiTable.Event.pfnHostReset =
         [](ze_event_handle_t hEvent) {
             EXPECT_EQ(event_reset_args.hEvent1, hEvent);
             return ZE_RESULT_SUCCESS;
@@ -950,7 +950,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
     event_pool_create_args.instanceData0 = generateRandomHandle<void *>();
     event_pool_create_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.EventPool.pfnCreate =
+    driverDdiTable.coreDdiTable.EventPool.pfnCreate =
         [](ze_context_handle_t hContext, const ze_event_pool_desc_t *desc, uint32_t numDevices, ze_device_handle_t *phDevices, ze_event_pool_handle_t *phEventPool) {
             EXPECT_EQ(event_pool_create_args.hContext1, hContext);
             EXPECT_EQ(&event_pool_create_args.desc1, desc);
@@ -1229,7 +1229,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolDestroyTra
     event_pool_destroy_args.instanceData0 = generateRandomHandle<void *>();
     event_pool_destroy_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.EventPool.pfnDestroy =
+    driverDdiTable.coreDdiTable.EventPool.pfnDestroy =
         [](ze_event_pool_handle_t hEventPool) {
             EXPECT_EQ(event_pool_destroy_args.hEventPool1, hEventPool);
             return ZE_RESULT_SUCCESS;
@@ -1380,7 +1380,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
     event_pool_get_ipc_handle_args.instanceData0 = generateRandomHandle<void *>();
     event_pool_get_ipc_handle_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.EventPool.pfnGetIpcHandle =
+    driverDdiTable.coreDdiTable.EventPool.pfnGetIpcHandle =
         [](ze_event_pool_handle_t hEventPool, ze_ipc_event_pool_handle_t *phIpc) {
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, hEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, phIpc);
@@ -1546,7 +1546,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
     event_pool_open_ipc_handle_args.instanceData0 = generateRandomHandle<void *>();
     event_pool_open_ipc_handle_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.EventPool.pfnOpenIpcHandle =
+    driverDdiTable.coreDdiTable.EventPool.pfnOpenIpcHandle =
         [](ze_context_handle_t hContext, ze_ipc_event_pool_handle_t hIpc, ze_event_pool_handle_t *phEventPool) {
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, hContext);
             EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, &hIpc));
@@ -1781,7 +1781,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCloseIpcHa
     event_pool_close_ipc_handle_args.instanceData0 = generateRandomHandle<void *>();
     event_pool_close_ipc_handle_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.EventPool.pfnCloseIpcHandle =
+    driverDdiTable.coreDdiTable.EventPool.pfnCloseIpcHandle =
         [](ze_event_pool_handle_t hEventPool) {
             EXPECT_EQ(event_pool_close_ipc_handle_args.hEventPool1, hEventPool);
             return ZE_RESULT_SUCCESS;
@@ -1916,7 +1916,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendSi
     command_list_append_signal_event_args.instanceData0 = generateRandomHandle<void *>();
     command_list_append_signal_event_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.CommandList.pfnAppendSignalEvent =
+    driverDdiTable.coreDdiTable.CommandList.pfnAppendSignalEvent =
         [](ze_command_list_handle_t hCommandList, ze_event_handle_t hEvent) {
             EXPECT_EQ(command_list_append_signal_event_args.hCommandList1, hCommandList);
             EXPECT_EQ(command_list_append_signal_event_args.hEvent1, hEvent);
@@ -2061,7 +2061,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWa
     command_list_append_wait_on_events_args.instanceData0 = generateRandomHandle<void *>();
     command_list_append_wait_on_events_args.instanceData3 = generateRandomHandle<void *>();
 
-    driver_ddiTable.core_ddiTable.CommandList.pfnAppendWaitOnEvents =
+    driverDdiTable.coreDdiTable.CommandList.pfnAppendWaitOnEvents =
         [](ze_command_list_handle_t hCommandList, uint32_t numEvents, ze_event_handle_t *phEvents) {
             EXPECT_EQ(command_list_append_wait_on_events_args.hCommandList1, hCommandList);
             EXPECT_EQ(numEvents, (uint32_t)NUM_COMMAND_LIST_APPEND_WAIT_ON_EVENTS_1);

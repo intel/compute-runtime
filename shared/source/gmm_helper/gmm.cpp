@@ -123,7 +123,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
 
     resourceParams.Usage = CacheSettingsHelper::getGmmUsageType(AllocationType::IMAGE, false, productHelper);
 
-    resourceParams.Format = imgInfo.surfaceFormat->GMMSurfaceFormat;
+    resourceParams.Format = imgInfo.surfaceFormat->gmmSurfaceFormat;
     resourceParams.Flags.Gpu.Texture = 1;
     resourceParams.BaseWidth64 = imageWidth;
     resourceParams.BaseHeight = imageHeight;
@@ -157,9 +157,9 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto hardwareInfo = rootDeviceEnvironment.getHardwareInfo();
     if (this->resourceParams.Flags.Info.MediaCompressed) {
-        compressionFormat = gmmHelper->getClientContext()->getMediaSurfaceStateCompressionFormat(imgInfo.surfaceFormat->GMMSurfaceFormat);
+        compressionFormat = gmmHelper->getClientContext()->getMediaSurfaceStateCompressionFormat(imgInfo.surfaceFormat->gmmSurfaceFormat);
     } else {
-        compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(imgInfo.surfaceFormat->GMMSurfaceFormat);
+        compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(imgInfo.surfaceFormat->gmmSurfaceFormat);
     }
 
     bool compressionFormatSupported = false;
@@ -169,15 +169,15 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
         compressionFormatSupported = compressionFormat != GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID;
     }
 
-    const bool isPackedYuv = imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_YUY2 ||
-                             imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_UYVY ||
-                             imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_YVYU ||
-                             imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_VYUY;
+    const bool isPackedYuv = imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_YUY2 ||
+                             imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_UYVY ||
+                             imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_YVYU ||
+                             imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_VYUY;
 
     bool allowCompression = GfxCoreHelper::compressedImagesSupported(*hardwareInfo) &&
                             preferCompressed &&
                             compressionFormatSupported &&
-                            imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 &&
+                            imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 &&
                             imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE &&
                             !isPackedYuv;
 
@@ -234,7 +234,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
         imgInfo.offset = reqOffsetInfo.Render.Offset;
     }
 
-    if (imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 || imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_P010) {
+    if (imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 || imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_P010) {
         GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
         reqOffsetInfo.ReqLock = 1;
         reqOffsetInfo.Slice = 1;

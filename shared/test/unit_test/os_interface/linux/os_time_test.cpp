@@ -105,14 +105,14 @@ TEST_F(DrmTimeTest, WhenGettingCpuGpuTimeThenSucceeds) {
     osTime->updateDrm(pDrm);
     auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, cpuGpuTime01.CPUTimeinNS);
-    EXPECT_NE(0ULL, cpuGpuTime01.GPUTimeStamp);
+    EXPECT_NE(0ULL, cpuGpuTime01.cpuTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime01.gpuTimeStamp);
     error = osTime->getCpuGpuTime(&cpuGpuTime02);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, cpuGpuTime02.CPUTimeinNS);
-    EXPECT_NE(0ULL, cpuGpuTime02.GPUTimeStamp);
-    EXPECT_GT(cpuGpuTime02.GPUTimeStamp, cpuGpuTime01.GPUTimeStamp);
-    EXPECT_GT(cpuGpuTime02.CPUTimeinNS, cpuGpuTime01.CPUTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime02.cpuTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime02.gpuTimeStamp);
+    EXPECT_GT(cpuGpuTime02.gpuTimeStamp, cpuGpuTime01.gpuTimeStamp);
+    EXPECT_GT(cpuGpuTime02.cpuTimeinNS, cpuGpuTime01.cpuTimeinNS);
 }
 
 TEST_F(DrmTimeTest, GivenDrmWhenGettingCpuGpuTimeThenSucceeds) {
@@ -122,14 +122,14 @@ TEST_F(DrmTimeTest, GivenDrmWhenGettingCpuGpuTimeThenSucceeds) {
     osTime->updateDrm(pDrm);
     auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, cpuGpuTime01.CPUTimeinNS);
-    EXPECT_NE(0ULL, cpuGpuTime01.GPUTimeStamp);
+    EXPECT_NE(0ULL, cpuGpuTime01.cpuTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime01.gpuTimeStamp);
     error = osTime->getCpuGpuTime(&cpuGpuTime02);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, cpuGpuTime02.CPUTimeinNS);
-    EXPECT_NE(0ULL, cpuGpuTime02.GPUTimeStamp);
-    EXPECT_GT(cpuGpuTime02.GPUTimeStamp, cpuGpuTime01.GPUTimeStamp);
-    EXPECT_GT(cpuGpuTime02.CPUTimeinNS, cpuGpuTime01.CPUTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime02.cpuTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime02.gpuTimeStamp);
+    EXPECT_GT(cpuGpuTime02.gpuTimeStamp, cpuGpuTime01.gpuTimeStamp);
+    EXPECT_GT(cpuGpuTime02.cpuTimeinNS, cpuGpuTime01.cpuTimeinNS);
 }
 
 TEST_F(DrmTimeTest, givenGetCpuGpuTimeWhenItIsUnavailableThenReturnFalse) {

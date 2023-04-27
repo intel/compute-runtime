@@ -16,8 +16,8 @@ class OSInterface;
 struct HardwareInfo;
 
 struct TimeStampData {
-    uint64_t GPUTimeStamp; // GPU time in counter ticks
-    uint64_t CPUTimeinNS;  // CPU time in ns
+    uint64_t gpuTimeStamp; // GPU time in counter ticks
+    uint64_t cpuTimeinNS;  // CPU time in ns
 };
 
 class OSTime;

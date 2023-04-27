@@ -321,7 +321,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
                              cl_uint numEventsInWaitList,
                              const cl_event *eventWaitList,
                              cl_event *event) override {
-        EnqueueWriteImageCounter++;
+        enqueueWriteImageCounter++;
         return BaseClass::enqueueWriteImage(dstImage,
                                             blockingWrite,
                                             origin,
@@ -340,7 +340,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     }
     cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t size,
                               const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
-        EnqueueWriteBufferCounter++;
+        enqueueWriteBufferCounter++;
         blockingWriteBuffer = blockingWrite == CL_TRUE;
         return BaseClass::enqueueWriteBuffer(buffer, blockingWrite, offset, size, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event);
     }
@@ -416,8 +416,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
     MultiDispatchInfo storedMultiDispatchInfo;
-    size_t EnqueueWriteImageCounter = 0;
-    size_t EnqueueWriteBufferCounter = 0;
+    size_t enqueueWriteImageCounter = 0;
+    size_t enqueueWriteBufferCounter = 0;
     size_t requestedCmdStreamSize = 0;
     bool blockingWriteBuffer = false;
     bool storeMultiDispatchInfo = false;

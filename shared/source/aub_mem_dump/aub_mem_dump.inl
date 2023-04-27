@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,9 +135,9 @@ void AubDump<Traits>::reserveAddressGGTTAndWriteMmeory(typename Traits::Stream &
 template <typename Traits>
 void AubDump<Traits>::setGttEntry(MiGttEntry &entry, uint64_t address, AubGTTData data) {
     entry.uiData = 0;
-    entry.pageConfig.PhysicalAddress = address / 4096;
-    entry.pageConfig.Present = data.present;
-    entry.pageConfig.LocalMemory = data.localMemory;
+    entry.pageConfig.physicalAddress = address / 4096;
+    entry.pageConfig.present = data.present;
+    entry.pageConfig.localMemory = data.localMemory;
 }
 
 template <typename Traits>
@@ -326,18 +326,18 @@ template <typename Traits>
 void AubPageTableHelper32<Traits>::createContext(typename Traits::Stream &stream, uint32_t context) {
     AubPpgttContextCreate cmd;
     memset(&cmd, 0, sizeof(cmd));
-    cmd.Header.Type = 0x7;
-    cmd.Header.Opcode = 0x1;
-    cmd.Header.SubOp = 0x14;
-    cmd.Header.DwordLength = ((sizeof(cmd) - sizeof(cmd.Header)) / sizeof(uint32_t)) - 1;
-    cmd.Handle = context;
-    cmd.AdvancedContext = false;
+    cmd.header.type = 0x7;
+    cmd.header.opcode = 0x1;
+    cmd.header.subOp = 0x14;
+    cmd.header.dwordLength = ((sizeof(cmd) - sizeof(cmd.header)) / sizeof(uint32_t)) - 1;
+    cmd.handle = context;
+    cmd.advancedContext = false;
 
-    cmd.SixtyFourBit = 0;
-    cmd.PageDirPointer[0] = BaseClass::getPDEAddress(0x000);
-    cmd.PageDirPointer[1] = BaseClass::getPDEAddress(0x200);
-    cmd.PageDirPointer[2] = BaseClass::getPDEAddress(0x400);
-    cmd.PageDirPointer[3] = BaseClass::getPDEAddress(0x600);
+    cmd.sixtyFourBit = 0;
+    cmd.pageDirPointer[0] = BaseClass::getPDEAddress(0x000);
+    cmd.pageDirPointer[1] = BaseClass::getPDEAddress(0x200);
+    cmd.pageDirPointer[2] = BaseClass::getPDEAddress(0x400);
+    cmd.pageDirPointer[3] = BaseClass::getPDEAddress(0x600);
 
     stream.createContext(cmd);
 }
@@ -346,15 +346,15 @@ template <typename Traits>
 void AubPageTableHelper64<Traits>::createContext(typename Traits::Stream &stream, uint32_t context) {
     AubPpgttContextCreate cmd;
     memset(&cmd, 0, sizeof(cmd));
-    cmd.Header.Type = 0x7;
-    cmd.Header.Opcode = 0x1;
-    cmd.Header.SubOp = 0x14;
-    cmd.Header.DwordLength = ((sizeof(cmd) - sizeof(cmd.Header)) / sizeof(uint32_t)) - 1;
-    cmd.Handle = context;
-    cmd.AdvancedContext = false;
+    cmd.header.type = 0x7;
+    cmd.header.opcode = 0x1;
+    cmd.header.subOp = 0x14;
+    cmd.header.dwordLength = ((sizeof(cmd) - sizeof(cmd.header)) / sizeof(uint32_t)) - 1;
+    cmd.handle = context;
+    cmd.advancedContext = false;
 
-    cmd.SixtyFourBit = 1;
-    cmd.PageDirPointer[0] = getPML4Address(0);
+    cmd.sixtyFourBit = 1;
+    cmd.pageDirPointer[0] = getPML4Address(0);
 
     stream.createContext(cmd);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ void GmmTypesConverter::queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAll
     if (imgInfo.imgDesc.imageRowPitch > 0) {
         imgInfo.rowPitch = imgInfo.imgDesc.imageRowPitch;
     } else {
-        imgInfo.rowPitch = getValidParam(imgInfo.imgDesc.imageWidth) * imgInfo.surfaceFormat->ImageElementSizeInBytes;
+        imgInfo.rowPitch = getValidParam(imgInfo.imgDesc.imageWidth) * imgInfo.surfaceFormat->imageElementSizeInBytes;
     }
     imgInfo.slicePitch = imgInfo.rowPitch * getValidParam(imgInfo.imgDesc.imageHeight);
     imgInfo.size = gfxAlloc->getUnderlyingBufferSize();

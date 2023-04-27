@@ -7349,13 +7349,13 @@ void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaT
     r0[4] = 0xAAAAAAAA;
     r0[5] = ((renderSurfaceStateOffset) >> 6) << 10;
 
-    sba.GeneralStateBaseAddress = 0x11111111;
-    sba.SurfaceStateBaseAddress = surfaceStateBaseAddress;
-    sba.DynamicStateBaseAddress = 0x33333333;
-    sba.IndirectObjectBaseAddress = 0x44444444;
-    sba.InstructionBaseAddress = 0x55555555;
-    sba.BindlessSurfaceStateBaseAddress = 0x66666666;
-    sba.BindlessSamplerStateBaseAddress = 0x77777777;
+    sba.generalStateBaseAddress = 0x11111111;
+    sba.surfaceStateBaseAddress = surfaceStateBaseAddress;
+    sba.dynamicStateBaseAddress = 0x33333333;
+    sba.indirectObjectBaseAddress = 0x44444444;
+    sba.instructionBaseAddress = 0x55555555;
+    sba.bindlessSurfaceStateBaseAddress = 0x66666666;
+    sba.bindlessSamplerStateBaseAddress = 0x77777777;
 
     char *sbaCpuPtr = stateSaveArea.data() + maxDbgSurfaceSize;
     char *rssCpuPtr = sbaCpuPtr + sizeof(SbaTrackedAddresses) + renderSurfaceStateOffset;
@@ -7386,13 +7386,13 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead)
     sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0, device);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaBuffer(session->convertToThreadId(thread), sba));
-    EXPECT_EQ(sbaExpected.GeneralStateBaseAddress, sba.GeneralStateBaseAddress);
-    EXPECT_EQ(sbaExpected.SurfaceStateBaseAddress, sba.SurfaceStateBaseAddress);
-    EXPECT_EQ(sbaExpected.DynamicStateBaseAddress, sba.DynamicStateBaseAddress);
-    EXPECT_EQ(sbaExpected.IndirectObjectBaseAddress, sba.IndirectObjectBaseAddress);
-    EXPECT_EQ(sbaExpected.InstructionBaseAddress, sba.InstructionBaseAddress);
-    EXPECT_EQ(sbaExpected.BindlessSurfaceStateBaseAddress, sba.BindlessSurfaceStateBaseAddress);
-    EXPECT_EQ(sbaExpected.BindlessSamplerStateBaseAddress, sba.BindlessSamplerStateBaseAddress);
+    EXPECT_EQ(sbaExpected.generalStateBaseAddress, sba.generalStateBaseAddress);
+    EXPECT_EQ(sbaExpected.surfaceStateBaseAddress, sba.surfaceStateBaseAddress);
+    EXPECT_EQ(sbaExpected.dynamicStateBaseAddress, sba.dynamicStateBaseAddress);
+    EXPECT_EQ(sbaExpected.indirectObjectBaseAddress, sba.indirectObjectBaseAddress);
+    EXPECT_EQ(sbaExpected.instructionBaseAddress, sba.instructionBaseAddress);
+    EXPECT_EQ(sbaExpected.bindlessSurfaceStateBaseAddress, sba.bindlessSurfaceStateBaseAddress);
+    EXPECT_EQ(sbaExpected.bindlessSamplerStateBaseAddress, sba.bindlessSamplerStateBaseAddress);
 }
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
@@ -7428,22 +7428,22 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
     uint64_t sba[9];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), thread, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 9, sba));
 
-    EXPECT_EQ(sbaExpected.GeneralStateBaseAddress, sba[0]);
-    EXPECT_EQ(sbaExpected.SurfaceStateBaseAddress, sba[1]);
-    EXPECT_EQ(sbaExpected.DynamicStateBaseAddress, sba[2]);
-    EXPECT_EQ(sbaExpected.IndirectObjectBaseAddress, sba[3]);
-    EXPECT_EQ(sbaExpected.InstructionBaseAddress, sba[4]);
-    EXPECT_EQ(sbaExpected.BindlessSurfaceStateBaseAddress, sba[5]);
-    EXPECT_EQ(sbaExpected.BindlessSamplerStateBaseAddress, sba[6]);
+    EXPECT_EQ(sbaExpected.generalStateBaseAddress, sba[0]);
+    EXPECT_EQ(sbaExpected.surfaceStateBaseAddress, sba[1]);
+    EXPECT_EQ(sbaExpected.dynamicStateBaseAddress, sba[2]);
+    EXPECT_EQ(sbaExpected.indirectObjectBaseAddress, sba[3]);
+    EXPECT_EQ(sbaExpected.instructionBaseAddress, sba[4]);
+    EXPECT_EQ(sbaExpected.bindlessSurfaceStateBaseAddress, sba[5]);
+    EXPECT_EQ(sbaExpected.bindlessSamplerStateBaseAddress, sba[6]);
 
-    uint64_t expectedBindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaExpected.SurfaceStateBaseAddress;
+    uint64_t expectedBindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaExpected.surfaceStateBaseAddress;
     uint64_t expectedScratchSpaceBaseAddress = 0;
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         expectedScratchSpaceBaseAddress = 0xBA5EBA5E;
     } else {
-        expectedScratchSpaceBaseAddress = ((r0[5] >> 10) << 10) + sbaExpected.GeneralStateBaseAddress;
+        expectedScratchSpaceBaseAddress = ((r0[5] >> 10) << 10) + sbaExpected.generalStateBaseAddress;
     }
 
     EXPECT_EQ(expectedBindingTableBaseAddress, sba[7]);
@@ -7479,7 +7479,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
     if (!gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         r0[5] = 0;
     }
-    sbaExpected.SurfaceStateBaseAddress = surfaceStateBaseAddress;
+    sbaExpected.surfaceStateBaseAddress = surfaceStateBaseAddress;
 
     char *sbaCpuPtr = session->stateSaveAreaHeader.data() + maxDbgSurfaceSize;
     char *rssCpuPtr = sbaCpuPtr + sizeof(SbaTrackedAddresses) + renderSurfaceStateOffset;
@@ -7491,7 +7491,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
     uint64_t sba[9];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), thread, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 9, sba));
 
-    EXPECT_EQ(sbaExpected.SurfaceStateBaseAddress, sba[1]);
+    EXPECT_EQ(sbaExpected.surfaceStateBaseAddress, sba[1]);
 
     const uint64_t expectedScratchSpaceBaseAddress = 0;
     EXPECT_EQ(expectedScratchSpaceBaseAddress, sba[8]);

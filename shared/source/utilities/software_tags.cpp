@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,17 +61,17 @@ void SWTagHeapInfo::bxml(std::ostream &os) {
 
 uint32_t BaseTag::getMarkerNoopID(OpCode opcode) {
     MarkerNoopID id;
-    id.OpCode = static_cast<uint32_t>(opcode);
-    id.Reserved = 0;
+    id.opCode = static_cast<uint32_t>(opcode);
+    id.reserved = 0;
     return id.value;
 }
 
 uint32_t BaseTag::getOffsetNoopID(uint32_t offset) {
     OffsetNoopID id;
-    id.Offset = offset / sizeof(uint32_t);
-    id.SubTag = 0;
-    id.MagicBit = 1;
-    id.Reserved = 0;
+    id.offset = offset / sizeof(uint32_t);
+    id.subTag = 0;
+    id.magicBit = 1;
+    id.reserved = 0;
     return id.value;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ void MockGmmResourceInfo::setSurfaceFormat() {
         if (!surfaceFormatInfo) {
             for (auto &formatArray : formats) {
                 for (auto &format : formatArray) {
-                    if (mockResourceCreateParams.Format == format.GMMSurfaceFormat) {
+                    if (mockResourceCreateParams.Format == format.gmmSurfaceFormat) {
                         surfaceFormatInfo = &format;
                         ASSERT_NE(nullptr, surfaceFormatInfo);
                         return;

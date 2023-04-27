@@ -64,7 +64,7 @@ uint32_t getMipOffset(Image *image, const size_t *origin) {
         return 0;
     }
     UNRECOVERABLE_IF(origin == nullptr);
-    auto bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    auto bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     size_t offset{};
     auto imageType = image->getImageDesc().image_type;
     auto lod = findMipLevel(imageType, origin);

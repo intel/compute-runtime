@@ -1648,7 +1648,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecond
 class FalseCpuDeviceTime : public NEO::DeviceTime {
   public:
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime, NEO::OSTime *) override {
-        pGpuCpuTime->CPUTimeinNS = 0u;
+        pGpuCpuTime->cpuTimeinNS = 0u;
         return true;
     }
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {

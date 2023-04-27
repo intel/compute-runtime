@@ -43,25 +43,25 @@ class PerfProfiler {
         totalSystemTime = 0;
         systemLogs.clear();
         systemLogs.reserve(20);
-        ApiTimer.start();
+        apiTimer.start();
     }
 
     void apiLeave(const char *func) {
-        ApiTimer.end();
-        logTimes(ApiTimer.getStart(), ApiTimer.getEnd(), ApiTimer.get(), totalSystemTime, func);
+        apiTimer.end();
+        logTimes(apiTimer.getStart(), apiTimer.getEnd(), apiTimer.get(), totalSystemTime, func);
     }
 
     void logTimes(long long start, long long end, long long span, unsigned long long totalSystem, const char *function);
     void logSysTimes(long long start, unsigned long long time, unsigned int id);
 
     void systemEnter() {
-        SystemTimer.start();
+        systemTimer.start();
     }
 
     void systemLeave(unsigned int id) {
-        SystemTimer.end();
-        logSysTimes(SystemTimer.getStart(), SystemTimer.get(), id);
-        totalSystemTime += SystemTimer.get();
+        systemTimer.end();
+        logSysTimes(systemTimer.getStart(), systemTimer.get(), id);
+        totalSystemTime += systemTimer.get();
     }
 
     std::ostream *getLogStream() {
@@ -88,8 +88,8 @@ class PerfProfiler {
   protected:
     static std::atomic<int> counter;
     static PerfProfiler *objects[PerfProfiler::objectsNumber];
-    Timer ApiTimer;
-    Timer SystemTimer;
+    Timer apiTimer;
+    Timer systemTimer;
     unsigned long long totalSystemTime = 0;
     std::unique_ptr<std::ostream> logFile;
     std::unique_ptr<std::ostream> sysLogFile;
