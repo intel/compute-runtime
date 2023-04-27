@@ -12,6 +12,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
@@ -194,7 +195,8 @@ GEN11TEST_F(PreambleFixtureGen11, whenKernelDebuggingCommandsAreProgrammedThenCo
     hwParser.parseCommands<FamilyType>(stream);
     auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
 
-    ASSERT_EQ(2u, cmdList.size());
+    auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
+    ASSERT_EQ(expectedProgrammedCmdsCount, cmdList.size());
 
     auto it = cmdList.begin();
 

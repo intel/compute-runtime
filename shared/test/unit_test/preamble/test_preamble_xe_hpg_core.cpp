@@ -20,33 +20,6 @@ using PreambleTest = ::testing::Test;
 
 using namespace NEO;
 
-HWTEST2_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectCommandsArePlacedIntoStream, IsXeHpgCore) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-
-    auto bufferSize = PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true);
-    auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
-
-    LinearStream stream(buffer.get(), bufferSize);
-    PreambleHelper<FamilyType>::programKernelDebugging(&stream);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(stream);
-    auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
-
-    ASSERT_EQ(2u, cmdList.size());
-
-    auto it = cmdList.begin();
-
-    MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(0x20d8u, pCmd->getRegisterOffset());
-    EXPECT_EQ((1u << 5) | (1u << 21), pCmd->getDataDword());
-    it++;
-
-    pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(0xe400u, pCmd->getRegisterOffset());
-    EXPECT_EQ((1u << 7) | (1u << 4) | (1u << 2) | (1u << 0), pCmd->getDataDword());
-}
-
 HWTEST2_F(PreambleTest, givenDisableEUFusionWhenProgramVFEStateThenFusedEUDispatchIsSetCorrectly, IsXeHpgCore) {
     typedef typename FamilyType::CFE_STATE CFE_STATE;
 

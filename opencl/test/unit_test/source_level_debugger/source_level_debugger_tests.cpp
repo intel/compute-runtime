@@ -13,10 +13,10 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debugger_library_restore.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/libult/source_level_debugger_library.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -32,23 +32,8 @@ using namespace NEO;
 using std::string;
 using std::unique_ptr;
 
-class DebuggerLibraryRestorer {
-  public:
-    DebuggerLibraryRestorer() {
-        restoreActiveState = DebuggerLibrary::getDebuggerActive();
-        restoreAvailableState = DebuggerLibrary::getLibraryAvailable();
-    }
-    ~DebuggerLibraryRestorer() {
-        DebuggerLibrary::clearDebuggerLibraryInterceptor();
-        DebuggerLibrary::setDebuggerActive(restoreActiveState);
-        DebuggerLibrary::setLibraryAvailable(restoreAvailableState);
-    }
-    bool restoreActiveState = false;
-    bool restoreAvailableState = false;
-};
-
 TEST(SourceLevelDebugger, whenSourceLevelDebuggerIsCreatedThenLegacyModeIsTrue) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(true);
 
     MockSourceLevelDebugger debugger;
@@ -56,7 +41,7 @@ TEST(SourceLevelDebugger, whenSourceLevelDebuggerIsCreatedThenLegacyModeIsTrue) 
 }
 
 TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsCreatedInExecutionEnvironment) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibrary::setLibraryAvailable(true);
@@ -70,7 +55,7 @@ TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsC
 }
 
 TEST(SourceLevelDebugger, givenPlatformWhenSourceLevelDebuggerIsCreatedThenRuntimeCapabilityHasFusedEusDisabled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibrary::setLibraryAvailable(true);
@@ -86,7 +71,7 @@ TEST(SourceLevelDebugger, givenPlatformWhenSourceLevelDebuggerIsCreatedThenRunti
 }
 
 TEST(SourceLevelDebugger, givenPlatformWhenInitializingSourceLevelDebuggerFailsThenRuntimeCapabilityFusedEusAreNotModified) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
@@ -106,7 +91,7 @@ TEST(SourceLevelDebugger, givenPlatformWhenInitializingSourceLevelDebuggerFailsT
 }
 
 TEST(SourceLevelDebugger, givenNoKernelDebuggerLibraryWhenSourceLevelDebuggerIsCreatedThenLibraryIsNotLoaded) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(false);
 
     MockSourceLevelDebugger debugger;
@@ -114,7 +99,7 @@ TEST(SourceLevelDebugger, givenNoKernelDebuggerLibraryWhenSourceLevelDebuggerIsC
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenSourceLevelDebuggerIsConstructedThenLibraryIsLoaded) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(true);
 
     MockSourceLevelDebugger debugger;
@@ -122,7 +107,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenSourceLevelDebu
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenIsDebuggerActiveIsCalledThenFalseIsReturned) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(true);
 
     MockSourceLevelDebugger debugger;
@@ -131,7 +116,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenIsDebuggerActiv
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenIsDebuggerActiveIsCalledThenTrueIsReturned) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(true);
     DebuggerLibrary::setDebuggerActive(true);
 
@@ -141,7 +126,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenIsDebuggerActiveIs
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotAvailableWhenIsDebuggerActiveIsCalledThenFalseIsReturned) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(false);
 
     MockSourceLevelDebugger debugger;
@@ -150,7 +135,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotAvailableWhenIsDebuggerAc
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifySourceCodeIsCalledThenDebuggerLibraryFunctionIsCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -181,7 +166,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifySourceCodeIs
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifySourceCodeIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -200,7 +185,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifySourceCod
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyNewDeviceIsCalledThenDebuggerLibraryFunctionIsCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -217,7 +202,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyNewDeviceIsC
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyNewDeviceIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -233,7 +218,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyNewDevice
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenIsOptimizationDisabledIsCalledThenDebuggerLibraryFunctionIsCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -252,7 +237,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenIsOptimizationDisa
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenIsOptimizationDisabledIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -268,7 +253,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenIsOptimizationD
 }
 
 TEST(SourceLevelDebugger, givenActiveDebuggerWhenGetDebuggerOptionReturnsZeroThenIsOptimizationDisabledReturnsFalse) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -289,7 +274,7 @@ TEST(SourceLevelDebugger, givenActiveDebuggerWhenGetDebuggerOptionReturnsZeroThe
 }
 
 TEST(SourceLevelDebugger, givenActiveDebuggerAndOptDisabledWhenGetDebuggerOptionReturnsNonZeroAndOneInValueThenIsOptimizationDisabledReturnsTrue) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -310,7 +295,7 @@ TEST(SourceLevelDebugger, givenActiveDebuggerAndOptDisabledWhenGetDebuggerOption
 }
 
 TEST(SourceLevelDebugger, givenActiveDebuggerAndOptDisabledWhenGetDebuggerOptionReturnsNonZeroAndZeroInValueThenIsOptimizationDisabledReturnsFalse) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -331,7 +316,7 @@ TEST(SourceLevelDebugger, givenActiveDebuggerAndOptDisabledWhenGetDebuggerOption
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -374,7 +359,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNullptrDebugDataIsPassedToNotifyThenDebuggerNotifiedWithNullPointersAndZeroSizes) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -410,7 +395,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNullptrDebugDataIs
 }
 
 TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsCalledWithIsa) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -439,7 +424,7 @@ TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebugg
 }
 
 TEST(SourceLevelDebugger, givenNoGenIsaWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsCalledWithIsa) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -468,7 +453,7 @@ TEST(SourceLevelDebugger, givenNoGenIsaWhenNotifyKernelDebugDataIsCalledThenDebu
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -485,7 +470,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyKernelDeb
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeIsCalledWithLocalMemoryUsageFalseThenDebuggerFunctionIsCalledWithCorrectArg) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -501,7 +486,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeIsCalled
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeReturnsErrorThenIsActiveIsSetToFalse) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -518,7 +503,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeReturnsE
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeIsCalledWithLocalMemoryUsageTrueThenDebuggerFunctionIsCalledWithCorrectArg) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -534,7 +519,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeIsCalled
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenInitializeIsCalledThenDebuggerFunctionIsNotCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -549,7 +534,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenInitializeIsCal
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceIsConstructedThenDebuggerIsInitialized) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
@@ -563,7 +548,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceIsConstructe
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedThenDebuggerIsNotified) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
@@ -582,7 +567,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedWithOsCsrThenDebuggerIsNotifiedWithCorrectDeviceHandle) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
@@ -610,7 +595,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreatedThenDebuggerIsNotCreatedInitializedAndNotNotified) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -625,7 +610,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreated
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenGettingSourceLevelDebuggerThenNullptrIsReturned) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -638,7 +623,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenGettingSourceLe
 }
 
 TEST(SourceLevelDebugger, givenDeviceWithDebuggerActiveSetWhenSourceLevelDebuggerIsNotCreatedThenNotificationsAreNotCalled) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(false);
@@ -654,7 +639,7 @@ TEST(SourceLevelDebugger, givenDeviceWithDebuggerActiveSetWhenSourceLevelDebugge
 }
 
 TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewSourceLevelDebugger) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
@@ -680,7 +665,7 @@ TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewS
 }
 
 TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenCreatedThenUseDedicatedSourceLevelDebugger) {
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibrary::setLibraryAvailable(true);
@@ -723,7 +708,7 @@ TEST(SourceLevelDebugger, givenEnableMockSourceLevelDebuggerWhenInitializingExec
         GTEST_SKIP_("Source Level Debugger not supported");
     }
     DebugManagerStateRestore stateRestore;
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(false);
 
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
@@ -771,7 +756,7 @@ TEST(SourceLevelDebugger, givenMode1InEnableMockSourceLevelDebuggerWhenDebuggerC
         GTEST_SKIP_("Source Level Debugger not supported");
     }
     DebugManagerStateRestore stateRestore;
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(false);
 
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
@@ -785,7 +770,7 @@ TEST(SourceLevelDebugger, givenMode2InEnableMockSourceLevelDebuggerWhenDebuggerC
         GTEST_SKIP_("Source Level Debugger not supported");
     }
     DebugManagerStateRestore stateRestore;
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setLibraryAvailable(false);
 
     DebugManager.flags.EnableMockSourceLevelDebugger.set(2);
@@ -798,7 +783,7 @@ TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenNotifyKernelDebugDataIsCalledT
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF);
 
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -834,7 +819,7 @@ TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenElfFileExistsWhileNotifyingDeb
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF);
 
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
@@ -874,7 +859,7 @@ TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenElfFileExistsWhileNotifyingDeb
 
 TEST(SourceLevelDebugger, givenDebuggerLibraryAvailableAndExperimentalEnableSourceLevelDebuggerThenDebuggerIsCreated) {
     DebugManagerStateRestore stateRestore;
-    DebuggerLibraryRestorer restorer;
+    DebuggerLibraryRestore restore;
     DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::setLibraryAvailable(true);
 

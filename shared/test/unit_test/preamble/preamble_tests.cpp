@@ -97,10 +97,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIs
 }
 
 HWTEST_F(PreambleTest, givenActiveKernelDebuggingWhenPreambleKernelDebuggingCommandsSizeIsQueriedThenCorrectSizeIsReturned) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
     auto size = PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true);
-    auto sizeExpected = 2 * sizeof(MI_LOAD_REGISTER_IMM);
-    EXPECT_EQ(sizeExpected, size);
+    auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
+    auto expectedSize = expectedProgrammedCmdsCount * sizeof(MI_LOAD_REGISTER_IMM);
+    EXPECT_EQ(expectedSize, size);
 }
 
 HWTEST_F(PreambleTest, givenInactiveKernelDebuggingWhenPreambleKernelDebuggingCommandsSizeIsQueriedThenZeroIsReturned) {
@@ -121,7 +123,8 @@ HWTEST_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectComman
     hwParser.parseCommands<FamilyType>(stream);
     auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
 
-    ASSERT_EQ(2u, cmdList.size());
+    auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
+    ASSERT_EQ(expectedProgrammedCmdsCount, cmdList.size());
 
     auto it = cmdList.begin();
 
@@ -165,8 +168,9 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
     cmdList = hwParser2.getCommandsList<MI_LOAD_REGISTER_IMM>();
 
     auto miLoadRegImmCountWithDebugging = cmdList.size();
+    auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
     ASSERT_LT(miLoadRegImmCountWithoutDebugging, miLoadRegImmCountWithDebugging);
-    EXPECT_EQ(2u, miLoadRegImmCountWithDebugging - miLoadRegImmCountWithoutDebugging);
+    EXPECT_EQ(expectedProgrammedCmdsCount, miLoadRegImmCountWithDebugging - miLoadRegImmCountWithoutDebugging);
 }
 
 HWTEST_F(PreambleTest, givenKernelDebuggingActiveAndMidThreadPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreAdded) {
@@ -180,7 +184,8 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveAndMidThreadPreemptionWhenGetAd
     EXPECT_LT(withoutDebugging, withDebugging);
 
     size_t diff = withDebugging - withoutDebugging;
-    size_t sizeExpected = 2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM);
+    auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
+    size_t sizeExpected = expectedProgrammedCmdsCount * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM);
     EXPECT_EQ(sizeExpected, diff);
 }
 

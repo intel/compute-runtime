@@ -125,6 +125,7 @@ void StateComputeModeProperties::setThreadArbitrationProperty(int32_t threadArbi
 void StateComputeModeProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     productHelper.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
+    productHelper.fillScmPropertiesSupportStructureExtra(this->scmPropertiesSupport, rootDeviceEnvironment);
 
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     this->defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();

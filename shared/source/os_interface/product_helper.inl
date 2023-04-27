@@ -605,6 +605,9 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureExtra(StateComputeModePropertiesSupport &propertiesSupport, const RootDeviceEnvironment &rootDeviceEnvironment) const {}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getScmPropertyThreadArbitrationPolicySupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::threadArbitrationPolicy;
@@ -775,4 +778,10 @@ bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isSharedContext,
     }
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isTranslationExceptionSupported() const {
+    return false;
+}
+
 } // namespace NEO

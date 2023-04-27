@@ -123,6 +123,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     productHelper.fillScmPropertiesSupportStructure(scmPropertiesSupport);
+    productHelper.fillScmPropertiesSupportStructureExtra(scmPropertiesSupport, rootDeviceEnvironment);
 
     int32_t threadArbitrationPolicyValues[] = {
         ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,

@@ -747,3 +747,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenChecking
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
     }
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsTranslationExceptionSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isTranslationExceptionSupported());
+}

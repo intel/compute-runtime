@@ -108,4 +108,9 @@ uint32_t UnitTestHelper<GfxFamily>::getProgrammedGrfValue(CommandStreamReceiver 
     return 0u;
 }
 
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getMiLoadRegisterImmProgrammedCmdsCount(bool debuggingEnabled) {
+    return (debuggingEnabled ? 2u : 0u);
+}
+
 } // namespace NEO

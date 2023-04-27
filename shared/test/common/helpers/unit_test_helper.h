@@ -62,6 +62,8 @@ struct UnitTestHelper {
     static uint32_t getTdCtlRegisterOffset();
     static uint32_t getTdCtlRegisterValue();
 
+    static uint32_t getMiLoadRegisterImmProgrammedCmdsCount(bool debuggingEnabled);
+
     static const uint32_t smallestTestableSimdSize;
 
     static const AuxTranslationMode requiredAuxTranslationMode;
