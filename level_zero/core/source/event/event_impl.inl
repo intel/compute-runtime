@@ -42,7 +42,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->hostAddress = reinterpret_cast<void *>(baseHostAddr + event->eventPoolOffset);
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
-    event->csr = csr;
+    event->csrs.push_back(csr);
     event->maxKernelCount = eventPool->getMaxKernelCount();
     event->maxPacketCount = eventPool->getEventMaxPackets();
     event->isFromIpcPool = eventPool->getImportedIpcPool();
@@ -167,10 +167,14 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
         }
     }
     if (this->downloadAllocationRequired) {
-        this->csr->downloadAllocations();
+        for (auto &csr : csrs) {
+            csr->downloadAllocations();
+        }
     }
     this->setIsCompleted();
-    this->csr->getInternalAllocationStorage()->cleanAllocationList(this->csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+    for (auto &csr : csrs) {
+        csr->getInternalAllocationStorage()->cleanAllocationList(csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -180,7 +184,9 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         hostEventSetValue(metricStreamer->getNotificationState());
     }
     if (this->downloadAllocationRequired) {
-        this->csr->downloadAllocation(this->getAllocation(this->device));
+        for (auto &csr : csrs) {
+            csr->downloadAllocation(this->getAllocation(this->device));
+        }
     }
 
     if (!this->isFromIpcPool && isAlreadyCompleted()) {
@@ -292,7 +298,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     ze_result_t ret = ZE_RESULT_NOT_READY;
 
-    if (this->csr->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
+    if (this->csrs[0]->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -320,7 +326,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
         if (elapsedTimeSinceGpuHangCheck.count() >= this->gpuHangCheckPeriod.count()) {
             lastHangCheckTime = currentTime;
-            if (this->csr->isGpuHangDetected()) {
+            if (this->csrs[0]->isGpuHangDetected()) {
                 if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
                     device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
                 }

@@ -135,7 +135,15 @@ struct Event : _ze_event_handle_t {
         return isTimestampEvent || usingContextEndOffset;
     }
     void setCsr(NEO::CommandStreamReceiver *csr) {
-        this->csr = csr;
+        this->csrs[0] = csr;
+    }
+    void appendAdditionalCsr(NEO::CommandStreamReceiver *additonalCsr) {
+        for (const auto &csr : csrs) {
+            if (csr == additonalCsr) {
+                return;
+            }
+        }
+        csrs.push_back(additonalCsr);
     }
 
     void increaseKernelCount();
@@ -226,7 +234,7 @@ struct Event : _ze_event_handle_t {
 
     // Metric streamer instance associated with the event.
     MetricStreamer *metricStreamer = nullptr;
-    NEO::CommandStreamReceiver *csr = nullptr;
+    StackVec<NEO::CommandStreamReceiver *, 1> csrs;
     void *hostAddress = nullptr;
     Device *device = nullptr;
     EventPool *eventPool = nullptr;

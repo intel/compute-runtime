@@ -12,7 +12,7 @@
 #include "shared/source/sku_info/sku_info_base.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 
@@ -118,6 +118,10 @@ struct BcsSplit {
 
             totalSize -= localSize;
             engineCount--;
+
+            if (hSignalEvent) {
+                Event::fromHandle(hSignalEvent)->appendAdditionalCsr(static_cast<CommandQueueImp *>(cmdQsForSplit[i])->getCsr());
+            }
         }
 
         cmdList->addEventsToCmdList(static_cast<uint32_t>(cmdQsForSplit.size()), eventHandles.data(), hasRelaxedOrderingDependencies, false);

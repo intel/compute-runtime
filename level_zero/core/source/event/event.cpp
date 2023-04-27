@@ -384,7 +384,8 @@ void Event::resetPackets(bool resetAllPackets) {
     cpuStartTimestamp = 0;
     gpuStartTimestamp = 0;
     gpuEndTimestamp = 0;
-    this->csr = this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    this->csrs.clear();
+    this->csrs.push_back(this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 }
 
 void Event::setIsCompleted() {

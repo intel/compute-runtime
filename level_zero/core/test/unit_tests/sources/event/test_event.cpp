@@ -259,8 +259,8 @@ TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsD
     eventPool->createEvent(&eventDesc, &event);
 
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
-    ASSERT_NE(nullptr, eventObject->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
+    ASSERT_NE(nullptr, eventObject->csrs[0]);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 }
 
 TEST_F(EventPoolCreate, GivenNoDeviceThenEventPoolIsCreated) {
@@ -1298,8 +1298,8 @@ TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamRece
 
     std::unique_ptr<Event> event(static_cast<Event *>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
     ASSERT_NE(nullptr, event);
-    ASSERT_NE(nullptr, event->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csr);
+    ASSERT_NE(nullptr, event->csrs[0]);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csrs[0]);
 }
 
 TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndOffsetAreSet) {
@@ -1460,7 +1460,7 @@ TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLo
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = true;
 
-    event->csr = csr.get();
+    event->csrs[0] = csr.get();
     event->gpuHangCheckPeriod = 0ms;
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
@@ -1473,7 +1473,7 @@ TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchr
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = false;
 
-    event->csr = csr.get();
+    event->csrs[0] = csr.get();
     event->gpuHangCheckPeriod = 0ms;
 
     constexpr uint64_t timeoutNanoseconds = 1;
@@ -1484,7 +1484,7 @@ TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchr
 
 TEST_F(EventSynchronizeTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    event->csr = csr.get();
+    event->csrs[0] = csr.get();
     event->gpuHangCheckPeriod = 50000000ms;
 
     constexpr uint64_t timeoutNanoseconds = 1;
@@ -2804,8 +2804,8 @@ HWTEST_F(EventTests,
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
 
     ASSERT_NE(event, nullptr);
-    ASSERT_NE(nullptr, event->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csr);
+    ASSERT_NE(nullptr, event->csrs[0]);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csrs[0]);
     event->setUsingContextEndOffset(false);
 
     size_t eventCompletionOffset = event->getContextStartOffset();
@@ -2825,7 +2825,7 @@ HWTEST_F(EventTests,
         }
     };
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
     ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
         downloadAllocationTrack[&gfxAllocation]++;
@@ -2859,7 +2859,7 @@ HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocat
 
     auto status = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
-    EXPECT_FALSE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr)->downloadAllocationsCalled);
+    EXPECT_FALSE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0])->downloadAllocationsCalled);
     event->destroy();
 }
 
@@ -2977,7 +2977,7 @@ struct MockEventCompletion : public L0::EventImp<uint32_t> {
         totalEventSize = eventPool->getEventSize();
         eventPoolOffset = index * totalEventSize;
         hostAddress = reinterpret_cast<void *>(baseHostAddr + eventPoolOffset);
-        csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+        csrs[0] = neoDevice->getDefaultEngine().commandStreamReceiver;
 
         maxKernelCount = eventPool->getMaxKernelCount();
         maxPacketCount = eventPool->getEventMaxPackets();
@@ -3006,6 +3006,25 @@ TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndRetur
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 0u);
+}
+
+TEST_F(EventTests, whenAppendAdditionalCsrThenStoreUniqueCsr) {
+    auto csr1 = reinterpret_cast<NEO::CommandStreamReceiver *>(0x1234);
+    auto csr2 = reinterpret_cast<NEO::CommandStreamReceiver *>(0x5678);
+
+    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+    EXPECT_EQ(event->csrs.size(), 1u);
+
+    event->appendAdditionalCsr(csr1);
+    EXPECT_EQ(event->csrs.size(), 2u);
+
+    event->appendAdditionalCsr(csr2);
+    EXPECT_EQ(event->csrs.size(), 3u);
+
+    event->appendAdditionalCsr(csr1);
+    EXPECT_EQ(event->csrs.size(), 3u);
+
+    event->destroy();
 }
 
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThatFailedThenAccessMemoryAndReturnSuccess) {
@@ -3116,12 +3135,12 @@ TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
     const auto mockCsr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
 
-    EXPECT_EQ(event->csr, defaultCsr);
+    EXPECT_EQ(event->csrs[0], defaultCsr);
     event->setCsr(mockCsr.get());
-    EXPECT_EQ(event->csr, mockCsr.get());
+    EXPECT_EQ(event->csrs[0], mockCsr.get());
 
     event->reset();
-    EXPECT_EQ(event->csr, defaultCsr);
+    EXPECT_EQ(event->csrs[0], defaultCsr);
 }
 
 template <int32_t multiTile, int32_t signalRemainingPackets>

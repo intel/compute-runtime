@@ -270,8 +270,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     eventPool->createEvent(&eventDesc, &event);
 
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
-    ASSERT_NE(nullptr, eventObject->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
+    ASSERT_NE(nullptr, eventObject->csrs[0]);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
     returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -334,8 +334,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
     eventPool->createEvent(&eventDesc, &event);
 
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
-    ASSERT_NE(nullptr, eventObject->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
+    ASSERT_NE(nullptr, eventObject->csrs[0]);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
     returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);

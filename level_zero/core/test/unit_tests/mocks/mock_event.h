@@ -19,7 +19,7 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
-    using BaseClass::csr;
+    using BaseClass::csrs;
     using BaseClass::Event;
     using BaseClass::gpuHangCheckPeriod;
     using BaseClass::hostAddress;
@@ -36,7 +36,7 @@ using Event = WhiteBox<::L0::Event>;
 template <typename TagSizeT>
 struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass = ::L0::EventImp<TagSizeT>;
-    using BaseClass::csr;
+    using BaseClass::csrs;
     using BaseClass::gpuHangCheckPeriod;
     using BaseClass::hostAddress;
     using BaseClass::hostEventSetValueTimestamps;

@@ -472,7 +472,7 @@ TEST_F(EventAssertTest, GivenGpuHangWhenHostSynchronizeIsCalledThenAssertIsCheck
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = true;
 
-    event->csr = csr.get();
+    event->csrs[0] = csr.get();
     event->gpuHangCheckPeriod = std::chrono::microseconds::zero();
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -488,7 +488,7 @@ TEST_F(EventAssertTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronize
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = false;
 
-    event->csr = csr.get();
+    event->csrs[0] = csr.get();
     event->gpuHangCheckPeriod = std::chrono::microseconds::zero();
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -506,7 +506,7 @@ TEST_F(EventAssertTest, GivenEventSignalledWhenHostSynchronizeIsCalledThenAssert
     *hostAddr = Event::STATE_SIGNALED;
 
     event->setUsingContextEndOffset(false);
-    event->csr = csr.get();
+    event->csrs[0] = csr.get();
 
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);

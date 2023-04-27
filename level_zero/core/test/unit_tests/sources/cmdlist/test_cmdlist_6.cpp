@@ -378,10 +378,10 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverri
     auto event = std::unique_ptr<Event>(static_cast<Event *>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
-    cmdList.csr = event->csr;
-    event->csr = &mockCommandStreamReceiver;
+    cmdList.csr = event->csrs[0];
+    event->csrs[0] = &mockCommandStreamReceiver;
     cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, false, false, event->toHandle());
-    EXPECT_EQ(event->csr, cmdList.csr);
+    EXPECT_EQ(event->csrs[0], cmdList.csr);
 }
 
 HWTEST2_F(CommandListTest,
