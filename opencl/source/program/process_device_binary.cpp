@@ -67,7 +67,7 @@ size_t Program::getNumKernels() const {
 
 const KernelInfo *Program::getKernelInfo(size_t ordinal, uint32_t rootDeviceIndex) const {
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
-    if (exportedFunctionsKernelId == ordinal) {
+    if (exportedFunctionsKernelId <= ordinal) {
         ordinal++;
     }
     DEBUG_BREAK_IF(ordinal >= kernelInfoArray.size());
