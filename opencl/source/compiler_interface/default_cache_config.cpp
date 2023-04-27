@@ -8,6 +8,7 @@
 #include "shared/source/compiler_interface/default_cache_config.h"
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
@@ -26,8 +27,15 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
     std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(false, keyName));
     ret.cacheDir = settingsReader->getSetting(settingsReader->appSpecificLocation(keyName), static_cast<std::string>(CL_CACHE_LOCATION));
 
-    ret.cacheSize = MemoryConstants::gigaByte;
-    ret.cacheFileExtension = ".cl_cache";
+    if (NEO::SysCalls::pathExists(ret.cacheDir)) {
+        ret.enabled = true;
+        ret.cacheSize = MemoryConstants::gigaByte;
+        ret.cacheFileExtension = ".cl_cache";
+    } else {
+        ret.enabled = false;
+        ret.cacheSize = 0u;
+        ret.cacheFileExtension = ".cl_cache";
+    }
 
     return ret;
 }

@@ -33,8 +33,7 @@ namespace NEO {
 
 cl_int Program::build(
     const ClDeviceVector &deviceVector,
-    const char *buildOptions,
-    bool enableCaching) {
+    const char *buildOptions) {
     cl_int retVal = CL_SUCCESS;
     auto internalOptions = getInternalOptions();
     auto defaultClDevice = deviceVector[0];
@@ -131,7 +130,6 @@ cl_int Program::build(
             DBG_LOG(LogApiCalls,
                     "Build Options", inputArgs.apiOptions.begin(),
                     "\nBuild Internal Options", inputArgs.internalOptions.begin());
-            inputArgs.allowCaching = enableCaching;
             NEO::TranslationOutput compilerOuput = {};
 
             for (const auto &clDevice : deviceVector) {
@@ -217,9 +215,9 @@ void Program::notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &file
     }
 }
 
-cl_int Program::build(const ClDeviceVector &deviceVector, const char *buildOptions, bool enableCaching,
+cl_int Program::build(const ClDeviceVector &deviceVector, const char *buildOptions,
                       std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap) {
-    auto ret = this->build(deviceVector, buildOptions, enableCaching);
+    auto ret = this->build(deviceVector, buildOptions);
     if (ret != CL_SUCCESS) {
         return ret;
     }

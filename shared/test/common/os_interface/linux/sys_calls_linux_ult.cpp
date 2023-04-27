@@ -60,6 +60,7 @@ int flockCalled = 0;
 std::vector<void *> mmapVector(64);
 std::vector<void *> mmapCapturedExtendedPointers(64);
 bool mmapCaptureExtendedPointers = false;
+bool pathExistsMock = false;
 bool mmapAllowExtendedPointers = false;
 bool failMmap = false;
 uint32_t mmapFuncCalled = 0u;
@@ -87,6 +88,10 @@ int (*sysCallsScandir)(const char *dirp,
 int (*sysCallsUnlink)(const std::string &pathname) = nullptr;
 int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf) = nullptr;
 int (*sysCallsMkstemp)(char *fileName) = nullptr;
+
+bool pathExists(const std::string &path) {
+    return pathExistsMock;
+}
 
 void exit(int code) {
     exitCalled = true;

@@ -59,6 +59,10 @@ class ClCompilerInterfaceTest : public ClDeviceFixture,
 };
 
 TEST_F(ClCompilerInterfaceTest, WhenBuildIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {
+    CompilerCacheConfig config = {};
+    config.enabled = false;
+    auto tempCompilerCache = std::make_unique<CompilerCache>(config);
+    pCompilerInterface->cache.reset(tempCompilerCache.release());
     std::string receivedInternalOptions;
 
     auto debugVars = NEO::getFclDebugVars();

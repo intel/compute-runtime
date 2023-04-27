@@ -1578,7 +1578,7 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
         retVal = Program::processInputDevices(deviceVectorPtr, numDevices, deviceList, pProgram->getDevices());
     }
     if (CL_SUCCESS == retVal) {
-        retVal = pProgram->build(*deviceVectorPtr, options, clCacheEnabled);
+        retVal = pProgram->build(*deviceVectorPtr, options);
         pProgram->invokeCallback(funcNotify, userData);
     }
 

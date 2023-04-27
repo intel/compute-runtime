@@ -102,8 +102,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            nullptr,
-            false);
+            nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         // create a kernel
@@ -150,8 +149,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            "-cl-std=CL2.0",
-            false);
+            "-cl-std=CL2.0");
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         kernel = Kernel::create<MockKernel>(
@@ -193,8 +191,7 @@ class SimpleKernelFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            nullptr,
-            false);
+            nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         for (size_t i = 0; i < maxKernelsCount; i++) {
@@ -247,8 +244,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            CompilerOptions::greaterThan4gbBuffersRequired.data(),
-            false);
+            CompilerOptions::greaterThan4gbBuffersRequired.data());
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         kernel.reset(Kernel::create<MockKernel>(
@@ -287,8 +283,7 @@ class StatelessCopyKernelFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            CompilerOptions::greaterThan4gbBuffersRequired.data(),
-            false);
+            CompilerOptions::greaterThan4gbBuffersRequired.data());
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         multiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(
@@ -328,8 +323,7 @@ class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            CompilerOptions::greaterThan4gbBuffersRequired.data(),
-            false);
+            CompilerOptions::greaterThan4gbBuffersRequired.data());
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         multiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(
@@ -373,8 +367,7 @@ class BindlessKernelFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            nullptr,
-            false);
+            nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         kernel.reset(Kernel::create<MockKernel>(

@@ -163,14 +163,6 @@ class BuiltIns {
         return *builtinsLib;
     }
 
-    void setCacheingEnableState(bool enableCacheing) {
-        this->enableCacheing = enableCacheing;
-    }
-
-    bool isCacheingEnabled() const {
-        return this->enableCacheing;
-    }
-
   protected:
     // sip builtins
     std::pair<std::unique_ptr<SipKernel>, std::once_flag> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
@@ -179,8 +171,6 @@ class BuiltIns {
 
     using ContextId = uint32_t;
     std::unordered_map<ContextId, std::pair<std::unique_ptr<SipKernel>, std::once_flag>> perContextSipKernels;
-
-    bool enableCacheing = true;
 };
 
 template <EBuiltInOps::Type OpCode>

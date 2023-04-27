@@ -278,7 +278,6 @@ ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t in
     inputArgs.src = ArrayRef<const char>(input, inputSize);
     inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-    inputArgs.allowCaching = true;
     return this->compileGenBinary(inputArgs, false);
 }
 

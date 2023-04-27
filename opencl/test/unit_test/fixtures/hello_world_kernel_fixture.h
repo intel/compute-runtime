@@ -66,8 +66,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            nullptr,
-            false);
+            nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         // create a kernel

@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/windows/sys_calls.h"
 
 #include <cstdlib>
+#include <string>
 
 namespace NEO {
 
@@ -37,6 +38,12 @@ unsigned int getProcessId() {
 
 unsigned long getNumThreads() {
     return 1;
+}
+
+bool pathExists(const std::string &path) {
+    DWORD ret = GetFileAttributesA(path.c_str());
+
+    return ret == FILE_ATTRIBUTE_DIRECTORY;
 }
 
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName) {

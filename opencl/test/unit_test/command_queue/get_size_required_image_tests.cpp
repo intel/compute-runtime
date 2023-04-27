@@ -120,7 +120,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandB
     auto usedBeforeSSH = ssh.getUsed();
 
     std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("CopyImageToImage3d", context, context->getDevices(), nullptr));
-    program->build(program->getDevices(), nullptr, false);
+    program->build(program->getDevices(), nullptr);
     cl_int retVal{CL_SUCCESS};
     std::unique_ptr<Kernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("CopyImageToImage3d"), *context->getDevice(0), retVal));
 

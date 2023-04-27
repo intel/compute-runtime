@@ -34,6 +34,9 @@ class CompilerCache {
     CompilerCache(CompilerCache &&) = delete;
     CompilerCache &operator=(const CompilerCache &) = delete;
     CompilerCache &operator=(CompilerCache &&) = delete;
+    const CompilerCacheConfig &getConfig() {
+        return config;
+    }
 
     const std::string getCachedFileName(const HardwareInfo &hwInfo, ArrayRef<const char> input,
                                         ArrayRef<const char> options, ArrayRef<const char> internalOptions);

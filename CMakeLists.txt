@@ -544,7 +544,6 @@ endif()
 
 # Miscs options
 option(IGDRCL_GCOV "generate gcov report" OFF)
-option(USE_CL_CACHE "Use OpenCL program binary cache" ON)
 set(CL_CACHE_LOCATION "cl_cache" CACHE STRING "OpenCL program binary cache location")
 
 option(NEO_SHOW_VERBOSE_ULT_RESULTS "Use the default/verbose test output" OFF)

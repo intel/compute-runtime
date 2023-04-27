@@ -234,7 +234,7 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenBuildingThenNotifyModuleCreat
     program->irBinary = std::make_unique<char[]>(16);
     program->irBinarySize = 16;
 
-    cl_int retVal = program->build(program->getDevices(), nullptr, false);
+    cl_int retVal = program->build(program->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, debuggerL0Hw->notifyModuleCreateCount);
 

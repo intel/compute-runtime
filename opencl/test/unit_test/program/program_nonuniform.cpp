@@ -185,8 +185,7 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
     mockProgram->setBuildOptions("-cl-std=CL2.1");
     retVal = mockProgram->build(
         mockProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);
@@ -227,8 +226,7 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
     mockProgram->setBuildOptions("-cl-std=CL2.0");
     retVal = mockProgram->build(
         mockProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);
@@ -267,8 +265,7 @@ TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInva
     mockProgram->setBuildOptions("-cl-std=CL1.2");
     retVal = mockProgram->build(
         mockProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);

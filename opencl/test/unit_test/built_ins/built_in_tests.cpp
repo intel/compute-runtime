@@ -1767,7 +1767,6 @@ TEST_F(BuiltInTests, GivenVmeKernelWhenGettingDeviceInfoThenCorrectVmeVersionIsR
 }
 
 TEST_F(VmeBuiltInTests, WhenVmeKernelIsCreatedThenParamsAreCorrect) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pClDevice);
     restoreBuiltInBinaryName();
@@ -1827,7 +1826,6 @@ TEST_F(VmeBuiltInTests, WhenVmeKernelIsCreatedThenParamsAreCorrect) {
 }
 
 TEST_F(VmeBuiltInTests, WhenVmeKernelIsCreatedThenDispatchIsBidirectional) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pClDevice);
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBidirBuilder(*this->pBuiltIns, *pClDevice);
@@ -1875,7 +1873,6 @@ const cl_image_format ImageVmeInvalidChannelOrder::imageFormat = {
     CL_UNORM_INT8};
 
 TEST_F(VmeBuiltInTests, WhenValidatingImagesThenCorrectResponses) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *pClDevice);
     restoreBuiltInBinaryName();
@@ -1951,7 +1948,6 @@ TEST_F(VmeBuiltInTests, WhenValidatingImagesThenCorrectResponses) {
 }
 
 TEST_F(VmeBuiltInTests, WhenValidatingFlagsThenValidFlagCombinationsReturnTrue) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pClDevice);
     restoreBuiltInBinaryName();
@@ -1981,7 +1977,6 @@ TEST_F(VmeBuiltInTests, WhenValidatingFlagsThenValidFlagCombinationsReturnTrue) 
 }
 
 TEST_F(VmeBuiltInTests, WhenValidatingSkipBlockTypeThenCorrectResponses) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBidirectionalBuilder(*this->pBuiltIns, *pClDevice);
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pClDevice);
@@ -2016,7 +2011,6 @@ TEST_F(VmeBuiltInTests, WhenValidatingSkipBlockTypeThenCorrectResponses) {
 }
 
 TEST_F(VmeBuiltInTests, GivenAcceleratorWhenExplicitlySettingArgThenFalseIsReturned) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
 
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pClDevice);
@@ -2042,7 +2036,6 @@ TEST_F(VmeBuiltInTests, GivenAcceleratorWhenExplicitlySettingArgThenFalseIsRetur
 }
 
 TEST_F(VmeBuiltInTests, WhenValidatingDispatchThenCorrectReturns) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     struct MockVmeBuilder : BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> {
         using BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel>::BuiltInOp;
@@ -2145,7 +2138,6 @@ TEST_F(VmeBuiltInTests, WhenValidatingDispatchThenCorrectReturns) {
 }
 
 TEST_F(VmeBuiltInTests, WhenValidatingVmeDispatchThenCorrectReturns) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *pClDevice);
     restoreBuiltInBinaryName();
@@ -2183,7 +2175,6 @@ TEST_F(VmeBuiltInTests, WhenValidatingVmeDispatchThenCorrectReturns) {
 }
 
 TEST_F(VmeBuiltInTests, GivenAdvancedVmeWhenValidatingVmeDispatchThenCorrectReturns) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pClDevice);
     restoreBuiltInBinaryName();
@@ -2243,7 +2234,6 @@ TEST_F(VmeBuiltInTests, GivenAdvancedVmeWhenValidatingVmeDispatchThenCorrectRetu
 }
 
 TEST_F(VmeBuiltInTests, GivenAdvancedBidirectionalVmeWhenValidatingVmeDispatchThenCorrectReturns) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBuilder(*this->pBuiltIns, *pClDevice);
     restoreBuiltInBinaryName();
@@ -2291,7 +2281,6 @@ TEST_F(VmeBuiltInTests, GivenAdvancedBidirectionalVmeWhenValidatingVmeDispatchTh
 }
 
 TEST_F(VmeBuiltInTests, GivenAdvancedVmeWhenGettingSkipResidualsBuffExpSizeThenDefaultSizeIsReturned) {
-    this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pClDevice);
     restoreBuiltInBinaryName();

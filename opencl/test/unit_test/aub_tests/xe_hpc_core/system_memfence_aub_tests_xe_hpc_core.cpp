@@ -202,7 +202,7 @@ XE_HPC_CORETEST_F(SystemMemFenceViaKernel, givenSystemMemFenceWhenKernelInstruct
 
     createProgramFromBinary(context.get(), context->getDevices(), "system_memfence");
 
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     const KernelInfo *pKernelInfo = pProgram->getKernelInfo("SystemMemFence", rootDeviceIndex);

@@ -156,6 +156,10 @@ TEST_F(CompilerInterfaceTest, WhenCompilingToIsaThenSuccessIsReturned) {
 }
 
 TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedThenPreserveIt) {
+    CompilerCacheConfig config = {};
+    config.enabled = false;
+    auto tempCompilerCache = std::make_unique<CompilerCache>(config);
+    pCompilerInterface->cache.reset(tempCompilerCache.release());
     TranslationOutput translationOutput;
     inputArgs.preferredIntermediateType = IGC::CodeType::llvmLl;
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
@@ -171,6 +175,10 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenBuildFailsGracefully
 }
 
 TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenBuildFailsGracefully) {
+    CompilerCacheConfig config = {};
+    config.enabled = false;
+    auto tempCompilerCache = std::make_unique<CompilerCache>(config);
+    pCompilerInterface->cache.reset(tempCompilerCache.release());
     pCompilerInterface->failCreateFclTranslationCtx = true;
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
@@ -179,6 +187,10 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenBuildFailsGrace
 }
 
 TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsNullptrThenBuildFailsGracefully) {
+    CompilerCacheConfig config = {};
+    config.enabled = false;
+    auto tempCompilerCache = std::make_unique<CompilerCache>(config);
+    pCompilerInterface->cache.reset(tempCompilerCache.release());
     pCompilerInterface->failCreateIgcTranslationCtx = true;
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
@@ -397,6 +409,10 @@ TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsNullptrThenCreateLibraryFa
 }
 
 TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenFclBuildingThenBuildFailureErrorIsReturned) {
+    CompilerCacheConfig config = {};
+    config.enabled = false;
+    auto tempCompilerCache = std::make_unique<CompilerCache>(config);
+    pCompilerInterface->cache.reset(tempCompilerCache.release());
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.forceCreateFailure = false;
     fclDebugVars.forceBuildFailure = true;
@@ -413,6 +429,10 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenFclBuildingThenBuildFail
 }
 
 TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenIgcBuildingThenBuildFailureErrorIsReturned) {
+    CompilerCacheConfig config = {};
+    config.enabled = false;
+    auto tempCompilerCache = std::make_unique<CompilerCache>(config);
+    pCompilerInterface->cache.reset(tempCompilerCache.release());
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceCreateFailure = false;
     igcDebugVars.forceBuildFailure = true;

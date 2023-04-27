@@ -12,6 +12,8 @@
 namespace NEO {
 class CompilerCacheMock : public CompilerCache {
   public:
+    using CompilerCache::config;
+
     CompilerCacheMock() : CompilerCache(CompilerCacheConfig{}) {
     }
 

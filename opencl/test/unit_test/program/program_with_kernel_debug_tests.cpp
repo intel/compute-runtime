@@ -192,13 +192,13 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenInternalOptionsIncludeDebugFlag) {
-    cl_int retVal = program->build(program->getDevices(), nullptr, false);
+    cl_int retVal = program->build(program->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(program->compilerInterface->buildInternalOptions, CompilerOptions::debugKernelEnable));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsIncludeDashGFlag) {
-    cl_int retVal = program->build(program->getDevices(), nullptr, false);
+    cl_int retVal = program->build(program->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(hasSubstr(program->getOptions(), "-g"));
 }
@@ -208,7 +208,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
     sourceLevelDebugger->isOptDisabled = true;
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
-    cl_int retVal = program->build(program->getDevices(), nullptr, false);
+    cl_int retVal = program->build(program->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(hasSubstr(program->getOptions(), CompilerOptions::optDisable.data()));
 }
@@ -218,7 +218,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     sourceLevelDebugger->sourceCodeFilename = "debugFileName";
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
-    cl_int retVal = program->build(program->getDevices(), nullptr, false);
+    cl_int retVal = program->build(program->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(startsWith(program->getOptions(), "-s \"debugFileName\""));
 }
@@ -229,7 +229,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
     char options[] = "-cmc -cl-opt-disable";
-    cl_int retVal = program->build(program->getDevices(), options, false);
+    cl_int retVal = program->build(program->getDevices(), options);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(startsWith(program->getOptions(), "-s debugFileName"));
 }
@@ -265,7 +265,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
         i++;
     }
 
-    cl_int retVal = program->build(program->getDevices(), nullptr, false);
+    cl_int retVal = program->build(program->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     for (auto &el : sourceLevelDebugger) {
@@ -314,7 +314,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
 TEST_F(ProgramWithKernelDebuggingTest, givenGtpinInitializedWhenCreatingProgramFromBinaryThenDebugDataIsAvailable) {
     bool gtpinInitializedBackup = NEO::isGTPinInitialized;
     NEO::isGTPinInitialized = true;
-    auto retVal = program->build(program->getDevices(), CompilerOptions::debugKernelEnable.data(), false);
+    auto retVal = program->build(program->getDevices(), CompilerOptions::debugKernelEnable.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(program->wasDebuggerNotified);
@@ -326,7 +326,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenGtpinNotInitializedWhenCreatingProgr
     bool gtpinInitializedBackup = NEO::isGTPinInitialized;
     NEO::isGTPinInitialized = false;
     program->kernelDebugEnabled = false;
-    auto retVal = program->build(program->getDevices(), CompilerOptions::debugKernelEnable.data(), false);
+    auto retVal = program->build(program->getDevices(), CompilerOptions::debugKernelEnable.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(program->wasDebuggerNotified);
@@ -335,7 +335,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenGtpinNotInitializedWhenCreatingProgr
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuiltThenDebugDataIsStored) {
-    auto retVal = program->build(program->getDevices(), nullptr, false);
+    auto retVal = program->build(program->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto debugData = program->getDebugData(pDevice->getRootDeviceIndex());

@@ -32,6 +32,11 @@ uint64_t regQueryValueExpectedData = 0ull;
 const HKEY validHkey = reinterpret_cast<HKEY>(0);
 bool getNumThreadsCalled = false;
 bool mmapAllowExtendedPointers = false;
+bool pathExistsMock = false;
+
+bool pathExists(const std::string &path) {
+    return pathExistsMock;
+}
 
 void exit(int code) {
 }

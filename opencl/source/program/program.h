@@ -128,10 +128,9 @@ class Program : public BaseObject<_cl_program> {
     Program(const Program &) = delete;
     Program &operator=(const Program &) = delete;
 
-    cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions,
-                 bool enableCaching);
+    cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions);
 
-    cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions, bool enableCaching,
+    cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions,
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
     cl_int processGenBinaries(const ClDeviceVector &clDevices, std::unordered_map<uint32_t, BuildPhase> &phaseReached);

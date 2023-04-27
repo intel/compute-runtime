@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ void BuiltinDispatchInfoBuilder::populate(EBuiltInOps::Type op, ConstStringRef o
     ClDeviceVector deviceVector;
     deviceVector.push_back(&clDevice);
     prog.reset(BuiltinDispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
-    prog->build(deviceVector, options.data(), kernelsLib.isCacheingEnabled());
+    prog->build(deviceVector, options.data());
     grabKernels(std::forward<KernelsDescArgsT>(desc)...);
 }
 } // namespace NEO

@@ -156,7 +156,7 @@ class MockProgram : public Program {
         this->requiresRebuild = true;
         setBuildStatus(CL_BUILD_NONE);
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtins;
-        return this->build(getDevices(), this->options.c_str(), false, builtins);
+        return this->build(getDevices(), this->options.c_str(), builtins);
     }
 
     cl_int recompile() {

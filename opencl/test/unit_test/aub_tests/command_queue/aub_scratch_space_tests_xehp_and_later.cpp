@@ -172,8 +172,7 @@ class DefaultGrfKernelFixture : public ProgramFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            nullptr,
-            false);
+            nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         kernel.reset(Kernel::create<MockKernel>(

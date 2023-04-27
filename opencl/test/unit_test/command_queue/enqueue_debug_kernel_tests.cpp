@@ -44,7 +44,7 @@ class EnqueueDebugKernelFixture {
             const_cast<DeviceInfo &>(device->getDeviceInfo()).debuggerActive = true;
 
             program = std::make_unique<MockDebugProgram>(context.getDevices());
-            cl_int retVal = program->build(program->getDevices(), nullptr, false);
+            cl_int retVal = program->build(program->getDevices(), nullptr);
             ASSERT_EQ(CL_SUCCESS, retVal);
 
             multiDeviceKernel = MultiDeviceKernel::create(

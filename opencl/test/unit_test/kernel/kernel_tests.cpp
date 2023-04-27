@@ -64,8 +64,7 @@ class KernelTests : public ProgramFromBinaryFixture {
 
         retVal = pProgram->build(
             pProgram->getDevices(),
-            nullptr,
-            false);
+            nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         // create a kernel
@@ -411,8 +410,7 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -450,8 +448,7 @@ TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -481,8 +478,7 @@ TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreated
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 

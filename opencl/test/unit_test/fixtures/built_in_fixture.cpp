@@ -19,7 +19,6 @@ using namespace NEO;
 void BuiltInFixture::setUp(Device *pDevice) {
     // create an instance of the builtins
     pBuiltIns = pDevice->getBuiltIns();
-    pBuiltIns->setCacheingEnableState(false);
 
     // set mock compiler to return expected kernel...
     MockCompilerDebugVars fclDebugVars;

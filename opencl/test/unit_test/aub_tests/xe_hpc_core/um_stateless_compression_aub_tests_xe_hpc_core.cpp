@@ -178,7 +178,7 @@ XE_HPC_CORETEST_P(UmStatelessCompressionWithStatefulAccess, givenDeviceMemAllocW
 
     createProgramFromBinary(context.get(), context->getDevices(), "stateful_copy_buffer");
 
-    retVal = pProgram->build(context->getDevices(), nullptr, false);
+    retVal = pProgram->build(context->getDevices(), nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     const KernelInfo *pKernelInfo = pProgram->getKernelInfo("StatefulCopyBuffer", rootDeviceIndex);

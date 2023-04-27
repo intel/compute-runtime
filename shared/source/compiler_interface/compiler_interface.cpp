@@ -70,7 +70,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
 
     CachingMode cachingMode = None;
 
-    if (input.allowCaching) {
+    if (cache != nullptr && cache->getConfig().enabled) {
         if ((srcCodeType == IGC::CodeType::oclC) && (std::strstr(input.src.begin(), "#include") == nullptr)) {
             cachingMode = CachingMode::Direct;
         } else {
@@ -158,7 +158,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
         return TranslationOutput::ErrorCode::BuildFailure;
     }
 
-    if (input.allowCaching) {
+    if (cache != nullptr && cache->getConfig().enabled) {
         cache->cacheBinary(kernelFileHash, igcOutput->GetOutput()->GetMemory<char>(), static_cast<uint32_t>(igcOutput->GetOutput()->GetSize<char>()));
     }
 

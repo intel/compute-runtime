@@ -134,8 +134,7 @@ using ProgramFromBinaryTest = ProgramFromBinaryFixture;
 TEST_F(ProgramFromBinaryTest, WhenBuildingProgramThenSuccessIsReturned) {
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -244,8 +243,7 @@ TEST_F(ProgramFromBinaryTest, GivenProgramWithOneKernelWhenGettingNumKernelsThen
 
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     retVal = pProgram->getInfo(
@@ -282,8 +280,7 @@ TEST_F(ProgramFromBinaryTest, WhenGettingKernelNamesThenCorrectNameIsReturned) {
 
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // get info successfully about required sizes for kernel names
@@ -503,7 +500,7 @@ TEST_F(ProgramUpdateBuildLogTest, GivenNullTerminatedBuildLogWhenUpdatingBuildLo
 }
 
 TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphicsAllocationInKernelInfo) {
-    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->build(pProgram->getDevices(), nullptr);
     auto kernelInfo = pProgram->getKernelInfo(size_t(0), rootDeviceIndex);
 
     auto graphicsAllocation = kernelInfo->getGraphicsAllocation();
@@ -522,7 +519,7 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
 }
 
 TEST_F(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreed) {
-    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
 
@@ -538,7 +535,7 @@ TEST_F(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffers
 }
 
 TEST_F(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
-    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(1u, pProgram->getNumKernels());
     for (auto i = 0u; i < pProgram->buildInfos.size(); i++) {
         pProgram->cleanCurrentKernelInfo(i);
@@ -550,7 +547,7 @@ TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfo
     DebugManagerStateRestore restorer;
     DebugManager.flags.ReuseKernelBinaries.set(1);
 
-    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->build(pProgram->getDevices(), nullptr);
     auto &kernelAllocMap = pProgram->peekExecutionEnvironment().memoryManager->getKernelAllocationMap();
     auto kernelName = pProgram->buildInfos[0].kernelInfoArray[0]->kernelDescriptor.kernelMetadata.kernelName;
     auto kernelAllocations = kernelAllocMap.find(kernelName);
@@ -570,7 +567,7 @@ TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfo
     DebugManagerStateRestore restorer;
     DebugManager.flags.ReuseKernelBinaries.set(1);
 
-    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->build(pProgram->getDevices(), nullptr);
     auto &kernelAllocMap = pProgram->peekExecutionEnvironment().memoryManager->getKernelAllocationMap();
 
     EXPECT_EQ(1u, pProgram->getNumKernels());
@@ -582,7 +579,7 @@ TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfo
 }
 
 TEST_F(ProgramFromBinaryTest, givenProgramWithGlobalAndConstAllocationsWhenGettingModuleAllocationsThenAllAreReturned) {
-    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->build(pProgram->getDevices(), nullptr);
     pProgram->processGenBinary(*pClDevice);
     pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface = new MockGraphicsAllocation();
     pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
@@ -632,7 +629,7 @@ TEST_F(ProgramGetKernelInfoTest, givenProgramFunctionsWhenGettingKernelInfoByNam
 HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDeferredFreeListAndCsrRegistersCacheFlush) {
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->build(pProgram->getDevices(), nullptr);
     auto kernelAllocation = pProgram->getKernelInfo(static_cast<size_t>(0u), rootDeviceIndex)->getGraphicsAllocation();
     kernelAllocation->updateTaskCount(100, csr.getOsContext().getContextId());
     *csr.getTagAddress() = 0;
@@ -647,7 +644,7 @@ HWTEST_F(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
     auto &csr0 = this->pDevice->getUltCommandStreamReceiverFromIndex<FamilyType>(0u);
     auto &csr1 = this->pDevice->getUltCommandStreamReceiverFromIndex<FamilyType>(1u);
 
-    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->build(pProgram->getDevices(), nullptr);
 
     auto kernelAllocation = pProgram->getKernelInfo(static_cast<size_t>(0u), rootDeviceIndex)->getGraphicsAllocation();
 
@@ -741,7 +738,7 @@ TEST_F(MinimumProgramFixture, givenApplicationContextMarkedAsNonZebinWhenBuildin
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(pProgram->getDevices(), "", false);
+    retVal = pProgram->build(pProgram->getDevices(), "");
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::disableZebin));
     pProgram->release();
@@ -773,7 +770,7 @@ HWTEST2_F(MinimumProgramFixture, givenAILReturningTrueForFallbackRequirementWhen
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(pProgram->getDevices(), "", false);
+    retVal = pProgram->build(pProgram->getDevices(), "");
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(pContext->checkIfContextIsNonZebin());
     pProgram->release();
@@ -794,7 +791,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
 
     // fail build - another build is already in progress
     pMockProgram->setBuildStatus(CL_BUILD_IN_PROGRESS);
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
     pMockProgram->setBuildStatus(CL_BUILD_NONE);
 
@@ -805,13 +802,13 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     rootDeviceEnvironment->setHwInfoAndInitHelpers(&device->getHardwareInfo());
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     auto p2 = std::make_unique<MockProgram>(toClDeviceVector(*device));
-    retVal = p2->build(p2->getDevices(), nullptr, false);
+    retVal = p2->build(p2->getDevices(), nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     p2.reset(nullptr);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
     // fail build - any build error (here caused by specifying unrecognized option)
-    retVal = pProgram->build(pProgram->getDevices(), "-invalid-option", false);
+    retVal = pProgram->build(pProgram->getDevices(), "-invalid-option");
     EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
     // fail build - linked code is corrupted and cannot be postprocessed
@@ -825,7 +822,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_NE(nullptr, pSourceBuffer);
     p3->sourceCode = pSourceBuffer.get();
     p3->createdFrom = Program::CreatedFrom::SOURCE;
-    retVal = p3->build(p3->getDevices(), nullptr, false);
+    retVal = p3->build(p3->getDevices(), nullptr);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
     p3.reset(nullptr);
 
@@ -836,7 +833,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     auto debugVars = NEO::getFclDebugVars();
     debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     gEnvironment->fclPushDebugVars(debugVars);
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(receivedInternalOptions, pPlatform->getClDevice(0)->peekCompilerExtensions())) << receivedInternalOptions;
     gEnvironment->fclPopDebugVars();
@@ -865,11 +862,11 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
 
     // build successfully - build kernel but do not write it to Kernel Cache (kernel is already in the Cache)
     pMockProgram->setBuildStatus(CL_BUILD_NONE);
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // build successfully - kernel is already in Kernel Cache, do not build and take it from Cache
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, true);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail build - code to be build does not exist
@@ -877,26 +874,26 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     pMockProgram->createdFrom = Program::CreatedFrom::SOURCE;
     pMockProgram->setBuildStatus(CL_BUILD_NONE);
     pMockProgram->setCreatedFromBinary(false);
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
 TEST_F(ProgramFromSourceTest, GivenDuplicateOptionsWhenCreatingWithSourceThenBuildSucceeds) {
     KernelBinaryHelper kbHelper(binaryFileName, false);
 
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::fastRelaxedMath.data(), false);
+    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::fastRelaxedMath.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::fastRelaxedMath.data(), false);
+    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::fastRelaxedMath.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::finiteMathOnly.data(), false);
+    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::finiteMathOnly.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -911,7 +908,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAndExtraExtensionsA
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, std::string{"+cl_khr_3d_image_writes "}));
 
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, extensionsOption));
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, std::string{"+cl_khr_3d_image_writes "}));
@@ -931,7 +928,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC20ThenExtraExtension
     auto extensionsWithFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensionsWithFeatures();
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, std::string{"+cl_khr_3d_image_writes "}));
 
-    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL2.0", false);
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL2.0");
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, std::string{"+cl_khr_3d_image_writes "}));
     EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
@@ -952,7 +949,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsOption));
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
 
-    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0", false);
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0");
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsOption));
     EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
@@ -967,9 +964,9 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     pProgram->sourceCode = "__kernel mock() {}";
     pProgram->createdFrom = Program::CreatedFrom::SOURCE;
 
-    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0", false);
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0");
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0", false);
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0");
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
@@ -1073,14 +1070,14 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
 
     Callback callback;
 
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, true);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash1 = pProgram->getCachedFileName();
     auto kernel1 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
     Callback::watch(kernel1);
     EXPECT_NE(nullptr, kernel1);
 
-    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::fastRelaxedMath.data(), true);
+    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::fastRelaxedMath.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash2 = pProgram->getCachedFileName();
     auto kernel2 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
@@ -1089,7 +1086,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::unwatch(kernel1);
     Callback::watch(kernel2);
 
-    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::finiteMathOnly.data(), true);
+    retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::finiteMathOnly.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash3 = pProgram->getCachedFileName();
     auto kernel3 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
@@ -1102,7 +1099,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     pProgram->createdFrom = NEO::Program::CreatedFrom::BINARY;
     pProgram->setIrBinary(new char[16], true);
     pProgram->setIrBinarySize(16, true);
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, true);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash4 = pProgram->getCachedFileName();
     auto kernel4 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
@@ -1112,7 +1109,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::watch(kernel4);
 
     pProgram->createdFrom = NEO::Program::CreatedFrom::SOURCE;
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, true);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash5 = pProgram->getCachedFileName();
     auto kernel5 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
@@ -1448,8 +1445,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -1468,8 +1464,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1508,8 +1503,7 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1927,7 +1921,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
             }
         }
 
-        EXPECT_EQ(expectedResult, program.build(toClDeviceVector(*pClDevice), nullptr, false));
+        EXPECT_EQ(expectedResult, program.build(toClDeviceVector(*pClDevice), nullptr));
     }
 
     {
@@ -1937,7 +1931,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         programWithBuiltIn.irBinarySize = 16;
         programWithBuiltIn.setAddressingMode(true);
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
-        EXPECT_EQ(CL_SUCCESS, programWithBuiltIn.build(toClDeviceVector(*pClDevice), nullptr, false));
+        EXPECT_EQ(CL_SUCCESS, programWithBuiltIn.build(toClDeviceVector(*pClDevice), nullptr));
     }
 }
 
@@ -2222,7 +2216,7 @@ TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreS
     program->createdFrom = Program::CreatedFrom::SOURCE;
 
     // Ask to build created program without NEO::CompilerOptions::gtpinRera flag.
-    cl_int retVal = program->build(program->getDevices(), CompilerOptions::fastRelaxedMath.data(), false);
+    cl_int retVal = program->build(program->getDevices(), CompilerOptions::fastRelaxedMath.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -2232,7 +2226,7 @@ TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreS
     // Ask to build created program with NEO::CompilerOptions::gtpinRera flag.
     cip->buildOptions.clear();
     cip->buildInternalOptions.clear();
-    retVal = program->build(program->getDevices(), CompilerOptions::concatenate(CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly).c_str(), false);
+    retVal = program->build(program->getDevices(), CompilerOptions::concatenate(CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly).c_str());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -2673,7 +2667,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingProgramThenInter
     program->sourceCode = "__kernel mock() {}";
     program->createdFrom = Program::CreatedFrom::SOURCE;
 
-    cl_int retVal = program->build(program->getDevices(), "", false);
+    cl_int retVal = program->build(program->getDevices(), "");
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, "-abc")) << cip->buildInternalOptions;
@@ -2691,7 +2685,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingBuiltInProgramTh
     program->createdFrom = Program::CreatedFrom::SOURCE;
     program->isBuiltIn = true;
 
-    cl_int retVal = program->build(program->getDevices(), "", false);
+    cl_int retVal = program->build(program->getDevices(), "");
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, "-abc")) << cip->buildInternalOptions;
@@ -2971,8 +2965,7 @@ TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramT
 
     auto retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_FALSE(output.compare(0, 14, "Elapsed time: "));
@@ -3014,7 +3007,7 @@ TEST_F(ProgramBinTest, GivenBuildWithDebugDataThenBuildDataAvailableViaGetInfo) 
         &sourceCode,
         &knownSourceSize,
         retVal);
-    retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify

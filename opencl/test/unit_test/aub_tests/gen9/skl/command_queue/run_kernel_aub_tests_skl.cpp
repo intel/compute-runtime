@@ -44,8 +44,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
 
     retVal = pProgram->build(
         pProgram->getDevices(),
-        nullptr,
-        false);
+        nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     const KernelInfo *pKernelInfo0 = pProgram->getKernelInfo("simple_kernel_0", rootDeviceIndex);
@@ -270,8 +269,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
 
     retVal = pProgram->build(
         pProgram->getDevices(),
-        "",
-        false);
+        "");
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     const KernelInfo *pKernelInfo = pProgram->getKernelInfo("device_side_block_motion_estimate_intel", rootDeviceIndex);

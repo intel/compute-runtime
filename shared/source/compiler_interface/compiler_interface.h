@@ -30,7 +30,7 @@ struct TranslationInput {
         : srcType(srcType), preferredIntermediateType(preferredIntermediateType), outType(outType) {
     }
 
-    bool allowCaching = false;
+    bool allowCaching = true;
 
     ArrayRef<const char> src;
     ArrayRef<const char> apiOptions;

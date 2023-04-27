@@ -225,7 +225,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
         createProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
-        retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+        retVal = pProgram->build(pProgram->getDevices(), nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
         kernel = Kernel::create<MockKernel>(pProgram, pProgram->getKernelInfoForKernel("CopyBuffer"), *context->getDevice(0), retVal);
 
@@ -266,7 +266,7 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
         createProgramFromBinary(context, context->getDevices(), "printf");
-        retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+        retVal = pProgram->build(pProgram->getDevices(), nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
         kernel = static_cast<KernelWhitebox *>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("test"), *context->getDevice(0), retVal));
         kernel->initializeLocalIdsCache();
