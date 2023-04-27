@@ -28,6 +28,7 @@ enum class HeapIndex : uint32_t {
     HEAP_EXTERNAL_DEVICE_FRONT_WINDOW,
     HEAP_INTERNAL_FRONT_WINDOW,
     HEAP_INTERNAL_DEVICE_FRONT_WINDOW,
+    HEAP_EXTENDED_HOST,
 
     // Please put new heap indexes above this line
     TOTAL_HEAPS

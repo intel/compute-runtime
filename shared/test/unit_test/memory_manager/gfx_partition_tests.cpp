@@ -869,8 +869,8 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
 
         auto heapExtendedSize = MemoryConstants::teraByte;
 
-        EXPECT_EQ(heapExtendedSize, gfxPartition.getHeapSize(HeapIndex::HEAP_EXTENDED));
-        EXPECT_LT(maxNBitValue(48), gfxPartition.getHeapBase(HeapIndex::HEAP_EXTENDED));
+        EXPECT_EQ(heapExtendedSize, gfxPartition.getHeapSize(HeapIndex::HEAP_EXTENDED_HOST));
+        EXPECT_LT(maxNBitValue(48), gfxPartition.getHeapBase(HeapIndex::HEAP_EXTENDED_HOST));
     }
 
     {

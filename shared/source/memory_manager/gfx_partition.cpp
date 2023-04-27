@@ -90,7 +90,7 @@ static void reserveHigh48BitRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemor
 
 static void reserve57BitRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange, uint64_t reservationSize) {
     constexpr uint64_t areaBase = maxNBitValue(48) + 1;
-    constexpr uint64_t areaTop = maxNBitValue(57);
+    constexpr uint64_t areaTop = maxNBitValue(56);
     reserveRangeWithMemoryMapsParse(osMemory, reservedCpuAddressRange, areaBase, areaTop, reservationSize);
 }
 
@@ -343,7 +343,6 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
         return false;
     }
 
-    bool isExtendedHeapInitialized = false;
     if (cpuVirtualAddressSize == 57 && CpuInfo::getInstance().isCpuFlagPresent("la57")) {
         // Always reserve 48 bit window on 57 bit CPU
         if (reservedCpuAddressRangeForHeapSvm.alignedPtr == nullptr) {
@@ -370,8 +369,7 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
             uint64_t heapExtendedSize = MemoryConstants::teraByte;
             reserve57BitRangeWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangeForHeapExtended, heapExtendedSize);
             if (reservedCpuAddressRangeForHeapExtended.alignedPtr) {
-                heapInit(HeapIndex::HEAP_EXTENDED, castToUint64(reservedCpuAddressRangeForHeapExtended.alignedPtr), heapExtendedSize);
-                isExtendedHeapInitialized = true;
+                heapInit(HeapIndex::HEAP_EXTENDED_HOST, castToUint64(reservedCpuAddressRangeForHeapExtended.alignedPtr), heapExtendedSize);
             }
         }
     } else {
@@ -382,7 +380,7 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
     }
 
     // Init HEAP_EXTENDED only for 57 bit GPU
-    if (gpuAddressSpace == maxNBitValue(57) && !isExtendedHeapInitialized) {
+    if (gpuAddressSpace == maxNBitValue(57)) {
         // Split HEAP_EXTENDED among root devices (like HEAP_STANDARD64K)
         auto heapExtendedSize = alignDown((maxNBitValue(48) + 1) / numRootDevices, GfxPartition::heapGranularity);
         heapInit(HeapIndex::HEAP_EXTENDED, maxNBitValue(57 - 1) + 1 + rootDeviceIndex * heapExtendedSize, heapExtendedSize);

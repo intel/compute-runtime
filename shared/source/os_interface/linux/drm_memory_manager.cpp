@@ -1977,10 +1977,10 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         auto totalSizeToAlloc = alignedSize + alignment;
         uint64_t preferredAddress = 0;
         auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-        auto canAllocateInHeapExtended = DebugManager.flags.AllocateHostAllocationsInHeapExtended.get();
-        if (canAllocateInHeapExtended && allocationData.flags.isUSMHostAllocation && gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0u) {
+        auto canAllocateInHeapExtended = DebugManager.flags.AllocateHostAllocationsInHeapExtendedHost.get();
+        if (canAllocateInHeapExtended && allocationData.flags.isUSMHostAllocation && gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED_HOST) > 0u) {
 
-            preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::HEAP_EXTENDED);
+            preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::HEAP_EXTENDED_HOST);
         }
 
         auto cpuPointer = this->mmapFunction(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -2130,9 +2130,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
     uint64_t preferredAddress = 0;
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-    auto canAllocateInHeapExtended = DebugManager.flags.AllocateSharedAllocationsInHeapExtended.get();
-    if (canAllocateInHeapExtended && gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0u && !allocationData.flags.resource48Bit) {
-        preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::HEAP_EXTENDED);
+    auto canAllocateInHeapExtended = DebugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.get();
+    if (canAllocateInHeapExtended && gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED_HOST) > 0u && !allocationData.flags.resource48Bit) {
+        preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::HEAP_EXTENDED_HOST);
     }
 
     auto cpuPointer = this->mmapFunction(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);

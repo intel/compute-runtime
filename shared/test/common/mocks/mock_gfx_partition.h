@@ -66,6 +66,9 @@ class MockGfxPartition : public GfxPartition {
             GfxPartition::freeGpuAddressRange(gpuAddress, size);
         }
     }
+    void initHeap(HeapIndex heapIndex, uint64_t base, uint64_t size, size_t allocationAlignment) {
+        getHeap(heapIndex).init(base, size, allocationAlignment);
+    }
 
     uint32_t freeGpuAddressRangeCalled = 0u;
     bool callBasefreeGpuAddressRange = false;

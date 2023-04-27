@@ -6520,6 +6520,9 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocatingHostUSMT
     if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
         GTEST_SKIP();
     }
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memoryManager->overrideGfxPartition(mockGfxPartition.release());
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
     SysCalls::mmapCapturedExtendedPointers.clear();
@@ -6537,8 +6540,8 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocatingHostUSMT
     auto gpuAddress = reinterpret_cast<uint64_t>(SysCalls::mmapCapturedExtendedPointers[0]);
     SysCalls::mmapCapturedExtendedPointers.clear();
     auto gmmHelper = memoryManager->getGmmHelper(mockRootDeviceIndex);
-    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
-    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
+    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED_HOST), gmmHelper->decanonize(gpuAddress));
+    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED_HOST), gmmHelper->decanonize(gpuAddress));
 
     EXPECT_EQ(hostUSM->getGpuAddress(), gpuAddress);
     EXPECT_EQ(hostUSM->getReservedAddressPtr(), reinterpret_cast<void *>(gpuAddress));
@@ -6549,6 +6552,9 @@ TEST_F(DrmMemoryManagerTest, given48bAddressSpaceCpuAnd57bGpuWhenAllocatingHostU
     if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
         GTEST_SKIP();
     }
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memoryManager->overrideGfxPartition(mockGfxPartition.release());
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, false);
     SysCalls::mmapCapturedExtendedPointers.clear();
@@ -6566,8 +6572,8 @@ TEST_F(DrmMemoryManagerTest, given48bAddressSpaceCpuAnd57bGpuWhenAllocatingHostU
     auto gpuAddress = reinterpret_cast<uint64_t>(SysCalls::mmapCapturedExtendedPointers[0]);
     SysCalls::mmapCapturedExtendedPointers.clear();
     auto gmmHelper = memoryManager->getGmmHelper(mockRootDeviceIndex);
-    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
-    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
+    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED_HOST), gmmHelper->decanonize(gpuAddress));
+    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED_HOST), gmmHelper->decanonize(gpuAddress));
 
     EXPECT_NE(hostUSM->getGpuAddress(), gpuAddress);
     memoryManager->freeGraphicsMemory(hostUSM);
@@ -6578,8 +6584,11 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuAndDisabledHeapExtende
         GTEST_SKIP();
     }
 
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memoryManager->overrideGfxPartition(mockGfxPartition.release());
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateHostAllocationsInHeapExtended.set(false);
+    DebugManager.flags.AllocateHostAllocationsInHeapExtendedHost.set(false);
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
     SysCalls::mmapCapturedExtendedPointers.clear();
@@ -6602,8 +6611,11 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocatingSharedUS
         GTEST_SKIP();
     }
 
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memoryManager->overrideGfxPartition(mockGfxPartition.release());
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateSharedAllocationsInHeapExtended.set(true);
+    DebugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
     SysCalls::mmapCapturedExtendedPointers.clear();
@@ -6627,8 +6639,8 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocatingSharedUS
     auto gpuAddress = reinterpret_cast<uint64_t>(SysCalls::mmapCapturedExtendedPointers[0]);
     SysCalls::mmapCapturedExtendedPointers.clear();
     auto gmmHelper = memoryManager->getGmmHelper(mockRootDeviceIndex);
-    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
-    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
+    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED_HOST), gmmHelper->decanonize(gpuAddress));
+    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED_HOST), gmmHelper->decanonize(gpuAddress));
 
     EXPECT_EQ(sharedUSM->getGpuAddress(), gpuAddress);
     EXPECT_EQ(sharedUSM->getReservedAddressPtr(), reinterpret_cast<void *>(gpuAddress));
@@ -6639,8 +6651,11 @@ TEST_F(DrmMemoryManagerTest, given48bAddressSpaceCpuAnd57bGpuWhenAllocatingShare
     if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
         GTEST_SKIP();
     }
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memoryManager->overrideGfxPartition(mockGfxPartition.release());
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateSharedAllocationsInHeapExtended.set(true);
+    DebugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, false);
     SysCalls::mmapCapturedExtendedPointers.clear();
@@ -6664,8 +6679,8 @@ TEST_F(DrmMemoryManagerTest, given48bAddressSpaceCpuAnd57bGpuWhenAllocatingShare
     auto gpuAddress = reinterpret_cast<uint64_t>(SysCalls::mmapCapturedExtendedPointers[0]);
     SysCalls::mmapCapturedExtendedPointers.clear();
     auto gmmHelper = memoryManager->getGmmHelper(mockRootDeviceIndex);
-    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
-    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
+    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED_HOST), gmmHelper->decanonize(gpuAddress));
+    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED_HOST), gmmHelper->decanonize(gpuAddress));
 
     EXPECT_NE(sharedUSM->getGpuAddress(), gpuAddress);
     memoryManager->freeGraphicsMemory(sharedUSM);
@@ -6675,8 +6690,11 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocating48bResou
     if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
         GTEST_SKIP();
     }
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memoryManager->overrideGfxPartition(mockGfxPartition.release());
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateSharedAllocationsInHeapExtended.set(true);
+    DebugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
     SysCalls::mmapCapturedExtendedPointers.clear();
