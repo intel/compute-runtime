@@ -169,6 +169,62 @@ TEST_F(MemoryIPCTests,
 }
 
 TEST_F(MemoryIPCTests,
+       givenCallToGetIpcHandleFromFdThenUsageInOpenIPCHandleSucceeds) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_external_memory_export_desc_t exportDesc = {};
+    exportDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
+    exportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+    ze_device_mem_alloc_desc_t deviceAllocDesc = {};
+    deviceAllocDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    deviceAllocDesc.pNext = &exportDesc;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceAllocDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_external_memory_export_fd_t exportFd = {};
+    exportFd.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+    exportFd.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    ze_memory_allocation_properties_t allocProps = {};
+    allocProps.stype = ZE_STRUCTURE_TYPE_MEMORY_ALLOCATION_PROPERTIES;
+    allocProps.pNext = &exportFd;
+    ze_device_handle_t deviceHandle;
+    context->memPropTest = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getMemAllocProperties(ptr, &allocProps, &deviceHandle));
+
+    ze_ipc_mem_handle_t ipcHandle;
+    result = context->getIpcHandleFromFd(exportFd.fd, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
+    EXPECT_EQ(static_cast<int>(ipcData.handle), exportFd.fd);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    ze_ipc_memory_flags_t flags = {};
+    void *ipcPtr;
+    result = context->openIpcMemHandle(deviceHandle, ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->closeIpcMemHandle(ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, context->getIPCHandleMap().size());
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryIPCTests,
        givenCallToGetIpcHandleFromFdWithInvalidFdThenErrorReturned) {
     size_t size = 10;
     size_t alignment = 1u;
