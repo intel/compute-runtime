@@ -265,6 +265,13 @@ void AppendFillFixture::tearDown() {
 
 void CommandListEventUsedPacketSignalFixture::setUp() {
     NEO::DebugManager.flags.SignalAllEventPackets.set(0);
+    NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+
+    CommandListFixture::setUp();
+}
+
+void CommandListSecondaryBatchBufferFixture::setUp() {
+    NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     CommandListFixture::setUp();
 }

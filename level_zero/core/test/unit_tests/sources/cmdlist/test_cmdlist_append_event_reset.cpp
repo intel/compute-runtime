@@ -25,6 +25,7 @@ namespace ult {
 
 using CommandListAppendEventReset = Test<CommandListFixture>;
 using CommandListAppendUsedPacketSignalEvent = Test<CommandListEventUsedPacketSignalFixture>;
+using CommandListAppendEventResetSecondaryBatchBuffer = Test<CommandListSecondaryBatchBufferFixture>;
 
 HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenStoreDataImmIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -126,7 +127,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
     EXPECT_EQ(1u, postSyncFound);
 }
 
-HWTEST_F(CommandListAppendEventReset, whenResetEventIsAppendedAndNoSpaceIsAvailableThenNextCommandBufferIsCreated) {
+HWTEST_F(CommandListAppendEventResetSecondaryBatchBuffer, whenResetEventIsAppendedAndNoSpaceIsAvailableThenNextCommandBufferIsCreated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;

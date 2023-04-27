@@ -34,6 +34,7 @@ HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAdd
 
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));

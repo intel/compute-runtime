@@ -38,6 +38,8 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    CommandList::fromHandle(commandLists[0])->close();
+
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -82,6 +84,8 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    CommandList::fromHandle(commandLists[0])->close();
+
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

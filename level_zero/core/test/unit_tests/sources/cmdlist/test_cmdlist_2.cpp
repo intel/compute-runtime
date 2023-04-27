@@ -1313,6 +1313,9 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+
     uint64_t size = 1024;
 
     ze_result_t res = ZE_RESULT_SUCCESS;

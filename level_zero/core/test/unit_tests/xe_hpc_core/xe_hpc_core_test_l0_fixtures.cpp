@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,7 @@ void CommandListStatePrefetchXeHpcCore::checkIfCommandBufferIsExhaustedWhenPrefe
     using MI_BATCH_BUFFER_END = typename XeHpcCoreFamily::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restore;
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);

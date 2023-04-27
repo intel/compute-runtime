@@ -239,6 +239,12 @@ struct CommandListEventUsedPacketSignalFixture : public CommandListFixture {
     DebugManagerStateRestore restorer;
 };
 
+struct CommandListSecondaryBatchBufferFixture : public CommandListFixture {
+    void setUp();
+
+    DebugManagerStateRestore restorer;
+};
+
 struct TbxImmediateCommandListFixture : public ModuleMutableCommandListFixture {
     using EventFieldType = uint64_t;
 

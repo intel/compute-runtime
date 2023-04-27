@@ -139,6 +139,7 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequired
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(4096);
+    CommandList::fromHandle(commandLists[0])->close();
 
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
@@ -190,6 +191,8 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIs
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->close();
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -203,7 +206,6 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIs
     pos = output.find("Debugger: SBA ssh");
     EXPECT_NE(std::string::npos, pos);
 
-    auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->destroy();
 
     commandQueue->destroy();
@@ -226,6 +228,8 @@ HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQue
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->close();
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -236,7 +240,6 @@ HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQue
     size_t pos = output.find("Debugger: SBA");
     EXPECT_EQ(std::string::npos, pos);
 
-    auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->destroy();
 
     commandQueue->destroy();
@@ -257,6 +260,8 @@ HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueue
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->close();
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -267,7 +272,6 @@ HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueue
     size_t pos = output.find("Debugger: SBA");
     EXPECT_EQ(std::string::npos, pos);
 
-    auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->destroy();
 
     commandQueue->destroy();
@@ -316,6 +320,8 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->close();
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -330,7 +336,6 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
     }
     EXPECT_TRUE(sbaFound);
 
-    auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->destroy();
 }
 
@@ -392,6 +397,8 @@ HWTEST2_F(L0DebuggerSingleAddressSpace, givenDebuggingEnabledWhenCommandListIsEx
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->close();
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

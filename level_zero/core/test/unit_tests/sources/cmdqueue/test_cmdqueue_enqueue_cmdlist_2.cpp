@@ -32,6 +32,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeWhenExe
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+    CommandList::fromHandle(commandLists[0])->close();
     mockCmdQ->executeCommandLists(1, commandLists, nullptr, true);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 1u);
     CommandList::fromHandle(commandLists[0])->destroy();
@@ -49,7 +50,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeAndDevi
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
-
+    CommandList::fromHandle(commandLists[0])->close();
     const auto result = mockCmdQ->executeCommandLists(1, commandLists, nullptr, true);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 1u);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
@@ -66,6 +67,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenAsynchronousModeWhenEx
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+    CommandList::fromHandle(commandLists[0])->close();
     mockCmdQ->executeCommandLists(1, commandLists, nullptr, true);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 0u);
     CommandList::fromHandle(commandLists[0])->destroy();
@@ -93,6 +95,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeC
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle(),
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    CommandList::fromHandle(commandLists[0])->close();
+    CommandList::fromHandle(commandLists[1])->close();
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -143,6 +147,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
+    CommandList::fromHandle(commandList)->close();
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
     returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -205,6 +210,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
+    CommandList::fromHandle(commandList)->close();
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
     returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);

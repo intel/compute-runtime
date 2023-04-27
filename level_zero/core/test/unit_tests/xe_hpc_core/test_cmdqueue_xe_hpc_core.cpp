@@ -40,6 +40,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
     auto globalFence = csr.getGlobalFenceAllocation();
@@ -66,6 +68,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
     auto globalFence = csr->getGlobalFenceAllocation();
@@ -95,6 +99,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsF
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
     auto usedSpaceAfter1stExecute = commandQueue->commandStream.getUsed();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);

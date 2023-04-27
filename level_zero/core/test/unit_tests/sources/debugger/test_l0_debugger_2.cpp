@@ -368,6 +368,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForReg
     auto commandList = CommandList::fromHandle(commandLists[0]);
     auto result = commandList->appendMemoryCopyRegion(dstPtr, &dr, 0, 0, srcPtr, &sr, 0, 0, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    commandList->close();
 
     result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -437,12 +438,13 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsed
     ze_command_queue_desc_t queueDesc = {};
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
-    commandQueue->initialize(false, true, false);
+    commandQueue->initialize(false, true, true);
     EXPECT_TRUE(commandQueue->internalUsage);
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
         CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    auto commandList = CommandList::fromHandle(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -472,7 +474,6 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsed
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->getSbaTrackingCommandsSizeCount);
 
-    auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->destroy();
 }
 
@@ -505,6 +506,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     char dest[8];
     auto result = commandList->appendMemoryCopy(dest, src, 8, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    commandList->close();
 
     result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

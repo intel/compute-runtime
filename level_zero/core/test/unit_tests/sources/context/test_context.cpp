@@ -626,6 +626,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                      0u,
                                                                      returnValue));
     auto commandListHandle = commandList->toHandle();
+    commandList->close();
     res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -728,6 +729,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                      0u,
                                                                      returnValue));
     auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
     res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 

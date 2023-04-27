@@ -282,6 +282,8 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
     auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
     auto globalFence = csr.getGlobalFenceAllocation();
@@ -312,6 +314,8 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
     auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
     auto kernelArgsBufferAllocation = csr.getKernelArgsBufferAllocation();
@@ -357,6 +361,8 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
     ASSERT_NE(nullptr, commandQueue);
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    commandList->close();
+
     auto commandListHandle = commandList->toHandle();
     auto workPartitionAllocation = csr.getWorkPartitionAllocation();
     csr.expectedGa = workPartitionAllocation;
@@ -446,7 +452,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
                                std::end(commandList->getCmdContainer().getResidencyContainer()),
                                gpuAlloc);
     EXPECT_EQ(itorEvent, std::end(commandList->getCmdContainer().getResidencyContainer()));
-
+    commandList->close();
     auto commandListHandle = commandList->toHandle();
 
     EXPECT_FALSE(gpuAlloc->isResident(csr.getOsContext().getContextId()));
@@ -510,7 +516,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
                                std::end(commandList->getCmdContainer().getResidencyContainer()),
                                gpuAlloc);
     EXPECT_EQ(itorEvent, std::end(commandList->getCmdContainer().getResidencyContainer()));
-
+    commandList->close();
     auto commandListHandle = commandList->toHandle();
 
     EXPECT_FALSE(gpuAlloc->isResident(csr.getOsContext().getContextId()));
@@ -710,7 +716,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, false, returnValue));
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
     auto commandListHandle = commandList->toHandle();
-
+    commandList->close();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
     GenCmdList cmdList;
@@ -761,7 +767,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabri
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, false, returnValue));
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
     auto commandListHandle = commandList->toHandle();
-
+    commandList->close();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
     GenCmdList cmdList;
@@ -804,6 +810,8 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecuti
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto cmdListHandle = commandList->toHandle();
+    commandList->close();
+
     auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
                                                                                                          1,
                                                                                                          csr->getPreemptionMode(),
@@ -826,6 +834,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecu
     commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
     auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
@@ -1083,6 +1092,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
     CmdListKernelLaunchParams launchParams = {};
     commandListA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListA->close();
 
     auto commandListBB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListBB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
@@ -1090,6 +1100,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     launchParams.isCooperative = true;
     commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
     commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBB->close();
 
     auto commandListAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
@@ -1099,6 +1110,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
     launchParams.isCooperative = true;
     commandListAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListAB->close();
 
     auto commandListBA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListBA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
@@ -1106,6 +1118,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
     launchParams.isCooperative = false;
     commandListBA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBA->close();
 
     auto commandListBAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListBAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
@@ -1118,6 +1131,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
     launchParams.isCooperative = true;
     commandListBAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBAB->close();
 
     auto commandListAAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListAAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
@@ -1128,9 +1142,11 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
     launchParams.isCooperative = true;
     commandListAAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListAAB->close();
 
     auto commandListEmpty = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListEmpty->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListEmpty->close();
 
     size_t singleFrontEndCmdSize = commandQueue->estimateFrontEndCmdSize();
 
@@ -1226,6 +1242,7 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
     commandList->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandList->close();
 
     EXPECT_EQ(-1, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
 
@@ -1269,12 +1286,14 @@ HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandLi
 
     CmdListKernelLaunchParams launchParams = {};
     commandListA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListA->close();
 
     auto commandListB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
 
     launchParams.isCooperative = true;
     commandListB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListB->close();
 
     ze_command_list_handle_t commandListsA[] = {commandListA->toHandle()};
     ze_command_list_handle_t commandListsB[] = {commandListB->toHandle()};

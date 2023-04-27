@@ -33,6 +33,7 @@ using CommandListTests = Test<DeviceFixture>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -96,6 +97,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableStateBaseAddressTracking.set(0);
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
@@ -164,6 +166,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListTests, givenPartitionedCommandL
 
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));

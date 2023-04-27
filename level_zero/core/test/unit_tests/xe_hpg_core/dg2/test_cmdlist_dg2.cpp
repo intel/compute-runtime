@@ -25,6 +25,7 @@ HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAddi
 
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
     auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();

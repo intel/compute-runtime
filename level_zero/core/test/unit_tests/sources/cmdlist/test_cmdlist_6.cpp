@@ -1009,6 +1009,8 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessWh
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->csr);
     ultCsr->storeMakeResidentAllocations = true;
 
+    commandList->close();
+
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
     auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

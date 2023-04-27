@@ -129,6 +129,8 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPoll
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
     queue->executeCommandLists(1, &commandListHandle, nullptr, false);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 1u);
 
@@ -324,6 +326,8 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     commandList->partitionCount = 2;
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandList->close();
+
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
@@ -364,6 +368,8 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
     ASSERT_NE(nullptr, commandList);
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandList->close();
+
     commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
@@ -393,6 +399,8 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSingleTileCsrWhenExecutingMultiTileCo
     commandList->partitionCount = 2;
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandList->close();
+
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
 
@@ -443,6 +451,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
 
     DebugManagerStateRestore restore;
     NEO::DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     size_t expectedSize = sizeof(MI_BATCH_BUFFER_START);
     if (neoDevice->getDefaultEngine().commandStreamReceiver->isAnyDirectSubmissionEnabled()) {
@@ -473,6 +482,8 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
 
     // 1st execute provides all preamble commands
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandList->close();
+
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -757,6 +768,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(kernel.toHandle(), &dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
     auto deviceImp = static_cast<DeviceImp *>(device);
+    commandList->close();
 
     auto pageFaultCmdQueue = whiteboxCast(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
 

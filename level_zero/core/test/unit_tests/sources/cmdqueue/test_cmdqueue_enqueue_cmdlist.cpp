@@ -29,8 +29,10 @@
 namespace L0 {
 namespace ult {
 
-struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
-    void SetUp() override {
+struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
+    void setUp() {
+        DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
@@ -43,7 +45,7 @@ struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     }
 
-    void TearDown() override {
+    void tearDown() {
         auto tagAddress = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getTagAddress();
         *tagAddress = std::numeric_limits<TagAddressType>::max();
 
@@ -58,13 +60,19 @@ struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
     template <typename FamilyType>
     void twoCommandListCommandPreemptionTest(bool preemptionCmdProgramming);
 
+    DebugManagerStateRestore restorer;
+
     const static uint32_t numCommandLists = 2;
     ze_command_list_handle_t commandLists[numCommandLists];
 };
 
-struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixture> {
-    void SetUp() override {
+using CommandQueueExecuteCommandLists = Test<CommandQueueExecuteCommandListsFixture>;
+
+struct MultiDeviceCommandQueueExecuteCommandListsFixture : public MultiDeviceFixture {
+    void setUp() {
         DebugManager.flags.EnableWalkerPartition.set(1);
+        DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+
         numRootDevices = 1u;
         MultiDeviceFixture::setUp();
 
@@ -86,7 +94,7 @@ struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixtu
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[1])->getPartitionCount());
     }
 
-    void TearDown() override {
+    void tearDown() {
         for (auto i = 0u; i < numCommandLists; i++) {
             auto commandList = CommandList::fromHandle(commandLists[i]);
             commandList->destroy();
@@ -99,6 +107,8 @@ struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixtu
     const static uint32_t numCommandLists = 2;
     ze_command_list_handle_t commandLists[numCommandLists];
 };
+
+using MultiDeviceCommandQueueExecuteCommandLists = Test<MultiDeviceCommandQueueExecuteCommandListsFixture>;
 
 HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncachedMOCSThenSuccessisReturned) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -660,7 +670,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
 }
 
 template <typename FamilyType>
-void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool preemptionCmdProgramming) {
+void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest(bool preemptionCmdProgramming) {
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -1002,9 +1012,10 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     commandQueue->destroy();
 }
 
-struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
-    void SetUp() override {
+struct CommandQueueExecuteCommandListSWTagsTestsFixture : public DeviceFixture {
+    void setUp() {
         DebugManager.flags.EnableSWTags.set(true);
+        DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
@@ -1025,7 +1036,7 @@ struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
         ASSERT_NE(nullptr, commandQueue);
     }
 
-    void TearDown() override {
+    void tearDown() {
         commandQueue->destroy();
 
         for (auto i = 0u; i < numCommandLists; i++) {
@@ -1041,6 +1052,8 @@ struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
     ze_command_list_handle_t commandLists[numCommandLists];
     L0::ult::CommandQueue *commandQueue;
 };
+
+using CommandQueueExecuteCommandListSWTagsTests = Test<CommandQueueExecuteCommandListSWTagsTestsFixture>;
 
 HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsWhenExecutingCommandListThenHeapAddressesAreInserted) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;

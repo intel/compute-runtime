@@ -159,6 +159,10 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelThenBbEndIsAddedAndNewCmdBufferAllocated, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+
     createKernel();
 
     ze_result_t returnValue;
