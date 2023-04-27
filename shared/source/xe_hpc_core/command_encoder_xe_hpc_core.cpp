@@ -31,7 +31,7 @@ void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd,
 }
 
 template <>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf) {
+void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WALKER_TYPE &walkerCmd) {
     const auto &productHelper = device.getProductHelper();
 
     if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
@@ -54,15 +54,30 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
             uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
             uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
             UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
+            auto tgDispatchSizeSelected = 1u;
 
             if (dispatchedTotalThreadCount <= availableThreadCount) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+                tgDispatchSizeSelected = 1;
             } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize8) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
+                tgDispatchSizeSelected = 8;
             } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize4) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
+                tgDispatchSizeSelected = 4;
             } else {
+                tgDispatchSizeSelected = 2;
+            }
+            if (walkerCmd.getThreadGroupIdYDimension() > 1 || walkerCmd.getThreadGroupIdZDimension() > 1) {
+                while (walkerCmd.getThreadGroupIdXDimension() % tgDispatchSizeSelected != 0) {
+                    tgDispatchSizeSelected /= 2;
+                }
+            }
+            if (tgDispatchSizeSelected == 8) {
+                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
+            } else if (tgDispatchSizeSelected == 1) {
+                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+            } else if (tgDispatchSizeSelected == 2) {
                 interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
+            } else {
+                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
             }
         }
     }

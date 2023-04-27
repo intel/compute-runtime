@@ -67,8 +67,9 @@ HWTEST2_F(DG2CommandEncoderTest, givenDG2AndCommandContainerWithDirtyHeapWhenGet
 
 HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGroupDispatchSizeVariableIsDefaultThenThreadGroupDispatchSizeIsNotChanged, IsDG2) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     INTERFACE_DESCRIPTOR_DATA iddArg;
+    WALKER_TYPE walkerCmd{};
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t forceThreadGroupDispatchSize = -1;
     auto hwInfo = pDevice->getHardwareInfo();
@@ -83,7 +84,7 @@ HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGrou
 
         for (auto numberOfThreadsInGroup : {1u, 4u, 16u}) {
             iddArg.setNumberOfThreadsInGpgpuThreadGroup(numberOfThreadsInGroup);
-            EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, 0, 0);
+            EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, 0, 0, walkerCmd);
 
             if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
                 if (numberOfThreadsInGroup == 1) {

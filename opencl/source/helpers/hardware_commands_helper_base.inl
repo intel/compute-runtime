@@ -119,7 +119,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     uint32_t bindingTablePrefetchSize,
     PreemptionMode preemptionMode,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-    const Device &device) {
+    const Device &device,
+    WALKER_TYPE *walkerCmd) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
     using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
@@ -174,7 +175,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
 
-    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, device, hardwareInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired);
+    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, device, hardwareInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, *walkerCmd);
 
     *pInterfaceDescriptor = interfaceDescriptor;
     return (size_t)offsetInterfaceDescriptor;
@@ -284,7 +285,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         bindingTablePrefetchSize,
         preemptionMode,
         inlineInterfaceDescriptor,
-        device);
+        device,
+        walkerCmd);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::InstructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::DynamicStateHeap);

@@ -61,6 +61,8 @@ void HardwareCommandsTest::addSpaceForSingleKernelArg() {
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptorDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    WALKER_TYPE walkerCmd{};
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
@@ -94,7 +96,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     const uint32_t threadGroupCount = 1u;
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
     HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
-        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, threadGroupCount, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, *pDevice);
+        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, threadGroupCount, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, *pDevice, &walkerCmd);
 
     auto usedIndirectHeapAfter = indirectHeap.getUsed();
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);

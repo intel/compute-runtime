@@ -59,7 +59,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     ASSERT_NE(nullptr, pClDevice);
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
-
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    WALKER_TYPE walkerCmd{};
     // define kernel info
     kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
     kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = GetParam() * KB;
@@ -88,7 +89,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
         4u,
         pDevice->getPreemptionMode(),
         nullptr,
-        *pDevice);
+        *pDevice,
+        &walkerCmd);
 
     // add the heap base + offset
     uint32_t *pIdData = (uint32_t *)indirectHeap.getCpuBase() + offsetInterfaceDescriptorData;
@@ -146,7 +148,8 @@ INSTANTIATE_TEST_CASE_P(
 
 HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    WALKER_TYPE walkerCmd{};
     uint32_t expectedSlmSize = 5;
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.OverrideSlmAllocationSize.set(expectedSlmSize);
@@ -178,7 +181,8 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
         4u,
         pDevice->getPreemptionMode(),
         &interfaceDescriptorData,
-        *pDevice);
+        *pDevice,
+        &walkerCmd);
 
     auto pInterfaceDescriptor = HardwareCommandsHelper<FamilyType>::getInterfaceDescriptor(indirectHeap, interfaceDescriptorOffset, &interfaceDescriptorData);
 

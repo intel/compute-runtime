@@ -52,7 +52,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         uint32_t bindingTablePrefetchSize,
         PreemptionMode preemptionMode,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-        const Device &device);
+        const Device &device,
+        WALKER_TYPE *walkerCmd);
 
     static void sendMediaStateFlush(
         LinearStream &commandStream,
