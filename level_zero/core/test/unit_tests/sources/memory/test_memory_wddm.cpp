@@ -148,12 +148,12 @@ TEST_F(MemoryIPCTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    std::unique_ptr<ContextHandleMock> context_invalid;
-    context_invalid = std::make_unique<ContextHandleMock>(driverHandle.get());
-    EXPECT_NE(context_invalid, nullptr);
-    context_invalid->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
-    context_invalid->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
-    context_invalid->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+    std::unique_ptr<ContextHandleMock> contextInvalid;
+    contextInvalid = std::make_unique<ContextHandleMock>(driverHandle.get());
+    EXPECT_NE(contextInvalid, nullptr);
+    contextInvalid->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    contextInvalid->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+    contextInvalid->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 
     ze_ipc_mem_handle_t ipcHandle;
     result = context->getIpcMemHandle(ptr, &ipcHandle);
@@ -164,7 +164,7 @@ TEST_F(MemoryIPCTests,
 
     EXPECT_EQ(0u, context->getIPCHandleMap().size());
 
-    result = context_invalid->putIpcMemHandle(ipcHandle);
+    result = contextInvalid->putIpcMemHandle(ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, context->getIPCHandleMap().size());
