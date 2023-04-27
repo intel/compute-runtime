@@ -615,6 +615,16 @@ TEST_F(ProgramGetKernelInfoTest, givenProgramWithFunctionsWhenGettingKernelInfoB
     EXPECT_EQ(program->buildInfos[0].kernelInfoArray[1], kernelInfo);
 }
 
+TEST_F(ProgramGetKernelInfoTest, givenProgramWithFunctionsWhenGettingKernelInfoByIndexThenCorrespondingKernelInfoIsReturned) {
+    program->resizeAndPopulateKernelInfoArray(9);
+    program->exportedFunctionsKernelId = 4;
+
+    for (size_t ordinal = 0; ordinal < 8; ordinal++) {
+        auto kernelInfo = program->getKernelInfo(ordinal, 0);
+        EXPECT_EQ(program->buildInfos[0].kernelInfoArray[ordinal + (program->exportedFunctionsKernelId <= ordinal)], kernelInfo);
+    }
+}
+
 TEST_F(ProgramGetKernelInfoTest, givenProgramFunctionsWhenGettingKernelInfoByNameThenFunctionsAreNotExposed) {
     EXPECT_EQ(nullptr, program->getKernelInfo(NEO::Zebin::Elf::SectionNames::externalFunctions.data(), uint32_t(0)));
 }
