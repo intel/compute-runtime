@@ -545,11 +545,12 @@ ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
     return ZE_RESULT_SUCCESS;
 }
 
-void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress) {
+void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress, uint8_t type) {
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
 
     ipcData = {};
     ipcData.handle = handle;
+    ipcData.type = type;
 
     auto lock = this->lockIPCHandleMap();
     ipcHandleIterator = this->getIPCHandleMap().find(handle);
@@ -581,11 +582,12 @@ ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
         memoryManager->registerIpcExportedAllocation(graphicsAllocation);
 
         IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
-        setIPCHandleData(graphicsAllocation, handle, ipcData, reinterpret_cast<uint64_t>(ptr));
         auto type = allocData->memoryType;
+        uint8_t ipcType = 0;
         if (type == HOST_UNIFIED_MEMORY) {
-            ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY);
+            ipcType = static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY);
         }
+        setIPCHandleData(graphicsAllocation, handle, ipcData, reinterpret_cast<uint64_t>(ptr), ipcType);
 
         return ZE_RESULT_SUCCESS;
     }
@@ -649,8 +651,7 @@ ze_result_t ContextImp::getIpcMemHandles(const void *ptr,
             }
 
             IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data);
-            setIPCHandleData(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr));
-            ipcData.type = static_cast<uint8_t>(ipcType);
+            setIPCHandleData(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType));
         }
 
         return ZE_RESULT_SUCCESS;
