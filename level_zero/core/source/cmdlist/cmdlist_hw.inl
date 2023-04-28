@@ -2669,11 +2669,9 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
     bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcPtr), size, &srcAllocData);
     bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, size, &dstAllocData);
 
-    if (srcAllocFound && dstAllocFound) {
-        return this->isAppendSplitNeeded(dstAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool(), srcAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool(), size, directionOut);
-    }
-
-    return false;
+    auto srcMemoryPool = srcAllocFound ? srcAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool() : NEO::MemoryPool::System4KBPages;
+    auto dstMemoryPool = dstAllocFound ? dstAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool() : NEO::MemoryPool::System4KBPages;
+    return this->isAppendSplitNeeded(dstMemoryPool, srcMemoryPool, size, directionOut);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
