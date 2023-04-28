@@ -762,8 +762,9 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         ctx.spaceForResidency += estimateCommandListResidencySize(cmdList);
 
         if (propertyScmDirty || propertyFeDirty || propertyPsDirty || propertySbaDirty || frontEndReturnPoint || propertyPreemptionDirty) {
-            CommandListDirtyFlags dirtyFlags = {propertyScmDirty, propertyFeDirty, propertyPsDirty, propertySbaDirty, frontEndReturnPoint, propertyPreemptionDirty};
-            this->stateChanges.emplace_back(stagingState, cmdList, dirtyFlags, ctx.statePreemption, i);
+            CommandListRequiredStateChange stateChange(stagingState, cmdList, {propertyScmDirty, propertyFeDirty, propertyPsDirty, propertySbaDirty, frontEndReturnPoint, propertyPreemptionDirty}, ctx.statePreemption, i);
+            this->stateChanges.push_back(stateChange);
+
             linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(true);
         }
     }

@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
@@ -125,15 +126,15 @@ struct CommandQueueImp : public CommandQueue {
         uint32_t cmdListIndex = 0;
     };
 
-    using CommandListStateChangeList = std::vector<CommandListRequiredStateChange>;
+    using CommandListStateChangeList = StackVec<CommandListRequiredStateChange, CommandQueueImp::defaultCommandListStateChangeListSize>;
 
+    CommandListStateChangeList stateChanges;
     CommandBufferManager buffers;
     NEO::LinearStream commandStream{};
     NEO::LinearStream firstCmdListStream{};
     NEO::HeapContainer heapContainer;
     ze_command_queue_desc_t desc;
     std::vector<Kernel *> printfKernelContainer;
-    CommandListStateChangeList stateChanges;
 
     std::atomic<TaskCountType> taskCount{0};
 
