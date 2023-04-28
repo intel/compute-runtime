@@ -367,7 +367,6 @@ class CommandQueueHw : public CommandQueue {
     template <uint32_t cmdType>
     cl_int enqueueBlitSplit(MultiDispatchInfo &dispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr);
 
-    template <uint32_t commandType>
     CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,
                                       size_t surfaceCount,
                                       LinearStream &commandStream,
@@ -381,7 +380,8 @@ class CommandQueueHw : public CommandQueue {
                                       EventBuilder &eventBuilder,
                                       TaskCountType taskLevel,
                                       PrintfHandler *printfHandler,
-                                      bool relaxedOrderingEnabled);
+                                      bool relaxedOrderingEnabled,
+                                      uint32_t commandType);
 
     void enqueueBlocked(uint32_t commandType,
                         Surface **surfacesForResidency,
