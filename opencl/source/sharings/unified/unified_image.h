@@ -14,6 +14,7 @@
 namespace NEO {
 class Image;
 class Context;
+struct ImageInfo;
 
 class UnifiedImage : public UnifiedSharing {
     using UnifiedSharing::UnifiedSharing;
@@ -21,5 +22,7 @@ class UnifiedImage : public UnifiedSharing {
   public:
     static Image *createSharedUnifiedImage(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription description,
                                            const cl_image_format *imageFormat, const cl_image_desc *imageDesc, cl_int *errcodeRet);
+
+    static void *swapGmm(GraphicsAllocation *graphicsAllocation, Context *context, ImageInfo *imgInfo);
 };
 } // namespace NEO

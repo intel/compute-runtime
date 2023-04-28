@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,10 +30,12 @@ set(RUNTIME_SRCS_MEM_OBJ
 if(WIN32)
   list(APPEND RUNTIME_SRCS_MEM_OBJ
        ${CMAKE_CURRENT_SOURCE_DIR}/buffer_windows.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/image_windows.cpp
   )
 else()
   list(APPEND RUNTIME_SRCS_MEM_OBJ
        ${CMAKE_CURRENT_SOURCE_DIR}/buffer_linux.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/image_linux.cpp
   )
 endif()
 

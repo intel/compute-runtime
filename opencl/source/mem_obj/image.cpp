@@ -36,6 +36,7 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/source/sharings/unified/unified_image.h"
 
 #include "igfxfmid.h"
 
@@ -1308,7 +1309,20 @@ cl_mem Image::validateAndCreateImage(cl_context context,
         return nullptr;
     }
 
-    auto image = Image::create(pContext, memoryProperties, flags, flagsIntel, surfaceFormat, imageDesc, hostPtr, errcodeRet);
+    Image *image = nullptr;
+    UnifiedSharingMemoryDescription extMem{};
+
+    if (memoryProperties.handle) {
+        if (validateHandleType(memoryProperties, extMem)) {
+            extMem.handle = reinterpret_cast<void *>(memoryProperties.handle);
+            image = UnifiedImage::createSharedUnifiedImage(pContext, flags, extMem, imageFormat, imageDesc, &errcodeRet);
+        } else {
+            errcodeRet = CL_INVALID_PROPERTY;
+            return nullptr;
+        }
+    } else {
+        image = Image::create(pContext, memoryProperties, flags, flagsIntel, surfaceFormat, imageDesc, hostPtr, errcodeRet);
+    }
 
     if (errcodeRet == CL_SUCCESS) {
         image->storeProperties(properties);

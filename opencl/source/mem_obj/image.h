@@ -12,12 +12,14 @@
 #include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
+
+class GfxCoreHelper;
 class Gmm;
-struct HardwareInfo;
 class Image;
+struct HardwareInfo;
 struct KernelInfo;
 struct SurfaceFormatInfo;
-class GfxCoreHelper;
+struct UnifiedSharingMemoryDescription;
 
 using ImageCreateFunc = Image *(*)(Context *context,
                                    const MemoryProperties &memoryProperties,
@@ -201,6 +203,8 @@ class Image : public MemObj {
     static cl_int checkIfDeviceSupportsImages(cl_context context);
 
     void fillImageRegion(size_t *region) const;
+
+    static bool validateHandleType(MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
 
   protected:
     Image(Context *context,

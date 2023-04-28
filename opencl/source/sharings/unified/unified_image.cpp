@@ -36,6 +36,8 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
         return nullptr;
     }
 
+    swapGmm(graphicsAllocation, context, &imgInfo);
+
     graphicsAllocation->getDefaultGmm()->updateOffsetsInImgInfo(imgInfo, 0u);
 
     auto &memoryManager = *context->getMemoryManager();
