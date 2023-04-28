@@ -30,6 +30,7 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::blitEnqueueAllowed;
     using CommandQueue::blitEnqueueImageAllowed;
     using CommandQueue::bufferCpuCopyAllowed;
+    using CommandQueue::deferredTimestampPackets;
     using CommandQueue::device;
     using CommandQueue::gpgpuEngine;
     using CommandQueue::isCopyOnly;

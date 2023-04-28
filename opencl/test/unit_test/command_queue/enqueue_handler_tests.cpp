@@ -716,14 +716,14 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
 }
 
 struct EnqueueHandlerTestBasic : public ::testing::Test {
-    template <typename FamilyType>
-    std::unique_ptr<MockCommandQueueHw<FamilyType>> setupFixtureAndCreateMockCommandQueue() {
+    template <typename MockCmdQueueType, typename FamilyType>
+    std::unique_ptr<MockCmdQueueType> setupFixtureAndCreateMockCommandQueue() {
         auto executionEnvironment = platform()->peekExecutionEnvironment();
 
         device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get());
 
-        auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+        auto mockCmdQ = std::make_unique<MockCmdQueueType>(context.get(), device.get(), nullptr);
 
         auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getGpgpuCommandStreamReceiver());
         ultCsr.taskCount = initialTaskCount;
@@ -741,7 +741,7 @@ struct EnqueueHandlerTestBasic : public ::testing::Test {
 };
 
 HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlokingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
-    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<FamilyType>();
+    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<MockCommandQueueHw<FamilyType>, FamilyType>();
     MockKernelWithInternals kernelInternals(*device, context.get());
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel);
@@ -757,7 +757,7 @@ HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlokingThenCom
 }
 
 HWTEST_F(EnqueueHandlerTestBasic, givenBlockedEnqueueHandlerWhenCommandIsBlokingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
-    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<FamilyType>();
+    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<MockCommandQueueHw<FamilyType>, FamilyType>();
 
     MockKernelWithInternals kernelInternals(*device, context.get());
     Kernel *kernel = kernelInternals.mockKernel;
@@ -782,4 +782,94 @@ HWTEST_F(EnqueueHandlerTestBasic, givenBlockedEnqueueHandlerWhenCommandIsBloking
     EXPECT_EQ(initialTaskCount + 1, mockInternalAllocationStorage->lastCleanAllocationsTaskCount);
 
     t0.join();
+}
+template <typename FamilyType>
+class MockCommandQueueFailEnqueue : public MockCommandQueueHw<FamilyType> {
+  public:
+    MockCommandQueueFailEnqueue(Context *context,
+                                ClDevice *device,
+                                cl_queue_properties *properties) : MockCommandQueueHw<FamilyType>(context, device, properties) {
+        mockTagAllocator = std::make_unique<MockTagAllocator<>>(0, device->getDevice().getMemoryManager());
+        this->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+        this->deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
+    }
+    CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,
+                                      size_t surfaceCount,
+                                      LinearStream &commandStream,
+                                      size_t commandStreamStart,
+                                      bool &blocking,
+                                      bool clearDependenciesForSubCapture,
+                                      const MultiDispatchInfo &multiDispatchInfo,
+                                      const EnqueueProperties &enqueueProperties,
+                                      TimestampPacketDependencies &timestampPacketDependencies,
+                                      EventsRequest &eventsRequest,
+                                      EventBuilder &eventBuilder,
+                                      TaskCountType taskLevel,
+                                      PrintfHandler *printfHandler,
+                                      bool relaxedOrderingEnabled,
+                                      uint32_t commandType) override {
+        this->timestampPacketContainer->add(mockTagAllocator->getTag());
+        CompletionStamp stamp{};
+        stamp.taskCount = taskCountToReturn;
+        return stamp;
+    }
+    TaskCountType taskCountToReturn = 0;
+    std::unique_ptr<MockTagAllocator<>> mockTagAllocator;
+};
+HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenEnqueueFailedThenTimestampPacketContainerIsEmpty) {
+    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<MockCommandQueueFailEnqueue<FamilyType>, FamilyType>();
+
+    MockKernelWithInternals kernelInternals(*device, context.get());
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel);
+    mockCmdQ->taskCountToReturn = CompletionStamp::gpuHang;
+    mockCmdQ->template enqueueHandler<CL_COMMAND_BARRIER>(nullptr,
+                                                          0,
+                                                          true,
+                                                          multiDispatchInfo,
+                                                          0,
+                                                          nullptr,
+                                                          nullptr);
+    EXPECT_TRUE(mockCmdQ->timestampPacketContainer->peekNodes().empty());
+    TimestampPacketContainer release;
+    mockCmdQ->deferredTimestampPackets->swapNodes(release);
+}
+
+HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenEnqueueSucceedsThenTimestampPacketContainerIsNotEmpty) {
+    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<MockCommandQueueFailEnqueue<FamilyType>, FamilyType>();
+
+    MockKernelWithInternals kernelInternals(*device, context.get());
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel);
+    mockCmdQ->taskCountToReturn = 100;
+    mockCmdQ->template enqueueHandler<CL_COMMAND_BARRIER>(nullptr,
+                                                          0,
+                                                          true,
+                                                          multiDispatchInfo,
+                                                          0,
+                                                          nullptr,
+                                                          nullptr);
+    EXPECT_FALSE(mockCmdQ->timestampPacketContainer->peekNodes().empty());
+    TimestampPacketContainer release;
+    mockCmdQ->timestampPacketContainer->swapNodes(release);
+}
+
+HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenEnqueueFailedButThereIsNoDeferredContainerThenTimestampPacketContainerIsNotEmpty) {
+    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<MockCommandQueueFailEnqueue<FamilyType>, FamilyType>();
+
+    MockKernelWithInternals kernelInternals(*device, context.get());
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel);
+    mockCmdQ->taskCountToReturn = CompletionStamp::gpuHang;
+    mockCmdQ->deferredTimestampPackets.reset();
+    mockCmdQ->template enqueueHandler<CL_COMMAND_BARRIER>(nullptr,
+                                                          0,
+                                                          true,
+                                                          multiDispatchInfo,
+                                                          0,
+                                                          nullptr,
+                                                          nullptr);
+    EXPECT_FALSE(mockCmdQ->timestampPacketContainer->peekNodes().empty());
+    TimestampPacketContainer release;
+    mockCmdQ->timestampPacketContainer->swapNodes(release);
 }

@@ -410,6 +410,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     if (completionStamp.taskCount > CompletionStamp::notReady) {
+        if (deferredTimestampPackets.get()) {
+            timestampPacketContainer->moveNodesToNewContainer(*deferredTimestampPackets);
+        }
         return CommandQueue::getErrorCodeFromTaskCount(completionStamp.taskCount);
     }
 
