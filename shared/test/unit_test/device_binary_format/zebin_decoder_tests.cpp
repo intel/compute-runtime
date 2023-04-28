@@ -806,7 +806,7 @@ kernels_misc_info:
 TEST(DecodeKernelMiscInfo, givenUnrecognizedEntryInKernelsMiscInfoSectionWhenDecodingItThenEmitWarning) {
     NEO::ConstStringRef kernelMiscInfoUnrecognized = R"===(---
 kernels_misc_info:
-  - name:            some_kernel
+  - name:            some_kernel.0
     args_info:
       - index:           0
         name:            a
@@ -818,7 +818,7 @@ kernels_misc_info:
 ...
 )===";
     auto kernelInfo = new KernelInfo();
-    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "some_kernel.0";
 
     NEO::ProgramInfo programInfo;
     programInfo.kernelMiscInfoPos = 0u;
@@ -827,7 +827,7 @@ kernels_misc_info:
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognized, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::Success, res);
-    EXPECT_TRUE(outErrors.empty());
+    EXPECT_TRUE(outErrors.empty()) << outErrors;
 
     auto expectedWarning = "DeviceBinaryFormat::Zebin : Unrecognized entry: pickle in kernels_misc_info zeInfo's section.\n";
     EXPECT_STREQ(outWarnings.c_str(), expectedWarning);

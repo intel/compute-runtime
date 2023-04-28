@@ -54,7 +54,7 @@ constexpr bool isAlphaNumeric(char c) {
 }
 
 constexpr bool isNameIdentifierCharacter(char c) {
-    return isAlphaNumeric(c) || ('_' == c) || ('-' == c);
+    return isAlphaNumeric(c) || ('_' == c) || ('-' == c) || ('.' == c);
 }
 
 constexpr bool isNameIdentifierBeginningCharacter(char c) {

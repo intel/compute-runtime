@@ -87,6 +87,7 @@ TEST(YamlIsNameIdentifierCharacter, GivenCharThenReturnsTrueOnlyWhenCharIsNumber
     validChars.insert(It{'0'}, ++It{'9'});
     validChars.insert('_');
     validChars.insert('-');
+    validChars.insert('.');
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {
         bool expected = validChars.count(static_cast<char>(c)) > 0;
         EXPECT_EQ(expected, NEO::Yaml::isNameIdentifierCharacter(static_cast<char>(c))) << static_cast<char>(c);
