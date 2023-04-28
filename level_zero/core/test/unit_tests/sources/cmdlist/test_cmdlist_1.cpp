@@ -27,6 +27,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
 namespace ult {
@@ -1233,9 +1234,9 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
-    auto commandList = CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue);
+    auto commandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
     ASSERT_NE(nullptr, commandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
     whiteBoxCmdList->enableInOrderExecution();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1270,8 +1271,6 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies);
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
-
-    commandList->destroy();
 }
 
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {

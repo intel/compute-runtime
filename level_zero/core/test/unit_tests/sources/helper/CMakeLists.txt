@@ -11,5 +11,6 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_l0_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/properties_parser_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/ze_object_utils.h
 )
 add_subdirectories()

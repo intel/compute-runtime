@@ -29,6 +29,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
 namespace ult {
@@ -665,23 +666,6 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         using EventImp<uint32_t>::latestUsedInOrderCmdList;
     };
 
-    template <typename T>
-    struct DestroyObject {
-        void operator()(T *t) {
-            if (t) {
-                t->destroy();
-            }
-        }
-    };
-
-    template <typename T>
-    using DestructableUniquePtr = std::unique_ptr<T, DestroyObject<T>>;
-
-    template <typename T>
-    DestructableUniquePtr<T> createDestructableUniqePtr(T *object) {
-        return DestructableUniquePtr<T>{object};
-    }
-
     void SetUp() override {
         NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.set(1);
 
@@ -707,8 +691,8 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily>
-    DestructableUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdList() {
-        auto cmdList = createDestructableUniqePtr(new WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>());
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdList() {
+        auto cmdList = makeZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
 
         auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
