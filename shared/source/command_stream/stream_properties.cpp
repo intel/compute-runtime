@@ -379,17 +379,17 @@ void StateBaseAddressProperties::resetState() {
     this->statelessMocs.value = StreamProperty::initValue;
     this->globalAtomics.value = StreamProperty::initValue;
 
-    this->bindingTablePoolBaseAddress.value = StreamProperty::initValue;
-    this->bindingTablePoolSize.value = StreamProperty::initValue;
+    this->bindingTablePoolBaseAddress.value = StreamProperty64::initValue;
+    this->bindingTablePoolSize.value = StreamPropertySizeT::initValue;
 
-    this->surfaceStateBaseAddress.value = StreamProperty::initValue;
-    this->surfaceStateSize.value = StreamProperty::initValue;
+    this->surfaceStateBaseAddress.value = StreamProperty64::initValue;
+    this->surfaceStateSize.value = StreamPropertySizeT::initValue;
 
-    this->indirectObjectBaseAddress.value = StreamProperty::initValue;
-    this->indirectObjectSize.value = StreamProperty::initValue;
+    this->indirectObjectBaseAddress.value = StreamProperty64::initValue;
+    this->indirectObjectSize.value = StreamPropertySizeT::initValue;
 
-    this->dynamicStateBaseAddress.value = StreamProperty::initValue;
-    this->dynamicStateSize.value = StreamProperty::initValue;
+    this->dynamicStateBaseAddress.value = StreamProperty64::initValue;
+    this->dynamicStateSize.value = StreamPropertySizeT::initValue;
 }
 
 void StateBaseAddressProperties::setPropertiesBindingTableSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
@@ -408,8 +408,6 @@ void StateBaseAddressProperties::setPropertiesBindingTableSurfaceState(int64_t b
 }
 
 void StateBaseAddressProperties::setPropertiesSurfaceState(int64_t surfaceStateBaseAddress, size_t surfaceStateSize) {
-    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
-
     this->surfaceStateBaseAddress.isDirty = false;
 
     this->surfaceStateBaseAddress.set(surfaceStateBaseAddress);

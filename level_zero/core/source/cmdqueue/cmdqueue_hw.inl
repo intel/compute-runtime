@@ -733,39 +733,38 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
     ctx.globalInit |= !gpgpuEnabled;
     ctx.globalInit |= scmStateDirty;
 
+    CommandListRequiredStateChange cmdListState;
+
     for (uint32_t i = 0; i < numCommandLists; i++) {
         auto cmdList = CommandList::fromHandle(phCommandLists[i]);
         auto &requiredStreamState = cmdList->getRequiredStreamState();
         auto &finalStreamState = cmdList->getFinalStreamState();
 
-        NEO::StreamProperties stagingState{};
-
-        bool propertyFeDirty = false;
-        bool propertyPsDirty = false;
-        bool propertySbaDirty = false;
-        bool propertyScmDirty = false;
-        bool frontEndReturnPoint = false;
-        bool propertyPreemptionDirty = false;
-
         linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, ctx.engineInstanced, cmdList,
                                                                                    streamProperties, requiredStreamState, finalStreamState,
-                                                                                   stagingState, propertyFeDirty, frontEndReturnPoint);
+                                                                                   cmdListState.requiredState,
+                                                                                   cmdListState.flags.propertyFeDirty, cmdListState.flags.frontEndReturnPoint);
         linearStreamSizeEstimate += estimatePipelineSelectCmdSizeForMultipleCommandLists(streamProperties, requiredStreamState, finalStreamState, gpgpuEnabled,
-                                                                                         stagingState, propertyPsDirty);
+                                                                                         cmdListState.requiredState, cmdListState.flags.propertyPsDirty);
         linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(streamProperties, scmStateDirty, requiredStreamState, finalStreamState,
-                                                                              stagingState, propertyScmDirty);
+                                                                              cmdListState.requiredState, cmdListState.flags.propertyScmDirty);
         linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirty, cmdList->getCmdListHeapAddressModel(), streamProperties, requiredStreamState, finalStreamState,
-                                                                                           stagingState, propertySbaDirty);
-        linearStreamSizeEstimate += computePreemptionSizeForCommandList(ctx, cmdList, propertyPreemptionDirty);
+                                                                                           cmdListState.requiredState, cmdListState.flags.propertySbaDirty);
+        linearStreamSizeEstimate += computePreemptionSizeForCommandList(ctx, cmdList, cmdListState.flags.preemptionDirty);
 
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
         ctx.spaceForResidency += estimateCommandListResidencySize(cmdList);
 
-        if (propertyScmDirty || propertyFeDirty || propertyPsDirty || propertySbaDirty || frontEndReturnPoint || propertyPreemptionDirty) {
-            CommandListRequiredStateChange stateChange(stagingState, cmdList, {propertyScmDirty, propertyFeDirty, propertyPsDirty, propertySbaDirty, frontEndReturnPoint, propertyPreemptionDirty}, ctx.statePreemption, i);
-            this->stateChanges.push_back(stateChange);
+        if (cmdListState.flags.isAnyDirty()) {
+            cmdListState.commandList = cmdList;
+            cmdListState.cmdListIndex = i;
+            cmdListState.newPreemptionMode = ctx.statePreemption;
+            this->stateChanges.push_back(cmdListState);
 
             linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(true);
+
+            cmdListState.requiredState.resetState();
+            cmdListState.flags.cleanDirty();
         }
     }
 
@@ -935,7 +934,7 @@ void CommandQueueHw<gfxCoreFamily>::updateOneCmdListPreemptionModeAndCtxStatePre
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
         }
         NEO::PreemptionHelper::programCmdStream<GfxFamily>(cmdStream,
-                                                           cmdListRequired.newMode,
+                                                           cmdListRequired.newPreemptionMode,
                                                            NEO::PreemptionMode::Initial,
                                                            this->csr->getPreemptionAllocation());
     }

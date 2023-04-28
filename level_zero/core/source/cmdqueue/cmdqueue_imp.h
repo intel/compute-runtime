@@ -108,21 +108,25 @@ struct CommandQueueImp : public CommandQueue {
         bool propertySbaDirty = false;
         bool frontEndReturnPoint = false;
         bool preemptionDirty = false;
+
+        bool isAnyDirty() const {
+            return (propertyScmDirty || propertyFeDirty || propertyPsDirty || propertySbaDirty || frontEndReturnPoint || preemptionDirty);
+        }
+        void cleanDirty() {
+            propertyScmDirty = false;
+            propertyFeDirty = false;
+            propertyPsDirty = false;
+            propertySbaDirty = false;
+            frontEndReturnPoint = false;
+            preemptionDirty = false;
+        }
     };
     struct CommandListRequiredStateChange {
         CommandListRequiredStateChange() = default;
-        CommandListRequiredStateChange(NEO::StreamProperties &requiredState, CommandList *commandList,
-                                       CommandListDirtyFlags flags,
-                                       NEO::PreemptionMode newMode,
-                                       uint32_t cmdListIndex) : requiredState(requiredState),
-                                                                commandList(commandList),
-                                                                flags(flags),
-                                                                newMode(newMode),
-                                                                cmdListIndex(cmdListIndex) {}
         NEO::StreamProperties requiredState{};
         CommandList *commandList = nullptr;
-        CommandListDirtyFlags flags;
-        NEO::PreemptionMode newMode = NEO::PreemptionMode::Initial;
+        CommandListDirtyFlags flags{};
+        NEO::PreemptionMode newPreemptionMode = NEO::PreemptionMode::Initial;
         uint32_t cmdListIndex = 0;
     };
 
