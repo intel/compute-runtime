@@ -99,7 +99,7 @@ struct CommandQueueImp : public CommandQueue {
 
     void postSyncOperations(bool hangDetected);
 
-    static constexpr uint32_t defaultCommandListStateChangeListSize = 32;
+    static constexpr uint32_t defaultCommandListStateChangeListSize = 10;
     struct CommandListDirtyFlags {
         bool propertyScmDirty = false;
         bool propertyFeDirty = false;
