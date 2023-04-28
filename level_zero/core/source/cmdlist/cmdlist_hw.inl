@@ -2024,6 +2024,10 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies) {
+    if (relaxedOrderingAllowed && (numWaitEvents > 0 || latestSentInOrderEvent)) {
+        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
+    }
+
     if (latestSentInOrderEvent) {
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(1, &latestSentInOrderEvent, relaxedOrderingAllowed, trackDependencies);
     }
@@ -2105,10 +2109,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             args.dcFlushEnable = true;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
         }
-    }
-
-    if (relaxedOrderingAllowed) {
-        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
     }
 
     for (uint32_t i = 0; i < numEvents; i++) {

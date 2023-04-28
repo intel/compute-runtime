@@ -824,6 +824,35 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     ASSERT_NE(cmdList.end(), itor);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsThenConfigureRegistersFirst, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents(1);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->addEventsToCmdList(0, nullptr, true, true);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), offset),
+        cmdStream->getUsed() - offset));
+
+    auto lrrCmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_REG *>(*cmdList.begin());
+    ASSERT_NE(nullptr, lrrCmd);
+
+    EXPECT_EQ(CS_GPR_R4, lrrCmd->getSourceRegisterAddress());
+    EXPECT_EQ(CS_GPR_R0, lrrCmd->getDestinationRegisterAddress());
+    lrrCmd++;
+    EXPECT_EQ(CS_GPR_R4 + 4, lrrCmd->getSourceRegisterAddress());
+    EXPECT_EQ(CS_GPR_R0 + 4, lrrCmd->getDestinationRegisterAddress());
+}
+
 struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {
     template <typename FamilyType>
     uint64_t getIndirectHeapOffsetForImplicitArgsBuffer(const Mock<::L0::Kernel> &kernel) {
