@@ -160,6 +160,8 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::immediateCmdListHeapSharing;
+    using BaseClass::inOrderDependencyCounter;
+    using BaseClass::inOrderDependencyCounterAllocation;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;

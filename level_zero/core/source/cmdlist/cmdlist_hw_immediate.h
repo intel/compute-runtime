@@ -170,6 +170,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const;
 
   protected:
+    using BaseClass::inOrderDependencyCounter;
+    using BaseClass::inOrderDependencyCounterAllocation;
     using BaseClass::latestInOrderOperationCompleted;
     using BaseClass::latestSentInOrderEvent;
 

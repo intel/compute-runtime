@@ -665,6 +665,23 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         using EventImp<uint32_t>::latestUsedInOrderCmdList;
     };
 
+    template <typename T>
+    struct DestroyObject {
+        void operator()(T *t) {
+            if (t) {
+                t->destroy();
+            }
+        }
+    };
+
+    template <typename T>
+    using DestructableUniquePtr = std::unique_ptr<T, DestroyObject<T>>;
+
+    template <typename T>
+    DestructableUniquePtr<T> createDestructableUniqePtr(T *object) {
+        return DestructableUniquePtr<T>{object};
+    }
+
     void SetUp() override {
         NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.set(1);
 
@@ -690,8 +707,8 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily>
-    std::unique_ptr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdList() {
-        auto cmdList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    DestructableUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdList() {
+        auto cmdList = createDestructableUniqePtr(new WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>());
 
         auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
@@ -701,11 +718,11 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
 
         cmdList->cmdQImmediate = mockCmdQ.get();
         cmdList->isFlushTaskSubmissionEnabled = true;
-        cmdList->setInOrderExecution(true);
         cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
         cmdList->csr = csr;
         cmdList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);
+        cmdList->enableInOrderExecution();
 
         return cmdList;
     }
@@ -822,6 +839,26 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
 
     ASSERT_NE(cmdList.end(), itor);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleDependencyCounter, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    EXPECT_NE(nullptr, immCmdList->inOrderDependencyCounterAllocation);
+    EXPECT_EQ(AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, immCmdList->inOrderDependencyCounterAllocation->getAllocationType());
+
+    EXPECT_EQ(0u, immCmdList->inOrderDependencyCounter);
+
+    auto itorAlloc = std::find(immCmdList->getCmdContainer().getResidencyContainer().begin(),
+                               immCmdList->getCmdContainer().getResidencyContainer().end(),
+                               immCmdList->inOrderDependencyCounterAllocation);
+    EXPECT_NE(itorAlloc, immCmdList->getCmdContainer().getResidencyContainer().end());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(2u, immCmdList->inOrderDependencyCounter);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsThenConfigureRegistersFirst, IsAtLeastSkl) {

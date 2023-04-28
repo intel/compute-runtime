@@ -702,8 +702,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     }
 
     if (isInOrderExecutionEnabled()) {
+        inOrderDependencyCounter++;
+
         latestInOrderOperationCompleted = false;
         this->latestSentInOrderEvent = hSignalEvent;
+
         if (hSignalEvent) {
             Event::fromHandle(hSignalEvent)->setLatestUsedInOrderCmdList(this);
         }

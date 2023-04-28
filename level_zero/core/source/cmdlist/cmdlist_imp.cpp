@@ -16,6 +16,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/sys_calls_common.h"
@@ -73,6 +74,8 @@ ze_result_t CommandListImp::destroy() {
             }
         }
     }
+
+    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(inOrderDependencyCounterAllocation);
 
     delete this;
     return ZE_RESULT_SUCCESS;
@@ -166,10 +169,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
         commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
 
-        if (NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1) {
-            commandList->setInOrderExecution(true);
-        }
-
         if (!internalUsage) {
             auto &productHelper = device->getProductHelper();
             commandList->isFlushTaskSubmissionEnabled = gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper);
@@ -185,6 +184,11 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         csr->initializeResources();
         csr->initDirectSubmission();
         returnValue = commandList->initialize(device, engineGroupType, desc->flags);
+
+        if (NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1) {
+            commandList->enableInOrderExecution();
+        }
+
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
@@ -232,6 +236,24 @@ void CommandListImp::unsetLastInOrderOutEvent(ze_event_handle_t outEvent) {
         latestSentInOrderEvent = nullptr;
         latestInOrderOperationCompleted = true;
     }
+}
+
+void CommandListImp::enableInOrderExecution() {
+    UNRECOVERABLE_IF(inOrderDependencyCounterAllocation);
+
+    auto device = this->device->getNEODevice();
+
+    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), sizeof(uint32_t), NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, device->getDeviceBitfield()};
+
+    inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+
+    UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
+
+    commandContainer.addToResidencyContainer(inOrderDependencyCounterAllocation);
+
+    memset(inOrderDependencyCounterAllocation->getUnderlyingBuffer(), 0, inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
+
+    inOrderExecutionEnabled = true;
 }
 
 } // namespace L0
