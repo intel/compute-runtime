@@ -343,7 +343,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (enqueueProperties.operation == EnqueueProperties::Operation::GpuKernel) {
             csrDeps.makeResident(computeCommandStreamReceiver);
 
-            completionStamp = enqueueNonBlocked<commandType>(
+            completionStamp = enqueueNonBlocked(
                 surfacesForResidency,
                 numSurfaceForResidency,
                 commandStream,
@@ -357,7 +357,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventBuilder,
                 taskLevel,
                 printfHandler.get(),
-                relaxedOrderingEnabled);
+                relaxedOrderingEnabled,
+                commandType);
         } else if (enqueueProperties.isFlushWithoutKernelRequired()) {
             completionStamp = enqueueCommandWithoutKernel(
                 surfacesForResidency,
@@ -745,7 +746,6 @@ bool CommandQueueHw<GfxFamily>::isTaskLevelUpdateRequired(const TaskCountType &t
 }
 
 template <typename GfxFamily>
-template <uint32_t commandType>
 CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     Surface **surfaces,
     size_t surfaceCount,
@@ -760,7 +760,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     EventBuilder &eventBuilder,
     TaskCountType taskLevel,
     PrintfHandler *printfHandler,
-    bool relaxedOrderingEnabled) {
+    bool relaxedOrderingEnabled,
+    uint32_t commandType) {
 
     UNRECOVERABLE_IF(multiDispatchInfo.empty());
 

@@ -80,8 +80,8 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndOddWorkGroupWhenenqueueNonBl
 
     bool blocking = false;
     pKernel->setSystolicPipelineSelectMode(true);
-    cmdQ.template enqueueNonBlocked<CL_COMMAND_NDRANGE_KERNEL>(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true,
-                                                               multiDispatchInfo, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr, false);
+    cmdQ.enqueueNonBlocked(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true,
+                           multiDispatchInfo, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr, false, CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_TRUE(csr->disableEuFusionPassed);
 }
 
@@ -117,8 +117,8 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndNotOddWorkGroupWhenenqueueNo
 
     bool blocking = false;
     const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
-    cmdQ.template enqueueNonBlocked<CL_COMMAND_NDRANGE_KERNEL>(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true,
-                                                               multiDispatchInfo, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr, false);
+    cmdQ.enqueueNonBlocked(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true,
+                           multiDispatchInfo, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr, false, CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_FALSE(csr->disableEuFusionPassed);
 }
 DG2TEST_F(CommandQueueHwTest, GivenKernelWithRequiredDisableEuFusionWhenenqueueNonBlockedCalledThenDisableEuFusionPassedToFlushTask) {
@@ -144,8 +144,8 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithRequiredDisableEuFusionWhenenqueueN
 
     bool blocking = false;
     const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).kernelAttributes.flags.requiresDisabledEUFusion = true;
-    cmdQ.template enqueueNonBlocked<CL_COMMAND_NDRANGE_KERNEL>(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true,
-                                                               multiDispatchInfo, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr, false);
+    cmdQ.enqueueNonBlocked(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true,
+                           multiDispatchInfo, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr, false, CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_TRUE(csr->disableEuFusionPassed);
 }
 DG2TEST_F(CommandQueueHwTest, GivenKernelWithoutRequiredDisableEuFusionWhenenqueueNonBlockedCalledThenDisableEuFusionNotPassedToFlushTask) {
@@ -171,7 +171,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithoutRequiredDisableEuFusionWhenenque
 
     bool blocking = false;
     const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).kernelAttributes.flags.requiresDisabledEUFusion = false;
-    cmdQ.template enqueueNonBlocked<CL_COMMAND_NDRANGE_KERNEL>(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true, multiDispatchInfo,
-                                                               enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr, false);
+    cmdQ.enqueueNonBlocked(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true, multiDispatchInfo,
+                           enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr, false, CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_FALSE(csr->disableEuFusionPassed);
 }
