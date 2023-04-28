@@ -154,6 +154,13 @@ class DrmMockCustom : public Drm {
 
     virtual void execBufferExtensions(void *execbuf) {
     }
+    int queryGttSize(uint64_t &gttSizeOutput) override {
+        if (callBaseQueryGttSize) {
+            return Drm::queryGttSize(gttSizeOutput);
+        }
+        gttSizeOutput = 1;
+        return 0u;
+    }
 
     Ioctls ioctlCnt{};
     Ioctls ioctlExpected{};
@@ -223,4 +230,5 @@ class DrmMockCustom : public Drm {
     int errnoValue = 0;
 
     bool returnIoctlExtraErrorValue = false;
+    bool callBaseQueryGttSize = false;
 };

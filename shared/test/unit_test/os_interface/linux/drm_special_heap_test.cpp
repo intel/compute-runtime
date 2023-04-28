@@ -21,7 +21,7 @@ class DrmMemManagerFixture {
     struct FrontWindowMemManagerMock : public TestedDrmMemoryManager {
         using MemoryManager::allocate32BitGraphicsMemoryImpl;
         FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : TestedDrmMemoryManager(executionEnvironment) {}
-        void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true); }
+        void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true, 0u); }
     };
 
     void setUp() {

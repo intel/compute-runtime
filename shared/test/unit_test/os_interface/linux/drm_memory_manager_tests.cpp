@@ -1204,7 +1204,9 @@ TEST(DrmMemoryManagerTest2, givenDrmMemoryManagerWhengetSystemSharedMemoryIsCall
     for (auto i = 0u; i < 4u; i++) {
         auto mock = executionEnvironment->rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<DrmMockCustom>();
 
+        mock->callBaseQueryGttSize = true;
         mock->getContextParamRetValue = 16 * MemoryConstants::gigaByte;
+        mock->ioctlCnt.contextGetParam = 0;
         uint64_t mem = memoryManager->getSystemSharedMemory(i);
         mock->ioctlExpected.contextGetParam = 1;
         EXPECT_EQ(mock->recordedGetContextParam.param, static_cast<__u64>(I915_CONTEXT_PARAM_GTT_SIZE));
@@ -1238,6 +1240,7 @@ TEST(DrmMemoryManagerTest2, WhenGetMinimumSystemSharedMemoryThenCorrectValueIsRe
 
     for (auto i = 0u; i < 4u; i++) {
         auto mock = executionEnvironment->rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<DrmMockCustom>();
+        mock->callBaseQueryGttSize = true;
 
         auto hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
         // gpuMemSize < hostMemSize
@@ -3532,7 +3535,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThen
     constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * GB) : 0;
     auto hwInfo = defaultHwInfo.get();
     auto mockGfxPartition = std::make_unique<MockGfxPartition>();
-    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1);
+    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1, false, 0u);
     auto size = 2 * MemoryConstants::megaByte;
     auto gpuAddress = mockGfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size);
     auto gmmHelper = device->getGmmHelper();
@@ -4616,7 +4619,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenDeviceHeapIsDepletedTh
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
 
     auto mockGfxPartition = std::make_unique<MockGfxPartition>();
-    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1);
+    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1, false, 0u);
 
     auto status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;

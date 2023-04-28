@@ -157,6 +157,10 @@ class DrmMock : public Drm {
         else
             return Drm::useVMBindImmediate();
     }
+    int queryGttSize(uint64_t &gttSizeOutput) override {
+        gttSizeOutput = storedGTTSize;
+        return storedRetValForGetGttSize;
+    }
 
     static const int mockFd = 33;
 

@@ -190,7 +190,7 @@ uint64_t GfxPartition::getHeapMinimalAddress(HeapIndex heapIndex) {
     }
 }
 
-bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool) {
+bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool, uint64_t systemMemorySize) {
 
     /*
      * I. 64-bit builds:
@@ -270,7 +270,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = 0ull;
             heapInit(HeapIndex::HEAP_SVM, 0ull, 0ull);
         } else {
-            if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, numRootDevices)) {
+            if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, numRootDevices, systemMemorySize)) {
                 return false;
             }
         }
@@ -318,7 +318,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     return true;
 }
 
-bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices) {
+bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices, uint64_t systemMemorySize) {
     /*
      * 57-bit Full Range SVM gfx layout:
      *
@@ -366,7 +366,7 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
         }
 
         if (gpuAddressSpace == maxNBitValue(57)) {
-            uint64_t heapExtendedSize = MemoryConstants::teraByte;
+            uint64_t heapExtendedSize = 4 * systemMemorySize;
             reserve57BitRangeWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangeForHeapExtended, heapExtendedSize);
             if (reservedCpuAddressRangeForHeapExtended.alignedPtr) {
                 heapInit(HeapIndex::HEAP_EXTENDED_HOST, castToUint64(reservedCpuAddressRangeForHeapExtended.alignedPtr), heapExtendedSize);

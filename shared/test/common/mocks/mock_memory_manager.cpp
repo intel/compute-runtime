@@ -194,7 +194,7 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemoryImpl(const All
 }
 
 void MockMemoryManager::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) {
-    getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size());
+    getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), false, 0u);
 }
 
 bool MockMemoryManager::hasPageFaultsEnabled(const Device &neoDevice) {
