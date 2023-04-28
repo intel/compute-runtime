@@ -854,12 +854,12 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
         mockKernelImmData->mockKernelDescriptor->payloadMappings.samplerTable = mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable;
     }
 
-    mockKernelImmData->kernelInfo->heapInfo.SurfaceStateHeapSize = static_cast<uint32_t>(sizeof(RENDER_SURFACE_STATE) + sizeof(uint32_t));
+    mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize = static_cast<uint32_t>(sizeof(RENDER_SURFACE_STATE) + sizeof(uint32_t));
     mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
     mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.tableOffset = 0x40;
     mockKernelImmData->mockKernelDescriptor->kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
 
-    kernel->surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.SurfaceStateHeapSize;
+    kernel->surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize;
     kernel->surfaceStateHeapData.reset(new uint8_t[kernel->surfaceStateHeapDataSize]);
 
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);

@@ -1580,13 +1580,13 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredSshSpaceThen
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     // no surface states
-    kernelInfo.heapInfo.SurfaceStateHeapSize = 0;
+    kernelInfo.heapInfo.surfaceStateHeapSize = 0;
     size_t size = EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(kernelInfo);
     EXPECT_EQ(0u, size);
 
     // two surface states and BTI indices
-    kernelInfo.heapInfo.SurfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE) + 2 * sizeof(uint32_t);
-    size_t expectedSize = alignUp(kernelInfo.heapInfo.SurfaceStateHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    kernelInfo.heapInfo.surfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE) + 2 * sizeof(uint32_t);
+    size_t expectedSize = alignUp(kernelInfo.heapInfo.surfaceStateHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
     size = EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(kernelInfo);
     EXPECT_EQ(expectedSize, size);

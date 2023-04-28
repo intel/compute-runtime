@@ -54,7 +54,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenKernelInitializeCalledThen
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernel;
@@ -110,7 +110,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerButDebuggerActiveSetWhenPatc
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernel;

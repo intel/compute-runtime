@@ -74,7 +74,7 @@ struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
 
         for (auto i = 0u; i < 2; i++) {
             pKernelInfosStorage[i]->heapInfo.pSsh = pSshLocal[i];
-            pKernelInfosStorage[i]->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal[i]);
+            pKernelInfosStorage[i]->heapInfo.surfaceStateHeapSize = sizeof(pSshLocal[i]);
             pKernelInfosStorage[i]->kernelDescriptor.kernelAttributes.simdSize = gfxCoreHelper.getMinimalSIMDSize();
 
             auto crossThreadDataPointer = &pCrossThreadData[i];

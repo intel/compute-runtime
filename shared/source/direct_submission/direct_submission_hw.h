@@ -19,16 +19,16 @@ struct RootDeviceEnvironment;
 
 #pragma pack(1)
 struct RingSemaphoreData {
-    uint32_t QueueWorkCount;
-    uint8_t ReservedCacheline0[60];
+    uint32_t queueWorkCount;
+    uint8_t reservedCacheline0[60];
     uint32_t tagAllocation;
-    uint8_t ReservedCacheline1[60];
-    uint32_t DiagnosticModeCounter;
-    uint32_t Reserved0Uint32;
-    uint64_t Reserved1Uint64;
-    uint8_t ReservedCacheline2[48];
+    uint8_t reservedCacheline1[60];
+    uint32_t diagnosticModeCounter;
+    uint32_t reserved0Uint32;
+    uint64_t reserved1Uint64;
+    uint8_t reservedCacheline2[48];
     uint64_t miFlushSpace;
-    uint8_t ReservedCacheline3[56];
+    uint8_t reservedCacheline3[56];
 };
 static_assert((64u * 4) == sizeof(RingSemaphoreData), "Invalid size for RingSemaphoreData");
 #pragma pack()

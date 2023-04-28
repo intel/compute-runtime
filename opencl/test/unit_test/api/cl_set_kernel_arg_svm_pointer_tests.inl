@@ -27,7 +27,7 @@ class KernelArgSvmApiFixture : public ApiFixture<> {
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal);
+        pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(pSshLocal);
         pKernelInfo->heapInfo.pSsh = pSshLocal;
 
         pKernelInfo->addArgBuffer(0, 0x30, sizeof(void *));

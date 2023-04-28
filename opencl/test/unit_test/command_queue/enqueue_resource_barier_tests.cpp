@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,8 @@ HWTEST_F(ResourceBarrierTest, givenNullArgsAndHWCommandQueueWhenEnqueueResourceB
         bufferSize,
         nullptr,
         retVal));
-    descriptor.mem_object = buffer.get();
-    descriptor.svm_allocation_pointer = nullptr;
+    descriptor.memObject = buffer.get();
+    descriptor.svmAllocationPointer = nullptr;
 
     BarrierCommand barrierCommand(pCmdQ, &descriptor, 1);
     auto surface = reinterpret_cast<ResourceSurface *>(barrierCommand.surfacePtrs.begin()[0]);
@@ -48,8 +48,8 @@ HWTEST_F(ResourceBarrierTest, whenEnqueueResourceBarrierCalledThenUpdateQueueCom
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     cl_resource_barrier_descriptor_intel descriptor{};
-    descriptor.mem_object = buffer.get();
-    descriptor.svm_allocation_pointer = nullptr;
+    descriptor.memObject = buffer.get();
+    descriptor.svmAllocationPointer = nullptr;
 
     BarrierCommand barrierCommand(pCmdQ, &descriptor, 1);
 
@@ -85,8 +85,8 @@ HWTEST_F(ResourceBarrierTest, GivenGpuHangAndBlockingCallsWhenEnqueueResourceBar
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     cl_resource_barrier_descriptor_intel descriptor{};
-    descriptor.mem_object = buffer.get();
-    descriptor.svm_allocation_pointer = nullptr;
+    descriptor.memObject = buffer.get();
+    descriptor.svmAllocationPointer = nullptr;
 
     BarrierCommand barrierCommand(&mockCommandQueueHw, &descriptor, 1);
 
@@ -97,6 +97,6 @@ HWTEST_F(ResourceBarrierTest, GivenGpuHangAndBlockingCallsWhenEnqueueResourceBar
 
 HWTEST_F(ResourceBarrierTest, whenBarierCommandCreatedWithInvalidSvmPointerThenExceptionIsThrown) {
     cl_resource_barrier_descriptor_intel descriptor{};
-    descriptor.svm_allocation_pointer = nullptr;
+    descriptor.svmAllocationPointer = nullptr;
     EXPECT_THROW(BarrierCommand barrierCommand(pCmdQ, &descriptor, 1), std::exception);
 }

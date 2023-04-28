@@ -20,12 +20,12 @@ namespace NEO {
 BarrierCommand::BarrierCommand(CommandQueue *commandQueue, const cl_resource_barrier_descriptor_intel *descriptors, uint32_t numDescriptors) : numSurfaces(numDescriptors) {
     for (auto description : createRange(descriptors, numDescriptors)) {
         GraphicsAllocation *allocation;
-        if (description.mem_object) {
+        if (description.memObject) {
             MemObj *memObj = nullptr;
-            withCastToInternal(description.mem_object, &memObj);
+            withCastToInternal(description.memObject, &memObj);
             allocation = memObj->getGraphicsAllocation(commandQueue->getDevice().getRootDeviceIndex());
         } else {
-            auto svmData = commandQueue->getContext().getSVMAllocsManager()->getSVMAlloc(description.svm_allocation_pointer);
+            auto svmData = commandQueue->getContext().getSVMAllocsManager()->getSVMAlloc(description.svmAllocationPointer);
             UNRECOVERABLE_IF(svmData == nullptr);
             allocation = svmData->gpuAllocations.getGraphicsAllocation(commandQueue->getDevice().getRootDeviceIndex());
         }

@@ -684,12 +684,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
         bti[i].setSurfaceStatePointer(i * sizeof(typename FamilyType::RENDER_SURFACE_STATE));
     }
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sshSize;
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sshSize;
 
     // setup kernel heap
     uint32_t kernelIsa[32];
     pKernelInfo->heapInfo.pKernelHeap = kernelIsa;
-    pKernelInfo->heapInfo.KernelHeapSize = sizeof(kernelIsa);
+    pKernelInfo->heapInfo.kernelHeapSize = sizeof(kernelIsa);
 
     pKernelInfo->setBindingTable(btiOffset, 5);
     pKernelInfo->setLocalIds({1, 1, 1});
@@ -780,7 +780,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     // setup surface state heap
     char surfaceStateHeap[256];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     pKernelInfo->addArgBuffer(0, 0, 0, 0);
     pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrGlobal);
@@ -826,7 +826,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     // setup surface state heap
     char surfaceStateHeap[256];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // initialize kernel
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
@@ -977,7 +977,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     memset(mockDsh, 6, samplerTableOffset);
     memset(mockDsh + samplerTableOffset, 8, samplerTableOffset);
     mockKernelWithInternal->kernelInfo.heapInfo.pDsh = mockDsh;
-    mockKernelWithInternal->kernelInfo.heapInfo.DynamicStateHeapSize = mockDshSize;
+    mockKernelWithInternal->kernelInfo.heapInfo.dynamicStateHeapSize = mockDshSize;
     uint64_t interfaceDescriptorTableOffset = dsh.getUsed();
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
     dsh.getSpace(4);

@@ -119,9 +119,9 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
         for (const auto &kernelInfo : kernelInfoArray) {
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
+            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
             DEBUG_BREAK_IF(nullptr == kernelInfo->getGraphicsAllocation());
-            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), static_cast<uintptr_t>(kernelInfo->getGraphicsAllocation()->getGpuAddressToPatch()), kernHeapInfo.KernelHeapSize});
+            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), static_cast<uintptr_t>(kernelInfo->getGraphicsAllocation()->getGpuAddressToPatch()), kernHeapInfo.kernelHeapSize});
             kernelDescriptors.push_back(&kernelInfo->kernelDescriptor);
         }
     }
@@ -151,7 +151,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
             const auto &productHelper = pDevice->getProductHelper();
             MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *kernelInfo->getGraphicsAllocation()),
                                                              *pDevice, kernelInfo->getGraphicsAllocation(), 0, isaSegmentsForPatching[segmentId].hostPointer,
-                                                             static_cast<size_t>(kernHeapInfo.KernelHeapSize));
+                                                             static_cast<size_t>(kernHeapInfo.kernelHeapSize));
         }
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->getSymbols(pDevice->getRootDeviceIndex())));
@@ -274,7 +274,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
 
     for (auto &kernelInfo : kernelInfoArray) {
         cl_int retVal = CL_SUCCESS;
-        if (kernelInfo->heapInfo.KernelHeapSize) {
+        if (kernelInfo->heapInfo.kernelHeapSize) {
             retVal = kernelInfo->createKernelAllocation(clDevice.getDevice(), isBuiltIn) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
         }
 
@@ -365,7 +365,7 @@ void Program::notifyDebuggerWithDebugData(ClDevice *clDevice) {
                 clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
                                                                           kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
                                                                           kernelInfo->heapInfo.pKernelHeap,
-                                                                          kernelInfo->heapInfo.KernelHeapSize);
+                                                                          kernelInfo->heapInfo.kernelHeapSize);
             }
         }
     }

@@ -162,8 +162,8 @@ class CommandStreamReceiver {
     void setMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
     bool getMediaVFEStateDirty() const { return mediaVfeStateDirty; }
 
-    void setGSBAStateDirty(bool dirty) { GSBAStateDirty = dirty; }
-    bool getGSBAStateDirty() const { return GSBAStateDirty; }
+    void setGSBAStateDirty(bool dirty) { gsbaStateDirty = dirty; }
+    bool getGSBAStateDirty() const { return gsbaStateDirty; }
 
     void setStateComputeModeDirty(bool dirty) { stateComputeModeDirty = dirty; }
     bool getStateComputeModeDirty() const { return stateComputeModeDirty; }
@@ -512,8 +512,8 @@ class CommandStreamReceiver {
     bool isStateSipSent = false;
     bool isEnginePrologueSent = false;
     bool isPerDssBackedBufferSent = false;
-    bool GSBAFor32BitProgrammed = false;
-    bool GSBAStateDirty = true;
+    bool gsbaFor32BitProgrammed = false;
+    bool gsbaStateDirty = true;
     bool bindingTableBaseAddressRequired = false;
     bool heapStorageRequiresRecyclingTag = false;
     bool mediaVfeStateDirty = true;

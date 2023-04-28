@@ -574,7 +574,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     std::vector<char> kernelHeap;
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
-    kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
+    kernelInfo.heapInfo.kernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     kernelInfo.createKernelAllocation(device->getDevice(), false);
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
@@ -613,7 +613,7 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     std::vector<char> kernelHeap;
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
-    kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
+    kernelInfo.heapInfo.kernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     MockGraphicsAllocation kernelIsa(kernelHeap.data(), kernelHeap.size());
     kernelInfo.kernelAllocation = &kernelIsa;
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
@@ -662,7 +662,7 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     kernelHeapData.resize(32, 7);
     std::vector<char> kernelHeap(kernelHeapData.begin(), kernelHeapData.end());
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
-    kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
+    kernelInfo.heapInfo.kernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     MockGraphicsAllocation kernelIsa(kernelHeap.data(), kernelHeap.size());
     kernelInfo.kernelAllocation = &kernelIsa;
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
@@ -700,7 +700,7 @@ TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking
     KernelInfo kernelInfo = {};
     kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
     kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
-    kernelInfo.heapInfo.KernelHeapSize = 64;
+    kernelInfo.heapInfo.kernelHeapSize = 64;
     kernelInfo.kernelAllocation = &kernelIsa;
 
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
@@ -734,7 +734,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRequ
     kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
     uint8_t kernelHeapData[64] = {};
     kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
-    kernelInfo.heapInfo.KernelHeapSize = 64;
+    kernelInfo.heapInfo.kernelHeapSize = 64;
     MockGraphicsAllocation kernelIsa(kernelHeapData, 64);
     kernelInfo.kernelAllocation = &kernelIsa;
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
@@ -766,7 +766,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndEnabledDebuggerThenKerne
     kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
     uint8_t kernelHeapData[64] = {};
     kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
-    kernelInfo.heapInfo.KernelHeapSize = 64;
+    kernelInfo.heapInfo.kernelHeapSize = 64;
     MockGraphicsAllocation kernelIsa(kernelHeapData, 64);
     kernelInfo.kernelAllocation = &kernelIsa;
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
@@ -792,7 +792,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisabledD
     kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
     uint8_t kernelHeapData[64] = {};
     kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
-    kernelInfo.heapInfo.KernelHeapSize = 64;
+    kernelInfo.heapInfo.kernelHeapSize = 64;
     MockGraphicsAllocation kernelIsa(kernelHeapData, 64);
     kernelInfo.kernelAllocation = &kernelIsa;
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);

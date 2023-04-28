@@ -322,10 +322,10 @@ HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenSizeIsDecereasedByOffs
     auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
     SURFACE_STATE_BUFFER_LENGTH length = {0};
-    length.Length = static_cast<uint32_t>((gpuAlloc->getUnderlyingBufferSize() - offset) - 1);
-    EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.SurfaceState.Width + 1));
-    EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.SurfaceState.Height + 1));
-    EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.SurfaceState.Depth + 1));
+    length.length = static_cast<uint32_t>((gpuAlloc->getUnderlyingBufferSize() - offset) - 1);
+    EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
+    EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+    EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
 
     Kernel::fromHandle(kernelHandle)->destroy();
 
@@ -363,10 +363,10 @@ HWTEST_F(ModuleTest, givenUnalignedHostBufferWhenSurfaceStateProgrammedThenUnali
     auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
     SURFACE_STATE_BUFFER_LENGTH length = {0};
-    length.Length = alignUp(static_cast<uint32_t>((mockGa.getUnderlyingBufferSize() + allocationOffset)), alignment) - 1;
-    EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.SurfaceState.Width + 1));
-    EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.SurfaceState.Height + 1));
-    EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.SurfaceState.Depth + 1));
+    length.length = alignUp(static_cast<uint32_t>((mockGa.getUnderlyingBufferSize() + allocationOffset)), alignment) - 1;
+    EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
+    EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+    EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
 
     Kernel::fromHandle(kernelHandle)->destroy();
 }
@@ -1030,7 +1030,7 @@ HWTEST_F(ModuleLinkingTest, whenExternFunctionsAllocationIsPresentThenItsBeingAd
     uint8_t data{};
     KernelInfo kernelInfo{};
     kernelInfo.heapInfo.pKernelHeap = &data;
-    kernelInfo.heapInfo.KernelHeapSize = sizeof(data);
+    kernelInfo.heapInfo.kernelHeapSize = sizeof(data);
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
@@ -1276,7 +1276,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1322,7 +1322,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1390,7 +1390,7 @@ TEST_F(ModuleDynamicLinkTests, givenMultipleModulesWithUnresolvedSymbolWhenTheEa
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1414,7 +1414,7 @@ TEST_F(ModuleDynamicLinkTests, givenMultipleModulesWithUnresolvedSymbolWhenTheEa
 
     auto kernelInfo2 = std::make_unique<NEO::KernelInfo>();
     kernelInfo2->heapInfo.pKernelHeap = kernelHeap2;
-    kernelInfo2->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo2->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module1->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo2.release());
 
     auto linkerInput1 = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1461,7 +1461,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithInternalRelocationAndUnresolvedExt
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::cacheLineSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::cacheLineSize;
     kernelInfo->kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
@@ -1534,7 +1534,7 @@ TEST_F(ModuleDynamicLinkTests, givenMultipleModulesWithUnresolvedSymbolWhenTheEa
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1558,7 +1558,7 @@ TEST_F(ModuleDynamicLinkTests, givenMultipleModulesWithUnresolvedSymbolWhenTheEa
 
     auto kernelInfo2 = std::make_unique<NEO::KernelInfo>();
     kernelInfo2->heapInfo.pKernelHeap = kernelHeap2;
-    kernelInfo2->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo2->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module1->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo2.release());
 
     auto linkerInput1 = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1617,7 +1617,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1678,7 +1678,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1734,7 +1734,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1853,7 +1853,7 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionP
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
@@ -1884,7 +1884,7 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolButNoExportFlags
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
     module0->isFunctionSymbolExportEnabled = false;
@@ -1918,7 +1918,7 @@ TEST_F(ModuleFunctionPointerTests, givenInvalidFunctionNameAndModuleWithExported
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
     module0->isFunctionSymbolExportEnabled = true;
@@ -1952,7 +1952,7 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionP
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
     module0->isFunctionSymbolExportEnabled = true;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
@@ -3125,7 +3125,7 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
                 argDescriptor.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
             }
             kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
-            kernelInfo->heapInfo.KernelHeapSize = 0x1;
+            kernelInfo->heapInfo.kernelHeapSize = 0x1;
             kernelInfo->heapInfo.pKernelHeap = reinterpret_cast<void *>(0xffff);
 
             this->translationUnit->programInfo.kernelInfos.clear();
@@ -3201,7 +3201,7 @@ TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDe
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
@@ -3383,7 +3383,7 @@ TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTb
 
     char data[1]{};
     auto kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = data;
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
@@ -3412,7 +3412,7 @@ TEST_F(ModuleTests, givenConstDataStringSectionWhenLinkingModuleThenSegmentIsPat
 
     char data[64]{};
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.kernelHeapSize = 64;
     kernelInfo->heapInfo.pKernelHeap = data;
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
@@ -3442,7 +3442,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingBuiltinMo
 
     char data[64]{};
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.kernelHeapSize = 64;
     kernelInfo->heapInfo.pKernelHeap = data;
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
@@ -3483,7 +3483,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
 
     char data[64]{};
     std::unique_ptr<KernelInfo> kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.kernelHeapSize = 64;
     kernelInfo->heapInfo.pKernelHeap = data;
 
     auto localMemSize = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceInfo().localMemSize);
@@ -3529,7 +3529,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivat
 
     char data[64]{};
     std::unique_ptr<KernelInfo> kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.kernelHeapSize = 64;
     kernelInfo->heapInfo.pKernelHeap = data;
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
@@ -3572,7 +3572,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThe
 
     char data[64]{};
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.kernelHeapSize = 64;
     kernelInfo->heapInfo.pKernelHeap = data;
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
@@ -3609,7 +3609,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndDebuggerEnabledWhenLinkingModu
 
     char data[64]{};
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.kernelHeapSize = 64;
     kernelInfo->heapInfo.pKernelHeap = data;
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
@@ -3639,7 +3639,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndNoDebuggerOrStackCallsWhenLink
 
     char data[64]{};
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.kernelHeapSize = 64;
     kernelInfo->heapInfo.pKernelHeap = data;
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
@@ -3676,7 +3676,7 @@ TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAll
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     // pass kernelInfo ownership to programInfo

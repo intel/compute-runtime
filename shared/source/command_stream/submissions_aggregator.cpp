@@ -45,7 +45,7 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
         return;
     }
 
-    if (primaryCommandBuffer->next->batchBuffer.low_priority != primaryCommandBuffer->batchBuffer.low_priority) {
+    if (primaryCommandBuffer->next->batchBuffer.lowPriority != primaryCommandBuffer->batchBuffer.lowPriority) {
         return;
     }
 
@@ -105,7 +105,7 @@ NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_
                               bool hasRelaxedOrderingDependencies)
     : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset),
       chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), taskStartAddress(taskStartAddress), chainedBatchBuffer(chainedBatchBuffer),
-      requiresCoherency(requiresCoherency), low_priority(lowPriority),
+      requiresCoherency(requiresCoherency), lowPriority(lowPriority),
       throttle(throttle), sliceCount(sliceCount),
       usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), numCsrClients(numCsrClients), hasStallingCmds(hasStallingCmds),
       hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies) {}

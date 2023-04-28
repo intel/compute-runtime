@@ -351,11 +351,11 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
 
     info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
-    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.kernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
     debugger.callBaseNotifyKernelDebugData = true;
-    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.kernelHeapSize);
 
     EXPECT_TRUE(interceptor.kernelDebugDataCalled);
 
@@ -368,7 +368,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
     EXPECT_EQ(visa, interceptor.kernelDebugDataArgIn.dbgVisaBuffer);
     EXPECT_EQ(sizeof(visa), interceptor.kernelDebugDataArgIn.dbgVisaSize);
 
-    EXPECT_EQ(info.heapInfo.KernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
+    EXPECT_EQ(info.heapInfo.kernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
     EXPECT_EQ(isa, interceptor.kernelDebugDataArgIn.kernelBinBuffer);
     EXPECT_STREQ(info.kernelDescriptor.kernelMetadata.kernelName.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
 }
@@ -387,11 +387,11 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNullptrDebugDataIs
     KernelInfo info;
     info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
-    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.kernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
     debugger.callBaseNotifyKernelDebugData = true;
-    debugger.notifyKernelDebugData(nullptr, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    debugger.notifyKernelDebugData(nullptr, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.kernelHeapSize);
 
     EXPECT_TRUE(interceptor.kernelDebugDataCalled);
 
@@ -404,7 +404,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNullptrDebugDataIs
     EXPECT_EQ(nullptr, interceptor.kernelDebugDataArgIn.dbgVisaBuffer);
     EXPECT_EQ(0u, interceptor.kernelDebugDataArgIn.dbgVisaSize);
 
-    EXPECT_EQ(info.heapInfo.KernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
+    EXPECT_EQ(info.heapInfo.kernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
     EXPECT_EQ(isa, interceptor.kernelDebugDataArgIn.kernelBinBuffer);
     EXPECT_STREQ(info.kernelDescriptor.kernelMetadata.kernelName.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
 }
@@ -429,11 +429,11 @@ TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebugg
 
     info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
-    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.kernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
     debugger.callBaseNotifyKernelDebugData = true;
-    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.kernelHeapSize);
     EXPECT_TRUE(interceptor.kernelDebugDataCalled);
     EXPECT_EQ(isa, interceptor.kernelDebugDataArgIn.kernelBinBuffer);
 }
@@ -458,7 +458,7 @@ TEST(SourceLevelDebugger, givenNoGenIsaWhenNotifyKernelDebugDataIsCalledThenDebu
 
     info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
-    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.kernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
     debugger.callBaseNotifyKernelDebugData = true;
@@ -756,11 +756,11 @@ TEST(SourceLevelDebugger, givenEnableMockSourceLevelDebuggerWhenInitializingExec
 
     info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
-    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.kernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
-    debugger->notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
-    debugger->notifyKernelDebugData(nullptr, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    debugger->notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.kernelHeapSize);
+    debugger->notifyKernelDebugData(nullptr, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.kernelHeapSize);
     debugger->notifyKernelDebugData(nullptr, info.kernelDescriptor.kernelMetadata.kernelName, nullptr, 0);
 
     EXPECT_TRUE(debugger->notifyDeviceDestruction());
@@ -818,14 +818,14 @@ TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenNotifyKernelDebugDataIsCalledT
 
     info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
-    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.kernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
     std::string fileName = info.kernelDescriptor.kernelMetadata.kernelName + ".elf";
     EXPECT_FALSE(fileExists(fileName));
 
     debugger.callBaseNotifyKernelDebugData = true;
-    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.kernelHeapSize);
     EXPECT_TRUE(fileExists(fileName));
     std::remove(fileName.c_str());
 }
@@ -854,7 +854,7 @@ TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenElfFileExistsWhileNotifyingDeb
 
     info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
-    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.kernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
     std::string fileName = info.kernelDescriptor.kernelMetadata.kernelName + ".elf";
@@ -864,7 +864,7 @@ TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenElfFileExistsWhileNotifyingDeb
 
     std::string fileName2 = info.kernelDescriptor.kernelMetadata.kernelName + "_0.elf";
     debugger.callBaseNotifyKernelDebugData = true;
-    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.kernelHeapSize);
 
     EXPECT_TRUE(fileExists(fileName2));
 

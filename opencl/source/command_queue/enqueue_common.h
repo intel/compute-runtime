@@ -789,7 +789,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     auto requiresCoherency = false;
     for (auto surface : createRange(surfaces, surfaceCount)) {
         surface->makeResident(getGpgpuCommandStreamReceiver());
-        requiresCoherency |= surface->IsCoherent;
+        requiresCoherency |= surface->isCoherent;
         if (!surface->allowsL3Caching()) {
             anyUncacheableArgs = true;
         }

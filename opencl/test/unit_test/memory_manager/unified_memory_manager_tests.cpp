@@ -37,7 +37,7 @@ using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
 TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr) {
     auto ptr = svmManager->createSVMAlloc(0, {}, rootDeviceIndices, deviceBitfields);
 
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
     EXPECT_EQ(ptr, nullptr);
 }
 
@@ -55,7 +55,7 @@ TEST_F(MultiDeviceSVMMemoryAllocatorTest, givenMultipleDevicesWhenCreatingSVMAll
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     EXPECT_NE(nullptr, ptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
-    EXPECT_EQ(1u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(1u, svmManager->svmAllocs.getNumAllocs());
     ASSERT_NE(nullptr, svmData);
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
         auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
@@ -66,7 +66,7 @@ TEST_F(MultiDeviceSVMMemoryAllocatorTest, givenMultipleDevicesWhenCreatingSVMAll
 
     svmManager->freeSVMAlloc(ptr);
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
@@ -78,13 +78,13 @@ TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
     svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
     EXPECT_NE(nullptr, svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex));
-    EXPECT_EQ(1u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(1u, svmManager->svmAllocs.getNumAllocs());
     auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_FALSE(svmAllocation->isCoherent());
 
     svmManager->freeSVMAlloc(ptr);
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
 }
 
 TEST_F(SVMMemoryAllocatorTest, givenSvmManagerWhenOperatedOnThenCorrectAllocationIsInsertedReturnedAndRemoved) {
@@ -104,13 +104,13 @@ TEST_F(SVMMemoryAllocatorTest, givenSvmManagerWhenOperatedOnThenCorrectAllocatio
     auto svmDataTemp = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmDataTemp);
     EXPECT_NE(nullptr, svmDataTemp->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex));
-    EXPECT_EQ(1u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(1u, svmManager->svmAllocs.getNumAllocs());
     auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_FALSE(svmAllocation->isCoherent());
 
     svmManager->removeSVMAlloc(svmData);
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
 
     svmManager->memoryManager->freeGraphicsMemory(allocation);
 }
@@ -158,7 +158,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenReturnsNul
     svmManager->memoryManager = &failMemoryManager;
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, rootDeviceIndices, deviceBitfields);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -172,7 +172,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateUnif
     unifiedMemoryProperties.device = &device->getDevice();
     auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -282,7 +282,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateShar
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -485,7 +485,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateCpuAllocationInMemoryMan
     svmManager->memoryManager = &failMemoryManager;
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, rootDeviceIndices, deviceBitfields);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -494,7 +494,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateGpuAllocationInMemoryMan
     svmManager->memoryManager = &failMemoryManager;
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, rootDeviceIndices, deviceBitfields);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -502,7 +502,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotReserveCpuAddressRangeInMemoryMa
     memoryManager->failReserveAddress = true;
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, rootDeviceIndices, deviceBitfields);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    EXPECT_EQ(0u, svmManager->svmAllocs.getNumAllocs());
 }
 
 struct MemoryManagerPropertiesCheck : public MockMemoryManager {

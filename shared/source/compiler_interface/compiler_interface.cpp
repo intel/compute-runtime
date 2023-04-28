@@ -146,7 +146,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
     auto igcTranslationCtx = createIgcTranslationCtx(device, intermediateCodeType, IGC::CodeType::oclGenBin);
 
     auto igcOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(), idsBuffer.get(), valuesBuffer.get(),
-                               fclOptions.get(), fclInternalOptions.get(), input.GTPinInput);
+                               fclOptions.get(), fclInternalOptions.get(), input.gtPinInput);
 
     if (igcOutput == nullptr) {
         return TranslationOutput::ErrorCode::UnknownError;
@@ -239,7 +239,7 @@ TranslationOutput::ErrorCode CompilerInterface::link(
 
         auto igcTranslationCtx = createIgcTranslationCtx(device, inType, outType);
         currOut = translate(igcTranslationCtx.get(), currSrc.get(),
-                            igcOptions.get(), igcInternalOptions.get(), input.GTPinInput);
+                            igcOptions.get(), igcInternalOptions.get(), input.gtPinInput);
 
         if (currOut == nullptr) {
             return TranslationOutput::ErrorCode::UnknownError;

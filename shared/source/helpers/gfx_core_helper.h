@@ -457,12 +457,12 @@ struct MemorySynchronizationCommands {
 };
 
 union SURFACE_STATE_BUFFER_LENGTH {
-    uint32_t Length;
+    uint32_t length;
     struct SurfaceState {
-        uint32_t Width : BITFIELD_RANGE(0, 6);
-        uint32_t Height : BITFIELD_RANGE(7, 20);
-        uint32_t Depth : BITFIELD_RANGE(21, 31);
-    } SurfaceState;
+        uint32_t width : BITFIELD_RANGE(0, 6);
+        uint32_t height : BITFIELD_RANGE(7, 20);
+        uint32_t depth : BITFIELD_RANGE(21, 31);
+    } surfaceState;
 };
 
 } // namespace NEO

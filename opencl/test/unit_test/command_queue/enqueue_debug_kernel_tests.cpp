@@ -119,11 +119,11 @@ HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSurfaceStateFor
         auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
 
         SURFACE_STATE_BUFFER_LENGTH length;
-        length.Length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
+        length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
 
-        EXPECT_EQ(length.SurfaceState.Depth + 1u, debugSurfaceState->getDepth());
-        EXPECT_EQ(length.SurfaceState.Width + 1u, debugSurfaceState->getWidth());
-        EXPECT_EQ(length.SurfaceState.Height + 1u, debugSurfaceState->getHeight());
+        EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
+        EXPECT_EQ(length.surfaceState.width + 1u, debugSurfaceState->getWidth());
+        EXPECT_EQ(length.surfaceState.height + 1u, debugSurfaceState->getHeight());
         EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
         EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());

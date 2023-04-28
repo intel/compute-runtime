@@ -51,7 +51,7 @@ class BufferSetArgTest : public ContextFixture,
         pKernelInfo->addArgBuffer(2, 0x30, sizeOfPointer);
 
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+        pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 

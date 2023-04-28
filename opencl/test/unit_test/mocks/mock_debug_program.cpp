@@ -64,9 +64,9 @@ void MockDebugProgram::prepareKernelInfo() {
 }
 
 void MockDebugProgram::prepareSSHForDebugSurface() {
-    kernelInfo->heapInfo.SurfaceStateHeapSize = static_cast<uint32_t>(alignUp(64U + sizeof(int), 64U));
-    kernelSsh = std::make_unique<char[]>(kernelInfo->heapInfo.SurfaceStateHeapSize);
-    memset(kernelSsh.get(), 0U, kernelInfo->heapInfo.SurfaceStateHeapSize);
+    kernelInfo->heapInfo.surfaceStateHeapSize = static_cast<uint32_t>(alignUp(64U + sizeof(int), 64U));
+    kernelSsh = std::make_unique<char[]>(kernelInfo->heapInfo.surfaceStateHeapSize);
+    memset(kernelSsh.get(), 0U, kernelInfo->heapInfo.surfaceStateHeapSize);
     kernelInfo->heapInfo.pSsh = kernelSsh.get();
 
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0U;

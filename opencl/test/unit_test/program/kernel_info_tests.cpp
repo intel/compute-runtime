@@ -34,7 +34,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
     auto device = factory.rootDevices[0];
     const size_t heapSize = 0x40;
     char heap[heapSize];
-    kernelInfo.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.kernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
     for (size_t i = 0; i < heapSize; i++) {
@@ -57,7 +57,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreatingKernelAllocationWithInternalIsaF
     auto device = factory.rootDevices[0];
     const size_t heapSize = 0x40;
     char heap[heapSize];
-    kernelInfo.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.kernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
     auto retVal = kernelInfo.createKernelAllocation(*device, false);
@@ -73,7 +73,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreatingKernelAllocationWithInternalIsaT
     auto device = factory.rootDevices[0];
     const size_t heapSize = 0x40;
     char heap[heapSize];
-    kernelInfo.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.kernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
     auto retVal = kernelInfo.createKernelAllocation(*device, true);
@@ -110,10 +110,10 @@ TEST(KernelInfoTest, givenReuseKernelBinariesWhenCreateKernelAllocationThenReuse
     const size_t heapSize = 0x40;
     char heap[heapSize];
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.kernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
     KernelInfo kernelInfo2;
-    kernelInfo2.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo2.heapInfo.kernelHeapSize = heapSize;
     kernelInfo2.heapInfo.pKernelHeap = &heap;
 
     EXPECT_EQ(0u, device->getMemoryManager()->getKernelAllocationMap().size());
@@ -135,7 +135,7 @@ TEST_F(KernelInfoMultiRootDeviceTests, WhenCreatingKernelAllocationThenItHasCorr
     KernelInfo kernelInfo;
     const size_t heapSize = 0x40;
     char heap[heapSize];
-    kernelInfo.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.kernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
     auto retVal = kernelInfo.createKernelAllocation(device1->getDevice(), false);

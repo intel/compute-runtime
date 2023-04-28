@@ -383,9 +383,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     semaphoreGpuVa = semaphores->getGpuAddress();
     semaphoreData = static_cast<volatile RingSemaphoreData *>(semaphorePtr);
     memset(semaphorePtr, 0, sizeof(RingSemaphoreData));
-    semaphoreData->QueueWorkCount = 0;
+    semaphoreData->queueWorkCount = 0;
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
-    workloadModeOneStoreAddress = static_cast<volatile void *>(&semaphoreData->DiagnosticModeCounter);
+    workloadModeOneStoreAddress = static_cast<volatile void *>(&semaphoreData->diagnosticModeCounter);
     *static_cast<volatile uint32_t *>(workloadModeOneStoreAddress) = 0u;
 
     this->gpuVaForMiFlush = this->semaphoreGpuVa + offsetof(RingSemaphoreData, miFlushSpace);
@@ -412,7 +412,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
         *this->pciBarrierPtr = 0u;
     }
 
-    semaphoreData->QueueWorkCount = currentQueueWorkCount;
+    semaphoreData->queueWorkCount = currentQueueWorkCount;
 
     if (sfenceMode == DirectSubmissionSfenceMode::BeforeAndAfterSemaphore) {
         CpuIntrinsics::sfence();

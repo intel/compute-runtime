@@ -43,7 +43,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
         kernelInfo.setLocalIds({1, 1, 1});
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
+        kernelInfo.heapInfo.kernelHeapSize = sizeof(kernelIsa);
     }
 
     void TearDown() override {

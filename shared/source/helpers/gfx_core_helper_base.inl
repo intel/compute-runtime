@@ -109,11 +109,11 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
     auto surfaceSize = alignUp(bufferSize, 4);
 
     SURFACE_STATE_BUFFER_LENGTH length = {0};
-    length.Length = static_cast<uint32_t>(surfaceSize - 1);
+    length.length = static_cast<uint32_t>(surfaceSize - 1);
 
-    state.setWidth(length.SurfaceState.Width + 1);
-    state.setHeight(length.SurfaceState.Height + 1);
-    state.setDepth(length.SurfaceState.Depth + 1);
+    state.setWidth(length.surfaceState.width + 1);
+    state.setHeight(length.surfaceState.height + 1);
+    state.setDepth(length.surfaceState.depth + 1);
     if (pitch) {
         state.setSurfacePitch(pitch);
     }

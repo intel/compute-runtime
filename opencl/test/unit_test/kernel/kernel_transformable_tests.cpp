@@ -28,7 +28,7 @@ class KernelTransformableTest : public ::testing::Test {
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+        pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
         pKernelInfo->addArgSampler(0, 0);
         pKernelInfo->addArgSampler(1, 0);

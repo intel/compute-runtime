@@ -105,11 +105,11 @@ HWTEST2_F(CommandEncoderTest, givenSbaCommandWhenGettingSbaAddressesForDebuggerT
     NEO::Debugger::SbaAddresses sbaAddress = {};
     auto setter = L0DebuggerSbaAddressSetter<FamilyType>{};
     setter.proxySetSbaAddressesForDebugger(sbaAddress, cmd);
-    EXPECT_EQ(0x1234000u, sbaAddress.InstructionBaseAddress);
-    EXPECT_EQ(0x1235000u, sbaAddress.SurfaceStateBaseAddress);
-    EXPECT_EQ(0x1236000u, sbaAddress.GeneralStateBaseAddress);
-    EXPECT_EQ(0x0u, sbaAddress.BindlessSurfaceStateBaseAddress);
-    EXPECT_EQ(0x0u, sbaAddress.BindlessSamplerStateBaseAddress);
+    EXPECT_EQ(0x1234000u, sbaAddress.instructionBaseAddress);
+    EXPECT_EQ(0x1235000u, sbaAddress.surfaceStateBaseAddress);
+    EXPECT_EQ(0x1236000u, sbaAddress.generalStateBaseAddress);
+    EXPECT_EQ(0x0u, sbaAddress.bindlessSurfaceStateBaseAddress);
+    EXPECT_EQ(0x0u, sbaAddress.bindlessSamplerStateBaseAddress);
 }
 
 HWTEST_F(CommandEncoderTest, GivenDwordStoreWhenAddingStoreDataImmThenExpectDwordProgramming) {

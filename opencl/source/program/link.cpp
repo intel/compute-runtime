@@ -137,7 +137,7 @@ cl_int Program::link(
         inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(clLinkInput.data()), clLinkInput.size());
         inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
         inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-        inputArgs.GTPinInput = gtpinGetIgcInit();
+        inputArgs.gtPinInput = gtpinGetIgcInit();
 
         if (!isCreateLibrary) {
             for (const auto &device : deviceVector) {

@@ -45,7 +45,7 @@ class KernelArgSvmFixture : public ContextFixture, public ClDeviceFixture {
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         pKernelInfo->heapInfo.pSsh = pSshLocal;
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal);
+        pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(pSshLocal);
 
         pKernelInfo->addArgBuffer(0, 0x30, sizeof(void *));
 

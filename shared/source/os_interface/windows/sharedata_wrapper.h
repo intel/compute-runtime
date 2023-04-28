@@ -48,123 +48,123 @@ static constexpr COMMAND_BUFFER_HEADER initCommandBufferHeader(uint32_t umdConte
 
 #else
 struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM { // NOLINT(readability-identifier-naming)
-    bool FtrGpGpuMidBatchPreempt : 1;
-    bool FtrGpGpuThreadGroupLevelPreempt : 1;
-    bool FtrGpGpuMidThreadLevelPreempt : 1;
+    bool FtrGpGpuMidBatchPreempt : 1;                  // NOLINT(readability-identifier-naming)
+    bool FtrGpGpuThreadGroupLevelPreempt : 1;          // NOLINT(readability-identifier-naming)
+    bool FtrGpGpuMidThreadLevelPreempt : 1;            // NOLINT(readability-identifier-naming)
 
-    bool FtrWddm2Svm : 1;
-    bool FtrPooledEuEnabled : 1;
+    bool FtrWddm2Svm : 1;        // NOLINT(readability-identifier-naming)
+    bool FtrPooledEuEnabled : 1; // NOLINT(readability-identifier-naming)
 
-    bool FtrPPGTT : 1;
-    bool FtrSVM : 1;
-    bool FtrEDram : 1;
-    bool FtrL3IACoherency : 1;
-    bool FtrIA32eGfxPTEs : 1;
+    bool FtrPPGTT : 1;         // NOLINT(readability-identifier-naming)
+    bool FtrSVM : 1;           // NOLINT(readability-identifier-naming)
+    bool FtrEDram : 1;         // NOLINT(readability-identifier-naming)
+    bool FtrL3IACoherency : 1; // NOLINT(readability-identifier-naming)
+    bool FtrIA32eGfxPTEs : 1;  // NOLINT(readability-identifier-naming)
 
-    bool FtrTileY : 1;
-    bool FtrDisplayYTiling : 1;
-    bool FtrTranslationTable : 1;
-    bool FtrUserModeTranslationTable : 1;
+    bool FtrTileY : 1;                    // NOLINT(readability-identifier-naming)
+    bool FtrDisplayYTiling : 1;           // NOLINT(readability-identifier-naming)
+    bool FtrTranslationTable : 1;         // NOLINT(readability-identifier-naming)
+    bool FtrUserModeTranslationTable : 1; // NOLINT(readability-identifier-naming)
 
-    bool FtrFbc : 1;
+    bool FtrFbc : 1; // NOLINT(readability-identifier-naming)
 
-    bool FtrULT : 1;
-    bool FtrLCIA : 1;
-    bool FtrTileMappedResource : 1;
-    bool FtrAstcHdr2D : 1;
-    bool FtrAstcLdr2D : 1;
+    bool FtrULT : 1;                // NOLINT(readability-identifier-naming)
+    bool FtrLCIA : 1;               // NOLINT(readability-identifier-naming)
+    bool FtrTileMappedResource : 1; // NOLINT(readability-identifier-naming)
+    bool FtrAstcHdr2D : 1;          // NOLINT(readability-identifier-naming)
+    bool FtrAstcLdr2D : 1;          // NOLINT(readability-identifier-naming)
 
-    bool FtrStandardMipTailFormat : 1;
-    bool FtrFrameBufferLLC : 1;
-    bool FtrLLCBypass : 1;
-    bool FtrDisplayEngineS3d : 1;
-    bool FtrWddm2GpuMmu : 1;
-    bool FtrWddm2_1_64kbPages : 1;
-    bool FtrWddmHwQueues : 1;
-    bool FtrMemTypeMocsDeferPAT : 1;
+    bool FtrStandardMipTailFormat : 1; // NOLINT(readability-identifier-naming)
+    bool FtrFrameBufferLLC : 1;        // NOLINT(readability-identifier-naming)
+    bool FtrLLCBypass : 1;             // NOLINT(readability-identifier-naming)
+    bool FtrDisplayEngineS3d : 1;      // NOLINT(readability-identifier-naming)
+    bool FtrWddm2GpuMmu : 1;           // NOLINT(readability-identifier-naming)
+    bool FtrWddm2_1_64kbPages : 1;     // NOLINT(readability-identifier-naming)
+    bool FtrWddmHwQueues : 1;          // NOLINT(readability-identifier-naming)
+    bool FtrMemTypeMocsDeferPAT : 1;   // NOLINT(readability-identifier-naming)
 
-    bool FtrKmdDaf : 1;
+    bool FtrKmdDaf : 1; // NOLINT(readability-identifier-naming)
 
-    bool FtrE2ECompression : 1;
-    bool FtrLinearCCS : 1;
-    bool FtrCCSRing : 1;
-    bool FtrCCSNode : 1;
-    bool FtrRcsNode : 1;
-    bool FtrLocalMemory : 1;
-    bool FtrLocalMemoryAllows4KB : 1;
+    bool FtrE2ECompression : 1;       // NOLINT(readability-identifier-naming)
+    bool FtrLinearCCS : 1;            // NOLINT(readability-identifier-naming)
+    bool FtrCCSRing : 1;              // NOLINT(readability-identifier-naming)
+    bool FtrCCSNode : 1;              // NOLINT(readability-identifier-naming)
+    bool FtrRcsNode : 1;              // NOLINT(readability-identifier-naming)
+    bool FtrLocalMemory : 1;          // NOLINT(readability-identifier-naming)
+    bool FtrLocalMemoryAllows4KB : 1; // NOLINT(readability-identifier-naming)
 };
 
 struct WA_TABLE_KMD : WA_TABLE_GMM { // NOLINT(readability-identifier-naming)
 
-    bool WaSendMIFLUSHBeforeVFE = false;
-    bool WaDisableLSQCROPERFforOCL = false;
-    bool WaMsaa8xTileYDepthPitchAlignment = false;
-    bool WaLosslessCompressionSurfaceStride = false;
-    bool WaFbcLinearSurfaceStride = false;
-    bool Wa4kAlignUVOffsetNV12LinearSurface = false;
-    bool WaEncryptedEdramOnlyPartials = false;
-    bool WaDisableEdramForDisplayRT = false;
-    bool WaCompressedResourceRequiresConstVA21 = false;
-    bool WaDisablePerCtxtPreemptionGranularityControl = false;
-    bool WaLLCCachingUnsupported = false;
-    bool WaUseVAlign16OnTileXYBpp816 = false;
-    bool WaModifyVFEStateAfterGPGPUPreemption = false;
-    bool WaCSRUncachable = false;
-    bool WaSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
-    bool WaRestrictPitch128KB = false;
-    bool WaLimit128BMediaCompr = false;
-    bool WaUntypedBufferCompression = false;
-    bool WaAuxTable16KGranular = false;
-    bool WaDisableFusedThreadScheduling = false;
+    bool WaSendMIFLUSHBeforeVFE = false;                            // NOLINT(readability-identifier-naming)
+    bool WaDisableLSQCROPERFforOCL = false;                         // NOLINT(readability-identifier-naming)
+    bool WaMsaa8xTileYDepthPitchAlignment = false;                  // NOLINT(readability-identifier-naming)
+    bool WaLosslessCompressionSurfaceStride = false;                // NOLINT(readability-identifier-naming)
+    bool WaFbcLinearSurfaceStride = false;                          // NOLINT(readability-identifier-naming)
+    bool Wa4kAlignUVOffsetNV12LinearSurface = false;                // NOLINT(readability-identifier-naming)
+    bool WaEncryptedEdramOnlyPartials = false;                      // NOLINT(readability-identifier-naming)
+    bool WaDisableEdramForDisplayRT = false;                        // NOLINT(readability-identifier-naming)
+    bool WaCompressedResourceRequiresConstVA21 = false;             // NOLINT(readability-identifier-naming)
+    bool WaDisablePerCtxtPreemptionGranularityControl = false;      // NOLINT(readability-identifier-naming)
+    bool WaLLCCachingUnsupported = false;                           // NOLINT(readability-identifier-naming)
+    bool WaUseVAlign16OnTileXYBpp816 = false;                       // NOLINT(readability-identifier-naming)
+    bool WaModifyVFEStateAfterGPGPUPreemption = false;              // NOLINT(readability-identifier-naming)
+    bool WaCSRUncachable = false;                                   // NOLINT(readability-identifier-naming)
+    bool WaSamplerCacheFlushBetweenRedescribedSurfaceReads = false; // NOLINT(readability-identifier-naming)
+    bool WaRestrictPitch128KB = false;                              // NOLINT(readability-identifier-naming)
+    bool WaLimit128BMediaCompr = false;                             // NOLINT(readability-identifier-naming)
+    bool WaUntypedBufferCompression = false;                        // NOLINT(readability-identifier-naming)
+    bool WaAuxTable16KGranular = false;                             // NOLINT(readability-identifier-naming)
+    bool WaDisableFusedThreadScheduling = false;                    // NOLINT(readability-identifier-naming)
 };
 
 typedef struct COMMAND_BUFFER_HEADER_REC { // NOLINT(readability-identifier-naming)
-    uint32_t UmdContextType : 4;
-    uint32_t UmdPatchList : 1;
+    uint32_t UmdContextType : 4;           // NOLINT(readability-identifier-naming)
+    uint32_t UmdPatchList : 1;             // NOLINT(readability-identifier-naming)
 
-    uint32_t UmdRequestedSliceState : 3;
-    uint32_t UmdRequestedSubsliceCount : 3;
-    uint32_t UmdRequestedEUCount : 5;
+    uint32_t UmdRequestedSliceState : 3;    // NOLINT(readability-identifier-naming)
+    uint32_t UmdRequestedSubsliceCount : 3; // NOLINT(readability-identifier-naming)
+    uint32_t UmdRequestedEUCount : 5;       // NOLINT(readability-identifier-naming)
 
-    uint32_t UsesResourceStreamer : 1;
-    uint32_t NeedsMidBatchPreEmptionSupport : 1;
-    uint32_t UsesGPGPUPipeline : 1;
-    uint32_t RequiresCoherency : 1;
+    uint32_t UsesResourceStreamer : 1;           // NOLINT(readability-identifier-naming)
+    uint32_t NeedsMidBatchPreEmptionSupport : 1; // NOLINT(readability-identifier-naming)
+    uint32_t UsesGPGPUPipeline : 1;              // NOLINT(readability-identifier-naming)
+    uint32_t RequiresCoherency : 1;              // NOLINT(readability-identifier-naming)
 
-    uint32_t PerfTag;
-    uint64_t MonitorFenceVA;
-    uint64_t MonitorFenceValue;
+    uint32_t PerfTag;           // NOLINT(readability-identifier-naming)
+    uint64_t MonitorFenceVA;    // NOLINT(readability-identifier-naming)
+    uint64_t MonitorFenceValue; // NOLINT(readability-identifier-naming)
 } COMMAND_BUFFER_HEADER;
 
 typedef struct __GMM_GFX_PARTITIONING {
     struct
     {
-        uint64_t Base, Limit;
-    } Standard,
-        Standard64KB,
-        Reserved0,
-        Reserved1,
-        SVM,
-        TR,
-        Heap32[4];
+        uint64_t Base, Limit; // NOLINT(readability-identifier-naming)
+    } Standard,               // NOLINT(readability-identifier-naming)
+        Standard64KB,         // NOLINT(readability-identifier-naming)
+        Reserved0,            // NOLINT(readability-identifier-naming)
+        Reserved1,            // NOLINT(readability-identifier-naming)
+        SVM,                  // NOLINT(readability-identifier-naming)
+        TR,                   // NOLINT(readability-identifier-naming)
+        Heap32[4];            // NOLINT(readability-identifier-naming)
 } GMM_GFX_PARTITIONING;
 
 struct CREATECONTEXT_PVTDATA { // NOLINT(readability-identifier-naming)
     unsigned long *pHwContextId;
-    uint32_t NumberOfHwContextIds;
+    uint32_t NumberOfHwContextIds; // NOLINT(readability-identifier-naming)
 
-    uint32_t ProcessID;
-    uint8_t IsProtectedProcess;
-    uint8_t IsDwm;
-    uint8_t IsMediaUsage;
-    uint8_t GpuVAContext;
-    BOOLEAN NoRingFlushes;
+    uint32_t ProcessID;         // NOLINT(readability-identifier-naming)
+    uint8_t IsProtectedProcess; // NOLINT(readability-identifier-naming)
+    uint8_t IsDwm;              // NOLINT(readability-identifier-naming)
+    uint8_t IsMediaUsage;       // NOLINT(readability-identifier-naming)
+    uint8_t GpuVAContext;       // NOLINT(readability-identifier-naming)
+    BOOLEAN NoRingFlushes;      // NOLINT(readability-identifier-naming)
 };
 
 struct ADAPTER_INFO_KMD : ADAPTER_INFO_GMM { // NOLINT(readability-identifier-naming)
-    SKU_FEATURE_TABLE_KMD SkuTable;
-    WA_TABLE_KMD WaTable;
-    GMM_GFX_PARTITIONING GfxPartition;
+    SKU_FEATURE_TABLE_KMD SkuTable;          // NOLINT(readability-identifier-naming)
+    WA_TABLE_KMD WaTable;                    // NOLINT(readability-identifier-naming)
+    GMM_GFX_PARTITIONING GfxPartition;       // NOLINT(readability-identifier-naming)
     ADAPTER_BDF stAdapterBDF;
 };
 

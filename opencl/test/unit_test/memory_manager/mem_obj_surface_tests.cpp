@@ -74,5 +74,5 @@ TEST_F(CoherentMemObjSurface, GivenCoherentMemObjWhenCreatingSurfaceFromMemObjTh
     std::unique_ptr<Surface> surface{createSurface::create(this->data,
                                                            &this->buffer,
                                                            &this->gfxAllocation)};
-    EXPECT_TRUE(surface->IsCoherent);
+    EXPECT_TRUE(surface->isCoherent);
 }

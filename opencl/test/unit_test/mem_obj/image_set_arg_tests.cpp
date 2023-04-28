@@ -70,7 +70,7 @@ class ImageSetArgTest : public ClDeviceFixture,
 
         // define kernel info
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+        pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
         // setup kernel arg offsets
         pKernelInfo->addArgImage(0, 0x00);
@@ -926,7 +926,7 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
 
         // define kernel info
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+        pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
         // setup kernel arg offsets
         pKernelInfo->addArgImage(0, 0x00, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK);

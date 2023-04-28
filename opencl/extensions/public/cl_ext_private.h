@@ -256,8 +256,8 @@ typedef cl_uint cl_resource_memory_scope;
 
 #pragma pack(push, 1)
 typedef struct _cl_resource_barrier_descriptor_intel {
-    void *svm_allocation_pointer;
-    cl_mem mem_object;
+    void *svmAllocationPointer;
+    cl_mem memObject;
     cl_resource_barrier_type type;
     cl_resource_memory_scope scope;
 } cl_resource_barrier_descriptor_intel;

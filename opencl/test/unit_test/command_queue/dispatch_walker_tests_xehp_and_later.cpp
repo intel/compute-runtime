@@ -1093,7 +1093,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
-                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize, device->getRootDeviceEnvironment());
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
 
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
@@ -1151,7 +1151,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
-                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize, device->getRootDeviceEnvironment());
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
 
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
@@ -1206,7 +1206,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
-                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize, device->getRootDeviceEnvironment());
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
 
     auto returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, baseSize);
@@ -1223,7 +1223,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeContro
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
-                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize, device->getRootDeviceEnvironment());
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
 
     auto returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, {});
     EXPECT_EQ(returnedSize, baseSize);
@@ -1241,7 +1241,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
-                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize, device->getRootDeviceEnvironment());
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
     testArgs.initializeWparidRegister = true;
@@ -1272,7 +1272,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
-                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize, device->getRootDeviceEnvironment());
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
     testArgs.initializeWparidRegister = true;

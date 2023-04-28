@@ -1828,7 +1828,7 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
 TEST_F(GTPinTests, givenKernelWithoutAllocatedSSHThenGTPinStillCanAllocateNewSSHAndProperlyAddNewSurfaceState) {
     auto kernelInfo = std::make_unique<MockKernelInfo>();
     ASSERT_EQ(nullptr, kernelInfo->heapInfo.pSsh);
-    ASSERT_EQ(0u, kernelInfo->heapInfo.SurfaceStateHeapSize);
+    ASSERT_EQ(0u, kernelInfo->heapInfo.surfaceStateHeapSize);
 
     MockContext context(pDevice);
     MockProgram program(&context, false, toClDeviceVector(*pDevice));
@@ -1962,7 +1962,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     auto pProgramm = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pDevice));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr, false));

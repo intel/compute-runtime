@@ -19,13 +19,13 @@ class Debugger {
   public:
     struct SbaAddresses {
         constexpr static size_t trackedAddressCount = 6;
-        uint64_t GeneralStateBaseAddress = 0;
-        uint64_t SurfaceStateBaseAddress = 0;
-        uint64_t DynamicStateBaseAddress = 0;
-        uint64_t IndirectObjectBaseAddress = 0;
-        uint64_t InstructionBaseAddress = 0;
-        uint64_t BindlessSurfaceStateBaseAddress = 0;
-        uint64_t BindlessSamplerStateBaseAddress = 0;
+        uint64_t generalStateBaseAddress = 0;
+        uint64_t surfaceStateBaseAddress = 0;
+        uint64_t dynamicStateBaseAddress = 0;
+        uint64_t indirectObjectBaseAddress = 0;
+        uint64_t instructionBaseAddress = 0;
+        uint64_t bindlessSurfaceStateBaseAddress = 0;
+        uint64_t bindlessSamplerStateBaseAddress = 0;
     };
 
     static std::unique_ptr<Debugger> create(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);

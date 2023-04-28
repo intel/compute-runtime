@@ -1307,10 +1307,10 @@ struct SCRTDispatchTable {
 
 // VAMedia sharing extension
 #ifdef LIBVA
-    INTELpfn_clCreateFromVA_APIMediaSurfaceINTEL clCreateFromVA_APIMediaSurfaceINTEL;
-    INTELpfn_clGetDeviceIDsFromVA_APIMediaAdapterINTEL clGetDeviceIDsFromVA_APIMediaAdapterINTEL;
-    INTELpfn_clEnqueueReleaseVA_APIMediaSurfacesINTEL clEnqueueReleaseVA_APIMediaSurfacesINTEL;
-    INTELpfn_clEnqueueAcquireVA_APIMediaSurfacesINTEL clEnqueueAcquireVA_APIMediaSurfacesINTEL;
+    INTELpfn_clCreateFromVA_APIMediaSurfaceINTEL clCreateFromVA_APIMediaSurfaceINTEL;             // NOLINT(readability-identifier-naming)
+    INTELpfn_clGetDeviceIDsFromVA_APIMediaAdapterINTEL clGetDeviceIDsFromVA_APIMediaAdapterINTEL; // NOLINT(readability-identifier-naming)
+    INTELpfn_clEnqueueReleaseVA_APIMediaSurfacesINTEL clEnqueueReleaseVA_APIMediaSurfacesINTEL;   // NOLINT(readability-identifier-naming)
+    INTELpfn_clEnqueueAcquireVA_APIMediaSurfacesINTEL clEnqueueAcquireVA_APIMediaSurfacesINTEL;   // NOLINT(readability-identifier-naming)
 #else
     void *placeholder14;
     void *placeholder15;

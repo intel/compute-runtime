@@ -25,7 +25,7 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
 
     constexpr int numImages = 5;

@@ -500,7 +500,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
@@ -522,7 +522,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
@@ -542,7 +542,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
@@ -589,7 +589,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAc
 
     MockKernelWithInternals kernel(*device);
     const size_t initialHeapSize = 0x40;
-    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 
     kernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
     ASSERT_NE(nullptr, kernel.kernelInfo.kernelAllocation);
@@ -620,7 +620,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAc
     std::vector<char> kernelHeap;
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
-    kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
+    kernelInfo.heapInfo.kernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     kernelInfo.createKernelAllocation(device->getDevice(), false);
     ASSERT_NE(nullptr, kernelInfo.kernelAllocation);
     EXPECT_TRUE(kernelInfo.kernelAllocation->isAllocatedInLocalMemoryPool());

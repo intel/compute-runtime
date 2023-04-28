@@ -18,7 +18,7 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     using SVMAllocsManager::memoryManager;
     using SVMAllocsManager::mtxForIndirectAccess;
     using SVMAllocsManager::multiOsContextSupport;
-    using SVMAllocsManager::SVMAllocs;
+    using SVMAllocsManager::svmAllocs;
     using SVMAllocsManager::SVMAllocsManager;
     using SVMAllocsManager::svmMapOperations;
     using SVMAllocsManager::usmDeviceAllocationsCache;

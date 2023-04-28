@@ -214,13 +214,13 @@ cl_int Kernel::initialize() {
     }
 
     // allocate our own SSH, if necessary
-    sshLocalSize = heapInfo.SurfaceStateHeapSize;
+    sshLocalSize = heapInfo.surfaceStateHeapSize;
     if (sshLocalSize) {
         pSshLocal = std::make_unique<char[]>(sshLocalSize);
 
         // copy the ssh into our local copy
         memcpy_s(pSshLocal.get(), sshLocalSize,
-                 heapInfo.pSsh, heapInfo.SurfaceStateHeapSize);
+                 heapInfo.pSsh, heapInfo.surfaceStateHeapSize);
     }
     numberOfBindingTableStates = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     localBindingTableOffset = kernelDescriptor.payloadMappings.bindingTable.tableOffset;
@@ -752,7 +752,7 @@ const void *Kernel::getKernelHeap() const {
 }
 
 size_t Kernel::getKernelHeapSize() const {
-    return kernelInfo.heapInfo.KernelHeapSize;
+    return kernelInfo.heapInfo.kernelHeapSize;
 }
 
 void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize) {
@@ -760,7 +760,7 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     void **pKernelHeap = const_cast<void **>(&pKernelInfo->heapInfo.pKernelHeap);
     *pKernelHeap = newKernelHeap;
     auto &heapInfo = pKernelInfo->heapInfo;
-    heapInfo.KernelHeapSize = static_cast<uint32_t>(newKernelHeapSize);
+    heapInfo.kernelHeapSize = static_cast<uint32_t>(newKernelHeapSize);
     pKernelInfo->isKernelHeapSubstituted = true;
     auto memoryManager = executionEnvironment.memoryManager.get();
 
@@ -814,7 +814,7 @@ void *Kernel::getSurfaceStateHeap() const {
 }
 
 size_t Kernel::getDynamicStateHeapSize() const {
-    return kernelInfo.heapInfo.DynamicStateHeapSize;
+    return kernelInfo.heapInfo.dynamicStateHeapSize;
 }
 
 const void *Kernel::getDynamicStateHeap() const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,11 +20,11 @@ using namespace iOpenCL;
 void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes) {
     UNRECOVERABLE_IF(nullptr == src.header);
 
-    dst.heapInfo.DynamicStateHeapSize = src.header->DynamicStateHeapSize;
-    dst.heapInfo.GeneralStateHeapSize = src.header->GeneralStateHeapSize;
-    dst.heapInfo.SurfaceStateHeapSize = src.header->SurfaceStateHeapSize;
-    dst.heapInfo.KernelHeapSize = src.header->KernelHeapSize;
-    dst.heapInfo.KernelUnpaddedSize = src.header->KernelUnpaddedSize;
+    dst.heapInfo.dynamicStateHeapSize = src.header->DynamicStateHeapSize;
+    dst.heapInfo.generalStateHeapSize = src.header->GeneralStateHeapSize;
+    dst.heapInfo.surfaceStateHeapSize = src.header->SurfaceStateHeapSize;
+    dst.heapInfo.kernelHeapSize = src.header->KernelHeapSize;
+    dst.heapInfo.kernelUnpaddedSize = src.header->KernelUnpaddedSize;
     dst.shaderHashCode = src.header->ShaderHashCode;
 
     dst.heapInfo.pKernelHeap = src.isa.begin();

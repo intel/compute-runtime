@@ -136,7 +136,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
     size_t size = sizeof(typename GfxFamily::COMPUTE_WALKER) +
                   (MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * numBarriers) +
                   HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
-                  EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.KernelHeapSize, commandQueue.getDevice().getRootDeviceEnvironment());
+                  EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.kernelHeapSize, commandQueue.getDevice().getRootDeviceEnvironment());
     auto devices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
     if (partitionWalker) {

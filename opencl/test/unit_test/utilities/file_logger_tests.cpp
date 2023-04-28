@@ -380,7 +380,7 @@ TEST(FileLogger, GivenImageNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
 
     char surfaceStateHeap[0x80];
     kernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    kernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    kernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     kernelInfo->addArgImage(0);
     kernelInfo->argAsImg(0).metadataPayload.imgWidth = 0x4;

@@ -51,7 +51,7 @@ void GeneralSurface::makeResident(CommandStreamReceiver &csr) {
 
 void GeneralSurface::setGraphicsAllocation(GraphicsAllocation *newAllocation) {
     gfxAllocation = newAllocation;
-    IsCoherent = newAllocation->isCoherent();
+    isCoherent = newAllocation->isCoherent();
 }
 
 } // namespace NEO

@@ -511,11 +511,11 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
     auto &helper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
-    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.KernelHeapSize + isaPadding);
+    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.kernelHeapSize + isaPadding);
 
     auto kernelIsa = graphicsAllocation->getUnderlyingBuffer();
     EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
-    EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.KernelHeapSize));
+    EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.kernelHeapSize));
     auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
     auto gmmHelper = pDevice->getGmmHelper();
     EXPECT_EQ(gmmHelper->decanonize(graphicsAllocation->getGpuBaseAddress()), pDevice->getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, graphicsAllocation->isAllocatedInLocalMemoryPool()));
@@ -3143,7 +3143,7 @@ class MockCompilerInterfaceWithGtpinParam : public CompilerInterface {
         const NEO::Device &device,
         const TranslationInput &input,
         TranslationOutput &output) override {
-        gtpinInfoPassed = input.GTPinInput;
+        gtpinInfoPassed = input.gtPinInput;
         return CompilerInterface::link(device, input, output);
     }
     void *gtpinInfoPassed;

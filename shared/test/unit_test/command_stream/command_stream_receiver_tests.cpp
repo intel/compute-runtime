@@ -196,7 +196,7 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.initProgrammingFlags();
     EXPECT_FALSE(csr.isPreambleSent);
-    EXPECT_FALSE(csr.GSBAFor32BitProgrammed);
+    EXPECT_FALSE(csr.gsbaFor32BitProgrammed);
     EXPECT_TRUE(csr.mediaVfeStateDirty);
     EXPECT_TRUE(csr.stateComputeModeDirty);
     EXPECT_FALSE(csr.lastVmeSubslicesConfig);

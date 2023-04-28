@@ -412,7 +412,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
 
     size_t size = 0x1000;
     SURFACE_STATE_BUFFER_LENGTH length;
-    length.Length = static_cast<uint32_t>(size - 1);
+    length.length = static_cast<uint32_t>(size - 1);
     uint64_t addr = 0x2000;
     size_t offset = 0x1000;
     uint32_t pitch = 0x40;
@@ -420,9 +420,9 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, true, false);
 
     RENDER_SURFACE_STATE *state = reinterpret_cast<RENDER_SURFACE_STATE *>(stateBuffer);
-    EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
-    EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
-    EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
+    EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
     EXPECT_EQ(pitch, state->getSurfacePitch());
     addr += offset;
     EXPECT_EQ(addr, state->getSurfaceBaseAddress());
@@ -431,34 +431,34 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
 
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
     size = 0x1003;
-    length.Length = static_cast<uint32_t>(alignUp(size, 4) - 1);
+    length.length = static_cast<uint32_t>(alignUp(size, 4) - 1);
     bool isReadOnly = false;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true, false);
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), state->getMemoryObjectControlState());
-    EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
-    EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
-    EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
+    EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
 
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
     size = 0x1000;
     addr = 0x2001;
-    length.Length = static_cast<uint32_t>(size - 1);
+    length.length = static_cast<uint32_t>(size - 1);
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true, false);
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), state->getMemoryObjectControlState());
-    EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
-    EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
-    EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
+    EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
     EXPECT_EQ(addr, state->getSurfaceBaseAddress());
 
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
     size = 0x1005;
-    length.Length = static_cast<uint32_t>(alignUp(size, 4) - 1);
+    length.length = static_cast<uint32_t>(alignUp(size, 4) - 1);
     isReadOnly = true;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true, false);
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), state->getMemoryObjectControlState());
-    EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
-    EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
-    EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
+    EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
     EXPECT_EQ(addr, state->getSurfaceBaseAddress());
 
     alignedFree(stateBuffer);
@@ -485,14 +485,14 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvided
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    length.Length = static_cast<uint32_t>(allocSize - 1);
+    length.length = static_cast<uint32_t>(allocSize - 1);
     GraphicsAllocation allocation(0, AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0u);
     allocation.setDefaultGmm(new Gmm(pDevice->getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true, false);
-    EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
-    EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
-    EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
+    EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
     EXPECT_EQ(pitch, state->getSurfacePitch() - 1u);
     EXPECT_EQ(gpuAddr, state->getSurfaceBaseAddress());
 

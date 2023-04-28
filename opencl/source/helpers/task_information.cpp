@@ -157,7 +157,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
     for (auto &surface : surfaces) {
         DEBUG_BREAK_IF(!surface);
         surface->makeResident(commandStreamReceiver);
-        requiresCoherency |= surface->IsCoherent;
+        requiresCoherency |= surface->isCoherent;
         if (!surface->allowsL3Caching()) {
             anyUncacheableArgs = true;
         }

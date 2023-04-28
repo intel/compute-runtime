@@ -290,7 +290,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     bool ndRangeKernel = false;
     bool requiresCoherency = false;
     for (auto &surface : surfaces) {
-        requiresCoherency |= surface->IsCoherent;
+        requiresCoherency |= surface->isCoherent;
     }
     std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1, nullptr));
     command->submit(20, false);
@@ -338,7 +338,7 @@ HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCa
     uint32_t commandType = CL_COMMAND_COPY_IMAGE;
     bool requiresCoherency = false;
     for (auto &surface : surfaces) {
-        requiresCoherency |= surface->IsCoherent;
+        requiresCoherency |= surface->isCoherent;
     }
     std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, commandType, nullptr, preemptionMode, kernel, 1, nullptr));
     command->submit(20, false);

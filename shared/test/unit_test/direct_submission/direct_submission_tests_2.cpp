@@ -214,7 +214,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
 
-    EXPECT_EQ(0u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(0u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
     size_t submitSize = RenderDispatcher<FamilyType>::getSizePreemption() +
@@ -239,7 +239,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
     EXPECT_NE(oldRingAllocation, directSubmission.ringCommandStream.getGraphicsAllocation());
-    EXPECT_EQ(1u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(1u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(2u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
@@ -533,7 +533,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(0x40u + 1u, storeData->getDataDword0());
     uint64_t expectedGpuVa = directSubmission.semaphoreGpuVa;
     auto semaphore = static_cast<RingSemaphoreData *>(directSubmission.semaphorePtr);
-    expectedGpuVa += ptrDiff(&semaphore->DiagnosticModeCounter, directSubmission.semaphorePtr);
+    expectedGpuVa += ptrDiff(&semaphore->diagnosticModeCounter, directSubmission.semaphorePtr);
     EXPECT_EQ(expectedGpuVa, storeData->getAddress());
 }
 
@@ -587,7 +587,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
 
-    EXPECT_EQ(0u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(0u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
     size_t submitSize = RenderDispatcher<FamilyType>::getSizePreemption() +
@@ -606,7 +606,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
     EXPECT_EQ(oldRingAllocation, directSubmission.ringCommandStream.getGraphicsAllocation());
-    EXPECT_EQ(1u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(1u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(2u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
@@ -631,7 +631,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
 
-    EXPECT_EQ(0u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(0u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(0u, directSubmission.submitCount);
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
@@ -639,7 +639,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
     EXPECT_EQ(oldRingAllocation, directSubmission.ringCommandStream.getGraphicsAllocation());
-    EXPECT_EQ(2u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(2u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(3u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
     size_t submitSize = directSubmission.getSizeSemaphoreSection(false);
@@ -670,7 +670,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
 
-    EXPECT_EQ(0u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(0u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
     size_t submitSize = RenderDispatcher<FamilyType>::getSizePreemption() +
@@ -691,7 +691,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
     EXPECT_NE(oldRingAllocation, directSubmission.ringCommandStream.getGraphicsAllocation());
-    EXPECT_EQ(1u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(1u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(2u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
@@ -708,7 +708,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(0u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(0u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(0u, directSubmission.submitCount);
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
@@ -720,7 +720,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
     EXPECT_NE(oldRingAllocation, directSubmission.ringCommandStream.getGraphicsAllocation());
-    EXPECT_EQ(2u, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(2u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(3u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
     size_t submitSize = directSubmission.getSizeSemaphoreSection(false);

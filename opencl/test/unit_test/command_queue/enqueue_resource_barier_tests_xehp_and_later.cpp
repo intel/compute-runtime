@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,8 +61,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCoreAndLater, GivenCo
     cl_event waitlist[] = {&event1};
 
     cl_resource_barrier_descriptor_intel descriptor{};
-    descriptor.mem_object = buffer.get();
-    descriptor.svm_allocation_pointer = nullptr;
+    descriptor.memObject = buffer.get();
+    descriptor.svmAllocationPointer = nullptr;
 
     BarrierCommand barrierCommand(mockCmdQ.get(), &descriptor, 1);
 
@@ -102,8 +102,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCoreAndLater, GivenCo
     cl_event waitlist[] = {&event1};
 
     cl_resource_barrier_descriptor_intel descriptor{};
-    descriptor.mem_object = buffer.get();
-    descriptor.svm_allocation_pointer = nullptr;
+    descriptor.memObject = buffer.get();
+    descriptor.svmAllocationPointer = nullptr;
 
     BarrierCommand barrierCommand(mockCmdQ.get(), &descriptor, 1);
 

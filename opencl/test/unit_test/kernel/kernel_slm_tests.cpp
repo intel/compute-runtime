@@ -31,7 +31,7 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
         kernelInfo.setLocalIds({1, 1, 1});
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
+        kernelInfo.heapInfo.kernelHeapSize = sizeof(kernelIsa);
 
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
     }

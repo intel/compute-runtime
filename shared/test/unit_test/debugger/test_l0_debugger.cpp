@@ -373,12 +373,12 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammi
     uint64_t dsba = 0xffff8000aaaa0000;
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
-    sbaAddresses.GeneralStateBaseAddress = gsba;
-    sbaAddresses.SurfaceStateBaseAddress = ssba;
-    sbaAddresses.InstructionBaseAddress = iba;
-    sbaAddresses.IndirectObjectBaseAddress = ioba;
-    sbaAddresses.DynamicStateBaseAddress = dsba;
-    sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
+    sbaAddresses.generalStateBaseAddress = gsba;
+    sbaAddresses.surfaceStateBaseAddress = ssba;
+    sbaAddresses.instructionBaseAddress = iba;
+    sbaAddresses.indirectObjectBaseAddress = ioba;
+    sbaAddresses.dynamicStateBaseAddress = dsba;
+    sbaAddresses.bindlessSurfaceStateBaseAddress = ssba;
 
     debugger->captureStateBaseAddress(cmdStream, sbaAddresses, false);
 
@@ -462,12 +462,12 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenNonZeroGpuVasWhenProgramming
     uint64_t dsba = 0xffffffffaaaa0000;
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
-    sbaAddresses.GeneralStateBaseAddress = gsba;
-    sbaAddresses.SurfaceStateBaseAddress = ssba;
-    sbaAddresses.InstructionBaseAddress = iba;
-    sbaAddresses.IndirectObjectBaseAddress = ioba;
-    sbaAddresses.DynamicStateBaseAddress = dsba;
-    sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
+    sbaAddresses.generalStateBaseAddress = gsba;
+    sbaAddresses.surfaceStateBaseAddress = ssba;
+    sbaAddresses.instructionBaseAddress = iba;
+    sbaAddresses.indirectObjectBaseAddress = ioba;
+    sbaAddresses.dynamicStateBaseAddress = dsba;
+    sbaAddresses.bindlessSurfaceStateBaseAddress = ssba;
 
     debugger->captureStateBaseAddress(cmdStream, sbaAddresses, false);
 
@@ -639,8 +639,8 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTr
     uint64_t ssba = 0;
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
-    sbaAddresses.GeneralStateBaseAddress = gsba;
-    sbaAddresses.SurfaceStateBaseAddress = ssba;
+    sbaAddresses.generalStateBaseAddress = gsba;
+    sbaAddresses.surfaceStateBaseAddress = ssba;
 
     debugger->captureStateBaseAddress(cmdStream, sbaAddresses, false);
 
@@ -656,13 +656,13 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenNotChangedSurfaceStateWhenCapt
     container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
     NEO::Debugger::SbaAddresses sba = {};
-    sba.SurfaceStateBaseAddress = 0x123456000;
+    sba.surfaceStateBaseAddress = 0x123456000;
 
     debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
     auto sizeUsed = container.getCommandStream()->getUsed();
 
     EXPECT_NE(0u, sizeUsed);
-    sba.SurfaceStateBaseAddress = 0;
+    sba.surfaceStateBaseAddress = 0;
 
     debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
     auto sizeUsed2 = container.getCommandStream()->getUsed();
@@ -679,7 +679,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
         container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
-        sba.SurfaceStateBaseAddress = 0x123456000;
+        sba.surfaceStateBaseAddress = 0x123456000;
 
         debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
         auto sizeUsed = container.getCommandStream()->getUsed();
@@ -692,7 +692,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
         container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
-        sba.GeneralStateBaseAddress = 0x123456000;
+        sba.generalStateBaseAddress = 0x123456000;
 
         debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
         auto sizeUsed = container.getCommandStream()->getUsed();
@@ -705,7 +705,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
         container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
-        sba.BindlessSurfaceStateBaseAddress = 0x123456000;
+        sba.bindlessSurfaceStateBaseAddress = 0x123456000;
 
         debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
         auto sizeUsed = container.getCommandStream()->getUsed();

@@ -29,7 +29,7 @@ ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwT
 
     mockKernelInfo = new NEO::KernelInfo;
     mockKernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    mockKernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    mockKernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     kernelInfo = mockKernelInfo;
 
     auto ptr = reinterpret_cast<void *>(0x1234);

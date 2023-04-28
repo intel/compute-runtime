@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@ struct HeapInfo {
     const void *pDsh = nullptr;
     const void *pSsh = nullptr;
 
-    uint32_t KernelHeapSize = 0U;
-    uint32_t GeneralStateHeapSize = 0U;
-    uint32_t DynamicStateHeapSize = 0U;
-    uint32_t SurfaceStateHeapSize = 0U;
-    uint32_t KernelUnpaddedSize = 0U;
+    uint32_t kernelHeapSize = 0U;
+    uint32_t generalStateHeapSize = 0U;
+    uint32_t dynamicStateHeapSize = 0U;
+    uint32_t surfaceStateHeapSize = 0U;
+    uint32_t kernelUnpaddedSize = 0U;
 };
 
 } // namespace NEO

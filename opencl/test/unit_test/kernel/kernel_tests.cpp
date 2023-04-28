@@ -103,7 +103,7 @@ TEST(KernelTest, WhenKernelIsCreatedThenCorrectMembersAreMemObjects) {
 
 TEST_F(KernelTests, WhenKernelIsCreatedThenKernelHeapIsCorrect) {
     EXPECT_EQ(kernel->getKernelInfo().heapInfo.pKernelHeap, kernel->getKernelHeap());
-    EXPECT_EQ(kernel->getKernelInfo().heapInfo.KernelHeapSize, kernel->getKernelHeapSize());
+    EXPECT_EQ(kernel->getKernelInfo().heapInfo.kernelHeapSize, kernel->getKernelHeapSize());
 }
 
 TEST_F(KernelTests, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsReturned) {
@@ -724,7 +724,7 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
     // setup surface state heap
     char surfaceStateHeap[0x80];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -921,7 +921,7 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
     // setup surface state heap
     char surfaceStateHeap[0x80];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -1038,7 +1038,7 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
     // setup surface state heap
     char surfaceStateHeap[0x80];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2491,14 +2491,14 @@ TEST(KernelInfoTest, givenGfxCoreHelperWhenCreatingKernelAllocationThenCorrectPa
 
     auto mockKernel = std::make_unique<MockKernelWithInternals>(*clDevice, context.get());
     uint32_t kernelHeap = 0;
-    mockKernel->kernelInfo.heapInfo.KernelHeapSize = 1;
+    mockKernel->kernelInfo.heapInfo.kernelHeapSize = 1;
     mockKernel->kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
     mockKernel->kernelInfo.createKernelAllocation(clDevice->getDevice(), false);
 
     auto graphicsAllocation = mockKernel->kernelInfo.getGraphicsAllocation();
     auto &helper = clDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
-    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), mockKernel->kernelInfo.heapInfo.KernelHeapSize + isaPadding);
+    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), mockKernel->kernelInfo.heapInfo.kernelHeapSize + isaPadding);
     clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getGraphicsAllocation());
 }
 
@@ -3321,7 +3321,7 @@ HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsC
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
-    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
 
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
@@ -3520,7 +3520,7 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
 
     std::array<uint8_t, 64 + 16> dsh = {0};
     kernel.kernelInfo.heapInfo.pDsh = dsh.data();
-    kernel.kernelInfo.heapInfo.DynamicStateHeapSize = static_cast<uint32_t>(dsh.size());
+    kernel.kernelInfo.heapInfo.dynamicStateHeapSize = static_cast<uint32_t>(dsh.size());
     kernel.mockKernel->setInlineSamplers();
 
     using SamplerState = typename FamilyType::SAMPLER_STATE;

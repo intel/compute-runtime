@@ -808,7 +808,7 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedIsaIsNotC
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -1873,7 +1873,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllo
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
@@ -1899,7 +1899,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowed
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
@@ -1923,7 +1923,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallo
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
@@ -1941,7 +1941,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallo
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithInternalIsaThenCorrectAllocationTypeIsUsed) {
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
@@ -1953,7 +1953,7 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithInternalI
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonInternalIsaThenCorrectAllocationTypeIsUsed) {
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
@@ -1965,7 +1965,7 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonIntern
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenPaddingIsAdded) {
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
@@ -1973,13 +1973,13 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenPa
     auto graphicsAllocation = kernelImmutableData.getIsaGraphicsAllocation();
     auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
-    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo.heapInfo.KernelHeapSize + isaPadding);
+    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo.heapInfo.kernelHeapSize + isaPadding);
 }
 
 TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuffersAreAddedToResidencyContainer) {
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
@@ -2734,7 +2734,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
         Mock<L0::DeviceImp> deviceImp(device.get(), device->getExecutionEnvironment());
 
         auto kernelInfo = std::make_unique<KernelInfo>();
-        kernelInfo->heapInfo.KernelHeapSize = 1;
+        kernelInfo->heapInfo.kernelHeapSize = 1;
         char kernelHeap[1];
         kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
         kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
@@ -2798,7 +2798,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         bcsCsr->flushBcsTaskReturnValue = NEO::CompletionStamp::gpuHang;
 
         auto kernelInfo = std::make_unique<KernelInfo>();
-        kernelInfo->heapInfo.KernelHeapSize = 1;
+        kernelInfo->heapInfo.kernelHeapSize = 1;
         char kernelHeap[1];
         kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
         kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;

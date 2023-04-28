@@ -446,7 +446,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         dispatchRayTracingStateCommand(commandStreamCSR, device);
     }
 
-    stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
+    stateBaseAddressDirty |= ((gsbaFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
 
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
 
@@ -501,13 +501,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, rootDeviceEnvironment, isRcs());
 
         uint64_t newGshBase = 0;
-        GSBAFor32BitProgrammed = false;
+        gsbaFor32BitProgrammed = false;
         if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
             newGshBase = scratchSpaceController->calculateNewGSH();
         } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
             bool useLocalMemory = scratchSpaceController->getScratchSpaceAllocation() ? scratchSpaceController->getScratchSpaceAllocation()->isAllocatedInLocalMemoryPool() : false;
             newGshBase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex, useLocalMemory);
-            GSBAFor32BitProgrammed = true;
+            gsbaFor32BitProgrammed = true;
         }
 
         auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();

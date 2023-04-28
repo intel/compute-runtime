@@ -50,7 +50,7 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
         pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 72;
         pKernelInfo->setPrivateMemory(0x10, false, 8, 64, 64);
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+        pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
 
         KernelInfoContainer kernelInfos;

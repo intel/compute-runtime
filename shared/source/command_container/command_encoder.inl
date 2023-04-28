@@ -407,11 +407,11 @@ void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
     auto bufferSize = alignUp(args.size, getSurfaceBaseAddressAlignment());
 
     SURFACE_STATE_BUFFER_LENGTH length = {0};
-    length.Length = static_cast<uint32_t>(bufferSize - 1);
+    length.length = static_cast<uint32_t>(bufferSize - 1);
 
-    surfaceState->setWidth(length.SurfaceState.Width + 1);
-    surfaceState->setHeight(length.SurfaceState.Height + 1);
-    surfaceState->setDepth(length.SurfaceState.Depth + 1);
+    surfaceState->setWidth(length.surfaceState.width + 1);
+    surfaceState->setHeight(length.surfaceState.height + 1);
+    surfaceState->setDepth(length.surfaceState.depth + 1);
 
     surfaceState->setSurfaceType((args.graphicsAddress != 0) ? R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER
                                                              : R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
@@ -752,7 +752,7 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getSizeRequiredSsh(const KernelInfo &kernelInfo) {
-    size_t requiredSshSize = kernelInfo.heapInfo.SurfaceStateHeapSize;
+    size_t requiredSshSize = kernelInfo.heapInfo.surfaceStateHeapSize;
     requiredSshSize = alignUp(requiredSshSize, EncodeDispatchKernel<Family>::getDefaultSshAlignment());
     return requiredSshSize;
 }

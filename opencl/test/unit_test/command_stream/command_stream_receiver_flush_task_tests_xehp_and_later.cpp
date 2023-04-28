@@ -727,7 +727,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     mockCsr->flushBatchedSubmissions();
 
-    EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.low_priority);
+    EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.lowPriority);
     EXPECT_TRUE(mockCsr->recordedCommandBuffer->batchBuffer.requiresCoherency);
     EXPECT_EQ(mockCsr->recordedCommandBuffer->batchBuffer.commandBufferAllocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(4u, mockCsr->recordedCommandBuffer->batchBuffer.startOffset);

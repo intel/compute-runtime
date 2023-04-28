@@ -43,7 +43,7 @@ struct BatchBuffer {
 
     GraphicsAllocation *chainedBatchBuffer = nullptr;
     bool requiresCoherency = false;
-    bool low_priority = false;
+    bool lowPriority = false;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     size_t usedSize = 0u;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,11 @@ TEST(KernelInfoFromPatchTokens, GivenValidEmptyKernelFromPatchtokensThenReturnEm
     expectedKernelInfo.kernelDescriptor.kernelMetadata.kernelName = std::string(src.name.begin()).c_str();
 
     EXPECT_STREQ(expectedKernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(), dst.kernelDescriptor.kernelMetadata.kernelName.c_str());
-    EXPECT_EQ(src.header->KernelHeapSize, dst.heapInfo.KernelHeapSize);
-    EXPECT_EQ(src.header->GeneralStateHeapSize, dst.heapInfo.GeneralStateHeapSize);
-    EXPECT_EQ(src.header->DynamicStateHeapSize, dst.heapInfo.DynamicStateHeapSize);
-    EXPECT_EQ(src.header->SurfaceStateHeapSize, dst.heapInfo.SurfaceStateHeapSize);
-    EXPECT_EQ(src.header->KernelUnpaddedSize, dst.heapInfo.KernelUnpaddedSize);
+    EXPECT_EQ(src.header->KernelHeapSize, dst.heapInfo.kernelHeapSize);
+    EXPECT_EQ(src.header->GeneralStateHeapSize, dst.heapInfo.generalStateHeapSize);
+    EXPECT_EQ(src.header->DynamicStateHeapSize, dst.heapInfo.dynamicStateHeapSize);
+    EXPECT_EQ(src.header->SurfaceStateHeapSize, dst.heapInfo.surfaceStateHeapSize);
+    EXPECT_EQ(src.header->KernelUnpaddedSize, dst.heapInfo.kernelUnpaddedSize);
 }
 
 TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWithEmptySizeThenTokenIsIgnored) {

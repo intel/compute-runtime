@@ -88,7 +88,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
-        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.KernelHeapSize, 0, rootDeviceEnvironment);
+        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, 0, rootDeviceEnvironment);
     }
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(

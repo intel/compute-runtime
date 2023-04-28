@@ -40,7 +40,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         pKernelInfo->heapInfo.pDsh = samplerStateHeap;
-        pKernelInfo->heapInfo.DynamicStateHeapSize = sizeof(samplerStateHeap);
+        pKernelInfo->heapInfo.dynamicStateHeapSize = sizeof(samplerStateHeap);
 
         // setup kernel arg offsets
         pKernelInfo->addArgSampler(0, 0x40, 0x8, 0x10, 0x4);

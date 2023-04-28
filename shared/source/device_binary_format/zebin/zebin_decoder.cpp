@@ -404,16 +404,16 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
         }
 
         kernelInfo->heapInfo.pKernelHeap = kernelInstructions.begin();
-        kernelInfo->heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelInstructions.size());
-        kernelInfo->heapInfo.KernelUnpaddedSize = static_cast<uint32_t>(kernelInstructions.size());
+        kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(kernelInstructions.size());
+        kernelInfo->heapInfo.kernelUnpaddedSize = static_cast<uint32_t>(kernelInstructions.size());
 
         auto &kernelSSH = kernelInfo->kernelDescriptor.generatedSsh;
         kernelInfo->heapInfo.pSsh = kernelSSH.data();
-        kernelInfo->heapInfo.SurfaceStateHeapSize = static_cast<uint32_t>(kernelSSH.size());
+        kernelInfo->heapInfo.surfaceStateHeapSize = static_cast<uint32_t>(kernelSSH.size());
 
         auto &kernelDSH = kernelInfo->kernelDescriptor.generatedDsh;
         kernelInfo->heapInfo.pDsh = kernelDSH.data();
-        kernelInfo->heapInfo.DynamicStateHeapSize = static_cast<uint32_t>(kernelDSH.size());
+        kernelInfo->heapInfo.dynamicStateHeapSize = static_cast<uint32_t>(kernelDSH.size());
     }
 
     return DecodeError::Success;

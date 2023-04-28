@@ -196,10 +196,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_SCRATCH, scratchState->getSurfaceType());
 
     SURFACE_STATE_BUFFER_LENGTH length = {0};
-    length.Length = static_cast<uint32_t>(computeUnits - 1);
-    EXPECT_EQ(length.SurfaceState.Depth + 1u, scratchState->getDepth());
-    EXPECT_EQ(length.SurfaceState.Width + 1u, scratchState->getWidth());
-    EXPECT_EQ(length.SurfaceState.Height + 1u, scratchState->getHeight());
+    length.length = static_cast<uint32_t>(computeUnits - 1);
+    EXPECT_EQ(length.surfaceState.depth + 1u, scratchState->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, scratchState->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, scratchState->getHeight());
     EXPECT_EQ(kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0], scratchState->getSurfacePitch());
 }
 
@@ -663,7 +663,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenBlock
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr(Buffer::create(&context, 0, MemoryConstants::pageSize, nullptr, retVal));
     cl_resource_barrier_descriptor_intel descriptor = {};
-    descriptor.mem_object = buffer.get();
+    descriptor.memObject = buffer.get();
     BarrierCommand barrierCommand(cmdQ0.get(), &descriptor, 1);
 
     cmdQ0->enqueueResourceBarrier(&barrierCommand, numEventsOnWaitlist, waitlist, nullptr);

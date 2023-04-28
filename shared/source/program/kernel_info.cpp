@@ -56,7 +56,7 @@ int32_t KernelInfo::getArgNumByName(const char *name) const {
 
 bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) {
     UNRECOVERABLE_IF(kernelAllocation);
-    auto kernelIsaSize = heapInfo.KernelHeapSize;
+    auto kernelIsaSize = heapInfo.kernelHeapSize;
     const auto allocType = internalIsa ? AllocationType::KERNEL_ISA_INTERNAL : AllocationType::KERNEL_ISA;
 
     if (device.getMemoryManager()->isKernelBinaryReuseEnabled()) {

@@ -187,7 +187,7 @@ TEST_F(ModuleWithSLDTest, GivenNoDebugDataWhenInitializingModuleThenRelocatedDeb
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernel;
@@ -231,7 +231,7 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithSingleRelocationWhenInitializingModu
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -283,7 +283,7 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithMultipleRelocationsWhenInitializingM
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -359,7 +359,7 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernel;
@@ -379,11 +379,11 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
 
     SURFACE_STATE_BUFFER_LENGTH length;
-    length.Length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
+    length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
 
-    EXPECT_EQ(length.SurfaceState.Depth + 1u, debugSurfaceState->getDepth());
-    EXPECT_EQ(length.SurfaceState.Width + 1u, debugSurfaceState->getWidth());
-    EXPECT_EQ(length.SurfaceState.Height + 1u, debugSurfaceState->getHeight());
+    EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, debugSurfaceState->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, debugSurfaceState->getHeight());
     EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
@@ -419,7 +419,7 @@ using KernelInitializeTest = Test<L0DebuggerHwFixture>;
 TEST_F(KernelInitializeTest, givenDebuggingEnabledWhenKernelsAreInitializedThenAllocationsAreNotResidentAndNotCopied) {
     uint32_t kernelHeap = 0xDEAD;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 4;
+    kernelInfo.heapInfo.kernelHeapSize = 4;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
@@ -459,7 +459,7 @@ HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThen
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -506,7 +506,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializing
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -551,7 +551,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenBuiltinModuleWhenInitializingModuleThenM
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -599,7 +599,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -653,7 +653,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoN
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -685,7 +685,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 
@@ -729,7 +729,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenDumpElfFlagAndZebinWhenInitializ
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 
@@ -791,7 +791,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 
@@ -842,7 +842,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModul
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -895,7 +895,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenDestroyingModuleThenNotif
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
     Mock<::L0::Kernel> kernelMock;
@@ -925,7 +925,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 

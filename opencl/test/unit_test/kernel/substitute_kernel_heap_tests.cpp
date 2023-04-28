@@ -21,7 +21,7 @@ typedef Test<ClDeviceFixture> KernelSubstituteTest;
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeThenAllocatesNewKernelAllocation) {
     MockKernelWithInternals kernel(*pClDevice);
     const size_t initialHeapSize = 0x40;
-    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
     kernel.kernelInfo.createKernelAllocation(*pDevice, false);
@@ -53,7 +53,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThenDoesNotAllocateNewKernelAllocation) {
     MockKernelWithInternals kernel(*pClDevice);
     const size_t initialHeapSize = 0x40;
-    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
     kernel.kernelInfo.createKernelAllocation(*pDevice, false);
@@ -84,7 +84,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeThenDoesNotAllocateNewKernelAllocation) {
     MockKernelWithInternals kernel(*pClDevice);
     const size_t initialHeapSize = 0x40;
-    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
     kernel.kernelInfo.createKernelAllocation(*pDevice, false);
@@ -118,7 +118,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
 
     const size_t initialHeapSize = 0x40;
-    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 
     kernel.kernelInfo.createKernelAllocation(*pDevice, false);
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;

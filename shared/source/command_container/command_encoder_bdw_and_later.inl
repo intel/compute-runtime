@@ -409,12 +409,12 @@ inline void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &co
 
 template <typename Family>
 void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
-    sbaAddress.IndirectObjectBaseAddress = sbaCmd.getIndirectObjectBaseAddress();
-    sbaAddress.BindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
-    sbaAddress.DynamicStateBaseAddress = sbaCmd.getDynamicStateBaseAddress();
-    sbaAddress.GeneralStateBaseAddress = sbaCmd.getGeneralStateBaseAddress();
-    sbaAddress.InstructionBaseAddress = sbaCmd.getInstructionBaseAddress();
-    sbaAddress.SurfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
+    sbaAddress.indirectObjectBaseAddress = sbaCmd.getIndirectObjectBaseAddress();
+    sbaAddress.bindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
+    sbaAddress.dynamicStateBaseAddress = sbaCmd.getDynamicStateBaseAddress();
+    sbaAddress.generalStateBaseAddress = sbaCmd.getGeneralStateBaseAddress();
+    sbaAddress.instructionBaseAddress = sbaCmd.getInstructionBaseAddress();
+    sbaAddress.surfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
 }
 
 template <typename Family>

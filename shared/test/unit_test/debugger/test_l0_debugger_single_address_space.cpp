@@ -94,12 +94,12 @@ HWTEST2_F(SingleAddressSpaceFixture, WhenProgrammingSbaTrackingCommandsForSingle
     uint64_t dsba = 0xffff0000aaaa0000;
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
-    sbaAddresses.GeneralStateBaseAddress = gsba;
-    sbaAddresses.SurfaceStateBaseAddress = ssba;
-    sbaAddresses.InstructionBaseAddress = iba;
-    sbaAddresses.IndirectObjectBaseAddress = ioba;
-    sbaAddresses.DynamicStateBaseAddress = dsba;
-    sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
+    sbaAddresses.generalStateBaseAddress = gsba;
+    sbaAddresses.surfaceStateBaseAddress = ssba;
+    sbaAddresses.instructionBaseAddress = iba;
+    sbaAddresses.indirectObjectBaseAddress = ioba;
+    sbaAddresses.dynamicStateBaseAddress = dsba;
+    sbaAddresses.bindlessSurfaceStateBaseAddress = ssba;
 
     EXPECT_THROW(debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses, false), std::exception);
 
@@ -136,12 +136,12 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgra
     uint64_t dsba = 0xffff0000aaaa0000;
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
-    sbaAddresses.GeneralStateBaseAddress = gsba;
-    sbaAddresses.SurfaceStateBaseAddress = ssba;
-    sbaAddresses.InstructionBaseAddress = iba;
-    sbaAddresses.IndirectObjectBaseAddress = ioba;
-    sbaAddresses.DynamicStateBaseAddress = dsba;
-    sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
+    sbaAddresses.generalStateBaseAddress = gsba;
+    sbaAddresses.surfaceStateBaseAddress = ssba;
+    sbaAddresses.instructionBaseAddress = iba;
+    sbaAddresses.indirectObjectBaseAddress = ioba;
+    sbaAddresses.dynamicStateBaseAddress = dsba;
+    sbaAddresses.bindlessSurfaceStateBaseAddress = ssba;
 
     debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses, GetParam());
 
@@ -252,7 +252,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenPro
     uint64_t ssba = 0x0000800011112222;
 
     NEO::Debugger::SbaAddresses sbaAddresses = {0};
-    sbaAddresses.SurfaceStateBaseAddress = ssba;
+    sbaAddresses.surfaceStateBaseAddress = ssba;
     auto expectedBbLevel = GetParam() ? MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH : MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH;
     debugger->singleAddressSpaceSbaTracking = true;
     debugger->captureStateBaseAddress(cmdStream, sbaAddresses, GetParam());

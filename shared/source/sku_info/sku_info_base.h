@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ struct FeatureTableBase {
         uint32_t ftrLLCBypass : 1;
         uint32_t ftrDisplayEngineS3d : 1;
         uint32_t ftrWddm2GpuMmu : 1;
-        uint32_t ftrWddm2_1_64kbPages : 1;
+        uint32_t ftrWddm2_1_64kbPages : 1; // NOLINT(readability-identifier-naming)
         uint32_t ftrWddmHwQueues : 1;
         uint32_t ftrMemTypeMocsDeferPAT : 1;
         uint32_t ftrKmdDaf : 1;

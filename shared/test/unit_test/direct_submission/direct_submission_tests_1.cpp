@@ -393,14 +393,14 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStopWhenStopRingIsCalledThen
     bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
-    uint32_t oldQueueCount = directSubmission.semaphoreData->QueueWorkCount;
+    uint32_t oldQueueCount = directSubmission.semaphoreData->queueWorkCount;
 
     directSubmission.stopRingBuffer();
 
     size_t expectedDispatchSize = alreadyDispatchedSize + directSubmission.getSizeEnd(false);
     EXPECT_LE(directSubmission.ringCommandStream.getUsed(), expectedDispatchSize);
     EXPECT_GE(directSubmission.ringCommandStream.getUsed() + MemoryConstants::cacheLineSize, expectedDispatchSize);
-    EXPECT_EQ(oldQueueCount + 1, directSubmission.semaphoreData->QueueWorkCount);
+    EXPECT_EQ(oldQueueCount + 1, directSubmission.semaphoreData->queueWorkCount);
 }
 
 HWTEST_F(DirectSubmissionTest,

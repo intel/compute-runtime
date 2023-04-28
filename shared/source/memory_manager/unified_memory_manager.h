@@ -179,9 +179,9 @@ class SVMAllocsManager {
     void trimUSMDeviceAllocCache();
     void insertSVMAlloc(const SvmAllocationData &svmData);
     void removeSVMAlloc(const SvmAllocationData &svmData);
-    size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }
-    MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() const { return SVMDeferFreeAllocs.getNumAllocs(); }
-    MapBasedAllocationTracker *getSVMAllocs() { return &SVMAllocs; }
+    size_t getNumAllocs() const { return svmAllocs.getNumAllocs(); }
+    MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() const { return svmDeferFreeAllocs.getNumAllocs(); }
+    MapBasedAllocationTracker *getSVMAllocs() { return &svmAllocs; }
 
     MOCKABLE_VIRTUAL void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
@@ -216,9 +216,9 @@ class SVMAllocsManager {
     void initUsmDeviceAllocationsCache();
     void freeSVMData(SvmAllocationData *svmData);
 
-    MapBasedAllocationTracker SVMAllocs;
+    MapBasedAllocationTracker svmAllocs;
     MapOperationsTracker svmMapOperations;
-    MapBasedAllocationTracker SVMDeferFreeAllocs;
+    MapBasedAllocationTracker svmDeferFreeAllocs;
     MemoryManager *memoryManager;
     std::shared_mutex mtx;
     std::mutex mtxForIndirectAccess;

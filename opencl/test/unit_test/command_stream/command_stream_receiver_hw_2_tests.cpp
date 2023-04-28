@@ -657,7 +657,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     EXPECT_EQ(0u, csr.latestFlushedBatchBuffer.chainedBatchBufferStartOffset);
     EXPECT_EQ(nullptr, csr.latestFlushedBatchBuffer.chainedBatchBuffer);
     EXPECT_FALSE(csr.latestFlushedBatchBuffer.requiresCoherency);
-    EXPECT_FALSE(csr.latestFlushedBatchBuffer.low_priority);
+    EXPECT_FALSE(csr.latestFlushedBatchBuffer.lowPriority);
     EXPECT_EQ(QueueThrottle::MEDIUM, csr.latestFlushedBatchBuffer.throttle);
     EXPECT_EQ(commandStream.getUsed(), csr.latestFlushedBatchBuffer.usedSize);
     EXPECT_EQ(&commandStream, csr.latestFlushedBatchBuffer.stream);

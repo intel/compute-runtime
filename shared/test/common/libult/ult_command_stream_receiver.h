@@ -92,7 +92,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
-    using BaseClass::CommandStreamReceiver::GSBAFor32BitProgrammed;
+    using BaseClass::CommandStreamReceiver::gsbaFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;
     using BaseClass::CommandStreamReceiver::isBlitterDirectSubmissionEnabled;

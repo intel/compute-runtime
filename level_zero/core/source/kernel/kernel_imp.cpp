@@ -76,7 +76,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
     auto neoDevice = deviceImp->getActiveDevice();
     auto memoryManager = neoDevice->getMemoryManager();
 
-    auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
+    auto kernelIsaSize = kernelInfo->heapInfo.kernelHeapSize;
     UNRECOVERABLE_IF(kernelIsaSize == 0);
     UNRECOVERABLE_IF(!kernelInfo->heapInfo.pKernelHeap);
     const auto allocType = internalKernel ? NEO::AllocationType::KERNEL_ISA_INTERNAL : NEO::AllocationType::KERNEL_ISA;
@@ -112,16 +112,16 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
                                        kernelDescriptor->payloadMappings.implicitArgs.simdSize, kernelDescriptor->kernelAttributes.simdSize);
     }
 
-    if (kernelInfo->heapInfo.SurfaceStateHeapSize != 0) {
-        this->surfaceStateHeapSize = kernelInfo->heapInfo.SurfaceStateHeapSize;
+    if (kernelInfo->heapInfo.surfaceStateHeapSize != 0) {
+        this->surfaceStateHeapSize = kernelInfo->heapInfo.surfaceStateHeapSize;
         surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
 
         memcpy_s(surfaceStateHeapTemplate.get(), surfaceStateHeapSize,
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     }
 
-    if (kernelInfo->heapInfo.DynamicStateHeapSize != 0) {
-        this->dynamicStateHeapSize = kernelInfo->heapInfo.DynamicStateHeapSize;
+    if (kernelInfo->heapInfo.dynamicStateHeapSize != 0) {
+        this->dynamicStateHeapSize = kernelInfo->heapInfo.dynamicStateHeapSize;
         dynamicStateHeapTemplate.reset(new uint8_t[dynamicStateHeapSize]);
 
         memcpy_s(dynamicStateHeapTemplate.get(), dynamicStateHeapSize,
@@ -841,7 +841,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                                                               isaAllocation,
                                                               0,
                                                               this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap,
-                                                              static_cast<size_t>(this->kernelImmData->getKernelInfo()->heapInfo.KernelHeapSize));
+                                                              static_cast<size_t>(this->kernelImmData->getKernelInfo()->heapInfo.kernelHeapSize));
     }
 
     for (const auto &argT : kernelDescriptor.payloadMappings.explicitArgs) {

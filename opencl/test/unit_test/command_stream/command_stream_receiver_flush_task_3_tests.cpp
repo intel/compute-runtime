@@ -88,7 +88,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     EXPECT_EQ(cmdBuffer->batchBuffer.commandBufferAllocation, mockCsr->commandStream.getGraphicsAllocation());
     EXPECT_EQ(cmdBuffer->batchBuffer.startOffset, 0u);
     EXPECT_FALSE(cmdBuffer->batchBuffer.requiresCoherency);
-    EXPECT_FALSE(cmdBuffer->batchBuffer.low_priority);
+    EXPECT_FALSE(cmdBuffer->batchBuffer.lowPriority);
 
     // find BB END
     parseCommands<FamilyType>(commandStream, 0);
@@ -402,8 +402,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     EXPECT_FALSE(cmdBuffer1->batchBuffer.requiresCoherency);
     EXPECT_TRUE(cmdBuffer2->batchBuffer.requiresCoherency);
 
-    EXPECT_FALSE(cmdBuffer1->batchBuffer.low_priority);
-    EXPECT_TRUE(cmdBuffer2->batchBuffer.low_priority);
+    EXPECT_FALSE(cmdBuffer1->batchBuffer.lowPriority);
+    EXPECT_TRUE(cmdBuffer2->batchBuffer.lowPriority);
 
     EXPECT_GT(cmdBuffer2->batchBuffer.startOffset, cmdBuffer1->batchBuffer.startOffset);
 }
@@ -465,7 +465,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
 
     mockCsr->flushBatchedSubmissions();
 
-    EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.low_priority);
+    EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.lowPriority);
     EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.requiresCoherency);
     EXPECT_EQ(mockCsr->recordedCommandBuffer->batchBuffer.commandBufferAllocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(4u, mockCsr->recordedCommandBuffer->batchBuffer.startOffset);

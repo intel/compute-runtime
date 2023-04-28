@@ -55,16 +55,16 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
         kernelInfo.setCrossThreadDataSize(64);
         kernelInfo.setLocalIds({1, 1, 1});
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
+        kernelInfo.heapInfo.kernelHeapSize = sizeof(kernelIsa);
 
         kernelInfoWithSampler.kernelDescriptor.kernelAttributes.simdSize = 32;
         kernelInfoWithSampler.setCrossThreadDataSize(64);
         kernelInfoWithSampler.setLocalIds({1, 1, 1});
         kernelInfoWithSampler.setSamplerTable(0, 1, 4);
         kernelInfoWithSampler.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfoWithSampler.heapInfo.KernelHeapSize = sizeof(kernelIsa);
+        kernelInfoWithSampler.heapInfo.kernelHeapSize = sizeof(kernelIsa);
         kernelInfoWithSampler.heapInfo.pDsh = static_cast<const void *>(dsh);
-        kernelInfoWithSampler.heapInfo.DynamicStateHeapSize = sizeof(dsh);
+        kernelInfoWithSampler.heapInfo.dynamicStateHeapSize = sizeof(dsh);
     }
 
     void TearDown() override {

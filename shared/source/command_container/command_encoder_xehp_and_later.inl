@@ -512,12 +512,12 @@ inline bool EncodeDispatchKernel<Family>::isDshNeeded(const DeviceInfo &deviceIn
 
 template <typename Family>
 void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
-    sbaAddress.BindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
-    sbaAddress.DynamicStateBaseAddress = sbaCmd.getDynamicStateBaseAddress();
-    sbaAddress.GeneralStateBaseAddress = sbaCmd.getGeneralStateBaseAddress();
-    sbaAddress.InstructionBaseAddress = sbaCmd.getInstructionBaseAddress();
-    sbaAddress.SurfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
-    sbaAddress.IndirectObjectBaseAddress = 0;
+    sbaAddress.bindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
+    sbaAddress.dynamicStateBaseAddress = sbaCmd.getDynamicStateBaseAddress();
+    sbaAddress.generalStateBaseAddress = sbaCmd.getGeneralStateBaseAddress();
+    sbaAddress.instructionBaseAddress = sbaCmd.getInstructionBaseAddress();
+    sbaAddress.surfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
+    sbaAddress.indirectObjectBaseAddress = 0;
 }
 
 template <typename Family>

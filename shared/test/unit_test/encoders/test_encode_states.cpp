@@ -208,7 +208,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    length.Length = static_cast<uint32_t>(allocSize - 1);
+    length.length = static_cast<uint32_t>(allocSize - 1);
     GraphicsAllocation allocation(0, AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
 
     NEO::EncodeSurfaceStateArgs args;
@@ -222,9 +222,9 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     args.areMultipleSubDevicesInContext = true;
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
-    EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
-    EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
+    EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
     EXPECT_EQ(gpuAddr, state->getSurfaceBaseAddress());
 
     alignedFree(stateBuffer);
@@ -244,7 +244,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNo
 
     uint64_t gpuAddr = 0;
     size_t allocSize = size;
-    length.Length = static_cast<uint32_t>(allocSize - 1);
+    length.length = static_cast<uint32_t>(allocSize - 1);
 
     NEO::EncodeSurfaceStateArgs args;
     args.outMemory = stateBuffer;
@@ -278,7 +278,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherency
 
     uint64_t gpuAddr = 0;
     size_t allocSize = size;
-    length.Length = static_cast<uint32_t>(allocSize - 1);
+    length.length = static_cast<uint32_t>(allocSize - 1);
 
     NEO::EncodeSurfaceStateArgs args;
     args.outMemory = stateBuffer;

@@ -1780,10 +1780,10 @@ HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgramm
 
     EXPECT_EQ(castToUint64(svmPtr), surfaceState.getSurfaceBaseAddress());
     SURFACE_STATE_BUFFER_LENGTH length = {};
-    length.SurfaceState.Width = surfaceState.getWidth() - 1;
-    length.SurfaceState.Height = surfaceState.getHeight() - 1;
-    length.SurfaceState.Depth = surfaceState.getDepth() - 1;
-    EXPECT_EQ(alignUp(5u, 4u), length.Length + 1);
+    length.surfaceState.width = surfaceState.getWidth() - 1;
+    length.surfaceState.height = surfaceState.getHeight() - 1;
+    length.surfaceState.depth = surfaceState.getDepth() - 1;
+    EXPECT_EQ(alignUp(5u, 4u), length.length + 1);
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBeingProgrammedThenL3CacheIsOff) {

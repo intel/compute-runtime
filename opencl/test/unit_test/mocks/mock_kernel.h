@@ -272,11 +272,11 @@ class MockKernelWithInternals {
         memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
+        kernelInfo.heapInfo.kernelHeapSize = sizeof(kernelIsa);
         kernelInfo.heapInfo.pSsh = sshLocal;
-        kernelInfo.heapInfo.SurfaceStateHeapSize = sizeof(sshLocal);
+        kernelInfo.heapInfo.surfaceStateHeapSize = sizeof(sshLocal);
         kernelInfo.heapInfo.pDsh = dshLocal;
-        kernelInfo.heapInfo.DynamicStateHeapSize = sizeof(dshLocal);
+        kernelInfo.heapInfo.dynamicStateHeapSize = sizeof(dshLocal);
 
         populateKernelDescriptor(kernelInfo.kernelDescriptor, execEnv);
         kernelInfo.kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;

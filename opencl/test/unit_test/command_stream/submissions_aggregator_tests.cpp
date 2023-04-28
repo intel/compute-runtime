@@ -456,8 +456,8 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentPrioritySetting
     MockGraphicsAllocation alloc1(nullptr, 1);
     MockGraphicsAllocation alloc7(nullptr, 7);
 
-    cmdBuffer->batchBuffer.low_priority = true;
-    cmdBuffer2->batchBuffer.low_priority = false;
+    cmdBuffer->batchBuffer.lowPriority = true;
+    cmdBuffer2->batchBuffer.lowPriority = false;
 
     cmdBuffer->surfaces.push_back(&alloc1);
     cmdBuffer2->surfaces.push_back(&alloc7);
@@ -696,8 +696,8 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenNotAggregatedDur
     cmdQ2.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, &event2);
 
     // dont aggregate
-    mockCsr->peekSubmissionAggregator()->peekCmdBufferList().peekHead()->batchBuffer.low_priority = true;
-    mockCsr->peekSubmissionAggregator()->peekCmdBufferList().peekTail()->batchBuffer.low_priority = false;
+    mockCsr->peekSubmissionAggregator()->peekCmdBufferList().peekHead()->batchBuffer.lowPriority = true;
+    mockCsr->peekSubmissionAggregator()->peekCmdBufferList().peekTail()->batchBuffer.lowPriority = false;
 
     mockCsr->flushBatchedSubmissions();
 

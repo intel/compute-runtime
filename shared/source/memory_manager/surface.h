@@ -15,12 +15,12 @@ class CommandStreamReceiver;
 
 class Surface {
   public:
-    Surface(bool isCoherent = false) : IsCoherent(isCoherent) {}
+    Surface(bool isCoherent = false) : isCoherent(isCoherent) {}
     virtual ~Surface() = default;
     virtual void makeResident(CommandStreamReceiver &csr) = 0;
     virtual Surface *duplicate() = 0;
     virtual bool allowsL3Caching() { return true; }
-    bool IsCoherent;
+    bool isCoherent;
 };
 
 class NullSurface : public Surface {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,8 +73,8 @@ HWTEST2_F(ResourceBarrierAubTest, givenAllocationsWhenEnqueueResourceBarrierCall
     cl_resource_barrier_descriptor_intel descriptor{};
     cl_resource_barrier_descriptor_intel descriptor2{};
 
-    descriptor.mem_object = dstBuffer1.get();
-    descriptor2.mem_object = dstBuffer2.get();
+    descriptor.memObject = dstBuffer1.get();
+    descriptor2.memObject = dstBuffer2.get();
 
     const cl_resource_barrier_descriptor_intel descriptors[] = {descriptor, descriptor2};
 

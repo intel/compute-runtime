@@ -407,9 +407,9 @@ class GivenCacheResourceSurfacesWhenprocessingCacheFlushThenExpectProperCacheFlu
             nullptr,
             retVal));
 
-        descriptor.svm_allocation_pointer = svm;
+        descriptor.svmAllocationPointer = svm;
 
-        descriptor2.mem_object = buffer.get();
+        descriptor2.memObject = buffer.get();
 
         const cl_resource_barrier_descriptor_intel descriptors[] = {descriptor, descriptor2};
         BarrierCommand bCmd(&cmdQ, descriptors, 2);
