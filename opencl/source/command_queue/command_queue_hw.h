@@ -367,21 +367,21 @@ class CommandQueueHw : public CommandQueue {
     template <uint32_t cmdType>
     cl_int enqueueBlitSplit(MultiDispatchInfo &dispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr);
 
-    CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,
-                                      size_t surfaceCount,
-                                      LinearStream &commandStream,
-                                      size_t commandStreamStart,
-                                      bool &blocking,
-                                      bool clearDependenciesForSubCapture,
-                                      const MultiDispatchInfo &multiDispatchInfo,
-                                      const EnqueueProperties &enqueueProperties,
-                                      TimestampPacketDependencies &timestampPacketDependencies,
-                                      EventsRequest &eventsRequest,
-                                      EventBuilder &eventBuilder,
-                                      TaskCountType taskLevel,
-                                      PrintfHandler *printfHandler,
-                                      bool relaxedOrderingEnabled,
-                                      uint32_t commandType);
+    MOCKABLE_VIRTUAL CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,
+                                                       size_t surfaceCount,
+                                                       LinearStream &commandStream,
+                                                       size_t commandStreamStart,
+                                                       bool &blocking,
+                                                       bool clearDependenciesForSubCapture,
+                                                       const MultiDispatchInfo &multiDispatchInfo,
+                                                       const EnqueueProperties &enqueueProperties,
+                                                       TimestampPacketDependencies &timestampPacketDependencies,
+                                                       EventsRequest &eventsRequest,
+                                                       EventBuilder &eventBuilder,
+                                                       TaskCountType taskLevel,
+                                                       PrintfHandler *printfHandler,
+                                                       bool relaxedOrderingEnabled,
+                                                       uint32_t commandType);
 
     void enqueueBlocked(uint32_t commandType,
                         Surface **surfacesForResidency,
