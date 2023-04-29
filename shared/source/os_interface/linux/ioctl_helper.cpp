@@ -10,11 +10,14 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 
 #include <fcntl.h>
@@ -374,6 +377,86 @@ std::string IoctlHelper::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId
 
 bool IoctlHelper::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const {
     return (error == EINTR || error == EAGAIN || error == EBUSY || error == -EBUSY);
+}
+
+std::unique_ptr<MemoryInfo> IoctlHelper::createMemoryInfo() {
+    auto request = getDrmParamValue(DrmParam::QueryMemoryRegions);
+    auto dataQuery = drm.query(request, 0);
+    if (!dataQuery.empty()) {
+        auto memRegions = translateToMemoryRegions(dataQuery);
+        return std::make_unique<MemoryInfo>(memRegions, drm);
+    }
+    return {};
+}
+
+std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) {
+    auto request = getDrmParamValue(DrmParam::QueryEngineInfo);
+    auto enginesQuery = drm.query(request, 0);
+    if (enginesQuery.empty()) {
+        return {};
+    }
+    auto engines = translateToEngineCaps(enginesQuery);
+    auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+
+    auto memInfo = drm.getMemoryInfo();
+
+    if (!memInfo) {
+        return std::make_unique<EngineInfo>(&drm, engines);
+    }
+
+    auto &memoryRegions = memInfo->getDrmRegionInfos();
+
+    auto tileCount = 0u;
+    std::vector<DistanceInfo> distanceInfos;
+    for (const auto &region : memoryRegions) {
+        if (getDrmParamValue(DrmParam::MemoryClassDevice) == region.region.memoryClass) {
+            tileCount++;
+            DistanceInfo distanceInfo{};
+            distanceInfo.region = region.region;
+
+            for (const auto &engine : engines) {
+                if (engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassCompute) ||
+                    engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassRender) ||
+                    engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassCopy)) {
+                    distanceInfo.engine = engine.engine;
+                    distanceInfos.push_back(distanceInfo);
+                } else if (isSysmanEnabled) {
+
+                    if (engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassVideo) ||
+                        engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassVideoEnhance)) {
+                        distanceInfo.engine = engine.engine;
+                        distanceInfos.push_back(distanceInfo);
+                    }
+                }
+            }
+        }
+    }
+
+    if (tileCount == 0u) {
+        return std::make_unique<EngineInfo>(&drm, engines);
+    }
+
+    std::vector<QueryItem> queryItems{distanceInfos.size()};
+    auto ret = queryDistances(queryItems, distanceInfos);
+    if (ret != 0) {
+        return {};
+    }
+
+    const bool queryUnsupported = std::all_of(queryItems.begin(), queryItems.end(),
+                                              [](const QueryItem &item) { return item.length == -EINVAL; });
+    if (queryUnsupported) {
+        DEBUG_BREAK_IF(tileCount != 1);
+        return std::make_unique<EngineInfo>(&drm, engines);
+    }
+
+    memInfo->assignRegionsFromDistances(distanceInfos);
+
+    auto &multiTileArchInfo = hwInfo->gtSystemInfo.MultiTileArchInfo;
+    multiTileArchInfo.IsValid = true;
+    multiTileArchInfo.TileCount = tileCount;
+    multiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
+
+    return std::make_unique<EngineInfo>(&drm, tileCount, distanceInfos, queryItems, engines);
 }
 
 } // namespace NEO

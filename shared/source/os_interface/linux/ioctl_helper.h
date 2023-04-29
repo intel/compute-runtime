@@ -27,6 +27,8 @@ enum class CacheRegion : uint16_t;
 enum class PreferredLocation : int16_t;
 struct HardwareInfo;
 struct HardwareIpVersion;
+struct EngineInfo;
+class MemoryInfo;
 
 struct MemoryRegion {
     MemoryClassInstance region;
@@ -143,6 +145,8 @@ class IoctlHelper {
     virtual void *pciBarrierMmap() { return nullptr; };
 
     uint32_t getFlagsForPrimeHandleToFd() const;
+    std::unique_ptr<MemoryInfo> createMemoryInfo();
+    std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled);
 
   protected:
     Drm &drm;

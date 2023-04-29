@@ -1003,87 +1003,13 @@ std::vector<uint8_t> Drm::getMemoryRegions() {
 }
 
 bool Drm::queryMemoryInfo() {
-    auto dataQuery = getMemoryRegions();
-    if (!dataQuery.empty()) {
-        auto memRegions = ioctlHelper->translateToMemoryRegions(dataQuery);
-        this->memoryInfo.reset(new MemoryInfo(memRegions, *this));
-        return true;
-    }
-    return false;
+    this->memoryInfo = ioctlHelper->createMemoryInfo();
+    return this->memoryInfo != nullptr;
 }
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
-    auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryEngineInfo);
-    auto enginesQuery = this->query(request, 0);
-    if (enginesQuery.empty()) {
-        return false;
-    }
-    auto engines = ioctlHelper->translateToEngineCaps(enginesQuery);
-    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-
-    auto memInfo = memoryInfo.get();
-
-    if (!memInfo) {
-        this->engineInfo.reset(new EngineInfo(this, engines));
-        return true;
-    }
-
-    auto &memoryRegions = memInfo->getDrmRegionInfos();
-
-    auto tileCount = 0u;
-    std::vector<DistanceInfo> distanceInfos;
-    for (const auto &region : memoryRegions) {
-        if (ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice) == region.region.memoryClass) {
-            tileCount++;
-            DistanceInfo distanceInfo{};
-            distanceInfo.region = region.region;
-
-            for (const auto &engine : engines) {
-                if (engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute) ||
-                    engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender) ||
-                    engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
-                    distanceInfo.engine = engine.engine;
-                    distanceInfos.push_back(distanceInfo);
-                } else if (isSysmanEnabled) {
-
-                    if (engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideo) ||
-                        engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideoEnhance)) {
-                        distanceInfo.engine = engine.engine;
-                        distanceInfos.push_back(distanceInfo);
-                    }
-                }
-            }
-        }
-    }
-
-    if (tileCount == 0u) {
-        this->engineInfo.reset(new EngineInfo(this, engines));
-        return true;
-    }
-
-    std::vector<QueryItem> queryItems{distanceInfos.size()};
-    auto ret = ioctlHelper->queryDistances(queryItems, distanceInfos);
-    if (ret != 0) {
-        return false;
-    }
-
-    const bool queryUnsupported = std::all_of(queryItems.begin(), queryItems.end(),
-                                              [](const QueryItem &item) { return item.length == -EINVAL; });
-    if (queryUnsupported) {
-        DEBUG_BREAK_IF(tileCount != 1);
-        this->engineInfo.reset(new EngineInfo(this, engines));
-        return true;
-    }
-
-    memInfo->assignRegionsFromDistances(distanceInfos);
-
-    auto &multiTileArchInfo = hwInfo->gtSystemInfo.MultiTileArchInfo;
-    multiTileArchInfo.IsValid = true;
-    multiTileArchInfo.TileCount = tileCount;
-    multiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
-
-    this->engineInfo.reset(new EngineInfo(this, tileCount, distanceInfos, queryItems, engines));
-    return true;
+    this->engineInfo = ioctlHelper->createEngineInfo(isSysmanEnabled);
+    return this->engineInfo != nullptr;
 }
 
 bool Drm::completionFenceSupport() {

@@ -262,6 +262,7 @@ class Drm : public DriverModel {
     bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();
     std::unique_ptr<HwDeviceIdDrm> &getHwDeviceId() { return hwDeviceId; }
+    std::vector<uint8_t> query(uint32_t queryId, uint32_t queryItemFlags);
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -270,7 +271,6 @@ class Drm : public DriverModel {
     bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
-    std::vector<uint8_t> query(uint32_t queryId, uint32_t queryItemFlags);
     void printIoctlStatistics();
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
     void queryAndSetVmBindPatIndexProgrammingSupport();
