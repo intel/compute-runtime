@@ -32,6 +32,12 @@ PVCTEST_F(PvcProductHelper, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
     EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }
 
+PVCTEST_F(PvcProductHelper, whenForceTlbFlushSetAndCheckIsTlbFlushRequiredThenReturnProperValue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceTlbFlush.set(1);
+    EXPECT_TRUE(productHelper->isTlbFlushRequired());
+}
+
 PVCTEST_F(PvcProductHelper, givenPVCRevId3AndAboveWhenGettingThreadEuRatioForScratchThen16IsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.platform.usRevId = 3;

@@ -168,7 +168,11 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
 
 template <>
 bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    return false;
+    bool tlbFlushRequired = false;
+    if (DebugManager.flags.ForceTlbFlush.get() != -1) {
+        tlbFlushRequired = !!DebugManager.flags.ForceTlbFlush.get();
+    }
+    return tlbFlushRequired;
 }
 
 template <>
