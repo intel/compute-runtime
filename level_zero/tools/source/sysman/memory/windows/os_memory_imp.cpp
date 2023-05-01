@@ -59,8 +59,8 @@ bool WddmMemoryImp::isMemoryModuleSupported() {
     return (value > 0);
 }
 ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
-    uint32_t valueSmall = 0;
-    uint64_t valueLarge = 0;
+    uint32_t retValu32 = 0;
+    uint64_t retValu64 = 0;
     std::vector<KmdSysman::RequestProperty> vRequests = {};
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
     KmdSysman::RequestProperty request = {};
@@ -94,8 +94,8 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
 
     pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
     if (vResponses[0].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
-        switch (valueSmall) {
+        memcpy_s(&retValu32, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        switch (retValu32) {
         case KmdSysman::MemoryType::DDR4: {
             pProperties->type = ZES_MEM_TYPE_DDR4;
         } break;
@@ -140,26 +140,26 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
 
     pProperties->physicalSize = 0;
     if (vResponses[1].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueLarge, sizeof(uint64_t), vResponses[1].dataBuffer, sizeof(uint64_t));
-        pProperties->physicalSize = valueLarge;
+        memcpy_s(&retValu64, sizeof(uint64_t), vResponses[1].dataBuffer, sizeof(uint64_t));
+        pProperties->physicalSize = retValu64;
     }
 
     pProperties->numChannels = -1;
     if (vResponses[2].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
-        pProperties->numChannels = valueSmall;
+        memcpy_s(&retValu32, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
+        pProperties->numChannels = retValu32;
     }
 
     pProperties->location = ZES_MEM_LOC_FORCE_UINT32;
     if (vResponses[3].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
-        pProperties->location = static_cast<zes_mem_loc_t>(valueSmall);
+        memcpy_s(&retValu32, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
+        pProperties->location = static_cast<zes_mem_loc_t>(retValu32);
     }
 
     pProperties->busWidth = -1;
     if (vResponses[4].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[4].dataBuffer, sizeof(uint32_t));
-        pProperties->busWidth = valueSmall;
+        memcpy_s(&retValu32, sizeof(uint32_t), vResponses[4].dataBuffer, sizeof(uint32_t));
+        pProperties->busWidth = retValu32;
     }
 
     pProperties->subdeviceId = 0;
@@ -173,8 +173,8 @@ ze_result_t WddmMemoryImp::getBandwidthEx(uint64_t *pReadCounters, uint64_t *pWr
 }
 
 ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
-    uint32_t valueSmall = 0;
-    uint64_t valueLarge = 0;
+    uint32_t retValu32 = 0;
+    uint64_t retValu64 = 0;
     std::vector<KmdSysman::RequestProperty> vRequests = {};
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
     KmdSysman::RequestProperty request = {};
@@ -199,20 +199,20 @@ ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 
     pBandwidth->maxBandwidth = 0;
     if (vResponses[0].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
-        pBandwidth->maxBandwidth = static_cast<uint64_t>(valueSmall) * static_cast<uint64_t>(MbpsToBytesPerSecond);
+        memcpy_s(&retValu32, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        pBandwidth->maxBandwidth = static_cast<uint64_t>(retValu32) * static_cast<uint64_t>(MbpsToBytesPerSecond);
     }
 
     pBandwidth->readCounter = 0;
     if (vResponses[1].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueLarge, sizeof(uint64_t), vResponses[1].dataBuffer, sizeof(uint64_t));
-        pBandwidth->readCounter = valueLarge;
+        memcpy_s(&retValu64, sizeof(uint64_t), vResponses[1].dataBuffer, sizeof(uint64_t));
+        pBandwidth->readCounter = retValu64;
     }
 
     pBandwidth->writeCounter = 0;
     if (vResponses[2].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueLarge, sizeof(uint64_t), vResponses[2].dataBuffer, sizeof(uint64_t));
-        pBandwidth->writeCounter = valueLarge;
+        memcpy_s(&retValu64, sizeof(uint64_t), vResponses[2].dataBuffer, sizeof(uint64_t));
+        pBandwidth->writeCounter = retValu64;
     }
 
     std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
@@ -223,7 +223,7 @@ ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 
 ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
     ze_result_t status = ZE_RESULT_SUCCESS;
-    uint64_t valueLarge = 0;
+    uint64_t retValu64 = 0;
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
@@ -239,8 +239,8 @@ ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
         return status;
     }
 
-    memcpy_s(&valueLarge, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
-    pState->size = valueLarge;
+    memcpy_s(&retValu64, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
+    pState->size = retValu64;
 
     if (!pdhInitialized) {
         if (pdhOpenQuery && pdhOpenQuery(NULL, NULL, &gpuQuery) == ERROR_SUCCESS) {
@@ -257,8 +257,8 @@ ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
         PDH_FMT_COUNTERVALUE counterVal;
         pdhCollectQueryData(gpuQuery);
         pdhGetFormattedCounterValue(dedicatedUsage, PDH_FMT_LARGE, NULL, &counterVal);
-        valueLarge = counterVal.largeValue;
-        pState->free = pState->size - valueLarge;
+        retValu64 = counterVal.largeValue;
+        pState->free = pState->size - retValu64;
     }
 
     return ZE_RESULT_SUCCESS;
