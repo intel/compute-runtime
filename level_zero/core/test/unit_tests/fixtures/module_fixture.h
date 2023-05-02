@@ -116,7 +116,6 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     std::unique_ptr<MockModule> module;
     std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
     MockImmutableMemoryManager *memoryManager;
-    DebugManagerStateRestore restore;
 };
 
 struct ModuleFixture : public DeviceFixture {
@@ -147,7 +146,6 @@ struct ModuleFixture : public DeviceFixture {
     std::unique_ptr<L0::Module> module;
     std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
     std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
-    DebugManagerStateRestore restore;
 };
 
 struct MultiDeviceModuleFixture : public MultiDeviceFixture {

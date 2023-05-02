@@ -73,8 +73,6 @@ void ModuleImmutableDataFixture::MockKernel::setCrossThreadData(uint32_t dataSiz
 }
 
 void ModuleImmutableDataFixture::setUp() {
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
-
     auto hwInfo = NEO::defaultHwInfo.get();
     if (DebugManager.flags.OverrideRevision.get() != -1) {
         this->copyHwInfo = *NEO::defaultHwInfo.get();
@@ -88,9 +86,6 @@ void ModuleImmutableDataFixture::setUp() {
 }
 
 void ModuleImmutableDataFixture::createModuleFromMockBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData, std::initializer_list<ZebinTestData::appendElfAdditionalSection> additionalSections) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
-
     zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
     const auto &src = zebinData->storage;
 
@@ -138,13 +133,12 @@ L0::Module *ModuleFixture::ProxyModuleImp::create(L0::Device *device, const ze_m
 }
 
 void ModuleFixture::setUp() {
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+
     DeviceFixture::setUp();
     createModuleFromMockBinary();
 }
 
 void ModuleFixture::createModuleFromMockBinary(ModuleType type) {
-
     zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
 
@@ -189,8 +183,6 @@ void MultiDeviceModuleFixture::setUp() {
 }
 
 void MultiDeviceModuleFixture::createModuleFromMockBinary(uint32_t rootDeviceIndex) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
     auto device = driverHandle->devices[rootDeviceIndex];
     zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;

@@ -2087,9 +2087,6 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 using ContextModuleCreateTest = Test<DeviceFixture>;
 
 HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
-
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
 
@@ -2113,8 +2110,6 @@ using ModuleTranslationUnitTest = Test<DeviceFixture>;
 struct MockModuleTU : public L0::ModuleTranslationUnit {
     MockModuleTU(L0::Device *device) : L0::ModuleTranslationUnit(device) {}
 
-    DebugManagerStateRestore restore;
-
     ze_result_t buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
                                const ze_module_constants_t *pConstants) override {
         wasBuildFromSpirVCalled = true;
@@ -2126,7 +2121,6 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
     }
 
     ze_result_t createFromNativeBinary(const char *input, size_t inputSize) override {
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         wasCreateFromNativeBinaryCalled = true;
         return L0::ModuleTranslationUnit::createFromNativeBinary(input, inputSize);
     }
@@ -2139,6 +2133,7 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
 
@@ -2816,8 +2811,6 @@ TEST(ModuleBuildLog, WhenTooSmallBufferIsPassedToGetStringThenErrorIsReturned) {
 using PrintfModuleTest = Test<DeviceFixture>;
 
 HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
-    DebugManagerStateRestore restore{};
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
 
@@ -3152,9 +3145,8 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
     moduleDesc.inputSize = src.size();
 
-    std::array<std::tuple<ze_result_t, bool, ModuleType, int32_t>, 6> testParams = {{
+    std::array<std::tuple<ze_result_t, bool, ModuleType, int32_t>, 5> testParams = {{
         {ZE_RESULT_SUCCESS, false, ModuleType::Builtin, -1},
-        {ZE_RESULT_SUCCESS, true, ModuleType::User, -1},
         {ZE_RESULT_SUCCESS, true, ModuleType::Builtin, 0},
         {ZE_RESULT_SUCCESS, true, ModuleType::User, 0},
         {ZE_RESULT_SUCCESS, true, ModuleType::Builtin, 1},
@@ -3166,13 +3158,6 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
         module.translationUnit = std::make_unique<MyMockModuleTU>(device);
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debugKey);
         module.setAddressingMode(isStateful);
-
-        if (isStateful && debugKey == -1) {
-            if (compilerProductHelper.failBuildProgramWithStatefulAccessPreference() == true) {
-                expectedResult = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-            }
-        }
-
         EXPECT_EQ(expectedResult, module.initialize(&moduleDesc, device->getNEODevice()));
     }
 }
@@ -3818,8 +3803,6 @@ HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpd
 
 using ModuleKernelImmDatasTest = Test<ModuleFixture>;
 TEST_F(ModuleKernelImmDatasTest, givenDeviceOOMWhenMemoryManagerFailsToAllocateMemoryThenReturnInformativeErrorToTheCaller) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;

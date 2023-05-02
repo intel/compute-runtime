@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -1393,8 +1392,6 @@ class KernelPropertiesTests : public ModuleFixture, public ::testing::Test {
         using KernelImp::kernelHasIndirectAccess;
     };
     void SetUp() override {
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
-
         ModuleFixture::setUp();
 
         ze_kernel_desc_t kernelDesc = {};
@@ -1414,7 +1411,6 @@ class KernelPropertiesTests : public ModuleFixture, public ::testing::Test {
 
     ze_kernel_handle_t kernelHandle;
     MockKernel *kernel = nullptr;
-    DebugManagerStateRestore restore;
 };
 
 TEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
