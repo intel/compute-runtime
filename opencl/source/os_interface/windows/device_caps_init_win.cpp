@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #ifdef _WIN32
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -14,6 +15,10 @@
 namespace NEO {
 
 void ClDevice::initializeOsSpecificCaps() {
+    if (enabledClVersion >= 30 && DebugManager.flags.ClKhrExternalMemoryExtension.get()) {
+        deviceInfo.externalMemorySharing = CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR;
+    }
+
     deviceExtensions += "cl_intel_simultaneous_sharing ";
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 

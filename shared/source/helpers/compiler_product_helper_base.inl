@@ -107,6 +107,10 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_ext_float_atomics ";
     }
 
+    if (enabledClVersion >= 30 && DebugManager.flags.ClKhrExternalMemoryExtension.get()) {
+        extensions += "cl_khr_external_memory ";
+    }
+
     if (DebugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
         extensions += "cl_intel_planar_yuv ";
     }

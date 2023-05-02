@@ -94,6 +94,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_ERROR_CORRECTION_SUPPORT:                    getCap<CL_DEVICE_ERROR_CORRECTION_SUPPORT                    >(src, srcSize, retSize); break;
     case CL_DEVICE_EXECUTION_CAPABILITIES:                      getCap<CL_DEVICE_EXECUTION_CAPABILITIES                      >(src, srcSize, retSize); break;
     case CL_DEVICE_EXTENSIONS:                                  getStr<CL_DEVICE_EXTENSIONS                                  >(src, srcSize, retSize); break;
+    case CL_DEVICE_EXTERNAL_MEMORY_IMPORT_HANDLE_TYPES_KHR:     getCap<CL_DEVICE_EXTERNAL_MEMORY_IMPORT_HANDLE_TYPES_KHR     >(src, srcSize, retSize); break;
     case CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT:               getCap<CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT               >(src, srcSize, retSize); break;
     case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE:                   getCap<CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE                   >(src, srcSize, retSize); break;
     case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE:                       getCap<CL_DEVICE_GLOBAL_MEM_CACHE_SIZE                       >(src, srcSize, retSize); break;

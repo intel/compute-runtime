@@ -44,6 +44,22 @@ TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCo
     delete pClDevice;
 }
 
+TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenDeviceInfoReportsSupportOfExternalMemorySharing) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ClKhrExternalMemoryExtension.set(1);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
+    auto hwInfo = defaultHwInfo.get();
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
+    DeviceFactory::prepareDeviceEnvironments(*pDevice->getExecutionEnvironment());
+    auto pClDevice = new ClDevice{*pDevice, platform()};
+
+    EXPECT_EQ(pClDevice->getDeviceInfo().externalMemorySharing, static_cast<cl_uint>(CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR));
+
+    delete pClDevice;
+}
+
 TEST(DeviceOsTest, WhenCreatingDeviceThenSimultaneousInteropsIsSupported) {
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 

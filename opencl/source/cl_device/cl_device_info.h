@@ -135,6 +135,7 @@ struct ClDeviceInfo {
     bool                                                                          vmeExtension;
     bool                                                                          platformLP;
     bool                                                                          packedYuvExtension;
+    cl_uint                                                                       externalMemorySharing;
     /*Unified Shared Memory Capabilites*/
     cl_unified_shared_memory_capabilities_intel                                   hostMemCapabilities;
     cl_unified_shared_memory_capabilities_intel                                   deviceMemCapabilities;
