@@ -146,7 +146,7 @@ class IoctlHelper {
 
     uint32_t getFlagsForPrimeHandleToFd() const;
     std::unique_ptr<MemoryInfo> createMemoryInfo();
-    std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled);
+    virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled);
 
   protected:
     Drm &drm;

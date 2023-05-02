@@ -75,6 +75,31 @@ EngineInfo::EngineInfo(Drm *drm, const std::vector<EngineCapabilities> &engineIn
     setSupportedEnginesInfo(rootDeviceEnvironment, computeEngines, bcsInfoMask);
 }
 
+EngineInfo::EngineInfo(Drm *drm, const StackVec<std::vector<EngineClassInstance>, 2> &engineClassInstancePerTile) : tileToEngineToInstanceMap(engineClassInstancePerTile.size()) {
+    auto ioctlHelper = drm->getIoctlHelper();
+    auto &rootDeviceEnvironment = drm->getRootDeviceEnvironment();
+    auto computeEnginesPerTile = 0u;
+    auto copyEnginesPerTile = 0u;
+    for (auto tile = 0u; tile < engineClassInstancePerTile.size(); tile++) {
+        copyEnginesPerTile = 0u;
+        computeEnginesPerTile = 0u;
+        for (const auto &engine : engineClassInstancePerTile[tile]) {
+            tileToEngineMap.emplace(tile, engine);
+            if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)) {
+                tileToEngineToInstanceMap[tile][EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment)] = engine;
+            } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
+                tileToEngineToInstanceMap[tile][DrmEngineMappingHelper::engineMapping[copyEnginesPerTile]] = engine;
+                copyEnginesPerTile++;
+            } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute)) {
+                tileToEngineToInstanceMap[tile][static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + computeEnginesPerTile)] = engine;
+                computeEnginesPerTile++;
+            }
+        }
+    }
+    BcsInfoMask bcsInfoMask = maxNBitValue(copyEnginesPerTile);
+    setSupportedEnginesInfo(rootDeviceEnvironment, computeEnginesPerTile, bcsInfoMask);
+}
+
 EngineInfo::EngineInfo(Drm *drm, uint32_t tileCount, const std::vector<DistanceInfo> &distanceInfos, const std::vector<QueryItem> &queryItems, const std::vector<EngineCapabilities> &engineInfos)
     : engines(engineInfos), tileToEngineToInstanceMap(tileCount) {
     auto tile = 0u;

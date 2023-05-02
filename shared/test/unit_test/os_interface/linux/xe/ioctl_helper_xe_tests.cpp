@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
@@ -23,6 +24,7 @@ using NEO::PrelimI915::drm_syncobj_destroy;
 using NEO::PrelimI915::drm_syncobj_wait;
 
 struct MockIoctlHelperXe : IoctlHelperXe {
+    using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::xeDecanonize;
     using IoctlHelperXe::xeGetBindOpName;
     using IoctlHelperXe::xeGetClassName;
@@ -515,9 +517,13 @@ class DrmMockXe : public DrmMockCustom {
             ret = -2;
             break;
         case DrmIoctl::Query: {
-            struct drm_xe_device_query *v = static_cast<struct drm_xe_device_query *>(arg);
-            switch (v->query) {
+            struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
+            switch (deviceQuery->query) {
             case DRM_XE_DEVICE_QUERY_ENGINES:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryEngines, sizeof(queryEngines));
+                }
+                deviceQuery->size = sizeof(queryEngines);
                 break;
             }
             ret = 0;
@@ -531,6 +537,16 @@ class DrmMockXe : public DrmMockCustom {
     }
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
+    const drm_xe_engine_class_instance queryEngines[9] = {
+        {DRM_XE_ENGINE_CLASS_RENDER, 0, 0},
+        {DRM_XE_ENGINE_CLASS_COPY, 1, 0},
+        {DRM_XE_ENGINE_CLASS_COPY, 2, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1},
+        {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 7, 1},
+        {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 8, 0}};
 };
 
 TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
@@ -538,7 +554,7 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     auto mockXeIoctlHelper = static_cast<MockIoctlHelperXe *>(xeIoctlHelper.get());
 
     drm.reset();
@@ -684,4 +700,96 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     }
     EXPECT_THROW(mockXeIoctlHelper->ioctl(DrmIoctl::GemContextCreateExt, NULL), std::runtime_error);
     drm.reset();
+}
+TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    for (const auto &isSysmanEnabled : ::testing::Bool()) {
+        auto engineInfo = xeIoctlHelper->createEngineInfo(isSysmanEnabled);
+
+        EXPECT_NE(nullptr, engineInfo);
+
+        auto rcsEngineType = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *executionEnvironment->rootDeviceEnvironments[0]);
+        auto rcsEngine = engineInfo->getEngineInstance(0, rcsEngineType);
+        EXPECT_NE(nullptr, rcsEngine);
+        EXPECT_EQ(0, rcsEngine->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_RENDER), rcsEngine->engineClass);
+        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*rcsEngine));
+
+        EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1, rcsEngineType));
+
+        auto bcsEngine = engineInfo->getEngineInstance(0, aub_stream::EngineType::ENGINE_BCS);
+        EXPECT_NE(nullptr, bcsEngine);
+        EXPECT_EQ(1, bcsEngine->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COPY), bcsEngine->engineClass);
+        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*bcsEngine));
+
+        EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_BCS));
+
+        auto bcs1Engine = engineInfo->getEngineInstance(0, aub_stream::EngineType::ENGINE_BCS1);
+        EXPECT_NE(nullptr, bcs1Engine);
+        EXPECT_EQ(2, bcs1Engine->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COPY), bcs1Engine->engineClass);
+        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*bcs1Engine));
+
+        EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_BCS1));
+
+        auto ccsEngine0 = engineInfo->getEngineInstance(0, aub_stream::EngineType::ENGINE_CCS);
+        EXPECT_NE(nullptr, ccsEngine0);
+        EXPECT_EQ(3, ccsEngine0->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COMPUTE), ccsEngine0->engineClass);
+        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*ccsEngine0));
+
+        auto ccsEngine1 = engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS);
+        EXPECT_NE(nullptr, ccsEngine1);
+        EXPECT_EQ(5, ccsEngine1->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COMPUTE), ccsEngine1->engineClass);
+        EXPECT_EQ(1u, engineInfo->getEngineTileIndex(*ccsEngine1));
+
+        auto ccs1Engine0 = engineInfo->getEngineInstance(0, aub_stream::EngineType::ENGINE_CCS1);
+        EXPECT_NE(nullptr, ccs1Engine0);
+        EXPECT_EQ(4, ccs1Engine0->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COMPUTE), ccs1Engine0->engineClass);
+        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*ccs1Engine0));
+
+        auto ccs1Engine1 = engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS1);
+        EXPECT_NE(nullptr, ccs1Engine1);
+        EXPECT_EQ(6, ccs1Engine1->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COMPUTE), ccs1Engine1->engineClass);
+        EXPECT_EQ(1u, engineInfo->getEngineTileIndex(*ccs1Engine1));
+
+        std::vector<EngineClassInstance> enginesOnTile0;
+        std::vector<EngineClassInstance> enginesOnTile1;
+        engineInfo->getListOfEnginesOnATile(0, enginesOnTile0);
+        engineInfo->getListOfEnginesOnATile(1, enginesOnTile1);
+
+        for (const auto &engine : enginesOnTile0) {
+            EXPECT_NE(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_VIDEO_DECODE), engine.engineClass);
+        }
+
+        bool foundVideDecodeEngine = false;
+        for (const auto &engine : enginesOnTile1) {
+            if (engine.engineClass == DRM_XE_ENGINE_CLASS_VIDEO_DECODE) {
+                EXPECT_EQ(7, engine.engineInstance);
+                foundVideDecodeEngine = true;
+            }
+        }
+        EXPECT_EQ(isSysmanEnabled, foundVideDecodeEngine);
+
+        bool foundVideoEnhanceEngine = false;
+        for (const auto &engine : enginesOnTile0) {
+            if (engine.engineClass == DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE) {
+                EXPECT_EQ(8, engine.engineInstance);
+                foundVideoEnhanceEngine = true;
+            }
+        }
+        EXPECT_EQ(isSysmanEnabled, foundVideoEnhanceEngine);
+
+        for (const auto &engine : enginesOnTile1) {
+            EXPECT_NE(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE), engine.engineClass);
+        }
+    }
 }

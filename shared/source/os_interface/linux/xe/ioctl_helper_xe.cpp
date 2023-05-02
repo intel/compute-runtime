@@ -19,6 +19,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 
 #include "drm/i915_drm_prelim.h"
@@ -61,9 +62,6 @@ int IoctlHelperXe::xeGetQuery(Query *data) {
         switch (queryItem->queryId) {
         case static_cast<int>(DrmParam::QueryMemoryRegions):
             queryData = &memQueryFakei915;
-            break;
-        case static_cast<int>(DrmParam::QueryEngineInfo):
-            queryData = &engineFakei915;
             break;
         case static_cast<int>(DrmParam::QueryHwconfigTable):
             queryData = &hwconfigFakei915;
@@ -150,187 +148,162 @@ IoctlHelperXe::IoctlHelperXe(Drm &drmArg) : IoctlHelper(drmArg) {
 bool IoctlHelperXe::initialize() {
     bool ret = false;
     xeLog("IoctlHelperXe::initialize\n", "");
-    if (!numberHwEngines) {
-        DebugManager.flags.ForceUserptrAlignment.set(64);
-        DebugManager.flags.UseVmBind.set(1);
-        DebugManager.flags.EnableImmediateVmBindExt.set(1);
-        DebugManager.flags.UseNewQueryTopoIoctl.set(0);
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    DebugManager.flags.ForceUserptrAlignment.set(64);
+    DebugManager.flags.UseVmBind.set(1);
+    DebugManager.flags.EnableImmediateVmBindExt.set(1);
+    DebugManager.flags.UseNewQueryTopoIoctl.set(0);
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
 
-        struct drm_xe_device_query queryEngine = {};
-        queryEngine.query = DRM_XE_DEVICE_QUERY_ENGINES;
+    struct drm_xe_device_query queryConfig = {};
+    queryConfig.query = DRM_XE_DEVICE_QUERY_CONFIG;
 
-        IoctlHelper::ioctl(DrmIoctl::Query, &queryEngine);
-
-        hwEngines = std::make_unique<struct drm_xe_engine_class_instance[]>(queryEngine.size);
-        queryEngine.data = castToUint64(hwEngines.get());
-        IoctlHelper::ioctl(DrmIoctl::Query, &queryEngine);
-
-        numberHwEngines = queryEngine.size /
-                          sizeof(struct drm_xe_engine_class_instance);
-        struct drm_xe_engine_class_instance *currentEngine;
-        engineFakei915.resize(sizeof(drm_i915_query_engine_info) + (numberHwEngines * sizeof(drm_i915_engine_info)));
-        struct drm_i915_query_engine_info *i915EngineInfo = reinterpret_cast<struct drm_i915_query_engine_info *>(engineFakei915.data());
-        i915EngineInfo->num_engines = numberHwEngines;
-        for (int i = 0; i < numberHwEngines && (currentEngine = &hwEngines.get()[i]); ++i) {
-            xeLog("\t%s:%d\n", xeGetClassName(currentEngine->engine_class), currentEngine->engine_instance);
-            i915EngineInfo->engines[i].engine.engine_class = currentEngine->engine_class;
-            i915EngineInfo->engines[i].engine.engine_instance = currentEngine->engine_instance;
-            i915EngineInfo->engines[i].flags = 1;
-        }
-
-        xeLog("numberHwEngines=%d\n", numberHwEngines);
-        if (numberHwEngines) {
-
-            struct drm_xe_device_query queryConfig = {};
-            queryConfig.query = DRM_XE_DEVICE_QUERY_CONFIG;
-
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-            auto data = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
-            struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(data.data());
-            queryConfig.data = castToUint64(config);
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-            xeLog("XE_QUERY_CONFIG_REV_AND_DEVICE_ID\t%#llx\n",
-                  config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID]);
-            xeLog("  REV_ID\t\t\t\t%#llx\n",
-                  config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16);
-            xeLog("  DEVICE_ID\t\t\t\t%#llx\n",
-                  config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff);
-            xeLog("XE_QUERY_CONFIG_FLAGS\t\t\t%#llx\n",
-                  config->info[XE_QUERY_CONFIG_FLAGS]);
-            xeLog("  XE_QUERY_CONFIG_FLAGS_HAS_VRAM\t%s\n",
-                  config->info[XE_QUERY_CONFIG_FLAGS] &
-                          XE_QUERY_CONFIG_FLAGS_HAS_VRAM
-                      ? "ON"
-                      : "OFF");
-            xeLog("  XE_QUERY_CONFIG_FLAGS_USE_GUC\t\t%s\n",
-                  config->info[XE_QUERY_CONFIG_FLAGS] &
-                          XE_QUERY_CONFIG_FLAGS_USE_GUC
-                      ? "ON"
-                      : "OFF");
-            xeLog("XE_QUERY_CONFIG_MIN_ALIGNEMENT\t\t%#llx\n",
-                  config->info[XE_QUERY_CONFIG_MIN_ALIGNEMENT]);
-            xeLog("XE_QUERY_CONFIG_VA_BITS\t\t%#llx\n",
-                  config->info[XE_QUERY_CONFIG_VA_BITS]);
-            xeLog("XE_QUERY_CONFIG_GT_COUNT\t\t%llu\n",
-                  config->info[XE_QUERY_CONFIG_GT_COUNT]);
-            xeLog("XE_QUERY_CONFIG_MEM_REGION_COUNT\t%llu\n",
-                  config->info[XE_QUERY_CONFIG_MEM_REGION_COUNT]);
-
-            chipsetId = config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
-            revId = static_cast<int>(config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16);
-            hasVram = config->info[XE_QUERY_CONFIG_FLAGS] & XE_QUERY_CONFIG_FLAGS_HAS_VRAM ? 1 : 0;
-            addressWidth = static_cast<uint32_t>(config->info[XE_QUERY_CONFIG_VA_BITS]);
-
-            memset(&queryConfig, 0, sizeof(queryConfig));
-            queryConfig.query = DRM_XE_DEVICE_QUERY_GTS;
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-            auto dataGts = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
-            struct drm_xe_query_gts *gts = reinterpret_cast<struct drm_xe_query_gts *>(dataGts.data());
-            queryConfig.data = castToUint64(gts);
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-            for (uint32_t i = 0; i < gts->num_gt; i++) {
-                xeMemoryRegions |= gts->gts[i].native_mem_regions | gts->gts[i].slow_mem_regions;
-                xeTimestampFrequency = gts->gts[i].clock_freq;
-            }
-            xeLog("xeMemoryRegions 0x%llx\n", xeMemoryRegions);
-
-            memset(&queryConfig, 0, sizeof(queryConfig));
-            queryConfig.query = DRM_XE_DEVICE_QUERY_MEM_USAGE;
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-            auto dataMem = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
-            struct drm_xe_query_mem_usage *configMem = reinterpret_cast<struct drm_xe_query_mem_usage *>(dataMem.data());
-            queryConfig.data = castToUint64(configMem);
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-
-            memQueryFakei915.resize(sizeof(drm_i915_query_memory_regions) + (configMem->num_regions * sizeof(drm_i915_memory_region_info)));
-            struct drm_i915_query_memory_regions *i915MemQuery = reinterpret_cast<struct drm_i915_query_memory_regions *>(memQueryFakei915.data());
-            i915MemQuery->num_regions = configMem->num_regions;
-            for (uint32_t i = 0; i < configMem->num_regions; i++) {
-                const char *memName = NULL;
-                uint16_t memClass = 0;
-                uint16_t memInst = configMem->regions[i].instance;
-
-                switch (configMem->regions[i].mem_class) {
-                case XE_MEM_REGION_CLASS_SYSMEM:
-                    memName = "SYSMEM";
-                    memClass = getDrmParamValue(DrmParam::MemoryClassSystem);
-                    break;
-                case XE_MEM_REGION_CLASS_VRAM:
-                    memName = "VRAM";
-                    memClass = getDrmParamValue(DrmParam::MemoryClassDevice);
-                    memInst--;
-                    break;
-                default:
-                    xeLog("Unhandled Xe memory class", "");
-                    UNRECOVERABLE_IF(true);
-                    break;
-                }
-                i915MemQuery->regions[i].region.memory_class = memClass;
-                i915MemQuery->regions[i].region.memory_instance = memInst;
-                i915MemQuery->regions[i].probed_size = configMem->regions[i].total_size;
-                i915MemQuery->regions[i].unallocated_size = configMem->regions[i].total_size - configMem->regions[i].used;
-                xeLog(" %s c=0x%x i=%d T=%llx U=0x%llx / i915: %d %d\n",
-                      memName, configMem->regions[i].mem_class, configMem->regions[i].instance,
-                      configMem->regions[i].total_size, configMem->regions[i].used, memClass, memInst);
-            }
-
-            memset(&queryConfig, 0, sizeof(queryConfig));
-            queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-            hwconfigFakei915.resize(queryConfig.size);
-            queryConfig.data = castToUint64(hwconfigFakei915.data());
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-
-            memset(&queryConfig, 0, sizeof(queryConfig));
-            queryConfig.query = DRM_XE_DEVICE_QUERY_GT_TOPOLOGY;
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-            std::vector<uint8_t> topology(queryConfig.size);
-            queryConfig.data = castToUint64(topology.data());
-            IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-            std::vector<uint8_t> geomDss;
-            std::vector<uint8_t> computeDss;
-            std::vector<uint8_t> euDss;
-            uint32_t topologySize = queryConfig.size;
-            uint8_t *dataPtr = reinterpret_cast<uint8_t *>(topology.data());
-            while (topologySize >= sizeof(struct drm_xe_query_topology_mask)) {
-                struct drm_xe_query_topology_mask *topo = reinterpret_cast<struct drm_xe_query_topology_mask *>(dataPtr);
-                uint32_t itemSize = sizeof(struct drm_xe_query_topology_mask) + topo->num_bytes;
-                std::vector<uint8_t> *toFill = nullptr;
-
-                switch (topo->type) {
-                case XE_TOPO_DSS_GEOMETRY:
-                    toFill = &geomDss;
-                    break;
-                case XE_TOPO_DSS_COMPUTE:
-                    toFill = &computeDss;
-                    break;
-                case XE_TOPO_EU_PER_DSS:
-                    toFill = &euDss;
-                    break;
-                default:
-                    xeLog("Un handle GT Topo type: %d\n", topo->type);
-                    break;
-                }
-                if (toFill != nullptr) {
-                    for (uint32_t j = 0; j < topo->num_bytes; j++)
-                        toFill->push_back(topo->mask[j]);
-                }
-                topologySize -= itemSize;
-                dataPtr += itemSize;
-            }
-            topologyFakei915 = xeRebuildi915Topology(&geomDss, &computeDss, &euDss);
-            if (topologyFakei915.size()) {
-                ret = true;
-            } else {
-                xeLog("can't get i915 topology\n", "");
-                UNRECOVERABLE_IF(true);
-            }
-            auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
-            hwInfo->platform.usDeviceID = chipsetId;
-            hwInfo->platform.usRevId = revId;
-        }
+    auto retVal = IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    if (retVal != 0 || queryConfig.size == 0) {
+        return false;
     }
+    auto data = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
+    struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(data.data());
+    queryConfig.data = castToUint64(config);
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    xeLog("XE_QUERY_CONFIG_REV_AND_DEVICE_ID\t%#llx\n",
+          config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID]);
+    xeLog("  REV_ID\t\t\t\t%#llx\n",
+          config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16);
+    xeLog("  DEVICE_ID\t\t\t\t%#llx\n",
+          config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff);
+    xeLog("XE_QUERY_CONFIG_FLAGS\t\t\t%#llx\n",
+          config->info[XE_QUERY_CONFIG_FLAGS]);
+    xeLog("  XE_QUERY_CONFIG_FLAGS_HAS_VRAM\t%s\n",
+          config->info[XE_QUERY_CONFIG_FLAGS] &
+                  XE_QUERY_CONFIG_FLAGS_HAS_VRAM
+              ? "ON"
+              : "OFF");
+    xeLog("  XE_QUERY_CONFIG_FLAGS_USE_GUC\t\t%s\n",
+          config->info[XE_QUERY_CONFIG_FLAGS] &
+                  XE_QUERY_CONFIG_FLAGS_USE_GUC
+              ? "ON"
+              : "OFF");
+    xeLog("XE_QUERY_CONFIG_MIN_ALIGNEMENT\t\t%#llx\n",
+          config->info[XE_QUERY_CONFIG_MIN_ALIGNEMENT]);
+    xeLog("XE_QUERY_CONFIG_VA_BITS\t\t%#llx\n",
+          config->info[XE_QUERY_CONFIG_VA_BITS]);
+    xeLog("XE_QUERY_CONFIG_GT_COUNT\t\t%llu\n",
+          config->info[XE_QUERY_CONFIG_GT_COUNT]);
+    xeLog("XE_QUERY_CONFIG_MEM_REGION_COUNT\t%llu\n",
+          config->info[XE_QUERY_CONFIG_MEM_REGION_COUNT]);
+
+    chipsetId = config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
+    revId = static_cast<int>(config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16);
+    hasVram = config->info[XE_QUERY_CONFIG_FLAGS] & XE_QUERY_CONFIG_FLAGS_HAS_VRAM ? 1 : 0;
+    addressWidth = static_cast<uint32_t>(config->info[XE_QUERY_CONFIG_VA_BITS]);
+
+    memset(&queryConfig, 0, sizeof(queryConfig));
+    queryConfig.query = DRM_XE_DEVICE_QUERY_GTS;
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    auto dataGts = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
+    struct drm_xe_query_gts *gts = reinterpret_cast<struct drm_xe_query_gts *>(dataGts.data());
+    queryConfig.data = castToUint64(gts);
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    for (uint32_t i = 0; i < gts->num_gt; i++) {
+        xeMemoryRegions |= gts->gts[i].native_mem_regions | gts->gts[i].slow_mem_regions;
+        xeTimestampFrequency = gts->gts[i].clock_freq;
+    }
+    xeLog("xeMemoryRegions 0x%llx\n", xeMemoryRegions);
+
+    memset(&queryConfig, 0, sizeof(queryConfig));
+    queryConfig.query = DRM_XE_DEVICE_QUERY_MEM_USAGE;
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    auto dataMem = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
+    struct drm_xe_query_mem_usage *configMem = reinterpret_cast<struct drm_xe_query_mem_usage *>(dataMem.data());
+    queryConfig.data = castToUint64(configMem);
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+
+    memQueryFakei915.resize(sizeof(drm_i915_query_memory_regions) + (configMem->num_regions * sizeof(drm_i915_memory_region_info)));
+    struct drm_i915_query_memory_regions *i915MemQuery = reinterpret_cast<struct drm_i915_query_memory_regions *>(memQueryFakei915.data());
+    i915MemQuery->num_regions = configMem->num_regions;
+    for (uint32_t i = 0; i < configMem->num_regions; i++) {
+        const char *memName = NULL;
+        uint16_t memClass = 0;
+        uint16_t memInst = configMem->regions[i].instance;
+
+        switch (configMem->regions[i].mem_class) {
+        case XE_MEM_REGION_CLASS_SYSMEM:
+            memName = "SYSMEM";
+            memClass = getDrmParamValue(DrmParam::MemoryClassSystem);
+            break;
+        case XE_MEM_REGION_CLASS_VRAM:
+            memName = "VRAM";
+            memClass = getDrmParamValue(DrmParam::MemoryClassDevice);
+            memInst--;
+            break;
+        default:
+            xeLog("Unhandled Xe memory class", "");
+            UNRECOVERABLE_IF(true);
+            break;
+        }
+        i915MemQuery->regions[i].region.memory_class = memClass;
+        i915MemQuery->regions[i].region.memory_instance = memInst;
+        i915MemQuery->regions[i].probed_size = configMem->regions[i].total_size;
+        i915MemQuery->regions[i].unallocated_size = configMem->regions[i].total_size - configMem->regions[i].used;
+        xeLog(" %s c=0x%x i=%d T=%llx U=0x%llx / i915: %d %d\n",
+              memName, configMem->regions[i].mem_class, configMem->regions[i].instance,
+              configMem->regions[i].total_size, configMem->regions[i].used, memClass, memInst);
+    }
+
+    memset(&queryConfig, 0, sizeof(queryConfig));
+    queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    hwconfigFakei915.resize(queryConfig.size);
+    queryConfig.data = castToUint64(hwconfigFakei915.data());
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+
+    memset(&queryConfig, 0, sizeof(queryConfig));
+    queryConfig.query = DRM_XE_DEVICE_QUERY_GT_TOPOLOGY;
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    std::vector<uint8_t> topology(queryConfig.size);
+    queryConfig.data = castToUint64(topology.data());
+    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    std::vector<uint8_t> geomDss;
+    std::vector<uint8_t> computeDss;
+    std::vector<uint8_t> euDss;
+    uint32_t topologySize = queryConfig.size;
+    uint8_t *dataPtr = reinterpret_cast<uint8_t *>(topology.data());
+    while (topologySize >= sizeof(struct drm_xe_query_topology_mask)) {
+        struct drm_xe_query_topology_mask *topo = reinterpret_cast<struct drm_xe_query_topology_mask *>(dataPtr);
+        uint32_t itemSize = sizeof(struct drm_xe_query_topology_mask) + topo->num_bytes;
+        std::vector<uint8_t> *toFill = nullptr;
+
+        switch (topo->type) {
+        case XE_TOPO_DSS_GEOMETRY:
+            toFill = &geomDss;
+            break;
+        case XE_TOPO_DSS_COMPUTE:
+            toFill = &computeDss;
+            break;
+        case XE_TOPO_EU_PER_DSS:
+            toFill = &euDss;
+            break;
+        default:
+            xeLog("Un handle GT Topo type: %d\n", topo->type);
+            break;
+        }
+        if (toFill != nullptr) {
+            for (uint32_t j = 0; j < topo->num_bytes; j++)
+                toFill->push_back(topo->mask[j]);
+        }
+        topologySize -= itemSize;
+        dataPtr += itemSize;
+    }
+    topologyFakei915 = xeRebuildi915Topology(&geomDss, &computeDss, &euDss);
+    if (topologyFakei915.size()) {
+        ret = true;
+    } else {
+        xeLog("can't get i915 topology\n", "");
+        UNRECOVERABLE_IF(true);
+    }
+    auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->platform.usDeviceID = chipsetId;
+    hwInfo->platform.usRevId = revId;
     return ret;
 }
 
@@ -344,6 +317,55 @@ bool IoctlHelperXe::isSetPairAvailable() {
 
 bool IoctlHelperXe::isVmBindAvailable() {
     return true;
+}
+
+std::vector<uint8_t> IoctlHelperXe::queryData(uint32_t queryId) {
+    struct drm_xe_device_query deviceQuery = {};
+    deviceQuery.query = queryId;
+
+    IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
+
+    std::vector<uint8_t> retVal(deviceQuery.size);
+
+    deviceQuery.data = castToUint64(retVal.data());
+    IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
+
+    return retVal;
+}
+
+std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled) {
+    auto enginesData = queryData(DRM_XE_DEVICE_QUERY_ENGINES);
+
+    auto numberHwEngines = enginesData.size() /
+                           sizeof(struct drm_xe_engine_class_instance);
+
+    xeLog("numberHwEngines=%d\n", numberHwEngines);
+    auto queriedEngines = reinterpret_cast<struct drm_xe_engine_class_instance *>(enginesData.data());
+
+    StackVec<std::vector<EngineClassInstance>, 2> enginesPerTile{};
+
+    for (auto i = 0u; i < numberHwEngines; i++) {
+        auto tile = queriedEngines[i].gt_id;
+        EngineClassInstance engineClassInstance{};
+        engineClassInstance.engineClass = queriedEngines[i].engine_class;
+        engineClassInstance.engineInstance = queriedEngines[i].engine_instance;
+        xeLog("\t%s:%d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance);
+
+        if (engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassCompute) ||
+            engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassRender) ||
+            engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassCopy) ||
+            (isSysmanEnabled && (engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassVideo) ||
+                                 engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassVideoEnhance)))) {
+
+            if (enginesPerTile.size() <= tile) {
+                enginesPerTile.resize(tile + 1);
+            }
+            enginesPerTile[tile].push_back(engineClassInstance);
+            allEngines.push_back(queriedEngines[i]);
+        }
+    }
+
+    return std::make_unique<EngineInfo>(&drm, enginesPerTile);
 }
 
 int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
@@ -555,24 +577,6 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
 
 int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    if (distanceInfos.size() == 0) {
-        DistanceInfo d;
-        struct drm_xe_engine_class_instance *currentEngine;
-        for (int i = 0; i < numberHwEngines && (currentEngine = &hwEngines.get()[i]); ++i) {
-            switch (currentEngine->engine_class) {
-            case DRM_XE_ENGINE_CLASS_RENDER:
-            case DRM_XE_ENGINE_CLASS_COPY:
-            case DRM_XE_ENGINE_CLASS_COMPUTE:
-                d.distance = 0;
-                d.engine.engineClass = currentEngine->engine_class;
-                d.engine.engineInstance = currentEngine->engine_instance;
-                d.region.memoryClass = XE_MEM_REGION_CLASS_VRAM;
-                d.region.memoryInstance = 0;
-                distanceInfos.push_back(d);
-                break;
-            }
-        }
-    }
     return 0;
 }
 
@@ -1356,13 +1360,12 @@ std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int subDevice
 
 struct drm_xe_engine_class_instance *
 IoctlHelperXe::xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance) {
-    struct drm_xe_engine_class_instance *currentEngine = nullptr;
-    for (int i = 0; i < numberHwEngines && (currentEngine = &hwEngines.get()[i]); ++i) {
-        if (currentEngine->engine_class == engineClass &&
-            (engineInstance == XE_FIND_INVALID_INSTANCE || currentEngine->engine_instance == engineInstance)) {
-            xeLog("\t select: %s:%d (%d)\n", xeGetClassName(currentEngine->engine_class),
-                  currentEngine->engine_instance, engineInstance);
-            return currentEngine;
+    for (auto &engine : allEngines) {
+        if (engine.engine_class == engineClass &&
+            (engineInstance == XE_FIND_INVALID_INSTANCE || engine.engine_instance == engineInstance)) {
+            xeLog("\t select: %s:%d (%d)\n", xeGetClassName(engine.engine_class),
+                  engine.engine_instance, engineInstance);
+            return &engine;
         }
     }
     return nullptr;

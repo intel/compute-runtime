@@ -94,6 +94,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
     bool isWaitBeforeBindRequired(bool bind) const override;
+    std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
 
     std::vector<uint8_t> xeRebuildi915Topology(std::vector<uint8_t> *geomDss, std::vector<uint8_t> *computeDss, std::vector<uint8_t> *euDss);
 
@@ -114,6 +115,7 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetClassName(int className);
     const char *xeGetBindOpName(int bindOp);
     const char *xeGetengineClassName(uint32_t engineClass);
+    std::vector<uint8_t> queryData(uint32_t queryId);
 
   protected:
     int chipsetId = 0;
@@ -123,8 +125,6 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t xeVmId = 0;
     uint32_t userPtrHandle = 0;
     uint32_t addressWidth = 48;
-    int numberHwEngines = 0;
-    std::unique_ptr<struct drm_xe_engine_class_instance[]> hwEngines;
     int xeFileHandle = 0;
     std::mutex xeLock;
     std::vector<BindInfo> bindInfo;
@@ -132,10 +132,10 @@ class IoctlHelperXe : public IoctlHelper {
     uint64_t xeMemoryRegions = 0;
     uint32_t xeTimestampFrequency = 0;
     std::vector<uint8_t> memQueryFakei915;
-    std::vector<uint8_t> engineFakei915;
     std::vector<uint8_t> hwconfigFakei915;
     std::vector<uint8_t> topologyFakei915;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
+    std::vector<drm_xe_engine_class_instance> allEngines;
 };
 
 } // namespace NEO
