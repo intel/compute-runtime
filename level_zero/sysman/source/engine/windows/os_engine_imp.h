@@ -13,15 +13,20 @@
 
 namespace L0 {
 namespace Sysman {
+class KmdSysManager;
 class WddmEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   public:
-    ze_result_t getActivity(zes_engine_stats_t *pStats) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
-    ze_result_t getProperties(zes_engine_properties_t &properties) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
-    bool isEngineModuleSupported() override { return false; };
+    ze_result_t getActivity(zes_engine_stats_t *pStats) override;
+    ze_result_t getProperties(zes_engine_properties_t &properties) override;
+    bool isEngineModuleSupported() override;
 
     WddmEngineImp() = default;
-    WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId) {}
+    WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId);
     ~WddmEngineImp() override = default;
+
+  protected:
+    KmdSysManager *pKmdSysManager = nullptr;
+    zes_engine_group_t engineGroup = ZES_ENGINE_GROUP_ALL;
 };
 } // namespace Sysman
 } // namespace L0
