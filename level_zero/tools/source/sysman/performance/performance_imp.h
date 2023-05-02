@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class PerformanceImp : public Performance, NEO::NonCopyableOrMovableClass {
     PerformanceImp() = delete;
     PerformanceImp(OsSysman *pOsSysman, ze_device_handle_t handle, zes_engine_type_flag_t domain);
     ~PerformanceImp() override;
-    OsPerformance *pOsPerformance = nullptr;
+    std::unique_ptr<OsPerformance> pOsPerformance;
 
     void init();
 

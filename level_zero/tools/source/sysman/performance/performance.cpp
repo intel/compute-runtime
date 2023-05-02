@@ -16,21 +16,13 @@
 namespace L0 {
 
 PerformanceHandleContext::~PerformanceHandleContext() {
-    for (auto &pPerformance : handleList) {
-        if (pPerformance) {
-            delete pPerformance;
-            pPerformance = nullptr;
-        }
-        handleList.pop_back();
-    }
+    handleList.clear();
 }
 
 void PerformanceHandleContext::createHandle(ze_device_handle_t deviceHandle, zes_engine_type_flag_t domain) {
-    Performance *pPerformance = new PerformanceImp(pOsSysman, deviceHandle, domain);
+    std::unique_ptr<Performance> pPerformance = std::make_unique<PerformanceImp>(pOsSysman, deviceHandle, domain);
     if (pPerformance->isPerformanceEnabled == true) {
-        handleList.push_back(pPerformance);
-    } else {
-        delete pPerformance;
+        handleList.push_back(std::move(pPerformance));
     }
 }
 

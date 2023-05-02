@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ struct PerformanceHandleContext {
     ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Performance *> handleList = {};
+    std::vector<std::unique_ptr<Performance>> handleList = {};
 
   private:
     void createHandle(ze_device_handle_t deviceHandle, zes_engine_type_flag_t domain);

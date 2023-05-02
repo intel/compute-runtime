@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include <level_zero/zes_api.h>
+
+#include <memory>
 
 namespace L0 {
 
@@ -20,7 +22,7 @@ class OsPerformance {
 
     virtual bool isPerformanceSupported(void) = 0;
 
-    static OsPerformance *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_engine_type_flag_t domain);
+    static std::unique_ptr<OsPerformance> create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_engine_type_flag_t domain);
     virtual ~OsPerformance() {}
 };
 

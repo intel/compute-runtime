@@ -104,10 +104,10 @@ WddmPerformanceImp::WddmPerformanceImp(OsSysman *pOsSysman, ze_bool_t onSubdevic
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
-OsPerformance *OsPerformance::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId,
-                                     zes_engine_type_flag_t domain) {
-    WddmPerformanceImp *pWddmPerformanceImp = new WddmPerformanceImp(pOsSysman, onSubdevice, subdeviceId, domain);
-    return static_cast<OsPerformance *>(pWddmPerformanceImp);
+std::unique_ptr<OsPerformance> OsPerformance::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId,
+                                                     zes_engine_type_flag_t domain) {
+    std::unique_ptr<WddmPerformanceImp> pWddmPerformanceImp = std::make_unique<WddmPerformanceImp>(pOsSysman, onSubdevice, subdeviceId, domain);
+    return pWddmPerformanceImp;
 }
 
 } // namespace L0

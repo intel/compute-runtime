@@ -35,9 +35,6 @@ class SysmanDevicePerformanceFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        for (auto handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
-            delete handle;
-        }
         pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         std::vector<ze_device_handle_t> deviceHandles;

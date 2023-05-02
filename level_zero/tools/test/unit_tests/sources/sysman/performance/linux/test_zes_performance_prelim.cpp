@@ -30,11 +30,8 @@ class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
         ptestSysfsAccess = std::make_unique<MockPerformanceSysfsAccess>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
-        for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
-            delete handle;
-            handle = nullptr;
-            pSysmanDeviceImp->pPerformanceHandleContext->handleList.pop_back();
-        }
+
+        pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
         if (subDeviceCount == 0) {
@@ -85,11 +82,8 @@ TEST_F(ZesPerformanceFixture, GivenValidSysmanHandleWhenRetrievingPerfThenValidH
 
 TEST_F(ZesPerformanceFixture, GivenInAnyDomainTypeIfcanReadFailsWhenGettingPerfHandlesThenZeroHandlesAreRetrieved) {
     ptestSysfsAccess->mockCanReadResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
-        delete handle;
-        handle = nullptr;
-        pSysmanDeviceImp->pPerformanceHandleContext->handleList.pop_back();
-    }
+
+    pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
 
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_MEDIA);
     EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
@@ -108,11 +102,8 @@ TEST_F(ZesPerformanceFixture, GivenInAnyDomainTypeIfcanReadFailsWhenGettingPerfH
 
 TEST_F(ZesPerformanceFixture, GivenInAnyDomainTypeIfSysfsReadForMediaAndComputeScaleFailsWhileGettingPerfHandlesThenZeroHandlesAreRetrieved) {
     ptestSysfsAccess->mockReadResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
-        delete handle;
-        handle = nullptr;
-        pSysmanDeviceImp->pPerformanceHandleContext->handleList.pop_back();
-    }
+
+    pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
 
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_MEDIA);
     EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
@@ -126,11 +117,8 @@ TEST_F(ZesPerformanceFixture, GivenInAnyDomainTypeIfSysfsReadForMediaAndComputeS
 }
 
 TEST_F(ZesPerformanceFixture, GivenInAnyDomainTypeIfMediaAndBaseFreqFactorSysfsNodesAreAbsentWhenGettingPerfHandlesThenZeroHandlesAreRetrieved) {
-    for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
-        delete handle;
-        handle = nullptr;
-        pSysmanDeviceImp->pPerformanceHandleContext->handleList.pop_back();
-    }
+
+    pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
     ptestSysfsAccess->mockReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_MEDIA);
     EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
@@ -174,11 +162,8 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandleWhenGettingConfigThenSuccessIs
 }
 
 TEST_F(ZesPerformanceFixture, GivenValidPerfHandlesWhenInvalidMultiplierValuesAreReturnedBySysfsInterfaceThenUnknownErrorIsReturned) {
-    for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
-        delete handle;
-        handle = nullptr;
-        pSysmanDeviceImp->pPerformanceHandleContext->handleList.pop_back();
-    }
+
+    pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
     ptestSysfsAccess->isReturnUnknownFailure = true;
     pSysmanDeviceImp->pPerformanceHandleContext->init(deviceHandles, device);
     auto handles = getPerfHandles(mockHandleCount);
@@ -189,11 +174,8 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandlesWhenInvalidMultiplierValuesAr
 }
 
 TEST_F(ZesPerformanceFixture, GivenValidPerfHandlesWhenBaseAndMediaFreqFactorNodesAreAbsentThenUnsupportedFeatureIsReturned) {
-    for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
-        delete handle;
-        handle = nullptr;
-        pSysmanDeviceImp->pPerformanceHandleContext->handleList.pop_back();
-    }
+
+    pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
     ptestSysfsAccess->isMediaBaseFailure = true;
     pSysmanDeviceImp->pPerformanceHandleContext->init(deviceHandles, device);
     auto handles = getPerfHandles(mockHandleCount);
@@ -331,11 +313,8 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandlesButSysfsReadsFailAtDifferentB
 
 TEST_F(ZesPerformanceFixture, GivenValidOfjectsOfClassPerformanceImpAndPerformanceHandleContextThenDuringObjectReleaseCheckDestructorBranches) {
     for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
-        auto pPerformanceImp = static_cast<PerformanceImp *>(handle);
-        delete pPerformanceImp->pOsPerformance;
+        auto pPerformanceImp = static_cast<PerformanceImp *>(handle.get());
         pPerformanceImp->pOsPerformance = nullptr;
-        delete handle;
-        handle = nullptr;
     }
 }
 

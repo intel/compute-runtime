@@ -85,27 +85,24 @@ TEST_F(ZesPerformanceFixture, GivenValidOfjectsOfClassPerformanceImpAndPerforman
     // Check destructors of PerformanceImp and PerformanceHandleContext
     std::unique_ptr<PerformanceHandleContext> pPerformanceHandleContext1 = std::make_unique<PerformanceHandleContext>(pOsSysman);
     for (const auto &deviceHandle : deviceHandles) {
-        Performance *pPerformance1 = new PerformanceImp(pOsSysman, deviceHandle, ZES_ENGINE_TYPE_FLAG_MEDIA);
-        pPerformanceHandleContext1->handleList.push_back(pPerformance1);
-        Performance *pPerformance2 = new PerformanceImp(pOsSysman, deviceHandle, ZES_ENGINE_TYPE_FLAG_COMPUTE);
-        pPerformanceHandleContext1->handleList.push_back(pPerformance2);
+        std::unique_ptr<Performance> pPerformance1 = std::make_unique<PerformanceImp>(pOsSysman, deviceHandle, ZES_ENGINE_TYPE_FLAG_MEDIA);
+        pPerformanceHandleContext1->handleList.push_back(std::move(pPerformance1));
+        std::unique_ptr<Performance> pPerformance2 = std::make_unique<PerformanceImp>(pOsSysman, deviceHandle, ZES_ENGINE_TYPE_FLAG_COMPUTE);
+        pPerformanceHandleContext1->handleList.push_back(std::move(pPerformance2));
     }
 
     // Check branches of destructors of PerformanceImp and PerformanceHandleContext
     std::unique_ptr<PerformanceHandleContext> pPerformanceHandleContext2 = std::make_unique<PerformanceHandleContext>(pOsSysman);
     for (const auto &deviceHandle : deviceHandles) {
-        Performance *pPerformance1 = new PerformanceImp(pOsSysman, deviceHandle, ZES_ENGINE_TYPE_FLAG_MEDIA);
-        pPerformanceHandleContext2->handleList.push_back(pPerformance1);
-        Performance *pPerformance2 = new PerformanceImp(pOsSysman, deviceHandle, ZES_ENGINE_TYPE_FLAG_COMPUTE);
-        pPerformanceHandleContext2->handleList.push_back(pPerformance2);
+        std::unique_ptr<Performance> pPerformance1 = std::make_unique<PerformanceImp>(pOsSysman, deviceHandle, ZES_ENGINE_TYPE_FLAG_MEDIA);
+        pPerformanceHandleContext2->handleList.push_back(std::move(pPerformance1));
+        std::unique_ptr<Performance> pPerformance2 = std::make_unique<PerformanceImp>(pOsSysman, deviceHandle, ZES_ENGINE_TYPE_FLAG_COMPUTE);
+        pPerformanceHandleContext2->handleList.push_back(std::move(pPerformance2));
     }
 
     for (auto &handle : pPerformanceHandleContext2->handleList) {
-        auto pPerformanceImp = static_cast<PerformanceImp *>(handle);
-        delete pPerformanceImp->pOsPerformance;
+        auto pPerformanceImp = static_cast<PerformanceImp *>(handle.get());
         pPerformanceImp->pOsPerformance = nullptr;
-        delete handle;
-        handle = nullptr;
     }
 }
 

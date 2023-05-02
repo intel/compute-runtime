@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,11 +44,6 @@ PerformanceImp::PerformanceImp(OsSysman *pOsSysman, ze_device_handle_t handle, z
     init();
 }
 
-PerformanceImp::~PerformanceImp() {
-    if (pOsPerformance != nullptr) {
-        delete pOsPerformance;
-        pOsPerformance = nullptr;
-    }
-}
+PerformanceImp::~PerformanceImp() = default;
 
 } // namespace L0
