@@ -188,8 +188,8 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
 
 void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                           const UnifiedMemoryProperties &memoryProperties) {
-    size_t pageSizeForAlignment = MemoryConstants::pageSize;
-    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
+    size_t pageSizeForAlignment = alignUp<size_t>(memoryProperties.alignment, MemoryConstants::pageSize);
+    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize);
 
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
@@ -206,6 +206,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                  false,
                                                  (deviceBitfield.count() > 1) && multiOsContextSupport,
                                                  deviceBitfield};
+    unifiedMemoryProperties.alignment = pageSizeForAlignment;
     unifiedMemoryProperties.flags.preferCompressed = compressionEnabled;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.isUSMHostAllocation = true;
@@ -370,8 +371,8 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
     auto &deviceBitfield = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
-    size_t pageSizeForAlignment = 2 * MemoryConstants::megaByte;
-    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
+    size_t pageSizeForAlignment = alignUp<size_t>(unifiedMemoryProperties.alignment, 2 * MemoryConstants::megaByte);
+    size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        true,
                                        alignedSize,
@@ -575,15 +576,15 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
     auto externalPtr = reinterpret_cast<void *>(unifiedMemoryProperties.allocationFlags.hostptr);
     bool useExternalHostPtrForCpu = externalPtr != nullptr;
-    constexpr auto pageSizeForAlignment = MemoryConstants::pageSize64k;
-    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
+    size_t pageSizeForAlignment = alignUp<size_t>(unifiedMemoryProperties.alignment, MemoryConstants::pageSize64k);
+    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        !useExternalHostPtrForCpu, // allocateMemory
                                        alignedSize, AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
-    cpuProperties.alignment = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().getSvmCpuAlignment();
+    cpuProperties.alignment = std::max(pageSizeForAlignment, memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().getSvmCpuAlignment());
     cpuProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
     cpuProperties.forceKMDAllocation = true;
     cpuProperties.makeGPUVaDifferentThanCPUPtr = true;
