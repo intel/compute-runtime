@@ -23,6 +23,7 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     uint64_t handle = 0;
     uint64_t handleType = 0;
     uintptr_t hostptr = 0;
+    std::vector<Device *> devices;
 
     if (properties != nullptr) {
         for (int i = 0; properties[i] != 0; i += 2) {
@@ -60,6 +61,17 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
                 handle = static_cast<uint64_t>(properties[i + 1]);
                 handleType = static_cast<uint64_t>(UnifiedSharingHandleType::Win32Nt);
                 break;
+            case CL_DEVICE_HANDLE_LIST_KHR:
+                while (properties[i + 1] != CL_DEVICE_HANDLE_LIST_END_KHR) {
+                    cl_device_id deviceId = reinterpret_cast<cl_device_id>(properties[i + 1]);
+                    auto pClDevice = NEO::castToObject<ClDevice>(deviceId);
+                    if ((pClDevice == nullptr) || (!context.isDeviceAssociated(*pClDevice))) {
+                        return false;
+                    }
+                    devices.push_back(&pClDevice->getDevice());
+                    i++;
+                }
+                break;
             default:
                 return false;
             }
@@ -70,6 +82,7 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     memoryProperties.handleType = handleType;
     memoryProperties.handle = handle;
     memoryProperties.hostptr = hostptr;
+    memoryProperties.associatedDevices = devices;
 
     switch (objectType) {
     case ClMemoryPropertiesHelper::ObjType::BUFFER:

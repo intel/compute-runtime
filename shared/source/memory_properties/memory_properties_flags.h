@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ struct MemoryProperties {
     uint64_t handleType = 0;
     uintptr_t hostptr = 0;
     const Device *pDevice = nullptr;
+    std::vector<Device *> associatedDevices;
     uint32_t memCacheClos = 0;
     union {
         MemoryFlags flags;

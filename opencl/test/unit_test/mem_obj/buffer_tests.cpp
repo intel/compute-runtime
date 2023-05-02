@@ -619,6 +619,40 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
     }
 }
 
+TEST(Buffer, givenPropertiesWithClDeviceHandleListKHRWhenCreateBufferThenCorrectBufferIsSet) {
+    MockDefaultContext context;
+    auto clDevice = context.getDevice(1);
+    auto clDevice2 = context.getDevice(2);
+    cl_device_id deviceId = clDevice;
+    cl_device_id deviceId2 = clDevice2;
+
+    cl_mem_properties_intel properties[] = {
+        CL_DEVICE_HANDLE_LIST_KHR,
+        reinterpret_cast<cl_mem_properties_intel>(deviceId),
+        reinterpret_cast<cl_mem_properties_intel>(deviceId2),
+        CL_DEVICE_HANDLE_LIST_END_KHR,
+        0};
+
+    cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
+    cl_int retVal = CL_INVALID_VALUE;
+    MemoryProperties memoryProperties{};
+    cl_mem_flags_intel flagsIntel = 0;
+    cl_mem_alloc_flags_intel allocflags = 0;
+    uint8_t data;
+
+    ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                    ClMemoryPropertiesHelper::ObjType::BUFFER, context);
+
+    Buffer *buffer = Buffer::create(&context, memoryProperties, flags, flagsIntel, 1, &data, retVal);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(buffer->getGraphicsAllocation(0), nullptr);
+    EXPECT_NE(buffer->getGraphicsAllocation(1), nullptr);
+    EXPECT_NE(buffer->getGraphicsAllocation(2), nullptr);
+
+    clReleaseMemObject(buffer);
+}
+
 struct CompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
         ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);

@@ -8,6 +8,7 @@
 #include "opencl/source/mem_obj/image.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -131,6 +132,25 @@ Image *Image::create(Context *context,
                      cl_int &errcodeRet) {
     UNRECOVERABLE_IF(surfaceFormat == nullptr);
 
+    RootDeviceIndicesContainer rootDeviceIndices;
+    const RootDeviceIndicesContainer *pRootDeviceIndices;
+    uint32_t defaultRootDeviceIndex;
+    Device *defaultDevice;
+
+    if (memoryProperties.associatedDevices.empty()) {
+        defaultDevice = &context->getDevice(0)->getDevice();
+        defaultRootDeviceIndex = defaultDevice->getRootDeviceIndex();
+        pRootDeviceIndices = &context->getRootDeviceIndices();
+    } else {
+        for (const auto &device : memoryProperties.associatedDevices) {
+            rootDeviceIndices.push_back(device->getRootDeviceIndex());
+        }
+        defaultDevice = memoryProperties.associatedDevices[0];
+        defaultRootDeviceIndex = rootDeviceIndices[0];
+        rootDeviceIndices.remove_duplicates();
+        pRootDeviceIndices = &rootDeviceIndices;
+    }
+
     size_t imageWidth = imageDesc->image_width;
     size_t imageHeight = getImageHeight(*imageDesc);
     size_t imageDepth = getImageDepth(*imageDesc);
@@ -153,19 +173,17 @@ Image *Image::create(Context *context,
                                                             : imageWidth * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
     const auto hostPtrSlicePitch = getHostPtrSlicePitch(*imageDesc, hostPtrRowPitch, imageHeight);
 
-    auto defaultClDevice = context->getDevice(0);
-    auto defaultRootDeviceIndex = defaultClDevice->getRootDeviceIndex();
-    auto &defaultProductHelper = defaultClDevice->getProductHelper();
+    auto &defaultProductHelper = defaultDevice->getProductHelper();
     imgInfo.linearStorage = defaultProductHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
                                                                           memoryProperties.flags.forceLinearStorage);
 
     // if device doesn't support images, it can create only linear images
-    if (!context->getDevice(0)->getSharedDeviceInfo().imageSupport && !imgInfo.linearStorage) {
+    if (!defaultDevice->getDeviceInfo().imageSupport && !imgInfo.linearStorage) {
         errcodeRet = CL_INVALID_OPERATION;
         return nullptr;
     }
 
-    auto &clGfxCoreHelper = defaultClDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    auto &clGfxCoreHelper = defaultDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
                                                                     *context, true);
     preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->oclImageFormat);
@@ -185,7 +203,7 @@ Image *Image::create(Context *context,
     auto imageFromBuffer = isImageFromBuffer(*imageDesc, parentBuffer);
 
     // get allocation for image
-    for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+    for (auto &rootDeviceIndex : *pRootDeviceIndices) {
         allocationInfos[rootDeviceIndex] = {};
         auto &allocationInfo = allocationInfos[rootDeviceIndex];
         allocationInfo.zeroCopyAllowed = false;
@@ -250,7 +268,7 @@ Image *Image::create(Context *context,
         multiGraphicsAllocation.addAllocation(allocationInfo.memory);
     }
 
-    if (context->getRootDeviceIndices().size() > 1) {
+    if (pRootDeviceIndices->size() > 1) {
         multiGraphicsAllocation.setMultiStorage(!MemoryPoolHelper::isSystemMemoryPool(allocationInfos[defaultRootDeviceIndex].memory->getMemoryPool()));
     }
 
@@ -260,7 +278,7 @@ Image *Image::create(Context *context,
     setImageProperties(image, *imageDesc, imgInfo, parentImage, parentBuffer, hostPtrRowPitch, hostPtrSlicePitch, imageCount, hostPtrMinSize);
 
     errcodeRet = CL_SUCCESS;
-    auto &defaultHwInfo = defaultClDevice->getHardwareInfo();
+    auto &defaultHwInfo = defaultDevice->getHardwareInfo();
     if (context->isProvidingPerformanceHints()) {
 
         auto &allocationInfo = allocationInfos[defaultRootDeviceIndex];
@@ -281,7 +299,7 @@ Image *Image::create(Context *context,
             copyRegion = {imageWidth, imageCount, 1};
         }
 
-        auto &defaultGfxCoreHelper = defaultClDevice->getGfxCoreHelper();
+        auto &defaultGfxCoreHelper = defaultDevice->getGfxCoreHelper();
         auto allocationInSystemMemory = MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
         bool isCpuTransferPreferred = imgInfo.linearStorage && defaultGfxCoreHelper.isCpuImageTransferPreferred(defaultHwInfo);
         bool isCpuTransferPreferredInSystemMemory = imgInfo.linearStorage && allocationInSystemMemory;

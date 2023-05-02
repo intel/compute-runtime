@@ -264,13 +264,34 @@ Buffer *Buffer::create(Context *context,
                        cl_int &errcodeRet) {
 
     errcodeRet = CL_SUCCESS;
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    const RootDeviceIndicesContainer *pRootDeviceIndices;
+    uint32_t defaultRootDeviceIndex;
+    Device *defaultDevice;
+
+    if (memoryProperties.associatedDevices.empty()) {
+        defaultDevice = &context->getDevice(0)->getDevice();
+        defaultRootDeviceIndex = defaultDevice->getRootDeviceIndex();
+        pRootDeviceIndices = &context->getRootDeviceIndices();
+    } else {
+        for (const auto &device : memoryProperties.associatedDevices) {
+            rootDeviceIndices.push_back(device->getRootDeviceIndex());
+        }
+        defaultDevice = memoryProperties.associatedDevices[0];
+        defaultRootDeviceIndex = rootDeviceIndices[0];
+        rootDeviceIndices.remove_duplicates();
+        pRootDeviceIndices = &rootDeviceIndices;
+    }
+
     Context::BufferPoolAllocator &bufferPoolAllocator = context->getBufferPoolAllocator();
-    const bool implicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(context->getDevice(0u)->getDeviceBitfield(), true);
+    const bool implicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(defaultDevice->getDeviceBitfield(), true);
     const bool useHostPtr = memoryProperties.flags.useHostPtr;
     const bool copyHostPtr = memoryProperties.flags.copyHostPtr;
     if (implicitScalingEnabled == false &&
         useHostPtr == false &&
-        memoryProperties.flags.forceHostMemory == false) {
+        memoryProperties.flags.forceHostMemory == false &&
+        memoryProperties.associatedDevices.empty()) {
         cl_int poolAllocRet = CL_SUCCESS;
         auto bufferFromPool = bufferPoolAllocator.allocateBufferFromPool(memoryProperties,
                                                                          flags,
@@ -281,16 +302,12 @@ Buffer *Buffer::create(Context *context,
         if (CL_SUCCESS == poolAllocRet) {
             const bool needsCopy = copyHostPtr;
             if (needsCopy) {
-                for (auto &clDevice : context->getDevices()) {
-                    if (copyHostPointer(bufferFromPool,
-                                        clDevice->getDevice(),
-                                        size,
-                                        hostPtr,
-                                        implicitScalingEnabled,
-                                        poolAllocRet)) {
-                        break;
-                    }
-                }
+                copyHostPointer(bufferFromPool,
+                                *defaultDevice,
+                                size,
+                                hostPtr,
+                                implicitScalingEnabled,
+                                poolAllocRet);
             }
             if (!needsCopy || poolAllocRet == CL_SUCCESS) {
                 return bufferFromPool;
@@ -312,7 +329,7 @@ Buffer *Buffer::create(Context *context,
     void *allocationCpuPtr = nullptr;
     bool forceCopyHostPtr = false;
 
-    for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+    for (auto &rootDeviceIndex : *pRootDeviceIndices) {
         allocationInfos[rootDeviceIndex] = {};
         auto &allocationInfo = allocationInfos[rootDeviceIndex];
 
@@ -465,11 +482,10 @@ Buffer *Buffer::create(Context *context,
         }
     }
 
-    auto rootDeviceIndex = context->getDevice(0u)->getRootDeviceIndex();
-    auto &allocationInfo = allocationInfos[rootDeviceIndex];
+    auto &allocationInfo = allocationInfos[defaultRootDeviceIndex];
     auto allocation = allocationInfo.memory;
     auto memoryStorage = allocation->getUnderlyingBuffer();
-    if (context->getRootDeviceIndices().size() > 1) {
+    if (pRootDeviceIndices->size() > 1) {
         multiGraphicsAllocation.setMultiStorage(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
     }
 
@@ -497,7 +513,7 @@ Buffer *Buffer::create(Context *context,
             ", GPU address: ", allocationInfo.memory->getGpuAddress(),
             ", memoryPool: ", getMemoryPoolString(allocationInfo.memory));
 
-    for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+    for (auto &rootDeviceIndex : *pRootDeviceIndices) {
         auto &allocationInfo = allocationInfos[rootDeviceIndex];
         if (useHostPtr) {
             if (!allocationInfo.zeroCopyAllowed && !allocationInfo.isHostPtrSVM) {
@@ -520,18 +536,15 @@ Buffer *Buffer::create(Context *context,
         pBuffer->setHostPtrMinSize(size);
     }
     if (allocationInfo.copyMemoryFromHostPtr) {
-        for (auto &clDevice : context->getDevices()) {
-            if (copyHostPointer(pBuffer,
-                                clDevice->getDevice(),
-                                size,
-                                hostPtr,
-                                implicitScalingEnabled,
-                                errcodeRet)) {
-                auto migrationSyncData = pBuffer->getMultiGraphicsAllocation().getMigrationSyncData();
-                if (migrationSyncData) {
-                    migrationSyncData->setCurrentLocation(clDevice->getRootDeviceIndex());
-                }
-                break;
+        if (copyHostPointer(pBuffer,
+                            *defaultDevice,
+                            size,
+                            hostPtr,
+                            implicitScalingEnabled,
+                            errcodeRet)) {
+            auto migrationSyncData = pBuffer->getMultiGraphicsAllocation().getMigrationSyncData();
+            if (migrationSyncData) {
+                migrationSyncData->setCurrentLocation(defaultRootDeviceIndex);
             }
         }
     }

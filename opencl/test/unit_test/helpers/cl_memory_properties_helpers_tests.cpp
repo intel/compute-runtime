@@ -428,6 +428,46 @@ TEST_F(MemoryPropertiesHelperTests, givenDmaBufWhenParsePropertiesThenHandleIsSe
     EXPECT_EQ(memoryProperties.handle, 0x1234u);
 }
 
+TEST_F(MemoryPropertiesHelperTests, givenDeviceHandleListWhenParsePropertiesThenAssociatedDevicesAreSet) {
+    auto clDevice = context.getDevice(0);
+    auto clDevice2 = context.getDevice(1);
+    cl_device_id deviceId = clDevice;
+    cl_device_id deviceId2 = clDevice2;
+
+    cl_mem_properties_intel properties[] = {
+        CL_DEVICE_HANDLE_LIST_KHR,
+        reinterpret_cast<cl_mem_properties_intel>(deviceId),
+        reinterpret_cast<cl_mem_properties_intel>(deviceId2),
+        CL_DEVICE_HANDLE_LIST_END_KHR,
+        0};
+
+    EXPECT_TRUE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                ClMemoryPropertiesHelper::ObjType::BUFFER, context));
+
+    EXPECT_EQ(memoryProperties.associatedDevices[0], &clDevice->getDevice());
+    EXPECT_EQ(memoryProperties.associatedDevices[1], &clDevice2->getDevice());
+}
+
+TEST_F(MemoryPropertiesHelperTests, givenDeviceHandleListWhenParsePropertiesThenAssociatedDevicesAreNotSet) {
+    cl_mem_properties_intel properties[] = {
+        CL_DEVICE_HANDLE_LIST_KHR,
+        reinterpret_cast<cl_mem_properties_intel>(&context),
+        CL_DEVICE_HANDLE_LIST_END_KHR,
+        0};
+
+    EXPECT_FALSE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                 ClMemoryPropertiesHelper::ObjType::BUFFER, context));
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    cl_device_id deviceId = clDevice.get();
+
+    properties[1] = reinterpret_cast<cl_mem_properties_intel>(deviceId);
+
+    EXPECT_FALSE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                 ClMemoryPropertiesHelper::ObjType::BUFFER, context));
+}
+
 TEST_F(MemoryPropertiesHelperTests, WhenAdjustingDeviceBitfieldThenCorrectBitfieldIsReturned) {
     UltClDeviceFactory deviceFactory{2, 4};
     auto memoryPropertiesRootDevice0 = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &deviceFactory.rootDevices[0]->getDevice());

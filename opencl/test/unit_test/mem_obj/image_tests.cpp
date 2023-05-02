@@ -1803,6 +1803,77 @@ TEST(ImageTest, givenMultiDeviceEnvironmentWhenReleaseImageFromBufferThenMainBuf
     buffer->release();
 }
 
+TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorrectImageIsSet) {
+    MockDefaultContext context(1);
+    auto clDevice = context.getDevice(1);
+    auto clDevice2 = context.getDevice(2);
+    cl_device_id deviceId = clDevice;
+    cl_device_id deviceId2 = clDevice2;
+
+    cl_mem_properties_intel properties[] = {
+        CL_DEVICE_HANDLE_LIST_KHR,
+        reinterpret_cast<cl_mem_properties_intel>(deviceId),
+        reinterpret_cast<cl_mem_properties_intel>(deviceId2),
+        CL_DEVICE_HANDLE_LIST_END_KHR,
+        0};
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_int retVal;
+
+    char hostPtr[elementSize * 2 + 64]{};
+
+    imageFormat.image_channel_data_type = channelType;
+    imageFormat.image_channel_order = channelOrder;
+
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = NULL;
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 1;
+    imageDesc.image_height = 0;
+    imageDesc.image_depth = 0;
+    imageDesc.image_array_size = 0;
+    imageDesc.image_row_pitch = 0;
+    imageDesc.image_slice_pitch = 0;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+    cl_mem_flags_intel flagsIntel = 0;
+    cl_mem_alloc_flags_intel allocflags = 0;
+    MemoryProperties memoryProperties{};
+
+    ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                    ClMemoryPropertiesHelper::ObjType::IMAGE, context);
+
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+
+    auto image = Image::create(
+        &context,
+        memoryProperties,
+        flags,
+        0,
+        surfaceFormat,
+        &imageDesc,
+        hostPtr,
+        retVal);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(image->getGraphicsAllocation(0), nullptr);
+    EXPECT_NE(image->getGraphicsAllocation(1), nullptr);
+    EXPECT_NE(image->getGraphicsAllocation(2), nullptr);
+
+    EXPECT_EQ(static_cast<size_t>(elementSize), image->getHostPtrRowPitch());
+    EXPECT_EQ(0u, image->getHostPtrSlicePitch());
+
+    delete image;
+}
+
 using MultiRootDeviceImageTest = ::testing::Test;
 HWTEST2_F(MultiRootDeviceImageTest, givenHostPtrToCopyWhenImageIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext, IsAtLeastGen12lp) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
