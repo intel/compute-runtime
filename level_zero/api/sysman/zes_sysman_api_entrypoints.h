@@ -171,26 +171,42 @@ ze_result_t zesDeviceReset(
 ze_result_t zesDevicePciGetProperties(
     zes_device_handle_t hDevice,
     zes_pci_properties_t *pProperties) {
-    return L0::SysmanDevice::pciGetProperties(hDevice, pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::pciGetProperties(hDevice, pProperties);
+    } else {
+        return L0::Sysman::SysmanDevice::pciGetProperties(hDevice, pProperties);
+    }
 }
 
 ze_result_t zesDevicePciGetState(
     zes_device_handle_t hDevice,
     zes_pci_state_t *pState) {
-    return L0::SysmanDevice::pciGetState(hDevice, pState);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::pciGetState(hDevice, pState);
+    } else {
+        return L0::Sysman::SysmanDevice::pciGetState(hDevice, pState);
+    }
 }
 
 ze_result_t zesDevicePciGetBars(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_pci_bar_properties_t *pProperties) {
-    return L0::SysmanDevice::pciGetBars(hDevice, pCount, pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::pciGetBars(hDevice, pCount, pProperties);
+    } else {
+        return L0::Sysman::SysmanDevice::pciGetBars(hDevice, pCount, pProperties);
+    }
 }
 
 ze_result_t zesDevicePciGetStats(
     zes_device_handle_t hDevice,
     zes_pci_stats_t *pStats) {
-    return L0::SysmanDevice::pciGetStats(hDevice, pStats);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::pciGetStats(hDevice, pStats);
+    } else {
+        return L0::Sysman::SysmanDevice::pciGetStats(hDevice, pStats);
+    }
 }
 
 ze_result_t zesDeviceEnumPowerDomains(

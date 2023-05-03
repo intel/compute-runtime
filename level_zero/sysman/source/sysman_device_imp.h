@@ -51,6 +51,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     PerformanceHandleContext *pPerformanceHandleContext = nullptr;
     Ecc *pEcc = nullptr;
     TemperatureHandleContext *pTempHandleContext = nullptr;
+    Pci *pPci = nullptr;
 
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
     ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower) override;
@@ -73,6 +74,10 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) override;
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) override;
     ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) override;
+    ze_result_t pciGetProperties(zes_pci_properties_t *pProperties) override;
+    ze_result_t pciGetState(zes_pci_state_t *pState) override;
+    ze_result_t pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) override;
+    ze_result_t pciGetStats(zes_pci_stats_t *pStats) override;
 
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;

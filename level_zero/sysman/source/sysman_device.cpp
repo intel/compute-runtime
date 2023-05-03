@@ -129,5 +129,25 @@ ze_result_t SysmanDevice::performanceGet(zes_device_handle_t hDevice, uint32_t *
     return pSysmanDevice->performanceGet(pCount, phPerformance);
 }
 
+ze_result_t SysmanDevice::pciGetProperties(zes_device_handle_t hDevice, zes_pci_properties_t *pProperties) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->pciGetProperties(pProperties);
+}
+
+ze_result_t SysmanDevice::pciGetState(zes_device_handle_t hDevice, zes_pci_state_t *pState) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->pciGetState(pState);
+}
+
+ze_result_t SysmanDevice::pciGetBars(zes_device_handle_t hDevice, uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->pciGetBars(pCount, pProperties);
+}
+
+ze_result_t SysmanDevice::pciGetStats(zes_device_handle_t hDevice, zes_pci_stats_t *pStats) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->pciGetStats(pStats);
+}
+
 } // namespace Sysman
 } // namespace L0

@@ -12,6 +12,7 @@
 #include "level_zero/sysman/source/ecc/ecc_imp.h"
 #include "level_zero/sysman/source/global_operations/global_operations_imp.h"
 #include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/pci/pci_imp.h"
 
 #include <vector>
 
@@ -37,6 +38,7 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pPerformanceHandleContext = new PerformanceHandleContext(pOsSysman);
     pEcc = new EccImp(pOsSysman);
     pTempHandleContext = new TemperatureHandleContext(pOsSysman);
+    pPci = new PciImp(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -54,6 +56,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pPerformanceHandleContext);
     freeResource(pEcc);
     freeResource(pTempHandleContext);
+    freeResource(pPci);
     freeResource(pOsSysman);
     executionEnvironment->decRefInternal();
 }
@@ -148,6 +151,22 @@ ze_result_t SysmanDeviceImp::temperatureGet(uint32_t *pCount, zes_temp_handle_t 
 
 ze_result_t SysmanDeviceImp::performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) {
     return pPerformanceHandleContext->performanceGet(pCount, phPerformance);
+}
+
+ze_result_t SysmanDeviceImp::pciGetProperties(zes_pci_properties_t *pProperties) {
+    return pPci->pciStaticProperties(pProperties);
+}
+
+ze_result_t SysmanDeviceImp::pciGetState(zes_pci_state_t *pState) {
+    return pPci->pciGetState(pState);
+}
+
+ze_result_t SysmanDeviceImp::pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
+    return pPci->pciGetInitializedBars(pCount, pProperties);
+}
+
+ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace Sysman

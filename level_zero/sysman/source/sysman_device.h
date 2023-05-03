@@ -17,6 +17,7 @@
 #include "level_zero/sysman/source/frequency/frequency.h"
 #include "level_zero/sysman/source/global_operations/global_operations.h"
 #include "level_zero/sysman/source/memory/memory.h"
+#include "level_zero/sysman/source/pci/pci.h"
 #include "level_zero/sysman/source/performance/performance.h"
 #include "level_zero/sysman/source/power/power.h"
 #include "level_zero/sysman/source/ras/ras.h"
@@ -98,6 +99,18 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t performanceGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_perf_handle_t *phPerformance);
     virtual ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) = 0;
+
+    static ze_result_t pciGetProperties(zes_device_handle_t hDevice, zes_pci_properties_t *pProperties);
+    virtual ze_result_t pciGetProperties(zes_pci_properties_t *pProperties) = 0;
+
+    static ze_result_t pciGetState(zes_device_handle_t hDevice, zes_pci_state_t *pState);
+    virtual ze_result_t pciGetState(zes_pci_state_t *pState) = 0;
+
+    static ze_result_t pciGetBars(zes_device_handle_t hDevice, uint32_t *pCount, zes_pci_bar_properties_t *pProperties);
+    virtual ze_result_t pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) = 0;
+
+    static ze_result_t pciGetStats(zes_device_handle_t hDevice, zes_pci_stats_t *pStats);
+    virtual ze_result_t pciGetStats(zes_pci_stats_t *pStats) = 0;
 };
 
 } // namespace Sysman
