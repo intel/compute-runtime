@@ -107,7 +107,7 @@ NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64
         return nullptr;
     }
     if (this->storeExternalPtrAsTemporary()) {
-        this->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+        this->csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, this->csr->peekTaskCount());
     } else if (alloc->getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
         hostPtrMap.insert(std::make_pair(buffer, alloc));
     } else {

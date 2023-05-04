@@ -1488,6 +1488,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhe
     auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true);
     EXPECT_FALSE(commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
     EXPECT_EQ(alloc, commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
+    EXPECT_EQ(commandList->csr->peekTaskCount(), commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->getTaskCount(commandList->csr->getOsContext().getContextId()));
 }
 
 HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc, IsAtLeastSkl) {
