@@ -95,13 +95,14 @@ class IoctlHelperXe : public IoctlHelper {
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
     bool isWaitBeforeBindRequired(bool bind) const override;
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
+    std::unique_ptr<MemoryInfo> createMemoryInfo() override;
 
     std::vector<uint8_t> xeRebuildi915Topology(std::vector<uint8_t> *geomDss, std::vector<uint8_t> *computeDss, std::vector<uint8_t> *euDss);
 
   private:
     template <typename... XeLogArgs>
     void xeLog(XeLogArgs &&...args) const;
-    void xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, struct drm_xe_engine_class_instance *eci, int64_t timeout);
+    int xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, struct drm_xe_engine_class_instance *eci, int64_t timeout);
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
     uint32_t xeSyncObjCreate(uint32_t flags);
     bool xeSyncObjWait(uint32_t *handles, uint32_t count, uint64_t absTimeoutNsec, uint32_t flags, uint32_t *firstSignaled);
@@ -129,9 +130,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::mutex xeLock;
     std::vector<BindInfo> bindInfo;
     int instance = 0;
-    uint64_t xeMemoryRegions = 0;
     uint32_t xeTimestampFrequency = 0;
-    std::vector<uint8_t> memQueryFakei915;
     std::vector<uint8_t> hwconfigFakei915;
     std::vector<uint8_t> topologyFakei915;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;

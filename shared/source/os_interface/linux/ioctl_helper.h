@@ -145,7 +145,7 @@ class IoctlHelper {
     virtual void *pciBarrierMmap() { return nullptr; };
 
     uint32_t getFlagsForPrimeHandleToFd() const;
-    std::unique_ptr<MemoryInfo> createMemoryInfo();
+    virtual std::unique_ptr<MemoryInfo> createMemoryInfo();
     virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled);
 
   protected:

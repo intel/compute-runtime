@@ -20,6 +20,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 
 #include "drm/i915_drm_prelim.h"
@@ -60,9 +61,6 @@ int IoctlHelperXe::xeGetQuery(Query *data) {
         QueryItem *queryItem = (QueryItem *)data->itemsPtr;
         std::vector<uint8_t> *queryData = nullptr;
         switch (queryItem->queryId) {
-        case static_cast<int>(DrmParam::QueryMemoryRegions):
-            queryData = &memQueryFakei915;
-            break;
         case static_cast<int>(DrmParam::QueryHwconfigTable):
             queryData = &hwconfigFakei915;
             break;
@@ -198,59 +196,6 @@ bool IoctlHelperXe::initialize() {
     addressWidth = static_cast<uint32_t>(config->info[XE_QUERY_CONFIG_VA_BITS]);
 
     memset(&queryConfig, 0, sizeof(queryConfig));
-    queryConfig.query = DRM_XE_DEVICE_QUERY_GTS;
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-    auto dataGts = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
-    struct drm_xe_query_gts *gts = reinterpret_cast<struct drm_xe_query_gts *>(dataGts.data());
-    queryConfig.data = castToUint64(gts);
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-    for (uint32_t i = 0; i < gts->num_gt; i++) {
-        xeMemoryRegions |= gts->gts[i].native_mem_regions | gts->gts[i].slow_mem_regions;
-        xeTimestampFrequency = gts->gts[i].clock_freq;
-    }
-    xeLog("xeMemoryRegions 0x%llx\n", xeMemoryRegions);
-
-    memset(&queryConfig, 0, sizeof(queryConfig));
-    queryConfig.query = DRM_XE_DEVICE_QUERY_MEM_USAGE;
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-    auto dataMem = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
-    struct drm_xe_query_mem_usage *configMem = reinterpret_cast<struct drm_xe_query_mem_usage *>(dataMem.data());
-    queryConfig.data = castToUint64(configMem);
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-
-    memQueryFakei915.resize(sizeof(drm_i915_query_memory_regions) + (configMem->num_regions * sizeof(drm_i915_memory_region_info)));
-    struct drm_i915_query_memory_regions *i915MemQuery = reinterpret_cast<struct drm_i915_query_memory_regions *>(memQueryFakei915.data());
-    i915MemQuery->num_regions = configMem->num_regions;
-    for (uint32_t i = 0; i < configMem->num_regions; i++) {
-        const char *memName = NULL;
-        uint16_t memClass = 0;
-        uint16_t memInst = configMem->regions[i].instance;
-
-        switch (configMem->regions[i].mem_class) {
-        case XE_MEM_REGION_CLASS_SYSMEM:
-            memName = "SYSMEM";
-            memClass = getDrmParamValue(DrmParam::MemoryClassSystem);
-            break;
-        case XE_MEM_REGION_CLASS_VRAM:
-            memName = "VRAM";
-            memClass = getDrmParamValue(DrmParam::MemoryClassDevice);
-            memInst--;
-            break;
-        default:
-            xeLog("Unhandled Xe memory class", "");
-            UNRECOVERABLE_IF(true);
-            break;
-        }
-        i915MemQuery->regions[i].region.memory_class = memClass;
-        i915MemQuery->regions[i].region.memory_instance = memInst;
-        i915MemQuery->regions[i].probed_size = configMem->regions[i].total_size;
-        i915MemQuery->regions[i].unallocated_size = configMem->regions[i].total_size - configMem->regions[i].used;
-        xeLog(" %s c=0x%x i=%d T=%llx U=0x%llx / i915: %d %d\n",
-              memName, configMem->regions[i].mem_class, configMem->regions[i].instance,
-              configMem->regions[i].total_size, configMem->regions[i].used, memClass, memInst);
-    }
-
-    memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
     IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
     hwconfigFakei915.resize(queryConfig.size);
@@ -340,6 +285,11 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
                            sizeof(struct drm_xe_engine_class_instance);
 
     xeLog("numberHwEngines=%d\n", numberHwEngines);
+
+    if (enginesData.empty()) {
+        return {};
+    }
+
     auto queriedEngines = reinterpret_cast<struct drm_xe_engine_class_instance *>(enginesData.data());
 
     StackVec<std::vector<EngineClassInstance>, 2> enginesPerTile{};
@@ -368,6 +318,52 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
     return std::make_unique<EngineInfo>(&drm, enginesPerTile);
 }
 
+inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_query_mem_usage::drm_xe_query_mem_region &xeMemRegion) {
+    MemoryRegion memoryRegion{};
+    memoryRegion.region.memoryInstance = xeMemRegion.instance;
+    memoryRegion.region.memoryClass = xeMemRegion.mem_class;
+    memoryRegion.probedSize = xeMemRegion.total_size;
+    memoryRegion.unallocatedSize = xeMemRegion.total_size - xeMemRegion.used;
+    return memoryRegion;
+}
+
+std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
+    auto memUsageData = queryData(DRM_XE_DEVICE_QUERY_MEM_USAGE);
+    auto gtsData = queryData(DRM_XE_DEVICE_QUERY_GTS);
+
+    if (memUsageData.empty() || gtsData.empty()) {
+        return {};
+    }
+
+    MemoryInfo::RegionContainer regionsContainer{};
+    auto xeMemUsageData = reinterpret_cast<drm_xe_query_mem_usage *>(memUsageData.data());
+    auto xeGtsData = reinterpret_cast<drm_xe_query_gts *>(gtsData.data());
+
+    std::array<drm_xe_query_mem_usage::drm_xe_query_mem_region *, 64> memoryRegionInstances{};
+
+    for (auto i = 0u; i < xeMemUsageData->num_regions; i++) {
+        auto &region = xeMemUsageData->regions[i];
+        memoryRegionInstances[region.instance] = &region;
+        if (region.mem_class == XE_MEM_REGION_CLASS_SYSMEM) {
+            regionsContainer.push_back(createMemoryRegionFromXeMemRegion(region));
+        }
+    }
+
+    if (regionsContainer.empty()) {
+        return {};
+    }
+
+    for (auto i = 0u; i < xeGtsData->num_gt; i++) {
+        uint64_t nativeMemRegions = xeGtsData->gts[i].native_mem_regions;
+        auto regionIndex = Math::log2(nativeMemRegions);
+        UNRECOVERABLE_IF(!memoryRegionInstances[regionIndex]);
+        regionsContainer.push_back(createMemoryRegionFromXeMemRegion(*memoryRegionInstances[regionIndex]));
+
+        xeTimestampFrequency = xeGtsData->gts[i].clock_freq;
+    }
+    return std::make_unique<MemoryInfo>(regionsContainer, drm);
+}
+
 int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
     struct drm_xe_gem_create create = {};
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
@@ -383,18 +379,12 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
 
     create.size = allocSize;
     MemoryClassInstance mem = memClassInstances[regionsSize - 1];
-    switch (mem.memoryClass) {
-    case XE_MEM_REGION_CLASS_SYSMEM:
-        create.flags = xeMemoryRegions & 0x1;
-        break;
-    case XE_MEM_REGION_CLASS_VRAM:
-        create.flags = xeMemoryRegions & (0x2 << mem.memoryInstance);
-        break;
-    default:
-        xeLog(" wrong memory region: %d\n", mem.memoryClass);
-        UNRECOVERABLE_IF(true);
-        break;
+    std::bitset<32> memoryInstances{};
+    for (const auto &memoryClassInstance : memClassInstances) {
+        memoryInstances.set(memoryClassInstance.memoryInstance);
     }
+    create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
+
     auto ret = IoctlHelper::ioctl(DrmIoctl::GemCreate, &create);
     handle = create.handle;
 
@@ -426,10 +416,9 @@ CacheRegion IoctlHelperXe::closFree(CacheRegion closIndex) {
     return CacheRegion::None;
 }
 
-void IoctlHelperXe::xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value,
-                                    struct drm_xe_engine_class_instance *eci,
-                                    int64_t timeout) {
-    int ret;
+int IoctlHelperXe::xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value,
+                                   struct drm_xe_engine_class_instance *eci,
+                                   int64_t timeout) {
     struct drm_xe_wait_user_fence wait = {};
     wait.addr = addr;
     wait.op = op;
@@ -439,8 +428,11 @@ void IoctlHelperXe::xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, u
     wait.timeout = timeout;
     wait.num_engines = eci ? 1 : 0;
     wait.instances = eci ? castToUint64(eci) : 0;
-    ret = IoctlHelper::ioctl(DrmIoctl::GemWaitUserFence, &wait);
-    UNRECOVERABLE_IF(ret);
+    auto retVal = IoctlHelper::ioctl(DrmIoctl::GemWaitUserFence, &wait);
+    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx engine=[0x%x, 0x%x] T=0x%llx F=0x%x retVal=0x%x\n", __FUNCTION__, addr, value,
+          eci ? eci->engine_class : -1, eci ? eci->engine_instance : -1,
+          timeout, wait.flags, retVal);
+    return retVal;
 }
 
 int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
@@ -466,7 +458,7 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
         timeout = TimeoutControls::maxTimeout;
     }
     if (address) {
-        xeWaitUserFence(mask, DRM_XE_UFENCE_WAIT_GTE, address, value, NULL, timeout);
+        return xeWaitUserFence(mask, DRM_XE_UFENCE_WAIT_GTE, address, value, NULL, timeout);
     }
     return 0;
 }
@@ -1237,9 +1229,9 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
         ret = IoctlHelper::ioctl(DrmIoctl::GemVmBind, &bind);
 
         if (!bindOp) {
-            xeWaitUserFence(DRM_XE_UFENCE_WAIT_U64, DRM_XE_UFENCE_WAIT_EQ,
-                            sync[0].addr,
-                            sync[0].timeline_value, NULL, XE_ONE_SEC);
+            return xeWaitUserFence(DRM_XE_UFENCE_WAIT_U64, DRM_XE_UFENCE_WAIT_EQ,
+                                   sync[0].addr,
+                                   sync[0].timeline_value, NULL, XE_ONE_SEC);
         }
     }
 

@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -29,6 +30,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::xeGetBindOpName;
     using IoctlHelperXe::xeGetClassName;
     using IoctlHelperXe::xeGetengineClassName;
+    using IoctlHelperXe::xeTimestampFrequency;
 };
 
 TEST(IoctlHelperXeTest, givenXeDrmVersionsWhenGettingIoctlHelperThenValidIoctlHelperIsReturned) {
@@ -454,7 +456,58 @@ inline constexpr int testValueGemCreate = 0x8273;
 
 class DrmMockXe : public DrmMockCustom {
   public:
-    DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment){};
+    DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
+        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_usage *>(queryMemUsage);
+        xeQueryMemUsage->num_regions = 3;
+        xeQueryMemUsage->regions[0] = {
+            XE_MEM_REGION_CLASS_VRAM,      // class
+            1,                             // instance
+            0,                             // padding
+            MemoryConstants::pageSize,     // min page size
+            MemoryConstants::pageSize,     // max page size
+            2 * MemoryConstants::gigaByte, // total size
+            MemoryConstants::megaByte      // used size
+        };
+        xeQueryMemUsage->regions[1] = {
+            XE_MEM_REGION_CLASS_SYSMEM, // class
+            0,                          // instance
+            0,                          // padding
+            MemoryConstants::pageSize,  // min page size
+            MemoryConstants::pageSize,  // max page size
+            MemoryConstants::gigaByte,  // total size
+            MemoryConstants::kiloByte   // used size
+        };
+        xeQueryMemUsage->regions[2] = {
+            XE_MEM_REGION_CLASS_VRAM,      // class
+            2,                             // instance
+            0,                             // padding
+            MemoryConstants::pageSize,     // min page size
+            MemoryConstants::pageSize,     // max page size
+            4 * MemoryConstants::gigaByte, // total size
+            MemoryConstants::gigaByte      // used size
+        };
+
+        auto xeQueryGts = reinterpret_cast<drm_xe_query_gts *>(queryGts);
+        xeQueryGts->num_gt = 2;
+        xeQueryGts->gts[0] = {
+            XE_QUERY_GT_TYPE_MAIN, // type
+            0,                     // instance
+            12500000,              // clock freq
+            0,                     // features
+            0b100,                 // native mem regions
+            0x011,                 // slow mem regions
+            0                      // inaccessible mem regions
+        };
+        xeQueryGts->gts[1] = {
+            XE_QUERY_GT_TYPE_REMOTE, // type
+            1,                       // instance
+            12500000,                // clock freq
+            0,                       // features
+            0b010,                   // native mem regions
+            0x101,                   // slow mem regions
+            0                        // inaccessible mem regions
+        };
+    }
 
     void testMode(int f, int a = 0) {
         forceIoctlAnswer = f;
@@ -525,7 +578,19 @@ class DrmMockXe : public DrmMockCustom {
                 }
                 deviceQuery->size = sizeof(queryEngines);
                 break;
-            }
+            case DRM_XE_DEVICE_QUERY_MEM_USAGE:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryMemUsage, sizeof(queryMemUsage));
+                }
+                deviceQuery->size = sizeof(queryMemUsage);
+                break;
+            case DRM_XE_DEVICE_QUERY_GTS:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryGts, sizeof(queryGts));
+                }
+                deviceQuery->size = sizeof(queryGts);
+                break;
+            };
             ret = 0;
         } break;
         case DrmIoctl::GemContextSetparam:
@@ -547,6 +612,9 @@ class DrmMockXe : public DrmMockCustom {
         {DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1},
         {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 7, 1},
         {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 8, 0}};
+
+    uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
+    uint64_t queryGts[27]{};      // 1 qword for num gts and 13 qwords per gt
 };
 
 TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
@@ -792,4 +860,80 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
             EXPECT_NE(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE), engine.engineClass);
         }
     }
+}
+
+TEST(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscovered) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    auto memoryInfo = xeIoctlHelper->createMemoryInfo();
+    EXPECT_NE(nullptr, memoryInfo);
+
+    auto memoryClassInstance0 = memoryInfo->getMemoryRegionClassAndInstance(0, *defaultHwInfo);
+    EXPECT_EQ(static_cast<uint16_t>(XE_MEM_REGION_CLASS_SYSMEM), memoryClassInstance0.memoryClass);
+    EXPECT_EQ(0u, memoryClassInstance0.memoryInstance);
+    EXPECT_EQ(MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0));
+
+    auto memoryClassInstance1 = memoryInfo->getMemoryRegionClassAndInstance(0b01, *defaultHwInfo);
+    EXPECT_EQ(static_cast<uint16_t>(XE_MEM_REGION_CLASS_VRAM), memoryClassInstance1.memoryClass);
+    EXPECT_EQ(2u, memoryClassInstance1.memoryInstance);
+    EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0b01));
+
+    auto memoryClassInstance2 = memoryInfo->getMemoryRegionClassAndInstance(0b10, *defaultHwInfo);
+    EXPECT_EQ(static_cast<uint16_t>(XE_MEM_REGION_CLASS_VRAM), memoryClassInstance2.memoryClass);
+    EXPECT_EQ(1u, memoryClassInstance2.memoryInstance);
+    EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0b10));
+
+    auto &memoryRegions = memoryInfo->getDrmRegionInfos();
+    EXPECT_EQ(3u, memoryRegions.size());
+
+    EXPECT_EQ(0u, memoryRegions[0].region.memoryInstance);
+    EXPECT_EQ(MemoryConstants::gigaByte, memoryRegions[0].probedSize);
+    EXPECT_EQ(MemoryConstants::gigaByte - MemoryConstants::kiloByte, memoryRegions[0].unallocatedSize);
+
+    EXPECT_EQ(2u, memoryRegions[1].region.memoryInstance);
+    EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryRegions[1].probedSize);
+    EXPECT_EQ(3 * MemoryConstants::gigaByte, memoryRegions[1].unallocatedSize);
+
+    EXPECT_EQ(1u, memoryRegions[2].region.memoryInstance);
+    EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryRegions[2].probedSize);
+    EXPECT_EQ(2 * MemoryConstants::gigaByte - MemoryConstants::megaByte, memoryRegions[2].unallocatedSize);
+
+    EXPECT_EQ(12500000u, xeIoctlHelper->xeTimestampFrequency);
+}
+
+TEST(IoctlHelperXeTest, givenIoctlFailureWhenCreatingMemoryInfoThenNoMemoryBanksAreDiscovered) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    drm.testMode(1, -1);
+    auto memoryInfo = xeIoctlHelper->createMemoryInfo();
+    EXPECT_EQ(nullptr, memoryInfo);
+}
+
+TEST(IoctlHelperXeTest, givenNoMemoryRegionsWhenCreatingMemoryInfoThenMemoryInfoIsNotCreated) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_usage *>(drm.queryMemUsage);
+    xeQueryMemUsage->num_regions = 0u;
+    auto memoryInfo = xeIoctlHelper->createMemoryInfo();
+    EXPECT_EQ(nullptr, memoryInfo);
+}
+
+TEST(IoctlHelperXeTest, givenIoctlFailureWhenCreatingEngineInfoThenNoEnginesAreDiscovered) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    drm.testMode(1, -1);
+    auto engineInfo = xeIoctlHelper->createEngineInfo(true);
+    EXPECT_EQ(nullptr, engineInfo);
 }
