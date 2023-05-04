@@ -491,7 +491,7 @@ bool WddmMemoryManager::isNTHandle(osHandle handle, uint32_t rootDeviceIndex) {
     return status;
 }
 
-GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex) {
+GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex, void *mapPointer) {
     auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, maxOsContextCount, 0llu);
 
     bool status = ntHandle ? getWddm(rootDeviceIndex).openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)), allocation.get())
@@ -505,18 +505,22 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     size_t size = allocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
     allocation->setSize(size);
 
-    if (is32bit) {
-        void *ptr = nullptr;
-        if (!getWddm(rootDeviceIndex).reserveValidAddressRange(size, ptr)) {
-            return nullptr;
+    if (mapPointer == nullptr) {
+        if (is32bit) {
+            void *ptr = nullptr;
+            if (!getWddm(rootDeviceIndex).reserveValidAddressRange(size, ptr)) {
+                return nullptr;
+            }
+            allocation->setReservedAddressRange(ptr, size);
+        } else if (requireSpecificBitness && this->force32bitAllocations) {
+            allocation->set32BitAllocation(true);
+            auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
+            allocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), false)));
         }
-        allocation->setReservedAddressRange(ptr, size);
-    } else if (requireSpecificBitness && this->force32bitAllocations) {
-        allocation->set32BitAllocation(true);
-        auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
-        allocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), false)));
+        status = mapGpuVirtualAddress(allocation.get(), allocation->getReservedAddressPtr());
+    } else {
+        status = mapPhysicalToVirtualMemory(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size);
     }
-    status = mapGpuVirtualAddress(allocation.get(), allocation->getReservedAddressPtr());
     DEBUG_BREAK_IF(!status);
     if (!status) {
         freeGraphicsMemoryImpl(allocation.release());
@@ -527,16 +531,16 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     return allocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) {
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
     return nullptr;
 }
 
-GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) {
-    return createAllocationFromHandle(handle, requireSpecificBitness, false, properties.allocationType, properties.rootDeviceIndex);
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+    return createAllocationFromHandle(handle, requireSpecificBitness, false, properties.allocationType, properties.rootDeviceIndex, mapPointer);
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
-    return createAllocationFromHandle(toOsHandle(handle), false, true, allocType, rootDeviceIndex);
+    return createAllocationFromHandle(toOsHandle(handle), false, true, allocType, rootDeviceIndex, nullptr);
 }
 
 void WddmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {

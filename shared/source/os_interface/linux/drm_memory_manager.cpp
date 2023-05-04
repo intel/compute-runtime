@@ -783,10 +783,12 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
                                                                                         AllocationProperties &properties,
                                                                                         bool requireSpecificBitness,
                                                                                         bool isHostIpcAllocation,
-                                                                                        bool reuseSharedAllocation) {
+                                                                                        bool reuseSharedAllocation,
+                                                                                        void *mapPointer) {
     BufferObjects bos;
     std::vector<size_t> sizes;
     size_t totalSize = 0;
+    uint64_t gpuRange = 0;
 
     std::unique_lock<std::mutex> lock(mtx);
 
@@ -837,10 +839,14 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         sizes.push_back(bo->peekSize());
     }
 
-    auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
-    auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0);
-    auto heapIndex = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
-    auto gpuRange = acquireGpuRange(totalSize, properties.rootDeviceIndex, heapIndex);
+    if (mapPointer) {
+        gpuRange = reinterpret_cast<uint64_t>(mapPointer);
+    } else {
+        auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
+        auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0);
+        auto heapIndex = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
+        gpuRange = acquireGpuRange(totalSize, properties.rootDeviceIndex, heapIndex);
+    }
 
     if (reuseSharedAllocation) {
         lock.unlock();
@@ -937,7 +943,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
                                                                                const AllocationProperties &properties,
                                                                                bool requireSpecificBitness,
                                                                                bool isHostIpcAllocation,
-                                                                               bool reuseSharedAllocation) {
+                                                                               bool reuseSharedAllocation,
+                                                                               void *mapPointer) {
     if (isHostIpcAllocation) {
         return createUSMHostAllocationFromSharedHandle(handle, properties, false, reuseSharedAllocation);
     }
@@ -945,6 +952,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     std::unique_lock<std::mutex> lock(mtx);
 
     PrimeHandle openFd{};
+    uint64_t gpuRange = 0;
     openFd.fileDescriptor = handle;
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
@@ -995,8 +1003,12 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
             return HeapIndex::HEAP_STANDARD;
         };
 
-        auto heapIndex = getHeapIndex();
-        auto gpuRange = acquireGpuRange(size, properties.rootDeviceIndex, heapIndex);
+        if (mapPointer) {
+            gpuRange = reinterpret_cast<uint64_t>(mapPointer);
+        } else {
+            auto heapIndex = getHeapIndex();
+            gpuRange = acquireGpuRange(size, properties.rootDeviceIndex, heapIndex);
+        }
 
         bo->setAddress(gpuRange);
         bo->setUnmapSize(size);

@@ -375,7 +375,14 @@ void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *dev
         auto peerAllocData = &iter->second;
         auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
         auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
-        this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr, blocking);
+        if (peerAllocData->mappedAllocData) {
+            auto gpuAllocations = peerAllocData->gpuAllocations;
+            for (const auto &graphicsAllocation : gpuAllocations.getGraphicsAllocations()) {
+                this->driverHandle->getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
+            }
+        } else {
+            this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr, blocking);
+        }
         deviceImp->peerAllocations.allocations.erase(iter);
     }
 
@@ -707,8 +714,8 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
         handles.push_back(static_cast<NEO::osHandle>(handle));
     }
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice()->getRootDevice();
-
-    *pptr = this->driverHandle->importFdHandles(neoDevice, flags, handles, nullptr);
+    NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
+    *pptr = this->driverHandle->importFdHandles(neoDevice, flags, handles, nullptr, nullptr, allocDataInternal);
     if (nullptr == *pptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -1054,6 +1061,7 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
         allocData.size = size;
         allocData.pageSizeForAlignment = MemoryConstants::pageSize64k;
         allocData.setAllocId(this->driverHandle->svmAllocsManager->allocationsCounter++);
+        allocData.memoryType = InternalMemoryType::RESERVED_DEVICE_MEMORY;
         NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;
         mappedRange->ptr = ptr;
         mappedRange->size = size;

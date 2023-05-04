@@ -433,7 +433,6 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     if (SVMDeferFreeAllocs.allocations.size() > 0) {
         this->freeSVMAllocDeferImpl();
     }
-
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
         if (InternalMemoryType::DEVICE_UNIFIED_MEMORY == svmData->memoryType &&

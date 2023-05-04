@@ -94,7 +94,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, false)) {
-            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false, false, true);
+            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false, false, true, nullptr);
         } else {
             err.set(CL_INVALID_D3D11_RESOURCE_KHR);
             return nullptr;
@@ -188,7 +188,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, false)) {
-            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false, false, true);
+            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false, false, true, nullptr);
         } else {
             err.set(CL_INVALID_D3D11_RESOURCE_KHR);
             return nullptr;

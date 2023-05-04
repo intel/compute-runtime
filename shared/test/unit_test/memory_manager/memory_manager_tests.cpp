@@ -232,3 +232,62 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressReservat
     EXPECT_NE(static_cast<int>(addressRange.address), 0x1234);
     EXPECT_NE(static_cast<int>(addressRange.size), 0);
 }
+
+TEST(OsAgnosticMemoryManager, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesWithBasePointerFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    uint32_t mockRootDeviceIndex = 0u;
+    DeviceBitfield mockDeviceBitfield(0b1);
+
+    std::vector<osHandle> handles{6, 7};
+    AllocationProperties properties = {mockRootDeviceIndex,
+                                       true,
+                                       MemoryConstants::pageSize,
+                                       AllocationType::BUFFER,
+                                       false,
+                                       mockDeviceBitfield};
+    bool requireSpecificBitness{};
+    bool isHostIpcAllocation{};
+    uint64_t basePointer = 0x1234;
+    auto ptr = memoryManager.createGraphicsAllocationFromMultipleSharedHandles(handles, properties, requireSpecificBitness, isHostIpcAllocation, true, reinterpret_cast<void *>(basePointer));
+    EXPECT_EQ(nullptr, ptr);
+}
+
+TEST(OsAgnosticMemoryManager, whenCallingCreateGraphicsAllocationFromSharedHandleWithNullBasePointerFromOsAgnosticMemoryManagerThenBasicPointerReturned) {
+    uint32_t mockRootDeviceIndex = 0u;
+    DeviceBitfield mockDeviceBitfield(0b1);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
+    osHandle handle = 1;
+    auto size = 4096u;
+    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
+    EXPECT_NE(nullptr, sharedAllocation);
+    EXPECT_EQ(reinterpret_cast<void *>(1u), sharedAllocation->getUnderlyingBuffer());
+    EXPECT_FALSE(sharedAllocation->isCoherent());
+    EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
+
+    memoryManager.freeGraphicsMemory(sharedAllocation);
+}
+
+TEST(OsAgnosticMemoryManager, whenCallingCreateGraphicsAllocationFromSharedHandleWithBasePointerFromOsAgnosticMemoryManagerThenBasePointerReturned) {
+    uint32_t mockRootDeviceIndex = 0u;
+    DeviceBitfield mockDeviceBitfield(0b1);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
+    osHandle handle = 1;
+    auto size = 4096u;
+    uint64_t basePointer = 0x1234;
+    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, reinterpret_cast<void *>(basePointer));
+    EXPECT_NE(nullptr, sharedAllocation);
+    EXPECT_EQ(reinterpret_cast<void *>(0x1234), sharedAllocation->getUnderlyingBuffer());
+    EXPECT_FALSE(sharedAllocation->isCoherent());
+    EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
+
+    memoryManager.freeGraphicsMemory(sharedAllocation);
+}

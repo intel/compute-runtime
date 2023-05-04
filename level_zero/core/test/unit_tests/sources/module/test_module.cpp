@@ -403,7 +403,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     EXPECT_NE(nullptr, gpuAlloc);
 
     uint32_t argIndex = 0u;
-    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
+    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc, nullptr);
     EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
 
     Kernel::fromHandle(kernelHandle)->destroy();
@@ -439,7 +439,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     uint32_t argIndex = 0u;
     kernelImp->setKernelArgUncached(argIndex, true);
     kernelImp->kernelRequiresUncachedMocsCount++;
-    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
+    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc, nullptr);
     EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
 
     Kernel::fromHandle(kernelHandle)->destroy();
@@ -474,7 +474,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     EXPECT_NE(nullptr, gpuAlloc);
 
     uint32_t argIndex = 0u;
-    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
+    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc, nullptr);
     EXPECT_TRUE(kernelImp->getKernelRequiresUncachedMocs());
 
     Kernel::fromHandle(kernelHandle)->destroy();
@@ -512,7 +512,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     uint32_t argIndex = 0u;
     kernelImp->setKernelArgUncached(argIndex, true);
     kernelImp->kernelRequiresUncachedMocsCount++;
-    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
+    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc, nullptr);
     EXPECT_TRUE(kernelImp->getKernelRequiresUncachedMocs());
 
     auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();

@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/context/context_imp.h"
@@ -47,11 +48,15 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                                   reinterpret_cast<void *>(handle),
                                                   allocationType);
     } else if (driverType == NEO::DriverModelType::DRM) {
-        return this->driverHandle->importFdHandle(Device::fromHandle(hDevice)->getNEODevice(),
+        auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+        NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
+        return this->driverHandle->importFdHandle(neoDevice,
                                                   flags,
                                                   handle,
                                                   allocationType,
-                                                  nullptr);
+                                                  nullptr,
+                                                  nullptr,
+                                                  allocDataInternal);
     } else {
         return nullptr;
     }

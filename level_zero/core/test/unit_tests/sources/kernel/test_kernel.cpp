@@ -166,9 +166,9 @@ TEST(KernelArgTest, givenKernelWhenSetArgUnknownCalledThenSuccessRteurned) {
 struct MockKernelWithCallTracking : Mock<::L0::Kernel> {
     using ::L0::KernelImp::kernelArgInfos;
 
-    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override {
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {
         ++setArgBufferWithAllocCalled;
-        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation);
+        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation, peerAllocData);
     }
     size_t setArgBufferWithAllocCalled = 0u;
 
@@ -2126,8 +2126,8 @@ struct MyMockKernel : public Mock<Kernel> {
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
         setSurfaceStateCalled = true;
     }
-    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override {
-        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation);
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {
+        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation, peerAllocData);
     }
     bool setSurfaceStateCalled = false;
 };
@@ -2146,7 +2146,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenValidBindlessOffsetWhenSetArgBufferWithA
 
     NEO::MockGraphicsAllocation alloc;
 
-    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc);
+    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc, nullptr);
 
     EXPECT_TRUE(mockKernel.setSurfaceStateCalled);
 }
@@ -2165,7 +2165,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenValidBindfulOffsetWhenSetArgBufferWithAl
 
     NEO::MockGraphicsAllocation alloc;
 
-    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc);
+    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc, nullptr);
 
     EXPECT_TRUE(mockKernel.setSurfaceStateCalled);
 }
@@ -2184,7 +2184,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenUndefiedBidfulAndBindlesstOffsetWhenSetA
 
     NEO::MockGraphicsAllocation alloc;
 
-    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc);
+    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc, nullptr);
 
     EXPECT_FALSE(mockKernel.setSurfaceStateCalled);
 }
@@ -2205,7 +2205,7 @@ TEST_F(KernelBindlessUncachedMemoryTests, givenBindlessKernelAndAllocDataNoTfoun
 
     NEO::MockGraphicsAllocation alloc;
 
-    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc);
+    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc, nullptr);
     EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
 }
 
@@ -2235,7 +2235,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, alloc);
 
-        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc, nullptr);
         EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
         context->freeMem(devicePtr);
     }
@@ -2253,7 +2253,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, alloc);
 
-        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc, nullptr);
         EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
         context->freeMem(devicePtr);
     }
@@ -2286,7 +2286,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, alloc);
 
-        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc, nullptr);
         EXPECT_TRUE(mockKernel.getKernelRequiresUncachedMocs());
         context->freeMem(devicePtr);
     }
@@ -2305,7 +2305,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, alloc);
 
-        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc, nullptr);
         EXPECT_TRUE(mockKernel.getKernelRequiresUncachedMocs());
         context->freeMem(devicePtr);
     }
@@ -2338,7 +2338,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, alloc);
 
-        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc, nullptr);
         EXPECT_TRUE(mockKernel.getKernelRequiresUncachedMocs());
         context->freeMem(devicePtr);
     }
@@ -2356,7 +2356,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, alloc);
 
-        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc, nullptr);
         EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
         context->freeMem(devicePtr);
     }
@@ -2388,7 +2388,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, alloc);
 
-        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc, nullptr);
         EXPECT_TRUE(mockKernel.getKernelRequiresUncachedMocs());
         context->freeMem(ptr);
     }
@@ -2405,7 +2405,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, alloc);
 
-        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+        mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc, nullptr);
         EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
         context->freeMem(ptr);
     }

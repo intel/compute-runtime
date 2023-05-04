@@ -288,7 +288,8 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
                                                                                              unifiedMemoryProperties,
                                                                                              false,
                                                                                              eventPool->isHostVisibleEventPoolAllocation,
-                                                                                             false);
+                                                                                             false,
+                                                                                             nullptr);
 
     if (alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
