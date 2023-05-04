@@ -105,7 +105,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
                                          imgInfo,
                                          AllocationType::SHARED_IMAGE,
                                          context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
-    auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false, false, false);
+    auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false, false, false, nullptr);
 
     if (alloc == nullptr) {
         errorCode.set(CL_INVALID_GL_OBJECT);

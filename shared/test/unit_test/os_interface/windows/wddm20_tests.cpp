@@ -501,7 +501,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     MemoryManagerCreate<WddmMemoryManager> mm(false, false, *executionEnvironment);
     AllocationProperties properties(0, false, 4096u, AllocationType::SHARED_BUFFER, false, {});
 
-    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false, true);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false, true, nullptr);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 
@@ -529,6 +529,48 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     EXPECT_EQ(1u, destroyWithResourceHandleCalled);
 }
 
+TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledWithMapPointerThenGraphicsAllocationWithSharedPropertiesIsCreated) {
+    void *pSysMem = (void *)0x1000;
+
+    size_t sizeAlignedTo64Kb = 64 * KB;
+    void *reservedAddress;
+    EXPECT_TRUE(wddm->reserveValidAddressRange(sizeAlignedTo64Kb, reservedAddress));
+
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), pSysMem, sizeAlignedTo64Kb, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    EXPECT_EQ(0u, static_cast<uint32_t>(status));
+
+    MemoryManagerCreate<WddmMemoryManager> mm(false, false, *executionEnvironment);
+    AllocationProperties properties(0, false, sizeAlignedTo64Kb, AllocationType::SHARED_BUFFER, false, {});
+
+    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false, true, reservedAddress);
+    auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
+    ASSERT_NE(nullptr, wddmAllocation);
+
+    EXPECT_EQ(ALLOCATION_HANDLE, wddmAllocation->peekSharedHandle());
+    EXPECT_EQ(RESOURCE_HANDLE, wddmAllocation->resourceHandle);
+    EXPECT_NE(0u, wddmAllocation->getDefaultHandle());
+    EXPECT_EQ(ALLOCATION_HANDLE, wddmAllocation->getDefaultHandle());
+    EXPECT_EQ(reservedAddress, reinterpret_cast<void *>(wddmAllocation->getGpuAddress()));
+    EXPECT_EQ(sizeAlignedTo64Kb, wddmAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(nullptr, wddmAllocation->getAlignedCpuPtr());
+    EXPECT_NE(nullptr, wddmAllocation->getDefaultGmm());
+
+    EXPECT_EQ(sizeAlignedTo64Kb, wddmAllocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation());
+    mm.freeGraphicsMemory(graphicsAllocation);
+    wddm->releaseReservedAddress(nullptr);
+    auto destroyWithResourceHandleCalled = 0u;
+    D3DKMT_DESTROYALLOCATION2 *ptrToDestroyAlloc2 = nullptr;
+
+    status = getSizesFcn(destroyWithResourceHandleCalled, ptrToDestroyAlloc2);
+
+    EXPECT_EQ(0u, ptrToDestroyAlloc2->Flags.SynchronousDestroy);
+    EXPECT_EQ(1u, ptrToDestroyAlloc2->Flags.AssumeNotInUse);
+
+    EXPECT_EQ(0u, static_cast<uint32_t>(status));
+    EXPECT_EQ(1u, destroyWithResourceHandleCalled);
+}
+
 TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromMultipleSharedHandlesIsCalledThenNullptrIsReturned) {
     void *pSysMem = (void *)0x1000;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
@@ -539,7 +581,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     AllocationProperties properties(0, false, 4096u, AllocationType::SHARED_BUFFER, false, {});
 
     std::vector<osHandle> handles{ALLOCATION_HANDLE};
-    auto graphicsAllocation = mm.createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true, nullptr);
     ASSERT_EQ(nullptr, graphicsAllocation);
 }
 
@@ -552,7 +594,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     MemoryManagerCreate<WddmMemoryManager> mm(false, false, *executionEnvironment);
     AllocationProperties properties(0, false, 4096, AllocationType::SHARED_BUFFER, false, {});
 
-    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false, true);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false, true, nullptr);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 

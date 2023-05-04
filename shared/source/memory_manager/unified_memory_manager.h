@@ -42,6 +42,7 @@ struct SvmAllocationData {
                 this->gpuAllocations.addAllocation(allocation);
             }
         }
+        this->mappedAllocData = svmAllocData.mappedAllocData;
     }
     SvmAllocationData &operator=(const SvmAllocationData &) = delete;
     GraphicsAllocation *cpuAllocation = nullptr;
@@ -55,6 +56,7 @@ struct SvmAllocationData {
     void setAllocId(uint32_t id) {
         allocId = id;
     }
+    bool mappedAllocData = false;
 
     uint32_t getAllocId() {
         return allocId;

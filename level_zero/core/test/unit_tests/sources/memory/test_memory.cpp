@@ -292,7 +292,8 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     void *ipcPtr;
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
-    ipcPtr = driverHandleImp->importFdHandles(device->getNEODevice(), flags, handles, &ipcAlloc);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    ipcPtr = driverHandleImp->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal);
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 
@@ -342,7 +343,8 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     void *ipcPtr;
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
-    ipcPtr = driverHandleImp->importFdHandles(device->getNEODevice(), flags, handles, &ipcAlloc);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    ipcPtr = driverHandleImp->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal);
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 
@@ -417,7 +419,8 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     ze_ipc_memory_flags_t flags = {};
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
-    void *ipcPtr = driverHandleImp->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, &ipcAlloc);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    void *ipcPtr = driverHandleImp->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, &ipcAlloc, allocDataInternal);
     EXPECT_EQ(ipcPtr, nullptr);
 
     result = context->freeMem(ptr);
@@ -2314,7 +2317,7 @@ TEST_F(ContextMemoryTests, givenMultipleSubDevicesWhenAllocatingThenUseCorrectGl
 }
 
 struct DriverHandleFailGetFdMock : public L0::DriverHandleImp {
-    void *importFdHandle(NEO::Device *neoDevicee, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, NEO::GraphicsAllocation **pAloc) override {
+    void *importFdHandle(NEO::Device *neoDevicee, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override {
         importFdHandleCalledTimes++;
         if (mockFd == allocationMap.second) {
             return allocationMap.first;
@@ -3118,7 +3121,7 @@ TEST_F(MultipleDevicePeerAllocationFailTest,
     EXPECT_NE(allocData, nullptr);
 
     DriverHandleFailGetFdMock *driverHandleFailGetFdMock = static_cast<DriverHandleFailGetFdMock *>(context->getDriverHandle());
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_GT(driverHandleFailGetFdMock->importFdHandleCalledTimes, 0u);
     EXPECT_EQ(peerAlloc, nullptr);
 
@@ -3784,7 +3787,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
     uintptr_t peerGpuAddress = 0u;
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_EQ(peerAlloc, nullptr);
 
     result = context->freeMem(ptr);
@@ -3809,8 +3812,35 @@ TEST_F(MultipleDevicePeerAllocationTest,
     uintptr_t peerGpuAddress = 0u;
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MultipleDevicePeerAllocationTest,
+       whenPeerAllocationForDeviceAllocationIsRequestedWithPeerAllocDataThenPeerAllocDataIsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uintptr_t peerGpuAddress = 0u;
+    auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+    NEO::SvmAllocationData *peerAllocData;
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, &peerAllocData);
+    EXPECT_NE(peerAlloc, nullptr);
+    EXPECT_NE(peerAllocData, nullptr);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -3834,7 +3864,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
     uintptr_t peerGpuAddress = 0u;
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
 
     DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
@@ -3874,7 +3904,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
     DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
     EXPECT_EQ(0u, deviceImp1->peerAllocations.allocations.size());
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
     EXPECT_EQ(1u, deviceImp1->peerAllocations.allocations.size());
 
@@ -3884,7 +3914,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
     }
 
     uintptr_t peerGpuAddress2 = 0u;
-    peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress2);
+    peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress2, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
     EXPECT_EQ(1u, deviceImp1->peerAllocations.allocations.size());
     EXPECT_EQ(peerGpuAddress, peerGpuAddress2);
@@ -3916,7 +3946,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, nullptr);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, nullptr, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
 
     result = context->freeMem(ptr);
@@ -3942,11 +3972,11 @@ TEST_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(allocData, nullptr);
 
     uintptr_t peerGpuAddress0 = 0u;
-    auto peerAlloc0 = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress0);
+    auto peerAlloc0 = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress0, nullptr);
     EXPECT_NE(peerAlloc0, nullptr);
 
     uintptr_t peerGpuAddress1 = 0u;
-    auto peerAlloc1 = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress1);
+    auto peerAlloc1 = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress1, nullptr);
     EXPECT_NE(peerAlloc1, nullptr);
 
     EXPECT_EQ(peerAlloc0, peerAlloc1);
@@ -4681,7 +4711,8 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithUncachedFlagsThenLocallyUncachedResourceIsSet) {
     ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -4694,7 +4725,8 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithUncachedIpcFlagsThenLocallyUncachedResourceIsSet) {
     ze_ipc_memory_flags_t flags = ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -4707,7 +4739,8 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithBothUncachedFlagsThenLocallyUncachedResourceIsSet) {
     ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED | ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -4720,7 +4753,8 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithoutUncachedFlagsThenLocallyUncachedResourceIsNotSet) {
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -4733,7 +4767,8 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithHostBufferMemoryAllocationTypeThenHostUnifiedMemoryIsSet) {
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER_HOST_MEMORY, nullptr);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER_HOST_MEMORY, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -4747,7 +4782,8 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithBufferMemoryAllocationTypeThenDeviceUnifiedMemoryIsSet) {
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr);
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -5029,12 +5065,12 @@ class MockSharedHandleMemoryManager : public MockMemoryManager {
   public:
     using MockMemoryManager::MockMemoryManager;
 
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override {
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
 
-        return MockMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation);
+        return MockMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
     }
 
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {

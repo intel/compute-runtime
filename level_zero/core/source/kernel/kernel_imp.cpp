@@ -526,7 +526,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) {
+ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) {
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
     const auto val = argVal;
 
@@ -534,8 +534,12 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
     if (NEO::isValidOffset(arg.bindful) || NEO::isValidOffset(arg.bindless)) {
         setBufferSurfaceState(argIndex, reinterpret_cast<void *>(val), allocation);
     }
-
-    auto allocData = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()));
+    NEO::SvmAllocationData *allocData = nullptr;
+    if (peerAllocData) {
+        allocData = peerAllocData;
+    } else {
+        allocData = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()));
+    }
     if (allocData) {
         bool argWasUncacheable = isArgUncached[argIndex];
         bool argIsUncacheable = allocData->allocationFlagsProperty.flags.locallyUncachedResource;
@@ -546,7 +550,6 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
         }
         this->setKernelArgUncached(argIndex, argIsUncacheable);
     }
-
     residencyContainer[argIndex] = allocation;
 
     return ZE_RESULT_SUCCESS;
@@ -633,6 +636,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     if (allocData == nullptr) {
         allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
     }
+    NEO::SvmAllocationData *peerAllocData = nullptr;
     if (driverHandle->isRemoteResourceNeeded(requestedAddress, alloc, allocData, device)) {
         if (allocData == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -640,18 +644,16 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
 
         uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
         uint64_t offset = (uint64_t)requestedAddress - pbase;
-
-        alloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &gpuAddress);
+        alloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &gpuAddress, &peerAllocData);
         if (alloc == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         gpuAddress += offset;
     }
-
     const uint32_t allocId = allocData ? allocData->getAllocId() : 0u;
     kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
 
-    return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
+    return setArgBufferWithAlloc(argIndex, gpuAddress, alloc, peerAllocData);
 }
 
 ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void *argVal) {

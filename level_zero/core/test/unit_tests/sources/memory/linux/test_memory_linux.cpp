@@ -60,7 +60,7 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
   public:
     MemoryManagerIpcImplicitScalingObtainFdMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {}
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override { return nullptr; }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override { return nullptr; };
@@ -113,7 +113,8 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
                                                                                AllocationProperties &properties,
                                                                                bool requireSpecificBitness,
                                                                                bool isHostIpcAllocation,
-                                                                               bool reuseSharedAllocation) override {
+                                                                               bool reuseSharedAllocation,
+                                                                               void *mapPointer) override {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
@@ -400,7 +401,7 @@ TEST_F(MemoryExportImportObtainFdTest,
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
     currMemoryManager->failOnObtainFdFromHandle = false;
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
 
     result = context->freeMem(ptr);
@@ -426,7 +427,7 @@ TEST_F(MemoryExportImportObtainFdTest,
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
     currMemoryManager->failOnObtainFdFromHandle = true;
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_EQ(peerAlloc, nullptr);
 
     result = context->freeMem(ptr);
@@ -468,7 +469,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
   public:
     MemoryManagerIpcObtainFdMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {}
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override { return nullptr; }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override { return nullptr; };
@@ -521,7 +522,8 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
                                                                                AllocationProperties &properties,
                                                                                bool requireSpecificBitness,
                                                                                bool isHostIpcAllocation,
-                                                                               bool reuseSharedAllocation) override {
+                                                                               bool reuseSharedAllocation,
+                                                                               void *mapPointer) override {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
@@ -562,7 +564,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
 };
 
 struct DriverHandleObtaindFdMock : public L0::DriverHandleImp {
-    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, NEO::GraphicsAllocation **pAloc) override {
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override {
         DeviceBitfield deviceBitfield{0x0};
         AllocationProperties properties(0, MemoryConstants::pageSize,
                                         AllocationType::BUFFER,
@@ -657,7 +659,7 @@ TEST_F(MemoryObtainFdTest,
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
     currMemoryManager->failOnObtainFdFromHandle = true;
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_EQ(peerAlloc, nullptr);
 
     result = context->freeMem(ptr);

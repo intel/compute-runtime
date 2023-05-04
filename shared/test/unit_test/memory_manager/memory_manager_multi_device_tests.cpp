@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,12 +45,12 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
             EXPECT_EQ(rootDeviceIndex, gfxAllocation->getRootDeviceIndex());
             memoryManager->freeGraphicsMemory(gfxAllocation);
 
-            gfxAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(static_cast<osHandle>(0u), properties, false, false, true);
+            gfxAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(static_cast<osHandle>(0u), properties, false, false, true, nullptr);
             ASSERT_NE(gfxAllocation, nullptr);
             EXPECT_EQ(rootDeviceIndex, gfxAllocation->getRootDeviceIndex());
             memoryManager->freeGraphicsMemory(gfxAllocation);
 
-            gfxAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(static_cast<osHandle>(0u), properties, true, false, true);
+            gfxAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(static_cast<osHandle>(0u), properties, true, false, true, nullptr);
             ASSERT_NE(gfxAllocation, nullptr);
             EXPECT_EQ(rootDeviceIndex, gfxAllocation->getRootDeviceIndex());
             memoryManager->freeGraphicsMemory(gfxAllocation);

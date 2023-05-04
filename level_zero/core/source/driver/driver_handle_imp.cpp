@@ -476,7 +476,9 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
                                       ze_ipc_memory_flags_t flags,
                                       uint64_t handle,
                                       NEO::AllocationType allocationType,
-                                      NEO::GraphicsAllocation **pAlloc) {
+                                      void *basePointer,
+                                      NEO::GraphicsAllocation **pAlloc,
+                                      NEO::SvmAllocationData &mappedPeerAllocData) {
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
@@ -489,29 +491,39 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
                                                                            unifiedMemoryProperties,
                                                                            false,
                                                                            isHostIpcAllocation,
-                                                                           false);
+                                                                           false,
+                                                                           basePointer);
     if (alloc == nullptr) {
         return nullptr;
     }
 
     NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
-    allocData.gpuAllocations.addAllocation(alloc);
-    allocData.cpuAllocation = nullptr;
-    allocData.size = alloc->getUnderlyingBufferSize();
-    allocData.memoryType =
+    NEO::SvmAllocationData *allocDataTmp = nullptr;
+    if (basePointer) {
+        allocDataTmp = &mappedPeerAllocData;
+        allocDataTmp->mappedAllocData = true;
+    } else {
+        allocDataTmp = &allocData;
+        allocDataTmp->mappedAllocData = false;
+    }
+    allocDataTmp->gpuAllocations.addAllocation(alloc);
+    allocDataTmp->cpuAllocation = nullptr;
+    allocDataTmp->size = alloc->getUnderlyingBufferSize();
+    allocDataTmp->memoryType =
         isHostIpcAllocation ? InternalMemoryType::HOST_UNIFIED_MEMORY : InternalMemoryType::DEVICE_UNIFIED_MEMORY;
-    allocData.device = neoDevice;
-    allocData.isImportedAllocation = true;
+    allocDataTmp->device = neoDevice;
+    allocDataTmp->isImportedAllocation = true;
     if (flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
-        allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
+        allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
 
     if (flags & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED) {
-        allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
+        allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
 
-    this->getSvmAllocsManager()->insertSVMAlloc(allocData);
-
+    if (!basePointer) {
+        this->getSvmAllocsManager()->insertSVMAlloc(allocData);
+    }
     if (pAlloc) {
         *pAlloc = alloc;
     }
@@ -519,7 +531,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
-void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, NEO::GraphicsAllocation **pAlloc) {
+void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) {
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       NEO::AllocationType::BUFFER,
@@ -531,26 +543,39 @@ void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_fla
                                                                                     unifiedMemoryProperties,
                                                                                     false,
                                                                                     false,
-                                                                                    false);
+                                                                                    false,
+                                                                                    basePtr);
     if (alloc == nullptr) {
         return nullptr;
     }
 
+    NEO::SvmAllocationData *allocDataTmp = nullptr;
     NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
-    allocData.gpuAllocations.addAllocation(alloc);
-    allocData.cpuAllocation = nullptr;
-    allocData.size = alloc->getUnderlyingBufferSize();
-    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
-    allocData.device = neoDevice;
+
+    if (basePtr) {
+        allocDataTmp = &mappedPeerAllocData;
+        allocDataTmp->mappedAllocData = true;
+    } else {
+        allocDataTmp = &allocData;
+        allocDataTmp->mappedAllocData = false;
+    }
+
+    allocDataTmp->gpuAllocations.addAllocation(alloc);
+    allocDataTmp->cpuAllocation = nullptr;
+    allocDataTmp->size = alloc->getUnderlyingBufferSize();
+    allocDataTmp->memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocDataTmp->device = neoDevice;
     if (flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
-        allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
+        allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
 
     if (flags & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED) {
-        allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
+        allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
 
-    this->getSvmAllocsManager()->insertSVMAlloc(allocData);
+    if (!basePtr) {
+        this->getSvmAllocsManager()->insertSVMAlloc(allocData);
+    }
 
     if (pAlloc) {
         *pAlloc = alloc;
@@ -603,19 +628,21 @@ ze_result_t DriverHandleImp::getPeerImage(Device *device, Image *image, Image **
 NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                                                             NEO::SvmAllocationData *allocData,
                                                             void *basePtr,
-                                                            uintptr_t *peerGpuAddress) {
+                                                            uintptr_t *peerGpuAddress,
+                                                            NEO::SvmAllocationData **peerAllocData) {
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
     NEO::GraphicsAllocation *alloc = nullptr;
-
-    NEO::SvmAllocationData *peerAllocData = nullptr;
+    void *peerMapAddress = basePtr;
     void *peerPtr = nullptr;
+
+    NEO::SvmAllocationData *peerAllocDataInternal = nullptr;
 
     std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
 
     auto iter = deviceImp->peerAllocations.allocations.find(basePtr);
     if (iter != deviceImp->peerAllocations.allocations.end()) {
-        peerAllocData = &iter->second;
-        alloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
+        peerAllocDataInternal = &iter->second;
+        alloc = peerAllocDataInternal->gpuAllocations.getDefaultGraphicsAllocation();
         UNRECOVERABLE_IF(alloc == nullptr);
         peerPtr = reinterpret_cast<void *>(alloc->getGpuAddress());
     } else {
@@ -623,6 +650,17 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
         UNRECOVERABLE_IF(alloc == nullptr);
         ze_ipc_memory_flags_t flags = {};
         uint32_t numHandles = alloc->getNumHandles();
+
+        // Don't attempt to use the peerMapAddress for reserved memory due to the limitations in the address reserved.
+        if (allocData->memoryType == InternalMemoryType::RESERVED_DEVICE_MEMORY) {
+            peerMapAddress = nullptr;
+        }
+
+        uint32_t peerAllocRootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
+        if (numHandles > 1) {
+            peerAllocRootDeviceIndex = device->getNEODevice()->getRootDevice()->getRootDeviceIndex();
+        }
+        NEO::SvmAllocationData allocDataInternal(peerAllocRootDeviceIndex);
 
         if (numHandles > 1) {
             UNRECOVERABLE_IF(numHandles == 0);
@@ -636,7 +674,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                 handles.push_back(static_cast<NEO::osHandle>(handle));
             }
             auto neoDevice = device->getNEODevice()->getRootDevice();
-            peerPtr = this->importFdHandles(neoDevice, flags, handles, &alloc);
+            peerPtr = this->importFdHandles(neoDevice, flags, handles, peerMapAddress, &alloc, allocDataInternal);
         } else {
             uint64_t handle = 0;
             int ret = alloc->peekInternalHandle(this->getMemoryManager(), handle);
@@ -647,15 +685,28 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                                            flags,
                                            handle,
                                            NEO::AllocationType::BUFFER,
-                                           &alloc);
+                                           peerMapAddress,
+                                           &alloc,
+                                           allocDataInternal);
         }
 
         if (peerPtr == nullptr) {
             return nullptr;
         }
 
-        peerAllocData = this->getSvmAllocsManager()->getSVMAlloc(peerPtr);
-        deviceImp->peerAllocations.allocations.insert(std::make_pair(basePtr, *peerAllocData));
+        peerAllocDataInternal = &allocDataInternal;
+        if (peerMapAddress == nullptr) {
+            peerAllocDataInternal = this->getSvmAllocsManager()->getSVMAlloc(peerPtr);
+        }
+        deviceImp->peerAllocations.allocations.insert(std::make_pair(basePtr, *peerAllocDataInternal));
+        // Point to the new peer Alloc Data after it is recreated in the peer allocations map
+        if (peerMapAddress) {
+            peerAllocDataInternal = &deviceImp->peerAllocations.allocations.at(basePtr);
+        }
+    }
+
+    if (peerAllocData) {
+        *peerAllocData = peerAllocDataInternal;
     }
 
     if (peerGpuAddress) {

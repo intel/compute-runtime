@@ -232,7 +232,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenDrmMemoryManagerAndOsHandleWhen
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::BUFFER_HOST_MEMORY, false, {});
 
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, true, true);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, true, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_EQ(this->mock->inputFd, (int)handle);

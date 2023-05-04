@@ -43,8 +43,8 @@ struct DriverHandleImp : public DriverHandle {
 
     NEO::MemoryManager *getMemoryManager() override;
     void setMemoryManager(NEO::MemoryManager *memoryManager) override;
-    MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, NEO::GraphicsAllocation **pAlloc);
-    MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, NEO::GraphicsAllocation **pAlloc);
+    MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData);
+    MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData);
     MOCKABLE_VIRTUAL void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType);
     ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) override;
     NEO::SVMAllocsManager *getSvmAllocsManager() override;
@@ -75,7 +75,8 @@ struct DriverHandleImp : public DriverHandle {
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,
                                                NEO::SvmAllocationData *allocData,
                                                void *basePtr,
-                                               uintptr_t *peerGpuAddress);
+                                               uintptr_t *peerGpuAddress,
+                                               NEO::SvmAllocationData **peerAllocData);
     void initializeVertexes();
     ze_result_t fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phDevices) override;
     void createHostPointerManager();

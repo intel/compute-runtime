@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
@@ -77,7 +78,7 @@ struct KernelImp : Kernel {
 
     ze_result_t setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal) override;
 
-    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override;
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override;
 
     ze_result_t setArgImage(uint32_t argIndex, size_t argSize, const void *argVal);
 
