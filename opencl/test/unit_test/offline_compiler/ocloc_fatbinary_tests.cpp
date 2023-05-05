@@ -29,6 +29,7 @@
 extern Environment *gEnvironment;
 
 namespace NEO {
+extern std::set<std::string> virtualFileList;
 
 auto searchInArchiveByFilename(const Ar::Ar &archive, const ConstStringRef &name) {
     const auto isSearchedFile = [&name](const auto &file) {
@@ -459,6 +460,46 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsAcronymsWithoutDashesWhe
     }
 
     EXPECT_STREQ(output.c_str(), resString.str().c_str());
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputNameOptionWhenBuildingThenCorrectFileIsCreated) {
+    if (enabledProductsAcronyms.size() < 2) {
+        GTEST_SKIP();
+    }
+    for (unsigned int product = 0; product < enabledProductsAcronyms.size() - 1; product++) {
+        auto acronym0 = enabledProductsAcronyms.at(product);
+        auto acronym1 = enabledProductsAcronyms.at(product + 1);
+        std::vector<ConstStringRef> expected{acronym0, acronym1};
+
+        std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-o",
+            "expected_output.bin",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        EXPECT_EQ(1u, NEO::virtualFileList.size());
+        EXPECT_TRUE(NEO::virtualFileList.find("expected_output.bin") != NEO::virtualFileList.end());
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoSameReleaseTargetsWhenGetProductsAcronymsThenDuplicatesAreNotFound) {

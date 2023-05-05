@@ -136,6 +136,7 @@ All supported acronyms: %s.
     std::string productFamilyName;
     std::string inputFile;
     std::string outputFile;
+    std::string binaryOutputFile;
     std::string outputDirectory;
     std::string options;
     std::string internalOptions;

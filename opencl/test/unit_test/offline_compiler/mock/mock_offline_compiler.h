@@ -24,6 +24,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::allowCaching;
     using OfflineCompiler::appendExtraInternalOptions;
     using OfflineCompiler::argHelper;
+    using OfflineCompiler::binaryOutputFile;
     using OfflineCompiler::cache;
     using OfflineCompiler::compilerProductHelper;
     using OfflineCompiler::dbgHash;
@@ -57,6 +58,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::irBinarySize;
     using OfflineCompiler::irHash;
     using OfflineCompiler::isSpirV;
+    using OfflineCompiler::onlySpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
     using OfflineCompiler::outputFile;

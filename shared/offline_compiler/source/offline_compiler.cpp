@@ -677,6 +677,9 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (("-output" == currArg) && hasMoreArgs) {
             outputFile = argv[argIndex + 1];
             argIndex++;
+        } else if (("-o" == currArg) && hasMoreArgs) {
+            binaryOutputFile = argv[argIndex + 1];
+            argIndex++;
         } else if ((CompilerOptions::arch32bit == currArg) || ("-32" == currArg)) {
             compile32 = true;
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
@@ -753,6 +756,11 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         }
     }
 
+    if (!binaryOutputFile.empty() && (useGenFile || useCppFile || outputNoSuffix || !outputFile.empty())) {
+        argHelper->printf("Error: options: -gen_file/-cpp_file/-output_no_suffix/-output cannot be used with -o\n");
+        retVal = INVALID_COMMAND_LINE;
+        return retVal;
+    }
     unifyExcludeIrFlags();
 
     if (DebugManager.flags.OverrideRevision.get() != -1) {
@@ -923,10 +931,14 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 <device_type> can be: %s
                                 - can be single target device.
 
+  -o <filename>                 Optional output file name. 
+                                Must not be used with: 
+                                -gen_file | -cpp_file | -output_no_suffix | -output
+
   -output <filename>            Optional output file base name.
                                 Default is input file's base name.
-                                This base name will be used for all output
-                                files. Proper sufixes (describing file formats)
+                                This base name will be used for all output files. 
+                                For single target device proper suffixes (describing file formats)
                                 will be added automatically.
 
   -out_dir <output_dir>         Optional output directory.
@@ -1139,6 +1151,16 @@ void OfflineCompiler::writeOutAllFiles() {
             createDir(dirList.back());
             dirList.pop_back();
         }
+    }
+
+    if (!binaryOutputFile.empty()) {
+        std::string outputFile = generateFilePath(outputDirectory, binaryOutputFile, "");
+        if (isOnlySpirV()) {
+            argHelper->saveOutput(outputFile, irBinary, irBinarySize);
+        } else if (!elfBinary.empty()) {
+            argHelper->saveOutput(outputFile, elfBinary.data(), elfBinary.size());
+        }
+        return;
     }
 
     if (irBinary && !inputFileSpirV) {

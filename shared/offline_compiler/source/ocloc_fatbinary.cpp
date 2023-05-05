@@ -311,7 +311,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         } else if ((ConstStringRef("-file") == currArg) && hasMoreArgs) {
             inputFileName = args[argIndex + 1];
             ++argIndex;
-        } else if ((ConstStringRef("-output") == currArg) && hasMoreArgs) {
+        } else if (((ConstStringRef("-output") == currArg) || (ConstStringRef("-o") == currArg)) && hasMoreArgs) {
             outputFileName = args[argIndex + 1];
             ++argIndex;
         } else if ((ConstStringRef("-out_dir") == currArg) && hasMoreArgs) {

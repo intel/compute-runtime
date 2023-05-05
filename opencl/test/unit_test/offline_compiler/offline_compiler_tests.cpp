@@ -2884,6 +2884,51 @@ TEST(OfflineCompilerTest, givenNonEmptyOutputDirectoryWhenWritingOutAllFilesTheD
     EXPECT_EQ("12345678", outputFileIt->second);
 }
 
+TEST(OfflineCompilerTest, givenBinaryOutputFileWhenWritingOutAllFilesThenOnlyBinaryWithCorrectNameIsCreated) {
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.interceptCreatedDirs = true;
+    mockOfflineCompiler.uniqueHelper->interceptOutput = true;
+
+    mockOfflineCompiler.binaryOutputFile = "some_output_filename.bin";
+    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+    mockOfflineCompiler.irBinary = new char[4];
+    mockOfflineCompiler.irBinarySize = 4;
+
+    mockOfflineCompiler.writeOutAllFiles();
+
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.bin");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
+
+    EXPECT_EQ("12345678", outputFileIt->second);
+
+    const auto outputFileIt2 = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.spv");
+    EXPECT_EQ(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt2);
+}
+
+TEST(OfflineCompilerTest, givenBinaryOutputFileWithSpirvOnlyWhenWritingOutAllFilesThenOnlyBinaryWithCorrectNameIsCreated) {
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.interceptCreatedDirs = true;
+    mockOfflineCompiler.uniqueHelper->interceptOutput = true;
+
+    mockOfflineCompiler.binaryOutputFile = "some_output_filename.bin";
+    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0};
+    mockOfflineCompiler.irBinary = new char[4];
+    mockOfflineCompiler.irBinarySize = 4;
+    uint8_t data[] = {49, 50, 51, 52}; // ASCII codes of "1234"
+    memcpy(mockOfflineCompiler.irBinary, data, sizeof(data));
+    mockOfflineCompiler.onlySpirV = true;
+
+    mockOfflineCompiler.writeOutAllFiles();
+
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.bin");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
+
+    EXPECT_EQ("1234", outputFileIt->second);
+
+    const auto outputFileIt2 = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.spv");
+    EXPECT_EQ(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt2);
+}
+
 TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFileLlvmIsSetTrue) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -3144,6 +3189,84 @@ TEST(OfflineCompilerTest, givenOptionsWhenCmdLineParsedThenOptionsAreAppendedToO
     std::string options = mockOfflineCompiler->options;
     EXPECT_TRUE(hasSubstr(options, std::string("options1")));
     EXPECT_TRUE(hasSubstr(options, std::string("options2")));
+}
+
+TEST(OfflineCompilerTest, givenDashOOptionWhenCmdLineParsedThenBinaryOutputNameIsSet) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-o",
+        "nameOfFile.bin",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    auto retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(0u, output.size());
+
+    EXPECT_EQ("nameOfFile.bin", mockOfflineCompiler->binaryOutputFile);
+}
+
+TEST(OfflineCompilerTest, givenDashOAndOtherInvalidOptionsWhenCmdLineParsedThenErrorReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-o",
+        "nameOfFile.bin",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "empty"};
+
+    std::vector<std::string> options = {
+        "-gen_file",
+        "-cpp_file",
+        "-output_no_suffix"};
+
+    for (const auto &op : options) {
+        argv[argv.size() - 1] = op;
+        auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+        ASSERT_NE(nullptr, mockOfflineCompiler);
+
+        testing::internal::CaptureStdout();
+        auto retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+        std::string output = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, retVal);
+        EXPECT_NE(0u, output.size());
+
+        EXPECT_TRUE(hasSubstr(output, std::string("Error: options: -gen_file/-cpp_file/-output_no_suffix/-output cannot be used with -o\n")));
+    }
+
+    std::vector<std::string> argv2 = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-o",
+        "nameOfFile.bin",
+        "-output",
+        "abc",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    auto retVal = mockOfflineCompiler->parseCommandLine(argv2.size(), argv2);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, retVal);
+    EXPECT_NE(0u, output.size());
+
+    EXPECT_TRUE(hasSubstr(output, std::string("Error: options: -gen_file/-cpp_file/-output_no_suffix/-output cannot be used with -o\n")));
 }
 
 TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSetAndRemainAfterBuild) {
