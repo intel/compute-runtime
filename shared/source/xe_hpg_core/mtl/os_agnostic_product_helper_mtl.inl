@@ -66,11 +66,6 @@ bool ProductHelperHw<gfxProduct>::programAllStateComputeCommandFields() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const {
-    return (MTL::isLpg(hwInfo) == false);
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

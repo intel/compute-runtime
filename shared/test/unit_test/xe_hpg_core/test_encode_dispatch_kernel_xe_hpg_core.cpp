@@ -34,7 +34,7 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenVariousValuesWhenCallingSetBarr
 }
 template <PRODUCT_FAMILY productFamily>
 struct MockProductHelper : NEO::ProductHelperHw<productFamily> {
-    bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const override { return true; }
+    bool isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const override { return true; }
 };
 
 HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenRequiredWorkGroupOrderAndIsAdjustWalkOrderAvailableReturnTrueWhenCallAdjustWalkOrderThenWalkerIsProgrammedCorrectly, IsXeHpgCore) {

@@ -12,6 +12,7 @@
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -33,6 +34,7 @@ using namespace NEO;
 ProductHelperTest::ProductHelperTest() {
     executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     productHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
 }
 
 ProductHelperTest::~ProductHelperTest() = default;
@@ -40,6 +42,11 @@ ProductHelperTest::~ProductHelperTest() = default;
 void ProductHelperTest::SetUp() {
     pInHwInfo = *defaultHwInfo;
     testPlatform = &pInHwInfo.platform;
+}
+
+void ProductHelperTest::refreshReleaseHelper(HardwareInfo *hwInfo) {
+    executionEnvironment->rootDeviceEnvironments[0]->releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->releaseHelper->create(hwInfo->ipVersion);
+    releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
 }
 
 TEST(ProductHelperTestCreate, WhenProductHelperCreateIsCalledWithUnknownProductThenNullptrIsReturned) {
@@ -619,7 +626,8 @@ HWTEST_F(ProductHelperTest, givenForceThreadArbitrationPolicyProgrammingWithScmF
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsAdjustWalkOrderAvailableCallThenFalseReturn) {
-    EXPECT_FALSE(productHelper->isAdjustWalkOrderAvailable(*defaultHwInfo));
+
+    EXPECT_FALSE(productHelper->isAdjustWalkOrderAvailable(releaseHelper));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsPrefetcherDisablingInDirectSubmissionRequiredThenTrueIsReturned) {

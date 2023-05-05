@@ -14,6 +14,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
@@ -251,4 +252,16 @@ MTLTEST_F(MtlProductHelper, givenMtlPB0WhengetProductMaxPreferredSlmSizeThenPass
     compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
     preferredEnumValue = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(productHelper->getProductMaxPreferredSlmSize(hwInfo, preferredEnumValue));
     EXPECT_EQ(preferredEnumValue, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K);
+}
+
+MTLTEST_F(MtlProductHelper, givenMtlWhenCallIsAdjustWalkOrderAvailableThenReturnProperValue) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    unsigned int gmdReleases[] = {70, 71};
+    defaultHwInfo->ipVersion.architecture = 12;
+
+    for (auto gmdRelease : gmdReleases) {
+        defaultHwInfo->ipVersion.release = gmdRelease;
+        refreshReleaseHelper(defaultHwInfo.get());
+        EXPECT_EQ(!MTL::isLpg(*defaultHwInfo), productHelper->isAdjustWalkOrderAvailable(releaseHelper));
+    }
 }

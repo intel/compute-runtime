@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 
 #include <bitset>
@@ -519,7 +520,12 @@ bool ProductHelperHw<gfxProduct>::isUnlockingLockedPtrNecessary(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const { return false; }
+bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isAdjustWalkOrderAvailable();
+    }
+    return false;
+}
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive) const {

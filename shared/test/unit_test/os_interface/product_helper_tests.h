@@ -13,8 +13,9 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-class ProductHelper;
 class ExecutionEnvironment;
+class ProductHelper;
+class ReleaseHelper;
 } // namespace NEO
 
 using namespace NEO;
@@ -24,9 +25,11 @@ struct ProductHelperTest : public ::testing::Test {
     ~ProductHelperTest() override;
     void SetUp() override;
 
+    void refreshReleaseHelper(HardwareInfo *hwInfo);
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     HardwareInfo pInHwInfo{};
     HardwareInfo outHwInfo{};
     ProductHelper *productHelper = nullptr;
+    ReleaseHelper *releaseHelper = nullptr;
     PLATFORM *testPlatform = nullptr;
 };

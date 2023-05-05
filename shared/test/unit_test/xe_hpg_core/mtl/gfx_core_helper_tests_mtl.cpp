@@ -49,18 +49,6 @@ MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalled
 
 using ProductHelperTestMtl = Test<DeviceFixture>;
 
-MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCallIsAdjustWalkOrderAvailableThenReturnProperValue) {
-    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    const auto &productHelper = getHelper<ProductHelper>();
-    unsigned int gmdReleases[] = {70, 71, 72, 73};
-    defaultHwInfo->ipVersion.architecture = 12;
-
-    for (auto gmdRelease : gmdReleases) {
-        defaultHwInfo->ipVersion.release = gmdRelease;
-        EXPECT_EQ(!MTL::isLpg(*defaultHwInfo), productHelper.isAdjustWalkOrderAvailable(*defaultHwInfo));
-    }
-}
-
 MTLTEST_F(ProductHelperTestMtl, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenForTimestampPacketTagBufferReturnTwo) {
     auto &helper = getHelper<ProductHelper>();
     uint64_t expectedPatIndexWhenTimestampPacketTagBuffer = 2u;

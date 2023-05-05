@@ -180,8 +180,7 @@ void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE 
 template <>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto &productHelper = rootDeviceEnvironment.template getHelper<ProductHelper>();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    if (productHelper.isAdjustWalkOrderAvailable(hwInfo)) {
+    if (productHelper.isAdjustWalkOrderAvailable(rootDeviceEnvironment.getReleaseHelper())) {
         if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::linearWalk) {
             walkerCmd.setDispatchWalkOrder(WALKER_TYPE::DISPATCH_WALK_ORDER::LINERAR_WALKER);
         } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {

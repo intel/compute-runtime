@@ -10,8 +10,8 @@
 namespace NEO {
 
 enum class ReleaseType {
-    release1270 = 0,
-    release1271 = 1,
+    release1270,
+    release1271,
 };
 
 } // namespace NEO
