@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -508,4 +509,231 @@ HWTEST2_F(MiMath, givenValueToMakeRightAritmeticShiftWhenUseMiMathThenShiftIsDon
     expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(allocation->getGpuAddress() + 4), &secondShift, sizeof(uint32_t));
     expectMemory<FamilyType>(reinterpret_cast<void *>(allocation->getGpuAddress() + 4), &executeSecondShift, sizeof(uint32_t));
 }
+
+struct ConditionalBbStartTests : public MiMath {
+    void SetUp() override {
+        MiMath::SetUp();
+
+        std::vector<uint32_t> bufferMemory;
+        bufferMemory.resize(compareBufferSize);
+
+        std::fill(bufferMemory.begin(), bufferMemory.end(), baseCompareValue);
+
+        // bufferMemory[0]; -- Equal. Dont change
+        bufferMemory[1] += 5; // Greater
+        bufferMemory[2] -= 5; // Less
+
+        cl_int retVal = CL_SUCCESS;
+
+        buffer = std::unique_ptr<Buffer>(Buffer::create(context,
+                                                        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                                                        compareBufferSize * sizeof(uint32_t), bufferMemory.data(), retVal));
+
+        csr->makeResident(*buffer->getGraphicsAllocation(rootDeviceIndex));
+
+        baseGpuVa = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
+        baseWriteGpuVa = baseGpuVa + (sizeof(uint32_t) * numCompareModes);
+    }
+
+    uint64_t baseGpuVa = 0;
+    uint64_t baseWriteGpuVa = 0;
+    uint64_t invalidGpuVa = 0x1230000;
+    uint32_t numCompareModes = 3;
+    const size_t compareBufferSize = numCompareModes * 3;
+    const uint32_t baseCompareValue = 10;
+    std::unique_ptr<Buffer> buffer;
+};
+
+HWTEST2_F(ConditionalBbStartTests, whenDispatchingEqualModeThenResultsAreValid, IsAtLeastXeHpcCore) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    // Equal
+    {
+        uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart() + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
+
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa, baseCompareValue, NEO::CompareOperation::Equal, false);
+
+        NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa,
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    // Greater
+    {
+
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + sizeof(uint32_t), baseCompareValue, NEO::CompareOperation::Equal, false);
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + sizeof(uint32_t),
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    // Less
+    {
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + (sizeof(uint32_t) * 2), baseCompareValue, NEO::CompareOperation::Equal, false);
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + (sizeof(uint32_t) * 2),
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    flushStream();
+
+    uint32_t expectedValue = baseCompareValue + 1;
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa), &expectedValue, sizeof(uint32_t));
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa + sizeof(uint32_t)), &expectedValue, sizeof(uint32_t));
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa + (sizeof(uint32_t) * 2)), &expectedValue, sizeof(uint32_t));
+}
+
+HWTEST2_F(ConditionalBbStartTests, whenDispatchingNotEqualModeThenResultsAreValid, IsAtLeastXeHpcCore) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    // Equal
+    {
+
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa, baseCompareValue, NEO::CompareOperation::NotEqual, false);
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa,
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    // Greater
+    {
+
+        uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart() + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
+
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + sizeof(uint32_t), baseCompareValue, NEO::CompareOperation::NotEqual, false);
+
+        NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + sizeof(uint32_t),
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    // Less
+    {
+        uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart() + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
+
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + (sizeof(uint32_t) * 2), baseCompareValue, NEO::CompareOperation::NotEqual, false);
+
+        NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + (sizeof(uint32_t) * 2),
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    flushStream();
+
+    uint32_t expectedValue = baseCompareValue + 1;
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa), &expectedValue, sizeof(uint32_t));
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa + sizeof(uint32_t)), &expectedValue, sizeof(uint32_t));
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa + (sizeof(uint32_t) * 2)), &expectedValue, sizeof(uint32_t));
+}
+
+HWTEST2_F(ConditionalBbStartTests, whenDispatchingGreaterOrEqualModeThenResultsAreValid, IsAtLeastXeHpcCore) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    // Equal
+    {
+        uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart() + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
+
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa, baseCompareValue, NEO::CompareOperation::GreaterOrEqual, false);
+
+        NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa,
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    // Greater
+    {
+
+        uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart() + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
+
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + sizeof(uint32_t), baseCompareValue, NEO::CompareOperation::GreaterOrEqual, false);
+
+        NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + sizeof(uint32_t),
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    // Less
+    {
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + (sizeof(uint32_t) * 2), baseCompareValue, NEO::CompareOperation::GreaterOrEqual, false);
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + (sizeof(uint32_t) * 2),
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    flushStream();
+
+    uint32_t expectedValue = baseCompareValue + 1;
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa), &expectedValue, sizeof(uint32_t));
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa + sizeof(uint32_t)), &expectedValue, sizeof(uint32_t));
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa + (sizeof(uint32_t) * 2)), &expectedValue, sizeof(uint32_t));
+}
+
+HWTEST2_F(ConditionalBbStartTests, whenDispatchingLessModeThenResultsAreValid, IsAtLeastXeHpcCore) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    // Equal
+    {
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa, baseCompareValue, NEO::CompareOperation::Less, false);
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa,
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    // Greater
+    {
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + sizeof(uint32_t), baseCompareValue, NEO::CompareOperation::Less, false);
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + sizeof(uint32_t),
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    // Less
+    {
+        uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart() + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
+
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + (sizeof(uint32_t) * 2), baseCompareValue, NEO::CompareOperation::Less, false);
+
+        NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
+
+        EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + (sizeof(uint32_t) * 2),
+                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
+                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                  0, 0, 0, 0);
+    }
+
+    flushStream();
+
+    uint32_t expectedValue = baseCompareValue + 1;
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa), &expectedValue, sizeof(uint32_t));
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa + sizeof(uint32_t)), &expectedValue, sizeof(uint32_t));
+    expectMemory<FamilyType>(reinterpret_cast<void *>(baseWriteGpuVa + (sizeof(uint32_t) * 2)), &expectedValue, sizeof(uint32_t));
+}
+
 } // namespace NEO

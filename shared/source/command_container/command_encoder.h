@@ -75,7 +75,8 @@ enum class MiPredicateType : uint32_t {
 enum class CompareOperation : uint32_t {
     Equal = 0,
     NotEqual = 1,
-    GreaterOrEqual = 2
+    GreaterOrEqual = 2,
+    Less = 3,
 };
 
 struct EncodeWalkerArgs {

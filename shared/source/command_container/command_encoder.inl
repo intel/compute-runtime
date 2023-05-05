@@ -911,16 +911,17 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase
 
     if ((compareOperation == CompareOperation::Equal) || (compareOperation == CompareOperation::NotEqual)) {
         aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ZF);
-    } else {
-        UNRECOVERABLE_IF(compareOperation != CompareOperation::GreaterOrEqual);
+    } else if ((compareOperation == CompareOperation::GreaterOrEqual) || (compareOperation == CompareOperation::Less)) {
         aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_CF);
+    } else {
+        UNRECOVERABLE_IF(true);
     }
 
     aluHelper.copyToCmdStream(commandStream);
 
     EncodeSetMMIO<Family>::encodeREG(commandStream, CS_PREDICATE_RESULT_2, CS_GPR_R7);
 
-    MiPredicateType predicateType = MiPredicateType::NoopOnResult2Clear; // Equal
+    MiPredicateType predicateType = MiPredicateType::NoopOnResult2Clear; // Equal or Less
     if ((compareOperation == CompareOperation::NotEqual) || (compareOperation == CompareOperation::GreaterOrEqual)) {
         predicateType = MiPredicateType::NoopOnResult2Set;
     }
