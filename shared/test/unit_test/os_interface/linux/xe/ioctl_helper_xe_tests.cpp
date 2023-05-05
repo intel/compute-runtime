@@ -937,3 +937,43 @@ TEST(IoctlHelperXeTest, givenIoctlFailureWhenCreatingEngineInfoThenNoEnginesAreD
     auto engineInfo = xeIoctlHelper->createEngineInfo(true);
     EXPECT_EQ(nullptr, engineInfo);
 }
+
+TEST(IoctlHelperXeTest, givenEnabledFtrMultiTileArchWhenCreatingEngineInfoThenMultiTileArchInfoIsProperlySet) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    DrmMockXe drm{rootDeviceEnvironment};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    for (const auto &isSysmanEnabled : ::testing::Bool()) {
+        hwInfo->gtSystemInfo.MultiTileArchInfo = {};
+        hwInfo->featureTable.flags.ftrMultiTileArch = true;
+        auto engineInfo = xeIoctlHelper->createEngineInfo(isSysmanEnabled);
+        EXPECT_NE(nullptr, engineInfo);
+
+        EXPECT_TRUE(hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid);
+        EXPECT_EQ(2u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount);
+        EXPECT_EQ(0b11u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileMask);
+    }
+}
+
+TEST(IoctlHelperXeTest, givenDisabledFtrMultiTileArchWhenCreatingEngineInfoThenMultiTileArchInfoIsNotSet) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    DrmMockXe drm{rootDeviceEnvironment};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    for (const auto &isSysmanEnabled : ::testing::Bool()) {
+        hwInfo->gtSystemInfo.MultiTileArchInfo = {};
+        hwInfo->featureTable.flags.ftrMultiTileArch = false;
+        auto engineInfo = xeIoctlHelper->createEngineInfo(isSysmanEnabled);
+        EXPECT_NE(nullptr, engineInfo);
+
+        EXPECT_FALSE(hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid);
+        EXPECT_EQ(0u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount);
+        EXPECT_EQ(0u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileMask);
+    }
+}

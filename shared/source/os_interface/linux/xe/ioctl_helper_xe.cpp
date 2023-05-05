@@ -293,9 +293,11 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
     auto queriedEngines = reinterpret_cast<struct drm_xe_engine_class_instance *>(enginesData.data());
 
     StackVec<std::vector<EngineClassInstance>, 2> enginesPerTile{};
+    std::bitset<8> multiTileMask{};
 
     for (auto i = 0u; i < numberHwEngines; i++) {
         auto tile = queriedEngines[i].gt_id;
+        multiTileMask.set(tile);
         EngineClassInstance engineClassInstance{};
         engineClassInstance.engineClass = queriedEngines[i].engine_class;
         engineClassInstance.engineInstance = queriedEngines[i].engine_instance;
@@ -315,6 +317,13 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         }
     }
 
+    auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    if (hwInfo->featureTable.flags.ftrMultiTileArch) {
+        auto &multiTileArchInfo = hwInfo->gtSystemInfo.MultiTileArchInfo;
+        multiTileArchInfo.IsValid = true;
+        multiTileArchInfo.TileCount = multiTileMask.count();
+        multiTileArchInfo.TileMask = static_cast<uint8_t>(multiTileMask.to_ulong());
+    }
     return std::make_unique<EngineInfo>(&drm, enginesPerTile);
 }
 
