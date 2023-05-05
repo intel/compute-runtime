@@ -848,32 +848,52 @@ ze_result_t zesDeviceEnumRasErrorSets(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_ras_handle_t *phRas) {
-    return L0::SysmanDevice::rasGet(hDevice, pCount, phRas);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::rasGet(hDevice, pCount, phRas);
+    } else {
+        return L0::Sysman::SysmanDevice::rasGet(hDevice, pCount, phRas);
+    }
 }
 
 ze_result_t zesRasGetProperties(
     zes_ras_handle_t hRas,
     zes_ras_properties_t *pProperties) {
-    return L0::Ras::fromHandle(hRas)->rasGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Ras::fromHandle(hRas)->rasGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Ras::fromHandle(hRas)->rasGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesRasGetConfig(
     zes_ras_handle_t hRas,
     zes_ras_config_t *pConfig) {
-    return L0::Ras::fromHandle(hRas)->rasGetConfig(pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::Ras::fromHandle(hRas)->rasGetConfig(pConfig);
+    } else {
+        return L0::Sysman::Ras::fromHandle(hRas)->rasGetConfig(pConfig);
+    }
 }
 
 ze_result_t zesRasSetConfig(
     zes_ras_handle_t hRas,
     const zes_ras_config_t *pConfig) {
-    return L0::Ras::fromHandle(hRas)->rasSetConfig(pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::Ras::fromHandle(hRas)->rasSetConfig(pConfig);
+    } else {
+        return L0::Sysman::Ras::fromHandle(hRas)->rasSetConfig(pConfig);
+    }
 }
 
 ze_result_t zesRasGetState(
     zes_ras_handle_t hRas,
     ze_bool_t clear,
     zes_ras_state_t *pState) {
-    return L0::Ras::fromHandle(hRas)->rasGetState(pState, clear);
+    if (L0::sysmanInitFromCore) {
+        return L0::Ras::fromHandle(hRas)->rasGetState(pState, clear);
+    } else {
+        return L0::Sysman::Ras::fromHandle(hRas)->rasGetState(pState, clear);
+    }
 }
 
 ze_result_t zesDeviceEventRegister(

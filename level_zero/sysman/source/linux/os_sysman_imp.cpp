@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/pci_path.h"
+#include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/sysman/source/firmware_util/firmware_util.h"
@@ -430,6 +431,23 @@ ze_result_t LinuxSysmanImp::osColdReset() {
         }
     }
     return ZE_RESULT_ERROR_DEVICE_LOST; // incase the reset fails inform upper layers.
+}
+
+uint32_t LinuxSysmanImp::getMemoryType() {
+    if (memType == unknownMemoryType) {
+        NEO::Drm *pDrm = getDrm();
+        auto hwDeviceId = getSysmanHwDeviceId();
+
+        hwDeviceId->openFileDescriptor();
+        if (pDrm->querySystemInfo()) {
+            auto memSystemInfo = getDrm()->getSystemInfo();
+            if (memSystemInfo != nullptr) {
+                memType = memSystemInfo->getMemoryType();
+            }
+        }
+        hwDeviceId->closeFileDescriptor();
+    }
+    return memType;
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

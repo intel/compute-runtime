@@ -49,7 +49,7 @@ struct RasHandleContext {
     }
 
   private:
-    void createHandle(zes_ras_error_type_t type, ze_device_handle_t deviceHandle);
+    void createHandle(zes_ras_error_type_t type, ze_bool_t isSubDevice, uint32_t subDeviceId);
     std::once_flag initRasOnce;
     bool rasInitDone = false;
 };

@@ -12,6 +12,7 @@
 
 #include "level_zero/sysman/source/linux/hw_device_id_linux.h"
 #include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/source/sysman_device_imp.h"
 
 #include <map>
@@ -45,6 +46,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *getSysmanDeviceImp();
     uint32_t getSubDeviceCount() override;
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
+    uint32_t getMemoryType();
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
     PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
@@ -81,6 +83,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     PmuInterface *pPmuInterface = nullptr;
     std::string rootPath;
     void releaseFwUtilInterface();
+    uint32_t memType = unknownMemoryType;
 
   private:
     LinuxSysmanImp() = delete;

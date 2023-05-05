@@ -13,6 +13,7 @@ const std::string unknown("unknown");
 const std::string intelPciId("0x8086");
 constexpr uint32_t MbpsToBytesPerSecond = 125000;
 constexpr double milliVoltsFactor = 1000.0;
+constexpr uint32_t maxRasErrorCategoryCount = 7;
 
 namespace L0 {
 namespace Sysman {
@@ -26,6 +27,15 @@ struct SteadyClock {
         return time_point(std::chrono::duration_cast<duration>(std::chrono::steady_clock::now() - epoch));
     }
 };
+
+typedef struct _zes_fabric_port_error_counters_t {
+    void *pNext;
+    uint64_t linkFailureCount;
+    uint64_t fwCommErrorCount;
+    uint64_t fwErrorCount;
+    uint64_t linkDegradeCount;
+
+} zes_fabric_port_error_counters_t;
 } // namespace Sysman
 } // namespace L0
 
@@ -61,4 +71,5 @@ constexpr uint64_t gigaUnitTransferToUnitTransfer = 1000 * 1000 * 1000;
 
 constexpr int32_t memoryBusWidth = 128; // bus width in bytes
 constexpr int32_t numMemoryChannels = 8;
+constexpr uint32_t unknownMemoryType = UINT32_MAX;
 #define BITS(x, at, width) (((x) >> (at)) & ((1 << (width)) - 1))
