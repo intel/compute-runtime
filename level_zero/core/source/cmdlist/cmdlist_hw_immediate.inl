@@ -704,11 +704,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     if (isInOrderExecutionEnabled()) {
         inOrderDependencyCounter++;
 
-        latestInOrderOperationCompleted = false;
-        this->latestSentInOrderEvent = hSignalEvent;
-
         if (hSignalEvent) {
-            Event::fromHandle(hSignalEvent)->setLatestUsedInOrderCmdList(this);
+            Event::fromHandle(hSignalEvent)->enableInOrderExecMode(*inOrderDependencyCounterAllocation, inOrderDependencyCounter);
         }
     }
     return inputRet;
@@ -1024,7 +1021,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const {
-    auto numEvents = numWaitEvents + (latestSentInOrderEvent ? 1 : 0);
+    auto numEvents = numWaitEvents + ((inOrderDependencyCounter > 0) ? 1 : 0);
 
     return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numEvents);
 }

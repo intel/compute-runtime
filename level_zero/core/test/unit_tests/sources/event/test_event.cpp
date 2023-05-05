@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_ostime.h"
@@ -30,6 +31,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 #include <algorithm>
 #include <atomic>
@@ -2841,6 +2843,36 @@ HWTEST_F(EventTests,
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 
     event->destroy();
+}
+
+HWTEST_F(EventTests, givenInOrderEventWhenHostEventSyncThenExpectDownloadEventAllocationWithEachQuery) {
+    std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
+
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+
+    ASSERT_NE(event, nullptr);
+
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
+    *eventAddress = Event::STATE_SIGNALED;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
+        downloadAllocationTrack[&gfxAllocation]++;
+    };
+
+    NEO::MockGraphicsAllocation allocation;
+    event->enableInOrderExecMode(allocation, 1);
+
+    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
+    auto result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(0u, downloadAllocationTrack[&allocation]);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 }
 
 HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocationNotRequiredThenDontDownloadAllocations) {

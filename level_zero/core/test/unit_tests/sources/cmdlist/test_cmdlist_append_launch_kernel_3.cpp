@@ -663,7 +663,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenRetur
 
 struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     struct MockEvent : public EventImp<uint32_t> {
-        using EventImp<uint32_t>::latestUsedInOrderCmdList;
+        using EventImp<uint32_t>::inOrderExecDataAllocation;
+        using EventImp<uint32_t>::inOrderExecEvent;
+        using EventImp<uint32_t>::inOrderExecSignalValue;
     };
 
     void SetUp() override {
@@ -721,98 +723,36 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     std::vector<std::unique_ptr<MockEvent>> events;
 };
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAppendCalledThenHandleEventAssignment, IsAtLeastSkl) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    EXPECT_TRUE(immCmdList->isInOrderExecutionEnabled());
-
-    auto eventPool = createEvents(1);
-
-    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
-
-    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(events[0]->toHandle(), immCmdList->latestSentInOrderEvent);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-
-    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
-}
-
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetCmdList, IsAtLeastSkl) {
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEventState, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents(3);
 
-    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
-
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
-    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(events[0]->toHandle(), immCmdList->latestSentInOrderEvent);
+    EXPECT_TRUE(events[0]->inOrderExecEvent);
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(events[0]->inOrderExecDataAllocation, immCmdList->inOrderDependencyCounterAllocation);
 
     events[0]->reset();
 
-    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[2]->toHandle(), 0, nullptr, launchParams, false);
-
-    // reset unused event
-    events[1]->reset();
-    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(events[2]->toHandle(), immCmdList->latestSentInOrderEvent);
-
-    // destroy
-    events[2]->destroy();
-    events[2].release();
-
-    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
-}
-
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSynchronizeEventCalledThenResetCmdList, IsAtLeastSkl) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    auto eventPool = createEvents(1);
-
-    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
-
-    EXPECT_FALSE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(events[0]->toHandle(), immCmdList->latestSentInOrderEvent);
-
-    uint32_t *hostAddr = static_cast<uint32_t *>(events[0]->getHostAddress());
-    *hostAddr = Event::STATE_SIGNALED;
-    events[0]->hostSynchronize(-1);
-
-    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
-    EXPECT_EQ(nullptr, events[0]->latestUsedInOrderCmdList);
+    EXPECT_FALSE(events[0]->inOrderExecEvent);
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
+    EXPECT_EQ(events[0]->inOrderExecDataAllocation, nullptr);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphoreForPreviousDispatch, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    auto eventPool = createEvents(1);
-
-    EXPECT_TRUE(immCmdList->latestInOrderOperationCompleted);
-    EXPECT_EQ(nullptr, immCmdList->latestSentInOrderEvent);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -823,6 +763,50 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
 
     ASSERT_NE(cmdList.end(), itor);
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+
+    EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSemaphoreForEvent, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents(1);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto event0Handle = events[0]->toHandle();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, event0Handle, 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, &event0Handle, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), offset),
+        cmdStream->getUsed() - offset));
+
+    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+    itor++; // skip implicit dependency
+
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+
+    EXPECT_EQ(2u, semaphoreCmd->getSemaphoreDataDword());
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleDependencyCounter, IsAtLeastSkl) {

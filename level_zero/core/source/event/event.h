@@ -39,7 +39,6 @@ struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
 struct Kernel;
-struct CommandListImp;
 
 #pragma pack(1)
 struct IpcEventPoolData {
@@ -204,10 +203,9 @@ struct Event : _ze_event_handle_t {
     void setMetricStreamer(MetricStreamer *metricStreamer) {
         this->metricStreamer = metricStreamer;
     }
-
-    void setLatestUsedInOrderCmdList(CommandListImp *newCmdList) {
-        latestUsedInOrderCmdList = newCmdList;
-    }
+    void enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint32_t signalValue);
+    bool isInOrderExecEvent() const { return inOrderExecEvent; }
+    uint32_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
@@ -239,12 +237,13 @@ struct Event : _ze_event_handle_t {
     Device *device = nullptr;
     EventPool *eventPool = nullptr;
     Kernel *kernelWithPrintf = nullptr;
-    CommandListImp *latestUsedInOrderCmdList = nullptr;
+    NEO::GraphicsAllocation *inOrderExecDataAllocation = nullptr;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
+    uint32_t inOrderExecSignalValue = 0;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
@@ -257,6 +256,7 @@ struct Event : _ze_event_handle_t {
     bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
+    bool inOrderExecEvent = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {

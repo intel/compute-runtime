@@ -34,14 +34,11 @@ struct CommandListImp : CommandList {
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
     void enableInOrderExecution();
     bool isInOrderExecutionEnabled() const { return inOrderExecutionEnabled; }
-    void unsetLastInOrderOutEvent(ze_event_handle_t outEvent);
 
   protected:
     std::unique_ptr<NEO::LogicalStateHelper> nonImmediateLogicalStateHelper;
     NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;
     uint32_t inOrderDependencyCounter = 0;
-    ze_event_handle_t latestSentInOrderEvent = nullptr;
-    bool latestInOrderOperationCompleted = true; // If driver is able to detect that previous operation is already done, there is no need to track dependencies.
     bool inOrderExecutionEnabled = false;
 
     ~CommandListImp() override = default;

@@ -231,13 +231,6 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
     streamProperties.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, true);
 }
 
-void CommandListImp::unsetLastInOrderOutEvent(ze_event_handle_t outEvent) {
-    if (latestSentInOrderEvent == outEvent) {
-        latestSentInOrderEvent = nullptr;
-        latestInOrderOperationCompleted = true;
-    }
-}
-
 void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(inOrderDependencyCounterAllocation);
 

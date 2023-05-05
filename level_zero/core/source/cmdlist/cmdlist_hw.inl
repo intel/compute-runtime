@@ -2024,12 +2024,12 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies) {
-    if (relaxedOrderingAllowed && (numWaitEvents > 0 || latestSentInOrderEvent)) {
+    if (relaxedOrderingAllowed && (numWaitEvents > 0 || inOrderDependencyCounter > 0)) {
         NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
     }
 
-    if (latestSentInOrderEvent) {
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(1, &latestSentInOrderEvent, relaxedOrderingAllowed, trackDependencies);
+    if (inOrderDependencyCounter > 0) {
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderDependencyCounter, relaxedOrderingAllowed);
     }
 
     if (numWaitEvents > 0) {
@@ -2076,6 +2076,26 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(uint32_t waitValue, bool relaxedOrderingAllowed) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    commandContainer.addToResidencyContainer(this->inOrderDependencyCounterAllocation);
+
+    uint64_t gpuAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
+
+    if (relaxedOrderingAllowed) {
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue,
+                                                                                               NEO::CompareOperation::Less, true);
+
+    } else {
+        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                   gpuAddress,
+                                                                   waitValue,
+                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
@@ -2113,6 +2133,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
+
+        if (event->isInOrderExecEvent()) {
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecSignalValue(), relaxedOrderingAllowed);
+            continue;
+        }
+
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         gpuAddr = event->getCompletionFieldGpuAddress(this->device);
         uint32_t packetsToWait = event->getPacketsInUse();

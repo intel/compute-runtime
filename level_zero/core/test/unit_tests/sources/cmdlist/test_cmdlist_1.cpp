@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -1271,6 +1272,63 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies);
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+}
+
+HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrderingThenProgramConditionalBbStart, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, ultCsr, &desc);
+
+    auto cmdList = makeZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+
+    cmdList->cmdQImmediate = mockCmdQ.get();
+    cmdList->isFlushTaskSubmissionEnabled = true;
+    cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList->csr = ultCsr;
+    cmdList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList->commandContainer.setImmediateCmdListCsr(ultCsr);
+    cmdList->enableInOrderExecution();
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+    ultCsr->registerClient();
+    ultCsr->registerClient();
+
+    auto cmdStream = cmdList->getCmdContainer().getCommandStream();
+
+    cmdList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    size_t offset = cmdStream->getUsed();
+
+    cmdList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList,
+        ptrOffset(cmdStream->getCpuBase(), offset),
+        cmdStream->getUsed() - offset));
+
+    // init registers
+    auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*genCmdList.begin());
+    ASSERT_NE(nullptr, lrrCmd);
+    lrrCmd++;
+    lrrCmd++;
+
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, cmdList->inOrderDependencyCounterAllocation->getGpuAddress(), 2, NEO::CompareOperation::Less, true));
 }
 
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {

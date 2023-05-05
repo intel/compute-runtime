@@ -172,8 +172,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
   protected:
     using BaseClass::inOrderDependencyCounter;
     using BaseClass::inOrderDependencyCounterAllocation;
-    using BaseClass::latestInOrderOperationCompleted;
-    using BaseClass::latestSentInOrderEvent;
 
     void printKernelsPrintfOutput(bool hangDetected);
     MOCKABLE_VIRTUAL void checkAssert();

@@ -186,6 +186,9 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
     if (this->downloadAllocationRequired) {
         for (auto &csr : csrs) {
             csr->downloadAllocation(this->getAllocation(this->device));
+            if (inOrderExecEvent) {
+                csr->downloadAllocation(*this->inOrderExecDataAllocation);
+            }
         }
     }
 
@@ -352,9 +355,10 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
-    if (latestUsedInOrderCmdList) {
-        latestUsedInOrderCmdList->unsetLastInOrderOutEvent(this->toHandle());
-        latestUsedInOrderCmdList = nullptr;
+    if (inOrderExecEvent) {
+        inOrderExecDataAllocation = nullptr;
+        inOrderExecSignalValue = 0;
+        inOrderExecEvent = false;
     }
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);

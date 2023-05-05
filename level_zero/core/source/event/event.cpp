@@ -335,10 +335,6 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 }
 
 ze_result_t Event::destroy() {
-    if (latestUsedInOrderCmdList) {
-        latestUsedInOrderCmdList->unsetLastInOrderOutEvent(this->toHandle());
-    }
-
     delete this;
     return ZE_RESULT_SUCCESS;
 }
@@ -391,12 +387,13 @@ void Event::resetPackets(bool resetAllPackets) {
 void Event::setIsCompleted() {
     if (this->isCompleted.load() == STATE_CLEARED) {
         this->isCompleted = STATE_SIGNALED;
-
-        if (latestUsedInOrderCmdList) {
-            latestUsedInOrderCmdList->unsetLastInOrderOutEvent(this->toHandle());
-            latestUsedInOrderCmdList = nullptr;
-        }
     }
+}
+
+void Event::enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint32_t signalValue) {
+    inOrderExecEvent = true;
+    inOrderExecSignalValue = signalValue;
+    inOrderExecDataAllocation = &inOrderDependenciesAllocation;
 }
 
 } // namespace L0

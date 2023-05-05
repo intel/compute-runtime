@@ -195,7 +195,7 @@ bool verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, 
     }
 
     auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
-    if (compareOperation == CompareOperation::Equal) {
+    if ((compareOperation == CompareOperation::Equal) || (compareOperation == CompareOperation::Less)) {
         if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::NoopOnResult2Clear)) {
             return false;
         }
