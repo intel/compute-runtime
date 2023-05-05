@@ -521,7 +521,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
 
         for (unsigned int i = 0; i < maxDrmDevices; i++) {
             std::string path = std::string(pathPrefix) + std::to_string(i + startNum);
-            int fileDescriptor = SysCalls::open(path.c_str(), O_RDWR);
+            int fileDescriptor = SysCalls::open(path.c_str(), O_RDWR | O_CLOEXEC);
 
             auto pciPath = NEO::getPciPath(fileDescriptor);
 
@@ -564,7 +564,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
                     continue;
                 }
             }
-            int fileDescriptor = SysCalls::open(file->c_str(), O_RDWR);
+            int fileDescriptor = SysCalls::open(file->c_str(), O_RDWR | O_CLOEXEC);
             appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.c_str(), file->c_str());
             if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
                 break;

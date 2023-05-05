@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/directory.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -30,6 +31,7 @@
 
 #include "gtest/gtest.h"
 
+#include <fcntl.h>
 #include <fstream>
 #include <memory>
 
@@ -635,6 +637,7 @@ TEST(DrmTest, givenPlatformWithSupportToChangeSliceCountWhenCallSetQueueSliceCou
 namespace NEO {
 namespace SysCalls {
 extern uint32_t closeFuncCalled;
+extern uint32_t openFuncCalled;
 extern int closeFuncArgPassed;
 extern uint32_t vmId;
 } // namespace SysCalls
@@ -1397,6 +1400,29 @@ TEST(DrmTest, givenSetupIoctlHelperWhenCalledTwiceThenIoctlHelperIsSetOnlyOnce) 
     auto ioctlHelper = drm.ioctlHelper.get();
     drm.setupIoctlHelper(productFamily);
     EXPECT_EQ(ioctlHelper, drm.ioctlHelper.get());
+}
+
+TEST(DrmTest, GivenDrmWhenDiscoveringDevicesThenCloseOnExecFlagIsPassedToFdOpen) {
+    SysCalls::openFuncCalled = 0;
+    VariableBackup<decltype(SysCalls::openFuncCalled)> openCounter(&SysCalls::openFuncCalled);
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        EXPECT_TRUE(flags & O_CLOEXEC);
+        return 1;
+    });
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMock(*rootDeviceEnvironment)));
+
+    auto devices = Drm::discoverDevices(*executionEnvironment);
+    EXPECT_NE(0u, SysCalls::openFuncCalled);
+
+    SysCalls::openFuncCalled = 0;
+    VariableBackup<bool> emptyDir(&NEO::Directory::ReturnEmptyFilesVector, true);
+    devices = Drm::discoverDevices(*executionEnvironment);
+    EXPECT_NE(0u, SysCalls::openFuncCalled);
 }
 
 TEST(DrmWrapperTest, WhenGettingDrmIoctlGetparamValueThenIoctlHelperIsNotNeeded) {
