@@ -57,7 +57,7 @@ components:
     asset_name: libva
     dest_dir: libva
     type: git
-    branch: master
+    branch: v2.2-branch
     revision: 2.2.0
     repository: https://github.com/intel/libva.git
   metrics-discovery:
