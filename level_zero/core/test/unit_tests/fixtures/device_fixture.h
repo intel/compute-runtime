@@ -34,6 +34,7 @@ class MockBuiltins;
 struct DeviceFixture {
 
     void setUp();
+    void setUpImpl(NEO::HardwareInfo *hwInfo);
     void tearDown();
     void setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment);
 
@@ -43,6 +44,7 @@ struct DeviceFixture {
     L0::ContextImp *context = nullptr;
     MockBuiltins *mockBuiltIns = nullptr;
     NEO::ExecutionEnvironment *execEnv = nullptr;
+    HardwareInfo *hardwareInfo = nullptr;
 
     const uint32_t rootDeviceIndex = 0u;
     template <typename HelperType>

@@ -62,7 +62,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     false,                                         // ftr64KBpages
     true,                                          // instrumentationEnabled
-    true,                                          // sourceLevelDebuggerSupported
+    false,                                         // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages

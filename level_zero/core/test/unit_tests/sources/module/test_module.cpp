@@ -2553,10 +2553,22 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingStaticLinkSpirVThen
     Os::frontEndDllName = oldFclDllName;
 }
 
-HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryWithoutSpirvDataIncludedAndLegacyDebuggerAttachedThenReturnError) {
-    if (false == device->getHwInfo().capabilityTable.debuggerSupported) {
-        GTEST_SKIP();
+class ModuleTranslationUnitDebuggerSupportedTest : public ModuleTranslationUnitTest {
+  public:
+    void SetUp() override {
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+        hwInfo.capabilityTable.debuggerSupported = true;
+        DeviceFixture::setUpImpl(&hwInfo);
     }
+
+    void TearDown() override {
+        DeviceFixture::tearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+HWTEST2_F(ModuleTranslationUnitDebuggerSupportedTest, WhenCreatingFromZeBinaryWithoutSpirvDataIncludedAndLegacyDebuggerAttachedThenReturnError, HasSourceLevelDebuggerSupport) {
     ZebinTestData::ValidEmptyProgram<> zebin;
     const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
     zebin.elfHeader->machine = hwInfo.platform.eProductFamily;
@@ -2688,12 +2700,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     }
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndEnableZebinBuildOptionWhenBuildWithSpirvThenModuleBuildFails, IsAtMostGen12lp) {
-
-    if (device->getHwInfo().capabilityTable.debuggerSupported == false) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_F(ModuleTranslationUnitDebuggerSupportedTest, givenSourceLevelDebuggerAndEnableZebinBuildOptionWhenBuildWithSpirvThenModuleBuildFails, IsAtMostGen12lp) {
     auto mockCompilerInterface = new MockCompilerInterface;
     neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
     auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
@@ -2707,12 +2714,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndEnableZebinBuild
     EXPECT_EQ(result, ZE_RESULT_ERROR_MODULE_BUILD_FAILURE);
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndEnableZebinBuildOptionWhenBuildWithSpirvThenModuleBuildsWithSuccess, IsAtLeastXeHpCore) {
-
-    if (device->getHwInfo().capabilityTable.debuggerSupported == false) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_F(ModuleTranslationUnitDebuggerSupportedTest, givenSourceLevelDebuggerAndEnableZebinBuildOptionWhenBuildWithSpirvThenModuleBuildsWithSuccess, IsAtLeastXeHpCore) {
     auto mockCompilerInterface = new MockCompilerInterface;
     neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
     auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
@@ -2747,12 +2749,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenEnableZebinBuildOptionWhenBuildWithSpir
     EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find(NEO::CompilerOptions::disableZebin.str()), std::string::npos);
 }
 
-HWTEST_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerWhenBuildWithSpirvThenModuleBuildsWithSuccess) {
-
-    if (device->getHwInfo().capabilityTable.debuggerSupported == false) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_F(ModuleTranslationUnitDebuggerSupportedTest, givenSourceLevelDebuggerWhenBuildWithSpirvThenModuleBuildsWithSuccess, HasSourceLevelDebuggerSupport) {
     auto mockCompilerInterface = new MockCompilerInterface;
     neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
     auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
@@ -3581,10 +3578,9 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThe
     EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
-TEST_F(ModuleTests, givenImplicitArgsRelocationAndDebuggerEnabledWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired) {
-    if (!defaultHwInfo->capabilityTable.debuggerSupported) {
-        GTEST_SKIP();
-    }
+using ModuleTestsDebuggingSupported = ModuleTranslationUnitDebuggerSupportedTest;
+
+HWTEST2_F(ModuleTestsDebuggingSupported, givenImplicitArgsRelocationAndDebuggerEnabledWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired, HasSourceLevelDebuggerSupport) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
     auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);

@@ -16,6 +16,10 @@ using namespace NEO;
 
 using Dg1DeviceCaps = Test<DeviceFixture>;
 
+DG1TEST_F(Dg1DeviceCaps, givenDg1ThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckSupportCacheFlushAfterWalkerThenFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }

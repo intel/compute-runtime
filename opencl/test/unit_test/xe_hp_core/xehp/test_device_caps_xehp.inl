@@ -16,6 +16,10 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> XeHPUsDeviceIdTest;
 
+XEHPTEST_F(XeHPUsDeviceIdTest, givenXeHPThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 XEHPTEST_F(XeHPUsDeviceIdTest, WhenGettingHardwareInfoThenProductFamilyIsXeHpSdv) {
     EXPECT_EQ(IGFX_XE_HP_SDV, pDevice->getHardwareInfo().platform.eProductFamily);
 }

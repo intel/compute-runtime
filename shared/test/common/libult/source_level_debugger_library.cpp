@@ -35,6 +35,9 @@ void *DebuggerLibrary::getProcAddress(const std::string &procName) {
 }
 
 OsLibrary *DebuggerLibrary::load(const std::string &name) {
+    if (interceptor) {
+        interceptor->loadCalled = true;
+    }
     if (isLibraryAvailable) {
         return new DebuggerLibrary();
     }

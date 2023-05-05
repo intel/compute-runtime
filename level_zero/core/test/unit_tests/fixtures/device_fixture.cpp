@@ -25,12 +25,19 @@ namespace L0 {
 namespace ult {
 
 void DeviceFixture::setUp() {
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0u);
+    hardwareInfo = defaultHwInfo.get();
+    setUpImpl(hardwareInfo);
+}
+
+void DeviceFixture::setUpImpl(NEO::HardwareInfo *hwInfo) {
+    hardwareInfo = hwInfo;
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hardwareInfo, 0u);
     setupWithExecutionEnvironment(*executionEnvironment);
 }
+
 void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment) {
     execEnv = &executionEnvironment;
-    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), &executionEnvironment, rootDeviceIndex);
+    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(hardwareInfo == nullptr ? defaultHwInfo.get() : hardwareInfo, &executionEnvironment, rootDeviceIndex);
     mockBuiltIns = new MockBuiltins();
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     NEO::DeviceVector devices;

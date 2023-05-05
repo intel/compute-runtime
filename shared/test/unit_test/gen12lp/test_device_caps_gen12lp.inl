@@ -14,6 +14,10 @@ using namespace NEO;
 
 using Gen12LpDeviceCaps = Test<DeviceFixture>;
 
+GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 GEN12LPTEST_F(Gen12LpDeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReported) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }

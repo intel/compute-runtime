@@ -18,6 +18,10 @@ using namespace NEO;
 
 using XeHpcCoreDeviceCaps = Test<DeviceFixture>;
 
+XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenXeHpcCoreThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenXeHpcCoreWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }

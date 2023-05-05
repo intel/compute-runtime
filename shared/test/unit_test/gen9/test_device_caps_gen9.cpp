@@ -17,6 +17,10 @@ using namespace NEO;
 
 using Gen9DeviceCaps = Test<DeviceFixture>;
 
+GEN9TEST_F(Gen9DeviceCaps, givenGen9ThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 GEN9TEST_F(Gen9DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsSupported) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
