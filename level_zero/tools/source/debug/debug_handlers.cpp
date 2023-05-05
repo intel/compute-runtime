@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,6 +118,10 @@ ze_result_t debugAcknowledgeEvent(zet_debug_session_handle_t hDebug, const zet_d
 
 ze_result_t debugGetRegisterSetProperties(zet_device_handle_t hDevice, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
     return L0::DebugSession::getRegisterSetProperties(L0::Device::fromHandle(hDevice), pCount, pRegisterSetProperties);
+}
+
+ze_result_t debugGetThreadRegisterSetProperties(zet_debug_session_handle_t hDebug, ze_device_thread_t thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
+    return L0::DebugSession::fromHandle(hDebug)->getThreadRegisterSetProperties(thread, pCount, pRegisterSetProperties);
 }
 
 ze_result_t debugReadRegisters(zet_debug_session_handle_t hDebug, ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {

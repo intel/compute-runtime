@@ -2241,6 +2241,38 @@ TEST_F(DebugSessionRegistersAccessTest, givenInvalidRegisterWhenGettingSizeThenZ
     EXPECT_EQ(0u, session->getRegisterSize(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU));
 }
 
+TEST_F(DebugSessionRegistersAccessTest, givenGetThreadRegisterSetPropertiesCalledWithInvalidThreadThenErrorIsReturned) {
+
+    uint32_t threadCount = 0;
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
+    session->areRequestedThreadsStoppedReturnValue = 0;
+    session->allThreads[stoppedThreadId]->resumeThread();
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugGetThreadRegisterSetProperties(session->toHandle(), stoppedThread, &threadCount, nullptr));
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenGetThreadRegisterSetPropertiesCalledPropertieAreTheSameAsgetRegisterSetProperties) {
+
+    auto mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+
+    uint32_t count = 0;
+    uint32_t threadCount = 0;
+    ze_device_thread_t thread = stoppedThread;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(session->getConnectedDevice(), &count, nullptr));
+    EXPECT_EQ(12u, count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
+    ASSERT_EQ(threadCount, count);
+
+    std::vector<zet_debug_regset_properties_t> regsetProps(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(session->getConnectedDevice(), &count, regsetProps.data()));
+    std::vector<zet_debug_regset_properties_t> threadRegsetProps(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &count, threadRegsetProps.data()));
+
+    EXPECT_EQ(0, memcmp(regsetProps.data(), threadRegsetProps.data(), count * sizeof(zet_debug_regset_properties_t)));
+}
+
 TEST_F(DebugSessionRegistersAccessTest, givenUnsupportedRegisterTypeWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, 0x12345, 0, 1, nullptr));

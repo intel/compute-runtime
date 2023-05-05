@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
     virtual ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
     static ze_result_t getRegisterSetProperties(Device *device, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties);
+    virtual ze_result_t getThreadRegisterSetProperties(ze_device_thread_t thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties);
     MOCKABLE_VIRTUAL bool areRequestedThreadsStopped(ze_device_thread_t thread);
 
     Device *getConnectedDevice() { return connectedDevice; }

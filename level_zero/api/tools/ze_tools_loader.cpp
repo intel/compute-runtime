@@ -217,6 +217,7 @@ zetGetDebugProcAddrTable(
     pDdiTable->pfnGetRegisterSetProperties = L0::zetDebugGetRegisterSetProperties;
     pDdiTable->pfnReadRegisters = L0::zetDebugReadRegisters;
     pDdiTable->pfnWriteRegisters = L0::zetDebugWriteRegisters;
+    pDdiTable->pfnGetThreadRegisterSetProperties = L0::zetDebugGetThreadRegisterSetProperties;
 
     return result;
 }

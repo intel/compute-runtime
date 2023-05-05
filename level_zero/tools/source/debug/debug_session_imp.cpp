@@ -1159,6 +1159,19 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DebugSession::getThreadRegisterSetProperties(ze_device_thread_t thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
+    if (!isSingleThread(thread)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    auto threadId = convertToThreadId(thread);
+
+    if (!allThreads[threadId]->isReportedAsStopped()) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    return getRegisterSetProperties(this->connectedDevice, pCount, pRegisterSetProperties);
+}
+
 ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
     if (nullptr == pCount) {
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;

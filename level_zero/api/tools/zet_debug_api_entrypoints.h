@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,9 +99,27 @@ ze_result_t zetDebugWriteRegisters(
     void *pRegisterValues) {
     return L0::DebugApiHandlers::debugWriteRegisters(hDebug, thread, type, start, count, pRegisterValues);
 }
+
+ze_result_t zetDebugGetThreadRegisterSetProperties(
+    zet_debug_session_handle_t hDebug,
+    ze_device_thread_t thread,
+    uint32_t *pCount,
+    zet_debug_regset_properties_t *pRegisterSetProperties) {
+    return L0::DebugApiHandlers::debugGetThreadRegisterSetProperties(hDebug, thread, pCount, pRegisterSetProperties);
+}
+
 } // namespace L0
 
 extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zetDebugGetThreadRegisterSetProperties(
+    zet_debug_session_handle_t hDebug,
+    ze_device_thread_t thread,
+    uint32_t *pCount,
+    zet_debug_regset_properties_t *pRegisterSetProperties) {
+    return L0::zetDebugGetThreadRegisterSetProperties(hDebug, thread, pCount, pRegisterSetProperties);
+}
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zetDeviceGetDebugProperties(
     zet_device_handle_t hDevice,
     zet_device_debug_properties_t *pDebugProperties) {
