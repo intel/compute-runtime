@@ -51,6 +51,10 @@ unsigned long getNumThreads() {
     return taskStat.st_nlink - 2;
 }
 
+int mkdir(const std::string &path) {
+    return ::mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+}
+
 int close(int fileDescriptor) {
     return ::close(fileDescriptor);
 }

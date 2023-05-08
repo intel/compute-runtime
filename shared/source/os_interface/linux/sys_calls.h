@@ -17,6 +17,7 @@
 namespace NEO {
 namespace SysCalls {
 int close(int fileDescriptor);
+int mkdir(const std::string &path);
 int open(const char *file, int flags);
 int openWithMode(const char *file, int flags, int mode);
 void *dlopen(const char *filename, int flag);

@@ -16,6 +16,7 @@
 namespace NEO {
 namespace SysCalls {
 
+extern int (*sysCallsMkdir)(const std::string &dir);
 extern int (*sysCallsOpen)(const char *pathname, int flags);
 extern int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode);
 extern ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset);
@@ -38,6 +39,7 @@ extern int (*sysCallsScandir)(const char *dirp,
 extern int (*sysCallsUnlink)(const std::string &pathname);
 extern int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf);
 extern int (*sysCallsMkstemp)(char *fileName);
+extern bool (*sysCallsPathExists)(const std::string &path);
 
 extern int flockRetVal;
 extern int closeFuncRetVal;

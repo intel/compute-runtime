@@ -89,8 +89,22 @@ int (*sysCallsScandir)(const char *dirp,
 int (*sysCallsUnlink)(const std::string &pathname) = nullptr;
 int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf) = nullptr;
 int (*sysCallsMkstemp)(char *fileName) = nullptr;
+int (*sysCallsMkdir)(const std::string &dir) = nullptr;
+bool (*sysCallsPathExists)(const std::string &path) = nullptr;
+
+int mkdir(const std::string &path) {
+    if (sysCallsMkdir != nullptr) {
+        return sysCallsMkdir(path);
+    }
+
+    return 0;
+}
 
 bool pathExists(const std::string &path) {
+    if (sysCallsPathExists != nullptr) {
+        return sysCallsPathExists(path);
+    }
+
     return pathExistsMock;
 }
 

@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -40,29 +40,67 @@ See the enabling [guide](cl_intel_va_api_media_sharing.md).
 
 ## Feature: cl_cache
 
+Originally, compute-runtime had an experimental cache implementation, which was replaced
+in Q2'23 with a more robust approach. Legacy solution is now considered deprecated and the
+old experimental controls explained below will be removed by EOY 2023.
+
 ### What is cl_cache?
 
 This is a mechanism to cache binary representations of OpenCL kernels provided in text form by
 the application. By storing the binary representations, compiling is required only the first time,
 which improves performance.
 
-### How can cl_cache be enabled?
+### Linux
+
+#### Official instructions
+
+##### Environment flags (Linux only)
+
+NEO_PERSISTENT_CACHE - integer value to enable (1)/disable (0) on-disk binary cache. When enabled 
+                       Neo will try to cache and reuse compiled binaries. Default is off.
+
+NEO_CACHE_DIR        - path to persistent cache directory. Default values are $XDG_CACHE_HOME/neo_compiler_cache
+                       if $XDG_CACHE_HOME is set, $HOME/neo_compiler_cache otherwise. If none of environment
+                       variables are set then on-disk cache is disabled.
+
+NEO_CACHE_MAX_SIZE   - Cache eviction is triggered once total size of cached binaries exceeds the value in
+                       bytes (default is 1GB). Set to 0 to disable size-based cache eviction.
+
+##### How cl_cache works (Linux implementation)
+
+When persistent cache is enabled at first occurance driver create config.file which contains amount directory
+size and is also entry point to caching mechanism.
+
+Each write to disk has following steps:
+1. lock config.file (advisor lock)
+2. create temporary file
+3. write content to file
+4. rename temporary file to proper hash name
+
+Reads are unblocked
+
+Eviction mechanism is working as follow:
+1. lock config.file (advisor lock)
+2. scandir will gather all entries created by the driver
+3. stat all files and check last usage time
+4. sort files
+5. remove least recently used files with 1/3 amount size
+
+#### Legacy approach
 
 In the working directory, manually create *cl_cache* directory.
 The driver will use this directory to store the binary representations of the compiled kernels.
 Note: This will work on all supported OSes.
 
-### Configuring cl_cache location
+##### Configuring cl_cache location
 
 Cached kernels can be stored in a different directory than the default one.
 This is useful when the application is installed into a directory
 for which the user doesn't have permissions.
 
-#### Linux configuration
-
 Set the environment variable named `cl_cache_dir` to new location of cl_cache directory.
 
-#### Example:
+##### Example:
 
 If the application's directory is `/home/user/Document`, by default cl_cache will be stored in
  `/home/user/Document/cl_cache`. If the new path should be `/home/user/Desktop/cl_cache_place`,
@@ -74,14 +112,20 @@ export cl_cache_dir=/home/user/Desktop/cl_cache_place
 Subsequent application runs with passed source code and `cl_cache_dir` environment variable set will
 reuse previously cached kernel binaries instead of compiling kernels from source.
 
-#### Windows configuration
+### Windows
+
+#### Official instructions (implementation pending)
+
+#### Legacy approach
+
+##### Windows configuration
 
 To set the new location of cl_cache directory - in the registry `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL`:
 1. add key `cl_cache_dir`
 1. add string value named <path_to_app> to `cl_cache_dir` key
 1. set data of added value to desired location of cl_cache
 
-#### Example:
+##### Example:
 
 If application is located in `C:\Program Files\application\app.exe`,
 by default cl_cache will be stored in `C:\Program Files\application\cl_cache`.
@@ -98,7 +142,7 @@ Neo will look for string value (REG_SZ) `C:\Program Files\application\app.exe`
 in key `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL\cl_cache_dir`.
 Data of this string value will be used as new cl_cache dump directory for this specific application.
 
-### What are the known limitations of cl_cache?
+##### What are the known limitations of cl_cache for Windows?
 
 1. Not thread safe.
 (Workaround: Make sure your clBuildProgram calls are executed in thread safe fashion.)
