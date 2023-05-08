@@ -63,6 +63,8 @@ struct EventImp : public Event {
   protected:
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusEventPackets();
+    ze_result_t queryInOrderEventStatus();
+    void handleSuccessfulHostSynchronization();
     MOCKABLE_VIRTUAL ze_result_t hostEventSetValue(TagSizeT eventValue);
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
     MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);

@@ -2864,7 +2864,9 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostEventSyncThenExpectDownloadEventAl
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
-    NEO::MockGraphicsAllocation allocation;
+    uint32_t storage = 1;
+
+    NEO::MockGraphicsAllocation allocation(&storage, sizeof(storage));
     event->enableInOrderExecMode(allocation, 1);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();

@@ -261,6 +261,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
         this->partitionCount,                                   // partitionCount
+        0,                                                      // postSyncImmValue
+        this->inOrderExecutionEnabled,                          // inOrderExecEnabled
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate
         isTimestampEvent,                                       // isTimestampEvent
@@ -274,6 +276,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         engineGroupType == NEO::EngineGroupType::RenderCompute, // isRcs
         this->dcFlushSupport                                    // dcFlushEnable
     };
+
+    if (this->inOrderExecutionEnabled) {
+        DEBUG_BREAK_IF(isTimestampEvent);
+
+        dispatchKernelArgs.isTimestampEvent = false;
+        dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
+        dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
+    }
+
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
     if (!this->isFlushTaskSubmissionEnabled) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;

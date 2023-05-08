@@ -279,9 +279,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         if (args.isTimestampEvent) {
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
         } else {
-            uint32_t stateSignaled = 0u;
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA);
-            postSync.setImmediateData(stateSignaled);
+            postSync.setImmediateData(args.postSyncImmValue);
         }
         UNRECOVERABLE_IF(!(isAligned<TimestampDestinationAddressAlignment>(args.eventAddress)));
         postSync.setDestinationAddress(args.eventAddress);

@@ -190,6 +190,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         nullptr,
         PreemptionMode::MidBatch,
         0,
+        0,
+        false,
         false,
         false,
         false,

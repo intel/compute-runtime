@@ -46,6 +46,8 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         nullptr,                  // additionalCommands
         PreemptionMode::Disabled, // preemptionMode
         1,                        // partitionCount
+        0,                        // postSyncImmValue
+        false,                    // inOrderExecEnabled
         false,                    // isIndirect
         false,                    // isPredicate
         false,                    // isTimestampEvent

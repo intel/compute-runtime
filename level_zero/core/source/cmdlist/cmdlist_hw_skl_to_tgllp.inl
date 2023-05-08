@@ -166,6 +166,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         &additionalCommands,                                    // additionalCommands
         commandListPreemptionMode,                              // preemptionMode
         0,                                                      // partitionCount
+        0,                                                      // postSyncImmValue
+        false,                                                  // inOrderExecEnabled
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate
         false,                                                  // isTimestampEvent

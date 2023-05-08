@@ -129,6 +129,32 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 }
 
 template <typename TagSizeT>
+ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
+    auto hostAddress = static_cast<uint32_t *>(this->inOrderExecDataAllocation->getUnderlyingBuffer());
+
+    if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint32_t>(hostAddress, this->inOrderExecSignalValue, std::greater_equal<uint32_t>())) {
+        return ZE_RESULT_NOT_READY;
+    }
+
+    handleSuccessfulHostSynchronization();
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <typename TagSizeT>
+void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
+    if (this->downloadAllocationRequired) {
+        for (auto &csr : csrs) {
+            csr->downloadAllocations();
+        }
+    }
+    this->setIsCompleted();
+    for (auto &csr : csrs) {
+        csr->getInternalAllocationStorage()->cleanAllocationList(csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+    }
+}
+
+template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
     assignKernelEventCompletionData(this->hostAddress);
     uint32_t queryVal = Event::STATE_CLEARED;
@@ -166,15 +192,9 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
             }
         }
     }
-    if (this->downloadAllocationRequired) {
-        for (auto &csr : csrs) {
-            csr->downloadAllocations();
-        }
-    }
-    this->setIsCompleted();
-    for (auto &csr : csrs) {
-        csr->getInternalAllocationStorage()->cleanAllocationList(csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
-    }
+
+    handleSuccessfulHostSynchronization();
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -194,6 +214,8 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
 
     if (!this->isFromIpcPool && isAlreadyCompleted()) {
         return ZE_RESULT_SUCCESS;
+    } else if (this->inOrderExecEvent) {
+        return queryInOrderEventStatus();
     } else {
         return queryStatusEventPackets();
     }
