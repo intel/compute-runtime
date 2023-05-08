@@ -108,6 +108,8 @@ bool Wddm::init() {
     productHelper.adjustPlatformForProductFamily(hardwareInfo);
     rootDeviceEnvironment.initApiGfxCoreHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
+
+    populateIpVersion(*hardwareInfo);
     rootDeviceEnvironment.initReleaseHelper();
 
     if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {
@@ -116,7 +118,6 @@ bool Wddm::init() {
     setPlatformSupportEvictIfNecessaryFlag(productHelper);
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
-    populateIpVersion(*hardwareInfo);
 
     rootDeviceEnvironment.initGmm();
     this->rootDeviceEnvironment.getGmmClientContext()->setHandleAllocator(this->hwDeviceId->getUmKmDataTranslator()->createGmmHandleAllocator());
