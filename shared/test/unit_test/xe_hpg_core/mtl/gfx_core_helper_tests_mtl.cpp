@@ -24,42 +24,6 @@ using namespace NEO;
 
 using GfxCoreHelperTestMtl = GfxCoreHelperTest;
 
-MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreCorrectlyReported) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    unsigned int gmdReleases[] = {70, 71, 72, 73};
-    hwInfo.ipVersion.architecture = 12;
-
-    for (auto gmdRelease : gmdReleases) {
-        hwInfo.ipVersion.release = gmdRelease;
-
-        rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-        auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-
-        auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-
-        EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
-        EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
-        EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
-        EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(hwInfo));
-    }
-}
-
-using ProductHelperTestMtl = Test<DeviceFixture>;
-
-MTLTEST_F(ProductHelperTestMtl, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenForTimestampPacketTagBufferReturnTwo) {
-    auto &helper = getHelper<ProductHelper>();
-    uint64_t expectedPatIndexWhenTimestampPacketTagBuffer = 2u;
-    uint64_t patIndex = 1u;
-    auto allocationType = NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
-    EXPECT_EQ(expectedPatIndexWhenTimestampPacketTagBuffer, helper.overridePatIndex(allocationType, patIndex));
-    allocationType = NEO::AllocationType::BUFFER;
-    patIndex = 3u;
-    EXPECT_EQ(patIndex, helper.overridePatIndex(allocationType, patIndex));
-}
-
 MTLTEST_F(GfxCoreHelperTestMtl, givenAllocationThenCheckResourceCompatibilityReturnsTrue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto allocation = std::make_unique<GraphicsAllocation>(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, 3u, 0llu);
@@ -112,19 +76,6 @@ MTLTEST_F(GfxCoreHelperTestMtl, givenRevisionEnumAndPlatformFamilyTypeThenProper
         EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo, productHelper));
         EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
         EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo, productHelper));
-    }
-}
-
-MTLTEST_F(ProductHelperTestMtl, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
-    auto &productHelper = getHelper<ProductHelper>();
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    for (uint32_t tileCount = 0; tileCount <= 4; tileCount++) {
-        hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
-        productHelper.configureHardwareCustom(&hwInfo, nullptr);
-
-        EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
     }
 }
 

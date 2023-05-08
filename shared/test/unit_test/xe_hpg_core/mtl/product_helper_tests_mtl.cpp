@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_mtl.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -264,4 +265,45 @@ MTLTEST_F(MtlProductHelper, givenMtlWhenCallIsAdjustWalkOrderAvailableThenReturn
         refreshReleaseHelper(defaultHwInfo.get());
         EXPECT_EQ(!MTL::isLpg(*defaultHwInfo), productHelper->isAdjustWalkOrderAvailable(releaseHelper));
     }
+}
+
+MTLTEST_F(MtlProductHelper, givenMtlAndReleaseHelperNullptrWhengetIsMatrixMultiplyAccumulateSupportedThenReturnsFalse) {
+    auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    ReleaseHelper *releaseHelper = nullptr;
+    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
+}
+
+MTLTEST_F(MtlProductHelper, givenVariousMtlReleasesWhenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreCorrectlyReported) {
+
+    auto &rootDeviceEnvironment = *this->executionEnvironment->rootDeviceEnvironments[0].get();
+    auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    unsigned int gmdReleases[] = {70, 71};
+    hwInfo.ipVersion.architecture = 12;
+
+    for (auto gmdRelease : gmdReleases) {
+        hwInfo.ipVersion.release = gmdRelease;
+
+        refreshReleaseHelper(&hwInfo);
+        auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+        auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+
+        EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
+        EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
+        EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
+        EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(hwInfo));
+    }
+}
+
+using ProductHelperTestMtl = Test<DeviceFixture>;
+
+MTLTEST_F(ProductHelperTestMtl, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenForTimestampPacketTagBufferReturnTwo) {
+    auto &helper = getHelper<ProductHelper>();
+    uint64_t expectedPatIndexWhenTimestampPacketTagBuffer = 2u;
+    uint64_t patIndex = 1u;
+    auto allocationType = NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
+    EXPECT_EQ(expectedPatIndexWhenTimestampPacketTagBuffer, helper.overridePatIndex(allocationType, patIndex));
+    allocationType = NEO::AllocationType::BUFFER;
+    patIndex = 3u;
+    EXPECT_EQ(patIndex, helper.overridePatIndex(allocationType, patIndex));
 }

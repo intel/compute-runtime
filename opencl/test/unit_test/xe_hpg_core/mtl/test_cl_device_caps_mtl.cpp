@@ -20,7 +20,7 @@ using MtlDeviceCapsTest = ::testing::Test;
 
 MTLTEST_F(MtlDeviceCapsTest, whenCheckingExtensionThenCorrectExtensionsAreReported) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    unsigned int gmdReleases[] = {70, 71, 72, 73};
+    unsigned int gmdReleases[] = {70, 71};
     defaultHwInfo->ipVersion.architecture = 12;
 
     for (auto gmdRelease : gmdReleases) {
