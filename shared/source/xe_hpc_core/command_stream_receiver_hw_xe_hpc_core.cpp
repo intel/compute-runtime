@@ -90,13 +90,16 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
 
-    auto mocsL3enabled = rootDeviceEnvironment.getGmmHelper()->getMOCS(cachePolicy);
-    blitCmd.setDestinationMOCS(mocsL3enabled);
-    blitCmd.setSourceMOCS(mocsL3enabled);
-    if (DebugManager.flags.OverrideBlitterMocs.get() != -1) {
-        blitCmd.setDestinationMOCS(DebugManager.flags.OverrideBlitterMocs.get());
-        blitCmd.setSourceMOCS(DebugManager.flags.OverrideBlitterMocs.get());
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(cachePolicy);
+
+    if (DebugManager.flags.OverrideBlitterMocs.get() == 0) {
+        mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    } else if (DebugManager.flags.OverrideBlitterMocs.get() == 1) {
+        mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     }
+
+    blitCmd.setDestinationMOCS(mocs);
+    blitCmd.setSourceMOCS(mocs);
 
     if (dstAllocation->isCompressionEnabled()) {
         auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
@@ -140,11 +143,12 @@ void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocati
     auto blitCmd = Family::cmdInitMemSet;
     auto &rootDeviceEnvironment = *waArgs.rootDeviceEnvironment;
 
-    auto mocsL3enabled = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    blitCmd.setDestinationMOCS(mocsL3enabled);
-    if (DebugManager.flags.OverrideBlitterMocs.get() != -1) {
-        blitCmd.setDestinationMOCS(DebugManager.flags.OverrideBlitterMocs.get());
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    if (DebugManager.flags.OverrideBlitterMocs.get() == 0) {
+        mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     }
+
+    blitCmd.setDestinationMOCS(mocs);
 
     if (dstAlloc->isCompressionEnabled()) {
         auto resourceFormat = dstAlloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat();

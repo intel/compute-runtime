@@ -523,7 +523,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     uint32_t expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
 
-    EXPECT_EQ(expectedMocs, surfaceStateAddress->getMemoryObjectControlStateReserved());
+    EXPECT_EQ(expectedMocs, surfaceStateAddress->getMemoryObjectControlState());
 
     Kernel::fromHandle(kernelHandle)->destroy();
 

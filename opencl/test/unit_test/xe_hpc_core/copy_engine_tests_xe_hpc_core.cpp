@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,7 +158,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenTransferLargerThenHalfOfL3WhenItIsPro
     ASSERT_NE(hwParser.cmdList.end(), itorBltCmd);
     MEM_COPY *bltCmd = (MEM_COPY *)*itorBltCmd;
 
-    auto mocsL3disabled = 0x0u;
+    auto mocsL3disabled = clDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     EXPECT_EQ(mocsL3disabled, bltCmd->getDestinationMOCS());
     EXPECT_EQ(mocsL3disabled, bltCmd->getSourceMOCS());
 }
@@ -188,8 +188,10 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     ASSERT_NE(hwParser.cmdList.end(), itorBltCmd);
     MEM_COPY *bltCmd = (MEM_COPY *)*itorBltCmd;
 
-    EXPECT_EQ(0u, bltCmd->getDestinationMOCS());
-    EXPECT_EQ(0u, bltCmd->getSourceMOCS());
+    auto expectedMocs = clDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+
+    EXPECT_EQ(expectedMocs, bltCmd->getDestinationMOCS());
+    EXPECT_EQ(expectedMocs, bltCmd->getSourceMOCS());
 }
 
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenCompressedBufferWhenResolveBlitIsCalledThenProgramSpecialOperationMode) {

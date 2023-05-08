@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject
         retVal.DwordValue = 8u;
         break;
     case GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED:
-        retVal.DwordValue = 0u;
+        retVal.DwordValue = 6u;
         break;
     case GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER:
         retVal.DwordValue = 2u;

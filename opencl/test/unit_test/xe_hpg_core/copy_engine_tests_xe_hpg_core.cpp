@@ -104,8 +104,10 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
 
-    EXPECT_EQ(0u, bltCmd->getDestinationMOCS());
-    EXPECT_EQ(0u, bltCmd->getSourceMOCS());
+    auto expectedMocs = clDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+
+    EXPECT_EQ(expectedMocs, bltCmd->getDestinationMOCS());
+    EXPECT_EQ(expectedMocs, bltCmd->getSourceMOCS());
 }
 
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, given2dBlitCommandWhenDispatchingThenSetValidSurfaceType) {

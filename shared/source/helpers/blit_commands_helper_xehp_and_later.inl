@@ -90,13 +90,14 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsBlockCopy(const BlitProper
                    (blitProperties.dstAllocation != blitProperties.srcAllocation || !blitProperties.dstAllocation->isCompressionEnabled()));
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+
+    if (DebugManager.flags.OverrideBlitterMocs.get() == 1) {
+        mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    }
+
     blitCmd.setDestinationMOCS(mocs);
     blitCmd.setSourceMOCS(mocs);
 
-    if (DebugManager.flags.OverrideBlitterMocs.get() != -1) {
-        blitCmd.setDestinationMOCS(DebugManager.flags.OverrideBlitterMocs.get());
-        blitCmd.setSourceMOCS(DebugManager.flags.OverrideBlitterMocs.get());
-    }
     if (DebugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
         if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
             blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
@@ -135,10 +136,11 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::Graphic
     appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
-    blitCmd.setDestinationMOCS(mocs);
-    if (DebugManager.flags.OverrideBlitterMocs.get() != -1) {
-        blitCmd.setDestinationMOCS(DebugManager.flags.OverrideBlitterMocs.get());
+    if (DebugManager.flags.OverrideBlitterMocs.get() == 1) {
+        mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     }
+
+    blitCmd.setDestinationMOCS(mocs);
 
     if (DebugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
         if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {

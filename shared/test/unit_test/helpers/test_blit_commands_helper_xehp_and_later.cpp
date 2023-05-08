@@ -223,8 +223,9 @@ HWTEST2_F(BlitTests, givenAllocationInSystemMemWhenAppendBlitCommandsForFillBuff
 HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBufferThenDebugMocksValueIsSet, BlitPlatforms) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    uint32_t mockValue = 5;
-    DebugManager.flags.OverrideBlitterMocs.set(mockValue);
+    uint32_t mockValue = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    ;
+    DebugManager.flags.OverrideBlitterMocs.set(1);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
