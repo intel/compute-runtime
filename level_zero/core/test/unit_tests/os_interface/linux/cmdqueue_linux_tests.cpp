@@ -64,6 +64,7 @@ HWTEST2_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecutingComman
     ze_group_count_t dispatchFunctionArguments{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams, false);
+    commandList->close();
 
     ze_command_list_handle_t cmdListHandles[1] = {commandList->toHandle()};
 

@@ -64,9 +64,9 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenGettingPlatformDefault
     EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel());
 }
 
-XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForCmdlistPrimaryBufferSupportThenReturnFalse) {
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForCmdlistPrimaryBufferSupportThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList());
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList());
 }
 
 } // namespace ult
