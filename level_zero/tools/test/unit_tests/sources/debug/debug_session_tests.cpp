@@ -2270,7 +2270,16 @@ TEST_F(DebugSessionRegistersAccessTest, givenGetThreadRegisterSetPropertiesCalle
     std::vector<zet_debug_regset_properties_t> threadRegsetProps(count);
     ASSERT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &count, threadRegsetProps.data()));
 
-    EXPECT_EQ(0, memcmp(regsetProps.data(), threadRegsetProps.data(), count * sizeof(zet_debug_regset_properties_t)));
+    for (size_t i = 0; i < count; i++) {
+        EXPECT_EQ(regsetProps[i].stype, threadRegsetProps[i].stype);
+        EXPECT_EQ(regsetProps[i].pNext, threadRegsetProps[i].pNext);
+        EXPECT_EQ(regsetProps[i].version, threadRegsetProps[i].version);
+        EXPECT_EQ(regsetProps[i].generalFlags, threadRegsetProps[i].generalFlags);
+        EXPECT_EQ(regsetProps[i].deviceFlags, threadRegsetProps[i].deviceFlags);
+        EXPECT_EQ(regsetProps[i].count, threadRegsetProps[i].count);
+        EXPECT_EQ(regsetProps[i].bitSize, threadRegsetProps[i].bitSize);
+        EXPECT_EQ(regsetProps[i].byteSize, threadRegsetProps[i].byteSize);
+    }
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenUnsupportedRegisterTypeWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
