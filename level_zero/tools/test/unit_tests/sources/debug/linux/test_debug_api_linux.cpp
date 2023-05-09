@@ -4946,6 +4946,33 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandli
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
+TEST_F(DebugApiLinuxVmBindTest, GivenPendingEventsWhenCloseConnectionCalledThenEventsAreAcked) {
+    setupVmToTile(session.get());
+    // first module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    handler->ackCount = 0;
+    bool result = session->closeConnection();
+    EXPECT_TRUE(result);
+
+    EXPECT_EQ(1u, handler->ackCount);
+    EXPECT_EQ(1u, session->cleanRootSessionAfterDetachCallCount);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenNoClientHandleWhenCloseConnectionCalledThenCleanupIsNotCalled) {
+
+    session->clientHandle = DebugSessionLinux::invalidClientHandle;
+    handler->ackCount = 0;
+    bool result = session->closeConnection();
+    EXPECT_TRUE(result);
+
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(0u, session->cleanRootSessionAfterDetachCallCount);
+}
+
 TEST_F(DebugApiLinuxTest, GivenVmEventWithCreateAndDestroyFlagsWhenHandlingEventThenVmIdIsStoredAndErased) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

@@ -477,6 +477,18 @@ void DebugSessionLinux::readInternalEventsAsync() {
 bool DebugSessionLinux::closeConnection() {
     closeAsyncThread();
     closeInternalEventsThread();
+
+    if (clientHandle != invalidClientHandle) {
+        auto numTiles = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+        for (uint32_t i = 0; i < numTiles; i++) {
+            for (const auto &eventToAck : eventsToAck) {
+                auto moduleUUID = eventToAck.second;
+                ackModuleEvents(i, moduleUUID);
+            }
+            cleanRootSessionAfterDetach(i);
+        }
+    }
+
     return closeFd();
 }
 
