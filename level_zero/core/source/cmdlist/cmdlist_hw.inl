@@ -2029,7 +2029,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
     }
 
     if (inOrderDependencyCounter > 0) {
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderDependencyCounter, relaxedOrderingAllowed);
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, inOrderDependencyCounter, relaxedOrderingAllowed);
     }
 
     if (numWaitEvents > 0) {
@@ -2076,12 +2076,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(uint32_t waitValue, bool relaxedOrderingAllowed) {
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint32_t waitValue, bool relaxedOrderingAllowed) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    commandContainer.addToResidencyContainer(this->inOrderDependencyCounterAllocation);
+    commandContainer.addToResidencyContainer(dependencyCounterAllocation);
 
-    uint64_t gpuAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
+    uint64_t gpuAddress = dependencyCounterAllocation->getGpuAddress();
 
     if (relaxedOrderingAllowed) {
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue,
@@ -2135,7 +2135,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         auto event = Event::fromHandle(phEvent[i]);
 
         if (event->isInOrderExecEvent()) {
-            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecSignalValue(), relaxedOrderingAllowed);
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), relaxedOrderingAllowed);
             continue;
         }
 
