@@ -184,6 +184,9 @@ HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhen
 
     ASSERT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
+    pImage->getMultiGraphicsAllocation().getGraphicsAllocation(0)->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = false;
+    pImage->getMultiGraphicsAllocation().getGraphicsAllocation(1)->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = false;
+
     auto migrationSyncData = static_cast<MockMigrationSyncData *>(pImage->getMultiGraphicsAllocation().getMigrationSyncData());
 
     EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);

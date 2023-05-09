@@ -586,7 +586,7 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
 };
 
 using AubCommandStreamReceiverNoHostPtrTests = ::testing::Test;
-HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
+HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnLockableImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
     ExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
     auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
@@ -611,6 +611,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
 
     auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
+    imageAllocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = false;
 
     EXPECT_TRUE(aubCsr->writeMemory(*imageAllocation));
 
