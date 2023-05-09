@@ -329,7 +329,7 @@ HWTEST_F(ProductHelperTest, WhenCheckAssignEngineRoundRobinSupportedThenReturnFa
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPrefetchDisablingIsRequiredThenFalseIsReturned) {
 
-    EXPECT_FALSE(productHelper->isPrefetchDisablingRequired(pInHwInfo));
+    EXPECT_FALSE(productHelper->isPrefetchDisablingRequired(releaseHelper));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {

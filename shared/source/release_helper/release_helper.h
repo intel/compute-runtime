@@ -22,11 +22,12 @@ inline createReleaseHelperFunctionType *releaseHelperFactory[maxArchitecture]{};
 class ReleaseHelper {
   public:
     static std::unique_ptr<ReleaseHelper> create(HardwareIpVersion hardwareIpVersion);
-
-    virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
     virtual ~ReleaseHelper() = default;
+
     virtual bool isAdjustWalkOrderAvailable() const = 0;
+    virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const = 0;
+    virtual bool isPrefetchDisablingRequired() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -39,9 +40,11 @@ class ReleaseHelperHw : public ReleaseHelper {
     static std::unique_ptr<ReleaseHelper> create(HardwareIpVersion hardwareIpVersion) {
         return std::unique_ptr<ReleaseHelper>(new ReleaseHelperHw<releaseType>{hardwareIpVersion});
     }
-    bool isMatrixMultiplyAccumulateSupported() const override;
+
     bool isAdjustWalkOrderAvailable() const override;
+    bool isMatrixMultiplyAccumulateSupported() const override;
     bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const override;
+    bool isPrefetchDisablingRequired() const override;
 
   private:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

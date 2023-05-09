@@ -64,6 +64,9 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper.h
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_base.inl
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1255.cpp
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1256.cpp
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1257.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1270.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1271.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper${BRANCH_DIR_SUFFIX}enable_release_helper_xe.cpp

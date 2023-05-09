@@ -103,7 +103,7 @@ class ProductHelper {
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual int getProductMaxPreferredSlmSize(const HardwareInfo &hwInfo, int preferredEnumValue) const = 0;
-    virtual bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const = 0;
@@ -204,6 +204,7 @@ class ProductHelper {
     virtual bool isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumberOfPartsInTileForConcurrentKernel() const = 0;
     virtual bool is48bResourceNeededForRayTracing() const = 0;
+    virtual void adjustIpVersionIfNeeded(HardwareInfo &hwInfo) const = 0;
 
     virtual ~ProductHelper() = default;
 

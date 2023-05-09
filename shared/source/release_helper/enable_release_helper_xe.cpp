@@ -15,6 +15,9 @@ inline constexpr uint32_t maxReleaseXe = 75;
 inline createReleaseHelperFunctionType releaseHelperFactoryXe[maxReleaseXe]{};
 
 EnableReleaseHelperArchitecture<12> enableReleaseHelperArchitecture12{releaseHelperFactoryXe};
+EnableReleaseHelper<ReleaseType::release1255> enablerReleaseHelper1255{releaseHelperFactoryXe[55]};
+EnableReleaseHelper<ReleaseType::release1256> enablerReleaseHelper1256{releaseHelperFactoryXe[56]};
+EnableReleaseHelper<ReleaseType::release1257> enablerReleaseHelper1257{releaseHelperFactoryXe[57]};
 EnableReleaseHelper<ReleaseType::release1270> enablerReleaseHelper1270{releaseHelperFactoryXe[70]};
 EnableReleaseHelper<ReleaseType::release1271> enablerReleaseHelper1271{releaseHelperFactoryXe[71]};
 

@@ -281,7 +281,10 @@ int ProductHelperHw<gfxProduct>::getProductMaxPreferredSlmSize(const HardwareInf
     return preferredEnumValue;
 }
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isPrefetchDisablingRequired();
+    }
     return false;
 }
 
@@ -294,6 +297,9 @@ template <PRODUCT_FAMILY gfxProduct>
 std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     return {false, false};
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::adjustIpVersionIfNeeded(HardwareInfo &hwInfo) const {}
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {

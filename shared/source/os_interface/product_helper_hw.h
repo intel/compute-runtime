@@ -56,7 +56,7 @@ class ProductHelperHw : public ProductHelper {
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     int getProductMaxPreferredSlmSize(const HardwareInfo &hwInfo, int preferredEnumValue) const override;
-    bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const override;
+    bool isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const override;
     bool isNewResidencyModelSupported() const override;
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
     std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const override;
@@ -157,6 +157,7 @@ class ProductHelperHw : public ProductHelper {
     bool isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount, const HardwareInfo &hwInfo) const override;
     bool isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const override;
     bool is48bResourceNeededForRayTracing() const override;
+    void adjustIpVersionIfNeeded(HardwareInfo &hwInfo) const override;
 
     ~ProductHelperHw() override = default;
 

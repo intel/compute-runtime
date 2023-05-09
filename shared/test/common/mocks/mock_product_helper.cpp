@@ -193,7 +193,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isAllocationSizeAdjustmentRequired(const Har
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const {
     return false;
 }
 

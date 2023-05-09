@@ -22,7 +22,8 @@ constexpr auto *oclocStdoutLogName = "stdout.log";
 
 namespace NEO {
 class CompilerProductHelper;
-}
+class ReleaseHelper;
+} // namespace NEO
 
 struct Source {
     const uint8_t *data;
@@ -72,9 +73,9 @@ class OclocArgHelper {
                    uint64_t **lenOutputs, char ***nameOutputs);
     virtual ~OclocArgHelper();
     MOCKABLE_VIRTUAL bool fileExists(const std::string &filename) const;
-    bool setHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper);
-    uint32_t getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(NEO::HardwareInfo &hwInfo, unsigned short deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper);
-    void setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper);
+    bool setHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
+    uint32_t getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(NEO::HardwareInfo &hwInfo, unsigned short deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
+    void setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
     std::vector<std::string> headersToVectorOfStrings();
     MOCKABLE_VIRTUAL void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);
     MOCKABLE_VIRTUAL std::vector<char> readBinaryFile(const std::string &filename);

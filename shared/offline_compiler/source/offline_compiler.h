@@ -11,6 +11,7 @@
 #include "shared/offline_compiler/source/ocloc_fcl_facade.h"
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
@@ -100,7 +101,7 @@ All supported acronyms: %s.
 
     int initHardwareInfo(std::string deviceName);
     int initHardwareInfoForProductConfig(std::string deviceName);
-    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper);
+    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
     bool isArgumentDeviceId(const std::string &argument) const;
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
@@ -182,6 +183,7 @@ All supported acronyms: %s.
     std::unique_ptr<OclocFclFacade> fclFacade{nullptr};
     std::unique_ptr<CompilerCache> cache;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
+    std::unique_ptr<ReleaseHelper> releaseHelper;
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
 
     OclocArgHelper *argHelper = nullptr;

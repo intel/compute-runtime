@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -16,6 +17,8 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
+
+#include "platforms.h"
 
 using namespace NEO;
 
@@ -69,6 +72,14 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
         for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
             hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
+            hwInfo.ipVersion = productHelper.getProductConfigFromHwInfo(hwInfo);
+
+            if (hwInfo.ipVersion.value == AOT::UNKNOWN_ISA) {
+                continue;
+            }
+
+            rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+
             EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
             if (DG2::isG10(hwInfo) && revision < REVISION_B) {

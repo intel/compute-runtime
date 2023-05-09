@@ -114,9 +114,9 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 
 template <>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    bool l3PrefetchDisable = productHelper.isPrefetchDisablingRequired(hwInfo);
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    bool l3PrefetchDisable = productHelper.isPrefetchDisablingRequired(releaseHelper);
     int32_t overrideL3PrefetchDisable = DebugManager.flags.ForceL3PrefetchForComputeWalker.get();
     if (overrideL3PrefetchDisable != -1) {
         l3PrefetchDisable = !overrideL3PrefetchDisable;

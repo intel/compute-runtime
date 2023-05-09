@@ -16,6 +16,9 @@ set(NEO_CORE_RELEASE_HELPER
 if(SUPPORT_XE_HPG_CORE)
   list(APPEND NEO_CORE_RELEASE_HELPER
        ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe_lpg.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1255.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1256.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1257.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1270.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1271.cpp
   )

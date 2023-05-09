@@ -23,4 +23,9 @@ bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommands
     return false;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isPrefetchDisablingRequired() const {
+    return false;
+}
+
 } // namespace NEO

@@ -18,6 +18,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_info.h"
@@ -110,6 +111,7 @@ bool Wddm::init() {
     rootDeviceEnvironment.initGfxCoreHelper();
 
     populateIpVersion(*hardwareInfo);
+    productHelper.adjustIpVersionIfNeeded(*rootDeviceEnvironment.getMutableHardwareInfo());
     rootDeviceEnvironment.initReleaseHelper();
 
     if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {

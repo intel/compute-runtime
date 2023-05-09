@@ -11,6 +11,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "hw_cmds.h"
 #include "platforms.h"
@@ -150,7 +151,7 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
     }
 }
 
-uint32_t OclocArgHelper::getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(NEO::HardwareInfo &hwInfo, unsigned short deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
+uint32_t OclocArgHelper::getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(NEO::HardwareInfo &hwInfo, unsigned short deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper) {
     const auto &deviceAotMap = productConfigHelper->getDeviceAotInfo();
 
     for (const auto &device : deviceAotMap) {
@@ -164,21 +165,22 @@ uint32_t OclocArgHelper::getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(NEO::
                 auto config = compilerProductHelper->matchRevisionIdWithProductConfig(device.aotConfig, revisionID);
                 if (productConfigHelper->isSupportedProductConfig(config)) {
                     hwInfo.ipVersion = config;
+                    releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
                     return config;
                 }
             }
             hwInfo.ipVersion = device.aotConfig.value;
+            releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
             return device.aotConfig.value;
         }
     }
     return AOT::UNKNOWN_ISA;
 }
 
-bool OclocArgHelper::setHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
+bool OclocArgHelper::setHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper) {
     if (productConfig == AOT::UNKNOWN_ISA) {
         return false;
     }
-
     const auto &deviceAotMap = productConfigHelper->getDeviceAotInfo();
     for (auto &deviceConfig : deviceAotMap) {
         if (deviceConfig.aotConfig.value == productConfig) {
@@ -187,19 +189,20 @@ bool OclocArgHelper::setHwInfoForProductConfig(uint32_t productConfig, NEO::Hard
             compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
             UNRECOVERABLE_IF(compilerProductHelper == nullptr);
             compilerProductHelper->setProductConfigForHwInfo(hwInfo, productConfig);
+            releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
             return true;
         }
     }
     return false;
 }
 
-void OclocArgHelper::setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
+void OclocArgHelper::setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper) {
     compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     UNRECOVERABLE_IF(compilerProductHelper == nullptr);
-
     uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
     setHwInfoValuesFromConfig(config, hwInfo);
     NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, *compilerProductHelper);
+    releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
 }
 
 void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) {

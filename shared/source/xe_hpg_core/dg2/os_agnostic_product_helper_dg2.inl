@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "aubstream/product_family.h"
+#include "os_agnostic_product_helper_dg2_extra.inl"
 
 namespace NEO {
 template <>
@@ -138,8 +139,12 @@ bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const Hardw
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
-    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
+void ProductHelperHw<gfxProduct>::adjustIpVersionIfNeeded(HardwareInfo &hwInfo) const {
+    bool isIpVersionUninitialized = hwInfo.ipVersion.architecture == 0;
+
+    if (isIpVersionUninitialized) {
+        hwInfo.ipVersion.value = getProductConfigFromHwInfo(hwInfo);
+    }
 }
 
 template <>
