@@ -98,29 +98,32 @@ void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
-    printfKernelContainer.clear();
     removeDeallocationContainerData();
     removeHostPtrAllocations();
     removeMemoryPrefetchAllocations();
     commandContainer.reset();
-    containsStatelessUncachedResource = false;
-    indirectAllocationsAllowed = false;
-    unifiedMemoryControls.indirectHostAllocationsAllowed = false;
-    unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
-    unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
-    commandListPreemptionMode = device->getDevicePreemptionMode();
-    commandListPerThreadScratchSize = 0u;
-    commandListPerThreadPrivateScratchSize = 0u;
-    requiredStreamState.resetState();
-    finalStreamState.resetState();
-    containsAnyKernel = false;
-    containsCooperativeKernelsFlag = false;
     clearCommandsToPatch();
-    commandListSLMEnabled = false;
-    kernelWithAssertAppended = false;
 
     if (!isCopyOnly()) {
+        printfKernelContainer.clear();
+        containsStatelessUncachedResource = false;
+        indirectAllocationsAllowed = false;
+        unifiedMemoryControls.indirectHostAllocationsAllowed = false;
+        unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
+        unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
+        commandListPreemptionMode = device->getDevicePreemptionMode();
+        commandListPerThreadScratchSize = 0u;
+        commandListPerThreadPrivateScratchSize = 0u;
+        requiredStreamState.resetState();
+        finalStreamState.resetState();
+        containsAnyKernel = false;
+        containsCooperativeKernelsFlag = false;
+        commandListSLMEnabled = false;
+        kernelWithAssertAppended = false;
+
         postInitComputeSetup();
+
+        this->returnPoints.clear();
     }
 
     for (auto alloc : this->ownedPrivateAllocations) {
@@ -128,7 +131,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     }
     this->ownedPrivateAllocations.clear();
     cmdListCurrentStartOffset = 0;
-    this->returnPoints.clear();
 
     return ZE_RESULT_SUCCESS;
 }
