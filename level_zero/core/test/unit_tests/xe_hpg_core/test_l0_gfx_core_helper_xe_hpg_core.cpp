@@ -51,9 +51,9 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForPip
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsPipelineSelectTracking());
 }
 
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForStateBaseAddressTrackingSupportThenReturnTrue) {
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForStateBaseAddressTrackingSupportThenReturnFalse) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsStateBaseAddressTracking());
+    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsStateBaseAddressTracking());
 }
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForRayTracingSupportThenReturnTrue) {

@@ -158,6 +158,8 @@ void CmdListPipelineSelectStateFixture::tearDown() {
 
 void CmdListStateComputeModeStateFixture::setUp() {
     DebugManager.flags.EnableStateComputeModeTracking.set(1);
+    DebugManager.flags.EnableStateBaseAddressTracking.set(1);
+
     ModuleMutableCommandListFixture::setUp();
 }
 
@@ -342,6 +344,7 @@ void PrimaryBatchBufferCmdListFixture::setUp() {
 void PrimaryBatchBufferPreamblelessCmdListFixture::setUp() {
     DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless));
     DebugManager.flags.ForceL1Caching.set(0);
+    DebugManager.flags.EnableStateBaseAddressTracking.set(1);
 
     PrimaryBatchBufferCmdListFixture::setUp();
 
