@@ -178,6 +178,8 @@ class AppendFillFixture : public DeviceFixture {
 
     template <GFXCORE_FAMILY gfxCoreFamily>
     class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+        using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
+
       public:
         MockCommandList() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
 
@@ -198,6 +200,7 @@ class AppendFillFixture : public DeviceFixture {
                                                                                       event,
                                                                                       launchParams);
         }
+
         ze_group_count_t threadGroupDimensions[3];
         uint32_t xGroupSizes[3];
         uint32_t thresholdOfCallsToAppendLaunchKernelWithParamsToFail = std::numeric_limits<uint32_t>::max();

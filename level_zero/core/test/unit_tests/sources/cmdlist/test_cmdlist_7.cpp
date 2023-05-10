@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
@@ -2775,6 +2776,108 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerforming
     std::swap(cpuMemCopyInfo.srcAllocData, cpuMemCopyInfo.dstAllocData);
     returnValue = cmdList.performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, returnValue);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFill, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    createKernel();
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    auto unalignedOffset = 2u;
+    auto patternSize = 4u;
+    auto sizeToFill = 599u * patternSize;
+    CmdListFillKernelArguments outArguments;
+    cmdList.setupFillKernelArguments(unalignedOffset, patternSize, sizeToFill, outArguments, kernel.get());
+    EXPECT_EQ(outArguments.groups * outArguments.mainGroupSize, sizeToFill);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFillDevidedBySizeOfUint32, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    createKernel();
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    auto unalignedOffset = 4u;
+    auto patternSize = 4u;
+    auto sizeToFill = 599u * patternSize;
+    CmdListFillKernelArguments outArguments;
+    cmdList.setupFillKernelArguments(unalignedOffset, patternSize, sizeToFill, outArguments, kernel.get());
+    EXPECT_EQ(outArguments.groups * outArguments.mainGroupSize, sizeToFill / sizeof(uint32_t));
+}
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListHwKernelSplit : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+  public:
+    ze_result_t appendLaunchKernelSplit(::L0::Kernel *kernel,
+                                        const ze_group_count_t *threadGroupDimensions,
+                                        ::L0::Event *event,
+                                        const CmdListKernelLaunchParams &launchParams) override {
+        passedKernel = kernel;
+        return status;
+    }
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    ::L0::Kernel *passedKernel;
+};
+HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryFillCalledThenRightLeftOverKernelIsDispatched, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    auto commandList = std::make_unique<MockCommandListHwKernelSplit<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto unalignedOffset = 2u;
+    uint32_t pattern = 0x12345678;
+    auto patternSize = sizeof(pattern);
+    auto sizeToFill = 599u * patternSize;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, 0x1000, 0x1000, &dstBuffer);
+    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
+    commandList->appendMemoryFill(ptrOffset(dstBuffer, unalignedOffset), &pattern, patternSize, sizeToFill, nullptr, 0, nullptr, false);
+    EXPECT_EQ(commandList->passedKernel, builtinKernelByte);
+    context->freeMem(dstBuffer);
+}
+HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenKernelLaunchSplitForRighLeftoverKernelFailsThenFailedStatusIsReturned, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    auto commandList = std::make_unique<MockCommandListHwKernelSplit<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto unalignedOffset = 2u;
+    uint32_t pattern = 0x12345678;
+    auto patternSize = sizeof(pattern);
+    auto sizeToFill = 599u * patternSize;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, 0x1000, 0x1000, &dstBuffer);
+    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
+    commandList->appendMemoryFill(ptrOffset(dstBuffer, unalignedOffset), &pattern, patternSize, sizeToFill, nullptr, 0, nullptr, false);
+    EXPECT_EQ(commandList->passedKernel, builtinKernelByte);
+    context->freeMem(dstBuffer);
+}
+HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryFillCalledWithStatelessEnabledThenRightLeftOverStatelessKernelIsDispatched, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    auto commandList = std::make_unique<MockCommandListHwKernelSplit<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto unalignedOffset = 2u;
+    uint32_t pattern = 0x12345678;
+    auto patternSize = sizeof(pattern);
+    auto sizeToFill = 599u * patternSize;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, 0x1000, 0x1000, &dstBuffer);
+    commandList->status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    auto ret = commandList->appendMemoryFill(ptrOffset(dstBuffer, unalignedOffset), &pattern, patternSize, sizeToFill, nullptr, 0, nullptr, true);
+    EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenAppendMemoryFillCalledThenMiddleBufferKernelIsDispatched, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    auto commandList = std::make_unique<MockCommandListHwKernelSplit<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto unalignedOffset = 4u;
+    uint32_t pattern = 0x12345678;
+    auto patternSize = sizeof(pattern);
+    auto sizeToFill = 599u * patternSize;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, 0x1000, 0x1000, &dstBuffer);
+    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
+    commandList->appendMemoryFill(ptrOffset(dstBuffer, unalignedOffset), &pattern, patternSize, sizeToFill, nullptr, 0, nullptr, false);
+    EXPECT_EQ(commandList->passedKernel, builtinKernelByte);
+    context->freeMem(dstBuffer);
 }
 
 } // namespace ult
