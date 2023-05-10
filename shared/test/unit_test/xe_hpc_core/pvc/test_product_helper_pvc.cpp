@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
@@ -266,5 +267,30 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsIpSamplingSupportedThenCo
     for (const auto &deviceId : pvcXtDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_TRUE(productHelper->isIpSamplingSupported(hwInfo));
+    }
+}
+
+PVCTEST_F(PvcProductHelper, givenPvcProductHelperAndKernelBinaryFormatsWhenCheckingIsDetectIndirectAccessInKernelSupportedThenCorrectValueIsReturned) {
+    KernelDescriptor kernelDescriptor;
+
+    {
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+        kernelDescriptor.kernelAttributes.simdSize = 8u;
+        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
+    }
+    {
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+        kernelDescriptor.kernelAttributes.simdSize = 1u;
+        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
+    }
+    {
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Zebin;
+        kernelDescriptor.kernelAttributes.simdSize = 1u;
+        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
+    }
+    {
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Zebin;
+        kernelDescriptor.kernelAttributes.simdSize = 8u;
+        EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
     }
 }

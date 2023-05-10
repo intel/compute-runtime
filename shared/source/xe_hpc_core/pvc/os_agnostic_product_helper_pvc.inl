@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 #include "aubstream/product_family.h"
 
@@ -223,6 +224,13 @@ void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const 
 template <>
 bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
     return false;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const {
+    const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::Zebin;
+    const bool isCMKernelHeuristic = kernelDescriptor.kernelAttributes.simdSize == 1;
+    return isZebin && !isCMKernelHeuristic;
 }
 
 template <>
