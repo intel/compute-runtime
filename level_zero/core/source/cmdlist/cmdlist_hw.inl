@@ -1772,16 +1772,45 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
             patternAllocOffset += patternSizeToCopy;
         } while (patternAllocOffset < patternAllocationSize);
+        if (fillArguments.leftRemainingBytes == 0) {
+            builtinKernel->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+            builtinKernel->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
+            builtinKernel->setArgBufferWithAlloc(2, reinterpret_cast<uintptr_t>(patternGfxAllocPtr), patternGfxAlloc);
+            builtinKernel->setArgumentValue(3, sizeof(fillArguments.patternSizeInEls), &fillArguments.patternSizeInEls);
 
-        builtinKernel->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
-        builtinKernel->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
-        builtinKernel->setArgBufferWithAlloc(2, reinterpret_cast<uintptr_t>(patternGfxAllocPtr), patternGfxAlloc);
-        builtinKernel->setArgumentValue(3, sizeof(fillArguments.patternSizeInEls), &fillArguments.patternSizeInEls);
+            ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
+            res = appendLaunchKernelSplit(builtinKernel, &dispatchKernelArgs, signalEvent, launchParams);
+            if (res) {
+                return res;
+            }
+        } else {
+            uint32_t dstOffsetRemainder = static_cast<uint32_t>(dstAllocation.offset);
 
-        ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
-        res = appendLaunchKernelSplit(builtinKernel, &dispatchKernelArgs, signalEvent, launchParams);
-        if (res) {
-            return res;
+            Kernel *builtinKernelRemainder;
+            if (isStateless) {
+                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftoverStateless);
+            } else {
+                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
+            }
+
+            builtinKernelRemainder->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
+            ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
+
+            builtinKernelRemainder->setArgBufferWithAlloc(0,
+                                                          dstAllocation.alignedAllocationPtr,
+                                                          dstAllocation.alloc);
+            builtinKernelRemainder->setArgumentValue(1,
+                                                     sizeof(dstOffsetRemainder),
+                                                     &dstOffsetRemainder);
+            builtinKernelRemainder->setArgBufferWithAlloc(2,
+                                                          reinterpret_cast<uintptr_t>(patternGfxAllocPtr),
+                                                          patternGfxAlloc);
+            builtinKernelRemainder->setArgumentValue(3, sizeof(patternAllocationSize), &patternAllocationSize);
+
+            res = appendLaunchKernelSplit(builtinKernelRemainder, &dispatchKernelArgs, signalEvent, launchParams);
+            if (res) {
+                return res;
+            }
         }
 
         if (fillArguments.rightRemainingBytes > 0) {
@@ -2841,23 +2870,29 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
             outArguments.rightOffset = outArguments.mainOffset + (middleSize - outArguments.rightRemainingBytes);
         }
     } else {
-        size_t middleElSize = sizeof(uint32_t);
-        size_t adjustedSize = dstSize / middleElSize;
+        size_t elSize = sizeof(uint32_t);
+        if (baseOffset % elSize != 0) {
+            outArguments.leftRemainingBytes = static_cast<uint32_t>(elSize - (baseOffset % elSize));
+        }
+        if (outArguments.leftRemainingBytes > 0) {
+            elSize = sizeof(uint8_t);
+        }
+        size_t adjustedSize = dstSize / elSize;
         uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
         uint32_t groupSizeY = 1, groupSizeZ = 1;
         kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
         outArguments.mainGroupSize = groupSizeX;
 
         outArguments.groups = static_cast<uint32_t>(adjustedSize) / outArguments.mainGroupSize;
-        outArguments.rightRemainingBytes = static_cast<uint32_t>((adjustedSize % outArguments.mainGroupSize) * middleElSize +
-                                                                 dstSize % middleElSize);
+        outArguments.rightRemainingBytes = static_cast<uint32_t>((adjustedSize % outArguments.mainGroupSize) * elSize +
+                                                                 dstSize % elSize);
 
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
-        outArguments.patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / middleElSize);
+        outArguments.patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / elSize);
 
         if (outArguments.rightRemainingBytes > 0) {
-            outArguments.rightOffset = outArguments.groups * outArguments.mainGroupSize * middleElSize;
-            outArguments.patternOffsetRemainder = (outArguments.mainGroupSize * outArguments.groups & (outArguments.patternSizeInEls - 1)) * middleElSize;
+            outArguments.rightOffset = outArguments.groups * outArguments.mainGroupSize * elSize;
+            outArguments.patternOffsetRemainder = (outArguments.mainGroupSize * outArguments.groups & (outArguments.patternSizeInEls - 1)) * elSize;
         }
     }
 }

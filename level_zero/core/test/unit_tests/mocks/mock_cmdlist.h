@@ -568,6 +568,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
+    using BaseClass::setupFillKernelArguments;
 
     ze_result_t executeCommandListImmediate(bool performMigration) override {
         ++executeCommandListImmediateCalledCount;

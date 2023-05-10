@@ -246,10 +246,10 @@ struct CommandListCoreFamily : CommandListImp {
                                                               const ze_group_count_t *threadGroupDimensions,
                                                               Event *event,
                                                               const CmdListKernelLaunchParams &launchParams);
-    ze_result_t appendLaunchKernelSplit(Kernel *kernel,
-                                        const ze_group_count_t *threadGroupDimensions,
-                                        Event *event,
-                                        const CmdListKernelLaunchParams &launchParams);
+    MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelSplit(Kernel *kernel,
+                                                         const ze_group_count_t *threadGroupDimensions,
+                                                         Event *event,
+                                                         const CmdListKernelLaunchParams &launchParams);
 
     ze_result_t appendUnalignedFillKernel(bool isStateless,
                                           uint32_t unalignedSize,
