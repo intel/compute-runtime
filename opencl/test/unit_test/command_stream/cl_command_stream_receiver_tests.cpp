@@ -133,6 +133,4 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
     EXPECT_TRUE(commandStreamReceiver->createAllocationForHostSurface(surface, false));
     ASSERT_NE(nullptr, surface.getAllocation());
     EXPECT_EQ(expectedRootDeviceIndex, surface.getAllocation()->getRootDeviceIndex());
-    EXPECT_EQ(1u, surface.getAllocation()->hostPtrTaskCountAssignment.load());
-    surface.getAllocation()->hostPtrTaskCountAssignment--;
 }

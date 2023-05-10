@@ -1748,9 +1748,6 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesA
     EXPECT_EQ(dstRowPitchExpected, blitProperties.dstRowPitch);
     EXPECT_EQ(srcSlicePitchExpected, blitProperties.srcSlicePitch);
     EXPECT_EQ(dstSlicePitchExpected, blitProperties.dstSlicePitch);
-
-    EXPECT_EQ(1u, blitProperties.srcAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.srcAllocation->hostPtrTaskCountAssignment--;
 }
 
 HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
@@ -1789,9 +1786,6 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesA
     EXPECT_EQ(dstRowPitchExpected, blitProperties.dstRowPitch);
     EXPECT_EQ(srcSlicePitchExpected, blitProperties.srcSlicePitch);
     EXPECT_EQ(dstSlicePitchExpected, blitProperties.dstSlicePitch);
-
-    EXPECT_EQ(1u, blitProperties.dstAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.dstAllocation->hostPtrTaskCountAssignment--;
 }
 
 HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
@@ -1822,9 +1816,6 @@ HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPrope
     EXPECT_EQ(dstRowPitchExpected, blitProperties.dstRowPitch);
     EXPECT_EQ(inputSlicePitch, blitProperties.srcSlicePitch);
     EXPECT_EQ(dstSlicePitchExpected, blitProperties.dstSlicePitch);
-
-    EXPECT_EQ(1u, blitProperties.srcAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.srcAllocation->hostPtrTaskCountAssignment--;
 }
 
 HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
@@ -1856,9 +1847,6 @@ HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPrope
     EXPECT_EQ(inputRowPitch, blitProperties.dstRowPitch);
     EXPECT_EQ(srcSlicePitchExpected, blitProperties.srcSlicePitch);
     EXPECT_EQ(inputSlicePitch, blitProperties.dstSlicePitch);
-
-    EXPECT_EQ(1u, blitProperties.dstAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.dstAllocation->hostPtrTaskCountAssignment--;
 }
 
 HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsFound) {

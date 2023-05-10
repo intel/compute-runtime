@@ -1090,14 +1090,10 @@ struct RelaxedOrderingBcsTests : public BcsTests {
     }
 
     BlitProperties generateBlitProperties(CommandStreamReceiver &csr, Buffer *clBuffer) {
-        auto properties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                          csr, clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
-                                                                          clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), 0,
-                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
-        EXPECT_EQ(1u, properties.srcAllocation->hostPtrTaskCountAssignment.load());
-        properties.srcAllocation->hostPtrTaskCountAssignment--;
-
-        return properties;
+        return BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                               csr, clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
+                                                               clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), 0,
+                                                               0, 0, {1, 1, 1}, 0, 0, 0, 0);
     }
 
     std::unique_ptr<VariableBackup<UltHwConfig>> ultHwConfigBackup;
