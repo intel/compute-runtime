@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -435,10 +435,24 @@ TEST_F(MultiDeviceStorageInfoTest, givenLeastOccupiedBankAndOtherBitsEnabledInSu
     EXPECT_TRUE(storageInfo.memoryBanks.test(leastOccupiedBank));
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenNoSubdeviceBitfieldWhenCreateStorageInfoThenReturnEmptyStorageInfo) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::UNKNOWN, false, {}};
+TEST_F(MultiDeviceStorageInfoTest, givenNoSubdeviceBitfieldWhenCreateStorageInfoForNonLockableAllocationThenReturnEmptyStorageInfo) {
+    AllocationType allocationType = AllocationType::BUFFER;
+    EXPECT_FALSE(GraphicsAllocation::isLockable(allocationType));
+    AllocationProperties properties{mockRootDeviceIndex, false, 1u, allocationType, false, {}};
     StorageInfo emptyInfo{};
-    EXPECT_EQ(memoryManager->createStorageInfoFromProperties(properties).getMemoryBanks(), emptyInfo.getMemoryBanks());
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_EQ(storageInfo.getMemoryBanks(), emptyInfo.getMemoryBanks());
+    EXPECT_FALSE(storageInfo.isLockable);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenNoSubdeviceBitfieldWhenCreateStorageInfoForNonLockableAllocationThenReturnEmptyStorageInfoWithLockableFlag) {
+    AllocationType allocationType = AllocationType::BUFFER_HOST_MEMORY;
+    EXPECT_TRUE(GraphicsAllocation::isLockable(allocationType));
+    AllocationProperties properties{mockRootDeviceIndex, false, 1u, allocationType, false, {}};
+    StorageInfo emptyInfo{};
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_EQ(storageInfo.getMemoryBanks(), emptyInfo.getMemoryBanks());
+    EXPECT_TRUE(storageInfo.isLockable);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationWithCpuAccessRequiredWhenCreatingStorageInfoThenSetCpuVisibleSegmentIsRequiredAndIsLockableFlagIsEnabled) {

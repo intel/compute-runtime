@@ -19,8 +19,10 @@
 
 namespace NEO {
 StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
+    StorageInfo storageInfo{};
+    storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::BUFFER);
     if (properties.subDevicesBitfield.count() == 0) {
-        return {};
+        return storageInfo;
     }
 
     const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo());
@@ -38,9 +40,10 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         preferredTile.set(leastOccupiedBank);
     }
 
-    StorageInfo storageInfo{preferredTile, allTilesValue};
+    storageInfo.memoryBanks = preferredTile;
+    storageInfo.pageTablesVisibility = allTilesValue;
+
     storageInfo.subDeviceBitfield = properties.subDevicesBitfield;
-    storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::BUFFER);
     storageInfo.cpuVisibleSegment = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
 
     AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
