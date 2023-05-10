@@ -34,7 +34,7 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsPipelineSelectTracking() const {
 
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking() const {
-    return true;
+    return false;
 }
 
 template <typename Family>
