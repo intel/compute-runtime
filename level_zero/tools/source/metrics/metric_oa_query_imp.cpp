@@ -796,7 +796,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
     commandList.getCmdContainer().addToResidencyContainer(pool.pAllocation);
 
     // Wait for events before executing query.
-    commandList.appendWaitOnEvents(numWaitEvents, phWaitEvents, false, true);
+    commandList.appendWaitOnEvents(numWaitEvents, phWaitEvents, false, true, false);
 
     if (metricQueriesSize) {
 

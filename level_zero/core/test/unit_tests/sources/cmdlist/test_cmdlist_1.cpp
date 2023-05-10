@@ -1052,7 +1052,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
     verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false, false);
 
-    verifyFlags(commandList->appendWaitOnEvents(1, &event, false, true), true, true);
+    verifyFlags(commandList->appendWaitOnEvents(1, &event, false, true, false), true, true);
 
     verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr), true, true);
 
@@ -1186,7 +1186,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
         verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false),
                     false, false);
 
-        verifyFlags(commandList->appendWaitOnEvents(1, &event, false, true), false, false);
+        verifyFlags(commandList->appendWaitOnEvents(1, &event, false, true, false), false, false);
 
         verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, numWaitlistEvents, waitlist),
                     false, false);
@@ -1402,7 +1402,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event);
@@ -1465,7 +1465,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImme
     whiteBoxCmdList->csr = &mockCommandStreamReceiver;
     static_cast<WhiteBox<::L0::CommandQueue> *>(whiteBoxCmdList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     whiteBoxCmdList->csr = oldCsr;
@@ -1543,7 +1543,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     whiteBoxCmdList->csr = &mockCommandStreamReceiver;
     static_cast<WhiteBox<::L0::CommandQueue> *>(whiteBoxCmdList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
     whiteBoxCmdList->csr = oldCsr;
     static_cast<WhiteBox<::L0::CommandQueue> *>(whiteBoxCmdList->cmdQImmediate)->csr = oldCsr;
@@ -1594,7 +1594,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     auto oldCommandQueue = whiteBoxCmdList->cmdQImmediate;
     whiteBoxCmdList->cmdQImmediate = &mockCommandQueue;
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
     whiteBoxCmdList->cmdQImmediate = oldCommandQueue;
 }
@@ -1644,7 +1644,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     auto oldCommandQueue = whiteBoxCmdList->cmdQImmediate;
     whiteBoxCmdList->cmdQImmediate = &mockCommandQueue;
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
     whiteBoxCmdList->cmdQImmediate = oldCommandQueue;
 }
@@ -1688,7 +1688,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event);
@@ -1783,7 +1783,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWhenCre
     whiteBoxCmdList->csr = &mockCommandStreamReceiver;
     static_cast<WhiteBox<::L0::CommandQueue> *>(whiteBoxCmdList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, false, true);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     whiteBoxCmdList->csr = oldCsr;

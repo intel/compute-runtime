@@ -65,7 +65,7 @@ ze_result_t zeCommandListAppendWaitOnEvents(
     ze_command_list_handle_t hCommandList,
     uint32_t numEvents,
     ze_event_handle_t *phEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendWaitOnEvents(numEvents, phEvents, false, true);
+    return L0::CommandList::fromHandle(hCommandList)->appendWaitOnEvents(numEvents, phEvents, false, true, true);
 }
 
 ze_result_t zeEventHostSignal(

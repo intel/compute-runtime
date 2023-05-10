@@ -385,7 +385,17 @@ void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
         appendMultiTileBarrier(*neoDevice);
     } else {
         NEO::PipeControlArgs args = createBarrierFlags();
-        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+        NEO::PostSyncMode postSyncMode = NEO::PostSyncMode::NoWrite;
+        uint64_t gpuWriteAddress = 0;
+        uint64_t writeValue = 0;
+
+        if (this->inOrderExecutionEnabled) {
+            postSyncMode = NEO::PostSyncMode::ImmediateData;
+            gpuWriteAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
+            writeValue = this->inOrderDependencyCounter + 1;
+        }
+
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), postSyncMode, gpuWriteAddress, writeValue, args);
     }
 }
 

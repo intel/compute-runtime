@@ -1067,7 +1067,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         size_t sizeBefore = cmdStream->getUsed();
         auto eventHandle = event->toHandle();
-        result = commandList->appendWaitOnEvents(1, &eventHandle, false, true);
+        result = commandList->appendWaitOnEvents(1, &eventHandle, false, true, false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

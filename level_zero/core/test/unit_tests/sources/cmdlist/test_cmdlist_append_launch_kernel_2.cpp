@@ -636,7 +636,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
 
     eventPool->createEvent(&eventDesc, &hEvent);
 
-    auto result = commandList->appendWaitOnEvents(1, &hEvent, false, true);
+    auto result = commandList->appendWaitOnEvents(1, &hEvent, false, true, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = cmdStream->getUsed();
