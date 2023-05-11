@@ -191,6 +191,8 @@ HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessComp
     EXPECT_FALSE(printfHandler->printEnqueueOutput());
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
     EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
+    EXPECT_EQ(1u, bcsCsr->receivedBlitProperties[0].dstAllocation->hostPtrTaskCountAssignment.load());
+    bcsCsr->receivedBlitProperties[0].dstAllocation->hostPtrTaskCountAssignment--;
 }
 
 HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToCopyPrintfOutput) {
