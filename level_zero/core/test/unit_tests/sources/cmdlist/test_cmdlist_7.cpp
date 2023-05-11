@@ -2057,6 +2057,46 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhen
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
 }
 
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HWhenCopyCantBePerformedImmediatelyThenReturnFalse, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    CpuMemCopyInfo cpuMemCopyInfo(hostPtr, devicePtr, 1024);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    ASSERT_TRUE(srcFound);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    ASSERT_TRUE(dstFound);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::EventPool> eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(device->getDriverHandle(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_event_handle_t event = nullptr;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.wait = 0;
+    eventDesc.signal = 0;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+
+    cmdList.dependenciesPresent = false;
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+
+    cmdList.dependenciesPresent = true;
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+
+    cmdList.dependenciesPresent = true;
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+
+    eventObject->setIsCompleted();
+    cmdList.dependenciesPresent = false;
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+}
+
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMDeviceAllocThenReturnCorrectValue, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;

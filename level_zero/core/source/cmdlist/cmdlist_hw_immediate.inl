@@ -729,7 +729,8 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
     bool cpuMemCopyEnabled = false;
 
     switch (transferType) {
-    case HOST_USM_TO_DEVICE_USM: {
+    case HOST_USM_TO_DEVICE_USM:
+    case DEVICE_USM_TO_HOST_USM: {
         if (this->dependenciesPresent) {
             cpuMemCopyEnabled = false;
             break;
@@ -746,7 +747,6 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
     }
     case HOST_NON_USM_TO_DEVICE_USM:
     case DEVICE_USM_TO_HOST_NON_USM:
-    case DEVICE_USM_TO_HOST_USM:
         cpuMemCopyEnabled = true;
         break;
     default:
