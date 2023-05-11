@@ -39,7 +39,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
 
         memset(hostBuffer, 0xFF, devBufferSize);
 
-        ze_command_list_handle_t cmdListInit;
+        ze_command_list_handle_t cmdListInit = nullptr;
         if (useInitFill) {
             SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdListInit));
             SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdListInit, devBuffer, &initPattern, sizeof(initPattern), devBufferSize, nullptr, 0, nullptr));
@@ -84,7 +84,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
             }
         }
 
-        if (useInitFill) {
+        if (cmdListInit != nullptr) {
             SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListInit));
         }
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListFill));
