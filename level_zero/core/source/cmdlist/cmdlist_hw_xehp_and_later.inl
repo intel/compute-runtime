@@ -277,7 +277,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->dcFlushSupport                                    // dcFlushEnable
     };
 
-    if (this->inOrderExecutionEnabled) {
+    if (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation) {
         DEBUG_BREAK_IF(isTimestampEvent);
 
         dispatchKernelArgs.isTimestampEvent = false;

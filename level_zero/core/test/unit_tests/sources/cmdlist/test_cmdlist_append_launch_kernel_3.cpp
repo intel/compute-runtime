@@ -9,6 +9,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -962,6 +963,43 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
 
     *hostAddress = 3;
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker, IsAtLeastXeHpCore) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    const size_t ptrBaseSize = 128;
+    const size_t offset = 1;
+    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto unalignedPtr = ptrOffset(alignedPtr, offset);
+
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+
+    uint32_t walkersFound = 0;
+    while (cmdList.end() != walkerItor) {
+        walkersFound++;
+
+        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto &postSync = walkerCmd->getPostSync();
+
+        EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
+
+        walkerItor = find<COMPUTE_WALKER *>(++walkerItor, cmdList.end());
+    }
+
+    EXPECT_TRUE(walkersFound > 1);
+
+    alignedFree(alignedPtr);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEventsThenSignalSyncAllocation, IsAtLeastXeHpCore) {
