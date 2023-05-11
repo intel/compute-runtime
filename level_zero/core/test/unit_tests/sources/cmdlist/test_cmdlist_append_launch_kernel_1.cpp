@@ -943,5 +943,38 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto expectedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    int32_t threadArbitrationPolicyValues[] = {
+        ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,
+        ThreadArbitrationPolicy::RoundRobinAfterDependency};
+
+    Mock<::L0::Kernel> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(-1, commandList->requiredStreamState.stateComputeMode.threadArbitrationPolicy.value);
+    EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
+
+    const ze_group_count_t launchKernelArgs = {};
+    commandList->updateStreamProperties(kernel, false, &launchKernelArgs, false);
+    EXPECT_EQ(expectedThreadArbitrationPolicy, commandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
+
+    for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
+        DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
+        commandList->reset();
+        commandList->updateStreamProperties(kernel, false, &launchKernelArgs, false);
+        EXPECT_EQ(threadArbitrationPolicy, commandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
+    }
+}
+
 } // namespace ult
 } // namespace L0
