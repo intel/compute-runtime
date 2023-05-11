@@ -14,13 +14,11 @@
 
 namespace NEO {
 struct StorageInfo {
-    StorageInfo() = default;
-    StorageInfo(DeviceBitfield memoryBanks, DeviceBitfield pageTablesVisibility)
-        : memoryBanks(memoryBanks), pageTablesVisibility(pageTablesVisibility){};
+    StorageInfo();
     uint32_t getNumBanks() const;
-    DeviceBitfield memoryBanks;
-    DeviceBitfield pageTablesVisibility;
-    DeviceBitfield subDeviceBitfield;
+    DeviceBitfield memoryBanks{};
+    DeviceBitfield pageTablesVisibility{};
+    DeviceBitfield subDeviceBitfield{};
     bool cloningOfPageTables = true;
     bool tileInstanced = false;
     bool multiStorage = false;

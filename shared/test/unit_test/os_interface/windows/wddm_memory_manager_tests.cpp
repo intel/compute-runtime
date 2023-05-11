@@ -30,6 +30,7 @@ class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<W
     MockAllocateGraphicsMemoryWithAlignmentWddm(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {}
     bool allocateSystemMemoryAndCreateGraphicsAllocationFromItCalled = false;
     bool allocateGraphicsMemoryUsingKmdAndMapItToCpuVACalled = false;
+    bool callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = false;
     bool mapGpuVirtualAddressWithCpuPtr = false;
 
     GraphicsAllocation *allocateSystemMemoryAndCreateGraphicsAllocationFromIt(const AllocationData &allocationData) override {
@@ -39,6 +40,9 @@ class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<W
     }
     GraphicsAllocation *allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(const AllocationData &allocationData, bool allowLargePages) override {
         allocateGraphicsMemoryUsingKmdAndMapItToCpuVACalled = true;
+        if (callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA) {
+            return WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, allowLargePages);
+        }
 
         return nullptr;
     }
@@ -88,6 +92,43 @@ TEST_F(WddmMemoryManagerTests, GivenAllocDataWithSVMCPUSetWhenAllocateGraphicsMe
     } else {
         EXPECT_TRUE(memoryManager->allocateSystemMemoryAndCreateGraphicsAllocationFromItCalled);
     }
+}
+
+TEST_F(WddmMemoryManagerTests, GivenNotCompressedAndNotLockableAllocationTypeWhenAllocateUsingKmdAndMapToCpuVaThenSetResourceLockable) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::BUFFER;
+
+    EXPECT_FALSE(GraphicsAllocation::isLockable(allocData.type));
+    allocData.forceKMDAllocation = true;
+    allocData.makeGPUVaDifferentThanCPUPtr = true;
+
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+
+    EXPECT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_TRUE(graphicsAllocation->storageInfo.isLockable);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(WddmMemoryManagerTests, GivenCompressedAndNotLockableAllocationTypeWhenAllocateUsingKmdAndMapToCpuVaThenSetResourceNotLockable) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::BUFFER;
+
+    EXPECT_FALSE(GraphicsAllocation::isLockable(allocData.type));
+    allocData.forceKMDAllocation = true;
+    allocData.makeGPUVaDifferentThanCPUPtr = true;
+    allocData.flags.preferCompressed = true;
+
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+
+    EXPECT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_FALSE(graphicsAllocation->storageInfo.isLockable);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManagerCreate<WddmMemoryManager> {

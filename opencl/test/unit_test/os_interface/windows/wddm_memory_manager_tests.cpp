@@ -255,8 +255,11 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAl
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithStorageInfoWhenAllocateGraphicsMemory64kbThenStorageInfoInAllocationIsSetCorrectly) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    AllocationData allocationData;
+    AllocationData allocationData{};
+    allocationData.type = AllocationType::BUFFER;
     allocationData.storageInfo = {};
+    allocationData.storageInfo.isLockable = true;
+
     auto allocation = memoryManager->allocateGraphicsMemory64kb(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_TRUE(memcmp(&allocationData.storageInfo, &allocation->storageInfo, sizeof(StorageInfo)) == 0);

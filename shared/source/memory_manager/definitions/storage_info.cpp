@@ -18,6 +18,9 @@
 #include <bitset>
 
 namespace NEO {
+
+StorageInfo::StorageInfo() = default;
+
 StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
     StorageInfo storageInfo{};
     storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::BUFFER);

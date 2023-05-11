@@ -179,15 +179,21 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
                                                            maxOsContextCount);
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    auto storageInfo = allocationData.storageInfo;
+
+    if (!allocationData.flags.preferCompressed) {
+        storageInfo.isLockable = true;
+    }
+
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
                        sizeAligned, 0u,
                        CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
                        allocationData.flags.preferCompressed,
-                       allocationData.storageInfo,
+                       storageInfo,
                        allowLargePages);
     wddmAllocation->setDefaultGmm(gmm);
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
-    wddmAllocation->storageInfo = allocationData.storageInfo;
+    wddmAllocation->storageInfo = storageInfo;
 
     if (!getWddm(allocationData.rootDeviceIndex).createAllocation(gmm, wddmAllocation->getHandleToModify(0u))) {
         delete gmm;
@@ -462,8 +468,11 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
+    StorageInfo storageInfo{};
+    storageInfo.isLockable = preferredAllocationMethod != GfxMemoryAllocationMethod::UseUmdSystemPtr;
+
     gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), ptrAligned, sizeAligned, 0u,
-                  CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, {}, true);
+                  CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, storageInfo, true);
     wddmAllocation->setDefaultGmm(gmm);
 
     if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
@@ -474,7 +483,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo, allocationData.flags.use32BitFrontWindow));
     wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(baseAddress));
 
-    if (preferredAllocationMethod != GfxMemoryAllocationMethod::UseUmdSystemPtr) {
+    if (storageInfo.isLockable) {
         auto lockedPtr = lockResource(wddmAllocation.get());
         wddmAllocation->setCpuAddress(lockedPtr);
     }

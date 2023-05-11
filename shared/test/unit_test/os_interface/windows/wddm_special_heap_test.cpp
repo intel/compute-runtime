@@ -48,11 +48,17 @@ using WddmFrontWindowPoolAllocatorTests = Test<WddmMemManagerFixture>;
 
 TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenWddmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};
+    allocData.type = AllocationType::BUFFER;
+    EXPECT_FALSE(GraphicsAllocation::isLockable(allocData.type));
     allocData.flags.use32BitFrontWindow = true;
     allocData.size = MemoryConstants::kiloByte;
     auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData, false);
     auto gmmHelper = memManager->getGmmHelper(allocData.rootDeviceIndex);
     EXPECT_EQ(allocation->getGpuBaseAddress(), gmmHelper->canonize(allocation->getGpuAddress()));
+
+    if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+        EXPECT_TRUE(allocation->isAllocationLockable());
+    }
     memManager->freeGraphicsMemory(allocation);
 }
 } // namespace NEO
