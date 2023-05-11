@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,6 +19,8 @@ if(UNIX)
                    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_context.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_prelim.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_prelim_fixtures.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_extended.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_extended.h
     )
   endif()
 endif()
