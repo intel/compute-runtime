@@ -1002,8 +1002,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPreemption(const 
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cmdStream, Device &device) {
-    bool debuggingEnabled = device.getDebugger() != nullptr;
-    if (!this->isStateSipSent || debuggingEnabled) {
+    if (!this->isStateSipSent) {
         PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device, logicalStateHelper.get(), this->osContext);
         this->isStateSipSent = true;
     }

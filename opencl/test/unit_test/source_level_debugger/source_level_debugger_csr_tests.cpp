@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,19 +160,20 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
         ASSERT_NE(hwParser.cmdList.end(), itorStateBaseAddr);
         ASSERT_NE(hwParser.cmdList.end(), itorStateSip);
 
-        auto itorStateBaseAddr2 = find<STATE_BASE_ADDRESS *>(std::next(itorStateBaseAddr), hwParser.cmdList.end());
-        auto itorStateSip2 = find<STATE_SIP *>(std::next(itorStateSip), hwParser.cmdList.end());
-
-        ASSERT_NE(hwParser.cmdList.end(), itorStateBaseAddr2);
-        ASSERT_NE(hwParser.cmdList.end(), itorStateSip2);
-
-        STATE_BASE_ADDRESS *sba = (STATE_BASE_ADDRESS *)*itorStateBaseAddr2;
-        STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip2;
+        STATE_BASE_ADDRESS *sba = reinterpret_cast<STATE_BASE_ADDRESS *>(*itorStateBaseAddr);
+        STATE_SIP *stateSipCmd = reinterpret_cast<STATE_SIP *>(*itorStateSip);
         EXPECT_LT(reinterpret_cast<void *>(sba), reinterpret_cast<void *>(stateSipCmd));
 
         auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
         EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
+
+        auto itorStateBaseAddr2 = find<STATE_BASE_ADDRESS *>(std::next(itorStateBaseAddr), hwParser.cmdList.end());
+        auto itorStateSip2 = find<STATE_SIP *>(std::next(itorStateSip), hwParser.cmdList.end());
+
+        ASSERT_NE(hwParser.cmdList.end(), itorStateBaseAddr2);
+        EXPECT_EQ(hwParser.cmdList.end(), itorStateSip2);
+
         alignedFree(buffer);
     }
 }
