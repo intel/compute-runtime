@@ -107,7 +107,7 @@ TEST_F(WddmMemoryManagerTests, GivenNotCompressedAndNotLockableAllocationTypeWhe
 
     EXPECT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_TRUE(graphicsAllocation->isAllocationLockable());
+    EXPECT_TRUE(graphicsAllocation->storageInfo.isLockable);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -126,7 +126,7 @@ TEST_F(WddmMemoryManagerTests, GivenCompressedAndNotLockableAllocationTypeWhenAl
 
     EXPECT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_FALSE(graphicsAllocation->isAllocationLockable());
+    EXPECT_FALSE(graphicsAllocation->storageInfo.isLockable);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

@@ -1473,7 +1473,7 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUsingLocalMemoryAndAllocation
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotLockable);
 }
 
-TEST_F(GmmHelperTests, givenNotLockableAllocationWhenCreatingGmmThenNotLockableFlagsIsSetAndLocalAndNonLocalOnlyAreNotSet) {
+TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUsingLocalMemoryFalseAndAllocationIsNotLockableThenNotLockableFlagsIsSetAndLocalAndNonLocalOnlyAreNotSet) {
     StorageInfo storageInfo{};
     storageInfo.isLockable = false;
     storageInfo.memoryBanks.set(1);
@@ -1530,7 +1530,7 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithoutLocalOnlyRequir
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
 }
 
-TEST_F(GmmHelperTests, givenCompressionEnabledWhenUsingLocalMemoryAndAllocationIsNotLockableThenNotLockableAndLocalOnlyFlagsAreSetAndNonLocalOnlyIsNotSet) {
+TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryAndCompressionEnabledWhenUsingLocalMemoryAndAllocationIsNotLockableThenNotLockableAndLocalOnlyFlagsAreSetAndNonLocalOnlyIsNotSet) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
     StorageInfo storageInfo{};
@@ -1541,21 +1541,8 @@ TEST_F(GmmHelperTests, givenCompressionEnabledWhenUsingLocalMemoryAndAllocationI
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, storageInfo, true);
     EXPECT_TRUE(gmm->isCompressionEnabled);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(defaultHwInfo->featureTable.flags.ftrLocalMemory, gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
     EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
-}
-
-TEST_F(GmmHelperTests, givenCompressionSupportedWhenAllocationIsLockableThenGmmHasNoCompression) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    StorageInfo storageInfo{};
-    storageInfo.isLockable = true;
-    storageInfo.systemMemoryPlacement = false;
-    storageInfo.memoryBanks.set(1);
-
-    auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, storageInfo, true);
-    EXPECT_FALSE(gmm->isCompressionEnabled);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotLockable);
 }
 
 TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllocationIsNotLockableThenLocalAndNonLocalOnlyAndNotLockableFlagsAreNotSet) {

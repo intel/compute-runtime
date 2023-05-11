@@ -54,8 +54,6 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
         resourceParams.Flags.Gpu.NoRestriction = 1;
     }
 
-    preferCompressed &= !storageInfo.isLockable;
-
     applyAuxFlagsForBuffer(preferCompressed);
     applyMemoryFlags(storageInfo);
     applyAppResource(storageInfo);
@@ -75,7 +73,6 @@ Gmm::~Gmm() = default;
 
 Gmm::Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, const StorageInfo &storageInfo, bool preferCompressed) : gmmHelper(gmmHelper) {
     this->resourceParams = {};
-    preferCompressed &= !storageInfo.isLockable;
     setupImageResourceParams(inputOutputImgInfo, preferCompressed);
     applyMemoryFlags(storageInfo);
     applyAppResource(storageInfo);
@@ -349,14 +346,12 @@ void Gmm::applyMemoryFlags(const StorageInfo &storageInfo) {
             if (extraMemoryFlagsRequired()) {
                 applyExtraMemoryFlags(storageInfo);
             } else if (!storageInfo.isLockable) {
+                resourceParams.Flags.Info.NotLockable = 1;
                 if (isCompressionEnabled || storageInfo.localOnlyRequired) {
                     resourceParams.Flags.Info.LocalOnly = 1;
                 }
             }
         }
-    }
-    if (!storageInfo.isLockable) {
-        resourceParams.Flags.Info.NotLockable = 1;
     }
 
     if (hardwareInfo->featureTable.flags.ftrMultiTileArch) {

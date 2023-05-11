@@ -58,8 +58,6 @@ TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhen
 
     if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
         EXPECT_TRUE(allocation->isAllocationLockable());
-    } else {
-        EXPECT_FALSE(allocation->isAllocationLockable());
     }
     memManager->freeGraphicsMemory(allocation);
 }
