@@ -1218,10 +1218,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-
-    uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
-    bool isStateless = false;
-
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -1233,25 +1229,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
-    size_t middleAlignment = MemoryConstants::cacheLineSize;
-    size_t middleElSize = sizeof(uint32_t) * 4;
-
-    uintptr_t leftSize = start % middleAlignment;
-    leftSize = (leftSize > 0) ? (middleAlignment - leftSize) : 0;
-    leftSize = std::min(leftSize, size);
-
-    uintptr_t rightSize = (start + size) % middleAlignment;
-    rightSize = std::min(rightSize, size - leftSize);
-
-    uintptr_t middleSizeBytes = size - leftSize - rightSize;
-
-    if (!isAligned<4>(reinterpret_cast<uintptr_t>(srcptr) + leftSize)) {
-        leftSize += middleSizeBytes;
-        middleSizeBytes = 0;
-    }
-
-    DEBUG_BREAK_IF(size != leftSize + middleSizeBytes + rightSize);
-
     auto dstAllocationStruct = getAlignedAllocationData(this->device, dstptr, size, false);
     auto srcAllocationStruct = getAlignedAllocationData(this->device, srcptr, size, true);
 
@@ -1259,8 +1236,42 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    if (size >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
+    const size_t middleElSize = sizeof(uint32_t) * 4;
+    uint32_t kernelCounter = 0;
+    uintptr_t leftSize = 0;
+    uintptr_t rightSize = 0;
+    uintptr_t middleSizeBytes = 0;
+    bool isStateless = false;
+
+    if (!isCopyOnly()) {
+        uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
+
+        const size_t middleAlignment = MemoryConstants::cacheLineSize;
+
+        leftSize = start % middleAlignment;
+
+        leftSize = (leftSize > 0) ? (middleAlignment - leftSize) : 0;
+        leftSize = std::min(leftSize, size);
+
+        rightSize = (start + size) % middleAlignment;
+        rightSize = std::min(rightSize, size - leftSize);
+
+        middleSizeBytes = size - leftSize - rightSize;
+
+        if (!isAligned<4>(reinterpret_cast<uintptr_t>(srcptr) + leftSize)) {
+            leftSize += middleSizeBytes;
+            middleSizeBytes = 0;
+        }
+
+        DEBUG_BREAK_IF(size != leftSize + middleSizeBytes + rightSize);
+
+        if (size >= 4ull * MemoryConstants::gigaByte) {
+            isStateless = true;
+        }
+
+        kernelCounter = leftSize > 0 ? 1 : 0;
+        kernelCounter += middleSizeBytes > 0 ? 1 : 0;
+        kernelCounter += rightSize > 0 ? 1 : 0;
     }
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, true);
@@ -1269,35 +1280,33 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         return ret;
     }
 
-    CmdListKernelLaunchParams launchParams = {};
     bool dcFlush = false;
     Event *signalEvent = nullptr;
+    CmdListKernelLaunchParams launchParams = {};
+
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
         launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
         dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
     }
 
-    uint32_t kernelCounter = leftSize > 0 ? 1 : 0;
-    kernelCounter += middleSizeBytes > 0 ? 1 : 0;
-    kernelCounter += rightSize > 0 ? 1 : 0;
-
     launchParams.isKernelSplitOperation = kernelCounter > 1;
     bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
 
     appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
 
-    if (ret == ZE_RESULT_SUCCESS && leftSize) {
-        Builtin copyKernel = Builtin::CopyBufferToBufferSide;
-        if (isStateless) {
-            copyKernel = Builtin::CopyBufferToBufferSideStateless;
-        }
-        if (isCopyOnly()) {
-            ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
-                                       dstAllocationStruct.alloc, dstAllocationStruct.offset,
-                                       srcAllocationStruct.alignedAllocationPtr,
-                                       srcAllocationStruct.alloc, srcAllocationStruct.offset, leftSize);
-        } else {
+    if (isCopyOnly()) {
+        ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
+                                   dstAllocationStruct.alloc, dstAllocationStruct.offset,
+                                   srcAllocationStruct.alignedAllocationPtr,
+                                   srcAllocationStruct.alloc, srcAllocationStruct.offset, size);
+    } else {
+        if (ret == ZE_RESULT_SUCCESS && leftSize) {
+            Builtin copyKernel = Builtin::CopyBufferToBufferSide;
+            if (isStateless) {
+                copyKernel = Builtin::CopyBufferToBufferSideStateless;
+            }
+
             ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                                reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
@@ -1308,19 +1317,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                isStateless,
                                                launchParams);
         }
-    }
 
-    if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
-        Builtin copyKernel = Builtin::CopyBufferToBufferMiddle;
-        if (isStateless) {
-            copyKernel = Builtin::CopyBufferToBufferMiddleStateless;
-        }
-        if (isCopyOnly()) {
-            ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
-                                       dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
-                                       srcAllocationStruct.alignedAllocationPtr,
-                                       srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset, middleSizeBytes);
-        } else {
+        if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
+            Builtin copyKernel = Builtin::CopyBufferToBufferMiddle;
+            if (isStateless) {
+                copyKernel = Builtin::CopyBufferToBufferMiddleStateless;
+            }
+
             ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
                                                reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
@@ -1332,19 +1335,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                isStateless,
                                                launchParams);
         }
-    }
 
-    if (ret == ZE_RESULT_SUCCESS && rightSize) {
-        Builtin copyKernel = Builtin::CopyBufferToBufferSide;
-        if (isStateless) {
-            copyKernel = Builtin::CopyBufferToBufferSideStateless;
-        }
-        if (isCopyOnly()) {
-            ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
-                                       dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
-                                       srcAllocationStruct.alignedAllocationPtr,
-                                       srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset, rightSize);
-        } else {
+        if (ret == ZE_RESULT_SUCCESS && rightSize) {
+            Builtin copyKernel = Builtin::CopyBufferToBufferSide;
+            if (isStateless) {
+                copyKernel = Builtin::CopyBufferToBufferSideStateless;
+            }
+
             ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
                                                reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),

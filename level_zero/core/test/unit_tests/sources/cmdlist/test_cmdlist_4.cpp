@@ -808,7 +808,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     EXPECT_EQ(whiteBoxCmdList->csr->getNextBarrierCount(), 1u);
 }
 
-HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenLeftMiddleAndRightCopyAdded) {
+HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
@@ -829,10 +829,7 @@ HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenLeftMiddleAndRig
     EXPECT_NE(cmdList.end(), itor);
 
     itor = find<XY_COPY_BLT *>(++itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-
-    itor = find<XY_COPY_BLT *>(++itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
+    EXPECT_EQ(cmdList.end(), itor);
 }
 
 HWTEST2_F(CommandListCreate, whenCommandListIsCreatedThenFlagsAreCorrectlySet, IsAtLeastSkl) {
