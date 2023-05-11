@@ -111,6 +111,7 @@ struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryMan
 
         auto gmm = allocation->getDefaultGmm();
         auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfo>(gmm->gmmResourceInfo->peekGmmResourceInfo());
+        mockGmmResourceInfo->mockResourceCreateParams.Type = RESOURCE_1D;
         mockGmmResourceInfo->setUnifiedAuxTranslationCapable();
         gmm->gmmResourceInfo = std::move(mockGmmResourceInfo);
 

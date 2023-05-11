@@ -16,7 +16,7 @@
 namespace NEO {
 
 void *UnifiedImage::swapGmm(GraphicsAllocation *graphicsAllocation, Context *context, ImageInfo *imgInfo) {
-    if (graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo()->GetResourceType() == RESOURCE_BUFFER) {
+    if (graphicsAllocation->getDefaultGmm()->gmmResourceInfo->getResourceType() == RESOURCE_BUFFER) {
         auto gmmHelper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
         auto gmm = std::make_unique<Gmm>(gmmHelper, *imgInfo, StorageInfo{}, false);
         gmm->updateImgInfoAndDesc(*imgInfo, 0);
