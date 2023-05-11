@@ -1973,10 +1973,13 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
         DebugManagerStateRestore subTestRestorer;
         DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
         DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+
         cl_int retVal;
         cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
         auto writeBufferCounter = commandQueue->writeBufferCounter;
         size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        static_cast<MockGfxCoreHelperHwWithSetIsLockable<FamilyType> *>(executionEnvironment->rootDeviceEnvironments[0]->gfxCoreHelper.get())->setIsLockable = false;
 
         std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
         ASSERT_NE(nullptr, buffer.get());
