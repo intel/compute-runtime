@@ -67,6 +67,8 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
 }
 
 TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsUsmDeviceAllocation) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
     MockDevice device{};
     REQUIRE_SVM_OR_SKIP(&device);
     device.injectMemoryManager(new MockMemoryManager());

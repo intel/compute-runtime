@@ -66,6 +66,9 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForReadW
     EXPECT_EQ(blitProperties.dstSlicePitch, dstSlicePitch);
     EXPECT_EQ(blitProperties.srcRowPitch, srcRowPitch);
     EXPECT_EQ(blitProperties.srcSlicePitch, srcSlicePitch);
+
+    EXPECT_EQ(1u, blitProperties.dstAllocation->hostPtrTaskCountAssignment.load());
+    blitProperties.dstAllocation->hostPtrTaskCountAssignment--;
 }
 
 TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForBufferRegionsThenPropertiesCreatedCorrectly) {
