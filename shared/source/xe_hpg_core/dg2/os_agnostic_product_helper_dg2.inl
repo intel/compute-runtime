@@ -143,7 +143,7 @@ bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo
 }
 
 template <>
-std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     auto isAcm = DG2::isG10(hwInfo) || DG2::isG11(hwInfo) || DG2::isG12(hwInfo);
     auto isBasicWARequired = isAcm;
     auto isExtendedWARequired = isAcm && hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 && !isRcs;

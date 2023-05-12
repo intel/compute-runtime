@@ -16,8 +16,9 @@ template <typename Family>
 size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs) {
     size_t size = 0;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {
@@ -39,9 +40,9 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
     bool hasSharedHandles, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, rootDeviceEnvironment, isRcs);
-
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {

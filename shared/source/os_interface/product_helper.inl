@@ -291,7 +291,7 @@ bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     return {false, false};
 }
 

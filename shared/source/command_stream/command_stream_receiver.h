@@ -53,6 +53,7 @@ class LogicalStateHelper;
 class KmdNotifyHelper;
 class GfxCoreHelper;
 class ProductHelper;
+class ReleaseHelper;
 enum class WaitStatus;
 struct AubSubCaptureStatus;
 
@@ -350,6 +351,7 @@ class CommandStreamReceiver {
 
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
+    const ReleaseHelper *getReleaseHelper() const;
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
     MOCKABLE_VIRTUAL bool checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const;

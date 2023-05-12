@@ -335,7 +335,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPrefetchDisablingIsRequ
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
 
     auto isRcs = false;
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(pInHwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(pInHwInfo, isRcs, releaseHelper);
 
     EXPECT_FALSE(isExtendedWARequired);
     EXPECT_FALSE(isBasicWARequired);

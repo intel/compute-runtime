@@ -978,6 +978,10 @@ const ProductHelper &CommandStreamReceiver::getProductHelper() const {
     return peekRootDeviceEnvironment().getHelper<ProductHelper>();
 }
 
+const ReleaseHelper *CommandStreamReceiver::getReleaseHelper() const {
+    return peekRootDeviceEnvironment().getReleaseHelper();
+}
+
 TaskCountType CommandStreamReceiver::getCompletionValue(const GraphicsAllocation &gfxAllocation) {
     if (completionFenceValuePointer) {
         return *completionFenceValuePointer;

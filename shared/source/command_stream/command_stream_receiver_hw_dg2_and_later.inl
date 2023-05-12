@@ -32,9 +32,9 @@ void CommandStreamReceiverHw<Family>::programPerDssBackedBuffer(LinearStream &co
 template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
     size_t size = sizeof(_3DSTATE_BTD);
-
+    auto *releaseHelper = getReleaseHelper();
     auto &productHelper = getProductHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs(), releaseHelper);
     std::ignore = isBasicWARequired;
 
     if (isExtendedWARequired) {
@@ -56,7 +56,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(Line
 
     auto &hwInfo = peekHwInfo();
     auto &productHelper = getProductHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    auto *releaseHelper = getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs(), releaseHelper);
     std::ignore = isBasicWARequired;
 
     PipeControlArgs args;
@@ -72,7 +73,8 @@ template <>
 void CommandStreamReceiverHw<Family>::dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device) {
     auto &hwInfo = peekHwInfo();
     auto &productHelper = getProductHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    auto *releaseHelper = getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs(), releaseHelper);
     std::ignore = isBasicWARequired;
 
     if (isExtendedWARequired) {

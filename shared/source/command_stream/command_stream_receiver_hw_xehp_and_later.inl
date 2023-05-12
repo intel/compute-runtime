@@ -135,10 +135,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     auto &hwInfo = peekHwInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
     auto &productHelper = getProductHelper();
+    auto *releaseHelper = getReleaseHelper();
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs(), releaseHelper);
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired && debuggingEnabled && !gfxCoreHelper.isSipWANeeded(hwInfo)) {

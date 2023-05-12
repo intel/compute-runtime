@@ -18,4 +18,9 @@ bool ReleaseHelperHw<releaseType>::isAdjustWalkOrderAvailable() const {
     return false;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommandsWARequired() const {
+    return false;
+}
+
 } // namespace NEO

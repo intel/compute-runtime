@@ -53,8 +53,11 @@ uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo 
 }
 
 template <>
-std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    auto isBasicWARequired = getProductConfigFromHwInfo(hwInfo) == AOT::MTL_M_A0 || getProductConfigFromHwInfo(hwInfo) == AOT::MTL_P_A0;
+std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
+    auto isBasicWARequired = true;
+    if (releaseHelper) {
+        isBasicWARequired = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired();
+    }
     auto isExtendedWARequired = false;
 
     return {isBasicWARequired, isExtendedWARequired};

@@ -329,7 +329,9 @@ DG2TEST_F(ProductHelperTestDg2, givenProgramExtendedPipeControlPriorToNonPipelin
         hwInfo.platform.usDeviceID = deviceId;
         auto isRcs = false;
 
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        refreshReleaseHelper(&hwInfo);
+
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_TRUE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
@@ -344,8 +346,9 @@ DG2TEST_F(ProductHelperTestDg2, givenProgramExtendedPipeControlPriorToNonPipelin
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
         hwInfo.platform.usDeviceID = deviceId;
         auto isRcs = true;
+        refreshReleaseHelper(&hwInfo);
 
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_TRUE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
@@ -360,8 +363,9 @@ DG2TEST_F(ProductHelperTestDg2, givenProgramPipeControlPriorToNonPipelinedStateC
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
         hwInfo.platform.usDeviceID = deviceId;
         auto isRcs = true;
+        refreshReleaseHelper(&hwInfo);
 
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
@@ -375,8 +379,9 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWithMultipleCSSWhenIsPipeContr
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
         hwInfo.platform.usDeviceID = deviceId;
         auto isRcs = false;
+        refreshReleaseHelper(&hwInfo);
 
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_TRUE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
@@ -390,8 +395,9 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWithMultipleCSSWhenIsPipeContr
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
         hwInfo.platform.usDeviceID = deviceId;
         auto isRcs = true;
+        refreshReleaseHelper(&hwInfo);
 
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
@@ -405,8 +411,9 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWithSingleCSSWhenIsPipeControl
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
         hwInfo.platform.usDeviceID = deviceId;
         auto isRcs = false;
+        refreshReleaseHelper(&hwInfo);
 
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
@@ -420,8 +427,9 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWithSingleCSSWhenIsPipeControl
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
         hwInfo.platform.usDeviceID = deviceId;
         auto isRcs = true;
+        refreshReleaseHelper(&hwInfo);
 
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
@@ -432,22 +440,24 @@ DG2TEST_F(ProductHelperTestDg2, givenNonG10G11OrG12Dg2WhenProductHelperWithMulti
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.platform.usDeviceID = 0;
-
+    refreshReleaseHelper(&hwInfo);
     EXPECT_FALSE(DG2::isG10(hwInfo));
     EXPECT_FALSE(DG2::isG11(hwInfo));
     EXPECT_FALSE(DG2::isG12(hwInfo));
 
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     auto isRcs = false;
+
     {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_FALSE(isBasicWARequired);
     }
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
     {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_FALSE(isBasicWARequired);
@@ -457,7 +467,7 @@ DG2TEST_F(ProductHelperTestDg2, givenNonG10G11OrG12Dg2WhenProductHelperWithMulti
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
 
     {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
         EXPECT_TRUE(isExtendedWARequired);
         EXPECT_FALSE(isBasicWARequired);
     }

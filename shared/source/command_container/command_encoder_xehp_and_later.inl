@@ -730,8 +730,9 @@ inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(Line
                                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {
 
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
     if (isExtendedWARequired) {
         args.textureCacheInvalidationEnable = true;

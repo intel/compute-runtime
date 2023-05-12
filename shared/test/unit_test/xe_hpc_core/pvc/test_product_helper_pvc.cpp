@@ -162,7 +162,7 @@ PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskedIfPipeControlPriorToNonPi
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
     EXPECT_FALSE(isBasicWARequired);
     EXPECT_FALSE(isExtendedWARequired);
@@ -185,7 +185,7 @@ PVCTEST_F(PvcProductHelper, givenProductHelperAndProgramExtendedPipeControlPrior
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
     EXPECT_FALSE(isExtendedWARequired);
     EXPECT_FALSE(isBasicWARequired);

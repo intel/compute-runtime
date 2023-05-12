@@ -27,7 +27,7 @@ bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
 }
 
 template <>
-std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     auto isBasicWARequired = false;
     auto isExtendedWARequired = false;
 

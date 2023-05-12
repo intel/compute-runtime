@@ -145,18 +145,20 @@ MTLTEST_F(MtlProductHelper, givenHwIpVersionWhenIsPipeControlPriorToNonPipelined
     hwInfo.ipVersion.architecture = 12;
     hwInfo.ipVersion.release = 70;
     hwInfo.ipVersion.revision = 0;
+    refreshReleaseHelper(&hwInfo);
 
     {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
     }
 
     hwInfo.ipVersion.revision = 4;
+    refreshReleaseHelper(&hwInfo);
 
     {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_FALSE(isBasicWARequired);
@@ -164,18 +166,20 @@ MTLTEST_F(MtlProductHelper, givenHwIpVersionWhenIsPipeControlPriorToNonPipelined
 
     hwInfo.ipVersion.release = 71;
     hwInfo.ipVersion.revision = 0;
+    refreshReleaseHelper(&hwInfo);
 
     {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
     }
 
     hwInfo.ipVersion.revision = 4;
+    refreshReleaseHelper(&hwInfo);
 
     {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_FALSE(isBasicWARequired);
