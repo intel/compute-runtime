@@ -9,6 +9,7 @@
 
 #include "zello_common.h"
 
+#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
@@ -31,12 +32,13 @@ void createImmediateCommandList(ze_device_handle_t &device,
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
-void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, int32_t copyQueueGroup, bool &validRet) {
+void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, int32_t copyQueueGroup, bool &validRet, bool useEventBasedSync) {
     const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
     char *hostBuffer = nullptr;
     void *deviceBuffer = nullptr;
     char *stackBuffer = new char[allocSize];
     ze_command_list_handle_t cmdList;
+    const bool isEventsUsed = useEventBasedSync && !syncMode;
 
     createImmediateCommandList(device, context, copyQueueGroup, syncMode, cmdList);
 
@@ -80,13 +82,17 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
 
     // Copy from device-allocated memory to stack
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, stackBuffer, deviceBuffer, allocSize,
-                                                       syncMode ? nullptr : hostEvents[0],
+                                                       isEventsUsed ? hostEvents[0] : nullptr,
                                                        syncMode ? 0 : 1,
                                                        syncMode ? nullptr : &deviceEvents[0]));
 
     if (!syncMode) {
-        // If Async mode, use event for sync
-        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(hostEvents[0], std::numeric_limits<uint64_t>::max()));
+        if (isEventsUsed) {
+            // If Async mode, use event for sync
+            SUCCESS_OR_TERMINATE(zeEventHostSynchronize(hostEvents[0], std::numeric_limits<uint64_t>::max()));
+        } else {
+            SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+        }
     }
 
     // Validate stack and xe deviceBuffers have the original data from hostBuffer
@@ -108,11 +114,12 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
 }
 
-void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, bool &outputValidationSuccessful) {
+void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, bool &outputValidationSuccessful, bool useEventBasedSync) {
     ze_command_list_handle_t cmdList;
 
     uint32_t computeOrdinal = getCommandQueueOrdinal(device);
     createImmediateCommandList(device, context, computeOrdinal, syncMode, cmdList);
+    const auto isEventsUsed = useEventBasedSync && !syncMode;
 
     // Create two shared buffers
     constexpr size_t allocSize = 4096;
@@ -202,17 +209,25 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
         dispatchTraits.groupCountZ = 1u;
 
         SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
-                                                             syncMode ? nullptr : hostEvents[0], 0, nullptr));
+                                                             isEventsUsed ? hostEvents[0] : nullptr, 0, nullptr));
         file.close();
     } else {
         // Perform a GPU copy
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize,
-                                                           syncMode ? nullptr : hostEvents[0], 0, nullptr));
+                                                           isEventsUsed ? hostEvents[0] : nullptr, 0, nullptr));
     }
 
     if (!syncMode) {
-        // If Async mode, use event for sync
-        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(hostEvents[0], std::numeric_limits<uint64_t>::max()));
+        std::chrono::high_resolution_clock::time_point start, end;
+        start = std::chrono::high_resolution_clock::now();
+        if (isEventsUsed) {
+            // If Async mode, use event for sync
+            SUCCESS_OR_TERMINATE(zeEventHostSynchronize(hostEvents[0], std::numeric_limits<uint64_t>::max()));
+        } else {
+            SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+        }
+        end = std::chrono::high_resolution_clock::now();
+        std::cout << "Time to synchronize : " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     }
 
     // Validate
@@ -245,6 +260,7 @@ int main(int argc, char *argv[]) {
 
     verbose = isVerbose(argc, argv);
     bool aubMode = isAubMode(argc, argv);
+    int useEventBasedSync = getParamValue(argc, argv, "-e", "--useEventsBasedSync", 1);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
@@ -259,12 +275,12 @@ int main(int argc, char *argv[]) {
     if (outputValidationSuccessful || aubMode) {
         // Sync mode with Compute queue
         std::cout << "Test case: Sync mode compute queue with Kernel launch \n";
-        executeGpuKernelAndValidate(context, device, true, outputValidationSuccessful);
+        executeGpuKernelAndValidate(context, device, true, outputValidationSuccessful, useEventBasedSync);
     }
     if (outputValidationSuccessful || aubMode) {
         // Async mode with Compute queue
         std::cout << "\nTest case: Async mode compute queue with Kernel launch \n";
-        executeGpuKernelAndValidate(context, device, false, outputValidationSuccessful);
+        executeGpuKernelAndValidate(context, device, false, outputValidationSuccessful, useEventBasedSync);
     }
 
     // Find copy queue in root device, if not found, try subdevices
@@ -321,12 +337,12 @@ int main(int argc, char *argv[]) {
         if (outputValidationSuccessful || aubMode) {
             // Sync mode with Copy queue
             std::cout << "\nTest case: Sync mode copy queue for memory copy\n";
-            testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, true, copyQueueGroup, outputValidationSuccessful);
+            testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, true, copyQueueGroup, outputValidationSuccessful, useEventBasedSync);
         }
         if (outputValidationSuccessful || aubMode) {
             // Async mode with Copy queue
             std::cout << "\nTest case: Async mode copy queue for memory copy\n";
-            testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, false, copyQueueGroup, outputValidationSuccessful);
+            testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, false, copyQueueGroup, outputValidationSuccessful, useEventBasedSync);
         }
     }
 

@@ -689,6 +689,26 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperati
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout) {
+
+    if (this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
+        const int64_t timeoutInMicroSeconds = timeout / 1000;
+        auto syncTaskCount = this->csr->peekTaskCount();
+        const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutInMicroSeconds},
+                                                                        syncTaskCount);
+        if (waitStatus == NEO::WaitStatus::GpuHang) {
+            this->printKernelsPrintfOutput(true);
+            this->checkAssert();
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+        this->csr->getInternalAllocationStorage()->cleanAllocationList(syncTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+        this->printKernelsPrintfOutput(false);
+        this->checkAssert();
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds,
                                                                           bool hasRelaxedOrderingDependencies, ze_event_handle_t hSignalEvent) {
     if (inputRet == ZE_RESULT_SUCCESS) {

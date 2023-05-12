@@ -143,6 +143,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                               uint32_t numWaitEvents,
                                               ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) override;
 
+    ze_result_t hostSynchronize(uint64_t timeout) override;
+
     MOCKABLE_VIRTUAL ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies);
     ze_result_t executeCommandListImmediateWithFlushTaskImpl(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, CommandQueue *cmdQ);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,12 @@ ze_result_t zeCommandListAppendMemoryRangesBarrier(
 ze_result_t zeDeviceSystemBarrier(
     ze_device_handle_t hDevice) {
     return L0::Device::fromHandle(hDevice)->systemBarrier();
+}
+
+ze_result_t ZE_APICALL zeCommandListHostSynchronize(
+    ze_command_list_handle_t hCommandList,
+    uint64_t timeout) {
+    return L0::CommandList::fromHandle(hCommandList)->hostSynchronize(timeout);
 }
 
 } // namespace L0
@@ -73,5 +79,13 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceSystemBarrier(
     ze_device_handle_t hDevice) {
     return L0::zeDeviceSystemBarrier(
         hDevice);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListHostSynchronize(
+    ze_command_list_handle_t hCommandList,
+    uint64_t timeout) {
+    return L0::zeCommandListHostSynchronize(
+        hCommandList,
+        timeout);
 }
 }

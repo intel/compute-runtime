@@ -339,6 +339,7 @@ zeGetCommandListProcAddrTable(
     pDdiTable->pfnAppendWriteGlobalTimestamp = L0::zeCommandListAppendWriteGlobalTimestamp;
     pDdiTable->pfnAppendMemoryCopyFromContext = L0::zeCommandListAppendMemoryCopyFromContext;
     pDdiTable->pfnAppendQueryKernelTimestamps = L0::zeCommandListAppendQueryKernelTimestamps;
+    pDdiTable->pfnHostSynchronize = L0::zeCommandListHostSynchronize;
     driverDdiTable.coreDdiTable.CommandList = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnAppendBarrier = zeCommandListAppendBarrierTracing;

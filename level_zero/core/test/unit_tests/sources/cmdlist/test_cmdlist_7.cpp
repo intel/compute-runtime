@@ -2949,5 +2949,80 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenAppendMemoryFil
     context->freeMem(dstBuffer);
 }
 
+using ImmediateCommandListHostSynchronize = Test<DeviceFixture>;
+
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskEnabledAndNotSyncModeThenWaitForCompletionIsCalled, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.isSyncModeQueue = false;
+
+    EXPECT_EQ(cmdList.hostSynchronize(0), ZE_RESULT_SUCCESS);
+
+    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
+    EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
+}
+
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenSyncModeThenWaitForCompletionIsNotCalled, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.isSyncModeQueue = true;
+
+    EXPECT_EQ(cmdList.hostSynchronize(0), ZE_RESULT_SUCCESS);
+
+    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
+    EXPECT_EQ(waitForFlushTagUpdateCalled, 0u);
+}
+
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisabledThenWaitForCompletionIsNotCalled, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.isFlushTaskSubmissionEnabled = false;
+    cmdList.isSyncModeQueue = false;
+
+    EXPECT_EQ(cmdList.hostSynchronize(0), ZE_RESULT_SUCCESS);
+
+    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
+    EXPECT_EQ(waitForFlushTagUpdateCalled, 0u);
+}
+
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenGpuStatusIsHangThenDeviceLostIsReturned, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.isSyncModeQueue = false;
+    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->callBaseWaitForCompletionWithTimeout = false;
+    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+
+    EXPECT_EQ(cmdList.hostSynchronize(0), ZE_RESULT_ERROR_DEVICE_LOST);
+
+    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
+    EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
+}
+
+using CommandListHostSynchronize = Test<DeviceFixture>;
+
+HWTEST2_F(CommandListHostSynchronize, whenHostSychronizeIsCalledReturnInvalidArgument, IsAtLeastSkl) {
+    ze_command_list_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(Context::fromHandle(CommandList::fromHandle(hCommandList)->getCmdListContext()), context);
+
+    L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
+    EXPECT_EQ(commandList->hostSynchronize(0), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    commandList->destroy();
+}
+
 } // namespace ult
 } // namespace L0

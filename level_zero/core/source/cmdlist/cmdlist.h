@@ -175,6 +175,7 @@ struct CommandList : _ze_command_list_handle_t {
                                            uint32_t data, ze_event_handle_t signalEventHandle) = 0;
     virtual ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                             uint64_t data) = 0;
+    virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
 
     static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue);
