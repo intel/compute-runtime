@@ -211,6 +211,32 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenConstructBcsEnginesForSplitThenConta
     EXPECT_EQ(4u, queue->countBcsEngines());
 }
 
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenBidirectionalMasksWhenConstructBcsEnginesForSplitThenMasksSet, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    DebugManager.flags.SplitBcsMaskD2H.set(0b10100010);
+    DebugManager.flags.SplitBcsMaskH2D.set(0b101010);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
+    ClDeviceVector clDevices{&clDeviceId, 1u};
+    cl_int retVal{};
+    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto queue = std::make_unique<MockCommandQueue>(*context);
+    EXPECT_EQ(0u, queue->countBcsEngines());
+
+    queue->constructBcsEnginesForSplit();
+
+    EXPECT_EQ(4u, queue->countBcsEngines());
+    EXPECT_EQ(0b10100010u, queue->d2hEngines.to_ulong());
+    EXPECT_EQ(0b101010u, queue->h2dEngines.to_ulong());
+}
+
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenSplitBcsMaskWhenConstructBcsEnginesForSplitThenContainsGivenBcsEngines, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableCopyEngineSelector.set(1);

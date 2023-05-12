@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/helpers/vec.h"
 
 #include "opencl/source/kernel/multi_device_kernel.h"
@@ -50,6 +51,7 @@ struct BuiltinOpParams {
     uint32_t dstMipLevel = 0;
     void *userPtrForPostOperationCpuCopy = nullptr;
     bool bcsSplit = false;
+    TransferDirection direction = TransferDirection::LocalToLocal;
 };
 
 class BuiltinDispatchInfoBuilder {

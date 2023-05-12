@@ -437,6 +437,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool bcsSplitInitialized = false;
     BcsInfoMask splitEngines = EngineHelpers::oddLinkedCopyEnginesMask;
+    BcsInfoMask h2dEngines = NEO::EngineHelpers::h2dCopyEngineMask;
+    BcsInfoMask d2hEngines = NEO::EngineHelpers::d2hCopyEngineMask;
 
     LinearStream *commandStream = nullptr;
 

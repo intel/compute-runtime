@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,6 +105,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.dstRowPitch = bufferRowPitch;
     dc.dstSlicePitch = bufferSlicePitch;
     dc.bcsSplit = bcsSplit;
+    dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);

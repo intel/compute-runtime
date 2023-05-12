@@ -40,6 +40,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
     dc.dstOffset = {dstOffset, 0, 0};
     dc.size = {size, 0, 0};
     dc.bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, size, csr);
+    dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
 

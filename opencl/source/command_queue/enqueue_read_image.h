@@ -114,6 +114,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
         dc.userPtrForPostOperationCpuCopy = ptr;
     }
     dc.bcsSplit = bcsSplit;
+    dc.direction = csrSelectionArgs.direction;
 
     auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);

@@ -98,6 +98,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     }
     dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
     dc.bcsSplit = bcsSplit;
+    dc.direction = csrSelectionArgs.direction;
 
     auto eBuiltInOps = EBuiltInOps::CopyBufferToImage3d;
     MultiDispatchInfo dispatchInfo(dc);

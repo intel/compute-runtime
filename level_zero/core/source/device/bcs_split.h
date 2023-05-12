@@ -56,11 +56,9 @@ struct BcsSplit {
     std::vector<CommandQueue *> h2dCmdQs;
     std::vector<CommandQueue *> d2hCmdQs;
 
-    inline static constexpr size_t h2dEngineMask = 0b000001010;
-    inline static constexpr size_t d2hEngineMask = 0b010100000;
     NEO::BcsInfoMask engines = NEO::EngineHelpers::oddLinkedCopyEnginesMask;
-    NEO::BcsInfoMask h2dEngines = h2dEngineMask;
-    NEO::BcsInfoMask d2hEngines = d2hEngineMask;
+    NEO::BcsInfoMask h2dEngines = NEO::EngineHelpers::h2dCopyEngineMask;
+    NEO::BcsInfoMask d2hEngines = NEO::EngineHelpers::d2hCopyEngineMask;
 
     template <GFXCORE_FAMILY gfxCoreFamily, typename T, typename K>
     ze_result_t appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,

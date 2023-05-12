@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
     }
     dc.bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, getTotalSizeFromRectRegion(region), csr);
+    dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
 

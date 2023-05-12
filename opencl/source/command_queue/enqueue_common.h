@@ -1245,11 +1245,18 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     auto ret = CL_SUCCESS;
     this->releaseMainCopyEngine();
 
-    StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 4u> locks;
-    StackVec<CommandStreamReceiver *, 4u> copyEngines;
+    StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 2u> locks;
+    StackVec<CommandStreamReceiver *, 2u> copyEngines;
+
+    auto splitEngines = this->splitEngines;
+    if (dispatchInfo.peekBuiltinOpParams().direction == NEO::TransferDirection::HostToLocal) {
+        splitEngines = this->h2dEngines;
+    } else if (dispatchInfo.peekBuiltinOpParams().direction == NEO::TransferDirection::LocalToHost) {
+        splitEngines = this->d2hEngines;
+    }
 
     for (uint32_t i = 0; i < bcsInfoMaskSize; i++) {
-        if (this->splitEngines.test(i)) {
+        if (splitEngines.test(i)) {
             auto engineType = EngineHelpers::mapBcsIndexToEngineType(i, true);
             auto bcs = getBcsCommandStreamReceiver(engineType);
             if (bcs) {

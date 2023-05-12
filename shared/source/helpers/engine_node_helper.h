@@ -65,6 +65,8 @@ constexpr bool isLinkBcs(aub_stream::EngineType engineType) {
 
 inline constexpr uint32_t numLinkedCopyEngines = 8u;
 inline constexpr size_t oddLinkedCopyEnginesMask = 0b010101010;
+inline constexpr size_t h2dCopyEngineMask = 0b000001010;
+inline constexpr size_t d2hCopyEngineMask = 0b010100000;
 
 bool linkCopyEnginesSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield);
 

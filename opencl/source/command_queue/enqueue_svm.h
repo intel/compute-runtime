@@ -125,6 +125,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         dc.size = {size, 0, 0};
         dc.unifiedMemoryArgsRequireMemSync = externalAppCall;
         dc.bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, size, csr);
+        dc.direction = csrSelectionArgs.direction;
 
         MultiDispatchInfo dispatchInfo(dc);
         const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, blocking, csr);
@@ -212,6 +213,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
         dc.size = {svmOperation->regionSize, 0, 0};
         dc.unifiedMemoryArgsRequireMemSync = externalAppCall;
         dc.bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, svmOperation->regionSize, csr);
+        dc.direction = csrSelectionArgs.direction;
 
         MultiDispatchInfo dispatchInfo(dc);
         const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, false, csr);
@@ -385,6 +387,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstHostPtrSurf;
 
         operationParams.bcsSplit = bcsSplit;
+        operationParams.direction = csrSelectionArgs.direction;
         dispatchInfo.setBuiltinOpParams(operationParams);
         dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     } else if (copyType == HostToSvm) {
@@ -409,6 +412,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &srcHostPtrSurf;
 
         operationParams.bcsSplit = bcsSplit;
+        operationParams.direction = csrSelectionArgs.direction;
         dispatchInfo.setBuiltinOpParams(operationParams);
         dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     } else if (copyType == SvmToSvm) {
@@ -422,6 +426,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstSvmSurf;
 
         operationParams.bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, size, csr);
+        operationParams.direction = csrSelectionArgs.direction;
         dispatchInfo.setBuiltinOpParams(operationParams);
         dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_SVM_MEMCPY>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     } else {
@@ -449,6 +454,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstHostPtrSurf;
 
         operationParams.bcsSplit = bcsSplit;
+        operationParams.direction = csrSelectionArgs.direction;
         dispatchInfo.setBuiltinOpParams(operationParams);
         dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     }

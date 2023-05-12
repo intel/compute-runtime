@@ -371,6 +371,13 @@ void CommandQueue::constructBcsEnginesForSplit() {
         }
     }
 
+    if (DebugManager.flags.SplitBcsMaskD2H.get() > 0) {
+        this->d2hEngines = DebugManager.flags.SplitBcsMaskD2H.get();
+    }
+    if (DebugManager.flags.SplitBcsMaskH2D.get() > 0) {
+        this->h2dEngines = DebugManager.flags.SplitBcsMaskH2D.get();
+    }
+
     this->bcsSplitInitialized = true;
 }
 
