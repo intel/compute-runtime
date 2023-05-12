@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/program/program_initialization.h"
@@ -86,6 +87,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     EXPECT_TRUE(alloc->isMemObjectsAllocationWithWritableFlags());
     EXPECT_EQ(DEVICE_UNIFIED_MEMORY, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()))->memoryType);
     EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
+    EXPECT_FALSE(alloc->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
     svmAllocsManager.freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress())));
 
     alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalVariables, initData.data());
@@ -112,6 +114,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     EXPECT_TRUE(alloc->isMemObjectsAllocationWithWritableFlags());
     EXPECT_EQ(DEVICE_UNIFIED_MEMORY, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()))->memoryType);
     EXPECT_EQ(AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
+    EXPECT_FALSE(alloc->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
     svmAllocsManager.freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress())));
 }
 

@@ -98,6 +98,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const Alloca
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
+    systemMemoryStorageInfo.isLockable = allocationData.storageInfo.isLockable;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr, allocationData.size, 0u,
                                      CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
@@ -121,6 +122,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
+    systemMemoryStorageInfo.isLockable = allocationData.storageInfo.isLockable;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr, allocationData.size, 0u,
                                      CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
