@@ -210,6 +210,82 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenRequiredFlushOperationThenExp
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
+HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+    cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    auto zeEvent = event->toHandle();
+
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, sizeof(uint32_t), nullptr, 1, &zeEvent, false);
+
+    EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
+}
+
+HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+    cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    auto zeEvent = event->toHandle();
+    ze_copy_region_t region = {};
+
+    cmdList.appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 1, &zeEvent, false);
+
+    EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
+}
+
+HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendFillWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+    cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    uint32_t patter = 1;
+    auto zeEvent = event->toHandle();
+
+    cmdList.appendMemoryFill(srcPtr, &patter, 1, sizeof(uint32_t), nullptr, 1, &zeEvent, false);
+
+    EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
+}
+
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationThenExpectPipeControlWithDcFlush, IsDcFlushSupportedPlatform) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
