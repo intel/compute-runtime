@@ -2198,8 +2198,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     }
 
     if (signalInOrderCompletion) {
-        NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(*commandContainer.getCommandStream(), this->inOrderDependencyCounterAllocation->getGpuAddress(),
-                                                               this->inOrderDependencyCounter + 1, 0, false, false);
+        appendSignalInOrderDependencyCounter();
     }
 
     makeResidentDummyAllocation();
@@ -2213,6 +2212,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter() {
+    NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(*commandContainer.getCommandStream(), this->inOrderDependencyCounterAllocation->getGpuAddress(),
+                                                           this->inOrderDependencyCounter + 1, 0, false, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

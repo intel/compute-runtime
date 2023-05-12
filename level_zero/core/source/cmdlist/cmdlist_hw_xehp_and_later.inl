@@ -261,7 +261,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
         this->partitionCount,                                   // partitionCount
-        0,                                                      // postSyncImmValue
+        static_cast<uint32_t>(Event::STATE_SIGNALED),           // postSyncImmValue
         this->inOrderExecutionEnabled,                          // inOrderExecEnabled
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate
@@ -277,15 +277,27 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->dcFlushSupport                                    // dcFlushEnable
     };
 
-    if (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation) {
-        DEBUG_BREAK_IF(isTimestampEvent);
+    bool inOrderExecCounterUpdate = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
 
-        dispatchKernelArgs.isTimestampEvent = false;
+    if (inOrderExecCounterUpdate && !isTimestampEvent) {
         dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
         dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
+
+    if (inOrderExecCounterUpdate && isTimestampEvent) {
+        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+        auto gpuAddr = event->getCompletionFieldGpuAddress(this->device);
+
+        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                   gpuAddr,
+                                                                   Event::State::STATE_CLEARED,
+                                                                   MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+
+        appendSignalInOrderDependencyCounter();
+    }
+
     if (!this->isFlushTaskSubmissionEnabled) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
     }
