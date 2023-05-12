@@ -237,56 +237,6 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenForceMemoryPrefetchForKmdMigratedShared
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenUnifiedMemoryAllocationsAreAlignedCorrectly) {
-    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
-    auto device = deviceFactory->rootDevices[0];
-    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
-    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager, false);
-    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
-    csr->setupContext(*device->getDefaultEngine().osContext);
-
-    size_t alignment = 8 * MemoryConstants::megaByte;
-    do {
-        alignment >>= 1;
-        memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
-            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize64k));
-        };
-        SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, alignment, rootDeviceIndices, deviceBitfields);
-        unifiedMemoryProperties.device = device;
-        auto ptr = svmManager->createUnifiedMemoryAllocation(1, unifiedMemoryProperties);
-        EXPECT_NE(nullptr, ptr);
-        if (alignment != 0) {
-            EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
-        }
-        svmManager->freeSVMAlloc(ptr);
-    } while (alignment != 0);
-}
-
-TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenHostUnifiedMemoryAllocationsAreAlignedCorrectly) {
-    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
-    auto device = deviceFactory->rootDevices[0];
-    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
-    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager, false);
-    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
-    csr->setupContext(*device->getDefaultEngine().osContext);
-
-    size_t alignment = 8 * MemoryConstants::megaByte;
-    do {
-        alignment >>= 1;
-        memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
-            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize));
-        };
-        SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, alignment, rootDeviceIndices, deviceBitfields);
-        unifiedMemoryProperties.device = device;
-        auto ptr = svmManager->createHostUnifiedMemoryAllocation(1, unifiedMemoryProperties);
-        EXPECT_NE(nullptr, ptr);
-        if (alignment != 0) {
-            EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
-        }
-        svmManager->freeSVMAlloc(ptr);
-    } while (alignment != 0);
-}
-
 TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocationsAreAlignedCorrectly) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];
@@ -294,10 +244,6 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocat
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager, false);
     auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     csr->setupContext(*device->getDefaultEngine().osContext);
-
-    void *cmdQ = reinterpret_cast<void *>(0x12345);
-    auto mockPageFaultManager = new MockPageFaultManager();
-    memoryManager->pageFaultManager.reset(mockPageFaultManager);
 
     size_t alignment = 8 * MemoryConstants::megaByte;
     do {
@@ -307,7 +253,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocat
         };
         SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, alignment, rootDeviceIndices, deviceBitfields);
         unifiedMemoryProperties.device = device;
-        auto ptr = svmManager->createSharedUnifiedMemoryAllocation(1, unifiedMemoryProperties, cmdQ);
+        auto ptr = svmManager->createUnifiedMemoryAllocation(1, unifiedMemoryProperties);
         EXPECT_NE(nullptr, ptr);
         if (alignment != 0) {
             EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
