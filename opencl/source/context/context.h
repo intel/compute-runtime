@@ -9,6 +9,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/utilities/buffer_pool_allocator.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
@@ -45,65 +47,45 @@ struct OpenCLObjectMapper<_cl_context> {
 
 class Context : public BaseObject<_cl_context> {
   public:
-    class BufferPoolAllocator {
+    using BufferAllocationsVec = StackVec<GraphicsAllocation *, 1>;
+
+    struct BufferPool : public AbstractBuffersPool<BufferPool, Buffer, MemObj> {
+        using BaseType = AbstractBuffersPool<BufferPool, Buffer, MemObj>;
+
+        BufferPool(Context *context);
+        Buffer *allocate(const MemoryProperties &memoryProperties,
+                         cl_mem_flags flags,
+                         cl_mem_flags_intel flagsIntel,
+                         size_t requestedSize,
+                         void *hostPtr,
+                         cl_int &errcodeRet);
+
+        const StackVec<NEO::GraphicsAllocation *, 1> &getAllocationsVector();
+    };
+
+    class BufferPoolAllocator : public AbstractBuffersAllocator<BufferPool, Buffer, MemObj> {
       public:
-        static constexpr auto aggregatedSmallBuffersPoolSize = 64 * KB;
-        static constexpr auto smallBufferThreshold = 4 * KB;
-        static constexpr auto chunkAlignment = 512u;
-        static constexpr auto startingOffset = chunkAlignment;
-
-        static_assert(aggregatedSmallBuffersPoolSize > smallBufferThreshold, "Largest allowed buffer needs to fit in pool");
-
+        bool isAggregatedSmallBuffersEnabled(Context *context) const;
+        void initAggregatedSmallBuffers(Context *context);
         Buffer *allocateBufferFromPool(const MemoryProperties &memoryProperties,
                                        cl_mem_flags flags,
                                        cl_mem_flags_intel flagsIntel,
-                                       size_t size,
+                                       size_t requestedSize,
                                        void *hostPtr,
                                        cl_int &errcodeRet);
-
-        void releaseSmallBufferPool();
-        bool isAggregatedSmallBuffersEnabled(Context *context) const;
-        void initAggregatedSmallBuffers(Context *context);
-        bool isPoolBuffer(const MemObj *buffer) const;
         bool flagsAllowBufferFromPool(const cl_mem_flags &flags, const cl_mem_flags_intel &flagsIntel) const;
-        void tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size);
 
       protected:
         Buffer *allocateFromPools(const MemoryProperties &memoryProperties,
                                   cl_mem_flags flags,
                                   cl_mem_flags_intel flagsIntel,
-                                  size_t size,
+                                  size_t requestedSize,
                                   void *hostPtr,
                                   cl_int &errcodeRet);
 
-        inline bool isSizeWithinThreshold(size_t size) const {
-            return BufferPoolAllocator::smallBufferThreshold >= size;
-        }
-
-        void drain();
-        void addNewBufferPool();
-
-        struct BufferPool {
-            BufferPool(Context *context);
-            BufferPool(BufferPool &&bufferPool);
-            bool isPoolBuffer(const MemObj *buffer) const;
-            void tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size);
-            Buffer *allocate(const MemoryProperties &memoryProperties,
-                             cl_mem_flags flags,
-                             cl_mem_flags_intel flagsIntel,
-                             size_t size,
-                             void *hostPtr,
-                             cl_int &errcodeRet);
-            void drain();
-            MemoryManager *memoryManager{nullptr};
-            std::unique_ptr<Buffer> mainStorage;
-            std::unique_ptr<HeapAllocator> chunkAllocator;
-            std::vector<std::pair<uint64_t, size_t>> chunksToFree;
-        };
         Context *context{nullptr};
-        std::mutex mutex;
-        std::vector<BufferPool> bufferPools;
     };
+
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
 
     bool createImpl(const cl_context_properties *properties,

@@ -55,7 +55,6 @@ class MockContext : public Context {
 
     class MockBufferPoolAllocator : public BufferPoolAllocator {
       public:
-        using BufferPoolAllocator::BufferPool;
         using BufferPoolAllocator::bufferPools;
         using BufferPoolAllocator::isAggregatedSmallBuffersEnabled;
     };

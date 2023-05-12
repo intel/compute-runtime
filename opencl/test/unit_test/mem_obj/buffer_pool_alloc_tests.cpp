@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"

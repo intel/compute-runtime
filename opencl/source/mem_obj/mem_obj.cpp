@@ -13,11 +13,14 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/heap_allocator.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/sharing.h"
 
 #include <algorithm>
