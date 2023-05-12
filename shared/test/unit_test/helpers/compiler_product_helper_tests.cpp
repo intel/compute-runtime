@@ -151,7 +151,7 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenMatrixMultiplyAccumulate
 HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {
     auto hwInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
-    auto productConfig = productHelper.getProductConfigFromHwInfo(*defaultHwInfo);
+    auto productConfig = productHelper.getHwIpVersion(*defaultHwInfo);
     HardwareIpVersion aotConfig = {0};
     aotConfig.value = productConfig;
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();

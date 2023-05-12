@@ -37,7 +37,11 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     auto configStr = productFamily;
     auto productConfigHelper = std::make_unique<ProductConfigHelper>();
     ProductConfigHelper::adjustDeviceName(configStr);
-    auto productConfig = productConfigHelper->getProductConfigFromDeviceName(configStr);
+    uint32_t productConfig = productConfigHelper->getProductConfigFromDeviceName(configStr);
+
+    if (DebugManager.flags.OverrideHwIpVersion.get() != -1 && productConfigHelper->isSupportedProductConfig(DebugManager.flags.OverrideHwIpVersion.get())) {
+        productConfig = DebugManager.flags.OverrideHwIpVersion.get();
+    }
 
     const HardwareInfo *hwInfoConst = getDefaultHwInfo();
     DeviceAotInfo aotInfo{};
@@ -72,7 +76,6 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         }
 
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
-
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, compilerProductHelper);
 
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
@@ -80,7 +83,13 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         if (productConfigFound) {
             compilerProductHelper.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
-            hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
+            if (DebugManager.flags.ForceDeviceId.get() == "unk") {
+                hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
+            }
+        }
+
+        if (DebugManager.flags.OverrideHwIpVersion.get() != -1) {
+            hardwareInfo->ipVersion = DebugManager.flags.OverrideHwIpVersion.get();
         }
 
         if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {

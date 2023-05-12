@@ -72,7 +72,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
         for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
             hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
-            hwInfo.ipVersion = productHelper.getProductConfigFromHwInfo(hwInfo);
+            hwInfo.ipVersion = productHelper.getHwIpVersion(hwInfo);
 
             if (hwInfo.ipVersion.value == AOT::UNKNOWN_ISA) {
                 continue;

@@ -594,7 +594,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpV
     ipVersion = {};
     drm->failRetHwIpVersion = true;
     drm->ioctlHelper->setupIpVersion();
-    auto config = productHelper.getProductConfigFromHwInfo(*hwInfo);
+    auto config = productHelper.getHwIpVersion(*hwInfo);
     EXPECT_EQ(config, ipVersion.value);
 }
 

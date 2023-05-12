@@ -143,7 +143,7 @@ void ProductHelperHw<gfxProduct>::adjustIpVersionIfNeeded(HardwareInfo &hwInfo) 
     bool isIpVersionUninitialized = hwInfo.ipVersion.architecture == 0;
 
     if (isIpVersionUninitialized) {
-        hwInfo.ipVersion.value = getProductConfigFromHwInfo(hwInfo);
+        hwInfo.ipVersion.value = getHwIpVersion(hwInfo);
     }
 }
 

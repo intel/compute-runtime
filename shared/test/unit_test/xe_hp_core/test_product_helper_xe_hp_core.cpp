@@ -139,7 +139,7 @@ XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenIsImplicitScalingSupportedTh
 
 XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(*defaultHwInfo), AOT::XEHP_SDV);
+    EXPECT_EQ(productHelper->getHwIpVersion(*defaultHwInfo), AOT::XEHP_SDV);
 }
 
 XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenIsSystolicModeConfigurabledThenTrueIsReturned) {

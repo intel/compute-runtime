@@ -94,19 +94,19 @@ CFLTEST_F(CflProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMat
 
     for (const auto &deviceId : cflDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::CFL);
+        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::CFL);
     }
     for (const auto &deviceId : cmlDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::CML);
+        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::CML);
     }
     for (const auto &deviceId : whlDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::WHL);
+        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::WHL);
     }
 
     pInHwInfo.platform.usDeviceID = 0u;
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::UNKNOWN_ISA);
 }
 
 CFLTEST_F(CflProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

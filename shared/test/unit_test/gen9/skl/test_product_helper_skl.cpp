@@ -110,7 +110,7 @@ SKLTEST_F(SklProductHelper, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTabl
 }
 
 SKLTEST_F(SklProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::SKL);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::SKL);
 }
 
 SKLTEST_F(SklProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

@@ -260,7 +260,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
             param.uint = clGfxCoreHelper.getDeviceIpVersion(getHardwareInfo());
         } else {
             auto &productHelper = device.getProductHelper();
-            param.uint = static_cast<cl_version>(productHelper.getProductConfigFromHwInfo(getHardwareInfo()));
+            param.uint = static_cast<cl_version>(productHelper.getHwIpVersion(getHardwareInfo()));
         }
         src = &param.uint;
         retSize = srcSize = sizeof(cl_version);

@@ -77,7 +77,7 @@ ADLSTEST_F(AdlsProductHelper, whenGettingAubstreamProductFamilyThenProperEnumVal
 
 ADLSTEST_F(AdlsProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::ADL_S);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::ADL_S);
 }
 
 ADLSTEST_F(AdlsProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

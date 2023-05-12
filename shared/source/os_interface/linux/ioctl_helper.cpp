@@ -59,7 +59,7 @@ void IoctlHelper::setupIpVersion() {
     auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    hwInfo.ipVersion.value = productHelper.getProductConfigFromHwInfo(hwInfo);
+    hwInfo.ipVersion.value = productHelper.getHwIpVersion(hwInfo);
 }
 
 void IoctlHelper::logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) {

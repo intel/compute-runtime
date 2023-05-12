@@ -16,6 +16,6 @@ void Wddm::populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterI
 }
 void Wddm::populateIpVersion(HardwareInfo &hwInfo) {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    hwInfo.ipVersion.value = productHelper.getProductConfigFromHwInfo(hwInfo);
+    hwInfo.ipVersion.value = productHelper.getHwIpVersion(hwInfo);
 }
 } // namespace NEO

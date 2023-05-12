@@ -84,7 +84,7 @@ BDWTEST_F(BdwProductHelper, givenProductHelperStringThenAfterSetupResultingVmeIs
 
 BDWTEST_F(BdwProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::BDW);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::BDW);
 }
 
 BDWTEST_F(BdwProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

@@ -107,7 +107,7 @@ struct ProductConfigHelper {
     bool isSupportedFamily(uint32_t family) const;
     bool isSupportedRelease(uint32_t release) const;
     bool isSupportedProductConfig(uint32_t config) const;
-    bool getDeviceAotInfoForProductConfig(AOT::PRODUCT_CONFIG config, DeviceAotInfo &out) const;
+    bool getDeviceAotInfoForProductConfig(uint32_t config, DeviceAotInfo &out) const;
 
     std::vector<DeviceAotInfo> &getDeviceAotInfo();
     std::vector<NEO::ConstStringRef> getRepresentativeProductAcronyms();

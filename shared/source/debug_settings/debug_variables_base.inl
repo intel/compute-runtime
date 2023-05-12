@@ -111,6 +111,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, MultiStorageGranularity, -1, "Forces granularity
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxWidth, -1, "-1: default, >=0: Max width")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxHeight, -1, "-1: default, >=0: Max height")
 DECLARE_DEBUG_VARIABLE(int32_t, PostBlitCommand, -1, "-1: default, 0: MI_ARB_CHECK, 1: MI_FLUSH, 2: Nothing")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideHwIpVersion, -1, "-1: default,  >=0: Hardware IP version")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePreemptionSurfaceSizeInMb, -1, "-1: default, >=0 Override preemption surface size with value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideLeastOccupiedBank, -1, "-1: default,  >=0 Override least occupied bank with value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideRevision, -1, "-1: default,  >=0: Revision id")

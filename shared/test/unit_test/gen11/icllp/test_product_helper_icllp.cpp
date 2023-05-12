@@ -98,7 +98,7 @@ ICLLPTEST_F(IcllpProductHelper, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatu
 }
 
 ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(*defaultHwInfo), AOT::ICL);
+    EXPECT_EQ(productHelper->getHwIpVersion(*defaultHwInfo), AOT::ICL);
 }
 
 ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

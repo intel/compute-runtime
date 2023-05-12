@@ -103,15 +103,15 @@ KBLTEST_F(KblProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMat
 
     for (const auto &deviceId : amlDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::AML);
+        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::AML);
     }
     for (const auto &deviceId : kblDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::KBL);
+        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::KBL);
     }
 
     pInHwInfo.platform.usDeviceID = 0u;
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::UNKNOWN_ISA);
 }
 
 KBLTEST_F(KblProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

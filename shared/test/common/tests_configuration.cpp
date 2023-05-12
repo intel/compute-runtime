@@ -41,6 +41,6 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     gtSystemInfo.MaxSubSlicesSupported = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);
 
     auto productHelper = ProductHelper::create(hwInfoForTests.platform.eProductFamily);
-    hwInfoForTests.ipVersion.value = productHelper->getProductConfigFromHwInfo(hwInfoForTests);
+    hwInfoForTests.ipVersion.value = productHelper->getHwIpVersion(hwInfoForTests);
 }
 } // namespace NEO

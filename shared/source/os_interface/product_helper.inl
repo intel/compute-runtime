@@ -213,6 +213,14 @@ uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getHwIpVersion(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.OverrideHwIpVersion.get() != -1) {
+        return DebugManager.flags.OverrideHwIpVersion.get();
+    }
+    return getProductConfigFromHwInfo(hwInfo);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     switch (getSteppingFromHwRevId(hwInfo)) {
     default:

@@ -82,7 +82,7 @@ RKLTEST_F(RklHwInfo, givenRklWhenCheckL0ThenReturnTrue) {
 using RklProductHelper = ProductHelperTest;
 
 RKLTEST_F(RklProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::RKL);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::RKL);
 }
 
 RKLTEST_F(RklProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

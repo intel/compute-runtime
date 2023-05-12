@@ -17,7 +17,7 @@ TEST_F(WddmTest, WhenPopulateIpVersionWddmIsCalledThenIpVersionIsSet) {
 
     auto &productHelper = wddm->rootDeviceEnvironment.getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto config = productHelper.getProductConfigFromHwInfo(hwInfo);
+    auto config = productHelper.getHwIpVersion(hwInfo);
     wddm->populateIpVersion(hwInfo);
 
     EXPECT_EQ(config, hwInfo.ipVersion.value);

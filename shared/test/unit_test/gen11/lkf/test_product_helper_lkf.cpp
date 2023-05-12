@@ -85,7 +85,7 @@ LKFTEST_F(LkfProductHelper, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTabl
 
 LKFTEST_F(LkfProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::LKF);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::LKF);
 }
 
 LKFTEST_F(LkfProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

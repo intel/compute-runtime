@@ -67,7 +67,7 @@ EHLTEST_F(EhlProductHelper, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTabl
 
 EHLTEST_F(EhlProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::EHL);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::EHL);
 }
 
 EHLTEST_F(EhlProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

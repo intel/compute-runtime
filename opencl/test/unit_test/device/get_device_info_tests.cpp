@@ -1120,7 +1120,7 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
                 EXPECT_EQ(clGfxCoreHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
             } else {
                 auto &productHelper = device.getProductHelper();
-                EXPECT_EQ(static_cast<cl_version>(productHelper.getProductConfigFromHwInfo(hwInfo)), *pDeviceIpVersion);
+                EXPECT_EQ(static_cast<cl_version>(productHelper.getHwIpVersion(hwInfo)), *pDeviceIpVersion);
             }
             EXPECT_EQ(sizeof(cl_version), sizeReturned);
             break;

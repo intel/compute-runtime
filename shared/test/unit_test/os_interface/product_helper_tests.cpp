@@ -750,3 +750,12 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsTranslationException
 HWTEST_F(ProductHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
     EXPECT_EQ(16u, productHelper->getMaxNumSamplers());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenGetAndOverrideHwIpVersionThenCorrectMatchIsFound) {
+    DebugManagerStateRestore stateRestore;
+    HardwareInfo hwInfo = pInHwInfo;
+    uint32_t config = 0x1234;
+    DebugManager.flags.OverrideHwIpVersion.set(config);
+    hwInfo.ipVersion.value = config;
+    EXPECT_EQ(productHelper->getHwIpVersion(hwInfo), config);
+}

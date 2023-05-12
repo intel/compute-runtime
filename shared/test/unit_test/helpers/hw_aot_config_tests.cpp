@@ -23,13 +23,13 @@ HWTEST2_P(ProductConfigHwInfoTests, givenAotConfigWhenSetHwInfoGmdIdThenCorrectV
     EXPECT_EQ(hwInfo.ipVersion.release, aotConfig.release);
     EXPECT_EQ(hwInfo.ipVersion.revision, aotConfig.revision);
 
-    auto ret = productHelper->getProductConfigFromHwInfo(hwInfo);
+    auto ret = productHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(ret, productConfig);
 }
 
 HWTEST2_P(ProductConfigHwInfoTests, givenUnknownAotConfigWhenGetProductConfigThenUnknownIsaIsReturned, IsAtLeastMtl) {
     hwInfo.ipVersion = {};
-    auto ret = productHelper->getProductConfigFromHwInfo(hwInfo);
+    auto ret = productHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(ret, AOT::UNKNOWN_ISA);
 }
 
@@ -39,7 +39,7 @@ HWTEST2_P(ProductConfigHwInfoTests, givenAotConfigWhenGetProductConfigThenCorrec
     hwInfo.ipVersion.architecture = aotConfig.architecture;
     hwInfo.ipVersion.release = aotConfig.release;
     hwInfo.ipVersion.revision = aotConfig.revision;
-    auto ret = productHelper->getProductConfigFromHwInfo(hwInfo);
+    auto ret = productHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(ret, productConfig);
 }
 
@@ -47,6 +47,6 @@ TEST(ProductConfigHwInfoTest, givenDefaultAotConfigWhenGetProductConfigThenSameV
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     auto hwInfo = *defaultHwInfo;
-    auto ret = productHelper.getProductConfigFromHwInfo(hwInfo);
+    auto ret = productHelper.getHwIpVersion(hwInfo);
     EXPECT_EQ(ret, hwInfo.ipVersion.value);
 }

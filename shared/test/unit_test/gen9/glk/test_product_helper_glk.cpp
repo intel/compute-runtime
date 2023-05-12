@@ -87,7 +87,7 @@ GLKTEST_F(GlkProductHelper, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTabl
 
 GLKTEST_F(GlkProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::GLK);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::GLK);
 }
 
 GLKTEST_F(GlkProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

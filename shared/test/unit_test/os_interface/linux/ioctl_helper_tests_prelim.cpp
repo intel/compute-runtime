@@ -553,7 +553,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
 TEST_F(IoctlPrelimHelperTests, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
     auto &hwInfo = *drm->getRootDeviceEnvironment().getHardwareInfo();
     auto &productHelper = drm->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto config = productHelper.getProductConfigFromHwInfo(hwInfo);
+    auto config = productHelper.getHwIpVersion(hwInfo);
 
     ioctlHelper.setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);

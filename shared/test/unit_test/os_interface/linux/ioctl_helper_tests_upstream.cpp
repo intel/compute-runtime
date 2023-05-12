@@ -507,7 +507,7 @@ TEST(IoctlHelperTestsUpstream, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect)
 
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    auto config = productHelper.getProductConfigFromHwInfo(hwInfo);
+    auto config = productHelper.getHwIpVersion(hwInfo);
 
     ioctlHelper.setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);

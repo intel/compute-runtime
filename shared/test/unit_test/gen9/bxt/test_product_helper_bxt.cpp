@@ -87,7 +87,7 @@ BXTTEST_F(BxtProductHelper, givenBoolWhenCallBxtHardwareInfoSetupThenFeatureTabl
 
 BXTTEST_F(BxtProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::APL);
+    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::APL);
 }
 
 BXTTEST_F(BxtProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

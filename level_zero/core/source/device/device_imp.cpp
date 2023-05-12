@@ -868,7 +868,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
                 ze_device_ip_version_ext_t *zeDeviceIpVersion = reinterpret_cast<ze_device_ip_version_ext_t *>(extendedProperties);
                 NEO::Device *activeDevice = getActiveDevice();
                 auto &productHelper = activeDevice->getProductHelper();
-                zeDeviceIpVersion->ipVersion = productHelper.getProductConfigFromHwInfo(hardwareInfo);
+                zeDeviceIpVersion->ipVersion = productHelper.getHwIpVersion(hardwareInfo);
             }
             extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);
         }

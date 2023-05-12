@@ -30,7 +30,7 @@ TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment)
 
     targetDevice.coreFamily = hwInfo.platform.eRenderCoreFamily;
     targetDevice.productFamily = hwInfo.platform.eProductFamily;
-    targetDevice.aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
+    targetDevice.aotConfig.value = productHelper.getHwIpVersion(hwInfo);
     targetDevice.stepping = hwInfo.platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;
