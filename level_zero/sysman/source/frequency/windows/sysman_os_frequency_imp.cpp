@@ -624,7 +624,7 @@ OsFrequency *OsFrequency::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uin
     return static_cast<OsFrequency *>(pWddmFrequencyImp);
 }
 
-uint16_t OsFrequency::getNumberOfFreqDomainsSupported(OsSysman *pOsSysman) {
+std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 
@@ -633,18 +633,23 @@ uint16_t OsFrequency::getNumberOfFreqDomainsSupported(OsSysman *pOsSysman) {
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::FrequencyComponent;
-    request.requestId = KmdSysman::Requests::Frequency::NumFrequencyDomains;
+    request.requestId = KmdSysman::Requests::Frequency::SupportedFreqDomains;
 
     ze_result_t status = pKmdSysManager->requestSingle(request, response);
 
+    std::vector<zes_freq_domain_t> freqDomains;
     if (status != ZE_RESULT_SUCCESS) {
-        return 0;
+        return freqDomains;
     }
 
-    uint32_t maxNumEnginesSupported = 0;
-    memcpy_s(&maxNumEnginesSupported, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-
-    return static_cast<uint16_t>(maxNumEnginesSupported);
+    uint32_t supportedFreqDomains = 0;
+    memcpy_s(&supportedFreqDomains, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    for (uint16_t i = ZES_FREQ_DOMAIN_GPU; i <= ZES_FREQ_DOMAIN_MEDIA; i++) {
+        if (supportedFreqDomains & 1 << i) {
+            freqDomains.push_back(static_cast<zes_freq_domain_t>(i));
+        }
+    }
+    return freqDomains;
 }
 
 } // namespace Sysman

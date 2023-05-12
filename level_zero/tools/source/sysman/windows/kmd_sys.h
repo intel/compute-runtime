@@ -216,6 +216,7 @@ enum Frequency {
     CurrentThrottleReasons,
     CurrentThrottleTime,
     CurrentFrequencyRange,
+    SupportedFreqDomains = 38,
 
     MaxFrequencyRequests,
 };
@@ -340,6 +341,7 @@ enum FlipType {
 enum GeneralDomainsType {
     GeneralDomainDGPU = 0,
     GeneralDomainHBM,
+    GeneralDomainMedia,
 
     GeneralDomainMaxTypes,
 };

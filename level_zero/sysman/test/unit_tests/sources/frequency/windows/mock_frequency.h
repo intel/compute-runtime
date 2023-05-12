@@ -14,41 +14,42 @@ namespace L0 {
 namespace ult {
 
 struct MockFrequencyKmdSysManager : public MockKmdSysManager {
-    uint32_t mockNumberOfDomains = 2;
-    uint32_t mockDomainType[2] = {ZES_FREQ_DOMAIN_GPU, ZES_FREQ_DOMAIN_MEMORY};
-    bool mockGPUCanControl[2] = {true, false};
-    bool mockGPUCannotControl[2] = {false, false};
+    uint32_t mockNumberOfDomains = 3;
+    uint32_t mockSupportedDomains = 7;
+    uint32_t mockDomainType[3] = {ZES_FREQ_DOMAIN_GPU, ZES_FREQ_DOMAIN_MEMORY, ZES_FREQ_DOMAIN_MEDIA};
+    bool mockGPUCanControl[3] = {true, false, false};
+    bool mockGPUCannotControl[3] = {false, false, false};
     uint32_t mockMinFrequencyRange = 400;
     uint32_t mockMaxFrequencyRange = 1200;
-    uint32_t mockRpn[2] = {400, 0};
-    uint32_t mockRp0[2] = {1200, 0};
+    uint32_t mockRpn[3] = {400, 0, 400};
+    uint32_t mockRp0[3] = {1200, 0, 1200};
     uint32_t mockRequestedFrequency = 600;
     uint32_t mockTdpFrequency = 0;
-    uint32_t mockResolvedFrequency[2] = {600, 4200};
+    uint32_t mockResolvedFrequency[3] = {600, 4200, 600};
     uint32_t mockEfficientFrequency = 400;
     uint32_t mockCurrentVoltage = 1100;
     uint32_t mockThrottleReasons = 0;
     uint32_t mockIccMax = 1025;
     uint32_t mockTjMax = 105;
 
-    uint32_t mockIsExtendedModeSupported[2] = {0, 0};
-    uint32_t mockIsFixedModeSupported[2] = {0, 0};
-    uint32_t mockIsHighVoltModeCapable[2] = {0, 0};
-    uint32_t mockIsHighVoltModeEnabled[2] = {0, 0};
+    uint32_t mockIsExtendedModeSupported[3] = {0, 0, 0};
+    uint32_t mockIsFixedModeSupported[3] = {0, 0, 0};
+    uint32_t mockIsHighVoltModeCapable[3] = {0, 0, 0};
+    uint32_t mockIsHighVoltModeEnabled[3] = {0, 0, 0};
     uint32_t mockIsIccMaxSupported = 1;
-    uint32_t mockIsOcSupported[2] = {0, 0};
+    uint32_t mockIsOcSupported[3] = {0, 0, 0};
     uint32_t mockIsTjMaxSupported = 1;
-    uint32_t mockMaxFactoryDefaultFrequency[2] = {600, 4200};
-    uint32_t mockMaxFactoryDefaultVoltage[2] = {1200, 1300};
-    uint32_t mockMaxOcFrequency[2] = {1800, 4500};
-    uint32_t mockMaxOcVoltage[2] = {1300, 1400};
-    uint32_t mockFixedMode[2] = {0, 0};
-    uint32_t mockVoltageMode[2] = {0, 0};
-    uint32_t mockHighVoltageSupported[2] = {0, 0};
-    uint32_t mockHighVoltageEnabled[2] = {0, 0};
-    uint32_t mockFrequencyTarget[2] = {0, 0};
-    uint32_t mockVoltageTarget[2] = {0, 0};
-    uint32_t mockVoltageOffset[2] = {0, 0};
+    uint32_t mockMaxFactoryDefaultFrequency[3] = {600, 4200, 600};
+    uint32_t mockMaxFactoryDefaultVoltage[3] = {1200, 1300, 1200};
+    uint32_t mockMaxOcFrequency[3] = {1800, 4500, 1800};
+    uint32_t mockMaxOcVoltage[3] = {1300, 1400, 1300};
+    uint32_t mockFixedMode[3] = {0, 0, 0};
+    uint32_t mockVoltageMode[3] = {0, 0, 0};
+    uint32_t mockHighVoltageSupported[3] = {0, 0, 0};
+    uint32_t mockHighVoltageEnabled[3] = {0, 0, 0};
+    uint32_t mockFrequencyTarget[3] = {0, 0, 0};
+    uint32_t mockVoltageTarget[3] = {0, 0, 0};
+    uint32_t mockVoltageOffset[3] = {0, 0, 0};
 
     void getFrequencyProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -66,6 +67,12 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
         case KmdSysman::Requests::Frequency::NumFrequencyDomains: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockNumberOfDomains;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Frequency::SupportedFreqDomains: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockSupportedDomains;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
@@ -188,6 +195,13 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pMinFreq = reinterpret_cast<uint32_t *>(pBuffer);
+                uint32_t *pMaxFreq = reinterpret_cast<uint32_t *>(pBuffer + sizeof(uint32_t));
+                *pMinFreq = mockMinFrequencyRange;
+                *pMaxFreq = mockMaxFrequencyRange;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = 2 * sizeof(uint32_t);
             }
         } break;
         case KmdSysman::Requests::Frequency::CurrentRequestedFrequency: {
@@ -199,6 +213,11 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+                *pValue = mockRequestedFrequency;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
             }
         } break;
         case KmdSysman::Requests::Frequency::CurrentTdpFrequency: {
@@ -210,6 +229,11 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+                *pValue = mockTdpFrequency;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
             }
         } break;
         case KmdSysman::Requests::Frequency::CurrentResolvedFrequency: {
@@ -227,6 +251,11 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+                *pValue = mockEfficientFrequency;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
             }
         } break;
         case KmdSysman::Requests::Frequency::FrequencyRangeMaxDefault: {
@@ -238,6 +267,11 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+                *pValue = mockRp0[domain];
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
             }
         } break;
         case KmdSysman::Requests::Frequency::FrequencyRangeMinDefault: {
@@ -249,6 +283,11 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+                *pValue = mockRpn[domain];
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
             }
         } break;
         case KmdSysman::Requests::Frequency::CurrentVoltage: {
@@ -260,6 +299,11 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+                *pValue = mockCurrentVoltage;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
             }
         } break;
         case KmdSysman::Requests::Frequency::CurrentThrottleReasons: {
@@ -271,6 +315,11 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+                *pValue = mockThrottleReasons;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
             }
         } break;
         default: {
@@ -293,12 +342,24 @@ struct MockFrequencyKmdSysManager : public MockKmdSysManager {
         }
         switch (pRequest->inRequestId) {
         case KmdSysman::Requests::Frequency::CurrentFrequencyRange: {
-            uint32_t *pMinFreq = reinterpret_cast<uint32_t *>(pBuffer);
-            uint32_t *pMaxFreq = reinterpret_cast<uint32_t *>(pBuffer + sizeof(uint32_t));
-            mockMinFrequencyRange = *pMinFreq;
-            mockMaxFrequencyRange = *pMaxFreq;
-            pResponse->outDataSize = 0;
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            if (domain == KmdSysman::GeneralDomainsType::GeneralDomainDGPU) {
+                uint32_t *pMinFreq = reinterpret_cast<uint32_t *>(pBuffer);
+                uint32_t *pMaxFreq = reinterpret_cast<uint32_t *>(pBuffer + sizeof(uint32_t));
+                mockMinFrequencyRange = *pMinFreq;
+                mockMaxFrequencyRange = *pMaxFreq;
+                pResponse->outDataSize = 0;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
+                pResponse->outDataSize = 0;
+                pResponse->outReturnCode = KmdSysman::ReturnCodes::DomainServiceNotSupported;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainMedia) {
+                uint32_t *pMinFreq = reinterpret_cast<uint32_t *>(pBuffer);
+                uint32_t *pMaxFreq = reinterpret_cast<uint32_t *>(pBuffer + sizeof(uint32_t));
+                mockMinFrequencyRange = *pMinFreq;
+                mockMaxFrequencyRange = *pMaxFreq;
+                pResponse->outDataSize = 0;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            }
         } break;
         case KmdSysman::Requests::Frequency::CurrentFixedMode: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);

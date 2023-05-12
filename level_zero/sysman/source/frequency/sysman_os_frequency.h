@@ -32,7 +32,7 @@ class OsFrequency {
     virtual ze_result_t getOcTjMax(double *pOcTjMax) = 0;
     virtual ze_result_t setOcTjMax(double ocTjMax) = 0;
     static OsFrequency *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t type);
-    static uint16_t getNumberOfFreqDomainsSupported(OsSysman *pOsSysman);
+    static std::vector<zes_freq_domain_t> getNumberOfFreqDomainsSupported(OsSysman *pOsSysman);
     virtual ~OsFrequency() {}
 };
 

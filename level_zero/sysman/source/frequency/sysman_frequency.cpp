@@ -30,16 +30,16 @@ void FrequencyHandleContext::createHandle(ze_bool_t onSubdevice, uint32_t subdev
 ze_result_t FrequencyHandleContext::init(uint32_t subDeviceCount) {
 
     auto totalDomains = OsFrequency::getNumberOfFreqDomainsSupported(pOsSysman);
-    UNRECOVERABLE_IF(totalDomains > 2);
+    UNRECOVERABLE_IF(totalDomains.size() > 3);
     if (subDeviceCount == 0) {
-        for (uint32_t frequencyDomain = 0; frequencyDomain < totalDomains; frequencyDomain++) {
+        for (const auto &frequencyDomain : totalDomains) {
             createHandle(false, 0, static_cast<zes_freq_domain_t>(frequencyDomain));
         }
     }
 
     else {
         for (uint32_t subDeviceId = 0; subDeviceId < subDeviceCount; subDeviceId++) {
-            for (uint32_t frequencyDomain = 0; frequencyDomain < totalDomains; frequencyDomain++) {
+            for (const auto &frequencyDomain : totalDomains) {
                 createHandle(true, subDeviceId, static_cast<zes_freq_domain_t>(frequencyDomain));
             }
         }

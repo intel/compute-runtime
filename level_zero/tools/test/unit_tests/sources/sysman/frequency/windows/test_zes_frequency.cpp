@@ -15,7 +15,7 @@ extern bool sysmanUltsEnable;
 namespace L0 {
 namespace ult {
 
-constexpr uint32_t frequencyHandleComponentCount = 2u;
+constexpr uint32_t frequencyHandleComponentCount = 3u;
 constexpr double minFreq = 400.0;
 constexpr double maxFreq = 1200.0;
 constexpr double step = 50.0 / 3;
@@ -76,10 +76,17 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidCountIsReturned) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, frequencyHandleComponentCount);
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsIfNoHandlesArePresentThenZeroCountIsReturned) {
+    uint32_t count = 0;
+    pKmdSysManager->mockSupportedDomains = 0;
+    EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 0u);
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidComponentCountWhenEnumeratingFrequencyDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
@@ -128,6 +135,9 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         } else if (domainIndex == ZES_FREQ_DOMAIN_MEMORY) {
             EXPECT_DOUBLE_EQ(-1, properties.max);
             EXPECT_DOUBLE_EQ(-1, properties.min);
+        } else if (domainIndex == ZES_FREQ_DOMAIN_MEDIA) {
+            EXPECT_DOUBLE_EQ(pKmdSysManager->mockRp0[domainIndex], properties.max);
+            EXPECT_DOUBLE_EQ(pKmdSysManager->mockRpn[domainIndex], properties.min);
         }
         domainIndex++;
     }
@@ -149,6 +159,9 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesAllo
         } else if (domainIndex == ZES_FREQ_DOMAIN_MEMORY) {
             EXPECT_DOUBLE_EQ(-1.0, properties.max);
             EXPECT_DOUBLE_EQ(-1.0, properties.min);
+        } else if (domainIndex == ZES_FREQ_DOMAIN_MEDIA) {
+            EXPECT_DOUBLE_EQ(pKmdSysManager->mockRp0[domainIndex], properties.max);
+            EXPECT_DOUBLE_EQ(pKmdSysManager->mockRpn[domainIndex], properties.min);
         }
         EXPECT_EQ(pKmdSysManager->mockGPUCannotControl[domainIndex], properties.canControl);
         domainIndex++;
@@ -194,6 +207,9 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCa
         } else if (domainIndex == ZES_FREQ_DOMAIN_MEMORY) {
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
             EXPECT_EQ(1, count);
+        } else if (domainIndex == ZES_FREQ_DOMAIN_MEDIA) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
+            EXPECT_EQ(numClocks, count);
         }
 
         domainIndex++;
@@ -235,6 +251,10 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
             EXPECT_DOUBLE_EQ(pKmdSysManager->mockMaxFrequencyRange, limits.max);
         } else if (domainIndex == ZES_FREQ_DOMAIN_MEMORY) {
             EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyGetRange(handle, &limits));
+        } else if (domainIndex == ZES_FREQ_DOMAIN_MEDIA) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
+            EXPECT_DOUBLE_EQ(pKmdSysManager->mockMinFrequencyRange, limits.min);
+            EXPECT_DOUBLE_EQ(pKmdSysManager->mockMaxFrequencyRange, limits.max);
         }
 
         domainIndex++;
@@ -276,6 +296,19 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
             EXPECT_DOUBLE_EQ(minFreq, limits.min);
             EXPECT_DOUBLE_EQ(newMax, limits.max);
+        } else if (domainIndex == ZES_FREQ_DOMAIN_MEDIA) {
+            zes_freq_range_t limits;
+
+            pKmdSysManager->mockMinFrequencyRange = static_cast<uint32_t>(startingMin);
+
+            // If the new Max value is less than the old Min
+            // value, the new Min must be set before the new Max
+            limits.min = minFreq;
+            limits.max = newMax;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencySetRange(handle, &limits));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
+            EXPECT_DOUBLE_EQ(minFreq, limits.min);
+            EXPECT_DOUBLE_EQ(newMax, limits.max);
         }
 
         domainIndex++;
@@ -291,6 +324,19 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         const double newMin = 900.0;
 
         if (domainIndex == ZES_FREQ_DOMAIN_GPU) {
+            zes_freq_range_t limits;
+
+            pKmdSysManager->mockMaxFrequencyRange = static_cast<uint32_t>(startingMax);
+
+            // If the new Min value is greater than the old Max
+            // value, the new Max must be set before the new Min
+            limits.min = newMin;
+            limits.max = maxFreq;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencySetRange(handle, &limits));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
+            EXPECT_DOUBLE_EQ(newMin, limits.min);
+            EXPECT_DOUBLE_EQ(maxFreq, limits.max);
+        } else if (domainIndex == ZES_FREQ_DOMAIN_MEDIA) {
             zes_freq_range_t limits;
 
             pKmdSysManager->mockMaxFrequencyRange = static_cast<uint32_t>(startingMax);
@@ -330,6 +376,13 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
             EXPECT_DOUBLE_EQ(-1.0, state.efficient);
             EXPECT_DOUBLE_EQ(-1.0, state.request);
             EXPECT_DOUBLE_EQ(-1.0, state.tdp);
+            EXPECT_EQ(pKmdSysManager->mockThrottleReasons, state.throttleReasons);
+        } else if (domainIndex == ZES_FREQ_DOMAIN_MEDIA) {
+            EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockResolvedFrequency[domainIndex]), state.actual);
+            EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockCurrentVoltage) / milliVoltsFactor, state.currentVoltage);
+            EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockEfficientFrequency), state.efficient);
+            EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockRequestedFrequency), state.request);
+            EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockTdpFrequency), state.tdp);
             EXPECT_EQ(pKmdSysManager->mockThrottleReasons, state.throttleReasons);
         }
 

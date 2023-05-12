@@ -423,8 +423,9 @@ OsFrequency *OsFrequency::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uin
     return static_cast<OsFrequency *>(pLinuxFrequencyImp);
 }
 
-uint16_t OsFrequency::getNumberOfFreqDoainsSupported(OsSysman *pOsSysman) {
-    return 1; // hardcode for now to support only ZES_FREQ_DOMAIN_GPU
+std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSysman *pOsSysman) {
+    std::vector<zes_freq_domain_t> freqDomains = {ZES_FREQ_DOMAIN_GPU};
+    return freqDomains;
 }
 
 } // namespace L0
