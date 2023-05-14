@@ -1799,9 +1799,6 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     auto allocation = surface.getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_EQ(1u, allocation->hostPtrTaskCountAssignment.load());
-    allocation->hostPtrTaskCountAssignment--;
-
     EXPECT_NE(memory, allocation->getUnderlyingBuffer());
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), memory, size));
 

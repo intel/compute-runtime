@@ -292,9 +292,6 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSet
     HostPtrSurface hostPtrSurf(ptr, ptrSize);
     queue->getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
 
-    EXPECT_EQ(1u, hostPtrSurf.getAllocation()->hostPtrTaskCountAssignment.load());
-    hostPtrSurf.getAllocation()->hostPtrTaskCountAssignment--;
-
     queue->prepareHostPtrSurfaceForSplit(false, *hostPtrSurf.getAllocation());
 
     for (auto i = static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS1); i <= static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS8); i++) {
