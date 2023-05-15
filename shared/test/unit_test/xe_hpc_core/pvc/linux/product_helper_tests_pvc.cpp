@@ -79,7 +79,7 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupportedThenReturnFalse, IGFX_PVC);
 
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnTrue) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
+    EXPECT_TRUE(productHelper->isKmdMigrationSupported());
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
