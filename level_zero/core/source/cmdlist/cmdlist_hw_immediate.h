@@ -40,6 +40,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = CommandListCoreFamily<gfxCoreFamily>;
     using BaseClass::BaseClass;
+    using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::executeCommandListImmediate;
     using BaseClass::isCopyOnly;
     using BaseClass::isInOrderExecutionEnabled;
@@ -174,6 +175,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::inOrderDependencyCounterAllocation;
 
     void printKernelsPrintfOutput(bool hangDetected);
+    ze_result_t synchronizeInOrderExecution() const;
+
     MOCKABLE_VIRTUAL void checkAssert();
     std::atomic<bool> dependenciesPresent{false};
 };

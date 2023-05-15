@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
@@ -787,6 +788,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    if (isInOrderExecutionEnabled()) {
+        this->dependenciesPresent = false; // wait only for waitlist and in-order sync value
+    }
+
     if (numWaitEvents > 0) {
         uint32_t numEventsThreshold = 5;
         if (NEO::DebugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.get() != -1) {
@@ -824,6 +829,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
         this->dependenciesPresent = false;
+    }
+
+    if (isInOrderExecutionEnabled()) {
+        auto status = synchronizeInOrderExecution();
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
     }
 
     if (signalEvent) {
@@ -1026,6 +1038,26 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAll
     auto numEvents = numWaitEvents + ((inOrderDependencyCounter > 0) ? 1 : 0);
 
     return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numEvents);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExecution() const {
+    auto hostAddress = static_cast<uint32_t *>(this->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    auto waitValue = this->inOrderDependencyCounter;
+
+    auto lastHangCheckTime = std::chrono::high_resolution_clock::now();
+
+    while (*hostAddress < waitValue) {
+        this->csr->downloadAllocation(*this->inOrderDependencyCounterAllocation);
+
+        bool status = NEO::WaitUtils::waitFunctionWithPredicate<const uint32_t>(hostAddress, waitValue, std::greater_equal<uint32_t>());
+
+        if (!status && this->csr->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime)) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

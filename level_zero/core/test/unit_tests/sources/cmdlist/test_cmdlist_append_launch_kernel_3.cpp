@@ -1115,6 +1115,107 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierThenS
     EXPECT_EQ(2u, pcCmd->getImmediateData());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompletion, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    *hostAddress = 0;
+
+    const uint32_t failCounter = 3;
+    uint32_t callCounter = 0;
+
+    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+        callCounter++;
+        if (callCounter >= failCounter) {
+            *hostAddress = 1;
+        }
+    };
+
+    immCmdList->synchronizeInOrderExecution();
+
+    EXPECT_EQ(3u, callCounter);
+    EXPECT_EQ(2u, ultCsr->checkGpuHangDetectedCalled);
+    EXPECT_EQ(1u, *hostAddress);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->copyThroughLockedPtrEnabled = true;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto eventPool = createEvents(1, false);
+
+    auto eventHandle = events[0]->toHandle();
+
+    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    *hostAddress = 0;
+
+    const uint32_t failCounter = 3;
+    uint32_t callCounter = 0;
+
+    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+        callCounter++;
+        if (callCounter >= failCounter) {
+            (*hostAddress)++;
+        }
+    };
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle, 0, nullptr, launchParams, false);
+    events[0]->setIsCompleted();
+
+    ultCsr->waitForCompletionWithTimeoutTaskCountCalled = 0;
+    ultCsr->flushTagUpdateCalled = false;
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    uint32_t hostCopyData = 0;
+
+    immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 1, &eventHandle, false);
+
+    EXPECT_EQ(3u, callCounter);
+    EXPECT_EQ(1u, *hostAddress);
+    EXPECT_EQ(2u, ultCsr->checkGpuHangDetectedCalled);
+    EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+
+    context->freeMem(deviceAlloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathThenReportError, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->copyThroughLockedPtrEnabled = true;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    *hostAddress = 0;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    uint32_t hostCopyData = 0;
+
+    ultCsr->forceReturnGpuHang = true;
+
+    auto status = immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, status);
+
+    ultCsr->forceReturnGpuHang = false;
+
+    context->freeMem(deviceAlloc);
+}
+
 struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {
     template <typename FamilyType>
     uint64_t getIndirectHeapOffsetForImplicitArgsBuffer(const Mock<::L0::Kernel> &kernel) {

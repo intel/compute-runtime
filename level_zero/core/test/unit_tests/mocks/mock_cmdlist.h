@@ -173,6 +173,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
+    using BaseClass::synchronizeInOrderExecution;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 };

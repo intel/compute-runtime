@@ -379,6 +379,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         pollForCompletionCalled++;
     }
 
+    bool checkGpuHangDetected(CommandStreamReceiver::TimeType currentTime, CommandStreamReceiver::TimeType &lastHangCheckTime) const override {
+        checkGpuHangDetectedCalled++;
+        if (forceReturnGpuHang) {
+            return true;
+        }
+
+        return BaseClass::checkGpuHangDetected(currentTime, lastHangCheckTime);
+    }
+
     SubmissionStatus sendRenderStateCacheFlush() override {
         if (callBaseSendRenderStateCacheFlush) {
             return BaseClass::sendRenderStateCacheFlush();
@@ -404,6 +413,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t initDirectSubmissionCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
     uint32_t pollForCompletionCalled = 0;
+    mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
     BlitPropertiesContainer receivedBlitProperties = {};
@@ -435,6 +445,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool callBaseFillReusableAllocationsList = false;
     bool callBaseFlushBcsTask{true};
     bool callBaseSendRenderStateCacheFlush = true;
+    bool forceReturnGpuHang = false;
 };
 
 } // namespace NEO
