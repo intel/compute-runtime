@@ -126,6 +126,20 @@ TEST_F(DeviceTest, whenGetRTDispatchGlobalsIsCalledWithUnsupportedBVHLevelsThenN
     EXPECT_EQ(nullptr, pDevice->getRTDispatchGlobals(100));
 }
 
+TEST_F(DeviceTest, whenInitializeRayTracingIsCalledWithMockAllocatorThenDispatchGlobalsArrayAllocationIsLockable) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    auto maxBvhLevel = 3;
+    pDevice->initializeRayTracing(maxBvhLevel);
+    for (auto i = 0; i < maxBvhLevel; i++) {
+        auto rtDispatchGlobals = pDevice->getRTDispatchGlobals(i);
+        EXPECT_NE(nullptr, rtDispatchGlobals);
+        auto dispatchGlobalsArray = rtDispatchGlobals->rtDispatchGlobalsArray;
+        EXPECT_NE(nullptr, dispatchGlobalsArray);
+        EXPECT_FALSE(dispatchGlobalsArray->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
+    }
+}
+
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledWithMockAllocatorThenRTDispatchGlobalsIsAllocated) {
     pDevice->initializeRayTracing(5);
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));

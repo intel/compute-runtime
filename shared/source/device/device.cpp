@@ -886,7 +886,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     GraphicsAllocation *dispatchGlobalsArrayAllocation = nullptr;
 
     AllocationProperties arrayAllocProps(getRootDeviceIndex(), true, dispatchGlobalsSize,
-                                         AllocationType::BUFFER, true, getDeviceBitfield());
+                                         AllocationType::GLOBAL_SURFACE, true, getDeviceBitfield());
     arrayAllocProps.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
     arrayAllocProps.flags.isUSMDeviceAllocation = true;
     dispatchGlobalsArrayAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(arrayAllocProps);
