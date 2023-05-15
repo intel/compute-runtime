@@ -885,6 +885,17 @@ ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *de
     *deviceTimestamp = queueTimeStamp.gpuTimeStamp;
     *hostTimestamp = queueTimeStamp.cpuTimeinNS;
 
+    if (NEO::DebugManager.flags.PrintGlobalTimestampInNs.get()) {
+        const auto &capabilityTable = this->neoDevice->getHardwareInfo().capabilityTable;
+        const auto validBits = std::min(capabilityTable.timestampValidBits, capabilityTable.kernelTimestampValidBits);
+        uint64_t kernelTimestampMaxValueInCycles = std::numeric_limits<uint64_t>::max();
+        if (validBits < 64u) {
+            kernelTimestampMaxValueInCycles = (1ull << validBits) - 1;
+        }
+        const uint64_t deviceTsinNs = (*deviceTimestamp & kernelTimestampMaxValueInCycles) * this->neoDevice->getDeviceInfo().outProfilingTimerResolution;
+        NEO::printDebugString(true, stdout,
+                              "Host timestamp in ns : %llu | Device timestamp in ns : %llu\n", *hostTimestamp, deviceTsinNs);
+    }
     return ZE_RESULT_SUCCESS;
 }
 

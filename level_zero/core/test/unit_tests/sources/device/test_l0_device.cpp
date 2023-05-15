@@ -1648,7 +1648,8 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecond
 class FalseCpuDeviceTime : public NEO::DeviceTime {
   public:
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime, NEO::OSTime *) override {
-        pGpuCpuTime->cpuTimeinNS = 0u;
+        pGpuCpuTime->cpuTimeinNS = mockCpuTimeInNs;
+        pGpuCpuTime->gpuTimeStamp = mockGpuTimeInNs;
         return true;
     }
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
@@ -1657,6 +1658,8 @@ class FalseCpuDeviceTime : public NEO::DeviceTime {
     uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
         return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
     }
+    uint64_t mockCpuTimeInNs = 0u;
+    uint64_t mockGpuTimeInNs = 100u;
 };
 
 class FalseCpuTime : public NEO::OSTime {
@@ -1676,6 +1679,10 @@ class FalseCpuTime : public NEO::OSTime {
     static std::unique_ptr<OSTime> create() {
         return std::unique_ptr<OSTime>(new FalseCpuTime());
     }
+
+    FalseCpuDeviceTime *getFalseCpuDeviceTime() {
+        return static_cast<FalseCpuDeviceTime *>(this->deviceTime.get());
+    }
 };
 
 TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseReturnArbitraryValues) {
@@ -1693,6 +1700,66 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseRetu
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(0u, hostTs);
     EXPECT_NE(0u, deviceTs);
+}
+
+TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetWhenGetGlobalTimestampIsCalledThenOutputStringIsAsExpected) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintGlobalTimestampInNs.set(true);
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    auto falseCpuTime = std::make_unique<FalseCpuTime>();
+    auto cpuDeviceTime = falseCpuTime->getFalseCpuDeviceTime();
+    // Using 36 bits for gpu timestamp
+    cpuDeviceTime->mockGpuTimeInNs = 0xFFFFFFFFF;
+    rootDeviceEnvironment.osTime = std::move(falseCpuTime);
+
+    auto &capabilityTable = rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable;
+    capabilityTable.timestampValidBits = 36;
+    capabilityTable.kernelTimestampValidBits = 32;
+
+    testing::internal::CaptureStdout();
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::string output = testing::internal::GetCapturedStdout();
+    // Considering kernelTimestampValidBits(32)
+    auto gpuTimeStamp = cpuDeviceTime->mockGpuTimeInNs & 0xFFFFFFFF;
+    const std::string expectedString("Host timestamp in ns : 0 | Device timestamp in ns : " +
+                                     std::to_string(static_cast<uint64_t>(neoDevice->getProfilingTimerResolution()) *
+                                                    gpuTimeStamp) +
+                                     "\n");
+    EXPECT_STREQ(output.c_str(), expectedString.c_str());
+}
+
+TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetAnd64bitTimestampWhenGetGlobalTimestampIsCalledThenOutputStringIsAsExpected) {
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    auto falseCpuTime = std::make_unique<FalseCpuTime>();
+    auto cpuDeviceTime = falseCpuTime->getFalseCpuDeviceTime();
+    // Using 36 bits for gpu timestamp
+    cpuDeviceTime->mockGpuTimeInNs = 0xFFFFFFFFF;
+    rootDeviceEnvironment.osTime = std::move(falseCpuTime);
+
+    auto &capabilityTable = rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable;
+    capabilityTable.timestampValidBits = 64;
+    capabilityTable.kernelTimestampValidBits = 64;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintGlobalTimestampInNs.set(true);
+
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+
+    testing::internal::CaptureStdout();
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::string output = testing::internal::GetCapturedStdout();
+    const std::string expectedString("Host timestamp in ns : 0 | Device timestamp in ns : " +
+                                     std::to_string(static_cast<uint64_t>(neoDevice->getProfilingTimerResolution()) *
+                                                    cpuDeviceTime->mockGpuTimeInNs) +
+                                     "\n");
+    printf("output: <%s> | Expected: <%s>\n", output.c_str(), expectedString.c_str());
+    EXPECT_STREQ(output.c_str(), expectedString.c_str());
 }
 
 using DeviceGetMemoryTests = DeviceTest;
