@@ -2687,6 +2687,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     if (logicalStateHelperBlock && this->stateBaseAddressTracking && finalStreamState.stateBaseAddress.isDirty()) {
         commandContainer.setDirtyStateForAllHeaps(false);
         programStateBaseAddress(commandContainer, true);
+        finalStreamState.stateBaseAddress.clearIsDirty();
     }
 }
 
