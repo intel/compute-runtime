@@ -195,7 +195,21 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void handlePipelineSelectStateTransition(const DispatchFlags &dispatchFlags);
     void handleStateBaseAddressStateTransition(const DispatchFlags &dispatchFlags, bool &isStateBaseAddressDirty);
     void updateStreamTaskCount(LinearStream &stream, TaskCountType newTaskCount);
+    inline void programStateBaseAddress(const IndirectHeap *dsh,
+                                        const IndirectHeap *ioh,
+                                        const IndirectHeap *ssh,
+                                        DispatchFlags &dispatchFlags,
+                                        Device &device, LinearStream &commandStreamCSR,
+                                        bool stateBaseAddressDirty);
 
+    inline void reprogramStateBaseAddress(const IndirectHeap *dsh,
+                                          const IndirectHeap *ioh,
+                                          const IndirectHeap *ssh,
+                                          DispatchFlags &dispatchFlags,
+                                          Device &device, LinearStream &commandStreamCSR,
+                                          bool force32BitAllocations, bool sshDirty, bool bindingTablePoolCommandNeeded);
+
+    inline void programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR);
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
 
     HeapDirtyState dshState;

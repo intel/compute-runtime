@@ -271,21 +271,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     TaskCountType taskLevel,
     DispatchFlags &dispatchFlags,
     Device &device) {
-    typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-    typedef typename GfxFamily::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
-    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
-
-    int64_t bindingTablePoolBaseAddress = -1;
-    size_t bindingTablePoolSize = std::numeric_limits<size_t>::max();
-    int64_t surfaceStateBaseAddress = -1;
-    size_t surfaceStateSize = std::numeric_limits<size_t>::max();
-    int64_t dynamicStateBaseAddress = -1;
-    size_t dynamicStateSize = std::numeric_limits<size_t>::max();
-    int64_t indirectObjectBaseAddress = -1;
-    size_t indirectObjectSize = std::numeric_limits<size_t>::max();
 
     DEBUG_BREAK_IF(&commandStreamTask == &commandStream);
     DEBUG_BREAK_IF(!(dispatchFlags.preemptionMode == PreemptionMode::Disabled ? device.getPreemptionMode() == PreemptionMode::Disabled : true));
@@ -385,8 +375,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
 
     csrSizeRequestFlags.activePartitionsChanged = isProgramActivePartitionConfigRequired();
-
-    auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
     bool stateBaseAddressDirty = false;
 
     bool checkVfeStateDirty = false;
@@ -446,8 +434,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         dispatchRayTracingStateCommand(commandStreamCSR, device);
     }
 
-    stateBaseAddressDirty |= ((gsbaFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
-
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
 
     programPreemption(commandStreamCSR, dispatchFlags);
@@ -457,138 +443,16 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
     }
-    const bool hasDsh = hwInfo.capabilityTable.supportsImages && dsh != nullptr;
-    bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh) : false;
-    bool iohDirty = iohState.updateAndCheck(ioh);
-    bool sshDirty = ssh != nullptr ? sshState.updateAndCheck(ssh) : false;
-    bool btCommandNeeded = sshDirty && (ssh->getGraphicsAllocation() != globalStatelessHeapAllocation);
 
-    if (dshDirty) {
-        dynamicStateBaseAddress = dsh->getHeapGpuBase();
-        dynamicStateSize = dsh->getHeapSizeInPages();
-
-        this->streamProperties.stateBaseAddress.setPropertiesDynamicState(dynamicStateBaseAddress, dynamicStateSize);
-    }
-    if (iohDirty) {
-        indirectObjectBaseAddress = ioh->getHeapGpuBase();
-        indirectObjectSize = ioh->getHeapSizeInPages();
-
-        this->streamProperties.stateBaseAddress.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
-    }
-    if (sshDirty) {
-        surfaceStateBaseAddress = ssh->getHeapGpuBase();
-        surfaceStateSize = ssh->getHeapSizeInPages();
-
-        if (btCommandNeeded) {
-            bindingTablePoolBaseAddress = surfaceStateBaseAddress;
-            bindingTablePoolSize = surfaceStateSize;
-        }
-
-        this->streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize,
-                                                                                      surfaceStateBaseAddress, surfaceStateSize);
-    }
-
-    auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
-
-    handleStateBaseAddressStateTransition(dispatchFlags, isStateBaseAddressDirty);
-
-    bool debuggingEnabled = device.getDebugger() != nullptr;
-    bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr ? true : false;
-
-    // Reprogram state base address if required
-    if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
-        EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, rootDeviceEnvironment, isRcs(), this->dcFlushSupport);
-        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, rootDeviceEnvironment, isRcs());
-
-        uint64_t newGshBase = 0;
-        gsbaFor32BitProgrammed = false;
-        if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
-            newGshBase = scratchSpaceController->calculateNewGSH();
-        } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
-            bool useLocalMemory = scratchSpaceController->getScratchSpaceAllocation() ? scratchSpaceController->getScratchSpaceAllocation()->isAllocatedInLocalMemoryPool() : false;
-            newGshBase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex, useLocalMemory);
-            gsbaFor32BitProgrammed = true;
-        }
-
-        auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
-        auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
-        uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
-
-        STATE_BASE_ADDRESS stateBaseAddressCmd;
-
-        StateBaseAddressHelperArgs<GfxFamily> args = {
-            newGshBase,                                    // generalStateBaseAddress
-            indirectObjectStateBaseAddress,                // indirectObjectHeapBaseAddress
-            instructionHeapBaseAddress,                    // instructionHeapBaseAddress
-            0,                                             // globalHeapsBaseAddress
-            0,                                             // surfaceStateBaseAddress
-            &stateBaseAddressCmd,                          // stateBaseAddressCmd
-            nullptr,                                       // sbaProperties
-            dsh,                                           // dsh
-            ioh,                                           // ioh
-            ssh,                                           // ssh
-            device.getGmmHelper(),                         // gmmHelper
-            this->latestSentStatelessMocsConfig,           // statelessMocsIndex
-            l1CachePolicyData.getL1CacheValue(false),      // l1CachePolicy
-            l1CachePolicyData.getL1CacheValue(true),       // l1CachePolicyDebuggerActive
-            this->lastMemoryCompressionState,              // memoryCompressionState
-            true,                                          // setInstructionStateBaseAddress
-            true,                                          // setGeneralStateBaseAddress
-            false,                                         // useGlobalHeapsBaseAddress
-            isMultiOsContextCapable(),                     // isMultiOsContextCapable
-            this->lastSentUseGlobalAtomics,                // useGlobalAtomics
-            dispatchFlags.areMultipleSubDevicesInContext,  // areMultipleSubDevicesInContext
-            false,                                         // overrideSurfaceStateBaseAddress
-            debuggingEnabled || device.isDebuggerActive(), // isDebuggerActive
-            this->doubleSbaWa                              // doubleSbaWa
-        };
-
-        StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, commandStreamCSR);
-
-        bool sbaTrackingEnabled = (debuggingEnabled && !device.getDebugger()->isLegacy());
-        if (sbaTrackingEnabled) {
-            device.getL0Debugger()->programSbaAddressLoad(commandStreamCSR,
-                                                          device.getL0Debugger()->getSbaTrackingBuffer(this->getOsContext().getContextId())->getGpuAddress());
-        }
-        NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
-                                                                                     device,
-                                                                                     commandStreamCSR,
-                                                                                     stateBaseAddressCmd, true);
-
-        if (sshDirty) {
-            bindingTableBaseAddressRequired = btCommandNeeded;
-        }
-
-        if (bindingTableBaseAddressRequired) {
-            StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStreamCSR, *ssh, device.getGmmHelper());
-            bindingTableBaseAddressRequired = false;
-        }
-
-        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, rootDeviceEnvironment, isRcs());
-
-        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGshBase,
-                                            device.getDeviceInfo().imageSupport);
-        }
-        setGSBAStateDirty(false);
-        this->streamProperties.stateBaseAddress.clearIsDirty();
-    }
-
+    programStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, stateBaseAddressDirty);
     addPipeControlBeforeStateSip(commandStreamCSR, device);
     programStateSip(commandStreamCSR, device);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
-    if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
-        if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
-            PipeControlArgs args;
-            args.textureCacheInvalidationEnable = true;
-            MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
-            if (this->samplerCacheFlushRequired == SamplerCacheFlushState::samplerCacheFlushBefore) {
-                this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushAfter;
-            } else {
-                this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
-            }
-        }
+
+    bool samplerCacheFlushBetweenRedescribedSurfaceReadsRequired = hwInfo.workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads;
+    if (samplerCacheFlushBetweenRedescribedSurfaceReadsRequired) {
+        programSamplerCacheFlushBetweenRedescribedSurfaceReads(commandStreamCSR);
     }
 
     if (experimentalCmdBuffer.get() != nullptr) {
@@ -617,20 +481,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
         forcePipeControl(commandStreamCSR);
     }
-    if (hasDsh) {
-        auto dshAllocation = dsh->getGraphicsAllocation();
-        this->makeResident(*dshAllocation);
-        dshAllocation->setEvictable(false);
-    }
-    auto iohAllocation = ioh->getGraphicsAllocation();
-
-    if (ssh != nullptr) {
-        auto sshAllocation = ssh->getGraphicsAllocation();
-        this->makeResident(*sshAllocation);
-    }
-
-    this->makeResident(*iohAllocation);
-    iohAllocation->setEvictable(false);
 
     this->makeResident(*tagAllocation);
 
@@ -638,13 +488,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*globalFenceAllocation);
     }
 
-    if (globalStatelessHeapAllocation) {
-        makeResident(*globalStatelessHeapAllocation);
-    }
-
     if (preemptionAllocation) {
         makeResident(*preemptionAllocation);
     }
+
+    bool debuggingEnabled = device.getDebugger() != nullptr;
 
     if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || debuggingEnabled) {
         makeResident(*SipKernel::getSipKernel(device).getSipAllocation());
@@ -1769,6 +1617,178 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::updateStreamTaskCount(LinearStream &stream, TaskCountType newTaskCount) {
     stream.getGraphicsAllocation()->updateTaskCount(newTaskCount, this->osContext->getContextId());
     stream.getGraphicsAllocation()->updateResidencyTaskCount(newTaskCount, this->osContext->getContextId());
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const IndirectHeap *dsh,
+                                                                        const IndirectHeap *ioh,
+                                                                        const IndirectHeap *ssh,
+                                                                        DispatchFlags &dispatchFlags,
+                                                                        Device &device,
+                                                                        LinearStream &commandStreamCSR,
+                                                                        bool stateBaseAddressDirty) {
+
+    auto &hwInfo = this->peekHwInfo();
+    const bool hasDsh = hwInfo.capabilityTable.supportsImages && dsh != nullptr;
+
+    bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh) : false;
+    bool iohDirty = iohState.updateAndCheck(ioh);
+    bool sshDirty = ssh != nullptr ? sshState.updateAndCheck(ssh) : false;
+
+    bool bindingTablePoolCommandNeeded = sshDirty && (ssh->getGraphicsAllocation() != globalStatelessHeapAllocation);
+
+    if (dshDirty) {
+        int64_t dynamicStateBaseAddress = dsh->getHeapGpuBase();
+        size_t dynamicStateSize = dsh->getHeapSizeInPages();
+        this->streamProperties.stateBaseAddress.setPropertiesDynamicState(dynamicStateBaseAddress, dynamicStateSize);
+    }
+    if (iohDirty) {
+        int64_t indirectObjectBaseAddress = ioh->getHeapGpuBase();
+        size_t indirectObjectSize = ioh->getHeapSizeInPages();
+        this->streamProperties.stateBaseAddress.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
+    }
+    if (sshDirty) {
+        int64_t surfaceStateBaseAddress = ssh->getHeapGpuBase();
+        size_t surfaceStateSize = ssh->getHeapSizeInPages();
+        int64_t bindingTablePoolBaseAddress = -1;
+        size_t bindingTablePoolSize = std::numeric_limits<size_t>::max();
+
+        if (bindingTablePoolCommandNeeded) {
+            bindingTablePoolBaseAddress = surfaceStateBaseAddress;
+            bindingTablePoolSize = surfaceStateSize;
+        }
+        this->streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize,
+                                                                                      surfaceStateBaseAddress, surfaceStateSize);
+    }
+
+    auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
+    stateBaseAddressDirty |= ((gsbaFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
+    bool isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
+    handleStateBaseAddressStateTransition(dispatchFlags, isStateBaseAddressDirty);
+
+    bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr;
+
+    // reprogram state base address command if required
+    if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
+        reprogramStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, force32BitAllocations, sshDirty, bindingTablePoolCommandNeeded);
+    }
+
+    if (hasDsh) {
+        auto dshAllocation = dsh->getGraphicsAllocation();
+        this->makeResident(*dshAllocation);
+        dshAllocation->setEvictable(false);
+    }
+
+    if (ssh != nullptr) {
+        auto sshAllocation = ssh->getGraphicsAllocation();
+        this->makeResident(*sshAllocation);
+    }
+
+    auto iohAllocation = ioh->getGraphicsAllocation();
+    this->makeResident(*iohAllocation);
+    iohAllocation->setEvictable(false);
+
+    if (globalStatelessHeapAllocation) {
+        makeResident(*globalStatelessHeapAllocation);
+    }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, DispatchFlags &dispatchFlags, Device &device, LinearStream &commandStreamCSR, bool force32BitAllocations, bool sshDirty, bool bindingTablePoolCommandNeeded) {
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+
+    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
+
+    EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, rootDeviceEnvironment, isRcs(), this->dcFlushSupport);
+    EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, rootDeviceEnvironment, isRcs());
+
+    uint64_t newGshBase = 0;
+    gsbaFor32BitProgrammed = false;
+    if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
+        newGshBase = scratchSpaceController->calculateNewGSH();
+    } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
+        bool useLocalMemory = scratchSpaceController->getScratchSpaceAllocation() ? scratchSpaceController->getScratchSpaceAllocation()->isAllocatedInLocalMemoryPool() : false;
+        newGshBase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex, useLocalMemory);
+        gsbaFor32BitProgrammed = true;
+    }
+
+    auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
+    auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
+    uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
+
+    STATE_BASE_ADDRESS stateBaseAddressCmd;
+
+    StateBaseAddressHelperArgs<GfxFamily> args = {
+        newGshBase,                                    // generalStateBaseAddress
+        indirectObjectStateBaseAddress,                // indirectObjectHeapBaseAddress
+        instructionHeapBaseAddress,                    // instructionHeapBaseAddress
+        0,                                             // globalHeapsBaseAddress
+        0,                                             // surfaceStateBaseAddress
+        &stateBaseAddressCmd,                          // stateBaseAddressCmd
+        nullptr,                                       // sbaProperties
+        dsh,                                           // dsh
+        ioh,                                           // ioh
+        ssh,                                           // ssh
+        device.getGmmHelper(),                         // gmmHelper
+        this->latestSentStatelessMocsConfig,           // statelessMocsIndex
+        l1CachePolicyData.getL1CacheValue(false),      // l1CachePolicy
+        l1CachePolicyData.getL1CacheValue(true),       // l1CachePolicyDebuggerActive
+        this->lastMemoryCompressionState,              // memoryCompressionState
+        true,                                          // setInstructionStateBaseAddress
+        true,                                          // setGeneralStateBaseAddress
+        false,                                         // useGlobalHeapsBaseAddress
+        isMultiOsContextCapable(),                     // isMultiOsContextCapable
+        this->lastSentUseGlobalAtomics,                // useGlobalAtomics
+        dispatchFlags.areMultipleSubDevicesInContext,  // areMultipleSubDevicesInContext
+        false,                                         // overrideSurfaceStateBaseAddress
+        debuggingEnabled || device.isDebuggerActive(), // isDebuggerActive
+        this->doubleSbaWa                              // doubleSbaWa
+    };
+
+    StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, commandStreamCSR);
+
+    bool sbaTrackingEnabled = (debuggingEnabled && !device.getDebugger()->isLegacy());
+    if (sbaTrackingEnabled) {
+        device.getL0Debugger()->programSbaAddressLoad(commandStreamCSR,
+                                                      device.getL0Debugger()->getSbaTrackingBuffer(this->getOsContext().getContextId())->getGpuAddress());
+    }
+    NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
+                                                                                 device,
+                                                                                 commandStreamCSR,
+                                                                                 stateBaseAddressCmd, true);
+
+    if (sshDirty) {
+        bindingTableBaseAddressRequired = bindingTablePoolCommandNeeded;
+    }
+
+    if (bindingTableBaseAddressRequired) {
+        StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStreamCSR, *ssh, device.getGmmHelper());
+        bindingTableBaseAddressRequired = false;
+    }
+
+    EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, rootDeviceEnvironment, isRcs());
+
+    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGshBase,
+                                        device.getDeviceInfo().imageSupport);
+    }
+    setGSBAStateDirty(false);
+    this->streamProperties.stateBaseAddress.clearIsDirty();
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR) {
+    if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
+        PipeControlArgs args;
+        args.textureCacheInvalidationEnable = true;
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
+        if (this->samplerCacheFlushRequired == SamplerCacheFlushState::samplerCacheFlushBefore) {
+            this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushAfter;
+        } else {
+            this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
+        }
+    }
 }
 
 } // namespace NEO
