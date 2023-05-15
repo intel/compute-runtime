@@ -1866,7 +1866,7 @@ TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocation
     EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
     EXPECT_NE(0llu, graphicsAllocation->getGpuAddress());
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(1u, graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
+    EXPECT_EQ(0u, graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
 
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }

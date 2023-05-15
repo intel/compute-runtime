@@ -26,6 +26,8 @@ struct CacheSettingsHelper {
                 (gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
+    static bool isResourceCacheableOnCpu(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType);
+
   protected:
     static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper);
     static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType);

@@ -28,6 +28,13 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType
     }
 }
 
+bool CacheSettingsHelper::isResourceCacheableOnCpu(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType) {
+    if (DebugManager.flags.EnableCpuCacheForResources.get()) {
+        return !CacheSettingsHelper::isUncachedType(gmmResourceUsageType);
+    }
+    return false;
+}
+
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper) {
 
     switch (allocationType) {
