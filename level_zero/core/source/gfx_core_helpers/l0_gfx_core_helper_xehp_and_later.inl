@@ -79,7 +79,7 @@ std::vector<uint32_t> L0GfxCoreHelperHw<Family>::getSupportedNumGrfs() const {
 
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::platformSupportsPrimaryBatchBufferCmdList() const {
-    return false;
+    return true;
 }
 
 } // namespace L0
