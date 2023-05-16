@@ -790,43 +790,71 @@ ze_result_t zesDeviceEnumFans(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_fan_handle_t *phFan) {
-    return L0::SysmanDevice::fanGet(hDevice, pCount, phFan);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::fanGet(hDevice, pCount, phFan);
+    } else {
+        return L0::Sysman::SysmanDevice::fanGet(hDevice, pCount, phFan);
+    }
 }
 
 ze_result_t zesFanGetProperties(
     zes_fan_handle_t hFan,
     zes_fan_properties_t *pProperties) {
-    return L0::Fan::fromHandle(hFan)->fanGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Fan::fromHandle(hFan)->fanGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Fan::fromHandle(hFan)->fanGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesFanGetConfig(
     zes_fan_handle_t hFan,
     zes_fan_config_t *pConfig) {
-    return L0::Fan::fromHandle(hFan)->fanGetConfig(pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::Fan::fromHandle(hFan)->fanGetConfig(pConfig);
+    } else {
+        return L0::Sysman::Fan::fromHandle(hFan)->fanGetConfig(pConfig);
+    }
 }
 
 ze_result_t zesFanSetDefaultMode(
     zes_fan_handle_t hFan) {
-    return L0::Fan::fromHandle(hFan)->fanSetDefaultMode();
+    if (L0::sysmanInitFromCore) {
+        return L0::Fan::fromHandle(hFan)->fanSetDefaultMode();
+    } else {
+        return L0::Sysman::Fan::fromHandle(hFan)->fanSetDefaultMode();
+    }
 }
 
 ze_result_t zesFanSetFixedSpeedMode(
     zes_fan_handle_t hFan,
     const zes_fan_speed_t *speed) {
-    return L0::Fan::fromHandle(hFan)->fanSetFixedSpeedMode(speed);
+    if (L0::sysmanInitFromCore) {
+        return L0::Fan::fromHandle(hFan)->fanSetFixedSpeedMode(speed);
+    } else {
+        return L0::Sysman::Fan::fromHandle(hFan)->fanSetFixedSpeedMode(speed);
+    }
 }
 
 ze_result_t zesFanSetSpeedTableMode(
     zes_fan_handle_t hFan,
     const zes_fan_speed_table_t *speedTable) {
-    return L0::Fan::fromHandle(hFan)->fanSetSpeedTableMode(speedTable);
+    if (L0::sysmanInitFromCore) {
+        return L0::Fan::fromHandle(hFan)->fanSetSpeedTableMode(speedTable);
+    } else {
+        return L0::Sysman::Fan::fromHandle(hFan)->fanSetSpeedTableMode(speedTable);
+    }
 }
 
 ze_result_t zesFanGetState(
     zes_fan_handle_t hFan,
     zes_fan_speed_units_t units,
     int32_t *pSpeed) {
-    return L0::Fan::fromHandle(hFan)->fanGetState(units, pSpeed);
+    if (L0::sysmanInitFromCore) {
+        return L0::Fan::fromHandle(hFan)->fanGetState(units, pSpeed);
+    } else {
+        return L0::Sysman::Fan::fromHandle(hFan)->fanGetState(units, pSpeed);
+    }
 }
 
 ze_result_t zesDeviceEnumLeds(

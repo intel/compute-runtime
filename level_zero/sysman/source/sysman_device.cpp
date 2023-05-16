@@ -149,5 +149,10 @@ ze_result_t SysmanDevice::pciGetStats(zes_device_handle_t hDevice, zes_pci_stats
     return pSysmanDevice->pciGetStats(pStats);
 }
 
+ze_result_t SysmanDevice::fanGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fan_handle_t *phFan) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->fanGet(pCount, phFan);
+}
+
 } // namespace Sysman
 } // namespace L0

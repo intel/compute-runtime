@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace L0 {
-
+namespace Sysman {
 struct OsSysman;
 class Fan : _zes_fan_handle_t {
   public:
@@ -46,4 +46,5 @@ struct FanHandleContext {
     std::once_flag initFanOnce;
 };
 
+} // namespace Sysman
 } // namespace L0

@@ -126,6 +126,7 @@ void usage() {
                  "\n  -P,   --performance                                                               selectively run performance black box test"
                  "\n        [--setconfig <deviceNo subdevId engineFlags pFactor>]                       optionally set the performance factor for the particular handle"
                  "\n  -C,   --ecc                                                                       selectively run ecc black box test"
+                 "\n  -a,   --fan                                                                       selectively run fan black box test"
                  "\n  -h,   --help                                                                      display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
@@ -1327,17 +1328,86 @@ void testSysmanDiagnostics(ze_device_handle_t &device) {
     }
 }
 
+std::string getFanModes(uint32_t fanMode) {
+    static const std::map<uint32_t, std::string> mgetFanMode{
+        {0, "ZES_FAN_SPEED_MODE_DEFAULT"},
+        {1, "ZES_FAN_SPEED_MODE_FIXED"},
+        {2, "ZES_FAN_SPEED_MODE_TABLE"}};
+    auto i = mgetFanMode.find(fanMode);
+    if (i == mgetFanMode.end())
+        return "NOT SUPPORTED FAN MODE SET";
+    else
+        return mgetFanMode.at(fanMode);
+}
+
+std::string getFanUnits(uint32_t fanUnit) {
+    static const std::map<uint32_t, std::string> mgetFanUnit{
+        {0, "ZES_FAN_SPEED_UNITS_RPM"},
+        {1, "ZES_FAN_SPEED_UNITS_PERCENT"}};
+    auto i = mgetFanUnit.find(fanUnit);
+    if (i == mgetFanUnit.end())
+        return "NOT SUPPORTED FAN UNIT SET";
+    else
+        return mgetFanUnit.at(fanUnit);
+}
+
+void testSysmanFan(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  Fan tests ---- " << std::endl;
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumFans(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Fans" << std::endl;
+        return;
+    }
+    std::vector<zes_fan_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumFans(device, &count, handles.data()));
+
+    for (auto handle : handles) {
+        zes_fan_properties_t fanProperties = {};
+        zes_fan_config_t fanConfig = {};
+        zes_fan_speed_units_t fanUnit = {};
+        int32_t fanSpeed;
+
+        VALIDATECALL(zesFanGetProperties(handle, &fanProperties));
+        if (verbose) {
+            std::cout << "On Subdevice = " << static_cast<uint32_t>(fanProperties.onSubdevice) << std::endl;
+            std::cout << "Subdevice Id = " << fanProperties.subdeviceId << std::endl;
+            std::cout << "Can control = " << static_cast<uint32_t>(fanProperties.canControl) << std::endl;
+            std::cout << "Supported modes = " << getFanModes(fanProperties.supportedModes) << std::endl;
+            std::cout << "Supported units = " << getFanUnits(fanProperties.supportedUnits) << std::endl;
+            std::cout << "Max RPM = " << fanProperties.maxRPM << std::endl;
+            std::cout << "MAX Points = " << fanProperties.maxPoints << std::endl;
+        }
+
+        VALIDATECALL(zesFanGetConfig(handle, &fanConfig));
+        if (verbose) {
+            std::cout << std::endl
+                      << " ----  Fan get config tests ---- " << std::endl;
+            std::cout << "Mode = " << getFanModes(fanConfig.mode) << std::endl;
+            std::cout << "Fan Speed = " << fanConfig.speedFixed.speed << std::endl;
+            std::cout << "Fan Speed Unit = " << getFanUnits(fanConfig.speedFixed.units) << std::endl;
+        }
+
+        VALIDATECALL(zesFanGetState(handle, fanUnit, &fanSpeed));
+        if (verbose) {
+            std::cout << std::endl
+                      << " ----  Fan get State tests ---- " << std::endl;
+            std::cout << "Fan Speed = " << fanSpeed << std::endl;
+            std::cout << "Fan Speed Unit = " << getFanUnits(fanUnit) << std::endl;
+        }
+    }
+}
+
 bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector<std::string> &buf) {
     uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[1]));
     if (deviceIndex >= devices.size()) {
         return false;
     }
-
     uint32_t subDeviceCount = 0;
     zes_device_properties_t properties = {};
     VALIDATECALL(zesDeviceGetProperties(devices[deviceIndex], &properties));
     subDeviceCount = properties.numSubdevices;
-
     uint32_t subDeviceIndex = static_cast<uint32_t>(std::stoi(buf[2]));
     if (subDeviceCount > 0 && subDeviceIndex >= subDeviceCount) {
         return false;
@@ -1590,6 +1660,11 @@ int main(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-d", "--diagnostics", &optind)) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanDiagnostics(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-a", "--fan", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanFan(device);
         });
     }
 

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/ecc/sysman_ecc_imp.h"
+#include "level_zero/sysman/source/fan/sysman_fan_imp.h"
 #include "level_zero/sysman/source/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/os_sysman.h"
 #include "level_zero/sysman/source/pci/sysman_pci_imp.h"
@@ -39,6 +40,7 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pEcc = new EccImp(pOsSysman);
     pTempHandleContext = new TemperatureHandleContext(pOsSysman);
     pPci = new PciImp(pOsSysman);
+    pFanHandleContext = new FanHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -57,6 +59,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pEcc);
     freeResource(pTempHandleContext);
     freeResource(pPci);
+    freeResource(pFanHandleContext);
     freeResource(pOsSysman);
     executionEnvironment->decRefInternal();
 }
@@ -167,6 +170,10 @@ ze_result_t SysmanDeviceImp::pciGetBars(uint32_t *pCount, zes_pci_bar_properties
 
 ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t SysmanDeviceImp::fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) {
+    return pFanHandleContext->fanGet(pCount, phFan);
 }
 
 } // namespace Sysman
