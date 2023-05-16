@@ -457,7 +457,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const Allocatio
 
     GraphicsAllocation *alloc = nullptr;
 
-    auto ptr = allocateSystemMemory(alignUp(allocationData.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
+    const size_t alignment = std::max(allocationData.alignment, MemoryConstants::pageSize);
+    auto ptr = allocateSystemMemory(alignUp(allocationData.size, alignment), alignment);
     if (ptr != nullptr) {
         alloc = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size,
                                        counter, MemoryPool::SystemCpuInaccessible, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
