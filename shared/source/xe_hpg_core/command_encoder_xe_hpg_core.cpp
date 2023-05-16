@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/lookup_array.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
@@ -66,14 +67,18 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
     }};
 
     auto programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K;
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    programmableIdPreferredSlmSize = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(productHelper.getProductMaxPreferredSlmSize(hwInfo, programmableIdPreferredSlmSize));
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    programmableIdPreferredSlmSize = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(
+        releaseHelper->getProductMaxPreferredSlmSize(programmableIdPreferredSlmSize));
+
     for (auto &range : ranges) {
         if (slmSize <= range.upperLimit) {
             programmableIdPreferredSlmSize = range.valueToProgram;
             break;
         }
     }
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
     if (productHelper.isAllocationSizeAdjustmentRequired(hwInfo)) {
         pInterfaceDescriptor->setPreferredSlmAllocationSize(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K);
     } else {
