@@ -39,6 +39,9 @@ class CommandQueueHw : public CommandQueue {
                    ClDevice *device,
                    const cl_queue_properties *properties,
                    bool internalUsage) : BaseClass(context, device, properties, internalUsage) {
+        if (DebugManager.flags.SplitBcsSize.get() != -1) {
+            this->minimalSizeForBcsSplit = DebugManager.flags.SplitBcsSize.get() * MemoryConstants::kiloByte;
+        }
 
         auto clPriority = getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR);
 

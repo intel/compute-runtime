@@ -379,7 +379,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::CommandStreamReceiver *csr = nullptr;
     Device *device = nullptr;
 
-    inline static constexpr size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
+    size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
     size_t cmdListCurrentStartOffset = 0;
 
     unsigned long numThreads = 1u;

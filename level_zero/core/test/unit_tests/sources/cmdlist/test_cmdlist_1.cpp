@@ -1363,6 +1363,21 @@ TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppen
     static_cast<WhiteBox<::L0::CommandQueue> *>(whiteBoxCmdList->cmdQImmediate)->csr = oldCsr;
 }
 
+TEST_F(CommandListCreate, givenSplitBcsSizeWhenCreateCommandListThenProperSizeSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsSize.set(120);
+
+    ze_command_queue_desc_t desc = {};
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(whiteBoxCmdList->minimalSizeForBcsSplit, 120 * MemoryConstants::kiloByte);
+}
+
 HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingSignalEventsThenDeviceLostIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableFlushTaskSubmission.set(1);

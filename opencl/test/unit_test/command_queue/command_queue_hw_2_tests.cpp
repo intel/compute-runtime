@@ -348,6 +348,23 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenCheckIsSplitEnqueueBlit
     }
 }
 
+HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsSizeSetWhenCheckIsSplitEnqueueBlitNeededThenReturnProperValue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsCopy.set(1);
+    DebugManager.flags.SplitBcsSize.set(100);
+    auto *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+    ultHwConfig.useBlitSplit = true;
+    {
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 150 * MemoryConstants::kiloByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+    }
+    {
+        MockCommandQueueHw<FamilyType> queue(this->pContext, this->pClDevice, nullptr);
+        EXPECT_TRUE(queue.isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 150 * MemoryConstants::kiloByte, *queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_EQ(queue.minimalSizeForBcsSplit, 100 * MemoryConstants::kiloByte);
+    }
+}
+
 char hostPtr[16 * MemoryConstants::megaByte];
 struct BcsSplitBufferTraits {
     enum { flags = CL_MEM_READ_WRITE };

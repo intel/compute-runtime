@@ -255,6 +255,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::gpgpuEngine;
     using BaseClass::isBlitAuxTranslationRequired;
     using BaseClass::latestSentEnqueueType;
+    using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::obtainCommandStream;
     using BaseClass::obtainNewTimestampPacketNodes;
     using BaseClass::overrideEngine;

@@ -34,6 +34,9 @@
 namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {
+    if (NEO::DebugManager.flags.SplitBcsSize.get() != -1) {
+        this->minimalSizeForBcsSplit = NEO::DebugManager.flags.SplitBcsSize.get() * MemoryConstants::kiloByte;
+    }
 }
 
 CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};

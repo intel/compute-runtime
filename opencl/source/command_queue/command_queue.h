@@ -439,6 +439,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     BcsInfoMask splitEngines = EngineHelpers::oddLinkedCopyEnginesMask;
     BcsInfoMask h2dEngines = NEO::EngineHelpers::h2dCopyEngineMask;
     BcsInfoMask d2hEngines = NEO::EngineHelpers::d2hCopyEngineMask;
+    size_t minimalSizeForBcsSplit = 16 * MemoryConstants::megaByte;
 
     LinearStream *commandStream = nullptr;
 

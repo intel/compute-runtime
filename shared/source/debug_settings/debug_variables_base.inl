@@ -319,6 +319,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DeferCmdQGpgpuInitialization, -1, "-1: default, 
 DECLARE_DEBUG_VARIABLE(int32_t, DeferCmdQBcsInitialization, -1, "-1: default, 0:disabled, 1: enabled.")
 DECLARE_DEBUG_VARIABLE(int32_t, PreferInternalBcsEngine, -1, "-1: default, 0:disabled, 1: enabled. When enabled use internal BCS engine for internal transfers, when disabled use regular engine")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsCopy, -1, "-1: default, 0:disabled, 1: enabled. When enqueues copy to main copy engine then split between even linked copy engines")
+DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsSize, -1, "-1: default, >=0: Size to apply BCS split from")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMask, 0, "0: default, >0: bitmask: indicates bcs engines for split")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMaskH2D, 0, "0: default, >0: bitmask: indicates bcs engines for H2D split")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMaskD2H, 0, "0: default, >0: bitmask: indicates bcs engines for D2H split")
