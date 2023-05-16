@@ -341,18 +341,8 @@ TEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeDimensionWhenSettingGro
     }
     mockKernel.module = &mockModule;
 
-    uint32_t groupSize[3] = {2, 2, 2};
+    uint32_t groupSize[3] = {1, 1, 1};
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-    groupSize[0] = 1;
-    groupSize[1] = 1;
-    groupSize[2] = 1;
-    ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, ret);
-
-    // check that caching does not hide error
-    ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, ret);
 }
 
@@ -655,28 +645,6 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThenPr
     createKernel(kernel.get());
 
     EXPECT_EQ(nullptr, kernel->privateMemoryGraphicsAllocation);
-}
-
-TEST_F(KernelImmutableDataTests, givenKernelInitializedWithRequiredGroupSizeThenGroupSizeIsSetByDefault) {
-    uint32_t perHwThreadPrivateMemorySizeRequested = 0u;
-    bool isInternal = false;
-
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    mockKernelImmData->mockKernelDescriptor->kernelAttributes.requiredWorkgroupSize[0] = 2u;
-    mockKernelImmData->mockKernelDescriptor->kernelAttributes.requiredWorkgroupSize[1] = 3u;
-    mockKernelImmData->mockKernelDescriptor->kernelAttributes.requiredWorkgroupSize[2] = 4u;
-
-    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
-
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    createKernel(kernel.get());
-
-    auto groupSize = kernel->getGroupSize();
-    EXPECT_EQ(groupSize[0], 2u);
-    EXPECT_EQ(groupSize[1], 3u);
-    EXPECT_EQ(groupSize[2], 4u);
 }
 
 TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPrivateMemoryIsCreated) {

@@ -301,12 +301,15 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
     }
 
+    this->groupSize[0] = groupSizeX;
+    this->groupSize[1] = groupSizeY;
+    this->groupSize[2] = groupSizeZ;
     for (uint32_t i = 0u; i < 3u; i++) {
         if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != 0 &&
-            kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != groupSize[i]) {
+            kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != this->groupSize[i]) {
             NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                                   "Invalid group size {%d, %d, %d} specified, requiredWorkGroupSize = {%d, %d, %d}\n",
-                                  groupSize[0], groupSize[1], groupSize[2],
+                                  this->groupSize[0], this->groupSize[1], this->groupSize[2],
                                   kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0],
                                   kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1],
                                   kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
@@ -352,9 +355,6 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
 
         this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / numThreadsPerThreadGroup;
     }
-    this->groupSize[0] = groupSizeX;
-    this->groupSize[1] = groupSizeY;
-    this->groupSize[2] = groupSizeZ;
     return ZE_RESULT_SUCCESS;
 }
 
