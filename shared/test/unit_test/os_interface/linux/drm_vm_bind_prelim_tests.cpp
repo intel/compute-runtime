@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
@@ -120,4 +121,28 @@ TEST(DrmVmBindTest, givenUseKmdMigrationWhenCallingBindBoOnUnifiedSharedMemoryTh
     EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
     EXPECT_FALSE(bo.isExplicitResidencyRequired());
     EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
+}
+
+TEST(DrmVmBindTest, givenDefaultDriverSettingsWhenCallingBindBoOnUnifiedSharedMemoryThenMarkAllocationShouldPageFaultWhenKmdMigrationIsSupported) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.pageFaultSupported = true;
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+    uint32_t vmHandleId = 0;
+
+    MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    allocation.bindBO(&bo, &osContext, vmHandleId, nullptr, true);
+
+    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto isKmdMigrationSupported = productHelper.isKmdMigrationSupported();
+
+    EXPECT_EQ(isKmdMigrationSupported, allocation.shouldAllocationPageFault(&drm));
 }

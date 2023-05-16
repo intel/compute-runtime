@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -17,6 +18,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include <sstream>
 
@@ -334,9 +336,12 @@ bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
         return DebugManager.flags.EnableImplicitMigrationOnFaultableHardware.get();
     }
 
+    auto &productHelper = drm->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto isKmdMigrationSupported = productHelper.isKmdMigrationSupported();
+
     switch (this->allocationType) {
     case AllocationType::UNIFIED_SHARED_MEMORY:
-        return DebugManager.flags.UseKmdMigration.get() > 0;
+        return (DebugManager.flags.UseKmdMigration.get() == -1) ? isKmdMigrationSupported : DebugManager.flags.UseKmdMigration.get();
     case AllocationType::BUFFER:
         return DebugManager.flags.UseKmdMigrationForBuffers.get() > 0;
     default:
