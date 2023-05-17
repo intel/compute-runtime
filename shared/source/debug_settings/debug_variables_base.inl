@@ -491,7 +491,7 @@ DECLARE_DEBUG_VARIABLE(bool, SkipFlushingEventsOnGetStatusCalls, false, "When se
 DECLARE_DEBUG_VARIABLE(bool, AllowUnrestrictedSize, false, "Allow allocating memory with greater size than MAX_MEM_ALLOC_SIZE")
 DECLARE_DEBUG_VARIABLE(bool, ForceDefaultThreadArbitrationPolicyIfNotSpecified, false, "When executing kernel without thread arbitration hint specified, ensure the default setting is used")
 DECLARE_DEBUG_VARIABLE(bool, ForceAllResourcesUncached, false, "When set, all memory operations for all resources are forced to UC. This overrides all caching-related debug variables and globally disables all caches")
-DECLARE_DEBUG_VARIABLE(bool, EnableCpuCacheForResources, false, "When true, driver will set gmm flag cacheable related to caching on cpu, for resources where it is allowed")
+DECLARE_DEBUG_VARIABLE(bool, EnableCpuCacheForResources, true, "When true, driver will set gmm flag cacheable related to caching on cpu, for resources where it is allowed")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebuggerMmapMemoryAccess, false, "Mmap used to access memory by debug api, valid only on Linux OS")
 DECLARE_DEBUG_VARIABLE(bool, ForceDefaultGrfCompilationMode, false, "Adds build option -cl-intel-128-GRF-per-thread to force kernel compilation in Default-GRF mode")
 DECLARE_DEBUG_VARIABLE(bool, ForceLargeGrfCompilationMode, false, "Adds build option -cl-intel-256-GRF-per-thread to force kernel compilation in Large-GRF mode")
