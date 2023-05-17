@@ -35,7 +35,16 @@ void WddmGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
 void WddmGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
 }
 ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    uint32_t value = 0;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+    request.commandId = KmdSysman::Command::Set;
+    request.componentId = KmdSysman::Component::GlobalOperationsComponent;
+    request.requestId = KmdSysman::Requests::GlobalOperation::TriggerDeviceLevelReset;
+    request.dataSize = sizeof(uint32_t);
+    value = static_cast<uint32_t>(force);
+    memcpy_s(request.dataBuffer, sizeof(uint32_t), &value, sizeof(uint32_t));
+    return pKmdSysManager->requestSingle(request, response);
 }
 
 ze_result_t WddmGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
@@ -47,6 +56,8 @@ ze_result_t WddmGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) 
 }
 
 WddmGlobalOperationsImp::WddmGlobalOperationsImp(OsSysman *pOsSysman) {
+    WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
+    pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
 OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {

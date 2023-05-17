@@ -13,7 +13,7 @@
 
 namespace L0 {
 namespace Sysman {
-
+class KmdSysManager;
 class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMovableClass {
   public:
     bool getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
@@ -31,6 +31,9 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMov
     WddmGlobalOperationsImp(OsSysman *pOsSysman);
     WddmGlobalOperationsImp() = default;
     ~WddmGlobalOperationsImp() override = default;
+
+  protected:
+    KmdSysManager *pKmdSysManager = nullptr;
 };
 
 } // namespace Sysman
