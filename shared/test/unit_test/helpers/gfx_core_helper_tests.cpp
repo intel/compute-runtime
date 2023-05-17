@@ -1585,3 +1585,13 @@ HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeT
     numGrfRequired = GrfConfig::DefaultGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, defaultMaxGroupSize));
 }
+
+HWTEST2_F(GfxCoreHelperTest, givenAtLeastXeHpWhenCheckIsCachingOnCpuAvailableThenAlwaysFalse, IsAtLeastXeHpCore) {
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isCachingOnCpuAvailable());
+}
+
+HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpWhenCheckIsCachingOnCpuAvailableThenAlwaysTrue, IsAtMostGen12lp) {
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isCachingOnCpuAvailable());
+}

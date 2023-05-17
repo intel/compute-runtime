@@ -1853,10 +1853,11 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
     memoryManager64k.freeGraphicsMemory(galloc);
 }
 
-TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocationIsCreatedWithSizeSmallerThan64kbThenGraphicsAllocationsHas64kbAlignedUnderlyingSize) {
+HWTEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocationIsCreatedWithSizeSmallerThan64kbThenGraphicsAllocationsHas64kbAlignedUnderlyingSize) {
     DebugManagerStateRestore dbgRestore;
     wddm->init();
     DebugManager.flags.Enable64kbpages.set(true);
+    DebugManager.flags.EnableCpuCacheForResources.set(0);
     MockWddmMemoryManager memoryManager(true, false, *executionEnvironment);
     AllocationData allocationData;
     allocationData.size = 1u;
@@ -1866,7 +1867,8 @@ TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocation
     EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
     EXPECT_NE(0llu, graphicsAllocation->getGpuAddress());
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    EXPECT_TRUE(graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
+    EXPECT_EQ(gfxCoreHelper.isCachingOnCpuAvailable(), graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
 
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }

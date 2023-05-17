@@ -232,4 +232,9 @@ bool GfxCoreHelperHw<Family>::isChipsetUniqueUUIDSupported() const {
     return true;
 }
 
+template <>
+bool GfxCoreHelperHw<Family>::isCachingOnCpuAvailable() const {
+    return false;
+}
+
 } // namespace NEO
