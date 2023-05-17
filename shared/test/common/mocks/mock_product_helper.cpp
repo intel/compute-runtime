@@ -193,11 +193,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isAllocationSizeAdjustmentRequired(const Har
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
     return false;
 }

@@ -327,11 +327,6 @@ HWTEST_F(ProductHelperTest, WhenCheckAssignEngineRoundRobinSupportedThenReturnFa
     EXPECT_FALSE(productHelper->isAssignEngineRoundRobinSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPrefetchDisablingIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isPrefetchDisablingRequired(releaseHelper));
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
 
     auto isRcs = false;
