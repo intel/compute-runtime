@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2018-2021 Intel Corporation
+Copyright (C) 2018-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -85,8 +85,8 @@ Directly linking to the runtime library is not supported:
 * Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler
 
 In addition, to enable performance counters support, the following packages are needed:
-* Intel Metrics Discovery - https://github.com/intel/metrics-discovery
-* Intel Metrics Library for MDAPI - https://github.com/intel/metrics-library
+* Intel(R) Metrics Discovery (MDAPI) - https://github.com/intel/metrics-discovery
+* Intel(R) Metrics Library for MDAPI - https://github.com/intel/metrics-library
 
 ## How to provide feedback
 
@@ -103,6 +103,7 @@ for more details.
 ## See also
 
 * [Contribution guidelines](https://github.com/intel/compute-runtime/blob/master/CONTRIBUTING.md)
+* [Programmers Guide](https://github.com/intel/compute-runtime/blob/master/programmers-guide/PROGRAMMERS_GUIDE.md)
 * [Frequently Asked Questions](https://github.com/intel/compute-runtime/blob/master/FAQ.md)
 
 ### Level Zero specific

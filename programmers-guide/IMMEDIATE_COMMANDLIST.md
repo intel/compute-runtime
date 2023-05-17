@@ -31,7 +31,7 @@ Since the intention of immediate command lists are to primarily provide a razor 
 ## Programming model
 
 Pseudo-code for creating immediate command list (async mode):
-```
+```cpp
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
@@ -44,7 +44,7 @@ Pseudo-code for creating immediate command list (async mode):
 
 Submitting commands and synchronization:
 Launching kernels:
-```
+```cpp
     zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
                                     events[0], 0, nullptr);
     // If Async mode, use event for sync
@@ -52,7 +52,7 @@ Launching kernels:
 ```
 
 Performing copies:
-```
+```cpp
     zeCommandListAppendMemoryCopy(cmdList, deviceBuffer, hostBuffer, allocSize,
                                     events[0],
                                     0, nullptr);
@@ -66,7 +66,7 @@ Performing copies:
 ```
 
 Pseudo-code for creating immediate command list (sync mode):
-```
+```cpp
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
@@ -78,7 +78,7 @@ Pseudo-code for creating immediate command list (sync mode):
 ```
 
 Launching kernel:
-```
+```cpp
     zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
                                     nullptr, 0, nullptr);
 ```
