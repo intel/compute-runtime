@@ -123,7 +123,7 @@ TEST(DrmVmBindTest, givenUseKmdMigrationWhenCallingBindBoOnUnifiedSharedMemoryTh
     EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
 }
 
-TEST(DrmVmBindTest, givenDefaultDriverSettingsWhenCallingBindBoOnUnifiedSharedMemoryThenMarkAllocationShouldPageFaultWhenKmdMigrationIsSupported) {
+TEST(DrmVmBindTest, givenDrmWithPageFaultSupportWhenCallingBindBoOnUnifiedSharedMemoryThenMarkAllocationShouldPageFaultWhenKmdMigrationIsSupported) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
@@ -142,7 +142,15 @@ TEST(DrmVmBindTest, givenDefaultDriverSettingsWhenCallingBindBoOnUnifiedSharedMe
     allocation.bindBO(&bo, &osContext, vmHandleId, nullptr, true);
 
     auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto isKmdMigrationSupported = productHelper.isKmdMigrationSupported();
+    auto kmdMigrationSupported = productHelper.isKmdMigrationSupported();
 
-    EXPECT_EQ(isKmdMigrationSupported, allocation.shouldAllocationPageFault(&drm));
+    if (kmdMigrationSupported) {
+        EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
+        EXPECT_FALSE(bo.isExplicitResidencyRequired());
+        EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
+    } else {
+        EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
+        EXPECT_TRUE(bo.isExplicitResidencyRequired());
+        EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag() | DrmPrelimHelper::getMakeResidentVmBindFlag(), drm.context.receivedVmBind->flags);
+    }
 }

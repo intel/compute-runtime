@@ -336,12 +336,9 @@ bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
         return DebugManager.flags.EnableImplicitMigrationOnFaultableHardware.get();
     }
 
-    auto &productHelper = drm->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto isKmdMigrationSupported = productHelper.isKmdMigrationSupported();
-
     switch (this->allocationType) {
     case AllocationType::UNIFIED_SHARED_MEMORY:
-        return (DebugManager.flags.UseKmdMigration.get() == -1) ? isKmdMigrationSupported : DebugManager.flags.UseKmdMigration.get();
+        return drm->hasKmdMigrationSupport();
     case AllocationType::BUFFER:
         return DebugManager.flags.UseKmdMigrationForBuffers.get() > 0;
     default:

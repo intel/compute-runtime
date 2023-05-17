@@ -1132,6 +1132,17 @@ bool Drm::hasPageFaultSupport() const {
     return pageFaultSupported;
 }
 
+bool Drm::hasKmdMigrationSupport() const {
+    const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto kmdMigrationSupported = hasPageFaultSupport() && productHelper.isKmdMigrationSupported();
+
+    if (DebugManager.flags.UseKmdMigration.get() != -1) {
+        return !!DebugManager.flags.UseKmdMigration.get();
+    }
+
+    return kmdMigrationSupported;
+}
+
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
     auto engineInfo = this->engineInfo.get();
 

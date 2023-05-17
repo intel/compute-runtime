@@ -245,14 +245,8 @@ bool DrmMemoryManager::hasPageFaultsEnabled(const Device &neoDevice) {
 }
 
 bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
-    const auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
-    auto useKmdMigration = productHelper.isKmdMigrationSupported();
-
-    if (DebugManager.flags.UseKmdMigration.get() != -1) {
-        useKmdMigration = DebugManager.flags.UseKmdMigration.get();
-    }
-
-    return useKmdMigration;
+    auto &drm = this->getDrm(rootDeviceIndex);
+    return drm.hasKmdMigrationSupport();
 }
 
 bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) {

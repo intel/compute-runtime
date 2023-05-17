@@ -403,3 +403,39 @@ TEST(DrmQueryTest, givenEnableImplicitMigrationOnFaultableHardwareWhenShouldAllo
     MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::MemoryNull);
     EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
 }
+
+TEST(DrmQueryTest, givenUseKmdMigrationSetWhenCallingHasKmdMigrationSupportThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.pageFaultSupported = true;
+
+    for (auto useKmdMigration : {-1, 0, 1}) {
+        DebugManager.flags.UseKmdMigration.set(useKmdMigration);
+        if (useKmdMigration == -1) {
+            auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+            EXPECT_EQ(productHelper.isKmdMigrationSupported(), drm.hasKmdMigrationSupport());
+        } else {
+            EXPECT_EQ(useKmdMigration, drm.hasKmdMigrationSupport());
+        }
+    }
+}
+
+TEST(DrmQueryTest, givenKmdMigrationSupportedWhenShouldAllocationPageFaultIsCalledOnUnifiedSharedMemoryThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.pageFaultSupported = true;
+
+    MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    EXPECT_EQ(drm.hasKmdMigrationSupport(), allocation.shouldAllocationPageFault(&drm));
+}
