@@ -73,11 +73,6 @@ uint32_t GfxCoreHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvi
 }
 
 template <typename Family>
-uint32_t GfxCoreHelperHw<Family>::getMaxNumSamplers() const {
-    return 16;
-}
-
-template <typename Family>
 const AubMemDump::LrcaHelper &GfxCoreHelperHw<Family>::getCsTraits(aub_stream::EngineType engineType) const {
     return *AUBFamilyMapper<Family>::csTraits[engineType];
 }

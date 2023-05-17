@@ -777,4 +777,9 @@ bool ProductHelperHw<gfxProduct>::isTranslationExceptionSupported() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
+    return 16u;
+}
+
 } // namespace NEO

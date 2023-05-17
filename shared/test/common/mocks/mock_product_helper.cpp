@@ -379,6 +379,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isPrefetcherDisablingInDirectSubmissionRequi
 }
 
 template <>
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxNumSamplers() const {
+    return 0u;
+}
+
+template <>
 uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getL1CachePolicy(bool isDebuggerActive) {
     return L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy(isDebuggerActive);
 }

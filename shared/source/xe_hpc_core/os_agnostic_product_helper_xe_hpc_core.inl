@@ -58,4 +58,9 @@ bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isSharedContext,
     return true;
 }
 
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
+    return 0u;
+}
+
 } // namespace NEO

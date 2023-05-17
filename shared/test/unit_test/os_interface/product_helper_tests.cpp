@@ -746,3 +746,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenChecking
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsTranslationExceptionSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isTranslationExceptionSupported());
 }
+
+HWTEST_F(ProductHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
+    EXPECT_EQ(16u, productHelper->getMaxNumSamplers());
+}

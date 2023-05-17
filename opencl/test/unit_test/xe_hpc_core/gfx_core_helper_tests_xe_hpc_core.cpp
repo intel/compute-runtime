@@ -98,11 +98,6 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSim
     EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
 }
 
-XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenReturnZero) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(0u, gfxCoreHelper.getMaxNumSamplers());
-}
-
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 

@@ -55,7 +55,6 @@ class GfxCoreHelper {
     virtual size_t getPaddingForISAAllocation() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual uint32_t getMaxNumSamplers() const = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
@@ -220,8 +219,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
-
-    uint32_t getMaxNumSamplers() const override;
 
     void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) override;
 

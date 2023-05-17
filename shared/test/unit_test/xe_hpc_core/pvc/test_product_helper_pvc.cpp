@@ -294,3 +294,7 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperAndKernelBinaryFormatsWhenCheck
         EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
     }
 }
+
+PVCTEST_F(PvcProductHelper, whenQueryingMaxNumSamplersThenReturnZero) {
+    EXPECT_EQ(0u, productHelper->getMaxNumSamplers());
+}

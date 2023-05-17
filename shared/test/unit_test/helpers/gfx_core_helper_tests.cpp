@@ -824,11 +824,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenVariousCachesRequestThenCorr
     }
 }
 
-HWTEST_F(GfxCoreHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(16u, gfxCoreHelper.getMaxNumSamplers());
-}
-
 HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
