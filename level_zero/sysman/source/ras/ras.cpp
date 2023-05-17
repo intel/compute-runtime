@@ -33,8 +33,12 @@ void RasHandleContext::init(uint32_t subDeviceCount) {
     const auto isSubDevice = (subDeviceCount > 0);
     uint32_t subDeviceCountLimit = (isSubDevice) ? subDeviceCount - 1 : 0;
     for (uint32_t subDeviceId = 0; subDeviceId <= subDeviceCountLimit; subDeviceId++) {
-        std::set<zes_ras_error_type_t> errorTypeSubDev = {};
+        std::set<zes_ras_error_type_t> errorTypeSubDev;
         OsRas::getSupportedRasErrorTypes(errorTypeSubDev, pOsSysman, isSubDevice, subDeviceId);
+        if (errorTypeSubDev.size() == 0) {
+            return;
+        }
+
         int32_t typeId = 0;
         for (const auto &type : errorTypeSubDev) {
             createHandle(type, isSubDevice, subDeviceId);

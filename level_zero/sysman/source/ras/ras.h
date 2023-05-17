@@ -28,6 +28,7 @@ class Ras : _zes_ras_handle_t {
     static Ras *fromHandle(zes_ras_handle_t handle) {
         return static_cast<Ras *>(handle);
     }
+
     inline zes_ras_handle_t toHandle() { return this; }
     bool isRasErrorSupported = false;
     zes_ras_error_type_t rasErrorType{};
