@@ -14,10 +14,10 @@ components:
     revision: 7c89d200bf9c5b5900d961bc6f7df5373f3d0ab6
     type: git
   infra:
-    branch: infra
+    branch: releases/19.32
     clean_on_sync: true
     dest_dir: infra
-    revision: 65abf81b2a3b8280ef575655a1bd08eada3147ec
+    revision: v1218.rel1932.1
     type: git
   internal:
     branch: master

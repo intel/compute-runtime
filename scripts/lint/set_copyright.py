@@ -13,7 +13,7 @@ from stat import ST_MODE
 
 # count arguments, need at least 1
 if len(sys.argv) < 2:
-    print "need 1 argument, file\n"
+    print("need 1 argument, file\n")
     sys.exit(0)
 
 header_cpp = """/*
@@ -97,15 +97,15 @@ for path in sys.argv:
         break
 
     if not path_ok:
-        print "[MIT] Ignoring file: %s" % path
+        print("[MIT] Ignoring file: %s" % path)
         continue
 
     # check that first arg is a existing file
     if not os.path.isfile(path):
-        print "cannot find file %s, skipping" % path
+        print("cannot find file %s, skipping" % path)
         continue
 
-    print "[MIT] Processing file: %s" % path
+    print("[MIT] Processing file: %s" % path)
 
     L = list()
     start_year = None
@@ -129,7 +129,7 @@ for path in sys.argv:
     try:
         if first_line or line.startswith('#'):
             for a in cpp_sharp_lines:
-                print "a: %s ~ %s" % (a, line)
+                print("a: %s ~ %s" % (a, line))
                 if line.startswith(a):
                     raise "c++"
             header_start = '#'
