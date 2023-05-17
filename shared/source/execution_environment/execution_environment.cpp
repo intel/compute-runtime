@@ -308,12 +308,8 @@ void ExecutionEnvironment::parseCcsCountLimitations() {
 
 void ExecutionEnvironment::configureNeoEnvironment() {
     if (DebugManager.flags.NEO_CAL_ENABLED.get()) {
-        DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.setIfDefault(6);
-        DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.setIfDefault(1);
-        DebugManager.flags.ForceBCSForInternalCopyEngine.setIfDefault(7);
-        DebugManager.flags.AssignBCSAtEnqueue.setIfDefault(0);
-        DebugManager.flags.EnableCopyEngineSelector.setIfDefault(1);
-        DebugManager.flags.SplitBcsCopy.setIfDefault(0);
+        DebugManager.flags.UseKmdMigration.setIfDefault(0);
+        DebugManager.flags.SplitBcsSize.setIfDefault(256);
     }
 }
 } // namespace NEO

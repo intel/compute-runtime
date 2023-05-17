@@ -186,13 +186,8 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenIniti
 
 TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {
     const std::unordered_map<std::string, int32_t> config = {
-        {"EnableCmdQRoundRobindBcsEngineAssignLimit", 6},
-        {"EnableCmdQRoundRobindBcsEngineAssign", 1},
-        {"ForceBCSForInternalCopyEngine", 7},
-        {"AssignBCSAtEnqueue", 0},
-        {"EnableCopyEngineSelector", 1},
-        {"SplitBcsCopy", 0},
-    };
+        {"UseKmdMigration", 0},
+        {"SplitBcsSize", 256}};
 
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
