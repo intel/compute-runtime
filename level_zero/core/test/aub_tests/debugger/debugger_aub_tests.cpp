@@ -29,12 +29,12 @@
 namespace L0 {
 namespace ult {
 
-struct DebuggerAub : Test<AUBFixtureL0> {
+struct DebuggerAubFixture : AUBFixtureL0 {
 
-    void SetUp() override {
+    void setUp() {
         AUBFixtureL0::setUp(NEO::defaultHwInfo.get(), true);
     }
-    void TearDown() override {
+    void tearDown() {
 
         module->destroy();
         AUBFixtureL0::tearDown();
@@ -62,25 +62,35 @@ struct DebuggerAub : Test<AUBFixtureL0> {
         ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         result = module->initialize(&moduleDesc, device->getNEODevice());
         ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+        memoryManager = neoDevice->getMemoryManager();
+        gmmHelper = neoDevice->getGmmHelper();
+        rootDeviceIndex = neoDevice->getRootDeviceIndex();
     }
+
     DebugManagerStateRestore restorer;
+
     ModuleImp *module = nullptr;
+    NEO::GmmHelper *gmmHelper = nullptr;
+    NEO::MemoryManager *memoryManager = nullptr;
+
+    uint32_t rootDeviceIndex = 0;
 };
 
-struct DebuggerSingleAddressSpaceAub : public DebuggerAub {
-    void SetUp() override {
+struct DebuggerSingleAddressSpaceAubFixture : public DebuggerAubFixture {
+    void setUp() {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
-        DebuggerAub::SetUp();
+        DebuggerAubFixture::setUp();
     }
-    void TearDown() override {
-
-        DebuggerAub::TearDown();
+    void tearDown() {
+        DebuggerAubFixture::tearDown();
     }
 };
+using DebuggerSingleAddressSpaceAub = Test<DebuggerSingleAddressSpaceAubFixture>;
 
-using IsBetweenGen12LpAndXeHp = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HP_CORE>;
+using PlatformsSupportingSingleAddressSpace = IsAtLeastGen12lp;
 
-HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, IsBetweenGen12LpAndXeHp) {
+HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, PlatformsSupportingSingleAddressSpace) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
@@ -121,7 +131,7 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     commandList->close();
 
     pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false);
-    pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
+    pCmdq->synchronize(std::numeric_limits<uint64_t>::max());
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(driverHandle->svmAllocsManager->getSVMAlloc(bufferDst)->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()),
                              expectedSizes, sizeof(expectedSizes));
@@ -133,21 +143,32 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     expectMMIO<FamilyType>(CS_GPR_R15, low);
     expectMMIO<FamilyType>(CS_GPR_R15 + 4, high);
 
-    auto instructionHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex()));
-    auto dynamicStateBaseAddress = commandList->commandContainer.getIndirectHeap(HeapType::DYNAMIC_STATE)->getGraphicsAllocation()->getGpuAddress();
-    auto surfaceStateBaseAddress = commandList->commandContainer.getIndirectHeap(HeapType::SURFACE_STATE)->getGraphicsAllocation()->getGpuAddress();
-
-    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, surfaceStateBaseAddress)),
-                             &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
-
-    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, dynamicStateBaseAddress)),
-                             &dynamicStateBaseAddress, sizeof(dynamicStateBaseAddress));
+    auto instructionHeapBaseAddress = memoryManager->getInternalHeapBaseAddress(rootDeviceIndex,
+                                                                                memoryManager->isLocalMemoryUsedForIsa(rootDeviceIndex));
+    instructionHeapBaseAddress = gmmHelper->canonize(instructionHeapBaseAddress);
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, instructionBaseAddress)),
                              &instructionHeapBaseAddress, sizeof(instructionHeapBaseAddress));
 
-    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, bindlessSurfaceStateBaseAddress)),
-                             &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
+    auto commandListSurfaceHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    if (commandListSurfaceHeapAllocation) {
+        auto surfaceStateBaseAddress = commandListSurfaceHeapAllocation->getGraphicsAllocation()->getGpuAddress();
+        surfaceStateBaseAddress = gmmHelper->canonize(surfaceStateBaseAddress);
+
+        expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, surfaceStateBaseAddress)),
+                                 &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
+        expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, bindlessSurfaceStateBaseAddress)),
+                                 &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
+    }
+
+    auto commandListDynamicHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    if (commandListDynamicHeapAllocation) {
+        auto dynamicStateBaseAddress = commandListDynamicHeapAllocation->getGraphicsAllocation()->getGpuAddress();
+        dynamicStateBaseAddress = gmmHelper->canonize(dynamicStateBaseAddress);
+
+        expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, dynamicStateBaseAddress)),
+                                 &dynamicStateBaseAddress, sizeof(dynamicStateBaseAddress));
+    }
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
     driverHandle->svmAllocsManager->freeSVMAlloc(bufferDst);
