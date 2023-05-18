@@ -177,7 +177,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::inOrderDependencyCounterAllocation;
 
     void printKernelsPrintfOutput(bool hangDetected);
-    ze_result_t synchronizeInOrderExecution() const;
+    ze_result_t synchronizeInOrderExecution(uint64_t timeout) const;
 
     MOCKABLE_VIRTUAL void checkAssert();
     std::atomic<bool> dependenciesPresent{false};

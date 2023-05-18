@@ -690,22 +690,28 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperati
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout) {
+    auto syncTaskCount = this->csr->peekTaskCount();
+    ze_result_t status = ZE_RESULT_SUCCESS;
 
-    if (this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
+    if (isInOrderExecutionEnabled()) {
+        status = synchronizeInOrderExecution(timeout);
+    } else if (this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
         const int64_t timeoutInMicroSeconds = timeout / 1000;
-        auto syncTaskCount = this->csr->peekTaskCount();
         const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutInMicroSeconds},
                                                                         syncTaskCount);
         if (waitStatus == NEO::WaitStatus::GpuHang) {
-            this->printKernelsPrintfOutput(true);
-            this->checkAssert();
-            return ZE_RESULT_ERROR_DEVICE_LOST;
+            status = ZE_RESULT_ERROR_DEVICE_LOST;
         }
-        this->csr->getInternalAllocationStorage()->cleanAllocationList(syncTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
-        this->printKernelsPrintfOutput(false);
-        this->checkAssert();
     }
-    return ZE_RESULT_SUCCESS;
+
+    if (status == ZE_RESULT_SUCCESS) {
+        this->csr->getInternalAllocationStorage()->cleanAllocationList(syncTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+    }
+
+    this->printKernelsPrintfOutput(status == ZE_RESULT_ERROR_DEVICE_LOST);
+    this->checkAssert();
+
+    return status;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -852,7 +858,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     }
 
     if (isInOrderExecutionEnabled()) {
-        auto status = synchronizeInOrderExecution();
+        auto status = synchronizeInOrderExecution(std::numeric_limits<uint64_t>::max());
         if (status != ZE_RESULT_SUCCESS) {
             return status;
         }
@@ -1061,23 +1067,42 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAll
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExecution() const {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExecution(uint64_t timeout) const {
+    std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, now;
+    uint64_t timeDiff = 0;
+
+    ze_result_t status = ZE_RESULT_NOT_READY;
+
     auto hostAddress = static_cast<uint32_t *>(this->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
     auto waitValue = this->inOrderDependencyCounter;
 
-    auto lastHangCheckTime = std::chrono::high_resolution_clock::now();
+    lastHangCheckTime = std::chrono::high_resolution_clock::now();
+    waitStartTime = lastHangCheckTime;
 
-    while (*hostAddress < waitValue) {
+    do {
         this->csr->downloadAllocation(*this->inOrderDependencyCounterAllocation);
 
-        bool status = NEO::WaitUtils::waitFunctionWithPredicate<const uint32_t>(hostAddress, waitValue, std::greater_equal<uint32_t>());
-
-        if (!status && this->csr->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime)) {
-            return ZE_RESULT_ERROR_DEVICE_LOST;
+        if (NEO::WaitUtils::waitFunctionWithPredicate<const uint32_t>(hostAddress, waitValue, std::greater_equal<uint32_t>())) {
+            status = ZE_RESULT_SUCCESS;
+            break;
         }
-    }
 
-    return ZE_RESULT_SUCCESS;
+        if (this->csr->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime)) {
+            status = ZE_RESULT_ERROR_DEVICE_LOST;
+            break;
+        }
+
+        if (timeout == std::numeric_limits<uint64_t>::max()) {
+            continue;
+        } else if (timeout == 0) {
+            break;
+        }
+
+        now = std::chrono::high_resolution_clock::now();
+        timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(now - waitStartTime).count();
+    } while (timeDiff < timeout);
+
+    return status;
 }
 
 } // namespace L0

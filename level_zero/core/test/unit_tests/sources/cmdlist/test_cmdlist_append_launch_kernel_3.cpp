@@ -1127,19 +1127,57 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
     const uint32_t failCounter = 3;
     uint32_t callCounter = 0;
+    bool forceFail = false;
 
     ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
         callCounter++;
-        if (callCounter >= failCounter) {
-            *hostAddress = 1;
+        if (callCounter >= failCounter && !forceFail) {
+            (*hostAddress)++;
         }
     };
 
-    immCmdList->synchronizeInOrderExecution();
+    // single check - not ready
+    {
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0));
 
-    EXPECT_EQ(3u, callCounter);
-    EXPECT_EQ(2u, ultCsr->checkGpuHangDetectedCalled);
-    EXPECT_EQ(1u, *hostAddress);
+        EXPECT_EQ(1u, callCounter);
+        EXPECT_EQ(1u, ultCsr->checkGpuHangDetectedCalled);
+        EXPECT_EQ(0u, *hostAddress);
+    }
+
+    // timeout - not ready
+    {
+        forceFail = true;
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10));
+
+        EXPECT_TRUE(callCounter > 1);
+        EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
+        EXPECT_EQ(0u, *hostAddress);
+    }
+
+    // gpu hang
+    {
+        ultCsr->forceReturnGpuHang = true;
+
+        EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10));
+
+        EXPECT_TRUE(callCounter > 1);
+        EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
+        EXPECT_EQ(0u, *hostAddress);
+    }
+
+    // success
+    {
+        ultCsr->checkGpuHangDetectedCalled = 0;
+        ultCsr->forceReturnGpuHang = false;
+        forceFail = false;
+        callCounter = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+
+        EXPECT_EQ(failCounter, callCounter);
+        EXPECT_EQ(failCounter - 1, ultCsr->checkGpuHangDetectedCalled);
+        EXPECT_EQ(1u, *hostAddress);
+    }
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, IsAtLeastXeHpCore) {
