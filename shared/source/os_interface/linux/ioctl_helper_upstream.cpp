@@ -221,7 +221,7 @@ int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
     case DrmParam::EngineClassCompute:
         return 4;
     case DrmParam::QueryHwconfigTable:
-        return DRM_I915_QUERY_HWCONFIG_TABLE;
+        return DRM_I915_QUERY_HWCONFIG_BLOB;
     case DrmParam::QueryComputeSlices:
         return 0;
     default:
