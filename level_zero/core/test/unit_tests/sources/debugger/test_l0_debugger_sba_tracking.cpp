@@ -279,9 +279,11 @@ HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueue
 
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, Gen12Plus) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     size_t usedSpaceBefore = 0;
     ze_result_t returnValue;
@@ -304,8 +306,32 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     EXPECT_EQ(expectedGpuVa, sshGpuVa);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
 
+    auto bbStartList = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    for (const auto &bbStartIt : bbStartList) {
+        auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+        EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStartCmd->getSecondLevelBatchBuffer());
+    }
+
     commandList->reset();
     EXPECT_EQ(2u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
+
+    commandList->destroy();
+
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+    commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+    commandList = CommandList::fromHandle(commandListHandle);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        commandList->getCmdContainer().getCommandStream()->getCpuBase(),
+        commandList->getCmdContainer().getCommandStream()->getUsed()));
+
+    bbStartList = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    for (const auto &bbStartIt : bbStartList) {
+        auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+        EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStartCmd->getSecondLevelBatchBuffer());
+    }
 
     commandList->destroy();
 }
