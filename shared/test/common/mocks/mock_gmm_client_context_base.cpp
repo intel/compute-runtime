@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-
 GMM_RESOURCE_INFO *MockGmmClientContextBase::createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) {
     return reinterpret_cast<GMM_RESOURCE_INFO *>(new char[1]);
 }
@@ -40,5 +39,9 @@ void MockGmmClientContextBase::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
 
     GMM_DEVICE_CALLBACKS_INT emptyStruct{};
     EXPECT_EQ(0, memcmp(deviceInfo->pDeviceCb, &emptyStruct, sizeof(GMM_DEVICE_CALLBACKS_INT)));
+}
+uint64_t MockGmmClientContextBase::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
+    freeGpuVirtualAddressCalled++;
+    return 0;
 }
 } // namespace NEO

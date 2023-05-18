@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,11 +25,15 @@ class MockGmmClientContextBase : public GmmClientContext {
     uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
     uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
     void setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override;
+    uint64_t mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpuVa) override;
+    uint64_t freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pMapGpuVa) override;
 
     GMM_RESOURCE_FORMAT capturedFormat = GMM_FORMAT_INVALID;
     uint8_t compressionFormatToReturn = 1;
     uint32_t getSurfaceStateCompressionFormatCalled = 0u;
     uint32_t getMediaSurfaceStateCompressionFormatCalled = 0u;
+    uint32_t mapGpuVirtualAddressCalled = 0u;
+    uint32_t freeGpuVirtualAddressCalled = 0u;
     bool returnErrorOnPatIndexQuery = false;
 
     bool passedCompressedSettingForGetPatIndexQuery = false;

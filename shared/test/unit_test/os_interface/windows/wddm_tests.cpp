@@ -6,11 +6,13 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -393,6 +395,18 @@ TEST_F(WddmTests, GivenPlatformNotSupportEvictIfNecessaryWhenAdjustingEvictNeede
     wddm->platformSupportsEvictIfNecessary = false;
     bool value = wddm->adjustEvictNeededParameter(false);
     EXPECT_TRUE(value);
+}
+
+TEST_F(WddmTests, GivenWddmWhenMapGpuVaCalledThenGmmClientCallsMapGpuVa) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::BUFFER;
+    wddm->callBaseDestroyAllocations = false;
+    wddm->pagingQueue = PAGINGQUEUE_HANDLE;
+    auto memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize}));
+    wddm->mapGpuVirtualAddress(allocation);
+    EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->mapGpuVirtualAddressCalled, 0u);
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;

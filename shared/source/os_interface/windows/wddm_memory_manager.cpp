@@ -639,7 +639,12 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         }
     }
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        delete gfxAllocation->getGmm(handleId);
+        auto gmm = gfxAllocation->getGmm(handleId);
+        if (gmm) {
+            auto gpuAddress = input->getGpuAddress();
+            getWddm(gfxAllocation->getRootDeviceIndex()).freeGmmGpuVirtualAddress(gfxAllocation->getGmm(handleId), gpuAddress, input->getAlignedSize());
+        }
+        delete gmm;
     }
     uint64_t handle = 0;
     int ret = input->peekInternalHandle(nullptr, handle);

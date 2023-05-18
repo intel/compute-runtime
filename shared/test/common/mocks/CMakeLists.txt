@@ -57,6 +57,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h

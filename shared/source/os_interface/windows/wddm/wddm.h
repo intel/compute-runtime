@@ -70,6 +70,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool createContext(OsContextWin &osContext);
     MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext);
     MOCKABLE_VIRTUAL void applyAdditionalMapGPUVAFields(D3DDDI_MAPGPUVIRTUALADDRESS &mapGPUVA, Gmm *gmm);
+    MOCKABLE_VIRTUAL uint64_t freeGmmGpuVirtualAddress(Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle);
     MOCKABLE_VIRTUAL bool createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle);

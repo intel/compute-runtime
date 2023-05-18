@@ -13,6 +13,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
+#include "shared/source/gmm_helper/client_context/map_gpu_va_gmm.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -536,8 +537,9 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     mapGPUVA.MaximumAddress = maximumAddress;
 
     applyAdditionalMapGPUVAFields(mapGPUVA, gmm);
-
-    NTSTATUS status = getGdi()->mapGpuVirtualAddress(&mapGPUVA);
+    auto resourceInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
+    MapGpuVirtualAddressGmm gmmMapGpuVa = {&mapGPUVA, &resourceInfo, &gpuPtr, getGdi()};
+    auto status = gmm->getGmmHelper()->getClientContext()->mapGpuVirtualAddress(&gmmMapGpuVa);
 
     auto gmmHelper = gmm->getGmmHelper();
     gpuPtr = gmmHelper->canonize(mapGPUVA.VirtualAddress);
@@ -585,6 +587,14 @@ NTSTATUS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress,
 
     NTSTATUS status = getGdi()->reserveGpuVirtualAddress(&reserveGpuVirtualAddress);
     *reservedAddress = reserveGpuVirtualAddress.VirtualAddress;
+    return status;
+}
+
+uint64_t Wddm::freeGmmGpuVirtualAddress(Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
+    uint64_t status = STATUS_SUCCESS;
+    auto resourceInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
+    FreeGpuVirtualAddressGmm freeGpuva = {getAdapter(), rootDeviceEnvironment.getGmmHelper()->decanonize(gpuPtr), size, &resourceInfo, getGdi()};
+    status = gmm->getGmmHelper()->getClientContext()->freeGpuVirtualAddress(&freeGpuva);
     return status;
 }
 

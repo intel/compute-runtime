@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
@@ -261,4 +263,18 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationWithFailingCreateInt
     EXPECT_EQ(1, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+TEST_F(WddmMemoryManagerTests, GivenAllocationWhenAllocationIsFreeThenFreeToGmmClientContextCalled) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::BUFFER;
+
+    allocData.forceKMDAllocation = true;
+    allocData.makeGPUVaDifferentThanCPUPtr = true;
+
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+    EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(gmmHelper->getClientContext())->freeGpuVirtualAddressCalled, 0u);
 }
