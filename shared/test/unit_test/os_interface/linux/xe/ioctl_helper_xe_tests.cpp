@@ -25,6 +25,7 @@ using NEO::PrelimI915::drm_syncobj_destroy;
 using NEO::PrelimI915::drm_syncobj_wait;
 
 struct MockIoctlHelperXe : IoctlHelperXe {
+    using IoctlHelperXe::bindInfo;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::xeDecanonize;
     using IoctlHelperXe::xeGetBindOpName;
@@ -593,8 +594,26 @@ class DrmMockXe : public DrmMockCustom {
             };
             ret = 0;
         } break;
+        case DrmIoctl::GemVmBind: {
+            ret = gemVmBindReturn;
+            auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
+            vmBindInputs.push_back(*vmBindInput);
+
+            EXPECT_EQ(1u, vmBindInput->num_syncs);
+
+            auto &syncInput = reinterpret_cast<drm_xe_sync *>(vmBindInput->syncs)[0];
+            syncInputs.push_back(syncInput);
+        } break;
+
+        case DrmIoctl::GemWaitUserFence: {
+            ret = waitUserFenceReturn;
+            auto waitUserFenceInput = static_cast<drm_xe_wait_user_fence *>(arg);
+            waitUserFenceInputs.push_back(*waitUserFenceInput);
+        } break;
+
         case DrmIoctl::GemContextSetparam:
         case DrmIoctl::GemContextGetparam:
+
         default:
             break;
         }
@@ -602,6 +621,7 @@ class DrmMockXe : public DrmMockCustom {
     }
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
+    int gemVmBindReturn = 0;
     const drm_xe_engine_class_instance queryEngines[9] = {
         {DRM_XE_ENGINE_CLASS_RENDER, 0, 0},
         {DRM_XE_ENGINE_CLASS_COPY, 1, 0},
@@ -615,6 +635,11 @@ class DrmMockXe : public DrmMockCustom {
 
     uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
     uint64_t queryGts[27]{};      // 1 qword for num gts and 13 qwords per gt
+
+    StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
+    StackVec<drm_xe_vm_bind, 1> vmBindInputs;
+    StackVec<drm_xe_sync, 1> syncInputs;
+    int waitUserFenceReturn = 0;
 };
 
 TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
@@ -976,4 +1001,137 @@ TEST(IoctlHelperXeTest, givenDisabledFtrMultiTileArchWhenCreatingEngineInfoThenM
         EXPECT_EQ(0u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount);
         EXPECT_EQ(0u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileMask);
     }
+}
+
+TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    BindInfo mockBindInfo{};
+    mockBindInfo.handle = 0x1234;
+    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.extensions = castToUint64(&vmBindExtUserFence);
+
+    drm.vmBindInputs.clear();
+    drm.syncInputs.clear();
+    drm.waitUserFenceInputs.clear();
+    EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
+    EXPECT_EQ(1u, drm.vmBindInputs.size());
+    EXPECT_EQ(1u, drm.syncInputs.size());
+    EXPECT_EQ(1u, drm.waitUserFenceInputs.size());
+    {
+        auto &sync = drm.syncInputs[0];
+
+        EXPECT_EQ(fenceAddress, sync.addr);
+        EXPECT_EQ(fenceValue, sync.timeline_value);
+
+        auto &waitUserFence = drm.waitUserFenceInputs[0];
+
+        EXPECT_EQ(fenceAddress, waitUserFence.addr);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_EQ), waitUserFence.op);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_SOFT_OP), waitUserFence.flags);
+        EXPECT_EQ(fenceValue, waitUserFence.value);
+        EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_U64), waitUserFence.mask);
+        EXPECT_EQ(static_cast<uint16_t>(XE_ONE_SEC), waitUserFence.timeout);
+        EXPECT_EQ(0u, waitUserFence.num_engines);
+        EXPECT_EQ(0u, waitUserFence.instances);
+    }
+    drm.vmBindInputs.clear();
+    drm.syncInputs.clear();
+    drm.waitUserFenceInputs.clear();
+    EXPECT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+    EXPECT_EQ(1u, drm.vmBindInputs.size());
+    EXPECT_EQ(1u, drm.syncInputs.size());
+    EXPECT_EQ(1u, drm.waitUserFenceInputs.size());
+    {
+        auto &sync = drm.syncInputs[0];
+
+        EXPECT_EQ(fenceAddress, sync.addr);
+        EXPECT_EQ(fenceValue, sync.timeline_value);
+
+        auto &waitUserFence = drm.waitUserFenceInputs[0];
+
+        EXPECT_EQ(fenceAddress, waitUserFence.addr);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_EQ), waitUserFence.op);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_SOFT_OP), waitUserFence.flags);
+        EXPECT_EQ(fenceValue, waitUserFence.value);
+        EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_U64), waitUserFence.mask);
+        EXPECT_EQ(static_cast<uint16_t>(XE_ONE_SEC), waitUserFence.timeout);
+        EXPECT_EQ(0u, waitUserFence.num_engines);
+        EXPECT_EQ(0u, waitUserFence.instances);
+    }
+}
+
+TEST(IoctlHelperXeTest, whenGemVmBindFailsThenErrorIsPropagated) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    BindInfo mockBindInfo{};
+    mockBindInfo.handle = 0x1234;
+    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.extensions = castToUint64(&vmBindExtUserFence);
+
+    drm.waitUserFenceInputs.clear();
+
+    int errorValue = -1;
+    drm.gemVmBindReturn = errorValue;
+    EXPECT_EQ(errorValue, xeIoctlHelper->vmBind(vmBindParams));
+    EXPECT_EQ(0u, drm.waitUserFenceInputs.size());
+
+    EXPECT_EQ(errorValue, xeIoctlHelper->vmUnbind(vmBindParams));
+    EXPECT_EQ(0u, drm.waitUserFenceInputs.size());
+}
+
+TEST(IoctlHelperXeTest, whenUserFenceFailsThenErrorIsPropagated) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    BindInfo mockBindInfo{};
+    mockBindInfo.handle = 0x1234;
+    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.extensions = castToUint64(&vmBindExtUserFence);
+
+    drm.waitUserFenceInputs.clear();
+
+    int errorValue = -1;
+    drm.waitUserFenceReturn = errorValue;
+
+    EXPECT_EQ(errorValue, xeIoctlHelper->vmBind(vmBindParams));
+    EXPECT_EQ(errorValue, xeIoctlHelper->vmUnbind(vmBindParams));
 }

@@ -37,16 +37,8 @@
 #define XE_USERPTR_FAKE_MASK 0x7FFFFF
 
 #define USER_FENCE_VALUE 0xc0ffee0000000000ull
-#define XE_ONE_SEC 1000
 
 namespace NEO {
-
-#define VMBIND_FENCE_TAG 0x123987
-struct XeFakeExtUserFence {
-    uint32_t tag;
-    uint64_t addr;
-    uint64_t value;
-};
 
 static_assert(DRM_XE_ENGINE_CLASS_RENDER == I915_ENGINE_CLASS_RENDER);
 static_assert(DRM_XE_ENGINE_CLASS_COPY == I915_ENGINE_CLASS_COPY);
@@ -633,9 +625,9 @@ void IoctlHelperXe::fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint6
 
 void IoctlHelperXe::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {
     xeLog(" -> IoctlHelperXe::%s 0x%lx 0x%lx\n", __FUNCTION__, fenceAddress, fenceValue);
-    auto xeBindExtUserFence = reinterpret_cast<XeFakeExtUserFence *>(vmBindExtUserFence);
+    auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindExtUserFence);
     UNRECOVERABLE_IF(!xeBindExtUserFence);
-    xeBindExtUserFence->tag = VMBIND_FENCE_TAG;
+    xeBindExtUserFence->tag = UserFenceExtension::tagValue;
     xeBindExtUserFence->addr = fenceAddress;
     xeBindExtUserFence->value = fenceValue;
 }
@@ -1194,9 +1186,9 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
         struct drm_xe_sync sync[1] = {};
         sync[0].flags = DRM_XE_SYNC_USER_FENCE | DRM_XE_SYNC_SIGNAL;
         extraBindFlag = XE_VM_BIND_FLAG_ASYNC;
-        auto xeBindExtUserFence = reinterpret_cast<XeFakeExtUserFence *>(vmBindParams.extensions);
+        auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.extensions);
         UNRECOVERABLE_IF(!xeBindExtUserFence);
-        UNRECOVERABLE_IF(xeBindExtUserFence->tag != VMBIND_FENCE_TAG);
+        UNRECOVERABLE_IF(xeBindExtUserFence->tag != UserFenceExtension::tagValue);
         sync[0].addr = xeBindExtUserFence->addr;
         sync[0].timeline_value = xeBindExtUserFence->value;
 
@@ -1234,14 +1226,14 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
               bind.bind.op,
               xeGetBindOpName(bind.bind.op),
               bind.num_syncs);
-
         ret = IoctlHelper::ioctl(DrmIoctl::GemVmBind, &bind);
-
-        if (!bindOp) {
-            return xeWaitUserFence(DRM_XE_UFENCE_WAIT_U64, DRM_XE_UFENCE_WAIT_EQ,
-                                   sync[0].addr,
-                                   sync[0].timeline_value, NULL, XE_ONE_SEC);
+        if (ret != 0) {
+            return ret;
         }
+
+        return xeWaitUserFence(DRM_XE_UFENCE_WAIT_U64, DRM_XE_UFENCE_WAIT_EQ,
+                               sync[0].addr,
+                               sync[0].timeline_value, NULL, XE_ONE_SEC);
     }
 
     xeLog(" -> IoctlHelperXe::%s %s found=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx r=%d\n",

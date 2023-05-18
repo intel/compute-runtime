@@ -23,6 +23,8 @@ struct drm_xe_engine_class_instance;
 
 #define PRELIM_I915_UFENCE_WAIT_SOFT (1 << 15)
 
+#define XE_ONE_SEC 1000
+
 namespace NEO {
 
 struct BindInfo {
@@ -102,8 +104,6 @@ class IoctlHelperXe : public IoctlHelper {
   private:
     template <typename... XeLogArgs>
     void xeLog(XeLogArgs &&...args) const;
-    int xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, struct drm_xe_engine_class_instance *eci, int64_t timeout);
-    int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
     uint32_t xeSyncObjCreate(uint32_t flags);
     bool xeSyncObjWait(uint32_t *handles, uint32_t count, uint64_t absTimeoutNsec, uint32_t flags, uint32_t *firstSignaled);
     void xeSyncObjDestroy(uint32_t handle);
@@ -117,6 +117,15 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetBindOpName(int bindOp);
     const char *xeGetengineClassName(uint32_t engineClass);
     std::vector<uint8_t> queryData(uint32_t queryId);
+    int xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, struct drm_xe_engine_class_instance *eci, int64_t timeout);
+    int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
+
+    struct UserFenceExtension {
+        static constexpr uint32_t tagValue = 0x123987;
+        uint32_t tag;
+        uint64_t addr;
+        uint64_t value;
+    };
 
   protected:
     int chipsetId = 0;
