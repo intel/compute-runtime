@@ -587,15 +587,16 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionI
     EXPECT_EQ(ipVersion.architecture, 3u);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsNotSet) {
-    auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsSet) {
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto &ipVersion = hwInfo->ipVersion;
     ipVersion = {};
     drm->failRetHwIpVersion = true;
     EXPECT_FALSE(drm->ioctlHelper->initialize());
+    auto config = productHelper.getProductConfigFromHwInfo(*hwInfo);
 
-    EXPECT_EQ(ipVersion.revision, 0u);
-    EXPECT_EQ(ipVersion.release, 0u);
-    EXPECT_EQ(ipVersion.architecture, 0u);
+    EXPECT_EQ(config, ipVersion.value);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnInitializationThenErrorIsPrinted) {

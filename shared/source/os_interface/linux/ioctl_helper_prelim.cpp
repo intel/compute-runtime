@@ -785,7 +785,12 @@ bool IoctlHelperPrelim20::initialize() {
     EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::EngineClassRender)), 0};
     int ret = 0;
     bool result = queryHwIpVersion(engineInfo, hwInfo->ipVersion, ret);
+
     auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+    if (result == false) {
+        hwInfo->ipVersion.value = productHelper.getProductConfigFromHwInfo(*hwInfo);
+    }
 
     if (result == false && ret != 0 && productHelper.isPlatformQuerySupported()) {
         int err = drm.getErrno();

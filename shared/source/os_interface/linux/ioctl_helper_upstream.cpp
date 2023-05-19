@@ -6,15 +6,22 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915_upstream.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 
 bool IoctlHelperUpstream::initialize() {
+    auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    hwInfo->ipVersion.value = productHelper.getProductConfigFromHwInfo(*hwInfo);
     return true;
 }
 
