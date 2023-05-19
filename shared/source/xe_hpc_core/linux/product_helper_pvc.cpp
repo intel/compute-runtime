@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,7 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
-    return true;
+    return false;
 }
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupportedThenReturnFalse, IGFX_PVC);
 
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isKmdMigrationSupported());
+    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
