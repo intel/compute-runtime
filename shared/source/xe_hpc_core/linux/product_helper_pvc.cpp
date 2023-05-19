@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
-    return true;
+    return false;
 }
 
 template <>
