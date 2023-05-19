@@ -2173,7 +2173,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         auto event = Event::fromHandle(phEvent[i]);
 
         if (event->isInOrderExecEvent()) {
-            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), relaxedOrderingAllowed);
+            bool eventFromPreviousAppend = (event->getInOrderExecDataAllocation() == this->inOrderDependencyCounterAllocation) &&
+                                           (event->getInOrderExecSignalValue() == this->inOrderDependencyCounter);
+
+            if (!eventFromPreviousAppend) {
+                CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), relaxedOrderingAllowed);
+            }
             continue;
         }
 
