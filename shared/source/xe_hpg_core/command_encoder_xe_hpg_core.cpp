@@ -12,7 +12,6 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/lookup_array.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
@@ -115,8 +114,9 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 
 template <>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    bool l3PrefetchDisable = releaseHelper->isPrefetchDisablingRequired();
+    bool l3PrefetchDisable = productHelper.isPrefetchDisablingRequired(releaseHelper);
     int32_t overrideL3PrefetchDisable = DebugManager.flags.ForceL3PrefetchForComputeWalker.get();
     if (overrideL3PrefetchDisable != -1) {
         l3PrefetchDisable = !overrideL3PrefetchDisable;

@@ -56,6 +56,7 @@ class ProductHelperHw : public ProductHelper {
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     int getProductMaxPreferredSlmSize(const HardwareInfo &hwInfo, int preferredEnumValue) const override;
+    bool isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const override;
     bool isNewResidencyModelSupported() const override;
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
     std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const override;
