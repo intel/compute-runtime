@@ -1093,7 +1093,18 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     do {
         this->csr->downloadAllocation(*node->getBaseGraphicsAllocation()->getGraphicsAllocation(this->device->getRootDeviceIndex()));
 
-        if (NEO::WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(node->getContextEndAddress(0)), 1, std::not_equal_to<TSPacketType>())) {
+        bool signaled = true;
+
+        for (uint32_t i = 0; i < this->partitionCount; i++) {
+            auto hostAddress = static_cast<TSPacketType const *>(node->getContextEndAddress(i));
+
+            if (!NEO::WaitUtils::waitFunctionWithPredicate<const TSPacketType>(hostAddress, 1, std::not_equal_to<TSPacketType>())) {
+                signaled = false;
+                break;
+            }
+        }
+
+        if (signaled) {
             status = ZE_RESULT_SUCCESS;
             break;
         }

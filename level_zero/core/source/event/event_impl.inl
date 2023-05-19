@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/assert_handler/assert_handler.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -130,9 +131,20 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
-    auto hostAddress = static_cast<TagSizeT const *>(this->inOrderTimestampPacket->peekNodes()[0]->getContextEndAddress(0));
+    auto node = this->inOrderTimestampPacket->peekNodes()[0];
 
-    if (!NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(hostAddress, 1, std::not_equal_to<TagSizeT>())) {
+    bool signaled = true;
+
+    for (uint32_t i = 0; i < this->getPacketsInUse(); i++) {
+        auto hostAddress = static_cast<TagSizeT const *>(node->getContextEndAddress(i));
+
+        if (!NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(hostAddress, 1, std::not_equal_to<TagSizeT>())) {
+            signaled = false;
+            break;
+        }
+    }
+
+    if (!signaled) {
         return ZE_RESULT_NOT_READY;
     }
 

@@ -2221,7 +2221,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyTimestampPacket() {
-    NEO::TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(*commandContainer.getCommandStream(), *this->timestampPacketContainer->peekNodes()[0], false);
+    NEO::TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(*commandContainer.getCommandStream(), *this->timestampPacketContainer->peekNodes()[0], (this->partitionCount > 1));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3135,7 +3135,10 @@ void CommandListCoreFamily<gfxCoreFamily>::obtainNewTimestampPacketNode() {
 
     timestampPacketContainer->moveNodesToNewContainer(*deferredTimestampPackets);
 
-    timestampPacketContainer->add(allocator->getTag());
+    auto tag = allocator->getTag();
+    tag->setPacketsUsed(this->partitionCount);
+
+    timestampPacketContainer->add(tag);
 }
 
 } // namespace L0
