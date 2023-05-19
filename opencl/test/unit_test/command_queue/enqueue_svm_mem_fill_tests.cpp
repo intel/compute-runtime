@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -19,20 +21,14 @@
 
 using namespace NEO;
 
-struct EnqueueSvmMemFillTest : public ClDeviceFixture,
-                               public CommandQueueHwFixture,
-                               public ::testing::TestWithParam<size_t> {
+struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
+                                      public CommandQueueHwFixture {
     typedef CommandQueueHwFixture CommandQueueFixture;
 
-    EnqueueSvmMemFillTest() {
-    }
-
-    void SetUp() override {
+    void setUp() {
         ClDeviceFixture::setUp();
         CommandQueueFixture::setUp(pClDevice, 0);
         REQUIRE_SVM_OR_SKIP(pDevice);
-        patternSize = (size_t)GetParam();
-        ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
         SVMAllocsManager::SvmAllocationProperties svmProperties;
         svmProperties.coherent = true;
         svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, svmProperties, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -43,19 +39,97 @@ struct EnqueueSvmMemFillTest : public ClDeviceFixture,
         ASSERT_NE(nullptr, svmAlloc);
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (svmPtr) {
             context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
         }
         CommandQueueFixture::tearDown();
         ClDeviceFixture::tearDown();
     }
-
-    const uint64_t pattern[16] = {0x0011223344556677, 0x8899AABBCCDDEEFF, 0xFFEEDDCCBBAA9988, 0x7766554433221100,
-                                  0xFFEEDDCCBBAA9988, 0x7766554433221100, 0x0011223344556677, 0x8899AABBCCDDEEFF};
-    size_t patternSize = 0;
     void *svmPtr = nullptr;
     GraphicsAllocation *svmAlloc = nullptr;
+    const uint64_t pattern[16] = {0x0011223344556677, 0x8899AABBCCDDEEFF, 0xFFEEDDCCBBAA9988, 0x7766554433221100,
+                                  0xFFEEDDCCBBAA9988, 0x7766554433221100, 0x0011223344556677, 0x8899AABBCCDDEEFF};
+    size_t patternSize = 0x10;
+};
+
+using BaseEnqueueSvmMemFillTest = Test<BaseEnqueueSvmMemFillFixture>;
+
+HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenUseGpuAddressOfPatternSVMAllocation) {
+    struct MockFillBufferBuilder : MockBuiltinDispatchInfoBuilder {
+        MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltinDispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
+            : MockBuiltinDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
+              pattern(pattern), patternSize(patternSize) {
+        }
+        const void *pattern;
+        size_t patternSize;
+    };
+
+    auto builtIns = new MockBuiltins();
+    pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
+
+    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        EBuiltInOps::FillBuffer,
+        pCmdQ->getClDevice());
+    ASSERT_NE(nullptr, &origBuilder);
+
+    // note that we need to store the returned value, as it is an unique pointer storing original builder, which will be later invoked
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        EBuiltInOps::FillBuffer,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
+
+    size_t patternSize = 0x10u;
+    auto patternAllocation = static_cast<MockGraphicsAllocation *>(context->getMemoryManager()->allocateGraphicsMemoryWithProperties({pCmdQ->getDevice().getRootDeviceIndex(), 2 * patternSize, AllocationType::FILL_PATTERN, pCmdQ->getDevice().getDeviceBitfield()}));
+
+    // offset cpuPtr so cpuPtr != gpuAddress in order to ensure that setArgSVM will be called using gpu address of the pattern allocation
+    auto origCpuPtr = patternAllocation->cpuPtr;
+    patternAllocation->cpuPtr = ptrOffset(patternAllocation->cpuPtr, patternSize);
+    ASSERT_NE((uint64_t)patternAllocation->cpuPtr, patternAllocation->getGpuAddress());
+
+    auto internalAllocStorage = pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
+    internalAllocStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION);
+
+    auto retVal = pCmdQ->enqueueSVMMemFill(
+        svmPtr,
+        pattern,
+        patternSize,
+        256,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // return mock builder
+    auto &newBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        EBuiltInOps::FillBuffer,
+        pCmdQ->getClDevice());
+    ASSERT_NE(nullptr, &origBuilder);
+
+    auto &mockBuilder = static_cast<MockFillBufferBuilder &>(newBuilder);
+    auto kernel = mockBuilder.getMultiDispatchInfo()->begin()->getKernel();
+
+    auto patternArgIndex = 2;
+    const auto &patternArg = kernel->getKernelArguments().at(patternArgIndex);
+    EXPECT_EQ(patternAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(patternArg.value));
+
+    patternAllocation->cpuPtr = origCpuPtr;
+}
+
+struct EnqueueSvmMemFillTest : public BaseEnqueueSvmMemFillFixture,
+                               public ::testing::TestWithParam<size_t> {
+    typedef CommandQueueHwFixture CommandQueueFixture;
+
+    void SetUp() override {
+        BaseEnqueueSvmMemFillFixture::setUp();
+        REQUIRE_SVM_OR_SKIP(pDevice);
+        patternSize = (size_t)GetParam();
+        ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
+    }
+
+    void TearDown() override {
+        BaseEnqueueSvmMemFillFixture::tearDown();
+    }
 };
 
 HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenItIsConfiguredWithBuitinOpParamsAndProducesDispatchInfo) {
