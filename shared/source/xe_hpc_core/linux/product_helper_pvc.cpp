@@ -80,7 +80,7 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
-    return true;
+    return false;
 }
 
 } // namespace NEO
