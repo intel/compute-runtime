@@ -39,6 +39,7 @@ class WddmMock : public Wddm {
     using Wddm::featureTable;
     using Wddm::forceEvictOnlyIfNecessary;
     using Wddm::getSystemInfo;
+    using Wddm::gfxPlatform;
     using Wddm::gmmMemory;
     using Wddm::hwDeviceId;
     using Wddm::mapGpuVirtualAddress;
