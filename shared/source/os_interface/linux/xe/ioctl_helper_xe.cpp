@@ -22,7 +22,6 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/product_helper.h"
 
 #include "drm/i915_drm_prelim.h"
 #include "drm/xe_drm.h"
@@ -242,10 +241,6 @@ bool IoctlHelperXe::initialize() {
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = chipsetId;
     hwInfo->platform.usRevId = revId;
-
-    auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-    hwInfo->ipVersion.value = productHelper.getProductConfigFromHwInfo(*hwInfo);
-
     return ret;
 }
 
