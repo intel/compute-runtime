@@ -7,7 +7,6 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -390,7 +389,6 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
     EXPECT_EQ(0u, cmdQueue.synchronizeCalled);
     EXPECT_EQ(0u, commandList->commandContainer.getResidencyContainer().size());
     commandList->cmdQImmediate = nullptr;
-    commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
 HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenProgramCmdStreamWithFlushTask, IsAtLeastSkl) {
@@ -604,7 +602,6 @@ HWTEST2_F(AppendMemoryCopy, givenSyncModeImmediateCommandListWhenAppendingMemory
     EXPECT_EQ(1u, cmdQueue.synchronizeCalled);
 
     commandList->cmdQImmediate = nullptr;
-    commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {

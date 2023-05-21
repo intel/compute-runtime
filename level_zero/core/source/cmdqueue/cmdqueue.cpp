@@ -335,7 +335,6 @@ void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls un
 
 void CommandQueueImp::makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) {
     for (auto alloc : residencyContainer) {
-        alloc->prepareHostPtrForResidency(csr);
         csr->makeResident(*alloc);
         if (performMigration &&
             (alloc->getAllocationType() == NEO::AllocationType::SVM_GPU ||

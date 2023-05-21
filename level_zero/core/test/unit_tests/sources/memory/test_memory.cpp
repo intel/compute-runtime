@@ -11,7 +11,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
@@ -5289,8 +5288,6 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     result = image1Dst->destroy();
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-
-    static_cast<L0::ult::CommandList *>(commandList0.get())->csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device0->getNEODevice());
 }
 
 HWTEST2_F(MultipleDevicePeerImageTest,
