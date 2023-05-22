@@ -113,7 +113,7 @@ void GraphicsAllocation::prepareHostPtrForResidency(CommandStreamReceiver *csr) 
     if (hostPtrTaskCountAssignment > 0) {
         auto allocTaskCount = getTaskCount(csr->getOsContext().getContextId());
         auto currentTaskCount = csr->peekTaskCount() + 1;
-        if (currentTaskCount > allocTaskCount) {
+        if (currentTaskCount > allocTaskCount || allocTaskCount == GraphicsAllocation::objectNotResident) {
             updateTaskCount(currentTaskCount, csr->getOsContext().getContextId());
             hostPtrTaskCountAssignment--;
         }

@@ -495,6 +495,20 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
     EXPECT_EQ(graphicsAllocation.updateTaskCountCalleedTimes, calledTimesBefore + 1u);
 }
 
+HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountNotUsedLowerThanInCsrThenUpdateTaskCountWasCalled) {
+    executionEnvironment.initializeMemoryManager();
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
+    MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
+    csr.osContext = osContext.get();
+    MockGraphicsAllocationTaskCount graphicsAllocation;
+    graphicsAllocation.updateTaskCount(GraphicsAllocation::objectNotResident, 0u);
+    csr.taskCount = 10;
+    graphicsAllocation.hostPtrTaskCountAssignment = 1;
+    auto calledTimesBefore = graphicsAllocation.updateTaskCountCalleedTimes;
+    graphicsAllocation.prepareHostPtrForResidency(&csr);
+    EXPECT_EQ(graphicsAllocation.updateTaskCountCalleedTimes, calledTimesBefore + 1u);
+}
+
 HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThanInCsrThenAssignmentCountIsDecremented) {
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));

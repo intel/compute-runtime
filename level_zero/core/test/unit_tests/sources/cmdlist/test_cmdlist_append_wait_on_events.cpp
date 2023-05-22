@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -707,6 +708,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     commandListImmediate->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+    ultCsr.getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
 }
 
 HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendMemoryCopyRegionThenExpectDownloadAllocations) {
@@ -720,6 +722,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     commandListImmediate->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+    ultCsr.getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
 }
 
 HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendMemoryFillThenExpectDownloadAllocations) {
@@ -811,6 +814,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     commandListImmediate->appendImageCopyFromMemory(imagePtr->toHandle(), ptr, nullptr, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+    ultCsr.getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
 }
 
 HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendImageCopyToMemoryThenExpectDownloadAllocations) {
@@ -836,6 +840,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     commandListImmediate->appendImageCopyToMemory(ptr, imagePtr->toHandle(), nullptr, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+    ultCsr.getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
 }
 
 HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendMemoryRangesBarrierThenExpectDownloadAllocations) {
