@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -48,17 +50,26 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
     EXPECT_EQ(0u, systemInfo.getL3BankSizeInKb());
 }
 
-TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystemInfoIsNotCreatedAndDebugMessageIsNotPrinted) {
+TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystemInfoIsNotCreated) {
     struct DrmMockToQuerySystemInfo : public DrmMock {
         DrmMockToQuerySystemInfo(RootDeviceEnvironment &rootDeviceEnvironment)
             : DrmMock(rootDeviceEnvironment) {}
         bool querySystemInfo() override { return false; }
     };
 
+    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+      public:
+        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        void setupIpVersion() override {
+        }
+    };
+
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerProductHelper &) {};

@@ -437,6 +437,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     const auto productFamily = hwInfo->platform.eProductFamily;
     setupIoctlHelper(productFamily);
+    ioctlHelper->setupIpVersion();
 
     Drm::QueryTopologyData topologyData = {};
 

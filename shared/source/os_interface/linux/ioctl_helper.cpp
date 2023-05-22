@@ -19,6 +19,7 @@
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include <fcntl.h>
 #include <sstream>
@@ -52,6 +53,13 @@ void IoctlHelper::fillExecObject(ExecObject &execObject, uint32_t handle, uint64
     if (bindInfo) {
         drmExecObject.handle = 0u;
     }
+}
+
+void IoctlHelper::setupIpVersion() {
+    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    hwInfo.ipVersion.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 }
 
 void IoctlHelper::logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) {
@@ -458,5 +466,4 @@ std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) 
 
     return std::make_unique<EngineInfo>(&drm, tileCount, distanceInfos, queryItems, engines);
 }
-
 } // namespace NEO

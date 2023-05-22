@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -547,4 +548,13 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
     region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::None, 1);
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), region->memoryClass);
     EXPECT_EQ(1u, region->memoryInstance);
+}
+
+TEST_F(IoctlPrelimHelperTests, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
+    auto &hwInfo = *drm->getRootDeviceEnvironment().getHardwareInfo();
+    auto &productHelper = drm->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto config = productHelper.getProductConfigFromHwInfo(hwInfo);
+
+    ioctlHelper.setupIpVersion();
+    EXPECT_EQ(config, hwInfo.ipVersion.value);
 }

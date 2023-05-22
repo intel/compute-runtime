@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -1134,4 +1135,17 @@ TEST(IoctlHelperXeTest, whenUserFenceFailsThenErrorIsPropagated) {
 
     EXPECT_EQ(errorValue, xeIoctlHelper->vmBind(vmBindParams));
     EXPECT_EQ(errorValue, xeIoctlHelper->vmUnbind(vmBindParams));
+}
+
+TEST(IoctlHelperXeTest, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto config = productHelper.getProductConfigFromHwInfo(hwInfo);
+
+    xeIoctlHelper->setupIpVersion();
+    EXPECT_EQ(config, hwInfo.ipVersion.value);
 }

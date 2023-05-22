@@ -581,21 +581,21 @@ TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenIni
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionIsSet) {
     auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
     ipVersion = {};
-    EXPECT_TRUE(drm->ioctlHelper->initialize());
+    drm->ioctlHelper->setupIpVersion();
     EXPECT_EQ(ipVersion.revision, 1u);
     EXPECT_EQ(ipVersion.release, 2u);
     EXPECT_EQ(ipVersion.architecture, 3u);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsNotSet) {
-    auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsCorrect) {
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto &ipVersion = hwInfo->ipVersion;
     ipVersion = {};
     drm->failRetHwIpVersion = true;
-    EXPECT_FALSE(drm->ioctlHelper->initialize());
-
-    EXPECT_EQ(ipVersion.revision, 0u);
-    EXPECT_EQ(ipVersion.release, 0u);
-    EXPECT_EQ(ipVersion.architecture, 0u);
+    drm->ioctlHelper->setupIpVersion();
+    auto config = productHelper.getProductConfigFromHwInfo(*hwInfo);
+    EXPECT_EQ(config, ipVersion.value);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnInitializationThenErrorIsPrinted) {
@@ -604,7 +604,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnIni
 
     testing::internal::CaptureStderr();
     drm->returnInvalidHwIpVersionLength = true;
-    EXPECT_FALSE(drm->ioctlHelper->initialize());
+    drm->ioctlHelper->setupIpVersion();
 
     DebugManager.flags.PrintDebugMessages.set(false);
     std::string output = testing::internal::GetCapturedStderr();
@@ -619,7 +619,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlat
 
     testing::internal::CaptureStderr();
     drm->failRetHwIpVersion = true;
-    EXPECT_FALSE(drm->ioctlHelper->initialize());
+    drm->ioctlHelper->setupIpVersion();
 
     DebugManager.flags.PrintDebugMessages.set(false);
     std::string output = testing::internal::GetCapturedStderr();

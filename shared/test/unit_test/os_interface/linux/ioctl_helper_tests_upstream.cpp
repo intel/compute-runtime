@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -496,4 +498,17 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingFabricLatencyThenFalseIsR
     IoctlHelperUpstream ioctlHelper{*drm};
     uint32_t fabricId = 0, latency = 0, bandwidth = 0;
     EXPECT_FALSE(ioctlHelper.getFabricLatency(fabricId, latency, bandwidth));
+}
+
+TEST(IoctlHelperTestsUpstream, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto config = productHelper.getProductConfigFromHwInfo(hwInfo);
+
+    ioctlHelper.setupIpVersion();
+    EXPECT_EQ(config, hwInfo.ipVersion.value);
 }

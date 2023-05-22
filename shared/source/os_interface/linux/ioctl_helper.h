@@ -29,6 +29,7 @@ struct HardwareInfo;
 struct HardwareIpVersion;
 struct EngineInfo;
 class MemoryInfo;
+struct RootDeviceEnvironment;
 
 struct MemoryRegion {
     MemoryClassInstance region;
@@ -143,6 +144,7 @@ class IoctlHelper {
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
+    virtual void setupIpVersion();
 
     uint32_t getFlagsForPrimeHandleToFd() const;
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo();
@@ -274,6 +276,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
     bool isWaitBeforeBindRequired(bool bind) const override;
     void *pciBarrierMmap() override;
+    void setupIpVersion() override;
 
   protected:
     bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);

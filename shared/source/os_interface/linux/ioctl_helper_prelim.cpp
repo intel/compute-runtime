@@ -781,7 +781,12 @@ bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, Hard
 }
 
 bool IoctlHelperPrelim20::initialize() {
-    auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    return true;
+}
+
+void IoctlHelperPrelim20::setupIpVersion() {
+    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::EngineClassRender)), 0};
     int ret = 0;
     bool result = queryHwIpVersion(engineInfo, hwInfo->ipVersion, ret);
@@ -793,7 +798,9 @@ bool IoctlHelperPrelim20::initialize() {
                            "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
     }
 
-    return result;
+    if (result == false) {
+        IoctlHelper::setupIpVersion();
+    }
 }
 
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));
