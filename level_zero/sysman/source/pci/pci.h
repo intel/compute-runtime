@@ -13,7 +13,7 @@ namespace Sysman {
 
 class Pci {
   public:
-    virtual ~Pci(){};
+    virtual ~Pci() = default;
     virtual ze_result_t pciStaticProperties(zes_pci_properties_t *pProperties) = 0;
     virtual ze_result_t pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) = 0;
     virtual ze_result_t pciGetState(zes_pci_state_t *pState) = 0;

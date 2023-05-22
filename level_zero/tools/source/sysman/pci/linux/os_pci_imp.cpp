@@ -8,10 +8,12 @@
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/directory.h"
 
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 

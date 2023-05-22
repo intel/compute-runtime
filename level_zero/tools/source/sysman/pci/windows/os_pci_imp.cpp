@@ -12,6 +12,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
+#include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 namespace L0 {
 

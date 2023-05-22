@@ -6,8 +6,7 @@
  */
 
 #pragma once
-
-#include "level_zero/sysman/source/os_sysman.h"
+#include <level_zero/zes_api.h>
 
 #include <vector>
 
@@ -16,6 +15,7 @@ namespace Sysman {
 int64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt);
 int32_t convertLinkSpeedToPciGen(double speed);
 double convertPciGenToLinkSpeed(uint32_t gen);
+struct OsSysman;
 class OsPci {
   public:
     virtual ze_result_t getPciBdf(zes_pci_properties_t &pciProperties) = 0;

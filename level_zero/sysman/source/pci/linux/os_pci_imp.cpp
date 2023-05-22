@@ -10,6 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/utilities/directory.h"
 
+#include "level_zero/sysman/source/linux/fs_access.h"
+#include "level_zero/sysman/source/linux/os_sysman_imp.h"
 #include "level_zero/sysman/source/pci/pci_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 

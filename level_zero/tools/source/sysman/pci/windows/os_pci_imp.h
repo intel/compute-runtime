@@ -9,7 +9,6 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/pci/os_pci.h"
-#include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 namespace L0 {
 class KmdSysManager;
@@ -23,7 +22,6 @@ class WddmPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     WddmPciImp(OsSysman *pOsSysman);
-    WddmPciImp() = default;
     ~WddmPciImp() override = default;
 
   protected:

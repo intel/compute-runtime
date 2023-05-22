@@ -11,7 +11,10 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/directory.h"
 
+#include "level_zero/sysman/source/pci/os_pci.h"
 #include "level_zero/sysman/source/sysman_const.h"
+
+#include <algorithm>
 
 namespace L0 {
 namespace Sysman {

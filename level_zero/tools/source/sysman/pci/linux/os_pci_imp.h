@@ -9,13 +9,14 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/pci/os_pci.h"
 
+#include <memory>
 namespace L0 {
-
 class SysfsAccess;
 class FsAccess;
+class LinuxSysmanImp;
+struct OsSysman;
 
 class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
   public:

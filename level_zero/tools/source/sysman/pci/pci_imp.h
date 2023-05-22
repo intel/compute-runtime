@@ -7,9 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/memory_manager/memory_manager.h"
 
-#include "os_pci.h"
 #include "pci.h"
 
 #include <mutex>
@@ -17,6 +15,8 @@
 
 namespace L0 {
 
+class OsPci;
+struct OsSysman;
 class PciImp : public Pci, NEO::NonCopyableOrMovableClass {
   public:
     void init() override;
@@ -25,7 +25,6 @@ class PciImp : public Pci, NEO::NonCopyableOrMovableClass {
     ze_result_t pciGetState(zes_pci_state_t *pState) override;
     void pciGetStaticFields();
 
-    PciImp() = default;
     PciImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~PciImp() override;
     OsPci *pOsPci = nullptr;
