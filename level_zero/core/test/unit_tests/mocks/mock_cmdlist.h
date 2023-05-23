@@ -153,6 +153,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::csr;
+    using BaseClass::deferredTimestampPackets;
     using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::finalStreamState;
@@ -174,6 +175,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::synchronizeInOrderExecution;
+    using BaseClass::timestampPacketContainer;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 };

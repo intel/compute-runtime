@@ -321,6 +321,7 @@ struct CommandListCoreFamily : CommandListImp {
     }
     void postInitComputeSetup();
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
+    void obtainNewTimestampPacketNode();
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

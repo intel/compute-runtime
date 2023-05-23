@@ -14,6 +14,7 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/simd_helper.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -277,26 +278,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->dcFlushSupport                                    // dcFlushEnable
     };
 
-    bool inOrderExecCounterUpdate = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
+    bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
 
-    if (inOrderExecCounterUpdate && !isTimestampEvent) {
-        dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
-        dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
+    if (inOrderExecSignalRequired) {
+        obtainNewTimestampPacketNode();
+    }
+
+    if (inOrderExecSignalRequired && !event) {
+        dispatchKernelArgs.isTimestampEvent = true;
+        dispatchKernelArgs.eventAddress = this->timestampPacketContainer->peekNodes()[0]->getGpuAddress();
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
-
-    if (inOrderExecCounterUpdate && isTimestampEvent) {
-        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-        auto gpuAddr = event->getCompletionFieldGpuAddress(this->device);
-
-        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
-                                                                   gpuAddr,
-                                                                   Event::State::STATE_CLEARED,
-                                                                   MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-
-        appendSignalInOrderDependencyCounter();
-    }
 
     if (!this->isFlushTaskSubmissionEnabled) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
@@ -312,6 +305,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (!launchParams.isKernelSplitOperation) {
             dispatchEventRemainingPacketsPostSyncOperation(event);
         }
+    }
+
+    if (inOrderExecSignalRequired && event) {
+        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+        auto gpuAddr = event->getCompletionFieldGpuAddress(this->device);
+
+        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                   gpuAddr,
+                                                                   Event::State::STATE_CLEARED,
+                                                                   MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+
+        appendSignalInOrderDependencyCounter();
     }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing) {

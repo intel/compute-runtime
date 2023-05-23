@@ -173,8 +173,10 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const;
 
   protected:
+    using BaseClass::deferredTimestampPackets;
     using BaseClass::inOrderDependencyCounter;
     using BaseClass::inOrderDependencyCounterAllocation;
+    using BaseClass::timestampPacketContainer;
 
     void printKernelsPrintfOutput(bool hangDetected);
     ze_result_t synchronizeInOrderExecution(uint64_t timeout) const;

@@ -235,7 +235,10 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
 }
 
 void CommandListImp::enableInOrderExecution() {
-    UNRECOVERABLE_IF(inOrderDependencyCounterAllocation);
+    UNRECOVERABLE_IF(inOrderExecutionEnabled);
+
+    timestampPacketContainer = std::make_unique<NEO::TimestampPacketContainer>();
+    deferredTimestampPackets = std::make_unique<NEO::TimestampPacketContainer>();
 
     auto device = this->device->getNEODevice();
 
