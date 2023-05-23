@@ -8,8 +8,10 @@
 #pragma once
 
 #include "shared/source/helpers/mt_helpers.h"
+#include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/os_context.h"
 
+#include <array>
 #include <atomic>
 #include <vector>
 
@@ -52,6 +54,11 @@ class OsContextLinux : public OsContext {
 
     uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const override;
 
+    uint64_t getNextFenceVal(uint32_t deviceIndex) { return fenceVal[deviceIndex] + 1; }
+    void incFenceVal(uint32_t deviceIndex) { fenceVal[deviceIndex]++; }
+    uint64_t *getFenceAddr(uint32_t deviceIndex) { return &pagingFence[deviceIndex]; }
+    void waitForBind(uint32_t drmIterator);
+
   protected:
     bool initializeContext() override;
 
@@ -60,6 +67,10 @@ class OsContextLinux : public OsContext {
     unsigned int engineFlag = 0;
     std::vector<uint32_t> drmContextIds;
     std::vector<uint32_t> drmVmIds;
+
+    std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;
+    std::array<uint64_t, EngineLimits::maxHandleCount> fenceVal;
+
     Drm &drm;
     bool contextHangDetected = false;
 };

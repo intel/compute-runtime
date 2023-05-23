@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/os_context.h"
@@ -30,7 +31,10 @@ OsContext *OsContextLinux::create(OSInterface *osInterface, uint32_t rootDeviceI
 
 OsContextLinux::OsContextLinux(Drm &drm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
     : OsContext(rootDeviceIndex, contextId, engineDescriptor),
-      drm(drm) {}
+      drm(drm) {
+    pagingFence.fill(0u);
+    fenceVal.fill(0u);
+}
 
 bool OsContextLinux::initializeContext() {
     auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
@@ -88,8 +92,25 @@ Drm &OsContextLinux::getDrm() const {
 void OsContextLinux::waitForPagingFence() {
     for (auto drmIterator = 0u; drmIterator < this->deviceBitfield.size(); drmIterator++) {
         if (this->deviceBitfield.test(drmIterator)) {
-            drm.waitForBind(drmIterator);
+            this->waitForBind(drmIterator);
         }
+    }
+}
+
+void OsContextLinux::waitForBind(uint32_t drmIterator) {
+    if (drm.isPerContextVMRequired()) {
+        if (pagingFence[drmIterator] >= fenceVal[drmIterator]) {
+            return;
+        }
+        auto lock = drm.lockBindFenceMutex();
+        auto fenceAddress = castToUint64(&this->pagingFence[drmIterator]);
+        auto fenceValue = this->fenceVal[drmIterator];
+        lock.unlock();
+
+        drm.waitUserFence(0u, fenceAddress, fenceValue, Drm::ValueWidth::U64, -1, drm.getIoctlHelper()->getWaitUserFenceSoftFlag());
+
+    } else {
+        drm.waitForBind(drmIterator);
     }
 }
 

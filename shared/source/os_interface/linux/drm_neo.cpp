@@ -1399,8 +1399,19 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 
                 if (!drm->hasPageFaultSupport() || bo->isExplicitResidencyRequired()) {
                     auto nextExtension = vmBind.extensions;
-                    auto address = castToUint64(drm->getFenceAddr(vmHandleId));
-                    auto value = drm->getNextFenceVal(vmHandleId);
+
+                    uint64_t address = 0;
+                    uint64_t value = 0;
+
+                    if (drm->isPerContextVMRequired()) {
+                        auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+                        address = castToUint64(osContextLinux->getFenceAddr(vmHandleId));
+                        value = osContextLinux->getNextFenceVal(vmHandleId);
+                    } else {
+                        address = castToUint64(drm->getFenceAddr(vmHandleId));
+                        value = drm->getNextFenceVal(vmHandleId);
+                    }
+
                     incrementFenceValue = true;
                     ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
                     vmBind.extensions = castToUint64(vmBindExtUserFence);
@@ -1422,7 +1433,12 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             }
         }
         if (incrementFenceValue) {
-            drm->incFenceVal(vmHandleId);
+            if (drm->isPerContextVMRequired()) {
+                auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+                osContextLinux->incFenceVal(vmHandleId);
+            } else {
+                drm->incFenceVal(vmHandleId);
+            }
         }
     }
 
