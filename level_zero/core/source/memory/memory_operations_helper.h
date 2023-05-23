@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ static ze_result_t changeMemoryOperationStatusToL0ResultType(NEO::MemoryOperatio
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 
     case NEO::MemoryOperationsStatus::OUT_OF_MEMORY:
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
 
     case NEO::MemoryOperationsStatus::FAILED:
         return ZE_RESULT_ERROR_DEVICE_LOST;

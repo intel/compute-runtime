@@ -28,11 +28,15 @@ DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     auto &engines = device->getAllEngines();
+    MemoryOperationsStatus result = MemoryOperationsStatus::SUCCESS;
     for (const auto &engine : engines) {
         engine.commandStreamReceiver->initializeResources();
-        this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false);
+        result = this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false);
+        if (result != MemoryOperationsStatus::SUCCESS) {
+            break;
+        }
     }
-    return MemoryOperationsStatus::SUCCESS;
+    return result;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {

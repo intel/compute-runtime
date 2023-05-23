@@ -291,7 +291,8 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, whenNoSpaceLeftOnDevi
     EXPECT_EQ(allocationDefault, registeredAllocations[1]);
 
     EXPECT_EQ(operationHandler->evictUnusedCalled, 0u);
-    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
+    auto res = operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
+    EXPECT_EQ(MemoryOperationsStatus::OUT_OF_MEMORY, res);
     EXPECT_EQ(operationHandler->evictUnusedCalled, 1u);
 
     memoryManager->freeGraphicsMemory(allocation);

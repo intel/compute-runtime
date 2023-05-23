@@ -4690,7 +4690,7 @@ TEST_F(ContextMemoryTest, givenCallTochangeMemoryOperationStatusToL0ResultTypeTh
 
     status = NEO::MemoryOperationsStatus::OUT_OF_MEMORY;
     res = changeMemoryOperationStatusToL0ResultType(status);
-    EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 
     status = NEO::MemoryOperationsStatus::UNSUPPORTED;
     res = changeMemoryOperationStatusToL0ResultType(status);
