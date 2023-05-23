@@ -296,9 +296,6 @@ std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipeli
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::adjustIpVersionIfNeeded(HardwareInfo &hwInfo) const {}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
     return false;
 }

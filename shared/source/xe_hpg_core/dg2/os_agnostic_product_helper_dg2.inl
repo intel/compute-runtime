@@ -139,15 +139,6 @@ bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const Hardw
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::adjustIpVersionIfNeeded(HardwareInfo &hwInfo) const {
-    bool isIpVersionUninitialized = hwInfo.ipVersion.architecture == 0;
-
-    if (isIpVersionUninitialized) {
-        hwInfo.ipVersion.value = getHwIpVersion(hwInfo);
-    }
-}
-
-template <>
 std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     auto isAcm = DG2::isG10(hwInfo) || DG2::isG11(hwInfo) || DG2::isG12(hwInfo);
     auto isBasicWARequired = isAcm;

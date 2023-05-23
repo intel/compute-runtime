@@ -111,7 +111,6 @@ bool Wddm::init() {
     rootDeviceEnvironment.initGfxCoreHelper();
 
     populateIpVersion(*hardwareInfo);
-    productHelper.adjustIpVersionIfNeeded(*rootDeviceEnvironment.getMutableHardwareInfo());
     rootDeviceEnvironment.initReleaseHelper();
 
     if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {

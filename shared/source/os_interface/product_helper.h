@@ -205,7 +205,6 @@ class ProductHelper {
     virtual bool isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumberOfPartsInTileForConcurrentKernel() const = 0;
     virtual bool is48bResourceNeededForRayTracing() const = 0;
-    virtual void adjustIpVersionIfNeeded(HardwareInfo &hwInfo) const = 0;
 
     virtual ~ProductHelper() = default;
 

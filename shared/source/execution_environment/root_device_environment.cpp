@@ -160,7 +160,6 @@ void RootDeviceEnvironment::initHelpers() {
     initGfxCoreHelper();
     initApiGfxCoreHelper();
     initCompilerProductHelper();
-    productHelper->adjustIpVersionIfNeeded(*hwInfo);
     initReleaseHelper();
 }
 

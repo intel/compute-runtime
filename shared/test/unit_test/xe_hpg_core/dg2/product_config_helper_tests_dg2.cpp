@@ -847,25 +847,3 @@ DG2TEST_F(ProductHelperTestDg2, givenDebugFlagWhenCheckingIsResolveDependenciesB
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
-
-DG2TEST_F(ProductHelperTestDg2, givenDg2WhenAdjustIpVersionThenIpVersionIsCorrect) {
-    auto testIpVersion = [&](auto revId, auto deviceId, auto config) {
-        auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-        hwInfo.platform.usDeviceID = deviceId;
-        hwInfo.platform.usRevId = revId;
-        hwInfo.ipVersion.value = 0;
-
-        productHelper->adjustIpVersionIfNeeded(hwInfo);
-        auto ipVersion = hwInfo.ipVersion;
-        EXPECT_EQ(config, ipVersion.value);
-    };
-
-    testIpVersion(0, 0x4F80, AOT::DG2_G10_A0);
-    testIpVersion(1, 0x4F80, AOT::DG2_G10_A1);
-    testIpVersion(4, 0x4F80, AOT::DG2_G10_B0);
-    testIpVersion(8, 0x4F80, AOT::DG2_G10_C0);
-    testIpVersion(0, 0x4F87, AOT::DG2_G11_A0);
-    testIpVersion(4, 0x4F87, AOT::DG2_G11_B0);
-    testIpVersion(5, 0x4F87, AOT::DG2_G11_B1);
-    testIpVersion(0, 0x5696, AOT::DG2_G12_A0);
-}
