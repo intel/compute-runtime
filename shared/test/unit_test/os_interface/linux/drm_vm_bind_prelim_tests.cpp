@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
@@ -53,6 +54,35 @@ TEST(DrmVmBindTest, givenBoRequiringExplicitResidencyWhenBindingThenMakeResident
             ASSERT_TRUE(drm.context.receivedVmBindUserFence);
             EXPECT_EQ(castToUint64(drm.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
             EXPECT_EQ(drm.fenceVal[vmHandleId], drm.context.receivedVmBindUserFence->val);
+        } else {
+            EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
+        }
+    }
+}
+
+TEST(DrmVmBindTest, givenPerContextVmsAndBoRequiringExplicitResidencyWhenBindingThenPagingFenceFromContextIsUsed) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+    drm.requirePerContextVM = true;
+
+    for (auto requireResidency : {false, true}) {
+        MockBufferObject bo(&drm, 3, 0, 0, 1);
+        bo.requireExplicitResidency(requireResidency);
+
+        MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        osContext.ensureContextInitialized();
+        uint32_t vmHandleId = 0;
+        bo.bind(&osContext, vmHandleId);
+
+        if (requireResidency) {
+            EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag() | DrmPrelimHelper::getMakeResidentVmBindFlag(), drm.context.receivedVmBind->flags);
+            ASSERT_TRUE(drm.context.receivedVmBindUserFence);
+            EXPECT_EQ(castToUint64(osContext.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
+            EXPECT_EQ(osContext.fenceVal[vmHandleId], drm.context.receivedVmBindUserFence->val);
+            EXPECT_EQ(1u, osContext.fenceVal[vmHandleId]);
         } else {
             EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
         }

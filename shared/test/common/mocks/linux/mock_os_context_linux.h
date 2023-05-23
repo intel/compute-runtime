@@ -12,6 +12,8 @@ namespace NEO {
 class MockOsContextLinux : public OsContextLinux {
   public:
     using OsContextLinux::drmContextIds;
+    using OsContextLinux::fenceVal;
+    using OsContextLinux::pagingFence;
 
     MockOsContextLinux(Drm &drm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
         : OsContextLinux(drm, rootDeviceIndex, contextId, engineDescriptor) {}
