@@ -29,7 +29,6 @@ struct HardwareInfo;
 struct HardwareIpVersion;
 struct EngineInfo;
 class MemoryInfo;
-struct RootDeviceEnvironment;
 
 struct MemoryRegion {
     MemoryClassInstance region;
