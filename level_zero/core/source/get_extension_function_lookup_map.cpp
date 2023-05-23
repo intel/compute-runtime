@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ std::unordered_map<std::string, void *> getExtensionFunctionsLookupMap() {
 
     addToMap(lookupMap, zexCommandListAppendWaitOnMemory);
     addToMap(lookupMap, zexCommandListAppendWriteToMemory);
+    addToMap(lookupMap, zexSysmanMemoryGetBandwidth);
 #undef addToMap
 
     return lookupMap;

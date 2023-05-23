@@ -15,7 +15,7 @@
 namespace L0 {
 namespace Sysman {
 
-struct SysmanDriverHandle : _ze_driver_handle_t {
+struct SysmanDriverHandle : BaseDriver {
     static SysmanDriverHandle *fromHandle(zes_driver_handle_t handle) { return static_cast<SysmanDriverHandle *>(handle); }
     inline zes_driver_handle_t toHandle() { return this; }
 

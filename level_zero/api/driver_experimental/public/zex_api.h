@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 
 // 'core' API headers
 #include <level_zero/ze_api.h>
+// 'sysman' API headers
+#include <level_zero/zes_api.h>
 
 // driver experimental API headers
 #include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
@@ -20,5 +22,6 @@
 #include "zex_driver.h"
 #include "zex_memory.h"
 #include "zex_module.h"
+#include "zex_sysman_memory.h"
 
 #endif // _ZEX_API_H

@@ -28,7 +28,12 @@ namespace L0 {
 struct Device;
 struct L0EnvVariables;
 
-struct DriverHandle : _ze_driver_handle_t {
+struct BaseDriver : _ze_driver_handle_t {
+    virtual ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) = 0;
+    static BaseDriver *fromHandle(ze_driver_handle_t handle) { return static_cast<BaseDriver *>(handle); }
+};
+
+struct DriverHandle : BaseDriver {
     virtual ze_result_t createContext(const ze_context_desc_t *desc,
                                       uint32_t numDevices,
                                       ze_device_handle_t *phDevices,
@@ -37,7 +42,6 @@ struct DriverHandle : _ze_driver_handle_t {
     virtual ze_result_t getProperties(ze_driver_properties_t *properties) = 0;
     virtual ze_result_t getApiVersion(ze_api_version_t *version) = 0;
     virtual ze_result_t getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) = 0;
-    virtual ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) = 0;
     virtual ze_result_t getExtensionProperties(uint32_t *pCount,
                                                ze_driver_extension_properties_t *pExtensionProperties) = 0;
 
