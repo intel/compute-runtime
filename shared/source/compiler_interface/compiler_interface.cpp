@@ -370,17 +370,18 @@ CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> CompilerInterface::getIg
 }
 
 bool CompilerInterface::loadFcl() {
-    return NEO::loadCompiler(Os::frontEndDllName, fclLib, fclMain);
+    return NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
 }
 
 bool CompilerInterface::loadIgc() {
-    return NEO::loadCompiler(Os::igcDllName, igcLib, igcMain);
+    return NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
 }
 
 bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
     bool fclAvailable = requireFcl ? this->loadFcl() : false;
     bool igcAvailable = this->loadIgc();
     bool compilerVersionCorrect = true;
+
     if (!DebugManager.flags.ZebinIgnoreIcbeVersion.get()) {
         compilerVersionCorrect = verifyIcbeVersion();
     }

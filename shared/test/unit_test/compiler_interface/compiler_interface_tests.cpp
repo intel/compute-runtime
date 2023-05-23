@@ -643,7 +643,7 @@ TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvok
 TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler("", retLib, retMain);
+    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
     EXPECT_TRUE(retVal);
     EXPECT_NE(nullptr, retLib.get());
     EXPECT_NE(nullptr, retMain.get());
@@ -652,7 +652,7 @@ TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
 TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler("_falseName.notRealLib", retLib, retMain);
+    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("_falseName.notRealLib", retLib, retMain);
     EXPECT_FALSE(retVal);
     EXPECT_EQ(nullptr, retLib.get());
     EXPECT_EQ(nullptr, retMain.get());
@@ -663,12 +663,31 @@ TEST(LoadCompilerTest, whenCreateMainFailsThenReturnFalseAndNullOutputs) {
 
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler("", retLib, retMain);
+    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
     EXPECT_FALSE(retVal);
     EXPECT_EQ(nullptr, retLib.get());
     EXPECT_EQ(nullptr, retMain.get());
 
     NEO::failCreateCifMain = false;
+}
+
+TEST(LoadCompilerTest, whenEntrypointInterfaceIsNotCompatibleThenReturnFalseAndNullOutputs) {
+
+    std::unique_ptr<NEO::OsLibrary> retLib;
+    CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
+    bool retVal = loadCompiler<IGC::GTSystemInfo>("", retLib, retMain);
+    EXPECT_FALSE(retVal);
+    EXPECT_EQ(nullptr, retLib.get());
+    EXPECT_EQ(nullptr, retMain.get());
+}
+
+TEST(LoadCompilerTest, whenLoadCompilerWhenEntryIgcOclDeviceCtxThenIgnoreIgcsIcbeVersion) {
+    std::unique_ptr<NEO::OsLibrary> retLib;
+    CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
+    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
+    EXPECT_TRUE(retVal);
+    EXPECT_NE(nullptr, retLib.get());
+    EXPECT_NE(nullptr, retMain.get());
 }
 
 template <typename DeviceCtxBase, typename TranslationCtx>
