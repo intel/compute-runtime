@@ -17,4 +17,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_memory.h
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_module.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_module.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/zex_sysman_memory.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/zex_sysman_memory.cpp
 )

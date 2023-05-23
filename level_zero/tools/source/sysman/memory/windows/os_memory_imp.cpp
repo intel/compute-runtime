@@ -168,6 +168,10 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t WddmMemoryImp::getBandwidthEx(uint64_t *pReadCounters, uint64_t *pWriteCounters, uint64_t *pMaxBandwidth, uint64_t timeout) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     uint32_t valueSmall = 0;
     uint64_t valueLarge = 0;

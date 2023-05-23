@@ -458,6 +458,79 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     }
 }
 
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGetBandwidthExWhenVFID1IsActiveThenSuccessIsReturnedAndBandwidthIsValid, IsPVC) {
+    setLocalSupportedAndReinit(true);
+    auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+
+    pPmt->mockVfid1Status = true;
+    pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
+    uint64_t readCounters = 0;
+    uint64_t writeCounters = 0;
+    uint64_t maxBandwidth = 0;
+    uint64_t timeout = 1;
+    std::unique_ptr<PublicLinuxMemoryImp> pLinuxMemoryImp = std::make_unique<PublicLinuxMemoryImp>(pOsSysman, true, 0);
+    EXPECT_EQ(pLinuxMemoryImp->getBandwidthEx(&readCounters, &writeCounters, &maxBandwidth, timeout), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(readCounters, 0u);
+    EXPECT_EQ(writeCounters, 0u);
+    uint64_t expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
+    EXPECT_EQ(maxBandwidth, expectedBandwidth);
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGetBandwidthExWhenVFID0IsActiveThenSuccessIsReturnedAndBandwidthIsValid, IsPVC) {
+    setLocalSupportedAndReinit(true);
+    auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+
+    pPmt->mockVfid0Status = true;
+    pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
+    uint64_t readCounters = 0;
+    uint64_t writeCounters = 0;
+    uint64_t maxBandwidth = 0;
+    uint64_t timeout = 1;
+    std::unique_ptr<PublicLinuxMemoryImp> pLinuxMemoryImp = std::make_unique<PublicLinuxMemoryImp>(pOsSysman, true, 0);
+    EXPECT_EQ(pLinuxMemoryImp->getBandwidthEx(&readCounters, &writeCounters, &maxBandwidth, timeout), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(readCounters, 0u);
+    EXPECT_EQ(writeCounters, 0u);
+    uint64_t expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
+    EXPECT_EQ(maxBandwidth, expectedBandwidth);
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGetBandwidthExForUnknownPlatformThenFailureIsReturned) {
+    setLocalSupportedAndReinit(true);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.platform.eProductFamily = IGFX_UNKNOWN;
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
+    uint64_t readCounters = 0;
+    uint64_t writeCounters = 0;
+    uint64_t maxBandwidth = 0;
+    uint64_t timeout = 1;
+    std::unique_ptr<PublicLinuxMemoryImp> pLinuxMemoryImp = std::make_unique<PublicLinuxMemoryImp>(pOsSysman, true, 0);
+    EXPECT_EQ(pLinuxMemoryImp->getBandwidthEx(&readCounters, &writeCounters, &maxBandwidth, timeout), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGetMemoryGetBandwidthExWhenPmtObjectIsNullThenFailureRetuned) {
+    for (auto &subDeviceIdToPmtEntry : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
+        if (subDeviceIdToPmtEntry.second != nullptr) {
+            delete subDeviceIdToPmtEntry.second;
+            subDeviceIdToPmtEntry.second = nullptr;
+        }
+    }
+    setLocalSupportedAndReinit(true);
+    uint64_t readCounters = 0;
+    uint64_t writeCounters = 0;
+    uint64_t maxBandwidth = 0;
+    uint64_t timeout = 1;
+    std::unique_ptr<PublicLinuxMemoryImp> pLinuxMemoryImp = std::make_unique<PublicLinuxMemoryImp>(pOsSysman, true, 0);
+    EXPECT_EQ(pLinuxMemoryImp->getBandwidthEx(&readCounters, &writeCounters, &maxBandwidth, timeout), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
 HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidUsRevIdForRevisionBWhenCallingzesSysmanMemoryGetBandwidthThenSuccessIsReturnedAndBandwidthIsValid, IsPVC) {
     setLocalSupportedAndReinit(true);
     auto handles = getMemoryHandles(memoryHandleComponentCount);

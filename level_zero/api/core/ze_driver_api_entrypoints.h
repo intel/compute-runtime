@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ ze_result_t zeDriverGetExtensionFunctionAddress(
     ze_driver_handle_t hDriver,
     const char *name,
     void **ppFunctionAddress) {
-    return L0::DriverHandle::fromHandle(hDriver)->getExtensionFunctionAddress(name, ppFunctionAddress);
+    return L0::BaseDriver::fromHandle(hDriver)->getExtensionFunctionAddress(name, ppFunctionAddress);
 }
 } // namespace L0
 

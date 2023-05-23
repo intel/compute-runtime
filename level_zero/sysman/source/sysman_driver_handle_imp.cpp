@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "level_zero/core/source/get_extension_function_lookup_map.h"
 #include "level_zero/sysman/source/sysman_device.h"
 #include "level_zero/sysman/source/sysman_driver.h"
 
@@ -44,6 +45,15 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t SysmanDriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
+    auto funcAddr = extensionFunctionsLookupMap.find(std::string(pFuncName));
+    if (funcAddr != extensionFunctionsLookupMap.end()) {
+        *pfunc = funcAddr->second;
+        return ZE_RESULT_SUCCESS;
+    }
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
 SysmanDriverHandle *SysmanDriverHandle::create(NEO::ExecutionEnvironment &executionEnvironment, ze_result_t *returnValue) {
     SysmanDriverHandleImp *driverHandle = new SysmanDriverHandleImp;
     UNRECOVERABLE_IF(nullptr == driverHandle);
@@ -56,6 +66,7 @@ SysmanDriverHandle *SysmanDriverHandle::create(NEO::ExecutionEnvironment &execut
         return nullptr;
     }
 
+    driverHandle->extensionFunctionsLookupMap = getExtensionFunctionsLookupMap();
     GlobalSysmanDriver = driverHandle;
     *returnValue = res;
     return driverHandle;

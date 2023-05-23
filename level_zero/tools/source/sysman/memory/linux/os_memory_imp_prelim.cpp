@@ -293,6 +293,97 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     return result;
 }
 
+uint64_t getCounterIncrement(uint32_t counterMaxValue, uint64_t prevValue, uint64_t currentValue) {
+    if (currentValue < prevValue) {
+        return (counterMaxValue - prevValue + currentValue);
+    }
+    return (currentValue - prevValue);
+}
+ze_result_t LinuxMemoryImp::getHbmBandwidthEx(uint32_t numHbmModules, uint32_t counterMaxValue, uint64_t *pReadCounters, uint64_t *pWriteCounters, uint64_t *pMaxBandwidth, uint64_t timeout) {
+    std::vector<uint64_t> prevReadCounters(numHbmModules, 0);
+    std::vector<uint64_t> prevWriteCounters(numHbmModules, 0);
+    uint64_t totalReadCounters = 0;
+    uint64_t totalWriteCounters = 0;
+    bool counterInit = false;
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    std::string vfId = "";
+    result = getVFIDString(vfId);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
+        return result;
+    }
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    auto productFamily = hwInfo.platform.eProductFamily;
+    auto &productHelper = pDevice->getNEODevice()->getProductHelper();
+    auto stepping = productHelper.getSteppingFromHwRevId(hwInfo);
+    auto timeToExitLoop = std::chrono::steady_clock::now() + std::chrono::duration<uint64_t, std::milli>(timeout);
+    do {
+        for (auto hbmModuleIndex = 0u; hbmModuleIndex < numHbmModules; hbmModuleIndex++) {
+            uint32_t counterValue = 0;
+            // To read counters from VFID 0 and HBM module 0, key would be: VF0_HBM0_READ
+            std::string readCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_READ";
+            result = pPmt->readValue(readCounterKey, counterValue);
+            if (result != ZE_RESULT_SUCCESS) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
+                return result;
+            }
+            if (counterInit) {
+                totalReadCounters += getCounterIncrement(counterMaxValue, prevReadCounters[hbmModuleIndex], counterValue);
+            }
+            prevReadCounters[hbmModuleIndex] = counterValue;
+            counterValue = 0;
+            // To write counters to VFID 0 and HBM module 0, key would be: VF0_HBM0_Write
+            std::string writeCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_WRITE";
+            result = pPmt->readValue(writeCounterKey, counterValue);
+            if (result != ZE_RESULT_SUCCESS) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", __FUNCTION__, result);
+                return result;
+            }
+            if (counterInit) {
+                totalWriteCounters += getCounterIncrement(counterMaxValue, prevWriteCounters[hbmModuleIndex], counterValue);
+            }
+            prevWriteCounters[hbmModuleIndex] = counterValue;
+        }
+        counterInit = true;
+    } while (std::chrono::steady_clock::now() <= timeToExitLoop);
+
+    constexpr uint64_t transactionSize = 32;
+    *pReadCounters = (totalReadCounters * transactionSize);
+    *pWriteCounters = (totalWriteCounters * transactionSize);
+    uint64_t hbmFrequency = 0;
+    getHbmFrequency(productFamily, stepping, hbmFrequency);
+
+    *pMaxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules; // Value in bytes/secs
+    return result;
+}
+
+ze_result_t LinuxMemoryImp::getBandwidthEx(uint64_t *pReadCounters, uint64_t *pWriteCounters, uint64_t *pMaxBw, uint64_t timeout) {
+    if (pPmt == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    auto productFamily = hwInfo.platform.eProductFamily;
+    uint32_t numHbmModules = 0u;
+    uint32_t counterMaxValue;
+    switch (productFamily) {
+    case IGFX_XE_HP_SDV:
+        numHbmModules = 2u;
+        counterMaxValue = UINT32_MAX;
+        result = getHbmBandwidthEx(numHbmModules, counterMaxValue, pReadCounters, pWriteCounters, pMaxBw, timeout);
+        break;
+    case IGFX_PVC:
+        numHbmModules = 4u;
+        counterMaxValue = UINT32_MAX;
+        result = getHbmBandwidthEx(numHbmModules, counterMaxValue, pReadCounters, pWriteCounters, pMaxBw, timeout);
+        break;
+    default:
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        break;
+    }
+    return result;
+}
+
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
