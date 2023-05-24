@@ -284,7 +284,10 @@ template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
-
+template <PRODUCT_FAMILY gfxProduct>
+int ProductHelperHw<gfxProduct>::getProductMaxPreferredSlmSize(const HardwareInfo &hwInfo, int preferredEnumValue) const {
+    return preferredEnumValue;
+}
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
     return false;

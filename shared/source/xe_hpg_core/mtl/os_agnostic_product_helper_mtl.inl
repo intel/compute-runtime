@@ -93,6 +93,16 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(AllocationType allocation
 }
 
 template <>
+int ProductHelperHw<gfxProduct>::getProductMaxPreferredSlmSize(const HardwareInfo &hwInfo, int preferredEnumValue) const {
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+    if (getProductConfigFromHwInfo(hwInfo) == AOT::MTL_M_A0 || getProductConfigFromHwInfo(hwInfo) == AOT::MTL_P_A0) {
+        return static_cast<int>(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K);
+    } else {
+        return preferredEnumValue;
+    }
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
     return true;
 }
