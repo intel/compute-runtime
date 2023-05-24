@@ -734,7 +734,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     std::vector<std::unique_ptr<MockEvent>> events;
 };
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEventState, IsAtLeastSkl) {
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEventState, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents(3, false);
@@ -763,6 +763,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
 
     auto offset = cmdStream->getUsed();
 
+    auto previousNode = immCmdList->timestampPacketContainer->peekNodes()[0];
+
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
     GenCmdList cmdList;
@@ -777,9 +779,11 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
 
     auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
 
+    auto compareAddress = NEO::TimestampPacketHelper::getContextEndGpuAddress(*previousNode);
+
     EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+    EXPECT_EQ(compareAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSemaphoreForEvent, IsAtLeastXeHpCore) {
@@ -817,84 +821,16 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSem
 
     auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
 
-    EXPECT_EQ(2u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+    auto gpuAddr = events[0]->getCompletionFieldGpuAddress(this->device);
+
+    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+    EXPECT_EQ(gpuAddr, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenWaitingForEventFromPreviousAppendThenSkip, IsAtLeastXeHpCore) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleTimestampPacketResidency, IsAtLeastXeHpCore) {
+    DebugManager.flags.DisableTimestampPacketOptimizations.set(1); // Create new allocation for node each time, to test residency handling
 
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    auto eventPool = createEvents(1, false);
-
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-
-    auto event0Handle = events[0]->toHandle();
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, event0Handle, 0, nullptr, launchParams, false);
-
-    auto offset = cmdStream->getUsed();
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, &event0Handle, launchParams, false);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdStream->getCpuBase(), offset),
-        cmdStream->getUsed() - offset));
-
-    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-
-    ASSERT_NE(cmdList.end(), itor);
-
-    itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
-
-    EXPECT_EQ(cmdList.end(), itor);
-}
-
-HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentCmdListThenProgramSemaphoreForEvent, IsAtLeastSkl) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
-    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
-
-    auto eventPool = createEvents(1, false);
-
-    auto cmdStream = immCmdList2->getCmdContainer().getCommandStream();
-
-    auto event0Handle = events[0]->toHandle();
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-    ultCsr->storeMakeResidentAllocations = true;
-
-    immCmdList1->appendLaunchKernel(kernel->toHandle(), &groupCount, event0Handle, 0, nullptr, launchParams, false);
-
-    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[immCmdList1->inOrderDependencyCounterAllocation]);
-
-    immCmdList2->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, &event0Handle, launchParams, false);
-
-    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[immCmdList1->inOrderDependencyCounterAllocation]);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
-
-    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-
-    ASSERT_NE(cmdList.end(), itor);
-
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-
-    EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_NE(immCmdList1->inOrderDependencyCounterAllocation->getGpuAddress(), immCmdList2->inOrderDependencyCounterAllocation->getGpuAddress());
-    EXPECT_EQ(immCmdList1->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-}
-
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleDependencyCounter, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     EXPECT_NE(nullptr, immCmdList->inOrderDependencyCounterAllocation);
@@ -906,12 +842,22 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleDependen
     ultCsr->storeMakeResidentAllocations = true;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
-    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[immCmdList->inOrderDependencyCounterAllocation]);
+    auto node0 = immCmdList->timestampPacketContainer->peekNodes()[0];
+    ultCsr->getTimestampPacketAllocator()->getTag();
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[node0->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(2u, immCmdList->inOrderDependencyCounter);
-    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[immCmdList->inOrderDependencyCounterAllocation]);
+    auto node1 = immCmdList->timestampPacketContainer->peekNodes()[0];
+    ultCsr->getTimestampPacketAllocator()->getTag();
+
+    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[node0->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[node1->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    auto node2 = immCmdList->timestampPacketContainer->peekNodes()[0];
+    ultCsr->getTimestampPacketAllocator()->getTag();
+    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[node0->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]); // not used anymore
+    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[node1->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[node2->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsThenConfigureRegistersFirst, IsAtLeastXeHpCore) {

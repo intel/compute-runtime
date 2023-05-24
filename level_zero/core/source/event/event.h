@@ -204,9 +204,6 @@ struct Event : _ze_event_handle_t {
         this->metricStreamer = metricStreamer;
     }
     void enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint32_t signalValue);
-    bool isInOrderExecEvent() const { return inOrderExecEvent; }
-    uint32_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
-    NEO::GraphicsAllocation *getInOrderExecDataAllocation() const { return inOrderExecDataAllocation; }
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}

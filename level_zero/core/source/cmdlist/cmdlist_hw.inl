@@ -2070,7 +2070,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
     }
 
     if (hasInOrderDependencies) {
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, inOrderDependencyCounter, relaxedOrderingAllowed);
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(relaxedOrderingAllowed);
     }
 
     if (numWaitEvents > 0) {
@@ -2117,22 +2117,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint32_t waitValue, bool relaxedOrderingAllowed) {
-    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(bool relaxedOrderingAllowed) {
+    auto node = this->timestampPacketContainer->peekNodes()[0];
 
-    commandContainer.addToResidencyContainer(dependencyCounterAllocation);
-
-    uint64_t gpuAddress = dependencyCounterAllocation->getGpuAddress();
+    commandContainer.addToResidencyContainer(node->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));
 
     if (relaxedOrderingAllowed) {
-        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue,
-                                                                                               NEO::CompareOperation::Less, true);
-
+        NEO::TimestampPacketHelper::programConditionalBbStartForRelaxedOrdering<GfxFamily>(*commandContainer.getCommandStream(), *node);
     } else {
-        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
-                                                                   gpuAddress,
-                                                                   waitValue,
-                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+        NEO::TimestampPacketHelper::programSemaphore<GfxFamily>(*commandContainer.getCommandStream(), *node);
     }
 }
 
@@ -2176,16 +2169,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
-
-        if (event->isInOrderExecEvent()) {
-            bool eventFromPreviousAppend = (event->getInOrderExecDataAllocation() == this->inOrderDependencyCounterAllocation) &&
-                                           (event->getInOrderExecSignalValue() == this->inOrderDependencyCounter);
-
-            if (!eventFromPreviousAppend) {
-                CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), relaxedOrderingAllowed);
-            }
-            continue;
-        }
 
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         gpuAddr = event->getCompletionFieldGpuAddress(this->device);

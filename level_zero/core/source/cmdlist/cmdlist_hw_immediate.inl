@@ -718,7 +718,11 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds,
                                                                           bool hasRelaxedOrderingDependencies, ze_event_handle_t hSignalEvent) {
     if (inputRet == ZE_RESULT_SUCCESS) {
-        this->commandContainer.addToResidencyContainer(this->inOrderDependencyCounterAllocation);
+        if (isInOrderExecutionEnabled()) {
+            auto node = this->timestampPacketContainer->peekNodes()[0];
+            auto allocation = node->getBaseGraphicsAllocation()->getGraphicsAllocation(this->device->getRootDeviceIndex());
+            this->commandContainer.addToResidencyContainer(allocation);
+        }
 
         if (this->isFlushTaskSubmissionEnabled) {
             inputRet = executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies);
