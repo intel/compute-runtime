@@ -316,7 +316,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                                                                    Event::State::STATE_CLEARED,
                                                                    MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
 
-        appendSignalInOrderDependencyCounter();
+        appendSignalInOrderDependencyTimestampPacket();
     }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing) {
@@ -407,9 +407,12 @@ void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
         uint64_t writeValue = 0;
 
         if (this->inOrderExecutionEnabled) {
+            obtainNewTimestampPacketNode();
+            auto node = this->timestampPacketContainer->peekNodes()[0];
+
             postSyncMode = NEO::PostSyncMode::ImmediateData;
-            gpuWriteAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
-            writeValue = this->inOrderDependencyCounter + 1;
+            gpuWriteAddress = node->getGpuAddress() + node->getContextEndOffset();
+            writeValue = 0;
         }
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), postSyncMode, gpuWriteAddress, writeValue, args);

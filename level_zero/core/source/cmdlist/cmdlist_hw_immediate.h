@@ -174,8 +174,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
   protected:
     using BaseClass::deferredTimestampPackets;
-    using BaseClass::inOrderDependencyCounter;
-    using BaseClass::inOrderDependencyCounterAllocation;
     using BaseClass::timestampPacketContainer;
 
     void printKernelsPrintfOutput(bool hangDetected);

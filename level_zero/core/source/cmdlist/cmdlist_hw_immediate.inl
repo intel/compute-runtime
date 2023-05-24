@@ -730,17 +730,17 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
             inputRet = executeCommandListImmediate(performMigration);
         }
     }
-    if (hSignalEvent) {
-        Event::fromHandle(hSignalEvent)->setCsr(this->csr);
-    }
 
-    if (isInOrderExecutionEnabled()) {
-        inOrderDependencyCounter++;
+    auto signalEvent = Event::fromHandle(hSignalEvent);
 
-        if (hSignalEvent) {
-            Event::fromHandle(hSignalEvent)->enableInOrderExecMode(*inOrderDependencyCounterAllocation, inOrderDependencyCounter);
+    if (signalEvent) {
+        signalEvent->setCsr(this->csr);
+
+        if (isInOrderExecutionEnabled()) {
+            signalEvent->enableInOrderExecMode(*this->timestampPacketContainer);
         }
     }
+
     return inputRet;
 }
 
@@ -819,7 +819,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     }
 
     if (isInOrderExecutionEnabled()) {
-        this->dependenciesPresent = false; // wait only for waitlist and in-order sync value
+        this->dependenciesPresent = false; // wait only for waitlist and in-order TimestampPacket value
     }
 
     if (numWaitEvents > 0) {
@@ -1065,28 +1065,32 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const {
-    auto numEvents = numWaitEvents + ((inOrderDependencyCounter > 0) ? 1 : 0);
+    auto numEvents = numWaitEvents;
+    if (this->isInOrderExecutionEnabled()) {
+        numEvents += static_cast<uint32_t>(this->timestampPacketContainer->peekNodes().size());
+    }
 
     return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numEvents);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExecution(uint64_t timeout) const {
+    using TSPacketType = typename GfxFamily::TimestampPacketType;
+
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, now;
     uint64_t timeDiff = 0;
 
     ze_result_t status = ZE_RESULT_NOT_READY;
 
-    auto hostAddress = static_cast<uint32_t *>(this->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
-    auto waitValue = this->inOrderDependencyCounter;
+    auto node = this->timestampPacketContainer->peekNodes()[0];
 
     lastHangCheckTime = std::chrono::high_resolution_clock::now();
     waitStartTime = lastHangCheckTime;
 
     do {
-        this->csr->downloadAllocation(*this->inOrderDependencyCounterAllocation);
+        this->csr->downloadAllocation(*node->getBaseGraphicsAllocation()->getGraphicsAllocation(this->device->getRootDeviceIndex()));
 
-        if (NEO::WaitUtils::waitFunctionWithPredicate<const uint32_t>(hostAddress, waitValue, std::greater_equal<uint32_t>())) {
+        if (NEO::WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(node->getContextEndAddress(0)), 1, std::not_equal_to<TSPacketType>())) {
             status = ZE_RESULT_SUCCESS;
             break;
         }

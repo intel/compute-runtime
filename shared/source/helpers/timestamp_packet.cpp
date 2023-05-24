@@ -51,6 +51,14 @@ void TimestampPacketContainer::moveNodesToNewContainer(TimestampPacketContainer 
     timestampPacketContainer.assignAndIncrementNodesRefCounts(tempContainer);
 }
 
+void TimestampPacketContainer::releaseNodes() {
+    for (auto node : timestampPacketNodes) {
+        node->returnTag();
+    }
+
+    timestampPacketNodes.clear();
+}
+
 void TimestampPacketDependencies::moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer) {
     cacheFlushNodes.moveNodesToNewContainer(timestampPacketContainer);
     previousEnqueueNodes.moveNodesToNewContainer(timestampPacketContainer);

@@ -667,9 +667,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenRetur
 
 struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     struct MockEvent : public EventImp<uint32_t> {
-        using EventImp<uint32_t>::inOrderExecDataAllocation;
+        using EventImp<uint32_t>::inOrderTimestampPacket;
         using EventImp<uint32_t>::inOrderExecEvent;
-        using EventImp<uint32_t>::inOrderExecSignalValue;
     };
 
     void SetUp() override {
@@ -677,6 +676,12 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
 
         CommandListAppendLaunchKernel::SetUp();
         createKernel();
+    }
+
+    void TearDown() override {
+        events.clear();
+
+        CommandListAppendLaunchKernel::TearDown();
     }
 
     std::unique_ptr<L0::EventPool> createEvents(uint32_t numEvents, bool timestampEvent) {
@@ -723,15 +728,26 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         return cmdList;
     }
 
+    template <typename GfxFamily>
+    void setTimestampPacketContextEndValue(TagNodeBase *node, typename GfxFamily::TimestampPacketType contextEndValue) {
+        typename GfxFamily::TimestampPacketType data[] = {1, 1, contextEndValue, 1};
+
+        node->assignDataToAllTimestamps(0, data);
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    TagNodeBase *getLatestTsNode(WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *immCmdList) {
+        return immCmdList->timestampPacketContainer->peekNodes()[0];
+    }
+
     DebugManagerStateRestore restorer;
 
     uint32_t createdCmdLists = 0;
+    std::vector<std::unique_ptr<MockEvent>> events;
     std::vector<std::unique_ptr<Mock<CommandQueue>>> mockCmdQs;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
-
-    std::vector<std::unique_ptr<MockEvent>> events;
 };
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEventState, IsAtLeastXeHpCore) {
@@ -739,17 +755,19 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEven
 
     auto eventPool = createEvents(3, false);
 
+    EXPECT_EQ(nullptr, events[0]->inOrderTimestampPacket.get());
+
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
     EXPECT_TRUE(events[0]->inOrderExecEvent);
-    EXPECT_EQ(events[0]->inOrderExecSignalValue, immCmdList->inOrderDependencyCounter);
-    EXPECT_EQ(events[0]->inOrderExecDataAllocation, immCmdList->inOrderDependencyCounterAllocation);
+    ASSERT_NE(nullptr, events[0]->inOrderTimestampPacket.get());
+    EXPECT_EQ(1u, events[0]->inOrderTimestampPacket->peekNodes().size());
 
     events[0]->reset();
 
     EXPECT_FALSE(events[0]->inOrderExecEvent);
-    EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
-    EXPECT_EQ(events[0]->inOrderExecDataAllocation, nullptr);
+    ASSERT_NE(nullptr, events[0]->inOrderTimestampPacket.get());
+    EXPECT_EQ(0u, events[0]->inOrderTimestampPacket->peekNodes().size());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphoreForPreviousDispatch, IsAtLeastXeHpCore) {
@@ -763,7 +781,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
 
     auto offset = cmdStream->getUsed();
 
-    auto previousNode = immCmdList->timestampPacketContainer->peekNodes()[0];
+    auto previousNode = getLatestTsNode(immCmdList.get());
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
@@ -833,27 +851,22 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleTimestam
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
-    EXPECT_NE(nullptr, immCmdList->inOrderDependencyCounterAllocation);
-    EXPECT_EQ(AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, immCmdList->inOrderDependencyCounterAllocation->getAllocationType());
-
-    EXPECT_EQ(0u, immCmdList->inOrderDependencyCounter);
-
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    auto node0 = immCmdList->timestampPacketContainer->peekNodes()[0];
+    auto node0 = getLatestTsNode(immCmdList.get());
     ultCsr->getTimestampPacketAllocator()->getTag();
     EXPECT_EQ(1u, ultCsr->makeResidentAllocations[node0->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    auto node1 = immCmdList->timestampPacketContainer->peekNodes()[0];
+    auto node1 = getLatestTsNode(immCmdList.get());
     ultCsr->getTimestampPacketAllocator()->getTag();
 
     EXPECT_EQ(2u, ultCsr->makeResidentAllocations[node0->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
     EXPECT_EQ(1u, ultCsr->makeResidentAllocations[node1->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    auto node2 = immCmdList->timestampPacketContainer->peekNodes()[0];
+    auto node2 = getLatestTsNode(immCmdList.get());
     ultCsr->getTimestampPacketAllocator()->getTag();
     EXPECT_EQ(2u, ultCsr->makeResidentAllocations[node0->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]); // not used anymore
     EXPECT_EQ(2u, ultCsr->makeResidentAllocations[node1->getBaseGraphicsAllocation()->getGraphicsAllocation(0)]);
@@ -902,14 +915,14 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGettingNewNodeThenSwapWithDef
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(0u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-    uint64_t nodeGpuVa0 = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+    uint64_t nodeGpuVa0 = getLatestTsNode(immCmdList.get())->getGpuAddress();
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-    uint64_t nodeGpuVa1 = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+    uint64_t nodeGpuVa1 = getLatestTsNode(immCmdList.get())->getGpuAddress();
 
     EXPECT_NE(nodeGpuVa0, nodeGpuVa1);
 
@@ -918,7 +931,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGettingNewNodeThenSwapWithDef
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(2u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-    uint64_t nodeGpuVa2 = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+    uint64_t nodeGpuVa2 = getLatestTsNode(immCmdList.get())->getGpuAddress();
 
     EXPECT_NE(nodeGpuVa0, nodeGpuVa2);
     EXPECT_NE(nodeGpuVa1, nodeGpuVa2);
@@ -953,7 +966,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
         EXPECT_EQ(0u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-        nodeGpuVa0 = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+        nodeGpuVa0 = getLatestTsNode(immCmdList.get())->getGpuAddress();
 
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
         EXPECT_EQ(nodeGpuVa0, postSync.getDestinationAddress());
@@ -979,7 +992,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
         EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-        uint64_t nodeGpuVa1 = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+        auto node = getLatestTsNode(immCmdList.get());
+        uint64_t nodeGpuVa1 = getLatestTsNode(immCmdList.get())->getGpuAddress();
         EXPECT_NE(nodeGpuVa0, nodeGpuVa1);
         EXPECT_EQ(nodeGpuVa0, immCmdList->deferredTimestampPackets->peekNodes()[0]->getGpuAddress());
 
@@ -1000,20 +1014,17 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
         ASSERT_NE(nullptr, sdiCmd);
 
-        EXPECT_EQ(nodeGpuVa1 + immCmdList->timestampPacketContainer->peekNodes()[0]->getContextEndOffset(), sdiCmd->getAddress());
+        EXPECT_EQ(nodeGpuVa1 + node->getContextEndOffset(), sdiCmd->getAddress());
         EXPECT_EQ(0u, sdiCmd->getStoreQword());
         EXPECT_EQ(0u, sdiCmd->getDataDword0());
     }
 
-    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    auto node = getLatestTsNode(immCmdList.get());
 
-    *hostAddress = 1;
+    setTimestampPacketContextEndValue<FamilyType>(node, 1);
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(1));
 
-    *hostAddress = 2;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
-
-    *hostAddress = 3;
+    setTimestampPacketContextEndValue<FamilyType>(node, 0x12345);
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
 }
 
@@ -1059,7 +1070,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(0u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-    uint64_t nodeGpuVa0 = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress() + immCmdList->timestampPacketContainer->peekNodes()[0]->getContextEndOffset();
+    auto node = getLatestTsNode(immCmdList.get());
+    uint64_t nodeGpuVa0 = node->getGpuAddress() + node->getContextEndOffset();
 
     EXPECT_EQ(nodeGpuVa0, sdiCmd->getAddress());
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
@@ -1136,7 +1148,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEvents
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-    uint64_t nodeGpuVa = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress() + immCmdList->timestampPacketContainer->peekNodes()[0]->getContextEndOffset();
+    auto node = getLatestTsNode(immCmdList.get());
+    ;
+    uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
 
     EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
@@ -1166,14 +1180,16 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierThenS
 
     auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
 
-    auto gpuAddress = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+    auto node = getLatestTsNode(immCmdList.get());
+
+    auto gpuAddress = node->getGpuAddress() + node->getContextEndOffset();
     auto lowAddress = static_cast<uint32_t>(gpuAddress & 0x0000FFFFFFFFULL);
     auto highAddress = static_cast<uint32_t>(gpuAddress >> 32);
 
     EXPECT_EQ(lowAddress, pcCmd->getAddress());
     EXPECT_EQ(highAddress, pcCmd->getAddressHigh());
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pcCmd->getPostSyncOperation());
-    EXPECT_EQ(2u, pcCmd->getImmediateData());
+    EXPECT_EQ(0u, pcCmd->getImmediateData());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompletion, IsAtLeastXeHpCore) {
@@ -1183,8 +1199,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
-    *hostAddress = 0;
+    auto node = getLatestTsNode(immCmdList.get());
+
+    setTimestampPacketContextEndValue<FamilyType>(node, 1);
 
     const uint32_t failCounter = 3;
     uint32_t callCounter = 0;
@@ -1193,7 +1210,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
         callCounter++;
         if (callCounter >= failCounter && !forceFail) {
-            (*hostAddress)++;
+            setTimestampPacketContextEndValue<FamilyType>(node, 0x123);
         }
     };
 
@@ -1203,7 +1220,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
         EXPECT_EQ(1u, callCounter);
         EXPECT_EQ(1u, ultCsr->checkGpuHangDetectedCalled);
-        EXPECT_EQ(0u, *hostAddress);
+        EXPECT_EQ(1u, node->getContextEndValue(0));
     }
 
     // timeout - not ready
@@ -1213,7 +1230,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
-        EXPECT_EQ(0u, *hostAddress);
+        EXPECT_EQ(1u, node->getContextEndValue(0));
     }
 
     // gpu hang
@@ -1224,7 +1241,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
-        EXPECT_EQ(0u, *hostAddress);
+        EXPECT_EQ(1u, node->getContextEndValue(0));
     }
 
     // success
@@ -1237,7 +1254,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
         EXPECT_EQ(failCounter, callCounter);
         EXPECT_EQ(failCounter - 1, ultCsr->checkGpuHangDetectedCalled);
-        EXPECT_EQ(1u, *hostAddress);
+        EXPECT_EQ(0x123u, node->getContextEndValue(0));
     }
 }
 
@@ -1250,16 +1267,14 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, 
 
     auto eventHandle = events[0]->toHandle();
 
-    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
-    *hostAddress = 0;
-
     const uint32_t failCounter = 3;
     uint32_t callCounter = 0;
 
     ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
         callCounter++;
         if (callCounter >= failCounter) {
-            (*hostAddress)++;
+            auto node = getLatestTsNode<gfxCoreFamily>(immCmdList.get());
+            setTimestampPacketContextEndValue<FamilyType>(node, 0x123);
         }
     };
 
@@ -1278,8 +1293,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, 
 
     immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 1, &eventHandle, false);
 
+    auto node = getLatestTsNode<gfxCoreFamily>(immCmdList.get());
+
     EXPECT_EQ(3u, callCounter);
-    EXPECT_EQ(1u, *hostAddress);
+    EXPECT_EQ(0x123u, node->getContextEndValue(0));
     EXPECT_EQ(2u, ultCsr->checkGpuHangDetectedCalled);
     EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
@@ -1292,9 +1309,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathT
     immCmdList->copyThroughLockedPtrEnabled = true;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
-    *hostAddress = 0;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
@@ -1351,7 +1365,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithout
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(0u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-    uint64_t nodeGpuVa = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress() + immCmdList->timestampPacketContainer->peekNodes()[0]->getContextEndOffset();
+    auto node = getLatestTsNode(immCmdList.get());
+    uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
 
     EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
@@ -1406,7 +1421,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithEve
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(0u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-    uint64_t nodeGpuVa = immCmdList->timestampPacketContainer->peekNodes()[0]->getGpuAddress() + immCmdList->timestampPacketContainer->peekNodes()[0]->getContextEndOffset();
+    auto node = getLatestTsNode(immCmdList.get());
+    uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
 
     EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());
     EXPECT_EQ(0u, sdiCmd->getStoreQword());

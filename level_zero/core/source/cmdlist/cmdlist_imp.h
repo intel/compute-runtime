@@ -41,8 +41,6 @@ struct CommandListImp : CommandList {
     std::unique_ptr<NEO::LogicalStateHelper> nonImmediateLogicalStateHelper;
     std::unique_ptr<NEO::TimestampPacketContainer> deferredTimestampPackets;
     std::unique_ptr<NEO::TimestampPacketContainer> timestampPacketContainer;
-    NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;
-    uint32_t inOrderDependencyCounter = 0;
     bool inOrderExecutionEnabled = false;
 
     ~CommandListImp() override = default;

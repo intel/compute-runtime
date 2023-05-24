@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/helpers/timestamp_packet_size_control.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 
@@ -203,7 +204,7 @@ struct Event : _ze_event_handle_t {
     void setMetricStreamer(MetricStreamer *metricStreamer) {
         this->metricStreamer = metricStreamer;
     }
-    void enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint32_t signalValue);
+    void enableInOrderExecMode(const NEO::TimestampPacketContainer &inOrderSyncNodes);
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
@@ -235,13 +236,12 @@ struct Event : _ze_event_handle_t {
     Device *device = nullptr;
     EventPool *eventPool = nullptr;
     Kernel *kernelWithPrintf = nullptr;
-    NEO::GraphicsAllocation *inOrderExecDataAllocation = nullptr;
+    std::unique_ptr<NEO::TimestampPacketContainer> inOrderTimestampPacket;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
-    uint32_t inOrderExecSignalValue = 0;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;

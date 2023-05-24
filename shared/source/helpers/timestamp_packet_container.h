@@ -27,6 +27,7 @@ class TimestampPacketContainer : public NonCopyableClass {
     void assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer);
     void makeResident(CommandStreamReceiver &commandStreamReceiver);
     void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
+    void releaseNodes();
 
   protected:
     StackVec<TagNodeBase *, 32u> timestampPacketNodes;

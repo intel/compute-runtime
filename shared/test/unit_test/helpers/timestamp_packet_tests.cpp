@@ -142,6 +142,33 @@ TEST_F(TimestampPacketTests, givenTimestampPacketContainerWhenMovedThenMoveAllNo
     EXPECT_EQ(1u, node1.returnCalls);
 }
 
+TEST_F(TimestampPacketTests, givenTagNodesWhenReleaseIsCalledThenReturnAllTagsToPool) {
+    struct MockTagNode : public TagNode<TimestampPackets<uint32_t>> {
+        void returnTag() override {
+            returnCalls++;
+        }
+        uint32_t returnCalls = 0;
+    };
+
+    MockTagNode mockNode0;
+    MockTagNode mockNode1;
+
+    TimestampPacketContainer container;
+
+    container.add(&mockNode0);
+    container.add(&mockNode1);
+
+    EXPECT_EQ(2u, container.peekNodes().size());
+    EXPECT_EQ(0u, mockNode0.returnCalls);
+    EXPECT_EQ(0u, mockNode1.returnCalls);
+
+    container.releaseNodes();
+
+    EXPECT_EQ(0u, container.peekNodes().size());
+    EXPECT_EQ(1u, mockNode0.returnCalls);
+    EXPECT_EQ(1u, mockNode1.returnCalls);
+}
+
 HWTEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(executionEnvironment);

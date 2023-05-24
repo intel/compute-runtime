@@ -1367,7 +1367,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
         }
-        appendSignalInOrderDependencyCounter();
+        appendSignalInOrderDependencyTimestampPacket();
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -2203,7 +2203,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     if (signalInOrderCompletion) {
         obtainNewTimestampPacketNode();
 
-        appendSignalInOrderDependencyCounter();
+        appendSignalInOrderDependencyTimestampPacket();
     }
 
     makeResidentDummyAllocation();
@@ -2220,7 +2220,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter() {
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyTimestampPacket() {
     NEO::TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(*commandContainer.getCommandStream(), *this->timestampPacketContainer->peekNodes()[0], false);
 }
 

@@ -2864,16 +2864,23 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostEventSyncThenExpectDownloadEventAl
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
-    uint32_t storage = 1;
+    auto node = ultCsr->getTimestampPacketAllocator()->getTag();
+    NEO::TimestampPacketContainer container;
+    container.add(node);
 
-    NEO::MockGraphicsAllocation allocation(&storage, sizeof(storage));
-    event->enableInOrderExecMode(allocation, 1);
+    typename FamilyType::TimestampPacketType data[] = {0, 0, 0, 0};
+
+    node->assignDataToAllTimestamps(0, data);
+
+    event->enableInOrderExecMode(container);
+
+    auto allocation = node->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     auto result = event->hostSynchronize(timeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_NE(0u, downloadAllocationTrack[&allocation]);
+    EXPECT_NE(0u, downloadAllocationTrack[allocation]);
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 }
 

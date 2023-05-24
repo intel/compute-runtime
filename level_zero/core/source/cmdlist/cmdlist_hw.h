@@ -170,7 +170,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool signalInOrderCompletion) override;
     void appendWaitOnInOrderDependency(bool relaxedOrderingAllowed);
-    void appendSignalInOrderDependencyCounter();
+    void appendSignalInOrderDependencyTimestampPacket();
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
