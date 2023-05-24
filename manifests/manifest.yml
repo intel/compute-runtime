@@ -30,7 +30,7 @@ components:
     branch: master
     dest_dir: infra
     fetch_tags: true
-    revision: v4891
+    revision: v4895
     type: git
   internal:
     branch: master
@@ -74,6 +74,11 @@ components:
     branch: master
     revision: metrics-library-1.0.133
     repository: https://github.com/intel/metrics-library.git
+  neo-clang-format:
+    dest_dir: tools/clang-format
+    type: git
+    branch: clang-format
+    revision: 15.0.6
   wdk:
     dest_dir: wdk
     type: git
@@ -84,5 +89,5 @@ components:
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-2056
+converter: M-2057
 version: '1'
