@@ -230,6 +230,21 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationThenCreateInternalHa
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(WddmMemoryManagerAllocPathTests, GivenNoAllocationThenCreateInternalHandleSucceeds) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::SVM_CPU;
+    allocData.forceKMDAllocation = true;
+    allocData.makeGPUVaDifferentThanCPUPtr = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+
+    uint64_t handle = 0;
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+
+    memoryManager->closeInternalHandle(handle, 0u, nullptr);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationThenCreateInternalHandleSucceedsAfterMultipleCallsToCreate) {
     NEO::AllocationData allocData = {};
     allocData.type = NEO::AllocationType::SVM_CPU;

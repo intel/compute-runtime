@@ -610,8 +610,10 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 }
 
 void WddmMemoryManager::closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {
-    WddmAllocation *wddmAllocation = static_cast<WddmAllocation *>(graphicsAllocation);
-    wddmAllocation->clearInternalHandle(handleId);
+    if (graphicsAllocation) {
+        WddmAllocation *wddmAllocation = static_cast<WddmAllocation *>(graphicsAllocation);
+        wddmAllocation->clearInternalHandle(handleId);
+    }
     [[maybe_unused]] auto status = SysCalls::closeHandle(reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(handle)));
     DEBUG_BREAK_IF(!status);
 }

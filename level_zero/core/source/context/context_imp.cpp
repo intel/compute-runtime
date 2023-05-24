@@ -403,22 +403,25 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    for (auto pairDevice : this->devices) {
-        this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
-    }
-    this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
-
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lockIPC = this->lockIPCHandleMap();
     ipcHandleIterator = this->getIPCHandleMap().begin();
     while (ipcHandleIterator != this->getIPCHandleMap().end()) {
         if (ipcHandleIterator->second->ptr == reinterpret_cast<uint64_t>(ptr)) {
+            auto *memoryManager = driverHandle->getMemoryManager();
+            memoryManager->closeInternalHandle(ipcHandleIterator->second->ipcData.handle, ipcHandleIterator->second->handleId, nullptr);
             delete ipcHandleIterator->second;
             this->getIPCHandleMap().erase(ipcHandleIterator->first);
             break;
         }
         ipcHandleIterator++;
     }
+
+    for (auto pairDevice : this->devices) {
+        this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
+    }
+    this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
+
     return ZE_RESULT_SUCCESS;
 }
 
