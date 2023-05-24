@@ -653,6 +653,18 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     const uint32_t allocId = allocData ? allocData->getAllocId() : 0u;
     kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
 
+    if (allocData && allocData->virtualReservationData) {
+        for (const auto &mappedAllocationData : allocData->virtualReservationData->mappedAllocations) {
+            // Add additional allocations to the residency container if the virtual reservation spans multiple allocations.
+            if (requestedAddress != mappedAllocationData.second->ptr) {
+                this->residencyContainer.push_back(mappedAllocationData.second->mappedAllocation->allocation);
+            } else if (mappedAllocationData.second->mappedAllocation->allocation->getUnderlyingBufferSize() < allocData->virtualReservationData->virtualAddressRange.size) {
+                // If the target buffer is the same as the virtual reservation, but the allocation is less than the full reserved size, then extend the size to the full reserved size.
+                mappedAllocationData.second->mappedAllocation->allocation->setExtendedSize(allocData->virtualReservationData->virtualAddressRange.size);
+            }
+        }
+    }
+
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc, peerAllocData);
 }
 

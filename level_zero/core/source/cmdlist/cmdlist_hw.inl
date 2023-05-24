@@ -2045,6 +2045,17 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
             hostPointerNeedsFlush = true;
         }
+        if (allocData->virtualReservationData) {
+            for (const auto &mappedAllocationData : allocData->virtualReservationData->mappedAllocations) {
+                // Add additional allocations to the residency container if the virtual reservation spans multiple allocations.
+                if (buffer != mappedAllocationData.second->ptr) {
+                    commandContainer.addToResidencyContainer(mappedAllocationData.second->mappedAllocation->allocation);
+                } else if (mappedAllocationData.second->mappedAllocation->allocation->getUnderlyingBufferSize() < allocData->virtualReservationData->virtualAddressRange.size) {
+                    // If the target buffer is the same as the virtual reservation, but the allocation is less than the full reserved size, then extend the size to the full reserved size.
+                    mappedAllocationData.second->mappedAllocation->allocation->setExtendedSize(allocData->virtualReservationData->virtualAddressRange.size);
+                }
+            }
+        }
     }
 
     return {alignedPtr, offset, alloc, hostPointerNeedsFlush};

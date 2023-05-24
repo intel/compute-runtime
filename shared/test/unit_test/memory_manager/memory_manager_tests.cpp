@@ -35,6 +35,21 @@ TEST(MemoryManagerTest, WhenCallingCloseInternalHandleWithOsAgnosticThenNoChange
     memoryManager.closeInternalHandle(handle, 0u, nullptr);
 }
 
+TEST(MemoryManagerTest, givenDefaultMemoryManagerWhenGraphicsAllocationContainsExtendedSizeThenExtendedSizeObtainedIsTheNewSize) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
+
+    EXPECT_EQ(0u, graphicsAllocation->getExtendedBufferSize());
+    graphicsAllocation->setExtendedSize(MemoryConstants::pageSize * 2);
+
+    EXPECT_NE(MemoryConstants::pageSize, graphicsAllocation->getExtendedBufferSize());
+    EXPECT_EQ(MemoryConstants::pageSize * 2, graphicsAllocation->getExtendedBufferSize());
+
+    memoryManager.freeGraphicsMemory(graphicsAllocation);
+}
+
 TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
     MockMemoryManager mockMemoryManager;
 

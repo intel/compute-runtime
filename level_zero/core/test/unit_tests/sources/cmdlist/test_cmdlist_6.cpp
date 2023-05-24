@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -772,6 +773,95 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAlloc
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
     context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDeviceAllocationThenResidencyContainerHasImplicitMappedAllocations, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    void *dstBuffer = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    size_t reservationSize = size * 2;
+
+    auto res = context->reserveVirtualMem(nullptr, reservationSize, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_desc_t desc = {};
+    desc.size = size;
+    ze_physical_mem_handle_t phPhysicalMemory;
+    res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_handle_t phPhysicalMemory2;
+    res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->mapVirtualMem(dstBuffer, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(dstBuffer) + size);
+    res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, size, nullptr, 0, nullptr, false);
+
+    bool phys2Resident = false;
+    for (auto alloc : commandList->getCmdContainer().getResidencyContainer()) {
+        if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
+            phys2Resident = true;
+        }
+    }
+    NEO::GraphicsAllocation *baseAlloc = reinterpret_cast<NEO::GraphicsAllocation *>(phPhysicalMemory);
+    EXPECT_EQ(reservationSize, baseAlloc->getExtendedBufferSize());
+
+    EXPECT_TRUE(phys2Resident);
+    res = context->unMapVirtualMem(dstBuffer, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->unMapVirtualMem(offsetAddress, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->freeVirtualMem(dstBuffer, reservationSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->destroyPhysicalMem(phPhysicalMemory);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->destroyPhysicalMem(phPhysicalMemory2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedDeviceAllocationMappedToFullReservationThenExtendedBufferSizeIsZero, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    void *dstBuffer = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    size_t reservationSize = size * 2;
+
+    auto res = context->reserveVirtualMem(nullptr, reservationSize, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_desc_t desc = {};
+    desc.size = reservationSize;
+    ze_physical_mem_handle_t phPhysicalMemory;
+    res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->mapVirtualMem(dstBuffer, reservationSize, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, reservationSize, nullptr, 0, nullptr, false);
+
+    NEO::GraphicsAllocation *baseAlloc = reinterpret_cast<NEO::GraphicsAllocation *>(phPhysicalMemory);
+    EXPECT_EQ(0u, baseAlloc->getExtendedBufferSize());
+
+    res = context->unMapVirtualMem(dstBuffer, reservationSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->freeVirtualMem(dstBuffer, reservationSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->destroyPhysicalMem(phPhysicalMemory);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmHostThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {

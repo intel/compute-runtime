@@ -38,6 +38,11 @@ struct KernelHw : public KernelImp {
         auto misalignedSize = ptrDiff(alloc->getGpuAddressToPatch(), baseAddress);
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
         size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
+        // If the allocation has been set with an extended size to span other resident allocations, then program that size for the surface state & reset the extended size to 0 in the allocation structure.
+        if (alloc->getExtendedBufferSize() != 0) {
+            bufferSizeForSsh = alloc->getExtendedBufferSize();
+            alloc->setExtendedSize(0);
+        }
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
                                                                          argInfo.bufferOffset, static_cast<uint32_t>(offset));

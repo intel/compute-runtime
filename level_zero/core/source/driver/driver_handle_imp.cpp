@@ -351,6 +351,15 @@ bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
         (beginAllocData->gpuAllocations.getDefaultGraphicsAllocation() == endAllocData->gpuAllocations.getDefaultGraphicsAllocation())) {
         return true;
     }
+    bool allocationRangeCovered = false;
+    // If memory accessed is part of a virtual reservation, then return the first allocation data within the range.
+    auto allocDataVec = findAllocationsWithinRange(buffer, size, &allocationRangeCovered);
+    for (const auto &mappedAllocationData : allocDataVec) {
+        if (mappedAllocationData->virtualReservationData) {
+            *allocData = mappedAllocationData;
+            return true;
+        }
+    }
     return false;
 }
 

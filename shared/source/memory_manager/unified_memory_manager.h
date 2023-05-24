@@ -25,6 +25,7 @@ class CommandStreamReceiver;
 class GraphicsAllocation;
 class MemoryManager;
 class Device;
+struct VirtualMemoryReservation;
 
 struct SvmAllocationData {
     SvmAllocationData(uint32_t maxRootDeviceIndex) : gpuAllocations(maxRootDeviceIndex), maxRootDeviceIndex(maxRootDeviceIndex){};
@@ -43,10 +44,12 @@ struct SvmAllocationData {
             }
         }
         this->mappedAllocData = svmAllocData.mappedAllocData;
+        this->virtualReservationData = svmAllocData.virtualReservationData;
     }
     SvmAllocationData &operator=(const SvmAllocationData &) = delete;
     GraphicsAllocation *cpuAllocation = nullptr;
     MultiGraphicsAllocation gpuAllocations;
+    VirtualMemoryReservation *virtualReservationData = nullptr;
     size_t size = 0;
     size_t pageSizeForAlignment = 0;
     InternalMemoryType memoryType = InternalMemoryType::SVM;

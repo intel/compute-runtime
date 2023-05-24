@@ -25,6 +25,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -2059,6 +2060,121 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     }
 };
+
+HWTEST_F(MultiDeviceModuleSetArgBufferTest,
+         givenCallsToSetArgBufferWithReservedMemoryThenResidencyContainerHasAllMappedAllocations) {
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        createModuleFromMockBinary(rootDeviceIndex);
+        auto device = driverHandle->devices[rootDeviceIndex];
+        driverHandle->devices[rootDeviceIndex]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
+            std::make_unique<NEO::MockMemoryOperations>();
+
+        ze_kernel_handle_t kernelHandle;
+        void *ptr = nullptr;
+        size_t size = MemoryConstants::pageSize64k;
+        size_t reservationSize = size * 2;
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.pKernelName = kernelName.c_str();
+        ze_result_t res = modules[rootDeviceIndex]->createKernel(&kernelDesc, &kernelHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->reserveVirtualMem(nullptr, reservationSize, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ze_physical_mem_desc_t desc = {};
+        desc.size = size;
+        ze_physical_mem_handle_t phPhysicalMemory;
+        res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ze_physical_mem_handle_t phPhysicalMemory2;
+        res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->mapVirtualMem(ptr, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + size);
+        res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+        kernel->setArgBuffer(0, sizeof(ptr), &ptr);
+
+        bool phys1Resident = false;
+        bool phys2Resident = false;
+        NEO::GraphicsAllocation *baseAlloc = nullptr;
+        for (auto alloc : kernel->getResidencyContainer()) {
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
+                phys1Resident = true;
+                baseAlloc = alloc;
+            }
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
+                phys2Resident = true;
+            }
+        }
+        EXPECT_TRUE(phys1Resident);
+        EXPECT_TRUE(phys2Resident);
+        res = context->unMapVirtualMem(ptr, size);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(0u, baseAlloc->getExtendedBufferSize());
+        res = context->unMapVirtualMem(offsetAddress, size);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->freeVirtualMem(ptr, reservationSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->destroyPhysicalMem(phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->destroyPhysicalMem(phPhysicalMemory2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        Kernel::fromHandle(kernelHandle)->destroy();
+    }
+}
+
+HWTEST_F(MultiDeviceModuleSetArgBufferTest,
+         givenCallsToSetArgBufferWithReservedMemoryWithMappingToFullReservedSizeThenExtendedBufferSizeIsZero) {
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        createModuleFromMockBinary(rootDeviceIndex);
+        auto device = driverHandle->devices[rootDeviceIndex];
+        driverHandle->devices[rootDeviceIndex]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
+            std::make_unique<NEO::MockMemoryOperations>();
+
+        ze_kernel_handle_t kernelHandle;
+        void *ptr = nullptr;
+        size_t size = MemoryConstants::pageSize64k;
+        size_t reservationSize = size * 2;
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.pKernelName = kernelName.c_str();
+        ze_result_t res = modules[rootDeviceIndex]->createKernel(&kernelDesc, &kernelHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->reserveVirtualMem(nullptr, reservationSize, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ze_physical_mem_desc_t desc = {};
+        desc.size = reservationSize;
+        ze_physical_mem_handle_t phPhysicalMemory;
+        res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->mapVirtualMem(ptr, reservationSize, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+        kernel->setArgBuffer(0, sizeof(ptr), &ptr);
+
+        bool phys1Resident = false;
+        NEO::GraphicsAllocation *baseAlloc = nullptr;
+        for (auto alloc : kernel->getResidencyContainer()) {
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
+                phys1Resident = true;
+                baseAlloc = alloc;
+            }
+        }
+        EXPECT_TRUE(phys1Resident);
+        EXPECT_EQ(0u, baseAlloc->getExtendedBufferSize());
+        res = context->unMapVirtualMem(ptr, reservationSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->freeVirtualMem(ptr, reservationSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->destroyPhysicalMem(phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        Kernel::fromHandle(kernelHandle)->destroy();
+    }
+}
 
 HWTEST_F(MultiDeviceModuleSetArgBufferTest,
          givenCallsToSetArgBufferThenAllocationIsSetForCorrectDevice) {
