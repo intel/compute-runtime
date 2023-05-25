@@ -116,6 +116,7 @@ class ProductHelper {
     virtual bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool is3DPipelineSelectWARequired() const = 0;
+    virtual bool isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isStorageInfoAdjustmentRequired() const = 0;
     virtual bool isBlitterForImagesSupported() const = 0;
     virtual bool isPageFaultSupported() const = 0;

@@ -70,6 +70,7 @@ class ProductHelperHw : public ProductHelper {
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const override;
     bool is3DPipelineSelectWARequired() const override;
     bool isStorageInfoAdjustmentRequired() const override;
+    bool isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const override;
     bool isBlitterForImagesSupported() const override;
     bool isPageFaultSupported() const override;
     bool isKmdMigrationSupported() const override;

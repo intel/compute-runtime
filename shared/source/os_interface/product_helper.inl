@@ -289,6 +289,14 @@ int ProductHelperHw<gfxProduct>::getProductMaxPreferredSlmSize(const HardwareInf
     return preferredEnumValue;
 }
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isPrefetchDisablingRequired();
+    }
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
     return false;
 }

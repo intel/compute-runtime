@@ -13,7 +13,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -290,7 +289,7 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0OrA1SteppingWhenAskingIfWAIsRequire
 
             EXPECT_EQ(expectedValue, productHelper->isDefaultEngineTypeAdjustmentRequired(hwInfo));
             EXPECT_EQ(expectedValue, productHelper->isAllocationSizeAdjustmentRequired(hwInfo));
-            EXPECT_EQ(expectedValue, releaseHelper->isPrefetchDisablingRequired());
+            EXPECT_EQ(expectedValue, productHelper->isPrefetchDisablingRequired(releaseHelper));
         }
     }
 }
