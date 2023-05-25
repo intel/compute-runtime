@@ -21,8 +21,8 @@
 
 namespace L0 {
 namespace Sysman {
-_ze_driver_handle_t *GlobalSysmanDriverHandle;
-uint32_t driverCount = 1;
+_ze_driver_handle_t *GlobalSysmanDriverHandle = nullptr;
+uint32_t driverCount = 0;
 
 void SysmanDriverImp::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -60,6 +60,7 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
         }
 
         GlobalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
+        driverCount = 1;
     } else {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s\n", "No devices found");
@@ -80,6 +81,10 @@ ze_result_t SysmanDriverImp::driverInit(zes_init_flags_t flags) {
 }
 
 ze_result_t driverHandleGet(uint32_t *pCount, zes_driver_handle_t *phDriverHandles) {
+    if (driverCount == 0) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
     if (*pCount == 0) {
         *pCount = driverCount;
         return ZE_RESULT_SUCCESS;

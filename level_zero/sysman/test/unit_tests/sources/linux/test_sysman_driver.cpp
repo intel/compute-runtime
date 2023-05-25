@@ -51,6 +51,11 @@ TEST(zesInit, whenCallingZesInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCal
     EXPECT_EQ(0u, driver.initCalledCount);
 }
 
+TEST(zesInit, whenCallingZesDriverGetWithoutZesInitThenZesDriverGetCallNotSucceed) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverGet(&count, nullptr));
+}
+
 struct SysmanDriverTestMultipleFamilySupport : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = new NEO::ExecutionEnvironment();
@@ -198,6 +203,7 @@ struct SysmanDriverHandleTest : public ::testing::Test {
 
         driverHandle = L0::Sysman::SysmanDriverHandle::create(*executionEnvironment, &returnValue);
         L0::Sysman::GlobalSysmanDriverHandle = driverHandle;
+        L0::Sysman::driverCount = 1;
     }
     void TearDown() override {
         if (driverHandle) {
@@ -205,6 +211,7 @@ struct SysmanDriverHandleTest : public ::testing::Test {
         }
         L0::Sysman::GlobalSysmanDriver = nullptr;
         L0::Sysman::GlobalSysmanDriverHandle = nullptr;
+        L0::Sysman::driverCount = 0;
     }
     L0::Sysman::SysmanDriverHandle *driverHandle;
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
