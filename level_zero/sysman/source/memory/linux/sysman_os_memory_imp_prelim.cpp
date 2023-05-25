@@ -9,8 +9,10 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
@@ -30,20 +32,12 @@ void memoryGetTimeStamp(uint64_t &timestamp) {
     timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
 }
 
-void LinuxMemoryImp::init() {
-    if (isSubdevice) {
-        const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
-        physicalSizeFile = baseDir + "addr_range";
-    }
-}
-
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getSysmanDeviceImp();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
-    init();
 }
 
 bool LinuxMemoryImp::isMemoryModuleSupported() {
@@ -89,6 +83,7 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     pProperties->physicalSize = 0;
     if (isSubdevice) {
         std::string memval;
+        physicalSizeFile = pDrm->getIoctlHelper()->getFileForMemoryAddrRange(subdeviceId);
         ze_result_t result = pSysfsAccess->read(physicalSizeFile, memval);
         uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
         if (ZE_RESULT_SUCCESS != result) {
@@ -170,9 +165,7 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
         hbmFrequency = 2.8 * gigaUnitTransferToUnitTransfer;
     } else if (productFamily == IGFX_PVC) {
         if (stepping >= REVISION_B) {
-            const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
-            // Calculating bandwidth based on HBM max frequency
-            const std::string hbmRP0FreqFile = baseDir + "mem_RP0_freq_mhz";
+            const std::string hbmRP0FreqFile = pDrm->getIoctlHelper()->getFileForMaxMemoryFrequencyOfSubDevice(subdeviceId);
             uint64_t hbmFreqValue = 0;
             ze_result_t result = pSysfsAccess->read(hbmRP0FreqFile, hbmFreqValue);
             if (ZE_RESULT_SUCCESS == result) {
@@ -305,26 +298,15 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         pFwInterface->fwGetMemoryHealthIndicator(&pState->health);
     }
 
-    std::vector<NEO::MemoryRegion> deviceRegions;
     auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
     hwDeviceId->openFileDescriptor();
-    auto memRegions = pDrm->getMemoryRegions();
+    auto memoryInfo = pDrm->getIoctlHelper()->createMemoryInfo();
     hwDeviceId->closeFileDescriptor();
 
-    if (memRegions.empty()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    auto regions = pDrm->getIoctlHelper()->translateToMemoryRegions(memRegions);
-    for (auto region : regions) {
-        if (region.region.memoryClass == drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE) {
-            deviceRegions.push_back(region);
-        }
-    }
+    auto region = memoryInfo->getMemoryRegion(MemoryBanks::getBankForLocalMemory(subdeviceId));
 
-    UNRECOVERABLE_IF(deviceRegions.size() <= subdeviceId);
-
-    pState->free = deviceRegions[subdeviceId].unallocatedSize;
-    pState->size = deviceRegions[subdeviceId].probedSize;
+    pState->free = region.unallocatedSize;
+    pState->size = region.probedSize;
 
     return ZE_RESULT_SUCCESS;
 }

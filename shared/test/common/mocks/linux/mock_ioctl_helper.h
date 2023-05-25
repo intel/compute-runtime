@@ -6,11 +6,22 @@
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/memory_info.h"
+
+#include "drm/i915_drm.h"
 
 #include <optional>
 
 namespace NEO {
+
+constexpr uint64_t probedSizeRegionZero = 8 * GB;
+constexpr uint64_t probedSizeRegionOne = 16 * GB;
+constexpr uint64_t probedSizeRegionFour = 32 * GB;
+constexpr uint64_t unallocatedSizeRegionZero = 6 * GB;
+constexpr uint64_t unallocatedSizeRegionOne = 12 * GB;
+constexpr uint64_t unallocatedSizeRegionFour = 4 * GB;
 
 class MockIoctlHelper : public IoctlHelperPrelim20 {
   public:
@@ -20,6 +31,9 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     };
 
     int getDrmParamValue(DrmParam drmParam) const override {
+        if (drmParam == DrmParam::MemoryClassSystem || drmParam == DrmParam::MemoryClassDevice) {
+            return IoctlHelperPrelim20::getDrmParamValue(drmParam);
+        }
         return drmParamValue;
     }
     int vmBind(const VmBindParams &vmBindParams) override {
@@ -39,6 +53,23 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
             return *waitBeforeBindRequired;
         else
             return IoctlHelperPrelim20::isWaitBeforeBindRequired(bind);
+    }
+
+    std::unique_ptr<MemoryInfo> createMemoryInfo() override {
+
+        std::vector<MemoryRegion> regionInfo(3);
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        regionInfo[0].probedSize = probedSizeRegionZero;
+        regionInfo[0].unallocatedSize = unallocatedSizeRegionZero;
+        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+        regionInfo[1].probedSize = probedSizeRegionOne;
+        regionInfo[1].unallocatedSize = unallocatedSizeRegionOne;
+        regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
+        regionInfo[2].probedSize = probedSizeRegionFour;
+        regionInfo[2].unallocatedSize = unallocatedSizeRegionFour;
+
+        std::unique_ptr<MemoryInfo> memoryInfo = std::make_unique<MemoryInfo>(regionInfo, drm);
+        return memoryInfo;
     }
 
     unsigned int ioctlRequestValue = 1234u;

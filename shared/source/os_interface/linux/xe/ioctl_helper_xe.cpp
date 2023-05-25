@@ -1356,6 +1356,10 @@ std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int subDevice
     return "/device/gt" + std::to_string(subDeviceId) + "/freq_rp0";
 }
 
+std::string IoctlHelperXe::getFileForMemoryAddrRange(int subDeviceId) const {
+    return "device/tile" + std::to_string(subDeviceId) + "/addr_range";
+}
+
 struct drm_xe_engine_class_instance *
 IoctlHelperXe::xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance) {
     for (auto &engine : allEngines) {

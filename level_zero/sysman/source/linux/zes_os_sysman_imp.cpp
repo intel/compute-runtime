@@ -64,7 +64,6 @@ ze_result_t LinuxSysmanImp::init() {
 
     rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");
     pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
-
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     // Close Drm handles
     sysmanHwDeviceId->closeFileDescriptor();

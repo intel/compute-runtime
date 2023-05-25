@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/linux/pmt/sysman_pmt_xml_offsets.h"
@@ -51,7 +52,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
-        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
+        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<NEO::MockIoctlHelper>(*pDrm));
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pmtMapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
@@ -329,8 +330,8 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
-        EXPECT_EQ(state.size, probedSizeRegionOne);
-        EXPECT_EQ(state.free, unallocatedSizeRegionOne);
+        EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
+        EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
     }
 }
 
@@ -709,18 +710,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesSysmanMemo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateAndIfGetMemoryRegionsFailsThenErrorIsReturned) {
-    setLocalSupportedAndReinit(true);
-
-    pDrm->mockReturnEmptyRegions = true;
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        EXPECT_EQ(zesMemoryGetState(handle, &state), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    }
-}
-
 TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingMemoryPropertiesThenValidMemoryPropertiesRetrieved) {
     zes_mem_properties_t properties = {};
     ze_bool_t isSubdevice = pLinuxSysmanImp->getSubDeviceCount() == 0 ? false : true;
@@ -748,7 +737,7 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
         pSysfsAccess = std::make_unique<MockMemorySysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pDrm = new MockMemoryNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
-        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
+        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<NEO::MockIoctlHelper>(*pDrm));
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockMemoryNeoDrm>(pDrm));
 
@@ -823,15 +812,15 @@ TEST_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysma
     ze_result_t result = zesMemoryGetState(handles[0], &state1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state1.health, ZES_MEM_HEALTH_OK);
-    EXPECT_EQ(state1.size, probedSizeRegionOne);
-    EXPECT_EQ(state1.free, unallocatedSizeRegionOne);
+    EXPECT_EQ(state1.size, NEO::probedSizeRegionOne);
+    EXPECT_EQ(state1.free, NEO::unallocatedSizeRegionOne);
 
     zes_mem_state_t state2;
     result = zesMemoryGetState(handles[1], &state2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state2.health, ZES_MEM_HEALTH_OK);
-    EXPECT_EQ(state2.size, probedSizeRegionFour);
-    EXPECT_EQ(state2.free, unallocatedSizeRegionFour);
+    EXPECT_EQ(state2.size, NEO::probedSizeRegionFour);
+    EXPECT_EQ(state2.free, NEO::unallocatedSizeRegionFour);
 }
 
 } // namespace ult

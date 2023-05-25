@@ -49,7 +49,6 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     std::string physicalSizeFile;
-    void init();
 };
 
 } // namespace L0

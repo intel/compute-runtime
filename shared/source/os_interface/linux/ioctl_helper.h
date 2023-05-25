@@ -142,6 +142,7 @@ class IoctlHelper {
     virtual std::string getFileForMaxGpuFrequency() const;
     virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const;
     virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const;
+    virtual std::string getFileForMemoryAddrRange(int subdeviceId) const;
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };

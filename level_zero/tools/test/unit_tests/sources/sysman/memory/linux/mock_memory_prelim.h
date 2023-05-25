@@ -19,16 +19,6 @@
 #include "drm/intel_hwconfig_types.h"
 
 using namespace NEO;
-constexpr uint64_t probedSizeRegionZero = 8 * GB;
-constexpr uint64_t probedSizeRegionOne = 16 * GB;
-constexpr uint64_t probedSizeRegionTwo = 4 * GB;
-constexpr uint64_t probedSizeRegionThree = 16 * GB;
-constexpr uint64_t probedSizeRegionFour = 32 * GB;
-constexpr uint64_t unallocatedSizeRegionZero = 6 * GB;
-constexpr uint64_t unallocatedSizeRegionOne = 12 * GB;
-constexpr uint64_t unallocatedSizeRegionTwo = 25 * GB;
-constexpr uint64_t unallocatedSizeRegionThree = 3 * GB;
-constexpr uint64_t unallocatedSizeRegionFour = 4 * GB;
 
 constexpr uint16_t vF0VfidIndex = 88;
 constexpr uint16_t vF0Hbm0ReadIndex = 92;
@@ -217,29 +207,6 @@ struct MockMemoryNeoDrm : public Drm {
     bool isRepeated = false;
     bool mockReturnEmptyRegions = false;
     MockMemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-
-    std::vector<uint8_t> getMemoryRegions() override {
-        if (mockReturnEmptyRegions == true) {
-            return {};
-        }
-
-        uint32_t regionCount = 3;
-        uint32_t allocSize = sizeof(drm_i915_query_memory_regions) + regionCount * sizeof(drm_i915_memory_region_info);
-        auto regions = std::vector<uint8_t>(allocSize, 0);
-        drm_i915_query_memory_regions *memRegions = reinterpret_cast<drm_i915_query_memory_regions *>(regions.data());
-        memRegions->regions[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-        memRegions->regions[0].probed_size = probedSizeRegionZero;
-        memRegions->regions[0].unallocated_size = unallocatedSizeRegionZero;
-        memRegions->regions[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
-        memRegions->regions[1].probed_size = probedSizeRegionOne;
-        memRegions->regions[1].unallocated_size = unallocatedSizeRegionOne;
-        memRegions->regions[2].region = {I915_MEMORY_CLASS_DEVICE, 1};
-        memRegions->regions[2].probed_size = probedSizeRegionFour;
-        memRegions->regions[2].unallocated_size = unallocatedSizeRegionFour;
-        memRegions->num_regions = 3;
-
-        return regions;
-    }
 
     void setMemoryType(uint32_t memory) {
         mockMemoryType = memory;

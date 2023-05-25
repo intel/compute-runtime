@@ -387,6 +387,10 @@ std::string IoctlHelper::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId
     return "/gt/gt" + std::to_string(subDeviceId) + "/mem_RP0_freq_mhz";
 }
 
+std::string IoctlHelper::getFileForMemoryAddrRange(int subDeviceId) const {
+    return "gt/gt" + std::to_string(subDeviceId) + "/addr_range";
+}
+
 bool IoctlHelper::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const {
     return (error == EINTR || error == EAGAIN || error == EBUSY || error == -EBUSY);
 }
