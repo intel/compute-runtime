@@ -912,7 +912,7 @@ void *Kernel::patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, Gr
 
     constexpr uint32_t minimumAlignment = 4;
     ptrToPatch = alignDown(ptrToPatch, minimumAlignment);
-    DEBUG_BREAK_IF(ptrDiff(svmPtr, ptrToPatch) != static_cast<uint32_t>(ptrDiff(svmPtr, ptrToPatch)));
+    UNRECOVERABLE_IF(ptrDiff(svmPtr, ptrToPatch) != static_cast<uint32_t>(ptrDiff(svmPtr, ptrToPatch)));
     uint32_t offsetToPatch = static_cast<uint32_t>(ptrDiff(svmPtr, ptrToPatch));
 
     patch<uint32_t, uint32_t>(offsetToPatch, getCrossThreadData(), argAsPtr.bufferOffset);
