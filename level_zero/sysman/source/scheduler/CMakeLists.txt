@@ -7,11 +7,11 @@
 target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/os_scheduler.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_imp.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_scheduler.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_scheduler.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_scheduler.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_scheduler_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_scheduler_imp.h
 )
 
 add_subdirectories()

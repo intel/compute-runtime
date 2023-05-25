@@ -5,8 +5,8 @@
 #
 
 set(L0_SRCS_SYSMAN_FREQUENCY_WINDOWS
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_frequency_imp.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_frequency_imp.cpp
 )
 
 if(WIN32)

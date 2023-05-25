@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/hw_device_id_linux.h"
+#include "level_zero/sysman/source/linux/sysman_hw_device_id_linux.h"
 
 #pragma once
 

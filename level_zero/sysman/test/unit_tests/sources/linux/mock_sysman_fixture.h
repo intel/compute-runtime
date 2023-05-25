@@ -15,8 +15,8 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/sysman/source/linux/fs_access.h"
-#include "level_zero/sysman/source/linux/os_sysman_imp.h"
+#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_device.h"
 #include "level_zero/sysman/source/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"

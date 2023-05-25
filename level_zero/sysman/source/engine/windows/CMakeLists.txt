@@ -6,8 +6,8 @@
 
 set(L0_SRCS_SYSMAN_ENGINE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_engine_imp.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_engine_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_engine_imp.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_engine_imp.cpp
 )
 
 if(WIN32)

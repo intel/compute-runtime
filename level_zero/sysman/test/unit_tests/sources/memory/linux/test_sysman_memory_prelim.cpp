@@ -8,8 +8,8 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/sysman/source/linux/pmt/pmt_xml_offsets.h"
-#include "level_zero/sysman/source/memory/linux/os_memory_imp_prelim.h"
+#include "level_zero/sysman/source/linux/pmt/sysman_pmt_xml_offsets.h"
+#include "level_zero/sysman/source/memory/linux/sysman_os_memory_imp_prelim.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory_prelim.h"

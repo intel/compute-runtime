@@ -8,11 +8,11 @@ if(WIN32)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/os_sysman_imp.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kmd_sys.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kmd_sys_manager.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/os_sysman_imp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kmd_sys_manager.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_windows.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_imp.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_sys.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_sys_manager.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_imp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_sys_manager.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_hw_device_id_windows.cpp
   )
 endif()

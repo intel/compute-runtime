@@ -9,9 +9,9 @@
 
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/sysman/source/fabric_port/fabric_port.h"
-#include "level_zero/sysman/source/linux/fs_access.h"
-#include "level_zero/sysman/source/linux/os_sysman_imp.h"
+#include "level_zero/sysman/source/fabric_port/sysman_fabric_port.h"
+#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 
 #include "gmock/gmock.h"
 

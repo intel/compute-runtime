@@ -9,10 +9,10 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
-#include "level_zero/sysman/source/engine/engine_imp.h"
-#include "level_zero/sysman/source/engine/linux/os_engine_imp.h"
-#include "level_zero/sysman/source/linux/os_sysman_imp.h"
-#include "level_zero/sysman/source/linux/pmu/pmu_imp.h"
+#include "level_zero/sysman/source/engine/linux/sysman_os_engine_imp.h"
+#include "level_zero/sysman/source/engine/sysman_engine_imp.h"
+#include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 using namespace NEO;

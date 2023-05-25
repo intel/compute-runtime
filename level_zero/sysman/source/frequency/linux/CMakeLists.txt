@@ -10,13 +10,13 @@ set(L0_SRCS_SYSMAN_FREQUENCY_LINUX
 
 if(NEO_ENABLE_i915_PRELIM_DETECTION)
   list(APPEND L0_SRCS_SYSMAN_FREQUENCY_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp_prelim.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp_prelim.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_frequency_imp_prelim.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_frequency_imp_prelim.h
   )
 else()
   list(APPEND L0_SRCS_SYSMAN_FREQUENCY_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_frequency_imp.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_frequency_imp.h
   )
 endif()
 

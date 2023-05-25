@@ -9,12 +9,12 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "level_zero/sysman/source/linux/fs_access.h"
-#include "level_zero/sysman/source/linux/os_sysman_imp.h"
-#include "level_zero/sysman/source/linux/pmu/pmu_imp.h"
-#include "level_zero/sysman/source/ras/linux/os_ras_imp_prelim.h"
-#include "level_zero/sysman/source/ras/ras.h"
-#include "level_zero/sysman/source/ras/ras_imp.h"
+#include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/ras/linux/sysman_os_ras_imp_prelim.h"
+#include "level_zero/sysman/source/ras/sysman_ras.h"
+#include "level_zero/sysman/source/ras/sysman_ras_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 #include "drm/intel_hwconfig_types.h"

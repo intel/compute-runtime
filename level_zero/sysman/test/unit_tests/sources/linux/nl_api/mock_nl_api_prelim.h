@@ -9,8 +9,8 @@
 
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/sysman/source/linux/nl_api/iaf_nl_api.h"
-#include "level_zero/sysman/source/linux/nl_api/nl_api.h"
+#include "level_zero/sysman/source/linux/nl_api/sysman_iaf_nl_api.h"
+#include "level_zero/sysman/source/linux/nl_api/sysman_nl_api.h"
 
 #include "gmock/gmock.h"
 

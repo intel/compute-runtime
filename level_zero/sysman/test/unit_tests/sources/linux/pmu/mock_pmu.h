@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/linux/pmu/pmu_imp.h"
+#include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
 
 using namespace NEO;
 namespace L0 {

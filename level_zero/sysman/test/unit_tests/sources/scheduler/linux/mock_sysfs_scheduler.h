@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "level_zero/sysman/source/linux/fs_access.h"
-#include "level_zero/sysman/source/scheduler/linux/os_scheduler_imp.h"
+#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/scheduler/linux/sysman_os_scheduler_imp.h"
 
 namespace L0 {
 namespace ult {

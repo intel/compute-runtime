@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "level_zero/sysman/source/linux/fs_access.h"
-#include "level_zero/sysman/source/ras/linux/os_ras_imp.h"
-#include "level_zero/sysman/source/ras/ras.h"
-#include "level_zero/sysman/source/ras/ras_imp.h"
+#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/ras/linux/sysman_os_ras_imp.h"
+#include "level_zero/sysman/source/ras/sysman_ras.h"
+#include "level_zero/sysman/source/ras/sysman_ras_imp.h"
 
 namespace L0 {
 namespace ult {

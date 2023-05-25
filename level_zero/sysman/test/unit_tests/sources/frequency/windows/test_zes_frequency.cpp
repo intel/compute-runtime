@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/frequency/windows/os_frequency_imp.h"
+#include "level_zero/sysman/source/frequency/windows/sysman_os_frequency_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/frequency/windows/mock_frequency.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"

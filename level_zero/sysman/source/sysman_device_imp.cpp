@@ -9,10 +9,10 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
-#include "level_zero/sysman/source/ecc/ecc_imp.h"
-#include "level_zero/sysman/source/global_operations/global_operations_imp.h"
+#include "level_zero/sysman/source/ecc/sysman_ecc_imp.h"
+#include "level_zero/sysman/source/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/os_sysman.h"
-#include "level_zero/sysman/source/pci/pci_imp.h"
+#include "level_zero/sysman/source/pci/sysman_pci_imp.h"
 
 #include <vector>
 

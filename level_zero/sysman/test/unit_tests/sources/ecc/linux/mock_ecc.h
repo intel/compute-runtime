@@ -8,8 +8,8 @@
 #pragma once
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/sysman/source/ecc/ecc_imp.h"
-#include "level_zero/sysman/source/firmware_util/firmware_util.h"
+#include "level_zero/sysman/source/ecc/sysman_ecc_imp.h"
+#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {

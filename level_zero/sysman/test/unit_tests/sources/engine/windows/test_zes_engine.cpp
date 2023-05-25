@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/engine/windows/os_engine_imp.h"
+#include "level_zero/sysman/source/engine/windows/sysman_os_engine_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/windows/mock_engine.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
