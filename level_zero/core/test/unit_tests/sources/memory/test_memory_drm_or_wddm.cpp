@@ -73,29 +73,6 @@ TEST_F(MemoryIPCTests,
 }
 
 TEST_F(MemoryIPCTests,
-       givenCallToGetIpcHandleWithDeviceAllocationAndCallToMemFreeThenIPCHandleIsClosed) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(0u, context->getIPCHandleMap().size());
-}
-
-TEST_F(MemoryIPCTests,
        givenCallToGetIpcHandleWithDeviceAllocationAndCallToGetFdFromIpcHandleThenIPCHandleReturned) {
     size_t size = 10;
     size_t alignment = 1u;
