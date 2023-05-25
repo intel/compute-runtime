@@ -37,7 +37,7 @@ extern "C" {
  */
 
 /**
- * struct i915_user_extension - Base class for defining a chain of extensions
+ * struct xe_user_extension - Base class for defining a chain of extensions
  *
  * Many interfaces need to grow over time. In most cases we can simply
  * extend the struct and have userspace pass in more data. Another option,
@@ -55,20 +55,20 @@ extern "C" {
  *
  * .. code-block:: C
  *
- *	struct i915_user_extension ext3 {
+ *	struct xe_user_extension ext3 {
  *		.next_extension = 0, // end
  *		.name = ...,
  *	};
- *	struct i915_user_extension ext2 {
+ *	struct xe_user_extension ext2 {
  *		.next_extension = (uintptr_t)&ext3,
  *		.name = ...,
  *	};
- *	struct i915_user_extension ext1 {
+ *	struct xe_user_extension ext1 {
  *		.next_extension = (uintptr_t)&ext2,
  *		.name = ...,
  *	};
  *
- * Typically the struct i915_user_extension would be embedded in some uAPI
+ * Typically the struct xe_user_extension would be embedded in some uAPI
  * struct, and in this case we would feed it the head of the chain(i.e ext1),
  * which would then apply all of the above extensions.
  *
@@ -77,7 +77,7 @@ struct xe_user_extension {
 	/**
 	 * @next_extension:
 	 *
-	 * Pointer to the next struct i915_user_extension, or zero if the end.
+	 * Pointer to the next struct xe_user_extension, or zero if the end.
 	 */
 	__u64 next_extension;
 	/**
@@ -87,11 +87,11 @@ struct xe_user_extension {
 	 *
 	 * Also note that the name space for this is not global for the whole
 	 * driver, but rather its scope/meaning is limited to the specific piece
-	 * of uAPI which has embedded the struct i915_user_extension.
+	 * of uAPI which has embedded the struct xe_user_extension.
 	 */
 	__u32 name;
 	/**
-	 * @flags: MBZ
+	 * @pad: MBZ
 	 *
 	 * All undefined bits must be zero.
 	 */
@@ -99,7 +99,7 @@ struct xe_user_extension {
 };
 
 /*
- * i915 specific ioctls.
+ * xe specific ioctls.
  *
  * The device specific ioctl range is [DRM_COMMAND_BASE, DRM_COMMAND_END) ie
  * [0x40, 0xa0) (a0 is excluded). The numbers below are defined as offset
@@ -118,6 +118,7 @@ struct xe_user_extension {
 #define DRM_XE_ENGINE_SET_PROPERTY	0x0a
 #define DRM_XE_WAIT_USER_FENCE		0x0b
 #define DRM_XE_VM_MADVISE		0x0c
+#define DRM_XE_ENGINE_GET_PROPERTY	0x0d
 
 /* Must be kept compact -- no holes */
 #define DRM_IOCTL_XE_DEVICE_QUERY		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_DEVICE_QUERY, struct drm_xe_device_query)
@@ -127,6 +128,7 @@ struct xe_user_extension {
 #define DRM_IOCTL_XE_VM_DESTROY			DRM_IOW( DRM_COMMAND_BASE + DRM_XE_VM_DESTROY, struct drm_xe_vm_destroy)
 #define DRM_IOCTL_XE_VM_BIND			DRM_IOW( DRM_COMMAND_BASE + DRM_XE_VM_BIND, struct drm_xe_vm_bind)
 #define DRM_IOCTL_XE_ENGINE_CREATE		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_ENGINE_CREATE, struct drm_xe_engine_create)
+#define DRM_IOCTL_XE_ENGINE_GET_PROPERTY	DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_ENGINE_GET_PROPERTY, struct drm_xe_engine_get_property)
 #define DRM_IOCTL_XE_ENGINE_DESTROY		DRM_IOW( DRM_COMMAND_BASE + DRM_XE_ENGINE_DESTROY, struct drm_xe_engine_destroy)
 #define DRM_IOCTL_XE_EXEC			DRM_IOW( DRM_COMMAND_BASE + DRM_XE_EXEC, struct drm_xe_exec)
 #define DRM_IOCTL_XE_MMIO			DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_MMIO, struct drm_xe_mmio)
@@ -182,7 +184,8 @@ struct drm_xe_query_config {
 #define XE_QUERY_CONFIG_VA_BITS			3
 #define XE_QUERY_CONFIG_GT_COUNT		4
 #define XE_QUERY_CONFIG_MEM_REGION_COUNT	5
-#define XE_QUERY_CONFIG_NUM_PARAM		XE_QUERY_CONFIG_MEM_REGION_COUNT + 1
+#define XE_QUERY_CONFIG_MAX_ENGINE_PRIORITY	6
+#define XE_QUERY_CONFIG_NUM_PARAM		XE_QUERY_CONFIG_MAX_ENGINE_PRIORITY + 1
 	__u64 info[];
 };
 
@@ -288,6 +291,9 @@ struct drm_xe_gem_create {
 	 */
 	__u32 handle;
 
+	/** @pad: MBZ */
+	__u32 pad;
+
 	/** @reserved: Reserved */
 	__u64 reserved[2];
 };
@@ -332,6 +338,9 @@ struct drm_xe_ext_vm_set_property {
 #define XE_VM_PROPERTY_BIND_OP_ERROR_CAPTURE_ADDRESS		0
 	__u32 property;
 
+	/** @pad: MBZ */
+	__u32 pad;
+
 	/** @value: property value */
 	__u64 value;
 
@@ -375,6 +384,9 @@ struct drm_xe_vm_bind_op {
 	 * @obj: GEM object to operate on, MBZ for MAP_USERPTR, MBZ for UNMAP
 	 */
 	__u32 obj;
+
+	/** @pad: MBZ */
+	__u32 pad;
 
 	union {
 		/**
@@ -466,6 +478,9 @@ struct drm_xe_vm_bind {
 	/** @num_binds: number of binds in this IOCTL */
 	__u32 num_binds;
 
+	/** @pad: MBZ */
+	__u32 pad;
+
 	union {
 		/** @bind: used if num_binds == 1 */
 		struct drm_xe_vm_bind_op bind;
@@ -478,6 +493,9 @@ struct drm_xe_vm_bind {
 
 	/** @num_syncs: amount of syncs to wait on */
 	__u32 num_syncs;
+
+	/** @pad2: MBZ */
+	__u32 pad2;
 
 	/** @syncs: pointer to struct drm_xe_sync array */
 	__u64 syncs;
@@ -493,6 +511,9 @@ struct drm_xe_ext_engine_set_property {
 
 	/** @property: property to set */
 	__u32 property;
+
+	/** @pad: MBZ */
+	__u32 pad;
 
 	/** @value: property value */
 	__u64 value;
@@ -511,21 +532,21 @@ struct drm_xe_engine_set_property {
 	__u32 engine_id;
 
 	/** @property: property to set */
-#define XE_ENGINE_PROPERTY_PRIORITY			0
-#define XE_ENGINE_PROPERTY_TIMESLICE			1
-#define XE_ENGINE_PROPERTY_PREEMPTION_TIMEOUT		2
+#define XE_ENGINE_SET_PROPERTY_PRIORITY			0
+#define XE_ENGINE_SET_PROPERTY_TIMESLICE		1
+#define XE_ENGINE_SET_PROPERTY_PREEMPTION_TIMEOUT	2
 	/*
 	 * Long running or ULLS engine mode. DMA fences not allowed in this
 	 * mode. Must match the value of DRM_XE_VM_CREATE_COMPUTE_MODE, serves
 	 * as a sanity check the UMD knows what it is doing. Can only be set at
 	 * engine create time.
 	 */
-#define XE_ENGINE_PROPERTY_COMPUTE_MODE			3
-#define XE_ENGINE_PROPERTY_PERSISTENCE			4
-#define XE_ENGINE_PROPERTY_JOB_TIMEOUT			5
-#define XE_ENGINE_PROPERTY_ACC_TRIGGER			6
-#define XE_ENGINE_PROPERTY_ACC_NOTIFY			7
-#define XE_ENGINE_PROPERTY_ACC_GRANULARITY		8
+#define XE_ENGINE_SET_PROPERTY_COMPUTE_MODE		3
+#define XE_ENGINE_SET_PROPERTY_PERSISTENCE		4
+#define XE_ENGINE_SET_PROPERTY_JOB_TIMEOUT		5
+#define XE_ENGINE_SET_PROPERTY_ACC_TRIGGER		6
+#define XE_ENGINE_SET_PROPERTY_ACC_NOTIFY		7
+#define XE_ENGINE_SET_PROPERTY_ACC_GRANULARITY		8
 	__u32 property;
 
 	/** @value: property value */
@@ -568,8 +589,26 @@ struct drm_xe_engine_create {
 	__u64 reserved[2];
 };
 
+struct drm_xe_engine_get_property {
+	/** @extensions: Pointer to the first extension struct, if any */
+	__u64 extensions;
+
+	/** @engine_id: Engine ID */
+	__u32 engine_id;
+
+	/** @property: property to get */
+#define XE_ENGINE_GET_PROPERTY_BAN			0
+	__u32 property;
+
+	/** @value: property value */
+	__u64 value;
+
+	/** @reserved: Reserved */
+	__u64 reserved[2];
+};
+
 struct drm_xe_engine_destroy {
-	/** @vm_id: VM ID */
+	/** @engine_id: Engine ID */
 	__u32 engine_id;
 
 	/** @pad: MBZ */
@@ -590,6 +629,9 @@ struct drm_xe_sync {
 #define DRM_XE_SYNC_DMA_BUF		0x2
 #define DRM_XE_SYNC_USER_FENCE		0x3
 #define DRM_XE_SYNC_SIGNAL		0x10
+
+	/** @pad: MBZ */
+	__u32 pad;
 
 	union {
 		__u32 handle;
@@ -634,6 +676,9 @@ struct drm_xe_exec {
 	 * the width of the engine
 	 */
 	__u16 num_batch_buffer;
+
+	/** @pad: MBZ */
+	__u16 pad[3];
 
 	/** @reserved: Reserved */
 	__u64 reserved[2];
@@ -697,6 +742,8 @@ struct drm_xe_wait_user_fence {
 #define DRM_XE_UFENCE_WAIT_ABSTIME	(1 << 1)
 #define DRM_XE_UFENCE_WAIT_VM_ERROR	(1 << 2)
 	__u16 flags;
+	/** @pad: MBZ */
+	__u32 pad;
 	/** @value: compare value */
 	__u64 value;
 	/** @mask: comparison mask */
@@ -728,6 +775,9 @@ struct drm_xe_vm_madvise {
 
 	/** @vm_id: The ID VM in which the VMA exists */
 	__u32 vm_id;
+
+	/** @pad: MBZ */
+	__u32 pad;
 
 	/** @range: Number of bytes in the VMA */
 	__u64 range;
@@ -772,6 +822,9 @@ struct drm_xe_vm_madvise {
 
 	/** @property: property to set */
 	__u32 property;
+
+	/** @pad2: MBZ */
+	__u32 pad2;
 
 	/** @value: property value */
 	__u64 value;
