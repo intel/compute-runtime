@@ -524,7 +524,7 @@ bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTime
         *hostTimestamp = timeStamp.cpuTimeinNS;
         if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
             auto resolution = getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
-            *deviceTimestamp = static_cast<uint64_t>(timeStamp.gpuTimeStamp * resolution);
+            *deviceTimestamp = getGfxCoreHelper().getGpuTimeStampInNS(timeStamp.gpuTimeStamp, resolution);
         } else
             *deviceTimestamp = *hostTimestamp;
     }
