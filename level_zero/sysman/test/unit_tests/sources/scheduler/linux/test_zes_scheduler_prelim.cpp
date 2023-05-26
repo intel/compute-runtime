@@ -342,7 +342,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     }
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetTimeoutModeThenVerifyCallSucceeds) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetTimeoutModeThenVerifyCallSucceeds) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
@@ -365,7 +365,7 @@ TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenCal
     delete pMockSchedulerProcfsAccess;
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenSettingTimeoutModeAndDebugModeCantBeChangedThenVerifyCallFails) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimeoutModeAndDebugModeCantBeChangedThenVerifyCallFails) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
@@ -488,7 +488,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     }
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetTimesliceModeThenVerifyCallSucceeds) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetTimesliceModeThenVerifyCallSucceeds) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
@@ -513,7 +513,7 @@ TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenCal
     delete pMockSchedulerProcfsAccess;
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenSettingTimesliceModeAndDebugModeCantBeChangedThenVerifyCallFails) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimesliceModeAndDebugModeCantBeChangedThenVerifyCallFails) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
@@ -619,7 +619,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     }
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetExclusiveModeThenVerifyCallSucceeds) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetExclusiveModeThenVerifyCallSucceeds) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
@@ -637,7 +637,7 @@ TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenCal
     delete pMockSchedulerProcfsAccess;
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenCurrentModeIsDebugModeWhenSettingExclusiveModeAndDebugModeCantBeChangedThenVerifyCallFails) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingExclusiveModeAndDebugModeCantBeChangedThenVerifyCallFails) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
@@ -747,7 +747,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     }
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenValidDeviceHandleWhenCallingzesSchedulerSetComputeUnitDebugModeThenSuccessIsReturned) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetComputeUnitDebugModeThenSuccessIsReturned) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
@@ -767,7 +767,7 @@ TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenValidDeviceHandleWhenCallingz
     delete pMockSchedulerProcfsAccess;
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenGpuProcessCleanupFailedWhenCallingzesSchedulerSetComputeUnitDebugModeThenErrorIsReturned) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenGpuProcessCleanupFailedWhenCallingzesSchedulerSetComputeUnitDebugModeThenErrorIsReturned) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
@@ -788,7 +788,7 @@ TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenGpuProcessCleanupFailedWhenCa
     delete pMockSchedulerProcfsAccess;
 }
 
-TEST_F(SysmanDeviceSchedulerFixture, DISABLED_GivenEuDebugNodeWriteFailsWhenCallingzesSchedulerSetComputeUnitDebugModeThenErrorIsReturned) {
+TEST_F(SysmanDeviceSchedulerFixture, GivenEuDebugNodeWriteFailsWhenCallingzesSchedulerSetComputeUnitDebugModeThenErrorIsReturned) {
     VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;

@@ -241,8 +241,6 @@ class MockSchedulerProcfsAccess : public ProcfsAccess {
     ADDMETHOD_NOBASE_VOIDRETURN(kill, (const ::pid_t pid));
 };
 
-// class SchedulerSysfsAccess : public SysfsAccess {};
-
 typedef struct SchedulerConfigValues {
     uint64_t defaultVal;
     uint64_t actualVal;
