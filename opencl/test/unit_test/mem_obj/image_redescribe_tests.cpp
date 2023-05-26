@@ -236,3 +236,12 @@ TEST(ImageRedescribeTestSimple, givenImageWhenItIsRedescribedThenCreateFunctionI
     ASSERT_NE(nullptr, imageNew);
     EXPECT_EQ(image->createFunction, imageNew->createFunction);
 }
+
+TEST(ImageRedescribeTestSimple, givenImageWhenItIsRedescribedThenPlaneIsSameAsInOriginalImage) {
+    MockContext context;
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&context));
+    image->setPlane(GMM_PLANE_U);
+    std::unique_ptr<Image> imageNew(image->redescribe());
+    ASSERT_NE(nullptr, imageNew);
+    EXPECT_EQ(image->getPlane(), imageNew->getPlane());
+}

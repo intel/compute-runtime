@@ -914,6 +914,7 @@ Image *Image::redescribe() {
     image->setCubeFaceIndex(this->getCubeFaceIndex());
     image->associatedMemObject = this->associatedMemObject;
     image->createFunction = createFunction;
+    image->plane = this->plane;
     return image;
 }
 
