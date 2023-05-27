@@ -985,6 +985,25 @@ TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringAnd2StringsT
     EXPECT_STREQ(expectedOutput, output);
 }
 
+TEST_F(PrintFormatterTest, GivenNoStringMapAndInvalidStringIndexStoredWhenPrintingOutputThenBufferParsingStopsAfterInvalidIndex) {
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
+
+    const char *string1 = "str1";
+    storeData(string1);
+    const int invalidIndex = -1;
+    const int zero = 0;
+    storeData(invalidIndex);
+    storeData(zero);
+
+    const char *string2 = "str2";
+    storeData(string2);
+
+    const char *expectedOutput = "str1";
+    char output[maxPrintfOutputLength];
+    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+    EXPECT_STREQ(expectedOutput, output);
+}
+
 TEST_F(PrintFormatterTest, GivenTypeSmallerThan4BThenItIsReadAs4BValue) {
     printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
     const char *formatString = "%c %hd %d";

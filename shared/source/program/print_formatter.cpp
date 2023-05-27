@@ -45,6 +45,9 @@ void PrintFormatter::printKernelOutput(const std::function<void(char *)> &print)
         while (currentOffset + sizeof(char *) <= printfOutputBufferSize) {
             char *formatString = nullptr;
             read(&formatString);
+            if (formatString == reinterpret_cast<char *>(static_cast<uintptr_t>(0xffffffff))) {
+                break;
+            }
             if (formatString != nullptr) {
                 printString(formatString, print);
             }
