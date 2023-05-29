@@ -791,4 +791,8 @@ bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &) c
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
+    return true;
+}
 } // namespace NEO

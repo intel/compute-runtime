@@ -39,8 +39,8 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
 
     resourceParams.Usage = gmmResourceUsage;
     resourceParams.Flags.Info.Linear = 1;
-    auto &gfxCoreHelper = gmmHelper->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    resourceParams.Flags.Info.Cacheable = CacheSettingsHelper::isResourceCacheableOnCpu(gmmResourceUsage, gfxCoreHelper);
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    resourceParams.Flags.Info.Cacheable = CacheSettingsHelper::isResourceCacheableOnCpu(gmmResourceUsage, productHelper, gmmHelper->getRootDeviceEnvironment().isWddmOnLinux());
     resourceParams.Flags.Gpu.Texture = 1;
 
     if (alignedPtr) {

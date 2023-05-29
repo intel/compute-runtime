@@ -1867,8 +1867,8 @@ HWTEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocati
     EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
     EXPECT_NE(0llu, graphicsAllocation->getGpuAddress());
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.isCachingOnCpuAvailable(), graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
 
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }

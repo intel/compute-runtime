@@ -207,6 +207,7 @@ class ProductHelper {
     virtual uint32_t getNumberOfPartsInTileForConcurrentKernel() const = 0;
     virtual bool is48bResourceNeededForRayTracing() const = 0;
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isCachingOnCpuAvailable() const = 0;
 
     virtual ~ProductHelper() = default;
 

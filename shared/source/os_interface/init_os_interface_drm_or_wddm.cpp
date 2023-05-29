@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDevi
     if (hwDeviceId->getDriverModelType() == DriverModelType::DRM) {
         return initDrmOsInterface(std::move(hwDeviceId), rootDeviceIndex, this);
     } else {
+        this->isWddmOnLinuxEnable = true;
         return initWddmOsInterface(std::move(hwDeviceId), this);
     }
 }

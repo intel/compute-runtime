@@ -169,7 +169,6 @@ class GfxCoreHelper {
     virtual bool isTimestampShiftRequired() const = 0;
     virtual bool isRelaxedOrderingSupported() const = 0;
     static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
-    virtual bool isCachingOnCpuAvailable() const = 0;
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -381,7 +380,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isChipsetUniqueUUIDSupported() const override;
     bool isTimestampShiftRequired() const override;
     bool isRelaxedOrderingSupported() const override;
-    bool isCachingOnCpuAvailable() const override;
 
     ~GfxCoreHelperHw() override = default;
 

@@ -160,6 +160,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const override;
     bool is48bResourceNeededForRayTracing() const override;
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
+    bool isCachingOnCpuAvailable() const override;
 
     ~ProductHelperHw() override = default;
 

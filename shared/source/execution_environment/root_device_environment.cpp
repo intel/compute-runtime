@@ -247,6 +247,10 @@ AssertHandler *RootDeviceEnvironment::getAssertHandler(Device *neoDevice) {
     return this->assertHandler.get();
 }
 
+bool RootDeviceEnvironment::isWddmOnLinux() const {
+    return isWddmOnLinuxEnable;
+}
+
 template <typename HelperType>
 HelperType &RootDeviceEnvironment::getHelper() const {
     if constexpr (std::is_same_v<HelperType, CompilerProductHelper>) {

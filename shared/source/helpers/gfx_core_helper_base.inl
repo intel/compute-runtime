@@ -685,9 +685,4 @@ template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalGrfSize() const {
     return 128u;
 }
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isCachingOnCpuAvailable() const {
-    return true;
-}
 } // namespace NEO

@@ -311,3 +311,8 @@ MTLTEST_F(ProductHelperTestMtl, givenPatIndexAndAllocationTypeWhenCallOverridePa
     patIndex = 3u;
     EXPECT_EQ(patIndex, helper.overridePatIndex(allocationType, patIndex));
 }
+
+MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCheckIsCachingOnCpuAvailableThenAlwaysFalse) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.isCachingOnCpuAvailable());
+}

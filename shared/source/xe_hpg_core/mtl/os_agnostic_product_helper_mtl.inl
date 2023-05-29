@@ -96,4 +96,9 @@ bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
+    return false;
+}
+
 } // namespace NEO

@@ -56,6 +56,7 @@ struct RootDeviceEnvironment {
     HardwareInfo *getMutableHardwareInfo() const;
     void setHwInfoAndInitHelpers(const HardwareInfo *hwInfo);
     bool isFullRangeSvm() const;
+    bool isWddmOnLinux() const;
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex);
@@ -118,6 +119,7 @@ struct RootDeviceEnvironment {
     GraphicsAllocationUniquePtrType dummyAllocation = nullptr;
 
     bool limitedNumberOfCcs = false;
+    bool isWddmOnLinuxEnable = false;
     std::once_flag isDummyAllocationInitialized;
     std::unique_ptr<AllocationProperties> dummyBlitProperties;
 

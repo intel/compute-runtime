@@ -29,8 +29,8 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType
     }
 }
 
-bool CacheSettingsHelper::isResourceCacheableOnCpu(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const GfxCoreHelper &gfxCoreHelper) {
-    bool isCachingOnCpuAvailable = gfxCoreHelper.isCachingOnCpuAvailable();
+bool CacheSettingsHelper::isResourceCacheableOnCpu(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const ProductHelper &productHelper, bool isWsl) {
+    bool isCachingOnCpuAvailable = isWsl ? true : productHelper.isCachingOnCpuAvailable();
     if (DebugManager.flags.EnableCpuCacheForResources.get()) {
         isCachingOnCpuAvailable = true;
     }

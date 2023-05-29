@@ -760,3 +760,7 @@ HWTEST_F(ProductHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
 HWTEST_F(ProductHelperTest, whenDisableL3ForDebugCalledThenFalseIsReturned) {
     EXPECT_FALSE(productHelper->disableL3CacheForDebug(*defaultHwInfo));
 }
+
+HWTEST_F(ProductHelperTest, whenCheckIsCachingOnCpuAvailableThenAlwaysTrue) {
+    EXPECT_TRUE(productHelper->isCachingOnCpuAvailable());
+}
