@@ -578,7 +578,7 @@ HWTEST2_F(L0DebuggerTest, givenNotXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3Ca
     EXPECT_FALSE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->allResourcesUncached);
 }
 
-HWTEST2_F(L0DebuggerTest, givenXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, IsXeHpOrXeHpgCore) {
+HWTEST2_F(L0DebuggerTest, givenDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, IsDG2) {
     EXPECT_TRUE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->allResourcesUncached);
 }
 

@@ -222,9 +222,8 @@ bool Device::createDeviceImpl() {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
     }
 
-    auto &gfxCoreHelper = getGfxCoreHelper();
     auto &productHelper = getProductHelper();
-    if (getDebugger() && gfxCoreHelper.disableL3CacheForDebug(hwInfo, productHelper)) {
+    if (getDebugger() && productHelper.disableL3CacheForDebug(hwInfo)) {
         getGmmHelper()->forceAllResourcesUncached();
     }
 
@@ -274,6 +273,7 @@ bool Device::createDeviceImpl() {
     }
 
     createBindlessHeapsHelper();
+    auto &gfxCoreHelper = getGfxCoreHelper();
     if (!isEngineInstanced()) {
         uuid.isValid = false;
 

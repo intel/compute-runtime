@@ -632,14 +632,14 @@ DG2TEST_F(ProductHelperTestDg2, givenRevisionEnumAndDisableL3CacheForDebugCalled
     };
 
     auto hardwareInfo = *defaultHwInfo;
-    const auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    hardwareInfo.platform.usDeviceID = dg2G10DeviceIds[0];
 
-    for (auto stepping : steppings) {
+    for (auto &stepping : steppings) {
         hardwareInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(stepping, hardwareInfo);
         if (stepping < REVISION_B) {
-            EXPECT_TRUE(gfxCoreHelper.disableL3CacheForDebug(hardwareInfo, *productHelper));
+            EXPECT_TRUE(productHelper->disableL3CacheForDebug(hardwareInfo));
         } else {
-            EXPECT_FALSE(gfxCoreHelper.disableL3CacheForDebug(hardwareInfo, *productHelper));
+            EXPECT_FALSE(productHelper->disableL3CacheForDebug(hardwareInfo));
         }
     }
 }

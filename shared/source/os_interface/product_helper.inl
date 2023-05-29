@@ -786,4 +786,9 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
     return 16u;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &) const {
+    return false;
+}
+
 } // namespace NEO

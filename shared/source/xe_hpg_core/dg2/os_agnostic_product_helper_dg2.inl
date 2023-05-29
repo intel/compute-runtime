@@ -254,4 +254,10 @@ template <>
 bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
     return false;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &hwInfo) const {
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
+}
+
 } // namespace NEO

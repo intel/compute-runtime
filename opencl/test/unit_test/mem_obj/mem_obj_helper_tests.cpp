@@ -418,64 +418,53 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
     cl_mem_flags_intel flagsIntelValues[] = {0, CL_MEM_COMPRESSED_HINT_INTEL, CL_MEM_UNCOMPRESSED_HINT_INTEL};
     uint32_t contextTypes[] = {ContextType::CONTEXT_TYPE_DEFAULT, ContextType::CONTEXT_TYPE_SPECIALIZED,
                                ContextType::CONTEXT_TYPE_UNRESTRICTIVE};
-    __REVID steppingValues[] = {REVISION_A0, REVISION_B};
 
-    MockExecutionEnvironment mockExecutionEnvironemnt{};
-    const auto &productHelper = mockExecutionEnvironemnt.rootDeviceEnvironments[0]->getProductHelper();
+    for (auto numSubDevices : numsSubDevices) {
+        UltClDeviceFactory clDeviceFactory{1, numSubDevices};
 
-    for (auto stepping : steppingValues) {
-        hardwareStepping = productHelper.getHwRevIdFromStepping(stepping, *defaultHwInfo);
-        if (hardwareStepping == CommonConstants::invalidStepping) {
-            continue;
-        }
+        for (auto contextType : contextTypes) {
+            if ((numSubDevices == 0) && (contextType != ContextType::CONTEXT_TYPE_DEFAULT)) {
+                continue;
+            }
 
-        for (auto numSubDevices : numsSubDevices) {
-            UltClDeviceFactory clDeviceFactory{1, numSubDevices};
+            ClDeviceVector contextDevices;
+            if (contextType != ContextType::CONTEXT_TYPE_SPECIALIZED) {
+                contextDevices.push_back(clDeviceFactory.rootDevices[0]);
+            }
+            if (contextType != ContextType::CONTEXT_TYPE_DEFAULT) {
+                contextDevices.push_back(clDeviceFactory.subDevices[0]);
+                contextDevices.push_back(clDeviceFactory.subDevices[1]);
+            }
+            MockContext context{contextDevices};
 
-            for (auto contextType : contextTypes) {
-                if ((numSubDevices == 0) && (contextType != ContextType::CONTEXT_TYPE_DEFAULT)) {
-                    continue;
-                }
+            for (auto flags : flagsValues) {
+                for (auto flagsIntel : flagsIntelValues) {
 
-                ClDeviceVector contextDevices;
-                if (contextType != ContextType::CONTEXT_TYPE_SPECIALIZED) {
-                    contextDevices.push_back(clDeviceFactory.rootDevices[0]);
-                }
-                if (contextType != ContextType::CONTEXT_TYPE_DEFAULT) {
-                    contextDevices.push_back(clDeviceFactory.subDevices[0]);
-                    contextDevices.push_back(clDeviceFactory.subDevices[1]);
-                }
-                MockContext context{contextDevices};
+                    auto &device = context.getDevice(0)->getDevice();
+                    auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
 
-                for (auto flags : flagsValues) {
-                    for (auto flagsIntel : flagsIntelValues) {
+                    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel,
+                                                                                                         0, &device);
 
-                        auto &device = context.getDevice(0)->getDevice();
-                        auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+                    bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
+                    MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
+                        memoryProperties, context, compressionEnabled, false);
 
-                        MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel,
-                                                                                                             0, &device);
+                    bool isCompressionDisabled = isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
+                                                 isValueSet(flagsIntel, CL_MEM_UNCOMPRESSED_HINT_INTEL);
+                    bool expectBufferCompressed = !isCompressionDisabled;
 
-                        bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
-                        MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
-                            memoryProperties, context, compressionEnabled, false);
+                    bool isMultiTile = (numSubDevices > 1);
+                    if (expectBufferCompressed && isMultiTile) {
+                        bool isBufferReadOnly = isValueSet(flags, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
+                        expectBufferCompressed = clGfxCoreHelper.allowCompressionForContext(*context.getDevice(0), context) &&
+                                                 ((contextType == ContextType::CONTEXT_TYPE_SPECIALIZED) || isBufferReadOnly);
+                    }
 
-                        bool isCompressionDisabled = isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
-                                                     isValueSet(flagsIntel, CL_MEM_UNCOMPRESSED_HINT_INTEL);
-                        bool expectBufferCompressed = !isCompressionDisabled;
-
-                        bool isMultiTile = (numSubDevices > 1);
-                        if (expectBufferCompressed && isMultiTile) {
-                            bool isBufferReadOnly = isValueSet(flags, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
-                            expectBufferCompressed = clGfxCoreHelper.allowCompressionForContext(*context.getDevice(0), context) &&
-                                                     ((contextType == ContextType::CONTEXT_TYPE_SPECIALIZED) || isBufferReadOnly);
-                        }
-
-                        if (expectBufferCompressed) {
-                            EXPECT_TRUE(compressionEnabled);
-                        } else {
-                            EXPECT_FALSE(compressionEnabled);
-                        }
+                    if (expectBufferCompressed) {
+                        EXPECT_TRUE(compressionEnabled);
+                    } else {
+                        EXPECT_FALSE(compressionEnabled);
                     }
                 }
             }

@@ -16,13 +16,13 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-
 using namespace NEO;
 
 struct BlitXeHpgCoreTests : public ::testing::Test {
@@ -290,7 +290,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     }
 }
 
-XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandAndRevisionB0ThenSetTargetMemory) {
+HWTEST2_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandAndRevisionB0ThenSetTargetMemory, IsDG2) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     HardwareInfo *hwInfo = clDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &productHelper = clDevice->getProductHelper();

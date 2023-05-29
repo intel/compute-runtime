@@ -886,7 +886,7 @@ HWTEST2_F(LegacyDebuggerTest, givenNotXeHpOrXeHpgCoreAndDebugIsActiveThenDisable
     EXPECT_FALSE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->allResourcesUncached);
 }
 
-HWTEST2_F(LegacyDebuggerTest, givenXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, IsXeHpOrXeHpgCore) {
+HWTEST2_F(LegacyDebuggerTest, givenDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, IsDG2) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
 

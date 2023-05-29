@@ -603,11 +603,6 @@ template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const {
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::disableL3CacheForDebug(const HardwareInfo &, const ProductHelper &productHelper) const {
-    return false;
-}
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isRevisionSpecificBinaryBuiltinRequired() const {
     return false;

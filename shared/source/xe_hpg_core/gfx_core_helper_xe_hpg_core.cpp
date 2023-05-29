@@ -125,11 +125,6 @@ uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, u
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
-    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, productHelper);
-}
-
-template <>
 bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;

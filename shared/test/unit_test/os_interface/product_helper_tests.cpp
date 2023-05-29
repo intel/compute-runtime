@@ -756,3 +756,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsTranslationException
 HWTEST_F(ProductHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
     EXPECT_EQ(16u, productHelper->getMaxNumSamplers());
 }
+
+HWTEST_F(ProductHelperTest, whenDisableL3ForDebugCalledThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->disableL3CacheForDebug(*defaultHwInfo));
+}

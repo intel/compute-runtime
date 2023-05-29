@@ -13,7 +13,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
@@ -80,7 +79,6 @@ void DebuggerL0::initialize() {
         auto &hwInfo = device->getHardwareInfo();
         auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
 
-        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
         NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize64k,
                                              NEO::AllocationType::DEBUG_MODULE_AREA,
                                              false,
@@ -104,7 +102,7 @@ void DebuggerL0::initialize() {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));
-        if (gfxCoreHelper.disableL3CacheForDebug(hwInfo, productHelper)) {
+        if (productHelper.disableL3CacheForDebug(hwInfo)) {
             device->getGmmHelper()->forceAllResourcesUncached();
         }
 

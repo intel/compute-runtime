@@ -51,34 +51,6 @@ MTLTEST_F(GfxCoreHelperTestMtl, givenisCompressionEnabledAndWaAuxTable64KGranula
     EXPECT_TRUE(gfxCoreHelper.is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
 }
 
-MTLTEST_F(GfxCoreHelperTestMtl, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
-    uint32_t steppings[] = {
-        REVISION_A0,
-        REVISION_B,
-        CommonConstants::invalidStepping,
-    };
-
-    auto hardwareInfo = *defaultHwInfo;
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
-
-        if (stepping == REVISION_A0) {
-            EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
-        } else {
-            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
-        }
-
-        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo, productHelper));
-
-        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
-        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo, productHelper));
-        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
-        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo, productHelper));
-    }
-}
-
 MTLTEST_F(GfxCoreHelperTestMtl, givenMtlWhenSetForceNonCoherentThenNothingChanged) {
     using FORCE_NON_COHERENT = typename FamilyType::STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
