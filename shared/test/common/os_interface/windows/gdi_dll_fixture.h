@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,7 @@ struct GdiDllFixture {
             reinterpret_cast<decltype(&getLastPriority)>(mockGdiDll->getProcAddress("getLastPriority"));
         setAdapterBDFFcn =
             reinterpret_cast<decltype(&setAdapterBDF)>(mockGdiDll->getProcAddress("setAdapterBDF"));
+        setMockDeviceExecutionStateFcn = reinterpret_cast<decltype(&setMockDeviceExecutionState)>(mockGdiDll->getProcAddress("setMockDeviceExecutionState"));
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
         *getDestroySynchronizationObjectDataFcn() = {};
         *getCreateSynchronizationObject2FailCallFcn() = false;
@@ -102,4 +103,5 @@ struct GdiDllFixture {
     decltype(&getRegisterTrimNotificationFailCall) getRegisterTrimNotificationFailCallFcn = nullptr;
     decltype(&getLastPriority) getLastPriorityFcn = nullptr;
     decltype(&setAdapterBDF) setAdapterBDFFcn = nullptr;
+    decltype(&setMockDeviceExecutionState) setMockDeviceExecutionStateFcn = nullptr;
 };

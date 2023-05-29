@@ -409,6 +409,62 @@ TEST_F(WddmTests, GivenWddmWhenMapGpuVaCalledThenGmmClientCallsMapGpuVa) {
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateAndForceExecutionStateThenProperMessageIsVisible) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDebugBreak.set(false);
+
+    wddm->checkDeviceState = true;
+    auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
+    setMockDeviceExecutionStateFcn(executionState);
+    ::testing::internal::CaptureStderr();
+    wddm->getDeviceState();
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string("Device execution error, out of memory " + std::to_string(executionState) + "\n"), output);
+
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+    ::testing::internal::CaptureStderr();
+    wddm->getDeviceState();
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+}
+
+TEST_F(WddmTests, givenCheckDeviceStateSetToFalseWhenCallGetDeviceStateAndForceExecutionStateThenNoMessageIsVisible) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDebugBreak.set(false);
+
+    wddm->checkDeviceState = false;
+    auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
+    setMockDeviceExecutionStateFcn(executionState);
+    ::testing::internal::CaptureStderr();
+    wddm->getDeviceState();
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+    ::testing::internal::CaptureStderr();
+    wddm->getDeviceState();
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+}
+
+TEST(WddmConstructorTest, givenEnableDeviceStateVerificationSetTrueWhenCreateWddmThenCheckDeviceStateIsTrue) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDeviceStateVerification.set(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    auto mockWddm = std::make_unique<WddmMock>(*rootDeviceEnvironment);
+    EXPECT_TRUE(mockWddm->checkDeviceState);
+}
+
+TEST(WddmConstructorTest, givenEnableDeviceStateVerificationSetFalseWhenCreateWddmThenCheckDeviceStateIsFalse) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDeviceStateVerification.set(0);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    auto mockWddm = std::make_unique<WddmMock>(*rootDeviceEnvironment);
+    EXPECT_FALSE(mockWddm->checkDeviceState);
+}
+
 uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;
 
 NTSTATUS __stdcall waitForSynchronizationObjectFromCpuNoOpMock(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {

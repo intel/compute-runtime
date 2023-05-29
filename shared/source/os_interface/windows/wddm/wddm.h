@@ -276,5 +276,6 @@ class Wddm : public DriverModel {
 
     bool platformSupportsEvictIfNecessary = false;
     bool instrumentationEnabled = false;
+    bool checkDeviceState = false;
 };
 } // namespace NEO

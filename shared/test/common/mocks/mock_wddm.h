@@ -30,6 +30,7 @@ class WddmMock : public Wddm {
     using Wddm::adapterBDF;
     using Wddm::additionalAdapterInfoOptions;
     using Wddm::adjustEvictNeededParameter;
+    using Wddm::checkDeviceState;
     using Wddm::createPagingFenceLogger;
     using Wddm::currentPagingFenceValue;
     using Wddm::dedicatedVideoMemory;
@@ -38,6 +39,7 @@ class WddmMock : public Wddm {
     using Wddm::enablePreemptionRegValue;
     using Wddm::featureTable;
     using Wddm::forceEvictOnlyIfNecessary;
+    using Wddm::getDeviceState;
     using Wddm::getSystemInfo;
     using Wddm::gfxPlatform;
     using Wddm::gmmMemory;

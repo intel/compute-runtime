@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,6 +125,9 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     }
     if (procName == "setMockCreateDeviceParams") {
         return reinterpret_cast<void *>(setMockCreateDeviceParams);
+    }
+    if (procName == "setMockDeviceExecutionState") {
+        return reinterpret_cast<void *>(setMockDeviceExecutionState);
     }
     if (procName == "getMockAllocation") {
         return reinterpret_cast<void *>(getMockAllocation);

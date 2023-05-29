@@ -18,6 +18,7 @@ uint32_t gMapGpuVaFailConfigMax = 0;
 uint64_t gGpuAddressSpace = 0ull;
 uint32_t gLastPriority = 0ull;
 ADAPTER_BDF gAdapterBDF{};
+D3DKMT_DEVICEEXECUTION_STATE gExecutionState = D3DKMT_DEVICEEXECUTION_ACTIVE;
 
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int perfTicks = 0;
@@ -590,7 +591,8 @@ NTSTATUS __stdcall mockD3DKMTEvict(IN OUT D3DKMT_EVICT *) {
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall mockD3DKMTGetDeviceState(IN OUT D3DKMT_GETDEVICESTATE *) {
+NTSTATUS __stdcall mockD3DKMTGetDeviceState(IN OUT D3DKMT_GETDEVICESTATE *getDevState) {
+    getDevState->ExecutionState = gExecutionState;
     return STATUS_SUCCESS;
 }
 
@@ -695,4 +697,8 @@ bool *getFailOnSetContextSchedulingPriorityCall() {
 
 D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *getSetContextSchedulingPriorityDataCall() {
     return &setContextSchedulingPriorityData;
+}
+
+void setMockDeviceExecutionState(D3DKMT_DEVICEEXECUTION_STATE newState) {
+    gExecutionState = newState;
 }

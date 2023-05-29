@@ -71,6 +71,11 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     temporaryResources = std::make_unique<WddmResidentAllocationsContainer>(this);
     osMemory = OSMemory::create();
+    bool forceCheck = false;
+#if _DEBUG
+    forceCheck = true;
+#endif
+    checkDeviceState = (DebugManager.flags.EnableDeviceStateVerification.get() != -1) ? DebugManager.flags.EnableDeviceStateVerification.get() : forceCheck;
 }
 
 Wddm::~Wddm() {
@@ -1009,30 +1014,31 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
         printf("%u: Wddm Submission with context handle %u and HwQueue handle %u\n", SysCalls::getProcessId(), submitArguments.contextHandle, submitArguments.hwQueueHandle);
     }
 
+    getDeviceState();
     status = wddmInterface->submit(commandBuffer, size, commandHeader, submitArguments);
     if (status) {
         submitArguments.monitorFence->lastSubmittedFence = submitArguments.monitorFence->currentFenceValue;
         submitArguments.monitorFence->currentFenceValue++;
     }
-    getDeviceState();
 
     return status;
 }
 
 void Wddm::getDeviceState() {
-#ifdef _DEBUG
-    D3DKMT_GETDEVICESTATE GetDevState = {};
-    NTSTATUS status = STATUS_SUCCESS;
+    if (checkDeviceState) {
+        D3DKMT_GETDEVICESTATE getDevState = {};
+        NTSTATUS status = STATUS_SUCCESS;
 
-    GetDevState.hDevice = device;
-    GetDevState.StateType = D3DKMT_DEVICESTATE_EXECUTION;
+        getDevState.hDevice = device;
+        getDevState.StateType = D3DKMT_DEVICESTATE_EXECUTION;
 
-    status = getGdi()->getDeviceState(&GetDevState);
-    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
-    if (status == STATUS_SUCCESS) {
-        DEBUG_BREAK_IF(GetDevState.ExecutionState != D3DKMT_DEVICEEXECUTION_ACTIVE);
+        status = getGdi()->getDeviceState(&getDevState);
+        DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+        PRINT_DEBUG_STRING(getDevState.ExecutionState == D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY, stderr, "Device execution error, out of memory %d\n", getDevState.ExecutionState);
+        if (status == STATUS_SUCCESS) {
+            DEBUG_BREAK_IF(getDevState.ExecutionState != D3DKMT_DEVICEEXECUTION_ACTIVE);
+        }
     }
-#endif
 }
 
 unsigned int Wddm::getEnablePreemptionRegValue() {
