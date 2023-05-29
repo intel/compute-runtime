@@ -851,14 +851,15 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
     }
 }
 
-void Event::tryFlushEvent() {
+bool Event::tryFlushEvent() {
     // only if event is not completed, completed event has already been flushed
     if (cmdQueue && updateStatusAndCheckCompletion() == false) {
         // flush the command queue only if it is not blocked event
         if (taskLevel != CompletionStamp::notReady) {
-            cmdQueue->getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
+            return cmdQueue->getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
         }
     }
+    return true;
 }
 
 void Event::setQueueTimeStamp() {

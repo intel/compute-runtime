@@ -2251,7 +2251,12 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
         return retVal;
     }
 
-    eventObject->tryFlushEvent();
+    if (eventObject->tryFlushEvent() == false) {
+        retVal = CL_OUT_OF_RESOURCES;
+        TRACING_EXIT(ClSetEventCallback, &retVal);
+        return retVal;
+    }
+
     eventObject->addCallback(funcNotify, commandExecCallbackType, userData);
     TRACING_EXIT(ClSetEventCallback, &retVal);
     return retVal;

@@ -21,8 +21,8 @@ void CL_CALLBACK eventCallBack(cl_event event, cl_int callbackType, void *userDa
     cbData = userData;
 }
 
-class ClSetEventCallbackTests : public ApiFixture<>,
-                                public ::testing::Test {
+struct ClSetEventCallbackTests : public ApiFixture<>,
+                                 public ::testing::Test {
 
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
@@ -148,4 +148,15 @@ TEST_F(ClSetEventCallbackTests, GivenUserDataWhenStatusIsSetToCompleteThenCallba
     EXPECT_EQ(cbInvoked, 1);
     EXPECT_EQ(&data, cbData);
 }
+
+HWTEST_F(ClSetEventCallbackTests, GivenFailingFlushWhenSettingEventCallbackThenOutOfResourcesErrorIsReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.shouldFailFlushBatchedSubmissions = true;
+
+    std::unique_ptr<Event> event(new Event(pCommandQueue, 0, 0, CompletionStamp::notReady + 1));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+}
+
 } // namespace ClSetEventCallbackTests

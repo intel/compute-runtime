@@ -281,7 +281,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     virtual void updateExecutionStatus();
-    void tryFlushEvent();
+    bool tryFlushEvent();
 
     TaskCountType peekTaskCount() const {
         return this->taskCount;
