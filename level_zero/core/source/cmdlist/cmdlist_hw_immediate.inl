@@ -1077,6 +1077,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExecution(uint64_t timeout) const {
     using TSPacketType = typename GfxFamily::TimestampPacketType;
 
+    NEO::TimestampPacketContainer nodesToRelease;
+    nodesToRelease.swapNodes(*this->deferredTimestampPackets);
+
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, now;
     uint64_t timeDiff = 0;
 
@@ -1109,6 +1112,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
         now = std::chrono::high_resolution_clock::now();
         timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(now - waitStartTime).count();
     } while (timeDiff < timeout);
+
+    if (status == ZE_RESULT_NOT_READY) {
+        nodesToRelease.moveNodesToNewContainer(*this->deferredTimestampPackets);
+    }
 
     return status;
 }

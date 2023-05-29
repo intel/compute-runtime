@@ -1258,6 +1258,33 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     }
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleDeferredNodesLifeCycle, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto node = getLatestTsNode(immCmdList.get());
+
+    setTimestampPacketContextEndValue<FamilyType>(node, 1);
+
+    EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(2u, immCmdList->deferredTimestampPackets->peekNodes().size());
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(1));
+
+    EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(2u, immCmdList->deferredTimestampPackets->peekNodes().size());
+
+    setTimestampPacketContextEndValue<FamilyType>(node, 0x1234);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+
+    EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(0u, immCmdList->deferredTimestampPackets->peekNodes().size());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->copyThroughLockedPtrEnabled = true;
