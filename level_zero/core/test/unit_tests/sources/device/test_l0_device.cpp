@@ -1758,7 +1758,6 @@ TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetAnd64bitTimestampWhenGetGlobalT
                                      std::to_string(static_cast<uint64_t>(neoDevice->getProfilingTimerResolution()) *
                                                     cpuDeviceTime->mockGpuTimeInNs) +
                                      "\n");
-    printf("output: <%s> | Expected: <%s>\n", output.c_str(), expectedString.c_str());
     EXPECT_STREQ(output.c_str(), expectedString.c_str());
 }
 
