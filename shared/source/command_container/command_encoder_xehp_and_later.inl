@@ -141,7 +141,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
                 auto dsHeap = args.dynamicStateHeap;
                 if (dsHeap == nullptr) {
-                    dsHeap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+                    dsHeap = ApiSpecificConfig::getBindlessMode() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
                 }
                 UNRECOVERABLE_IF(!dsHeap);
 
@@ -151,7 +151,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
                     args.dispatchInterface->getDynamicStateHeapData(),
                     args.device->getBindlessHeapsHelper(), rootDeviceEnvironment);
-                if (ApiSpecificConfig::getBindlessConfiguration()) {
+                if (ApiSpecificConfig::getBindlessMode()) {
                     container.getResidencyContainer().push_back(args.device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
                 }
             }

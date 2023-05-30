@@ -54,8 +54,9 @@ struct KernelHw : public KernelImp {
             surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
         } else {
             surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
-            surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
         }
+        surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
+
         uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
         bufferSizeForSsh += misalignedSize;

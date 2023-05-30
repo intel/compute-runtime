@@ -77,7 +77,7 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
 
-    if (ApiSpecificConfig::getBindlessConfiguration()) {
+    if (ApiSpecificConfig::getBindlessMode()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 

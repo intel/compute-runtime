@@ -1031,6 +1031,8 @@ void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint3
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
+    UNRECOVERABLE_IF(bindlessHeapsHelper == nullptr);
+
     auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
     this->residencyContainer.push_back(ssInHeap.heapAllocation);
     auto patchLocation = ptrOffset(getCrossThreadData(), bindless);

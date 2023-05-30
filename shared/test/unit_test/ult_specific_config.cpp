@@ -40,10 +40,10 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
 bool ApiSpecificConfig::isBcsSplitWaSupported() {
     return false;
 }
-bool ApiSpecificConfig::getHeapConfiguration() {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }
-bool ApiSpecificConfig::getBindlessConfiguration() {
+bool ApiSpecificConfig::getBindlessMode() {
     if (DebugManager.flags.UseBindlessMode.get() != -1) {
         return DebugManager.flags.UseBindlessMode.get();
     } else {

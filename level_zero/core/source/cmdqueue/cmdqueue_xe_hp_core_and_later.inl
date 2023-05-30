@@ -48,7 +48,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         dispatchCommand = true;
         sbaProperties = &streamProperties->stateBaseAddress;
     } else {
-        if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
+        if (NEO::ApiSpecificConfig::getBindlessMode()) {
             globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
             indirectObjectStateBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, useLocalMemoryForIndirectHeap);
 
@@ -136,7 +136,7 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatch
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
-    if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
+    if (NEO::ApiSpecificConfig::getBindlessMode()) {
         return estimateStateBaseAddressCmdDispatchSize(true);
     }
     return 0;
@@ -160,7 +160,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
             scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                             csr->getOsContext(), gsbaState, frontEndState);
         }
-        if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
+        if (NEO::ApiSpecificConfig::getBindlessMode()) {
             scratchController->programBindlessSurfaceStateForScratch(device->getNEODevice()->getBindlessHeapsHelper(), perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                                                      csr->getOsContext(), gsbaState, frontEndState, csr);
         }

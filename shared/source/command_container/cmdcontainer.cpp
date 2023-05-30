@@ -359,7 +359,7 @@ void CommandContainer::endAlignedPrimaryBuffer() {
 }
 
 void CommandContainer::prepareBindfulSsh() {
-    if (ApiSpecificConfig::getBindlessConfiguration()) {
+    if (ApiSpecificConfig::getBindlessMode()) {
         if (allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] == nullptr) {
             constexpr size_t heapSize = MemoryConstants::pageSize64k;
             allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] = heapHelper->getHeapAllocation(IndirectHeap::Type::SURFACE_STATE,
@@ -557,7 +557,7 @@ bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
     }
     const auto &hardwareInfo = this->device->getHardwareInfo();
 
-    bool skipCreation = NEO::ApiSpecificConfig::getBindlessConfiguration() ||
+    bool skipCreation = NEO::ApiSpecificConfig::getBindlessMode() ||
                         this->immediateCmdListSharedHeap(heapType) ||
                         (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) ||
                         (this->heapAddressModel != HeapAddressModel::PrivateHeaps);

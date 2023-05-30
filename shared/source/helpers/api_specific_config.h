@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@ struct ApiSpecificConfig {
                    L0 };
     static bool isStatelessCompressionSupported();
     static bool isBcsSplitWaSupported();
-    static bool getHeapConfiguration();
-    static bool getBindlessConfiguration();
+    static bool getGlobalBindlessHeapConfiguration();
+    static bool getBindlessMode();
     static bool isDeviceAllocationCacheEnabled();
     static ApiType getApiType();
     static std::string getName();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace NEO {
 
 HeapAssigner::HeapAssigner() {
-    apiAllowExternalHeapForSshAndDsh = ApiSpecificConfig::getHeapConfiguration();
+    apiAllowExternalHeapForSshAndDsh = ApiSpecificConfig::getGlobalBindlessHeapConfiguration();
 }
 bool HeapAssigner::useInternal32BitHeap(AllocationType allocType) {
     return GraphicsAllocation::isIsaAllocationType(allocType) ||

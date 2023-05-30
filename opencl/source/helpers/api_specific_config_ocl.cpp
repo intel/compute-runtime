@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,11 +19,11 @@ bool ApiSpecificConfig::isBcsSplitWaSupported() {
     return true;
 }
 
-bool ApiSpecificConfig::getHeapConfiguration() {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
     return false;
 }
 
-bool ApiSpecificConfig::getBindlessConfiguration() {
+bool ApiSpecificConfig::getBindlessMode() {
     if (DebugManager.flags.UseBindlessMode.get() != -1) {
         return DebugManager.flags.UseBindlessMode.get();
     } else {

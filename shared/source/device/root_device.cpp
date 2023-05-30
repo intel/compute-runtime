@@ -37,7 +37,8 @@ Device *RootDevice::getRootDevice() const {
 }
 
 void RootDevice::createBindlessHeapsHelper() {
-    if (ApiSpecificConfig::getBindlessConfiguration()) {
+
+    if (ApiSpecificConfig::getBindlessMode()) {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(getMemoryManager(), getNumGenericSubDevices() > 1, rootDeviceIndex, getDeviceBitfield());
     }
 }

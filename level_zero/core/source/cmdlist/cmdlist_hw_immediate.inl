@@ -145,7 +145,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
     NEO::IndirectHeap *dsh = nullptr;
     NEO::IndirectHeap *ssh = nullptr;
 
-    if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
+    if (!NEO::ApiSpecificConfig::getBindlessMode()) {
         if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
             ssh = this->csr->getGlobalStatelessHeap();
         } else if (this->immediateCmdListHeapSharing) {

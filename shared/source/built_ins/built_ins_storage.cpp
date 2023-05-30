@@ -95,7 +95,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
             const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
             if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
                 return "stateless_";
-            } else if (ApiSpecificConfig::getBindlessConfiguration()) {
+            } else if (ApiSpecificConfig::getBindlessMode()) {
                 return "bindless_";
             } else {
                 return "bindful_";

@@ -54,7 +54,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 
     dsh->align(EncodeStates<Family>::alignIndirectStatePointer);
     uint32_t borderColorOffsetInDsh = 0;
-    if (!ApiSpecificConfig::getBindlessConfiguration()) {
+    if (!ApiSpecificConfig::getBindlessMode()) {
         borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
         auto borderColor = dsh->getSpace(borderColorSize);
 
@@ -544,7 +544,7 @@ template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset) {
 
     if (container.nextIddInBlockRef() == container.getNumIddPerBlock()) {
-        if (ApiSpecificConfig::getBindlessConfiguration()) {
+        if (ApiSpecificConfig::getBindlessMode()) {
             container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
             container.setIddBlock(container.getDevice()->getBindlessHeapsHelper()->getSpaceInHeap(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock(), BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH));
         } else {
