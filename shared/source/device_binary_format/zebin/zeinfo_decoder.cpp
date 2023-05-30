@@ -946,11 +946,43 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
         dst.payloadMappings.explicitArgs.resize(maxArgumentIndex + 1);
         dst.kernelAttributes.numArgsToPatch = maxArgumentIndex + 1;
 
+        bool bindlessBufferAccess = false;
+        bool bindlessImageAccess = false;
+        bool bindfulBufferAccess = false;
+        bool bindfulImageAccess = false;
+
         for (const auto &arg : payloadArguments) {
             auto decodeErr = populateKernelPayloadArgument(dst, arg, outErrReason, outWarning);
             if (DecodeError::Success != decodeErr) {
                 return decodeErr;
             }
+
+            if (arg.addrmode == Types::Kernel::PayloadArgument::MemoryAddressingModeBindless) {
+                if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+                    bindlessBufferAccess = true;
+                } else if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::ArgTImage>()) {
+                    bindlessImageAccess = true;
+                }
+            } else if (arg.addrmode == Types::Kernel::PayloadArgument::MemoryAddressingModeStateful) {
+                if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+                    bindfulBufferAccess = true;
+                } else if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::ArgTImage>()) {
+                    bindfulImageAccess = true;
+                }
+            }
+        }
+
+        if ((bindlessBufferAccess && bindfulBufferAccess) ||
+            (bindlessImageAccess && bindfulImageAccess)) {
+            outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : bindless and bindful addressing modes must not be mixed.\n");
+            return DecodeError::InvalidBinary;
+        }
+
+        if (bindlessBufferAccess) {
+            dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+        }
+        if (bindlessImageAccess) {
+            dst.kernelAttributes.imageAddressingMode = KernelDescriptor::Bindless;
         }
         dst.kernelAttributes.crossThreadDataSize = static_cast<uint16_t>(alignUp(dst.kernelAttributes.crossThreadDataSize, 32));
     }

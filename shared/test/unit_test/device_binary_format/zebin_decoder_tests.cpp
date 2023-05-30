@@ -1508,6 +1508,110 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessBufferAddressingWhenDecodingZeInfoThenBufferAddressingModeIsBindlessAndStateless) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            4
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+
+    EXPECT_EQ(KernelDescriptor::BindlessAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessImageAddressingWhenDecodingZeInfoThenImageAddressingModeIsBindless) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            0
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       image
+          access_type:     readonly
+          image_type:      image_2d
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+
+    EXPECT_EQ(KernelDescriptor::Bindless, kernelDescriptor->kernelAttributes.imageAddressingMode);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessAndBindfulBufferAddressingWhenDecodingZeInfoThenErrorReturned) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            4
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+        - arg_type:        arg_bypointer
+          offset:          4
+          size:            4
+          arg_index:       1
+          addrmode:        stateful
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : bindless and bindful addressing modes must not be mixed.\n", errors.c_str());
+    EXPECT_EQ(KernelDescriptor::BindfulAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessAndBindfulImageAddressingWhenDecodingZeInfoThenErrorReturned) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            0
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       image
+          access_type:     readonly
+          image_type:      image_2d
+        - arg_type:        arg_bypointer
+          offset:          8
+          size:            0
+          arg_index:       1
+          addrmode:        stateful
+          addrspace:       image
+          access_type:     readonly
+          image_type:      image_2d
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : bindless and bindful addressing modes must not be mixed.\n", errors.c_str());
+    EXPECT_EQ(KernelDescriptor::Bindful, kernelDescriptor->kernelAttributes.imageAddressingMode);
+}
 TEST(ReadZeInfoExecutionEnvironment, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
 kernels:         
