@@ -297,7 +297,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         if (isNonStallingIoqBarrierWithDependencies) {
-            TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(commandStream, *this->timestampPacketContainer->peekNodes()[0], getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled());
+            auto node = this->timestampPacketContainer->peekNodes()[0];
+
+            if (getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled()) {
+                node->setPacketsUsed(getGpgpuCommandStreamReceiver().getActivePartitions());
+            }
+
+            TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(commandStream, *node, getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled());
         }
 
         if (isMarkerWithPostSyncWrite) {

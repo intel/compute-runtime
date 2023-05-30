@@ -247,6 +247,34 @@ HWTEST_F(TimestampPacketTests, givenWaitlistWhenEnqueueingBarrierThenProgramNonS
     clReleaseEvent(outEvent);
 }
 
+HWTEST_F(TimestampPacketTests, givenMultiTileConfigWhenProgrammingNonStallingBarrierThenSetNumActivePackets) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.activePartitions = 2;
+    csr.activePartitionsConfig = 2;
+    csr.staticWorkPartitioningEnabled = true;
+
+    *ptrOffset(csr.tagAddress, csr.postSyncWriteOffset) = *csr.tagAddress;
+
+    MockKernelWithInternals mockKernel(*device, context);
+
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+
+    cl_event outEvent;
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &outEvent);
+
+    TimestampPacketContainer cmdQNodes;
+    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
+
+    cmdQ.enqueueBarrierWithWaitList(1, &outEvent, nullptr);
+
+    auto barrierNode = cmdQ.timestampPacketContainer->peekNodes()[0];
+
+    EXPECT_EQ(csr.activePartitions, barrierNode->getPacketsUsed());
+
+    clReleaseEvent(outEvent);
+}
+
 HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {
     DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
 
