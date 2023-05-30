@@ -32,6 +32,11 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+CommandListCoreFamilyImmediate<gfxCoreFamily>::CommandListCoreFamilyImmediate(uint32_t numIddsPerBlock) : BaseClass(numIddsPerBlock) {
+    computeFlushMethod = &CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegularTask;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::LogicalStateHelper *CommandListCoreFamilyImmediate<gfxCoreFamily>::getLogicalStateHelper() const {
     return this->csr->getLogicalStateHelper();
 }
@@ -261,7 +266,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     if (isCopyOnly()) {
         completionStamp = flushBcsTask(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies, csr);
     } else {
-        completionStamp = flushRegularTask(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies);
+        completionStamp = (this->*computeFlushMethod)(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies);
     }
 
     if (completionStamp.taskCount > NEO::CompletionStamp::notReady) {

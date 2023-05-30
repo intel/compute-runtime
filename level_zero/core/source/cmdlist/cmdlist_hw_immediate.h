@@ -45,6 +45,10 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::isCopyOnly;
     using BaseClass::isInOrderExecutionEnabled;
 
+    using ComputeFlushMethodType = NEO::CompletionStamp (CommandListCoreFamilyImmediate<gfxCoreFamily>::*)(NEO::LinearStream &, size_t, bool, bool);
+
+    CommandListCoreFamilyImmediate(uint32_t numIddsPerBlock);
+
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                    const ze_group_count_t *threadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
@@ -180,6 +184,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t synchronizeInOrderExecution(uint64_t timeout) const;
 
     MOCKABLE_VIRTUAL void checkAssert();
+    ComputeFlushMethodType computeFlushMethod = nullptr;
     std::atomic<bool> dependenciesPresent{false};
 };
 
