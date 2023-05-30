@@ -76,32 +76,29 @@ uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank) {
 MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
 
     auto &gfxCoreHelper = this->drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    if (!gfxCoreHelper.getEnableLocalMemory(hwInfo) || memoryBank == 0) {
-        return systemMemoryRegion.region;
+    if (!gfxCoreHelper.getEnableLocalMemory(hwInfo)) {
+        memoryBank = 0;
+    }
+
+    return getMemoryRegion(memoryBank).region;
+}
+
+const MemoryRegion &MemoryInfo::getMemoryRegion(uint32_t memoryBank) {
+    if (memoryBank == 0) {
+        return systemMemoryRegion;
     }
 
     auto index = getTileIndex(memoryBank);
 
     UNRECOVERABLE_IF(index >= localMemoryRegions.size());
-
-    return localMemoryRegions[index].region;
+    return localMemoryRegions[index];
 }
 
 size_t MemoryInfo::getMemoryRegionSize(uint32_t memoryBank) {
     if (DebugManager.flags.PrintMemoryRegionSizes.get()) {
         printRegionSizes();
     }
-    if (memoryBank == 0) {
-        return systemMemoryRegion.probedSize;
-    }
-
-    auto index = Math::log2(memoryBank);
-
-    if (index < localMemoryRegions.size()) {
-        return localMemoryRegions[index].probedSize;
-    }
-
-    return 0;
+    return getMemoryRegion(memoryBank).probedSize;
 }
 
 void MemoryInfo::printRegionSizes() {

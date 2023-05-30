@@ -32,6 +32,8 @@ class MemoryInfo {
 
     MOCKABLE_VIRTUAL size_t getMemoryRegionSize(uint32_t memoryBank);
 
+    const MemoryRegion &getMemoryRegion(uint32_t memoryBank);
+
     void printRegionSizes();
 
     uint32_t getTileIndex(uint32_t memoryBank);

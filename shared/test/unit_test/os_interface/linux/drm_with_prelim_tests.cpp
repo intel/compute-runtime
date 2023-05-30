@@ -372,7 +372,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryT
 
     EXPECT_EQ(1024u, drm->memoryInfo->getMemoryRegionSize(1));
     EXPECT_EQ(1024u, drm->memoryInfo->getMemoryRegionSize(2));
-    EXPECT_EQ(0u, drm->memoryInfo->getMemoryRegionSize(4));
+    EXPECT_ANY_THROW(drm->memoryInfo->getMemoryRegionSize(4));
 
     std::vector<EngineClassInstance> engines;
     engineInfo->getListOfEnginesOnATile(0u, engines);

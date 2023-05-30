@@ -1574,5 +1574,5 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
     memoryInfo->assignRegionsFromDistances(distances);
     EXPECT_EQ(1024u, memoryInfo->getMemoryRegionSize(1));
     EXPECT_EQ(1024u, memoryInfo->getMemoryRegionSize(2));
-    EXPECT_EQ(0u, memoryInfo->getMemoryRegionSize(4));
+    EXPECT_ANY_THROW(memoryInfo->getMemoryRegionSize(4));
 }

@@ -30,9 +30,9 @@ class DrmMemoryManagerWithSubDevicesPrelimTest : public ::testing::Test {
 
         mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         auto memoryInfo = new MockExtendedMemoryInfo(*mock);
-        mock->memoryInfo.reset(memoryInfo);
 
         mock->queryEngineInfo();
+        mock->memoryInfo.reset(memoryInfo);
 
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));

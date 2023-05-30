@@ -115,8 +115,7 @@ TEST(MemoryInfo, givenMemoryInfoWithoutDeviceRegionWhenGettingDeviceRegionSizeTh
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
-    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0));
-    EXPECT_EQ(0 * GB, regionSize);
+    EXPECT_ANY_THROW(memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0)));
 }
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryDisabledWhenGettingMemoryRegionClassAndInstanceThenReturnCorrectValues) {
@@ -190,7 +189,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenGettingMemoryRegionClassAndInstan
     EXPECT_EQ(regionInfo[2].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[2].region.memoryInstance, regionClassAndInstance.memoryInstance);
     auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0));
-    EXPECT_EQ(16 * GB, regionSize);
+    EXPECT_EQ(regionInfo[2].probedSize, regionSize);
 
     DebugManager.flags.OverrideDrmRegion.set(0);
 
@@ -198,7 +197,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenGettingMemoryRegionClassAndInstan
     EXPECT_EQ(regionInfo[1].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[1].region.memoryInstance, regionClassAndInstance.memoryInstance);
     regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(1));
-    EXPECT_EQ(32 * GB, regionSize);
+    EXPECT_EQ(regionInfo[1].probedSize, regionSize);
 
     DebugManager.flags.OverrideDrmRegion.set(-1);
     DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
@@ -207,15 +206,16 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenGettingMemoryRegionClassAndInstan
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(1), *defaultHwInfo);
+    regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(1));
     if (gfxCoreHelper.isBankOverrideRequired(*defaultHwInfo, productHelper)) {
         EXPECT_EQ(regionInfo[1].region.memoryClass, regionClassAndInstance.memoryClass);
         EXPECT_EQ(regionInfo[1].region.memoryInstance, regionClassAndInstance.memoryInstance);
+        EXPECT_EQ(regionInfo[1].probedSize, regionSize);
     } else {
         EXPECT_EQ(regionInfo[2].region.memoryClass, regionClassAndInstance.memoryClass);
         EXPECT_EQ(regionInfo[2].region.memoryInstance, regionClassAndInstance.memoryInstance);
+        EXPECT_EQ(regionInfo[2].probedSize, regionSize);
     }
-    regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(1));
-    EXPECT_EQ(32 * GB, regionSize);
 }
 
 using MemoryInfoTest = ::testing::Test;
