@@ -31,7 +31,7 @@ void setTagToReadyState(TagNodeBase *tagNode) {
 
     typename FamilyType::TimestampPacketType zeros[4] = {};
 
-    for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
+    for (uint32_t i = 0; i < TimestampPacketConstants::preferredPacketCount; i++) {
         tagNode->assignDataToAllTimestamps(i, zeros);
     }
     tagNode->setPacketsUsed(packetsUsed);
@@ -202,7 +202,7 @@ HWTEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
 
 TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
     MockTimestampPackets32 timestampPacketStorage;
-    EXPECT_EQ(TimestampPacketSizeControl::preferredPacketCount * sizeof(timestampPacketStorage.packets[0]), sizeof(timestampPacketStorage.packets));
+    EXPECT_EQ(TimestampPacketConstants::preferredPacketCount * sizeof(timestampPacketStorage.packets[0]), sizeof(timestampPacketStorage.packets));
 
     for (const auto &packet : timestampPacketStorage.packets) {
         EXPECT_EQ(1u, packet.contextStart);

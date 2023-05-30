@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
-#include "shared/source/helpers/timestamp_packet_size_control.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 #include <level_zero/ze_api.h>
@@ -57,7 +57,7 @@ static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolD
 
 namespace EventPacketsCount {
 inline constexpr uint32_t maxKernelSplit = 3;
-inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketSizeControl::preferredPacketCount;
+inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketConstants::preferredPacketCount;
 } // namespace EventPacketsCount
 
 struct Event : _ze_event_handle_t {

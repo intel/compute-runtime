@@ -14,8 +14,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
-#include "shared/source/helpers/timestamp_packet_size_control.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include <cstdint>
@@ -27,14 +27,6 @@ class LinearStream;
 #pragma pack(1)
 template <typename TSize>
 class TimestampPackets : public TagTypeBase {
-  protected:
-    struct Packet {
-        TSize contextStart = 1u;
-        TSize globalStart = 1u;
-        TSize contextEnd = 1u;
-        TSize globalEnd = 1u;
-    };
-
   public:
     static constexpr AllocationType getAllocationType() {
         return AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
@@ -46,10 +38,10 @@ class TimestampPackets : public TagTypeBase {
 
     void initialize() {
         for (auto &packet : packets) {
-            packet.contextStart = 1u;
-            packet.globalStart = 1u;
-            packet.contextEnd = 1u;
-            packet.globalEnd = 1u;
+            packet.contextStart = TimestampPacketConstants::initValue;
+            packet.globalStart = TimestampPacketConstants::initValue;
+            packet.contextEnd = TimestampPacketConstants::initValue;
+            packet.globalEnd = TimestampPacketConstants::initValue;
         }
     }
 
@@ -71,11 +63,18 @@ class TimestampPackets : public TagTypeBase {
     void const *getContextStartAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextStart); }
 
   protected:
-    Packet packets[TimestampPacketSizeControl::preferredPacketCount];
+    struct alignas(1) Packet {
+        TSize contextStart = TimestampPacketConstants::initValue;
+        TSize globalStart = TimestampPacketConstants::initValue;
+        TSize contextEnd = TimestampPacketConstants::initValue;
+        TSize globalEnd = TimestampPacketConstants::initValue;
+    };
+
+    Packet packets[TimestampPacketConstants::preferredPacketCount];
 };
 #pragma pack()
 
-static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
+static_assert(((4 * TimestampPacketConstants::preferredPacketCount) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 struct TimestampPacketHelper {
@@ -100,7 +99,7 @@ struct TimestampPacketHelper {
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
-            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, TimestampPacketConstants::initValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
     }
 
@@ -111,7 +110,7 @@ struct TimestampPacketHelper {
         for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
 
-            EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(cmdStream, 0, compareAddress + compareOffset, 1,
+            EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(cmdStream, 0, compareAddress + compareOffset, TimestampPacketConstants::initValue,
                                                                                               NEO::CompareOperation::Equal, true);
         }
     }

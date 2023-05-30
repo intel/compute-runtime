@@ -178,7 +178,7 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
 
-    uint32_t maxPacketCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
+    uint32_t maxPacketCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketConstants::preferredPacketCount;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
         maxPacketCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
@@ -1330,7 +1330,7 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     }
 
     uint32_t *eventCompletionMemory = reinterpret_cast<uint32_t *>(event->getCompletionFieldHostAddress());
-    uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
+    uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketConstants::preferredPacketCount;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
         maxPacketsCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
@@ -1804,7 +1804,7 @@ TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCor
 
     EXPECT_NE(nullptr, event->kernelEventCompletionData);
     for (auto j = 0u; j < maxKernelCount; j++) {
-        for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
+        for (auto i = 0u; i < NEO::TimestampPacketConstants::preferredPacketCount; i++) {
             EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getContextStartValue(i));
             EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getGlobalStartValue(i));
             EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getContextEndValue(i));
@@ -1869,7 +1869,7 @@ TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrec
     result = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
     for (auto j = 0u; j < event->getKernelCount(); j++) {
-        for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
+        for (auto i = 0u; i < NEO::TimestampPacketConstants::preferredPacketCount; i++) {
             EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getContextStartValue(i));
             EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getGlobalStartValue(i));
             EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getContextEndValue(i));

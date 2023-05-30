@@ -138,7 +138,7 @@ ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
     for (uint32_t i = 0; i < this->getPacketsInUse(); i++) {
         auto hostAddress = static_cast<TagSizeT const *>(node->getContextEndAddress(i));
 
-        if (!NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(hostAddress, 1, std::not_equal_to<TagSizeT>())) {
+        if (!NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(hostAddress, NEO::TimestampPacketConstants::initValue, std::not_equal_to<TagSizeT>())) {
             signaled = false;
             break;
         }
@@ -271,7 +271,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
         setRemainingPackets(eventVal, reinterpret_cast<void *>(baseAddr), packets);
     }
 
-    const auto dataSize = 4u * EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
+    const auto dataSize = 4u * EventPacketsCount::maxKernelSplit * NEO::TimestampPacketConstants::preferredPacketCount;
     TagSizeT tagValues[dataSize];
 
     for (uint32_t index = 0u; index < dataSize; index++) {
@@ -408,7 +408,7 @@ void EventImp<TagSizeT>::resetDeviceCompletionData(bool resetAllPackets) {
     if (resetAllPackets) {
         this->kernelCount = this->maxKernelCount;
         for (uint32_t i = 0; i < kernelCount; i++) {
-            this->kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
+            this->kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketConstants::preferredPacketCount);
         }
     }
 

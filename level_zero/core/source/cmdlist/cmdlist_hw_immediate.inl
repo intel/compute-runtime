@@ -1098,7 +1098,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
         for (uint32_t i = 0; i < this->partitionCount; i++) {
             auto hostAddress = static_cast<TSPacketType const *>(node->getContextEndAddress(i));
 
-            if (!NEO::WaitUtils::waitFunctionWithPredicate<const TSPacketType>(hostAddress, 1, std::not_equal_to<TSPacketType>())) {
+            if (!NEO::WaitUtils::waitFunctionWithPredicate<const TSPacketType>(hostAddress, NEO::TimestampPacketConstants::initValue, std::not_equal_to<TSPacketType>())) {
                 signaled = false;
                 break;
             }

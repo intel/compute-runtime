@@ -383,7 +383,7 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
 
         typename FamilyType::TimestampPacketType zeros[4] = {};
 
-        for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
+        for (uint32_t i = 0; i < TimestampPacketConstants::preferredPacketCount; i++) {
             tag->assignDataToAllTimestamps(i, zeros);
         }
 
