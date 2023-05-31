@@ -110,9 +110,12 @@ KBLTEST_F(KblProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCo
         pInHwInfo.platform.usDeviceID = deviceId;
         EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::KBL);
     }
+}
 
+KBLTEST_F(KblProductHelper, givenCompilerProductHelperWhenGetIpVersionAndDeviceIdIsUnknownThenDefaultConfigIsReturned) {
     pInHwInfo.platform.usDeviceID = 0u;
-    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::KBL);
+    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::KBL);
 }
 
 KBLTEST_F(KblProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

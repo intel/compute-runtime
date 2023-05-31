@@ -27,6 +27,11 @@ uint64_t CompilerProductHelperHw<IGFX_COFFEELAKE>::getHwInfoConfig(const Hardwar
 }
 
 template <>
+uint32_t CompilerProductHelperHw<IGFX_COFFEELAKE>::getDefaultHwIpVersion() const {
+    return AOT::CFL;
+}
+
+template <>
 uint32_t CompilerProductHelperHw<IGFX_COFFEELAKE>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     auto deviceId = hwInfo.platform.usDeviceID;
     bool isCfl = (std::find(cflDeviceIds.begin(), cflDeviceIds.end(), deviceId) != cflDeviceIds.end());
@@ -40,7 +45,7 @@ uint32_t CompilerProductHelperHw<IGFX_COFFEELAKE>::getProductConfigFromHwInfo(co
     } else if (isWhl) {
         return AOT::WHL;
     }
-    return AOT::UNKNOWN_ISA;
+    return getDefaultHwIpVersion();
 }
 
 static EnableCompilerProductHelper<IGFX_COFFEELAKE> enableCompilerProductHelperCFL;

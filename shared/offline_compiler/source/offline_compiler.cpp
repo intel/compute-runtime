@@ -443,9 +443,12 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             hwInfo = *hardwareInfoTable[product];
             if (revisionId != -1) {
                 hwInfo.platform.usRevId = revisionId;
-                hwInfo.ipVersion.revision = revisionId;
             }
             compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+            auto defaultIpVersion = compilerProductHelper->getDefaultHwIpVersion();
+            auto productConfig = compilerProductHelper->matchRevisionIdWithProductConfig(defaultIpVersion, revisionId);
+            hwInfo.ipVersion = argHelper->productConfigHelper->isSupportedProductConfig(productConfig) ? productConfig : defaultIpVersion;
+
             uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
             setHwInfoValuesFromConfig(config, hwInfo);
             hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, *compilerProductHelper);

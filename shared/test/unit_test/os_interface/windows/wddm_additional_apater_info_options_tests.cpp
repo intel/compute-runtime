@@ -22,3 +22,13 @@ TEST_F(WddmTest, WhenPopulateIpVersionWddmIsCalledThenIpVersionIsSet) {
 
     EXPECT_EQ(config, hwInfo.ipVersion.value);
 }
+
+HWTEST2_F(WddmTest, WhenPopulateIpVersionWddmIsCalledAndIpVersionIsZeroThenDefaultValueIsSet, IsAtLeastMtl) {
+    auto &compilerProductHelper = wddm->rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.ipVersion = 0;
+    auto config = compilerProductHelper.getDefaultHwIpVersion();
+    wddm->populateIpVersion(hwInfo);
+
+    EXPECT_EQ(config, hwInfo.ipVersion.value);
+}

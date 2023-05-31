@@ -20,6 +20,10 @@
 #include "compiler_product_helper_pvc.inl"
 #include "platforms.h"
 namespace NEO {
+template <>
+uint32_t CompilerProductHelperHw<IGFX_PVC>::getDefaultHwIpVersion() const {
+    return AOT::PVC_XT_C0;
+}
 
 template <>
 uint32_t CompilerProductHelperHw<IGFX_PVC>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
@@ -47,7 +51,7 @@ uint32_t CompilerProductHelperHw<IGFX_PVC>::getProductConfigFromHwInfo(const Har
             return AOT::PVC_XT_C0;
         }
     }
-    return AOT::UNKNOWN_ISA;
+    return getDefaultHwIpVersion();
 }
 template <>
 uint32_t CompilerProductHelperHw<IGFX_PVC>::matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const {

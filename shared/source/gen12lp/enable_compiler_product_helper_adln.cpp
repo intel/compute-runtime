@@ -13,15 +13,15 @@
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
+#include "shared/source/helpers/compiler_product_helper_product_config_default.inl"
 #include "shared/source/helpers/compiler_product_helper_tgllp_and_later.inl"
 
 #include "compiler_product_helper_adln.inl"
 #include "platforms.h"
 
 namespace NEO {
-
 template <>
-uint32_t CompilerProductHelperHw<IGFX_ALDERLAKE_N>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+uint32_t CompilerProductHelperHw<IGFX_ALDERLAKE_N>::getDefaultHwIpVersion() const {
     return AOT::ADL_N;
 }
 

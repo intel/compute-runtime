@@ -14,6 +14,7 @@
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
+#include "shared/source/helpers/compiler_product_helper_product_config_default.inl"
 
 #include "platforms.h"
 
@@ -24,7 +25,7 @@ uint64_t CompilerProductHelperHw<IGFX_LAKEFIELD>::getHwInfoConfig(const Hardware
 }
 
 template <>
-uint32_t CompilerProductHelperHw<IGFX_LAKEFIELD>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+uint32_t CompilerProductHelperHw<IGFX_LAKEFIELD>::getDefaultHwIpVersion() const {
     return AOT::LKF;
 }
 

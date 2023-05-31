@@ -27,6 +27,11 @@ uint64_t CompilerProductHelperHw<IGFX_KABYLAKE>::getHwInfoConfig(const HardwareI
 }
 
 template <>
+uint32_t CompilerProductHelperHw<IGFX_KABYLAKE>::getDefaultHwIpVersion() const {
+    return AOT::KBL;
+}
+
+template <>
 uint32_t CompilerProductHelperHw<IGFX_KABYLAKE>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     auto deviceId = hwInfo.platform.usDeviceID;
     bool isKbl = (std::find(kblDeviceIds.begin(), kblDeviceIds.end(), deviceId) != kblDeviceIds.end());
@@ -37,7 +42,7 @@ uint32_t CompilerProductHelperHw<IGFX_KABYLAKE>::getProductConfigFromHwInfo(cons
     } else if (isAml) {
         return AOT::AML;
     }
-    return AOT::UNKNOWN_ISA;
+    return getDefaultHwIpVersion();
 }
 
 static EnableCompilerProductHelper<IGFX_KABYLAKE> enableCompilerProductHelperKBL;

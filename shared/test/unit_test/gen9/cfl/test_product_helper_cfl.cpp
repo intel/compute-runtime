@@ -107,7 +107,13 @@ CFLTEST_F(CflProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCo
     }
 
     pInHwInfo.platform.usDeviceID = 0u;
-    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::CFL);
+}
+
+CFLTEST_F(CflProductHelper, givenCompilerProductHelperWhenGetIpVersionAndDeviceIdIsUnknownThenDefaultConfigIsReturned) {
+    pInHwInfo.platform.usDeviceID = 0u;
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::CFL);
+    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::CFL);
 }
 
 CFLTEST_F(CflProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

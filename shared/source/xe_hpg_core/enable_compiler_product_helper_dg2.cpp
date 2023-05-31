@@ -16,15 +16,7 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 
 #include "compiler_product_helper_dg2.inl"
+
 namespace NEO {
-
 static EnableCompilerProductHelper<IGFX_DG2> enableCompilerProductHelperDG2;
-
-template <>
-uint32_t CompilerProductHelperHw<IGFX_DG2>::matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const {
-    HardwareIpVersion dg2Config = ipVersion;
-    dg2Config.revision = revisionID;
-    return dg2Config.value;
-}
-
 } // namespace NEO

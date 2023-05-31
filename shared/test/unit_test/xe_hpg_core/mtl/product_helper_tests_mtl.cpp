@@ -186,6 +186,16 @@ MTLTEST_F(MtlProductHelper, givenHwIpVersionWhenIsPipeControlPriorToNonPipelined
     }
 }
 
+MTLTEST_F(MtlProductHelper, givenNoReleaseHelperWhenisPipeControlPriorToNonPipelinedStateCommandsWARequiredThenCorrectValuesAreReturned) {
+    auto &rootDeviceEnvironment = *this->executionEnvironment->rootDeviceEnvironments[0].get();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    ReleaseHelper *releaseHelper = nullptr;
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, false, releaseHelper);
+
+    EXPECT_FALSE(isExtendedWARequired);
+    EXPECT_TRUE(isBasicWARequired);
+}
+
 MTLTEST_F(MtlProductHelper, givenMtlNotLpgWhenIsBFloat16ConversionSupportedIsCalledThenTrueIsReturned) {
     auto hwInfo = *defaultHwInfo.get();
     uint32_t notLpgArchitecture = 10;
@@ -297,6 +307,10 @@ MTLTEST_F(MtlProductHelper, givenVariousMtlReleasesWhenGetExtensionsIsCalledThen
         EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
         EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(hwInfo));
     }
+}
+
+MTLTEST_F(MtlProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet) {
+    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::MTL_M_A0);
 }
 
 using ProductHelperTestMtl = Test<DeviceFixture>;

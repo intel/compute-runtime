@@ -13,6 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
+#include "shared/source/helpers/compiler_product_helper_product_config_default.inl"
 #include "shared/source/helpers/compiler_product_helper_tgllp_and_later.inl"
 
 #include "platforms.h"
@@ -24,7 +25,7 @@ uint64_t CompilerProductHelperHw<IGFX_ALDERLAKE_S>::getHwInfoConfig(const Hardwa
 }
 
 template <>
-uint32_t CompilerProductHelperHw<IGFX_ALDERLAKE_S>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+uint32_t CompilerProductHelperHw<IGFX_ALDERLAKE_S>::getDefaultHwIpVersion() const {
     return AOT::ADL_S;
 }
 

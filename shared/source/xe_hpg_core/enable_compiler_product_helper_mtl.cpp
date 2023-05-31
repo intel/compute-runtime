@@ -16,10 +16,15 @@
 #include "shared/source/xe_hpg_core/hw_cmds_mtl.h"
 
 #include "compiler_product_helper_mtl.inl"
+#include "platforms.h"
 
 constexpr auto gfxProduct = IGFX_METEORLAKE;
 
 namespace NEO {
+template <>
+uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
+    return AOT::MTL_M_A0;
+}
 
 template <>
 bool CompilerProductHelperHw<gfxProduct>::isSplitMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {

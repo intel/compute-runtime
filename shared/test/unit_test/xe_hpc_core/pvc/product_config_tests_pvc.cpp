@@ -120,14 +120,8 @@ PVCTEST_F(ProductConfigTests, givenInvalidRevisionIdForPvcXlWhenGetProductConfig
     }
 }
 
-PVCTEST_F(ProductConfigTests, givenInvalidDeviceIdWhenGetProductConfigThenInvalidConfigIsReturned) {
+PVCTEST_F(ProductConfigTests, givenUnknownDeviceIdWhenGetProductConfigThenDefaultConfigIsReturned) {
     hwInfo.platform.usDeviceID = 0;
-
-    hwInfo.platform.usRevId = 0x0;
     productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
-    EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
-
-    hwInfo.platform.usRevId = 0x3;
-    productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
-    EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
 }

@@ -5,19 +5,9 @@
  *
  */
 
-#include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
-
-#include "platforms.h"
+#include "shared/source/xe_hpg_core/definitions/compiler_product_helper_dg2_base.inl"
 
 namespace NEO {
-template <>
-uint64_t CompilerProductHelperHw<IGFX_DG2>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
-    if (DG2::isG10(hwInfo)) {
-        return 0x800040010;
-    }
-    return 0x200040010;
-}
-
 template <>
 uint32_t CompilerProductHelperHw<IGFX_DG2>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     if (DG2::isG10(hwInfo)) {
@@ -43,6 +33,6 @@ uint32_t CompilerProductHelperHw<IGFX_DG2>::getProductConfigFromHwInfo(const Har
     } else if (DG2::isG12(hwInfo)) {
         return AOT::DG2_G12_A0;
     }
-    return AOT::UNKNOWN_ISA;
+    return getDefaultHwIpVersion();
 }
 } // namespace NEO

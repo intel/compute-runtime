@@ -273,24 +273,27 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G11OrG12WhenAskingIfMaxThreadsForWorkgro
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0OrA1SteppingWhenAskingIfWAIsRequiredThenReturnTrue) {
-
     auto hwInfo = *defaultHwInfo;
-    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
-        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
-            hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
-            hwInfo.platform.usDeviceID = deviceId;
-            hwInfo.ipVersion.value = compilerProductHelper->getHwIpVersion(hwInfo);
-            if (hwInfo.ipVersion.value == AOT::UNKNOWN_ISA) {
-                continue;
-            }
+    std::vector<std::pair<unsigned short, uint16_t>> dg2Configs =
+        {{dg2G10DeviceIds[0], REV_ID_A0},
+         {dg2G10DeviceIds[0], REV_ID_A1},
+         {dg2G10DeviceIds[0], REV_ID_B0},
+         {dg2G10DeviceIds[0], REV_ID_C0},
+         {dg2G11DeviceIds[0], REV_ID_A0},
+         {dg2G11DeviceIds[0], REV_ID_B0},
+         {dg2G11DeviceIds[0], REV_ID_B1},
+         {dg2G12DeviceIds[0], REV_ID_A0}};
 
-            auto expectedValue = DG2::isG10(hwInfo) && revision < REVISION_B;
-            refreshReleaseHelper(&hwInfo);
+    for (const auto &[deviceID, revisionID] : dg2Configs) {
+        hwInfo.platform.usRevId = revisionID;
+        hwInfo.platform.usDeviceID = deviceID;
+        hwInfo.ipVersion.value = compilerProductHelper->getHwIpVersion(hwInfo);
+        auto expectedValue = DG2::isG10(hwInfo) && revisionID < REV_ID_B0;
+        refreshReleaseHelper(&hwInfo);
 
-            EXPECT_EQ(expectedValue, productHelper->isDefaultEngineTypeAdjustmentRequired(hwInfo));
-            EXPECT_EQ(expectedValue, productHelper->isAllocationSizeAdjustmentRequired(hwInfo));
-            EXPECT_EQ(expectedValue, productHelper->isPrefetchDisablingRequired(releaseHelper));
-        }
+        EXPECT_EQ(expectedValue, productHelper->isDefaultEngineTypeAdjustmentRequired(hwInfo));
+        EXPECT_EQ(expectedValue, productHelper->isAllocationSizeAdjustmentRequired(hwInfo));
+        EXPECT_EQ(expectedValue, productHelper->isPrefetchDisablingRequired(releaseHelper));
     }
 }
 
@@ -323,6 +326,24 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G12WhenAskingForSBAWaThenReturnSuccess) 
 
         EXPECT_FALSE(productHelper->isAdditionalStateBaseAddressWARequired(hwInfo));
     }
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenInvalidArchitectureInIpVersionWhenRefreshReleaseHelperThenNullptrIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.ipVersion.value = AOT::DG2_G10_A0;
+    hwInfo.ipVersion.architecture = 0;
+
+    refreshReleaseHelper(&hwInfo);
+    EXPECT_EQ(releaseHelper, nullptr);
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenInvalidReleaseInIpVersionWhenRefreshReleaseHelperThenNullptrIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.ipVersion.value = AOT::DG2_G10_A0;
+    hwInfo.ipVersion.release = 0;
+
+    refreshReleaseHelper(&hwInfo);
+    EXPECT_EQ(releaseHelper, nullptr);
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenTrueIsReturned) {
@@ -729,12 +750,12 @@ DG2TEST_F(ProductConfigTests, givenDg2G12DeviceIdsWhenConfigIsCheckedThenCorrect
     }
 }
 
-DG2TEST_F(ProductConfigTests, givenInvalidRevisionIdWhenDeviceIdIsDefaultThenUnknownIsaIsReturned) {
+DG2TEST_F(ProductConfigTests, givenInvalidRevisionIdWhenDeviceIdIsDefaultThenDefaultConfigIsReturned) {
     hwInfo.platform.usDeviceID = 0;
     hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
 
     productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
-    EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productConfig, AOT::DG2_G10_A0);
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedThenCorrectProductConfigIsReturned) {
@@ -759,13 +780,13 @@ DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedTh
     }
 }
 
-DG2TEST_F(ProductConfigTests, givenDg2DeviceIdWhenIncorrectRevisionIsPassedThenCorrectProductConfigIsReturned) {
+DG2TEST_F(ProductConfigTests, givenDg2DeviceIdWhenIncorrectRevisionIsPassedThenDefaultConfigIsReturned) {
     for (const auto *dg2 : {&dg2G10DeviceIds, &dg2G11DeviceIds}) {
         for (const auto &deviceId : *dg2) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
             productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
-            EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
+            EXPECT_EQ(productConfig, AOT::DG2_G10_A0);
         }
     }
 }
@@ -796,12 +817,12 @@ DG2TEST_F(ProductConfigTests, givenDg2G12DeviceIdWhenGetProductConfigThenCorrect
     }
 }
 
-DG2TEST_F(ProductConfigTests, givenNotSetDeviceAndRevisionIdWhenGetProductConfigThenUnknownIsaIsReturned) {
+DG2TEST_F(ProductConfigTests, givenNotSetDeviceAndRevisionIdWhenGetProductConfigThenDefaultConfigIsReturned) {
     hwInfo.platform.usRevId = 0x0;
     hwInfo.platform.usDeviceID = 0x0;
 
     productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
-    EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productConfig, AOT::DG2_G10_A0);
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {

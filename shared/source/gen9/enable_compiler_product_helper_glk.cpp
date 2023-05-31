@@ -14,6 +14,7 @@
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_subgroup_local_block_io.inl"
+#include "shared/source/helpers/compiler_product_helper_product_config_default.inl"
 
 #include "platforms.h"
 
@@ -29,7 +30,7 @@ uint32_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getNumThreadsPerEu() const {
 }
 
 template <>
-uint32_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+uint32_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getDefaultHwIpVersion() const {
     return AOT::GLK;
 }
 

@@ -673,8 +673,16 @@ TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithRevisionWhenInitHwIn
         mockOfflineCompiler.deviceName = acronym.str();
         mockOfflineCompiler.revisionId = 0x3;
         EXPECT_EQ(OclocErrorCode::SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
+
+        auto defaultIpVersion = mockOfflineCompiler.compilerProductHelper->getDefaultHwIpVersion();
+        auto productConfig = mockOfflineCompiler.compilerProductHelper->matchRevisionIdWithProductConfig(defaultIpVersion, mockOfflineCompiler.revisionId);
+        if (mockOfflineCompiler.argHelper->productConfigHelper->isSupportedProductConfig(productConfig)) {
+            EXPECT_EQ(mockOfflineCompiler.hwInfo.ipVersion.value, productConfig);
+        } else {
+            EXPECT_EQ(mockOfflineCompiler.hwInfo.ipVersion.value, defaultIpVersion);
+        }
+
         EXPECT_EQ(mockOfflineCompiler.revisionId, static_cast<decltype(mockOfflineCompiler.revisionId)>(mockOfflineCompiler.hwInfo.platform.usRevId));
-        EXPECT_EQ(mockOfflineCompiler.revisionId, static_cast<decltype(mockOfflineCompiler.revisionId)>(mockOfflineCompiler.hwInfo.ipVersion.revision));
     }
 }
 

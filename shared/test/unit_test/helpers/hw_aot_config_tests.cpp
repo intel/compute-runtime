@@ -25,10 +25,10 @@ HWTEST2_P(ProductConfigHwInfoTests, givenAotConfigWhenSetHwInfoGmdIdThenCorrectV
     EXPECT_EQ(ret, productConfig);
 }
 
-HWTEST2_P(ProductConfigHwInfoTests, givenUnknownAotConfigWhenGetProductConfigThenUnknownIsaIsReturned, IsAtLeastMtl) {
+HWTEST2_P(ProductConfigHwInfoTests, givenUnknownAotConfigWhenGetProductConfigThenDefaultConfigIsReturned, IsAtLeastMtl) {
     hwInfo.ipVersion = {};
     auto ret = compilerProductHelper->getHwIpVersion(hwInfo);
-    EXPECT_EQ(ret, AOT::UNKNOWN_ISA);
+    EXPECT_EQ(ret, compilerProductHelper->getDefaultHwIpVersion());
 }
 
 HWTEST2_P(ProductConfigHwInfoTests, givenAotConfigWhenGetProductConfigThenCorrectValueIsReturned, IsAtLeastMtl) {

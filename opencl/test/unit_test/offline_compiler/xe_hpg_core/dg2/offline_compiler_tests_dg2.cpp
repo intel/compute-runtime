@@ -130,4 +130,34 @@ TEST_F(Dg2OfflineCompilerTests, givenDg2G10DeviceAndUnknownRevisionIdValueWhenIn
     EXPECT_EQ(mockOfflineCompiler.deviceConfig, dg2G10Config);
 }
 
+DG2TEST_F(Dg2OfflineCompilerTests, givenDg2DeprecatedAcronymAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
+    MockOfflineCompiler mockOfflineCompiler;
+    std::vector<std::pair<HardwareIpVersion, int>> dg2G10Configs = {
+        {AOT::DG2_G10_A0, REV_ID_A0},
+        {AOT::DG2_G10_A1, REV_ID_A1},
+        {AOT::DG2_G10_B0, REV_ID_B0},
+        {AOT::DG2_G10_C0, REV_ID_C0}};
+
+    std::string deprecatedAcronym = NEO::hardwarePrefix[IGFX_DG2];
+
+    for (const auto &[config, revisionID] : dg2G10Configs) {
+        mockOfflineCompiler.revisionId = revisionID;
+        mockOfflineCompiler.initHardwareInfo(deprecatedAcronym);
+
+        EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, revisionID);
+        EXPECT_EQ(mockOfflineCompiler.hwInfo.ipVersion.value, config.value);
+    }
+}
+
+DG2TEST_F(Dg2OfflineCompilerTests, givenDg2DeprecatedAcronymAndInvalisRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
+    MockOfflineCompiler mockOfflineCompiler;
+    std::string deprecatedAcronym = NEO::hardwarePrefix[IGFX_DG2];
+
+    mockOfflineCompiler.revisionId = CommonConstants::invalidRevisionID;
+    mockOfflineCompiler.initHardwareInfo(deprecatedAcronym);
+
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, CommonConstants::invalidRevisionID);
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.ipVersion.value, AOT::DG2_G10_A0);
+}
+
 } // namespace NEO

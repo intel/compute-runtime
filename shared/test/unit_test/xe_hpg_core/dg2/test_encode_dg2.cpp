@@ -63,32 +63,35 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
     MockExecutionEnvironment executionEnvironment{};
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
+    std::vector<std::pair<unsigned short, uint16_t>> dg2Configs =
+        {{dg2G10DeviceIds[0], REV_ID_A0},
+         {dg2G10DeviceIds[0], REV_ID_A1},
+         {dg2G10DeviceIds[0], REV_ID_B0},
+         {dg2G10DeviceIds[0], REV_ID_C0},
+         {dg2G11DeviceIds[0], REV_ID_A0},
+         {dg2G11DeviceIds[0], REV_ID_B0},
+         {dg2G11DeviceIds[0], REV_ID_B1},
+         {dg2G12DeviceIds[0], REV_ID_A0}};
+
     KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
-    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
-        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
-            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
-            hwInfo.platform.usDeviceID = deviceId;
-            hwInfo.ipVersion = compilerProductHelper.getHwIpVersion(hwInfo);
 
-            if (hwInfo.ipVersion.value == AOT::UNKNOWN_ISA) {
-                continue;
-            }
+    for (const auto &[deviceID, revisionID] : dg2Configs) {
+        hwInfo.platform.usRevId = revisionID;
+        hwInfo.platform.usDeviceID = deviceID;
+        hwInfo.ipVersion = compilerProductHelper.getHwIpVersion(hwInfo);
+        rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
 
-            rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
-            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
-
-            if (DG2::isG10(hwInfo) && revision < REVISION_B) {
-                EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());
-            } else {
-                EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
-            }
+        if (DG2::isG10(hwInfo) && revisionID < REV_ID_B0) {
+            EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());
+        } else {
+            EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
         }
     }
 }
