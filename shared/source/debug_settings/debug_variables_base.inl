@@ -81,6 +81,7 @@ DECLARE_DEBUG_VARIABLE(bool, DontDisableZebinIfVmeUsed, false, "When enabled, dr
 DECLARE_DEBUG_VARIABLE(bool, AppendMemoryPrefetchForKmdMigratedSharedAllocations, true, "Allow prefetching shared memory to the device associated with the specified command list")
 DECLARE_DEBUG_VARIABLE(bool, ForceMemoryPrefetchForKmdMigratedSharedAllocations, false, "Force prefetch of shared memory in command queue execute command lists")
 DECLARE_DEBUG_VARIABLE(bool, ClKhrExternalMemoryExtension, false, "Enable cl_khr_external_memory extension")
+DECLARE_DEBUG_VARIABLE(bool, WaitForMemoryRelease, false, "Wait for memory release when out of memory")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened; ignored when unk")

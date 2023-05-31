@@ -1135,3 +1135,54 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     EXPECT_TRUE(residencyController->isMemoryBudgetExhausted());
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
 }
+
+struct WddmMakeResidentMock : public WddmMock {
+    WddmMakeResidentMock::WddmMakeResidentMock(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment){};
+
+    bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override {
+        *numberOfBytesToTrim = makeResidentNumberOfBytesToTrim;
+        makeResidentResult.called++;
+
+        if (makeResidentResult.called > 2) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+};
+
+struct WddmResidencyControllerWithMockWddmMakeResidentTest : public WddmResidencyControllerWithMockWddmTest {
+    void SetUp() override {
+        wddm = new WddmMakeResidentMock(*executionEnvironment.rootDeviceEnvironments[0].get());
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+        wddm->init();
+
+        executionEnvironment.initializeMemoryManager();
+
+        memoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
+
+        csr.reset(createCommandStream(executionEnvironment, 0u, 1));
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
+                                                                                                                      preemptionMode));
+
+        osContext->incRefInternal();
+        residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
+        gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+    }
+};
+
+TEST_F(WddmResidencyControllerWithMockWddmMakeResidentTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenCallItAgainWithWaitForMemoryReleaseSetToTrue) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.WaitForMemoryRelease.set(1);
+
+    wddm->makeResidentNumberOfBytesToTrim = 4 * 4096;
+
+    MockWddmAllocation allocation1(gmmHelper);
+    ResidencyContainer residencyPack{&allocation1};
+
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(3u, wddm->makeResidentResult.called);
+}

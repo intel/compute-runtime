@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -235,7 +235,9 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
                     continue;
                 }
                 DEBUG_BREAK_IF(evictionStatus != MemoryOperationsStatus::MEMORY_NOT_FOUND);
-                result = wddm.makeResident(&handlesForResidency[0], totalHandlesCount, true, &bytesToTrim, totalSize);
+                do {
+                    result = wddm.makeResident(&handlesForResidency[0], totalHandlesCount, true, &bytesToTrim, totalSize);
+                } while (DebugManager.flags.WaitForMemoryRelease.get() && result == false);
                 break;
             }
         }
