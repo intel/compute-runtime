@@ -498,7 +498,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableDebuggerMmapMemoryAccess, false, "Mmap used t
 DECLARE_DEBUG_VARIABLE(bool, ForceDefaultGrfCompilationMode, false, "Adds build option -cl-intel-128-GRF-per-thread to force kernel compilation in Default-GRF mode")
 DECLARE_DEBUG_VARIABLE(bool, ForceLargeGrfCompilationMode, false, "Adds build option -cl-intel-256-GRF-per-thread to force kernel compilation in Large-GRF mode")
 DECLARE_DEBUG_VARIABLE(bool, EnableConcurrentSharedCrossP2PDeviceAccess, false, "Enables the concurrent use between host and peer devices of shared-allocations ")
-DECLARE_DEBUG_VARIABLE(bool, AllocateSharedAllocationsInHeapExtendedHost, true, "When enabled driver can allocate shared unified memory allocation in heap extended host. (0 - disable, 1 - enable)")
+DECLARE_DEBUG_VARIABLE(bool, AllocateSharedAllocationsInHeapExtendedHost, false, "When enabled driver can allocate shared unified memory allocation in heap extended host. (0 - disable, 1 - enable)")
 DECLARE_DEBUG_VARIABLE(bool, AllocateHostAllocationsInHeapExtendedHost, true, "When enabled driver can allocate host unified memory allocation in heap extended host. (0 - disable, 1 - enable)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAutoGrfCompilationMode, -1, "Adds build option -*-intel-enable-auto-large-GRF-mode to force kernel compilation")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
