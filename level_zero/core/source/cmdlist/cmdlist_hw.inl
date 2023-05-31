@@ -2172,6 +2172,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 
+        if (this->cmdListType == TYPE_IMMEDIATE && event->isAlreadyCompleted()) {
+            continue;
+        }
+
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         gpuAddr = event->getCompletionFieldGpuAddress(this->device);
         uint32_t packetsToWait = event->getPacketsInUse();

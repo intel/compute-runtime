@@ -818,6 +818,41 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
     EXPECT_GT(commandContainer.getCommandStream()->getUsed(), used);
 }
 
+HWTEST2_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWhenAddEventsToCmdListThenProgramSemaphoresOnlyForIncompletedEvents, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
+    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    EXPECT_EQ(device, commandList->getDevice());
+    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    MockEvent event, event2;
+    event.signalScope = 0;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event2.waitScope = 0;
+    ze_event_handle_t events[] = {&event, &event2};
+    event.isCompleted = Event::State::STATE_SIGNALED;
+
+    static_cast<CommandListCoreFamily<gfxCoreFamily> *>(commandList.get())->addEventsToCmdList(2, events, false, false);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor++);
+    itor = find<SEMAPHORE_WAIT *>(itor, cmdList.end());
+    EXPECT_EQ(cmdList.end(), itor);
+}
+
 struct CmdContainerMock : public CommandContainer {
     using CommandContainer::secondaryCommandStreamForImmediateCmdList;
 };
