@@ -87,6 +87,36 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSVMAllocIsDeferredThenFreedSubsequen
     ASSERT_EQ(svmManager->getSVMAlloc(ptr), nullptr);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, GivenTwoRootDevicesWhenAllocatingSharedMemoryForDevice2ThenAllocationsHappenForRootDeviceIndexOneAndNotZero) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(2, 0));
+    auto device = deviceFactory->rootDevices[1];
+    std::map<uint32_t, NEO::DeviceBitfield> deviceBitfieldsLocal;
+    deviceBitfieldsLocal[1] = device->getDeviceBitfield();
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr->setupContext(*device->getDefaultEngine().osContext);
+    void *cmdQ = reinterpret_cast<void *>(0x12345);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, 1, rootDeviceIndices, deviceBitfieldsLocal);
+    unifiedMemoryProperties.device = device;
+
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096, unifiedMemoryProperties, &cmdQ);
+    EXPECT_NE(nullptr, ptr);
+
+    EXPECT_EQ(svmManager->getNumAllocs(), 1u);
+    EXPECT_EQ(svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(0), nullptr);
+    EXPECT_NE(svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(1), nullptr);
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    memoryManager->deferAllocInUse = true;
+    svmManager->freeSVMAllocDefer(ptr);
+    memoryManager->deferAllocInUse = false;
+    svmManager->freeSVMAllocDefer(ptr);
+    ASSERT_EQ(svmManager->getSVMAlloc(ptr), nullptr);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, whenMultipleFreeSVMAllocDeferredThenFreedSubsequently) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));

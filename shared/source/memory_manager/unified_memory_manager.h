@@ -125,6 +125,7 @@ class SVMAllocsManager {
                                                                                                 alignment(alignment),
                                                                                                 rootDeviceIndices(rootDeviceIndices),
                                                                                                 subdeviceBitfields(subdeviceBitfields){};
+        uint32_t getRootDeviceIndex() const;
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
         MemoryProperties allocationFlags;
         Device *device = nullptr;

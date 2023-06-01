@@ -24,6 +24,13 @@
 
 namespace NEO {
 
+uint32_t SVMAllocsManager::UnifiedMemoryProperties::getRootDeviceIndex() const {
+    if (device) {
+        return device->getRootDeviceIndex();
+    }
+    return *rootDeviceIndices.begin();
+}
+
 void SVMAllocsManager::MapBasedAllocationTracker::insert(SvmAllocationData allocationsPair) {
     allocations.insert(std::make_pair(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), allocationsPair));
 }
@@ -238,9 +245,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
 
 void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                                       const UnifiedMemoryProperties &memoryProperties) {
-    auto rootDeviceIndex = memoryProperties.device
-                               ? memoryProperties.device->getRootDeviceIndex()
-                               : *memoryProperties.rootDeviceIndices.begin();
+    auto rootDeviceIndex = memoryProperties.getRootDeviceIndex();
     DeviceBitfield deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     size_t pageSizeForAlignment = alignUp<size_t>(memoryProperties.alignment, MemoryConstants::pageSize64k);
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
@@ -330,14 +335,16 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
         return createHostUnifiedMemoryAllocation(size, memoryProperties);
     }
 
-    auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported(*memoryProperties.rootDeviceIndices.begin());
+    auto rootDeviceIndex = memoryProperties.getRootDeviceIndex();
+
+    auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported(rootDeviceIndex);
 
     if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
         supportDualStorageSharedMemory = !!DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get();
     }
 
     if (supportDualStorageSharedMemory) {
-        bool useKmdMigration = memoryManager->isKmdMigrationAvailable(*memoryProperties.rootDeviceIndices.begin());
+        bool useKmdMigration = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
         void *unifiedMemoryPointer = nullptr;
 
         if (useKmdMigration) {
@@ -367,9 +374,7 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
 
 void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
 
-    auto rootDeviceIndex = unifiedMemoryProperties.device
-                               ? unifiedMemoryProperties.device->getRootDeviceIndex()
-                               : *unifiedMemoryProperties.rootDeviceIndices.begin();
+    auto rootDeviceIndex = unifiedMemoryProperties.getRootDeviceIndex();
     auto &deviceBitfield = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     size_t pageSizeForAlignment = std::max(alignUp<size_t>(unifiedMemoryProperties.alignment, MemoryConstants::pageSize2Mb), MemoryConstants::pageSize2Mb);
     size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
@@ -570,9 +575,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
 }
 
 void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
-    auto rootDeviceIndex = unifiedMemoryProperties.device
-                               ? unifiedMemoryProperties.device->getRootDeviceIndex()
-                               : *unifiedMemoryProperties.rootDeviceIndices.begin();
+    auto rootDeviceIndex = unifiedMemoryProperties.getRootDeviceIndex();
     auto externalPtr = reinterpret_cast<void *>(unifiedMemoryProperties.allocationFlags.hostptr);
     bool useExternalHostPtrForCpu = externalPtr != nullptr;
     const auto pageSizeForAlignment = alignUp<size_t>(unifiedMemoryProperties.alignment, MemoryConstants::pageSize64k);
