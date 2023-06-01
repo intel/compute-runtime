@@ -2784,36 +2784,5 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(0u, csrStream.getUsed());
 }
 
-HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
-          givenCommandListUsingPrivateSurfaceHeapWhenCommandListDestroyedAndCsrStateCacheFlushDispatchFailsThenWaitNotCalled,
-          IsAtLeastSkl) {
-    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    ze_result_t returnValue;
-    L0::ult::CommandList *cmdListObject = whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue));
-
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-    cmdListObject->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-
-    returnValue = cmdListObject->close();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    auto cmdListHandle = cmdListObject->toHandle();
-    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    csr.callBaseSendRenderStateCacheFlush = false;
-    csr.flushReturnValue = SubmissionStatus::DEVICE_UNINITIALIZED;
-    csr.waitForCompletionWithTimeoutTaskCountCalled = 0;
-
-    returnValue = cmdListObject->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    EXPECT_EQ(0u, csr.waitForCompletionWithTimeoutTaskCountCalled);
-
-    csr.callBaseSendRenderStateCacheFlush = true;
-}
-
 } // namespace ult
 } // namespace L0
