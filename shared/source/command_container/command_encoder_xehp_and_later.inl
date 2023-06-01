@@ -92,6 +92,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
         idd.setKernelStartPointer(offset);
     }
+    if (args.dispatchInterface->getKernelDescriptor().kernelAttributes.flags.usesAssert && args.device->getL0Debugger() != nullptr) {
+        idd.setSoftwareExceptionEnable(1);
+    }
 
     auto threadsPerThreadGroup = args.dispatchInterface->getNumThreadsPerThreadGroup();
     idd.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
