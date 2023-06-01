@@ -263,7 +263,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernelPreemptionMode,                                   // preemptionMode
         this->partitionCount,                                   // partitionCount
         static_cast<uint32_t>(Event::STATE_SIGNALED),           // postSyncImmValue
-        this->inOrderExecutionEnabled,                          // inOrderExecEnabled
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate
         isTimestampEvent,                                       // isTimestampEvent
