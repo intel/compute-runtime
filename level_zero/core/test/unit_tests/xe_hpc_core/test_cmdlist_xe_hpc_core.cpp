@@ -121,17 +121,13 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
     DebugManager.flags.UseKmdMigration.set(true);
     DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -153,6 +149,39 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
     context->freeMem(ptr);
     commandList->destroy();
     commandQueue->destroy();
+}
+
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListImmediateWithFlushTaskThenMemoryPrefetchIsCalled, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.UseKmdMigration.set(true);
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+
+    result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto mockMemoryManager = reinterpret_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
+
+    context->freeMem(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenPrefetchApiIsCalledThenRequestMemoryPrefetch, IsXeHpcCore) {

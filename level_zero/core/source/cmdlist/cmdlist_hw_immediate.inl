@@ -229,6 +229,11 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     auto csr = static_cast<CommandQueueImp *>(cmdQ)->getCsr();
     auto lockCSR = csr->obtainUniqueOwnership();
 
+    if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get()) {
+        auto svmAllocMgr = this->device->getDriverHandle()->getSvmAllocsManager();
+        svmAllocMgr->prefetchSVMAllocs(*this->device->getNEODevice(), *csr);
+    }
+
     if (cmdQ->getClientId() == CommandQueue::clientNotRegistered) {
         cmdQ->setClientId(csr->registerClient());
     }
