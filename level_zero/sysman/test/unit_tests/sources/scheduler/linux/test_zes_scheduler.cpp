@@ -548,7 +548,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     for (auto handle : handles) {
         ze_bool_t needReload;
         ze_result_t result = zesSchedulerSetComputeUnitDebugMode(handle, &needReload);
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
     }
 }
 
