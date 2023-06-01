@@ -33,6 +33,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
+#include <type_traits>
+
 namespace L0 {
 namespace ult {
 
@@ -730,6 +732,15 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         return cmdList;
     }
 
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createCopyOnlyImmCmdList() {
+        auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+        cmdList->engineGroupType = EngineGroupType::Copy;
+
+        return cmdList;
+    }
+
     template <typename GfxFamily>
     void setTimestampPacketContextEndValue(TagNodeBase *node, uint32_t packetId, typename GfxFamily::TimestampPacketType contextEndValue) {
         typename GfxFamily::TimestampPacketType data[] = {1, 1, contextEndValue, 1};
@@ -1249,6 +1260,107 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDon
     alignedFree(alignedPtr);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    uint32_t copyData = 0;
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false);
+
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), copyItor);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(copyItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
+
+    auto node = getLatestTsNode(immCmdList.get());
+
+    uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
+
+    EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(0u, sdiCmd->getDataDword0());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyRegionThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    uint32_t copyData = 0;
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false);
+
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), copyItor);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(copyItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
+
+    auto node = getLatestTsNode(immCmdList.get());
+
+    uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
+
+    EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(0u, sdiCmd->getDataDword0());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCopyRegionThenObtainSingleSyncAlloc, IsAtLeastXeHpCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    uint32_t copyData = 0;
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false);
+
+    EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(0u, immCmdList->deferredTimestampPackets->peekNodes().size());
+
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false);
+
+    EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEventsThenSignalSyncAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -1283,7 +1395,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEvents
     EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
     auto node = getLatestTsNode(immCmdList.get());
-    ;
+
     uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
 
     EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());

@@ -1360,10 +1360,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
 
-    if (this->inOrderExecutionEnabled && launchParams.isKernelSplitOperation) {
+    if (this->inOrderExecutionEnabled && (launchParams.isKernelSplitOperation || isCopyOnly())) {
         obtainNewTimestampPacketNode();
 
-        if (!signalEvent) {
+        if (!signalEvent && !isCopyOnly()) {
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
         }
@@ -1450,6 +1450,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     }
 
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
+
+    if (this->inOrderExecutionEnabled && isCopyOnly()) {
+        obtainNewTimestampPacketNode();
+        appendSignalInOrderDependencyTimestampPacket();
+    }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(

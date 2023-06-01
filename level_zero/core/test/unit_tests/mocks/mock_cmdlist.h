@@ -157,6 +157,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::deferredTimestampPackets;
     using BaseClass::device;
     using BaseClass::doubleSbaWa;
+    using BaseClass::engineGroupType;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;
