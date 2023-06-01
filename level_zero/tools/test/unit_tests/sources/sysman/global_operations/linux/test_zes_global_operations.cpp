@@ -755,6 +755,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGemCreateIoctlFailsWithEINVALWhenCall
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
     initGlobalOps();
     static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
     static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();

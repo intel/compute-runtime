@@ -19,6 +19,7 @@ const std::vector<std::string> mockSupportedDiagTypes = {"MOCKSUITE1", "MOCKSUIT
 const std::string deviceDirDiag("device");
 const std::string mockRealPathConfig("/sys/devices/pci0000:89/0000:89:02.0/config");
 const std::string mockdeviceDirDiag("/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0");
+const std::string mockdeviceDirConfig("/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/config");
 const std::string mockDeviceName("/MOCK_DEVICE_NAME");
 const std::string mockRemove("remove");
 const std::string mockRescan("rescan");
