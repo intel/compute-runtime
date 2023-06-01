@@ -23,6 +23,13 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
 
+    struct ImmediateFlushData {
+        size_t estimatedSize = 0;
+
+        bool pipelineSelectNeeded = false;
+        bool pipelineSelectDirty = false;
+    };
+
   public:
     static CommandStreamReceiver *create(ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
@@ -42,6 +49,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
     CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override;
+
+    CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
+                                       ImmediateDispatchFlags &dispatchFlags, Device &device) override;
 
     void forcePipeControl(NEO::LinearStream &commandStreamCSR);
 
@@ -211,6 +221,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     inline void programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR);
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
+    inline void handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device);
+    inline void dispatchImmediateFlushPipelineSelectState(ImmediateFlushData &flushData, Device &device, LinearStream &csrStream);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

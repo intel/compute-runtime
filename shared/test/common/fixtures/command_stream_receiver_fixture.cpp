@@ -33,6 +33,9 @@ void CommandStreamReceiverFixture::setUp() {
     ssh.replaceGraphicsAllocation(graphicsAllocation);
 
     flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+
+    requiredStreamProperties.initSupport(pDevice->getRootDeviceEnvironment());
+    immediateFlushTaskFlags.requiredState = &requiredStreamProperties;
 }
 
 void CommandStreamReceiverFixture::tearDown() {

@@ -3232,3 +3232,70 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto cmdBtdState = genCmdCast<_3DSTATE_BTD *>(*itCmd);
     EXPECT_NE(nullptr, cmdBtdState);
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenPipelineSelectNotInitializedThenDispatchPipelineSelectCommand,
+          IsWithinXeGfxFamily) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_FALSE(commandStreamReceiver.getPreambleSetFlag());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto pipelineSelectCmd = hwParserCsr.getCommand<PIPELINE_SELECT>();
+    ASSERT_NE(nullptr, pipelineSelectCmd);
+    EXPECT_TRUE(commandStreamReceiver.getPreambleSetFlag());
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    pipelineSelectCmd = hwParserCsr.getCommand<PIPELINE_SELECT>();
+
+    EXPECT_EQ(nullptr, pipelineSelectCmd);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskOnSystolicPlatformWhenPipelineSelectAlreadyInitializedAndSystolicRequiredThenDispatchPipelineSelectCommandForSystolic,
+          IsWithinXeGfxFamily) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_FALSE(commandStreamReceiver.getPreambleSetFlag());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto pipelineSelectCmd = hwParserCsr.getCommand<PIPELINE_SELECT>();
+    ASSERT_NE(nullptr, pipelineSelectCmd);
+    EXPECT_TRUE(commandStreamReceiver.getPreambleSetFlag());
+
+    this->requiredStreamProperties.pipelineSelect.setPropertySystolicMode(true);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    pipelineSelectCmd = hwParserCsr.getCommand<PIPELINE_SELECT>();
+
+    if (commandStreamReceiver.pipelineSupportFlags.systolicMode) {
+        ASSERT_NE(nullptr, pipelineSelectCmd);
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+    } else {
+        EXPECT_EQ(nullptr, pipelineSelectCmd);
+    }
+}

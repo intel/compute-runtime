@@ -262,6 +262,29 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
 }
 
 template <typename GfxFamily>
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
+    LinearStream &immediateCommandStream,
+    size_t immediateCommandStreamStart,
+    ImmediateDispatchFlags &dispatchFlags,
+    Device &device) {
+
+    ImmediateFlushData flushData;
+    flushData.pipelineSelectNeeded = !getPreambleSetFlag();
+
+    handleImmediateFlushPipelineSelectState(dispatchFlags, flushData, device);
+
+    auto &commandStreamCSR = getCS(flushData.estimatedSize);
+
+    dispatchImmediateFlushPipelineSelectState(flushData, device, commandStreamCSR);
+
+    CompletionStamp completionStamp = {
+        this->taskCount,
+        this->taskLevel,
+        flushStamp->peekStamp()};
+    return completionStamp;
+}
+
+template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     LinearStream &commandStreamTask,
     size_t commandStreamStartTask,
@@ -1788,6 +1811,36 @@ inline void CommandStreamReceiverHw<GfxFamily>::programSamplerCacheFlushBetweenR
         } else {
             this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
         }
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device) {
+    if (flushData.pipelineSelectNeeded) {
+        this->streamProperties.pipelineSelect.copyPropertiesAll(dispatchFlags.requiredState->pipelineSelect);
+        flushData.pipelineSelectDirty = true;
+        setPreambleSetFlag(true);
+    } else {
+        this->streamProperties.pipelineSelect.copyPropertiesSystolicMode(dispatchFlags.requiredState->pipelineSelect);
+        flushData.pipelineSelectDirty = this->streamProperties.pipelineSelect.isDirty();
+    }
+
+    if (flushData.pipelineSelectDirty) {
+        this->streamProperties.pipelineSelect.clearIsDirty();
+        flushData.estimatedSize += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(device.getRootDeviceEnvironment());
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushPipelineSelectState(ImmediateFlushData &flushData, Device &device, LinearStream &csrStream) {
+    if (flushData.pipelineSelectDirty) {
+        PipelineSelectArgs psDispatchArgs = {
+            this->streamProperties.pipelineSelect.systolicMode.value == 1,
+            false,
+            false,
+            this->pipelineSupportFlags.systolicMode};
+
+        PreambleHelper<GfxFamily>::programPipelineSelect(&csrStream, psDispatchArgs, device.getRootDeviceEnvironment());
     }
 }
 

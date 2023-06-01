@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,16 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
 
 CompletionStamp MockCommandStreamReceiver::flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                                         const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) {
+    ++taskCount;
+    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
+    return stamp;
+}
+
+CompletionStamp MockCommandStreamReceiver::flushImmediateTask(
+    LinearStream &immediateCommandStream,
+    size_t immediateCommandStreamStart,
+    ImmediateDispatchFlags &dispatchFlags,
+    Device &device) {
     ++taskCount;
     CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
     return stamp;

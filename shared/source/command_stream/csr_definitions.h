@@ -21,6 +21,7 @@
 
 namespace NEO {
 struct FlushStampTrackingObj;
+struct StreamProperties;
 
 namespace TimeoutControls {
 inline constexpr int64_t maxTimeout = std::numeric_limits<int64_t>::max();
@@ -134,4 +135,9 @@ struct CsrSizeRequestFlags {
     bool systolicPipelineSelectMode = false;
     bool activePartitionsChanged = false;
 };
+
+struct ImmediateDispatchFlags {
+    StreamProperties *requiredState;
+};
+
 } // namespace NEO
