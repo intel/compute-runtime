@@ -14,10 +14,13 @@ namespace L0 {
 namespace ult {
 
 static int mockFileDescriptor = 123;
+static int mockGtPciConfigFd = 124;
 
 inline static int openMockDiag(const char *pathname, int flags) {
     if (strcmp(pathname, mockRealPathConfig.c_str()) == 0) {
         return mockFileDescriptor;
+    } else if (strcmp(pathname, mockdeviceDirConfig.c_str()) == 0) {
+        return mockGtPciConfigFd;
     }
     return -1;
 }
@@ -28,8 +31,17 @@ void mockSleepFunctionSecs(int64_t secs) {
 inline static int openMockDiagFail(const char *pathname, int flags) {
     return -1;
 }
+
+inline static int gtPciConfigOpenFail(const char *pathname, int flags) {
+    if (strcmp(pathname, mockRealPathConfig.c_str()) == 0) {
+        return mockFileDescriptor;
+    } else {
+        return -1;
+    }
+}
+
 inline static int closeMockDiag(int fd) {
-    if (fd == mockFileDescriptor) {
+    if ((fd == mockFileDescriptor) || (fd == mockGtPciConfigFd)) {
         return 0;
     }
     return -1;
@@ -38,7 +50,65 @@ inline static int closeMockDiagFail(int fd) {
     return -1;
 }
 
+inline static int mockGtConfigcloseFail(int fd) {
+    if (fd == mockGtPciConfigFd) {
+        return -1;
+    }
+    return 0;
+}
+
 ssize_t preadMockDiag(int fd, void *buf, size_t count, off_t offset) {
+    uint8_t *mockBuf = static_cast<uint8_t *>(buf);
+    if (fd == mockGtPciConfigFd) {
+        mockBuf[0x006] = 0x24;
+        mockBuf[0x034] = 0x40;
+        mockBuf[0x040] = 0x0d;
+        mockBuf[0x041] = 0x50;
+        mockBuf[0x050] = 0x10;
+        mockBuf[0x051] = 0x70;
+        mockBuf[0x052] = 0x90;
+        mockBuf[0x070] = 0x10;
+        mockBuf[0x071] = 0xac;
+        mockBuf[0x072] = 0xa0;
+        mockBuf[0x0ac] = 0x10;
+        mockBuf[0x0b8] = 0x11;
+        mockBuf[0x100] = 0x0e;
+        mockBuf[0x102] = 0x24;
+        mockBuf[0x103] = 0x42;
+        mockBuf[0x420] = 0x15;
+        mockBuf[0x422] = 0x01;
+        mockBuf[0x423] = 0x22;
+        mockBuf[0x425] = 0xf0;
+        mockBuf[0x426] = 0x3f;
+        mockBuf[0x428] = 0x22;
+        mockBuf[0x429] = 0x11;
+        mockBuf[0x220] = 0x24;
+        mockBuf[0x222] = 0x24;
+        mockBuf[0x223] = 0x24;
+        mockBuf[0x320] = 0x10;
+        mockBuf[0x322] = 0x01;
+        mockBuf[0x323] = 0x40;
+        mockBuf[0x400] = 0x18;
+        mockBuf[0x402] = 0x01;
+    }
+    return count;
+}
+
+ssize_t mockGtConfigPreadInvalid(int fd, void *buf, size_t count, off_t offset) {
+    return count;
+}
+
+ssize_t mockGtConfigPreadFail(int fd, void *buf, size_t count, off_t offset) {
+    if (fd == mockGtPciConfigFd) {
+        return -1;
+    }
+    return count;
+}
+
+ssize_t mockGtConfigPwriteFail(int fd, const void *buf, size_t count, off_t offset) {
+    if (fd == mockGtPciConfigFd) {
+        return -1;
+    }
     return count;
 }
 
@@ -547,6 +617,94 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetThenCallSucceeds) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndGtPciConfigOpenFailsThenCallReturnsFailure) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = gtPciConfigOpenFail;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndConfigHeaderIsInvalidThenCallReturnsFailure) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = mockGtConfigPreadInvalid;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndGtConfigPreadFailsThenCallReturnsFailure) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = mockGtConfigPreadFail;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndGtConfigPwriteFailsThenCallReturnsFailure) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = mockGtConfigPwriteFail;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndGtConfigCloseFailsThenCallReturnsFailure) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = mockGtConfigcloseFail;
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndCardBusRemoveFailsThenCallReturnsFailure) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    pMockFsAccess->checkErrorAfterCount = 2;
+    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndRootPortRescanFailsThenCallReturnsFailure) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    pMockFsAccess->checkErrorAfterCount = 3;
+    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetThenCallSucceeds) {
     pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
     pLinuxSysmanImp->openFunction = openMockDiag;
     pLinuxSysmanImp->closeFunction = closeMockDiag;
@@ -557,6 +715,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetThen
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetfromDiagnosticsThenCallSucceeds) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
     pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
     pLinuxSysmanImp->openFunction = openMockDiag;
     pLinuxSysmanImp->closeFunction = closeMockDiag;
@@ -568,6 +728,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetfrom
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndRootPortConfigFileFailsToOpenThenCallFails) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
     pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
     pLinuxSysmanImp->openFunction = openMockDiagFail;
     pLinuxSysmanImp->closeFunction = closeMockDiag;
@@ -578,6 +740,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndR
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndRootPortConfigFileFailsToCloseThenCallFails) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
     pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
     pLinuxSysmanImp->openFunction = openMockDiag;
     pLinuxSysmanImp->closeFunction = closeMockDiagFail;
@@ -588,6 +752,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndR
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndCardbusRemoveFailsThenCallFails) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
     pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
     pLinuxSysmanImp->openFunction = openMockDiag;
     pLinuxSysmanImp->closeFunction = closeMockDiag;
@@ -599,6 +765,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndC
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndRootPortRescanFailsThenCallFails) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
     pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
     pLinuxSysmanImp->openFunction = openMockDiag;
     pLinuxSysmanImp->closeFunction = closeMockDiag;

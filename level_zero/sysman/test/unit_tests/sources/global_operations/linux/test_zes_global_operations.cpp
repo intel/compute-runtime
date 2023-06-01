@@ -729,7 +729,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGemCreateIoctlFailsWithEINVALWhenCall
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
-
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
