@@ -205,6 +205,8 @@ struct Event : _ze_event_handle_t {
         this->metricStreamer = metricStreamer;
     }
     void enableInOrderExecMode(const NEO::TimestampPacketContainer &inOrderSyncNodes);
+    bool isInOrderExecEvent() const { return inOrderExecEvent; }
+    const NEO::TimestampPacketContainer *getInOrderTimestampPacket() const { return inOrderTimestampPacket.get(); }
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}

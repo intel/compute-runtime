@@ -2176,6 +2176,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             continue;
         }
 
+        if (isInOrderExecutionEnabled() && event->isInOrderExecEvent()) {
+            auto const cmdListNode = this->timestampPacketContainer->peekNodes()[0];
+            auto const eventNode = event->getInOrderTimestampPacket()->peekNodes()[0];
+
+            if (cmdListNode == eventNode) {
+                continue;
+            }
+        }
+
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         gpuAddr = event->getCompletionFieldGpuAddress(this->device);
         uint32_t packetsToWait = event->getPacketsInUse();
