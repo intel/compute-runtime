@@ -106,6 +106,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     static const std::string deviceDir;
     void clearHPIE(int fd);
+    ze_result_t resizeVfBar(uint8_t size);
     std::mutex fwLock;
 };
 

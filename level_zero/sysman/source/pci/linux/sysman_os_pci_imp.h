@@ -30,6 +30,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     bool resizableBarSupported() override;
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
+    static uint32_t getRebarCapabilityPos(uint8_t *configMemory, bool isVfBar);
     LinuxPciImp() = default;
     LinuxPciImp(OsSysman *pOsSysman);
     ~LinuxPciImp() override = default;
@@ -51,7 +52,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     static const std::string maxLinkSpeedFile;
     static const std::string maxLinkWidthFile;
     bool isIntegratedDevice = false;
-    uint32_t getDwordFromConfig(uint32_t pos) {
+    static inline uint32_t getDwordFromConfig(uint32_t pos, uint8_t *configMemory) {
         return configMemory[pos] | (configMemory[pos + 1] << 8) |
                (configMemory[pos + 2] << 16) | (configMemory[pos + 3] << 24);
     }

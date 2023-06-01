@@ -91,6 +91,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     static const std::string deviceDir;
     void createFwUtilInterface();
     void clearHPIE(int fd);
+    ze_result_t resizeVfBar(uint8_t size);
     std::mutex fwLock;
 };
 
