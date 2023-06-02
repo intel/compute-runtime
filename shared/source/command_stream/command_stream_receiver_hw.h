@@ -30,6 +30,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         bool pipelineSelectDirty = false;
         bool frontEndFullConfigurationNeeded = false;
         bool frontEndDirty = false;
+        bool stateComputeModeFullConfigurationNeeded = false;
+        bool stateComputeModeDirty = false;
     };
 
   public:
@@ -224,9 +226,11 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     inline void programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR);
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
     inline void handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
-    inline void dispatchImmediateFlushPipelineSelectState(ImmediateFlushData &flushData, LinearStream &csrStream);
+    inline void dispatchImmediateFlushPipelineSelectCommand(ImmediateFlushData &flushData, LinearStream &csrStream);
     inline void handleImmediateFlushFrontEndState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
-    inline void dispatchImmediateFlushFrontEndState(uint64_t scratchAddress, ImmediateFlushData &flushData, Device &device, LinearStream &csrStream);
+    inline void dispatchImmediateFlushFrontEndCommand(uint64_t scratchAddress, ImmediateFlushData &flushData, Device &device, LinearStream &csrStream);
+    inline void handleImmediateFlushStateComputeModeState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
+    inline void dispatchImmediateFlushStateComputeModeCommand(ImmediateFlushData &flushData, LinearStream &csrStream);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

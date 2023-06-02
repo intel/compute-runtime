@@ -3375,3 +3375,75 @@ HWTEST2_F(CommandStreamReceiverHwTest,
         EXPECT_EQ(nullptr, frontEndCmd);
     }
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenStateComputeModeNotInitializedThenDispatchStateComputeModeCommand,
+          IsAtLeastXeHpCore) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(commandStreamReceiver.getStateComputeModeDirty());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateComputeModeCmd = hwParserCsr.getCommand<STATE_COMPUTE_MODE>();
+    ASSERT_NE(nullptr, stateComputeModeCmd);
+    EXPECT_FALSE(commandStreamReceiver.getStateComputeModeDirty());
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    stateComputeModeCmd = hwParserCsr.getCommand<STATE_COMPUTE_MODE>();
+
+    EXPECT_EQ(nullptr, stateComputeModeCmd);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskOnChangingStateComputeModePropertiesPlatformWhenStateComputeModeAlreadyInitializedAndStateComputeModePropertyChangeRequiredThenDispatchStateComputeModeCommand,
+          IsAtLeastXeHpCore) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(commandStreamReceiver.getStateComputeModeDirty());
+
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::DefaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateComputeModeCmd = hwParserCsr.getCommand<STATE_COMPUTE_MODE>();
+    ASSERT_NE(nullptr, stateComputeModeCmd);
+    EXPECT_FALSE(commandStreamReceiver.getStateComputeModeDirty());
+
+    this->requiredStreamProperties.stateComputeMode.setPropertiesGrfNumberThreadArbitration(GrfConfig::LargeGrfNumber, ThreadArbitrationPolicy::RoundRobin);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    stateComputeModeCmd = hwParserCsr.getCommand<STATE_COMPUTE_MODE>();
+
+    StateComputeModePropertiesSupport scmPropertiesSupport;
+    auto &productHelper = commandStreamReceiver.getProductHelper();
+    productHelper.fillScmPropertiesSupportStructure(scmPropertiesSupport);
+
+    if (scmPropertiesSupport.largeGrfMode || scmPropertiesSupport.threadArbitrationPolicy) {
+        ASSERT_NE(nullptr, stateComputeModeCmd);
+    } else {
+        EXPECT_EQ(nullptr, stateComputeModeCmd);
+    }
+}
