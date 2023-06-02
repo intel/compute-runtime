@@ -268,14 +268,19 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     ImmediateDispatchFlags &dispatchFlags,
     Device &device) {
 
+    uint64_t scratchAddress = 0;
+
     ImmediateFlushData flushData;
-    flushData.pipelineSelectNeeded = !getPreambleSetFlag();
+    flushData.pipelineSelectFullConfigurationNeeded = !getPreambleSetFlag();
+    flushData.frontEndFullConfigurationNeeded = getMediaVFEStateDirty();
 
-    handleImmediateFlushPipelineSelectState(dispatchFlags, flushData, device);
+    handleImmediateFlushPipelineSelectState(dispatchFlags, flushData);
+    handleImmediateFlushFrontEndState(dispatchFlags, flushData);
 
-    auto &commandStreamCSR = getCS(flushData.estimatedSize);
+    auto &csrCommandStream = getCS(flushData.estimatedSize);
 
-    dispatchImmediateFlushPipelineSelectState(flushData, device, commandStreamCSR);
+    dispatchImmediateFlushPipelineSelectState(flushData, csrCommandStream);
+    dispatchImmediateFlushFrontEndState(scratchAddress, flushData, device, csrCommandStream);
 
     CompletionStamp completionStamp = {
         this->taskCount,
@@ -1815,8 +1820,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programSamplerCacheFlushBetweenR
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device) {
-    if (flushData.pipelineSelectNeeded) {
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData) {
+    if (flushData.pipelineSelectFullConfigurationNeeded) {
         this->streamProperties.pipelineSelect.copyPropertiesAll(dispatchFlags.requiredState->pipelineSelect);
         flushData.pipelineSelectDirty = true;
         setPreambleSetFlag(true);
@@ -1827,12 +1832,12 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushPipelineSelectState
 
     if (flushData.pipelineSelectDirty) {
         this->streamProperties.pipelineSelect.clearIsDirty();
-        flushData.estimatedSize += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(device.getRootDeviceEnvironment());
+        flushData.estimatedSize += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment());
     }
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushPipelineSelectState(ImmediateFlushData &flushData, Device &device, LinearStream &csrStream) {
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushPipelineSelectState(ImmediateFlushData &flushData, LinearStream &csrStream) {
     if (flushData.pipelineSelectDirty) {
         PipelineSelectArgs psDispatchArgs = {
             this->streamProperties.pipelineSelect.systolicMode.value == 1,
@@ -1840,7 +1845,41 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushPipelineSelectSta
             false,
             this->pipelineSupportFlags.systolicMode};
 
-        PreambleHelper<GfxFamily>::programPipelineSelect(&csrStream, psDispatchArgs, device.getRootDeviceEnvironment());
+        PreambleHelper<GfxFamily>::programPipelineSelect(&csrStream, psDispatchArgs, peekRootDeviceEnvironment());
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushFrontEndState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData) {
+    if (flushData.frontEndFullConfigurationNeeded) {
+        this->streamProperties.frontEndState.copyPropertiesAll(dispatchFlags.requiredState->frontEndState);
+        flushData.frontEndDirty = true;
+        setMediaVFEStateDirty(false);
+    } else {
+        this->streamProperties.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(dispatchFlags.requiredState->frontEndState);
+        flushData.frontEndDirty = this->streamProperties.frontEndState.isDirty();
+    }
+
+    if (flushData.frontEndDirty) {
+        this->streamProperties.frontEndState.clearIsDirty();
+        flushData.estimatedSize += NEO::PreambleHelper<GfxFamily>::getVFECommandsSize();
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushFrontEndState(uint64_t scratchAddress, ImmediateFlushData &flushData, Device &device, LinearStream &csrStream) {
+    if (flushData.frontEndDirty) {
+        auto &gfxCoreHelper = getGfxCoreHelper();
+        auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), peekHwInfo());
+
+        auto feStateCmdSpace = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csrStream, peekHwInfo(), engineGroupType);
+        PreambleHelper<GfxFamily>::programVfeState(feStateCmdSpace,
+                                                   peekRootDeviceEnvironment(),
+                                                   requiredScratchSize,
+                                                   scratchAddress,
+                                                   device.getDeviceInfo().maxFrontEndThreads,
+                                                   this->streamProperties,
+                                                   getLogicalStateHelper());
     }
 }
 

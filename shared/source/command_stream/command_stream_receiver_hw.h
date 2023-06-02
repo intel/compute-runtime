@@ -26,8 +26,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     struct ImmediateFlushData {
         size_t estimatedSize = 0;
 
-        bool pipelineSelectNeeded = false;
+        bool pipelineSelectFullConfigurationNeeded = false;
         bool pipelineSelectDirty = false;
+        bool frontEndFullConfigurationNeeded = false;
+        bool frontEndDirty = false;
     };
 
   public:
@@ -221,8 +223,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     inline void programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR);
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
-    inline void handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device);
-    inline void dispatchImmediateFlushPipelineSelectState(ImmediateFlushData &flushData, Device &device, LinearStream &csrStream);
+    inline void handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
+    inline void dispatchImmediateFlushPipelineSelectState(ImmediateFlushData &flushData, LinearStream &csrStream);
+    inline void handleImmediateFlushFrontEndState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
+    inline void dispatchImmediateFlushFrontEndState(uint64_t scratchAddress, ImmediateFlushData &flushData, Device &device, LinearStream &csrStream);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

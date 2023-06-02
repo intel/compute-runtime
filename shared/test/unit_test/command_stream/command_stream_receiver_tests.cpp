@@ -3299,3 +3299,79 @@ HWTEST2_F(CommandStreamReceiverHwTest,
         EXPECT_EQ(nullptr, pipelineSelectCmd);
     }
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenFrontEndNotInitializedThenDispatchFrontEndCommand,
+          IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    ASSERT_NE(nullptr, frontEndCmd);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+
+    EXPECT_EQ(nullptr, frontEndCmd);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskOnChangingFrontEndPropertiesPlatformWhenFrontEndAlreadyInitializedAndFrontEndPropertyChangeRequiredThenDispatchFrontEndCommand,
+          IsWithinXeGfxFamily) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    ASSERT_NE(nullptr, frontEndCmd);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    this->requiredStreamProperties.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(true, true);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+
+    if (commandStreamReceiver.feSupportFlags.computeDispatchAllWalker || commandStreamReceiver.feSupportFlags.disableEuFusion) {
+        ASSERT_NE(nullptr, frontEndCmd);
+        if (commandStreamReceiver.feSupportFlags.computeDispatchAllWalker) {
+            EXPECT_TRUE(UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*frontEndCmd));
+        } else {
+            EXPECT_FALSE(UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*frontEndCmd));
+        }
+        if (commandStreamReceiver.feSupportFlags.disableEuFusion) {
+            EXPECT_TRUE(UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*frontEndCmd));
+        } else {
+            EXPECT_FALSE(UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*frontEndCmd));
+        }
+    } else {
+        EXPECT_EQ(nullptr, frontEndCmd);
+    }
+}
