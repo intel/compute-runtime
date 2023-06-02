@@ -830,6 +830,9 @@ uint64_t WddmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
 }
 
 double WddmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
+    if (isLocalMemorySupported(rootDeviceIndex)) {
+        return 0.98;
+    }
     return 0.8;
 }
 

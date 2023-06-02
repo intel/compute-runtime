@@ -2731,12 +2731,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsC
     }
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
-    MockWddmMemoryManager memoryManager(true, true, executionEnvironment);
-    uint32_t rootDeviceIndex = 0u;
-    EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.8);
-}
-
 TEST_F(WddmMemoryManagerSimpleTest, whenAlignmentRequirementExceedsPageSizeThenAllocateGraphicsMemoryFromSystemPtr) {
     struct MockWddmMemoryManagerAllocateWithAlignment : MockWddmMemoryManager {
         using MockWddmMemoryManager::MockWddmMemoryManager;

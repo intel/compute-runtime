@@ -133,6 +133,18 @@ TEST_F(WddmMemoryManagerTests, GivenCompressedAndNotLockableAllocationTypeWhenAl
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(WddmMemoryManagerTests, givenWddmMemoryManagerWithoutLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
+    MockWddmMemoryManager memoryManager(true, false, *executionEnvironment);
+    uint32_t rootDeviceIndex = 0u;
+    EXPECT_EQ(0.8, memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex));
+}
+
+TEST_F(WddmMemoryManagerTests, givenWddmMemoryManagerWithLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
+    MockWddmMemoryManager memoryManager(true, true, *executionEnvironment);
+    uint32_t rootDeviceIndex = 0u;
+    EXPECT_EQ(0.98, memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex));
+}
+
 class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManagerCreate<WddmMemoryManager> {
   public:
     using WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA;
