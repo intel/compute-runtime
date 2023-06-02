@@ -429,11 +429,12 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(static_cast<uint32_t>(driverHandle->fabricEdges.size()), root2root + subDevice2root + subDevice2SubDevice);
 
     count = 0;
-    std::vector<ze_fabric_edge_handle_t> edges(30);
+    std::vector<ze_fabric_edge_handle_t> edges;
 
     // Root to Root Connection
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->toHandle(), fabricVertex0->toHandle(), &count, nullptr));
     EXPECT_EQ(count, 1u);
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->toHandle(), fabricVertex0->toHandle(), &count, edges.data()));
     ze_fabric_vertex_handle_t vertexA = nullptr, vertexB = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetVerticesExp(edges[0], &vertexA, &vertexB));
@@ -453,7 +454,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->toHandle(), fabricVertex1->subVertices[0], &count, nullptr));
     EXPECT_EQ(count, 1u);
-    edges.clear();
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->toHandle(), fabricVertex1->subVertices[0], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
@@ -465,6 +466,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->toHandle(), fabricVertex1->subVertices[1], &count, nullptr));
     EXPECT_EQ(count, 1u);
     edges.clear();
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->toHandle(), fabricVertex1->subVertices[1], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
@@ -477,6 +479,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[0], fabricVertex1->toHandle(), &count, nullptr));
     EXPECT_EQ(count, 1u);
     edges.clear();
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[0], fabricVertex1->toHandle(), &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
@@ -488,6 +491,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[1], fabricVertex1->toHandle(), &count, nullptr));
     EXPECT_EQ(count, 1u);
     edges.clear();
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[1], fabricVertex1->toHandle(), &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
@@ -498,6 +502,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[0], fabricVertex0->subVertices[1], &count, nullptr));
     EXPECT_EQ(count, 1u);
     edges.clear();
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[0], fabricVertex0->subVertices[1], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 0u);
@@ -511,6 +516,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[0], fabricVertex1->subVertices[1], &count, nullptr));
     EXPECT_EQ(count, 1u);
     edges.clear();
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[0], fabricVertex1->subVertices[1], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_STREQ(edgeProperties.model, "MDFI");
@@ -519,6 +525,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[0], fabricVertex0->subVertices[0], &count, nullptr));
     EXPECT_EQ(count, 1u);
     edges.clear();
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[0], fabricVertex0->subVertices[0], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
@@ -530,6 +537,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[1], fabricVertex0->subVertices[1], &count, nullptr));
     EXPECT_EQ(count, 1u);
     edges.clear();
+    edges.resize(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[1], fabricVertex0->subVertices[1], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
