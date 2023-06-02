@@ -75,6 +75,9 @@ typedef const wchar_t *LPCWSTR, *PCWSTR;
 #define DECLSPEC_NOVTABLE
 #define DECLSPEC_SELECTANY
 #define EXTERN_C extern "C"
+#ifdef APIENTRY
+#undef APIENTRY
+#endif
 #define APIENTRY
 #define OUT
 #define IN
