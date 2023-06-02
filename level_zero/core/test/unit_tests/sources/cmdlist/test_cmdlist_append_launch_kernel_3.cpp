@@ -1143,6 +1143,75 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     EXPECT_EQ(0u, sdiCmd->getDataDword0());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendSignalEventThenSignalSyncAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendSignalEvent(events[0]->toHandle());
+
+    EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*cmdList.begin());
+
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        auto previousNode = immCmdList->deferredTimestampPackets->peekNodes()[0];
+        uint64_t nodeGpuVa = previousNode->getGpuAddress() + previousNode->getContextEndOffset();
+
+        EXPECT_EQ(TimestampPacketConstants::initValue, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(nodeGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+    }
+
+    {
+
+        auto rbeginItor = cmdList.rbegin();
+
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rbeginItor);
+        while (sdiCmd == nullptr) {
+            sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++rbeginItor));
+            if (rbeginItor == cmdList.rend()) {
+                break;
+            }
+        }
+
+        ASSERT_NE(nullptr, sdiCmd);
+
+        auto node = getLatestTsNode(immCmdList.get());
+        uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
+
+        EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());
+        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(0u, sdiCmd->getDataDword0());
+
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(++rbeginItor));
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
+
+        EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+    }
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker, IsAtLeastXeHpCore) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;

@@ -322,6 +322,7 @@ struct CommandListCoreFamily : CommandListImp {
     void postInitComputeSetup();
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
     void obtainNewTimestampPacketNode();
+    virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const { return false; }
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

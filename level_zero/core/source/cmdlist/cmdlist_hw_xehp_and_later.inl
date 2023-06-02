@@ -307,18 +307,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (inOrderExecSignalRequired && event) {
-        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-        auto gpuAddr = event->getCompletionFieldGpuAddress(this->device);
-
-        uint32_t packetsToWait = this->signalAllEventPackets ? event->getMaxPacketsCount() : event->getPacketsInUse();
-
-        for (uint32_t i = 0u; i < packetsToWait; i++) {
-            NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
-                                                                       gpuAddr,
-                                                                       Event::State::STATE_CLEARED,
-                                                                       MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-            gpuAddr += event->getSinglePacketSize();
-        }
+        auto eventHandle = event->toHandle();
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(1, &eventHandle, false, false, false);
 
         appendSignalInOrderDependencyTimestampPacket();
     }

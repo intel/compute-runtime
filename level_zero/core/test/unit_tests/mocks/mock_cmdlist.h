@@ -75,6 +75,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
     using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::isRelaxedOrderingDispatchAllowed;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::isTimestampEventForMultiTile;

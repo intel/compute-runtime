@@ -2088,6 +2088,10 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent) {
+    if (this->inOrderExecutionEnabled) {
+        addEventsToCmdList(0, nullptr, isRelaxedOrderingDispatchAllowed(0), false);
+    }
+
     auto event = Event::fromHandle(hEvent);
     event->resetKernelCountAndPacketUsedCount();
 
@@ -2106,6 +2110,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     event->setPacketsInUse(this->partitionCount);
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
     dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync);
+
+    if (this->inOrderExecutionEnabled) {
+        obtainNewTimestampPacketNode();
+
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(1, &hEvent, false, false, false);
+
+        appendSignalInOrderDependencyTimestampPacket();
+    }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
