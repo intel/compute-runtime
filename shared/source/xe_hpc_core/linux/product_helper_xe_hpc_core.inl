@@ -31,7 +31,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
 template <>
 bool ProductHelperHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
-    return true;
+    return false;
 }
 
 } // namespace NEO
