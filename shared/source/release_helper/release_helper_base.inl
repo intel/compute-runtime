@@ -28,4 +28,9 @@ bool ReleaseHelperHw<releaseType>::isPrefetchDisablingRequired() const {
     return false;
 }
 
+template <ReleaseType releaseType>
+int ReleaseHelperHw<releaseType>::getProductMaxPreferredSlmSize(int preferredEnumValue) const {
+    return preferredEnumValue;
+}
+
 } // namespace NEO
