@@ -25,7 +25,9 @@ void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     size_t size = sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
-    size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+    if (this->globalStatelessHeapAllocation == nullptr) {
+        size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+    }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
     if (this->doubleSbaWa) {
