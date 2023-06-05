@@ -206,6 +206,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
+        latestWaitForCompletionWithTimeoutWaitParams = params;
         waitForCompletionWithTimeoutTaskCountCalled++;
         if (callBaseWaitForCompletionWithTimeout) {
             return BaseClass::waitForCompletionWithTimeout(params, taskCountToWait);
@@ -402,6 +403,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     std::atomic<TaskCountType> latestWaitForCompletionWithTimeoutTaskCount{0};
     TaskCountType latestSentTaskCountValueDuringFlush = 0;
+    WaitParams latestWaitForCompletionWithTimeoutWaitParams{0};
     TaskCountType flushBcsTaskReturnValue{};
 
     LinearStream *lastFlushedCommandStream = nullptr;

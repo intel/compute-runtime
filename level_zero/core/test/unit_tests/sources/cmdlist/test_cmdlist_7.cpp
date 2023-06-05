@@ -3009,6 +3009,40 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenGpuStatusIsHangThenDeviceLos
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenTimeoutOtherThanMaxIsProvidedWaitParamsIsSetCorrectly, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.isSyncModeQueue = false;
+    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->callBaseWaitForCompletionWithTimeout = false;
+    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+
+    EXPECT_EQ(cmdList.hostSynchronize(1000), ZE_RESULT_SUCCESS);
+    auto waitParams = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->latestWaitForCompletionWithTimeoutWaitParams;
+    EXPECT_TRUE(waitParams.enableTimeout);
+    EXPECT_FALSE(waitParams.indefinitelyPoll);
+    EXPECT_EQ(waitParams.waitTimeout, 1);
+}
+
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenMaxTimeoutIsProvidedWaitParamsIsSetCorrectly, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.isSyncModeQueue = false;
+    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->callBaseWaitForCompletionWithTimeout = false;
+    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+
+    EXPECT_EQ(cmdList.hostSynchronize(std::numeric_limits<uint64_t>::max()), ZE_RESULT_SUCCESS);
+
+    auto waitParams = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->latestWaitForCompletionWithTimeoutWaitParams;
+    EXPECT_FALSE(waitParams.enableTimeout);
+    EXPECT_TRUE(waitParams.indefinitelyPoll);
+}
+
 using CommandListHostSynchronize = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListHostSynchronize, whenHostSychronizeIsCalledReturnInvalidArgument, IsAtLeastSkl) {
