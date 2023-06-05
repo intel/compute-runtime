@@ -24,6 +24,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
 
     struct ImmediateFlushData {
+        PipelineSelectArgs pipelineSelectArgs{};
         size_t estimatedSize = 0;
 
         bool pipelineSelectFullConfigurationNeeded = false;
@@ -32,6 +33,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         bool frontEndDirty = false;
         bool stateComputeModeFullConfigurationNeeded = false;
         bool stateComputeModeDirty = false;
+        bool stateBaseAddressFullConfigurationNeeded = false;
+        bool stateBaseAddressDirty = false;
     };
 
   public:
@@ -222,6 +225,17 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                           DispatchFlags &dispatchFlags,
                                           Device &device, LinearStream &commandStreamCSR,
                                           bool force32BitAllocations, bool sshDirty, bool bindingTablePoolCommandNeeded);
+    inline void programStateBaseAddressCommon(const IndirectHeap *dsh,
+                                              const IndirectHeap *ioh,
+                                              const IndirectHeap *ssh,
+                                              StateBaseAddressProperties *sbaProperties,
+                                              uint64_t generalStateBaseAddress,
+                                              uint64_t indirectObjectStateBaseAddress,
+                                              PipelineSelectArgs &pipelineSelectArgs,
+                                              Device &device,
+                                              LinearStream &csrCommandStream,
+                                              bool dispatchBindingTableCommand,
+                                              bool areMultipleSubDevicesInContext);
 
     inline void programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR);
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
@@ -231,6 +245,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     inline void dispatchImmediateFlushFrontEndCommand(uint64_t scratchAddress, ImmediateFlushData &flushData, Device &device, LinearStream &csrStream);
     inline void handleImmediateFlushStateComputeModeState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
     inline void dispatchImmediateFlushStateComputeModeCommand(ImmediateFlushData &flushData, LinearStream &csrStream);
+    inline void handleImmediateFlushStateBaseAddressState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device);
+    inline void dispatchImmediateFlushStateBaseAddressCommand(ImmediateFlushData &flushData, LinearStream &csrStream, Device &device);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

@@ -88,6 +88,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     configurePostSyncWriteOffset();
 
     this->dcFlushSupport = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+    this->dshSupported = hwInfo.capabilityTable.supportsImages;
 }
 
 template <typename GfxFamily>
@@ -274,16 +275,19 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     flushData.pipelineSelectFullConfigurationNeeded = !getPreambleSetFlag();
     flushData.frontEndFullConfigurationNeeded = getMediaVFEStateDirty();
     flushData.stateComputeModeFullConfigurationNeeded = getStateComputeModeDirty();
+    flushData.stateBaseAddressFullConfigurationNeeded = getGSBAStateDirty();
 
     handleImmediateFlushPipelineSelectState(dispatchFlags, flushData);
     handleImmediateFlushFrontEndState(dispatchFlags, flushData);
     handleImmediateFlushStateComputeModeState(dispatchFlags, flushData);
+    handleImmediateFlushStateBaseAddressState(dispatchFlags, flushData, device);
 
     auto &csrCommandStream = getCS(flushData.estimatedSize);
 
     dispatchImmediateFlushPipelineSelectCommand(flushData, csrCommandStream);
     dispatchImmediateFlushFrontEndCommand(scratchAddress, flushData, device, csrCommandStream);
     dispatchImmediateFlushStateComputeModeCommand(flushData, csrCommandStream);
+    dispatchImmediateFlushStateBaseAddressCommand(flushData, csrCommandStream, device);
 
     CompletionStamp completionStamp = {
         this->taskCount,
@@ -1726,13 +1730,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, DispatchFlags &dispatchFlags, Device &device, LinearStream &commandStreamCSR, bool force32BitAllocations, bool sshDirty, bool bindingTablePoolCommandNeeded) {
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
-
-    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
-    bool debuggingEnabled = device.getDebugger() != nullptr;
-
-    EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, rootDeviceEnvironment, isRcs(), this->dcFlushSupport);
-    EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, rootDeviceEnvironment, isRcs());
 
     uint64_t newGshBase = 0;
     gsbaFor32BitProgrammed = false;
@@ -1744,20 +1741,52 @@ inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const 
         gsbaFor32BitProgrammed = true;
     }
 
-    auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
-    auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
     uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
 
-    STATE_BASE_ADDRESS stateBaseAddressCmd;
+    if (sshDirty) {
+        bindingTableBaseAddressRequired = bindingTablePoolCommandNeeded;
+    }
 
+    programStateBaseAddressCommon(dsh, ioh, ssh, nullptr, newGshBase, indirectObjectStateBaseAddress, dispatchFlags.pipelineSelectArgs, device, commandStreamCSR, bindingTableBaseAddressRequired, dispatchFlags.areMultipleSubDevicesInContext);
+    bindingTableBaseAddressRequired = false;
+
+    setGSBAStateDirty(false);
+    this->streamProperties.stateBaseAddress.clearIsDirty();
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
+    const IndirectHeap *dsh,
+    const IndirectHeap *ioh,
+    const IndirectHeap *ssh,
+    StateBaseAddressProperties *sbaProperties,
+    uint64_t generalStateBaseAddress,
+    uint64_t indirectObjectStateBaseAddress,
+    PipelineSelectArgs &pipelineSelectArgs,
+    Device &device,
+    LinearStream &csrCommandStream,
+    bool dispatchBindingTableCommand,
+    bool areMultipleSubDevicesInContext) {
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+
+    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
+
+    EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(csrCommandStream, rootDeviceEnvironment, isRcs(), this->dcFlushSupport);
+    EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(csrCommandStream, pipelineSelectArgs, true, rootDeviceEnvironment, isRcs());
+
+    auto stateBaseAddressCmdOffset = csrCommandStream.getUsed();
+    auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
+
+    STATE_BASE_ADDRESS stateBaseAddressCmd;
     StateBaseAddressHelperArgs<GfxFamily> args = {
-        newGshBase,                                    // generalStateBaseAddress
+        generalStateBaseAddress,                       // generalStateBaseAddress
         indirectObjectStateBaseAddress,                // indirectObjectHeapBaseAddress
         instructionHeapBaseAddress,                    // instructionHeapBaseAddress
         0,                                             // globalHeapsBaseAddress
         0,                                             // surfaceStateBaseAddress
         &stateBaseAddressCmd,                          // stateBaseAddressCmd
-        nullptr,                                       // sbaProperties
+        sbaProperties,                                 // sbaProperties
         dsh,                                           // dsh
         ioh,                                           // ioh
         ssh,                                           // ssh
@@ -1771,41 +1800,45 @@ inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const 
         false,                                         // useGlobalHeapsBaseAddress
         isMultiOsContextCapable(),                     // isMultiOsContextCapable
         this->lastSentUseGlobalAtomics,                // useGlobalAtomics
-        dispatchFlags.areMultipleSubDevicesInContext,  // areMultipleSubDevicesInContext
+        areMultipleSubDevicesInContext,                // areMultipleSubDevicesInContext
         false,                                         // overrideSurfaceStateBaseAddress
         debuggingEnabled || device.isDebuggerActive(), // isDebuggerActive
         this->doubleSbaWa                              // doubleSbaWa
     };
 
-    StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, commandStreamCSR);
+    StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, csrCommandStream);
 
     bool sbaTrackingEnabled = (debuggingEnabled && !device.getDebugger()->isLegacy());
     if (sbaTrackingEnabled) {
-        device.getL0Debugger()->programSbaAddressLoad(commandStreamCSR,
+        device.getL0Debugger()->programSbaAddressLoad(csrCommandStream,
                                                       device.getL0Debugger()->getSbaTrackingBuffer(this->getOsContext().getContextId())->getGpuAddress());
     }
+
     NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
                                                                                  device,
-                                                                                 commandStreamCSR,
+                                                                                 csrCommandStream,
                                                                                  stateBaseAddressCmd, true);
 
-    if (sshDirty) {
-        bindingTableBaseAddressRequired = bindingTablePoolCommandNeeded;
+    if (dispatchBindingTableCommand) {
+        uint64_t bindingTableBaseAddress = 0;
+        uint32_t bindingTableSize = 0;
+        if (sbaProperties) {
+            bindingTableBaseAddress = static_cast<uint64_t>(sbaProperties->bindingTablePoolBaseAddress.value);
+            bindingTableSize = static_cast<uint32_t>(sbaProperties->bindingTablePoolSize.value);
+        } else {
+            UNRECOVERABLE_IF(!ssh);
+            bindingTableBaseAddress = ssh->getHeapGpuBase();
+            bindingTableSize = ssh->getHeapSizeInPages();
+        }
+        StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(csrCommandStream, bindingTableBaseAddress, bindingTableSize, device.getGmmHelper());
     }
 
-    if (bindingTableBaseAddressRequired) {
-        StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStreamCSR, *ssh, device.getGmmHelper());
-        bindingTableBaseAddressRequired = false;
-    }
-
-    EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, rootDeviceEnvironment, isRcs());
+    EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(csrCommandStream, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs());
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-        collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGshBase,
+        collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, generalStateBaseAddress,
                                         device.getDeviceInfo().imageSupport);
     }
-    setGSBAStateDirty(false);
-    this->streamProperties.stateBaseAddress.clearIsDirty();
 }
 
 template <typename GfxFamily>
@@ -1836,18 +1869,18 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushPipelineSelectState
     if (flushData.pipelineSelectDirty) {
         flushData.estimatedSize += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment());
     }
+
+    flushData.pipelineSelectArgs = {
+        this->streamProperties.pipelineSelect.systolicMode.value == 1,
+        false,
+        false,
+        this->pipelineSupportFlags.systolicMode};
 }
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushPipelineSelectCommand(ImmediateFlushData &flushData, LinearStream &csrStream) {
     if (flushData.pipelineSelectDirty) {
-        PipelineSelectArgs psDispatchArgs = {
-            this->streamProperties.pipelineSelect.systolicMode.value == 1,
-            false,
-            false,
-            this->pipelineSupportFlags.systolicMode};
-
-        PreambleHelper<GfxFamily>::programPipelineSelect(&csrStream, psDispatchArgs, peekRootDeviceEnvironment());
+        PreambleHelper<GfxFamily>::programPipelineSelect(&csrStream, flushData.pipelineSelectArgs, peekRootDeviceEnvironment());
         this->streamProperties.pipelineSelect.clearIsDirty();
     }
 }
@@ -1905,16 +1938,43 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStateComputeModeSta
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushStateComputeModeCommand(ImmediateFlushData &flushData, LinearStream &csrStream) {
     if (flushData.stateComputeModeDirty) {
-        PipelineSelectArgs pipelineSelectArgs = {
-            this->streamProperties.pipelineSelect.systolicMode.value == 1,
-            false,
-            false,
-            this->pipelineSupportFlags.systolicMode};
-
-        EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(csrStream, this->streamProperties.stateComputeMode, pipelineSelectArgs,
+        EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(csrStream, this->streamProperties.stateComputeMode,
+                                                                                   flushData.pipelineSelectArgs,
                                                                                    false, peekRootDeviceEnvironment(), isRcs(),
                                                                                    getDcFlushSupport(), nullptr);
         this->streamProperties.stateComputeMode.clearIsDirty();
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStateBaseAddressState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device) {
+    if (flushData.stateBaseAddressFullConfigurationNeeded) {
+        this->streamProperties.stateBaseAddress.copyPropertiesAll(dispatchFlags.requiredState->stateBaseAddress);
+        flushData.stateBaseAddressDirty = true;
+        setGSBAStateDirty(false);
+    } else {
+        this->streamProperties.stateBaseAddress.copyPropertiesStatelessMocs(dispatchFlags.requiredState->stateBaseAddress);
+        if (globalStatelessHeapAllocation == nullptr) {
+            if (this->dshSupported) {
+                this->streamProperties.stateBaseAddress.copyPropertiesDynamicState(dispatchFlags.requiredState->stateBaseAddress);
+            }
+            this->streamProperties.stateBaseAddress.copyPropertiesBindingTableSurfaceState(dispatchFlags.requiredState->stateBaseAddress);
+        }
+        flushData.stateBaseAddressDirty = this->streamProperties.stateBaseAddress.isDirty();
+    }
+
+    if (flushData.stateBaseAddressDirty) {
+        flushData.estimatedSize += getRequiredStateBaseAddressSize(device);
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushStateBaseAddressCommand(ImmediateFlushData &flushData, LinearStream &csrStream, Device &device) {
+    if (flushData.stateBaseAddressDirty) {
+        bool btCommandNeeded = this->streamProperties.stateBaseAddress.bindingTablePoolBaseAddress.value != StreamProperty64::initValue;
+        programStateBaseAddressCommon(nullptr, nullptr, nullptr, &this->streamProperties.stateBaseAddress,
+                                      0, 0, flushData.pipelineSelectArgs, device, csrStream, btCommandNeeded, device.getNumGenericSubDevices() > 1);
+        this->streamProperties.stateBaseAddress.clearIsDirty();
     }
 }
 
