@@ -1291,9 +1291,9 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
     alignedFree(alloc);
 }
 
-HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEnabledThenHeapContainerIsEmpty, IsAtLeastSkl) {
+HWTEST2_F(ExecuteCommandListTests, givenBindlessHelperWhenCommandListIsExecutedOnCommandQueueThenHeapContainerIsEmpty, IsAtLeastSkl) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     ze_command_queue_desc_t desc = {};
@@ -1310,6 +1310,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEn
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
     EXPECT_EQ(commandQueue->mockHeapContainer.size(), 0u);
+    EXPECT_EQ(commandQueue->heapContainer.size(), 0u);
+
     commandQueue->destroy();
     commandList->destroy();
 }

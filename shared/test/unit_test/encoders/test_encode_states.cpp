@@ -74,7 +74,7 @@ using BindlessCommandEncodeStatesTest = Test<BindlessCommandEncodeStatesFixture>
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWithoutAlphaThenBorderColorPtrReturned) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
@@ -96,7 +96,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWithAlphaThenBorderColorPtrOffseted) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
@@ -119,7 +119,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRedChanelIsNotZeroThenExceptionThrown) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
@@ -138,7 +138,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRe
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGreenChanelIsNotZeroThenExceptionThrown) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
@@ -157,7 +157,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGr
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBlueChanelIsNotZeroThenExceptionThrown) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
@@ -175,7 +175,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBl
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAlphaChanelIsNotZeroOrOneThenExceptionThrown) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),

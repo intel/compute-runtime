@@ -777,13 +777,29 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
 
 typedef Test<KernelArgBufferFixtureBindless> KernelArgBufferTestBindless;
 
-HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenSettingKernelArgThenOffsetInCrossThreadDataIsNotPatched) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));
     *patchLocation = 0xdead;
 
     cl_mem memObj = pBuffer;
     retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
+
+    EXPECT_EQ(0xdeadu, *patchLocation);
+}
+
+HWTEST_F(KernelArgBufferTestBindless, givenBindlessBuffersWhenPatchBindlessOffsetCalledThenBindlessOffsetToSurfaceStateWrittenInCrossThreadData) {
+
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pClDevice->getMemoryManager(),
+                                                                                                                             pClDevice->getNumGenericSubDevices() > 1,
+                                                                                                                             pClDevice->getRootDeviceIndex(),
+                                                                                                                             pClDevice->getDeviceBitfield());
+
+    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));
+    *patchLocation = 0xdead;
+
+    pKernel->patchBindlessSurfaceState(pBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()), bindlessOffset);
 
     EXPECT_NE(0xdeadu, *patchLocation);
 }

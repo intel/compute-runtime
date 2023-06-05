@@ -1454,9 +1454,11 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
-TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithBindlessModeEnabledThenOnlyOneHeapFilled) {
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithGlobalSshEnabledThenTwoHeapsFilled) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     auto cmdContainer = std::make_unique<CommandContainer>();
     AllocationsList allocList;
@@ -1467,10 +1469,10 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 
     EXPECT_TRUE(reusableHeapsList.peekIsEmpty());
 
-    DebugManager.flags.UseBindlessMode.set(true);
     cmdContainer->fillReusableAllocationLists();
     EXPECT_FALSE(reusableHeapsList.peekIsEmpty());
-    EXPECT_EQ(reusableHeapsList.peekHead()->countThisAndAllConnected(), 1u);
+    auto expectedHeapCount = hardwareInfo.capabilityTable.supportsImages ? 2u : 1u;
+    EXPECT_EQ(reusableHeapsList.peekHead()->countThisAndAllConnected(), expectedHeapCount);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);

@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_helper.h"
@@ -120,10 +121,12 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
             }
 
             size_t heapSize = getHeapSize(heapType);
+
             allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
                                                                        heapSize,
                                                                        defaultHeapAllocationAlignment,
                                                                        device->getRootDeviceIndex());
+
             if (!allocationIndirectHeaps[i]) {
                 return ErrorCode::OUT_OF_DEVICE_MEMORY;
             }
@@ -557,7 +560,7 @@ bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
     }
     const auto &hardwareInfo = this->device->getHardwareInfo();
 
-    bool skipCreation = NEO::ApiSpecificConfig::getBindlessMode() ||
+    bool skipCreation = (NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration() && IndirectHeap::Type::SURFACE_STATE == heapType) ||
                         this->immediateCmdListSharedHeap(heapType) ||
                         (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) ||
                         (this->heapAddressModel != HeapAddressModel::PrivateHeaps);

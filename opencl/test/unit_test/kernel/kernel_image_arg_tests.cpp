@@ -358,6 +358,7 @@ class KernelImageArgTestBindless : public KernelImageArgTest {
   public:
     void SetUp() override {
         DebugManager.flags.UseBindlessMode.set(1);
+        DebugManager.flags.UseBindlessMode.set(1);
         KernelImageArgTest::SetUp();
 
         auto &img = pKernelInfo->argAsImg(0);
@@ -368,10 +369,10 @@ class KernelImageArgTestBindless : public KernelImageArgTest {
         KernelImageArgTest::TearDown();
     }
     DebugManagerStateRestore restorer;
-    const CrossThreadDataOffset bindlessOffset = 0x10;
+    const CrossThreadDataOffset bindlessOffset = 0x0;
 };
 
-HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenSettingKernelArgThenOffsetInCrossThreadDataIsNotPatched) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));
     *patchLocation = 0xdead;
@@ -379,5 +380,5 @@ HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenPatchingSurfaceS
     cl_mem memObj = image.get();
     pKernel->setArg(0, sizeof(memObj), &memObj);
 
-    EXPECT_NE(0xdeadu, *patchLocation);
+    EXPECT_EQ(0xdeadu, *patchLocation);
 }

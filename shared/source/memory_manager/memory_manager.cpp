@@ -244,7 +244,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     if (!gfxAllocation) {
         return;
     }
-    if (ApiSpecificConfig::getBindlessMode() && executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr) {
+    if (ApiSpecificConfig::getGlobalBindlessHeapConfiguration() && executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr) {
         executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper()->placeSSAllocationInReuseVectorOnFreeMemory(gfxAllocation);
     }
     const bool hasFragments = gfxAllocation->fragmentsStorage.fragmentCount != 0;

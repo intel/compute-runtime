@@ -44,7 +44,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     if (streamProperties != nullptr) {
         sbaProperties = &streamProperties->stateBaseAddress;
     } else {
-        useGlobalSshAndDsh = NEO::ApiSpecificConfig::getBindlessMode();
+        useGlobalSshAndDsh = NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration();
         if (useGlobalSshAndDsh) {
             globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
         }

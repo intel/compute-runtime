@@ -54,7 +54,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 
     dsh->align(EncodeStates<Family>::alignIndirectStatePointer);
     uint32_t borderColorOffsetInDsh = 0;
-    if (!ApiSpecificConfig::getBindlessMode()) {
+    if (!ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
         borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
         auto borderColor = dsh->getSpace(borderColorSize);
 
@@ -544,21 +544,17 @@ template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset) {
 
     if (container.nextIddInBlockRef() == container.getNumIddPerBlock()) {
-        if (ApiSpecificConfig::getBindlessMode()) {
-            container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
-            container.setIddBlock(container.getDevice()->getBindlessHeapsHelper()->getSpaceInHeap(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock(), BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH));
+
+        void *heapPointer = nullptr;
+        size_t heapSize = sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock();
+        if (childDsh != nullptr) {
+            childDsh->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+            heapPointer = childDsh->getSpace(heapSize);
         } else {
-            void *heapPointer = nullptr;
-            size_t heapSize = sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock();
-            if (childDsh != nullptr) {
-                childDsh->align(EncodeStates<Family>::alignInterfaceDescriptorData);
-                heapPointer = childDsh->getSpace(heapSize);
-            } else {
-                container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
-                heapPointer = container.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, heapSize);
-            }
-            container.setIddBlock(heapPointer);
+            container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+            heapPointer = container.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, heapSize);
         }
+        container.setIddBlock(heapPointer);
         container.nextIddInBlockRef() = 0;
     }
 

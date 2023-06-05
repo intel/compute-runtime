@@ -28,12 +28,11 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     uint32_t rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
     auto csr = this->getCsr();
-    bool dispatchCommand = false;
     bool multiOsContextCapable = device->isImplicitScalingCapable();
     bool isRcs = csr->isRcs();
     auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
     bool setGeneralStateBaseAddress = false;
-    bool useGlobalHeapsBaseAddress = false;
+    bool useGlobalSshAndDsh = false;
 
     uint64_t globalHeapsBase = 0;
     uint64_t indirectObjectStateBaseAddress = 0;
@@ -45,20 +44,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     auto l1CachePolicyData = csr->getStoredL1CachePolicy();
 
     if (streamProperties != nullptr) {
-        dispatchCommand = true;
         sbaProperties = &streamProperties->stateBaseAddress;
-    } else {
-        if (NEO::ApiSpecificConfig::getBindlessMode()) {
-            globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
-            indirectObjectStateBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, useLocalMemoryForIndirectHeap);
 
-            dispatchCommand = true;
-            setGeneralStateBaseAddress = true;
-            useGlobalHeapsBaseAddress = true;
-        }
-    }
-
-    if (dispatchCommand) {
         auto gmmHelper = neoDevice->getGmmHelper();
         NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, neoDevice->getRootDeviceEnvironment(), isRcs, csr->getDcFlushSupport());
 
@@ -81,7 +68,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
             true,                                             // setInstructionStateBaseAddress
             setGeneralStateBaseAddress,                       // setGeneralStateBaseAddress
-            useGlobalHeapsBaseAddress,                        // useGlobalHeapsBaseAddress
+            useGlobalSshAndDsh,                               // useGlobalHeapsBaseAddress
             multiOsContextCapable,                            // isMultiOsContextCapable
             false,                                            // useGlobalAtomics
             false,                                            // areMultipleSubDevicesInContext
@@ -97,19 +84,11 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                                      commandStream,
                                                                                      sbaCmd, true);
 
-        if (sbaProperties) {
-            if (sbaProperties->bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue) {
-                NEO::StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(
-                    commandStream,
-                    static_cast<uint64_t>(sbaProperties->bindingTablePoolBaseAddress.value),
-                    static_cast<uint32_t>(sbaProperties->bindingTablePoolSize.value),
-                    gmmHelper);
-            }
-        } else {
-            auto heap = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::GLOBAL_SSH);
+        if (sbaProperties->bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue) {
             NEO::StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(
                 commandStream,
-                *heap,
+                static_cast<uint64_t>(sbaProperties->bindingTablePoolBaseAddress.value),
+                static_cast<uint32_t>(sbaProperties->bindingTablePoolSize.value),
                 gmmHelper);
         }
     }
@@ -136,9 +115,6 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatch
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
-    if (NEO::ApiSpecificConfig::getBindlessMode()) {
-        return estimateStateBaseAddressCmdDispatchSize(true);
-    }
     return 0;
 }
 
@@ -160,7 +136,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
             scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                             csr->getOsContext(), gsbaState, frontEndState);
         }
-        if (NEO::ApiSpecificConfig::getBindlessMode()) {
+        if (NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
             scratchController->programBindlessSurfaceStateForScratch(device->getNEODevice()->getBindlessHeapsHelper(), perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                                                      csr->getOsContext(), gsbaState, frontEndState, csr);
         }

@@ -157,10 +157,10 @@ HWTEST2_F(CommandQueueProgramSBATest, whenProgrammingStateBaseAddressWithStatele
 }
 
 HWTEST2_F(CommandQueueProgramSBATest,
-          givenBindlessModeEnabledWhenProgrammingStateBaseAddressThenBindlessBaseAddressAndSizeAreSet, IsAtLeastSkl) {
+          givenGlobalSshWhenProgrammingStateBaseAddressThenBindlessBaseAddressAndSizeAreSet, CommandQueueSBASupport) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
@@ -1021,18 +1021,14 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueTest, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledThenReturnedSizeOfSBAAndPCAnd3DBindingTablePoolPool, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueTest, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledThenZeroSizeIsReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr.get(), &desc);
     auto size = commandQueue->estimateStateBaseAddressCmdSize();
-    auto expectedSize = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+    auto expectedSize = 0u;
     EXPECT_EQ(size, expectedSize);
 }
 

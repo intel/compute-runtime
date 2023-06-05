@@ -124,14 +124,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
         auto dsHeap = args.dynamicStateHeap;
         if (dsHeap == nullptr) {
-            if (!ApiSpecificConfig::getBindlessMode()) {
-                dsHeap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
-                auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor, container.getNumIddPerBlock());
-                if (dsHeap->getAvailableSpace() <= dshSizeRequired) {
-                    dsHeap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dsHeap->getMaxAvailableSpace(), NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
-                }
-            } else {
-                dsHeap = args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH);
+            dsHeap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+            auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor, container.getNumIddPerBlock());
+            if (dsHeap->getAvailableSpace() <= dshSizeRequired) {
+                dsHeap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dsHeap->getMaxAvailableSpace(), NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
             }
         }
         UNRECOVERABLE_IF(!dsHeap);
@@ -259,10 +255,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     cmd.setPredicateEnable(args.isPredicate);
 
-    if (ApiSpecificConfig::getBindlessMode()) {
-        container.getResidencyContainer().push_back(args.device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
-    }
-
     auto threadGroupCount = cmd.getThreadGroupIdXDimension() * cmd.getThreadGroupIdYDimension() * cmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, *args.device, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, cmd);
 
@@ -304,21 +296,13 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
     if (childDsh != nullptr) {
         heapBase = childDsh->getCpuBase();
     } else {
-        if (ApiSpecificConfig::getBindlessMode()) {
-            heapBase = container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getUnderlyingBuffer();
-        } else {
-            heapBase = container.getIndirectHeap(HeapType::DYNAMIC_STATE)->getCpuBase();
-        }
+        heapBase = container.getIndirectHeap(HeapType::DYNAMIC_STATE)->getCpuBase();
     }
 
     auto mediaStateFlush = container.getCommandStream()->getSpaceForCmd<MEDIA_STATE_FLUSH>();
     *mediaStateFlush = Family::cmdInitMediaStateFlush;
 
     auto iddOffset = static_cast<uint32_t>(ptrDiff(container.getIddBlock(), heapBase));
-
-    iddOffset += ApiSpecificConfig::getBindlessMode() ? static_cast<uint32_t>(container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getGpuAddress() -
-                                                                              container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getGpuBaseAddress())
-                                                      : 0;
 
     MEDIA_INTERFACE_DESCRIPTOR_LOAD cmd = Family::cmdInitMediaInterfaceDescriptorLoad;
     cmd.setInterfaceDescriptorDataStartAddress(iddOffset);

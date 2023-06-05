@@ -150,25 +150,20 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
     NEO::IndirectHeap *dsh = nullptr;
     NEO::IndirectHeap *ssh = nullptr;
 
-    if (!NEO::ApiSpecificConfig::getBindlessMode()) {
-        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
-            ssh = this->csr->getGlobalStatelessHeap();
-        } else if (this->immediateCmdListHeapSharing) {
-            auto &sshReserveConfig = this->commandContainer.getSurfaceStateHeapReserve();
-            if (sshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
-                ssh = sshReserveConfig.indirectHeapReservation;
-            }
-            auto &dshReserveConfig = this->commandContainer.getDynamicStateHeapReserve();
-            if (this->dynamicHeapRequired && dshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
-                dsh = dshReserveConfig.indirectHeapReservation;
-            }
-        } else {
-            dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
-            ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+        ssh = this->csr->getGlobalStatelessHeap();
+    } else if (this->immediateCmdListHeapSharing) {
+        auto &sshReserveConfig = this->commandContainer.getSurfaceStateHeapReserve();
+        if (sshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
+            ssh = sshReserveConfig.indirectHeapReservation;
+        }
+        auto &dshReserveConfig = this->commandContainer.getDynamicStateHeapReserve();
+        if (this->dynamicHeapRequired && dshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
+            dsh = dshReserveConfig.indirectHeapReservation;
         }
     } else {
-        dsh = this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
-        ssh = this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+        dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
+        ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
     }
 
     if (this->device->getL0Debugger()) {

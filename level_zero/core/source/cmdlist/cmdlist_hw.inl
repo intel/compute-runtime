@@ -81,7 +81,7 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
-    if (!NEO::ApiSpecificConfig::getBindlessMode() && !this->stateBaseAddressTracking) {
+    if (!this->stateBaseAddressTracking) {
         if (!this->isFlushTaskSubmissionEnabled) {
             programStateBaseAddress(commandContainer, false);
         }

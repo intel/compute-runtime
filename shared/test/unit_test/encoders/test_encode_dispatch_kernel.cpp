@@ -1290,6 +1290,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
     using WALKER = typename FamilyType::WALKER_TYPE;
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
@@ -1300,18 +1301,12 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
                                                                                                                          pDevice->getRootDeviceIndex(),
                                                                                                                          pDevice->getDeviceBitfield());
     uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
-
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
     dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
-
-    const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
-    dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);
-    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
 
     bool requiresUncachedMocs = false;
     EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
@@ -1322,47 +1317,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
     EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
 }
 
-HWTEST2_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindlessModeEnabledWhenEncodingKernelThenCmdContainerResidencyContainsGlobalDSH, IsAtMostGen12lp) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER = typename FamilyType::WALKER_TYPE;
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
-    auto commandContainer = std::make_unique<CommandContainer>();
-    commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    commandContainer->setDirtyStateForAllHeaps(false);
-    commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
-    uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
-
-    uint32_t dims[] = {1, 1, 1};
-    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
-    dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
-
-    const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
-    dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);
-    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
-
-    bool requiresUncachedMocs = false;
-    EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
-    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dispatchArgs, nullptr);
-
-    auto globalDSHIterator = std::find(commandContainer->getResidencyContainer().begin(), commandContainer->getResidencyContainer().end(),
-                                       pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation());
-
-    EXPECT_NE(commandContainer->getResidencyContainer().end(), globalDSHIterator);
-}
-
-HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindlessModeEnabledThenCmdContainerHaveSsh) {
+HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindlessModeEnabledThenCmdContainerHasSsh) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER = typename FamilyType::WALKER_TYPE;
@@ -1391,161 +1346,12 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindles
     dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
 
     bool requiresUncachedMocs = false;
-    EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
+    EXPECT_NE(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
     EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dispatchArgs, nullptr);
 
     EXPECT_NE(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
-}
-
-HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessModeEnabledWhenDispatchingTwoBindfulKernelsThenItuseTheSameSsh) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER = typename FamilyType::WALKER_TYPE;
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
-    auto commandContainer = std::make_unique<CommandContainer>();
-    commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    commandContainer->setDirtyStateForAllHeaps(false);
-    commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
-    uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
-
-    uint32_t dims[] = {1, 1, 1};
-    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
-    dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
-
-    const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
-    dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);
-    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
-
-    bool requiresUncachedMocs = false;
-    EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
-    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dispatchArgs, nullptr);
-
-    auto sshBefore = commandContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dispatchArgs, nullptr);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dispatchArgs, nullptr);
-    auto sshAfter = commandContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dispatchArgs, nullptr);
-    EXPECT_EQ(sshBefore, sshAfter);
-}
-
-HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchingKernelWithSamplerThenGlobalDshInResidencyContainer) {
-    bool deviceUsesDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
-    if (!deviceUsesDsh) {
-        GTEST_SKIP();
-    }
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
-    cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    cmdContainer->setDirtyStateForAllHeaps(false);
-    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    uint32_t numSamplers = 1;
-    SAMPLER_BORDER_COLOR_STATE samplerState;
-    samplerState.init();
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
-
-    uint32_t dims[] = {2, 1, 1};
-    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-
-    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
-    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0U;
-    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0U;
-    const uint8_t *dshData = reinterpret_cast<uint8_t *>(&samplerState);
-    dispatchInterface->getDynamicStateHeapDataResult = const_cast<uint8_t *>(dshData);
-
-    bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        nullptr,
-        nullptr,
-        dims,
-        nullptr,
-        NEO::PreemptionMode::Disabled,
-        0,
-        0,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false};
-
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
-
-    EXPECT_NE(std::find(cmdContainer->getResidencyContainer().begin(), cmdContainer->getResidencyContainer().end(), pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()), cmdContainer->getResidencyContainer().end());
-}
-
-HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSamplerThenGlobalDshIsNotResidnecyContainer) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(0);
-    cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    uint32_t numSamplers = 1;
-    SAMPLER_STATE samplerState;
-    memset(&samplerState, 2, sizeof(SAMPLER_STATE));
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
-
-    uint32_t dims[] = {2, 1, 1};
-    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-
-    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
-    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0U;
-    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0U;
-    const uint8_t *dshData = reinterpret_cast<uint8_t *>(&samplerState);
-    dispatchInterface->getDynamicStateHeapDataResult = const_cast<uint8_t *>(dshData);
-
-    bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        nullptr,
-        nullptr,
-        dims,
-        nullptr,
-        NEO::PreemptionMode::Disabled,
-        0,
-        0,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false};
-
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
-
-    EXPECT_EQ(std::find(cmdContainer->getResidencyContainer().begin(), cmdContainer->getResidencyContainer().end(), pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()), cmdContainer->getResidencyContainer().end());
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThenReturnCorrectValues) {

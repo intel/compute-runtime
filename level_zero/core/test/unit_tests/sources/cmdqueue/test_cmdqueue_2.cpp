@@ -918,7 +918,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
 
 HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenBindlessEnabledThenHandleScratchSpaceCallsProgramBindlessSurfaceStateForScratch, Platforms) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     class MockScratchSpaceControllerXeHPAndLater : public NEO::ScratchSpaceControllerXeHPAndLater {
       public:
         bool programHeapsCalled = false;

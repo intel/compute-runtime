@@ -1537,7 +1537,11 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                                    disableL3, isAuxTranslationKernel, arg.isReadOnly(), pClDevice->getDevice(),
                                    kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
         } else if (isValidOffset(argAsPtr.bindless)) {
-            buffer->setArgStateful(patchBindlessSurfaceState(graphicsAllocation, argAsPtr.bindless), forceNonAuxMode,
+            auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
+            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+            auto surfaceState = ptrOffset(getSurfaceStateHeap(), surfaceStateSize * argIndex);
+
+            buffer->setArgStateful(surfaceState, forceNonAuxMode,
                                    disableL3, isAuxTranslationKernel, arg.isReadOnly(), pClDevice->getDevice(),
                                    kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
         }
@@ -1651,7 +1655,9 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
 
         void *surfaceState = nullptr;
         if (isValidOffset(argAsImg.bindless)) {
-            surfaceState = patchBindlessSurfaceState(pImage->getGraphicsAllocation(rootDeviceIndex), argAsImg.bindless);
+            auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
+            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+            surfaceState = ptrOffset(getSurfaceStateHeap(), surfaceStateSize * argIndex);
         } else {
             DEBUG_BREAK_IF(isUndefinedOffset(argAsImg.bindful));
             surfaceState = ptrOffset(getSurfaceStateHeap(), argAsImg.bindful);

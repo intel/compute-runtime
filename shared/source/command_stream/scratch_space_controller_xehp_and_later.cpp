@@ -110,7 +110,7 @@ uint64_t ScratchSpaceControllerXeHPAndLater::calculateNewGSH() {
 uint64_t ScratchSpaceControllerXeHPAndLater::getScratchPatchAddress() {
     uint64_t scratchAddress = 0u;
     if (scratchAllocation || privateScratchAllocation) {
-        if (ApiSpecificConfig::getBindlessMode()) {
+        if (ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
             scratchAddress = bindlessSS.surfaceStateOffset;
         } else {
             scratchAddress = static_cast<uint64_t>(getOffsetToSurfaceState(slotId + sshOffset));
