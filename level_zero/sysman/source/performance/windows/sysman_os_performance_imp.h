@@ -22,6 +22,12 @@ class WddmPerformanceImp : public OsPerformance {
     WddmPerformanceImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId,
                        zes_engine_type_flag_t domain);
     ~WddmPerformanceImp() override = default;
+
+  protected:
+    ze_bool_t isSubdevice = false;
+    uint32_t subDeviceId = 0;
+    KmdSysManager *pKmdSysManager = nullptr;
+    zes_engine_type_flag_t domain = ZES_ENGINE_TYPE_FLAG_OTHER;
 };
 
 } // namespace Sysman
