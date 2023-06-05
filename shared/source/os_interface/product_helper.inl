@@ -278,14 +278,6 @@ bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const Hardw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isPrefetchDisablingRequired();
-    }
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
     return false;
 }
