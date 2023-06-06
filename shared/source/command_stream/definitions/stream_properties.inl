@@ -159,6 +159,9 @@ struct StateBaseAddressProperties {
     void copyPropertiesAll(const StateBaseAddressProperties &properties);
     void copyPropertiesStatelessMocs(const StateBaseAddressProperties &properties);
     void copyPropertiesStatelessMocsIndirectState(const StateBaseAddressProperties &properties);
+    void copyPropertiesBindingTableSurfaceState(const StateBaseAddressProperties &properties);
+    void copyPropertiesSurfaceState(const StateBaseAddressProperties &properties);
+    void copyPropertiesDynamicState(const StateBaseAddressProperties &properties);
 
     bool isDirty() const;
     void clearIsDirty();

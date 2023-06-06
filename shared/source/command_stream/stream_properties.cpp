@@ -505,6 +505,30 @@ void StateBaseAddressProperties::copyPropertiesStatelessMocsIndirectState(const 
     this->indirectObjectSize.set(properties.indirectObjectSize.value);
 }
 
+void StateBaseAddressProperties::copyPropertiesBindingTableSurfaceState(const StateBaseAddressProperties &properties) {
+    this->bindingTablePoolBaseAddress.isDirty = false;
+    this->surfaceStateBaseAddress.isDirty = false;
+
+    this->bindingTablePoolBaseAddress.set(properties.bindingTablePoolBaseAddress.value);
+    this->bindingTablePoolSize.set(properties.bindingTablePoolSize.value);
+    this->surfaceStateBaseAddress.set(properties.surfaceStateBaseAddress.value);
+    this->surfaceStateSize.set(properties.surfaceStateSize.value);
+}
+
+void StateBaseAddressProperties::copyPropertiesSurfaceState(const StateBaseAddressProperties &properties) {
+    this->surfaceStateBaseAddress.isDirty = false;
+
+    this->surfaceStateBaseAddress.set(properties.surfaceStateBaseAddress.value);
+    this->surfaceStateSize.set(properties.surfaceStateSize.value);
+}
+
+void StateBaseAddressProperties::copyPropertiesDynamicState(const StateBaseAddressProperties &properties) {
+    this->dynamicStateBaseAddress.isDirty = false;
+
+    this->dynamicStateBaseAddress.set(properties.dynamicStateBaseAddress.value);
+    this->dynamicStateSize.set(properties.dynamicStateSize.value);
+}
+
 bool StateBaseAddressProperties::isDirty() const {
     return globalAtomics.isDirty || statelessMocs.isDirty ||
            bindingTablePoolBaseAddress.isDirty ||
