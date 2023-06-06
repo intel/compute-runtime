@@ -125,7 +125,7 @@ struct CommandListCoreFamily : CommandListImp {
                                 ze_memory_advice_t advice) override;
     ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) override;
     ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                     NEO::GraphicsAllocation *srcAllocation,
                                     size_t size,
@@ -140,7 +140,7 @@ struct CommandListCoreFamily : CommandListImp {
                                        uint32_t srcSlicePitch,
                                        ze_event_handle_t hSignalEvent,
                                        uint32_t numWaitEvents,
-                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) override;
     ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) override;
     ze_result_t appendMemoryFill(void *ptr, const void *pattern,
                                  size_t patternSize, size_t size,
@@ -186,6 +186,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t executeCommandListImmediate(bool performMigration) override;
     ze_result_t executeCommandListImmediateImpl(bool performMigration, L0::CommandQueue *cmdQImmediate);
     size_t getReserveSshSize();
+    void obtainNewTimestampPacketNode();
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
@@ -322,7 +323,6 @@ struct CommandListCoreFamily : CommandListImp {
     }
     void postInitComputeSetup();
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
-    void obtainNewTimestampPacketNode();
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const { return false; }
 };
 

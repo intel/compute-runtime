@@ -376,7 +376,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
@@ -426,7 +426,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                           size, alignment, &srcPtr);
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 1u);
@@ -472,7 +472,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 1u);
@@ -517,7 +517,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, size, alignment, &srcPtr);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 1u);
@@ -569,7 +569,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                             &deviceDesc,
                             size, alignment, &dstPtr);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
@@ -625,7 +625,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     ultCsr->recordFlusheBatchBuffer = true;
     ultCsr->registerClient();
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
@@ -690,7 +690,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
@@ -748,7 +748,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(1u, ultCsr->getNumClients());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
@@ -818,7 +818,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
@@ -870,7 +870,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, size, alignment, &srcPtr);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 1u);
@@ -921,7 +921,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
     ze_copy_region_t region = {2, 1, 1, 4 * MemoryConstants::megaByte, 1, 1};
 
-    auto result = commandList0->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
@@ -985,7 +985,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
@@ -1048,7 +1048,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     *whiteBoxCmdList->csr->getBarrierCountTagAddress() = 0u;
     whiteBoxCmdList->csr->getNextBarrierCount();
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
@@ -1122,7 +1122,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     std::unique_ptr<EventPool> eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     std::unique_ptr<Event> event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
-    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, false);
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);

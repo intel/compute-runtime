@@ -15,11 +15,14 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -738,6 +741,8 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
 
         cmdList->engineGroupType = EngineGroupType::Copy;
 
+        mockCopyOsContext = std::make_unique<NEO::MockOsContext>(0, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, DeviceBitfield(1)));
+        cmdList->csr->setupContext(*mockCopyOsContext);
         return cmdList;
     }
 
@@ -754,6 +759,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     }
 
     DebugManagerStateRestore restorer;
+    std::unique_ptr<NEO::MockOsContext> mockCopyOsContext;
 
     uint32_t createdCmdLists = 0;
     std::vector<std::unique_ptr<MockEvent>> events;
@@ -1236,7 +1242,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDon
     auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, offset);
 
-    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, false);
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -1270,10 +1276,10 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyThenSi
 
     uint32_t copyData = 0;
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
 
     auto offset = cmdStream->getUsed();
-    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -1311,10 +1317,10 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyRegion
     uint32_t copyData = 0;
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
 
-    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false);
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
 
     auto offset = cmdStream->getUsed();
-    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false);
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -1350,12 +1356,12 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCopyRegionThenObta
     uint32_t copyData = 0;
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
 
-    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false);
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
 
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(0u, immCmdList->deferredTimestampPackets->peekNodes().size());
 
-    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false);
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
 
     EXPECT_EQ(1u, immCmdList->timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(1u, immCmdList->deferredTimestampPackets->peekNodes().size());
@@ -1564,7 +1570,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, 
 
     uint32_t hostCopyData = 0;
 
-    immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 1, &eventHandle, false);
+    immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 1, &eventHandle, false, false);
 
     auto node = getLatestTsNode<gfxCoreFamily>(immCmdList.get());
 
@@ -1594,7 +1600,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathT
 
     ultCsr->forceReturnGpuHang = true;
 
-    auto status = immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, false);
+    auto status = immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, status);
 
     ultCsr->forceReturnGpuHang = false;
@@ -1615,7 +1621,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithout
     auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, offset);
 
-    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, false);
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -1664,7 +1670,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithEve
     auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, offset);
 
-    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, eventHandle, 0, nullptr, false);
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, eventHandle, 0, nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -1920,6 +1926,126 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
     offset += events[0]->getSinglePacketSize();
     EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
     EXPECT_EQ(eventEndGpuVa + offset, semaphoreCmd->getSemaphoreGraphicsAddress());
+}
+
+struct BcsSplitInOrderCmdListTests : public InOrderCmdListTests {
+    void SetUp() override {
+        NEO::DebugManager.flags.SplitBcsCopy.set(1);
+        NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+
+        hwInfoBackup = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        defaultHwInfo->featureTable.ftrBcsInfo = 0b111111111;
+
+        InOrderCmdListTests::SetUp();
+    }
+
+    bool verifySplit(uint64_t expectedTaskCount) {
+        auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
+
+        for (uint32_t i = 0; i < 4; i++) {
+            if (static_cast<CommandQueueImp *>(bcsSplit.cmdQs[0])->getTaskCount() != expectedTaskCount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createBcsSplitImmCmdList() {
+        auto cmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+        auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
+
+        ze_command_queue_desc_t desc = {};
+        desc.ordinal = static_cast<uint32_t>(device->getNEODevice()->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::Copy));
+
+        cmdList->isBcsSplitNeeded = bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, &desc, cmdList->csr);
+        cmdList->isFlushTaskSubmissionEnabled = false;
+
+        return cmdList;
+    }
+
+    std::unique_ptr<VariableBackup<HardwareInfo>> hwInfoBackup;
+};
+
+HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyThenHandleInOrderSignaling, IsAtLeastXeHpcCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createBcsSplitImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    uint32_t copyData = 0;
+    constexpr size_t copySize = 8 * MemoryConstants::megaByte;
+
+    EXPECT_TRUE(verifySplit(0));
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+
+    EXPECT_TRUE(verifySplit(1));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphoreItor);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    ASSERT_NE(nullptr, sdiCmd);
+
+    auto node = getLatestTsNode(immCmdList.get());
+    uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
+
+    EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(0u, sdiCmd->getDataDword0());
+}
+
+HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRegionThenHandleInOrderSignaling, IsAtLeastXeHpcCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createBcsSplitImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    uint32_t copyData = 0;
+    constexpr size_t copySize = 8 * MemoryConstants::megaByte;
+
+    EXPECT_TRUE(verifySplit(0));
+
+    ze_copy_region_t region = {0, 0, 0, copySize, 1, 1};
+
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
+
+    EXPECT_TRUE(verifySplit(1));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphoreItor);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    ASSERT_NE(nullptr, sdiCmd);
+
+    auto node = getLatestTsNode(immCmdList.get());
+    uint64_t nodeGpuVa = node->getGpuAddress() + node->getContextEndOffset();
+
+    EXPECT_EQ(nodeGpuVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(0u, sdiCmd->getDataDword0());
 }
 
 struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {

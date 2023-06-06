@@ -128,6 +128,11 @@ struct BcsSplit {
         }
         cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], false, true);
 
+        if (cmdList->isInOrderExecutionEnabled()) {
+            cmdList->obtainNewTimestampPacketNode();
+            cmdList->appendSignalInOrderDependencyTimestampPacket();
+        }
+
         return result;
     }
 

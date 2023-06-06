@@ -180,7 +180,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledWithNullDstPtrT
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = nullptr;
-    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false);
+    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
@@ -190,7 +190,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledWithNullSrcPtrT
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = nullptr;
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false);
+    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
@@ -200,7 +200,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledWithNullSrcPtrA
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = nullptr;
     void *dstPtr = nullptr;
-    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false);
+    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
@@ -212,7 +212,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullS
     void *dstPtr = nullptr;
     ze_copy_region_t dstRegion = {};
     ze_copy_region_t srcRegion = {};
-    ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
@@ -224,7 +224,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullS
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {};
     ze_copy_region_t srcRegion = {};
-    ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
@@ -236,7 +236,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullD
     void *dstPtr = nullptr;
     ze_copy_region_t dstRegion = {};
     ze_copy_region_t srcRegion = {};
-    ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
@@ -271,7 +271,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledThenAppendMemor
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false);
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.appendMemoryCopyKernelWithGACalledTimes, 0u);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
 }
@@ -281,7 +281,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GByteMemoryCopyCalledThenAppen
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x100001234);
-    cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x100000000, nullptr, 0, nullptr, false);
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x100000000, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.appendMemoryCopyKernelWithGACalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 0u);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
@@ -292,7 +292,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledThenAppendMemor
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false);
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
 }
@@ -304,7 +304,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledThenAppen
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {};
     ze_copy_region_t srcRegion = {};
-    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_GT(cmdList.appendMemoryCopyBlitRegionCalledTimes, 0u);
 }
 
@@ -536,7 +536,7 @@ HWTEST2_F(CommandListAppend, givenCommandListAnd3DWhbufferenMemoryCopyRegionCall
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
-    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitRegionCalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyKernel3dCalledTimes, 0u);
 }
@@ -548,7 +548,7 @@ HWTEST2_F(CommandListAppend, givenCommandListAnd2DWhbufferenMemoryCopyRegionCall
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
     ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
-    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitRegionCalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyKernel2dCalledTimes, 0u);
 }
@@ -564,7 +564,7 @@ HWTEST2_F(CommandListAppend, givenImmediateCommandListWithFlushTaskEnabledWhenAp
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
-    auto result = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    auto result = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -612,9 +612,9 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventsThenS
     auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     events.push_back(event1.get());
 
-    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 2, events.data(), false);
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 2, events.data(), false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 2, events.data(), false);
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 2, events.data(), false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -656,7 +656,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeS
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
-    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, event.get(), 0, nullptr, false);
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, event.get(), 0, nullptr, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -698,7 +698,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeS
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
-    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, event.get(), 0, nullptr, false);
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, event.get(), 0, nullptr, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -1270,7 +1270,7 @@ HWTEST2_F(CommandListCreate, givenZeroAsPitchAndSlicePitchWhenMemoryCopyRegionCa
     ze_copy_region_t srcRegion = dstRegion;
     uint32_t pitch = 0;
     uint32_t slicePitch = 0;
-    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, pitch, slicePitch, srcPtr, &srcRegion, pitch, slicePitch, nullptr, 0, nullptr, false);
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, pitch, slicePitch, srcPtr, &srcRegion, pitch, slicePitch, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(cmdList.dstSize.x, dstRegion.width + dstRegion.originX);
     EXPECT_EQ(cmdList.dstSize.y, dstRegion.height + dstRegion.originY);
     EXPECT_EQ(cmdList.dstSize.z, dstRegion.depth + dstRegion.originZ);
@@ -1289,7 +1289,7 @@ HWTEST2_F(CommandListCreate, givenPitchAndSlicePitchWhenMemoryCopyRegionCalledTh
     ze_copy_region_t srcRegion = dstRegion;
     uint32_t pitch = 0x1000;
     uint32_t slicePitch = 0x100000;
-    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, pitch, slicePitch, srcPtr, &srcRegion, pitch, slicePitch, nullptr, 0, nullptr, false);
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, pitch, slicePitch, srcPtr, &srcRegion, pitch, slicePitch, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(cmdList.dstSize.x, pitch);
     EXPECT_EQ(cmdList.dstSize.y, slicePitch / pitch);
 
@@ -1352,7 +1352,7 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
     auto result = commandList->appendMemoryCopy(dstPtr,
                                                 srcPtr,
                                                 size,
-                                                nullptr, 0, nullptr, false);
+                                                nullptr, 0, nullptr, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto secondBatchBufferAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
@@ -1593,7 +1593,7 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCopyCommandLi
     auto &cmdListStream = *cmdContainerCopy.getCommandStream();
     auto firstCmdBufferAllocation = cmdContainerCopy.getCmdBufferAllocations()[0];
 
-    returnValue = commandListCopy->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    returnValue = commandListCopy->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     size_t firstCmdBufferUsed = cmdListStream.getUsed();

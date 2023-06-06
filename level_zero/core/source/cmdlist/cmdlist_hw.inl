@@ -1220,7 +1220,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    size_t size,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
-                                                                   ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                   ze_event_handle_t *phWaitEvents,
+                                                                   bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) {
+    const bool inOrderCopyOnlySignalingAllowed = this->inOrderExecutionEnabled && !forceDisableCopyOnlyInOrderSignaling;
+
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -1360,7 +1363,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
 
-    if (this->inOrderExecutionEnabled && (launchParams.isKernelSplitOperation || isCopyOnly())) {
+    if (this->inOrderExecutionEnabled && (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed)) {
         obtainNewTimestampPacketNode();
 
         if (!signalEvent && !isCopyOnly()) {
@@ -1392,7 +1395,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                                                          uint32_t srcSlicePitch,
                                                                          ze_event_handle_t hSignalEvent,
                                                                          uint32_t numWaitEvents,
-                                                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch,
+                                                                         bool forceDisableCopyOnlyInOrderSignaling) {
+
+    const bool inOrderCopyOnlySignalingAllowed = this->inOrderExecutionEnabled && !forceDisableCopyOnlyInOrderSignaling;
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
@@ -1451,7 +1457,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
 
-    if (this->inOrderExecutionEnabled && isCopyOnly()) {
+    if (this->inOrderExecutionEnabled && isCopyOnly() && inOrderCopyOnlySignalingAllowed) {
         obtainNewTimestampPacketNode();
         appendSignalInOrderDependencyTimestampPacket();
     }
@@ -2406,7 +2412,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyFromContext(
     void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
     size_t size, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
-    return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+    return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

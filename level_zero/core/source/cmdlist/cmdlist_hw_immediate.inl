@@ -393,7 +393,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     size_t size,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
@@ -417,11 +417,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     if (isSplitNeeded) {
         relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1); // split generates more than 1 event
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, relaxedOrderingDispatch, direction, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
-            return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, relaxedOrderingDispatch);
+            return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, relaxedOrderingDispatch, true);
         });
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
-                                                                     numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+                                                                     numWaitEvents, phWaitEvents, relaxedOrderingDispatch, forceDisableCopyOnlyInOrderSignaling);
     }
     return flushImmediate(ret, true, false, relaxedOrderingDispatch, hSignalEvent);
 }
@@ -438,7 +438,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     uint32_t srcSlicePitch,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     if (this->isFlushTaskSubmissionEnabled) {
@@ -463,12 +463,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
             srcRegionLocal.width = static_cast<uint32_t>(sizeParam);
             return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, &dstRegionLocal, dstPitch, dstSlicePitch,
                                                                                 srcPtr, &srcRegionLocal, srcPitch, srcSlicePitch,
-                                                                                hSignalEventParam, 0u, nullptr, relaxedOrderingDispatch);
+                                                                                hSignalEventParam, 0u, nullptr, relaxedOrderingDispatch, true);
         });
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch,
                                                                            srcPtr, srcRegion, srcPitch, srcSlicePitch,
-                                                                           hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+                                                                           hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch, forceDisableCopyOnlyInOrderSignaling);
     }
 
     return flushImmediate(ret, true, false, relaxedOrderingDispatch, hSignalEvent);
@@ -585,7 +585,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyFromC
     void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
     size_t size, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
-    return CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+    return CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

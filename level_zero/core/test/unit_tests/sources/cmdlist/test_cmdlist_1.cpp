@@ -1041,9 +1041,9 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
     verifyFlags(commandList->appendBarrier(nullptr, 0, nullptr), true, true);
 
-    verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false), false, false);
+    verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false), false, false);
 
-    verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 0, nullptr, false), false, false);
+    verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 0, nullptr, false, false), false, false);
 
     verifyFlags(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, nullptr, 0, nullptr, false), false, false);
 
@@ -1171,10 +1171,10 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
         verifyFlags(commandList->appendBarrier(nullptr, numWaitlistEvents, waitlist),
                     false, false);
 
-        verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, numWaitlistEvents, waitlist, false),
+        verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, numWaitlistEvents, waitlist, false, false),
                     hasEventDependencies, hasEventDependencies);
 
-        verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, numWaitlistEvents, waitlist, false),
+        verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, numWaitlistEvents, waitlist, false, false),
                     hasEventDependencies, hasEventDependencies);
 
         verifyFlags(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, nullptr, numWaitlistEvents, waitlist, false),
@@ -1516,7 +1516,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForIm
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
-    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false);
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
     whiteBoxCmdList->csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());

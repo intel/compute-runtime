@@ -32,7 +32,7 @@ TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) 
     auto dstMemory = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 
     memset(srcMemory, val, size);
-    commandList->appendMemoryCopy(dstMemory, srcMemory, size, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopy(dstMemory, srcMemory, size, nullptr, 0, nullptr, false, false);
     commandList->close();
     auto pHCmdList = std::make_unique<ze_command_list_handle_t>(commandList->toHandle());
 

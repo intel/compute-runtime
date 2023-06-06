@@ -705,7 +705,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto eventHandle = event->toHandle();
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    commandListImmediate->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 1, &eventHandle, false);
+    commandListImmediate->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 1, &eventHandle, false, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
     ultCsr.getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
@@ -719,7 +719,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {};
     ze_copy_region_t srcRegion = {};
-    commandListImmediate->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 1, &eventHandle, false);
+    commandListImmediate->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 1, &eventHandle, false, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
     ultCsr.getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);

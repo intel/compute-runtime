@@ -240,7 +240,7 @@ HWTEST_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediat
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue);
 
-    auto result = commandList->appendMemoryCopyRegion(dstPtr, &dr, 0, 0, srcPtr, &sr, 0, 0, nullptr, 0, nullptr, false);
+    auto result = commandList->appendMemoryCopyRegion(dstPtr, &dr, 0, 0, srcPtr, &sr, 0, 0, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandList->destroy();
@@ -818,7 +818,7 @@ HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded)
 
     void *srcPtr = reinterpret_cast<void *>(0x4321);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 2 * MemoryConstants::cacheLineSize, nullptr, 0, nullptr, false);
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 2 * MemoryConstants::cacheLineSize, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     GenCmdList cmdList;
 

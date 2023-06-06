@@ -232,7 +232,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThe
     void *dstPtr = reinterpret_cast<void *>(0x5678);
     auto zeEvent = event->toHandle();
 
-    cmdList.appendMemoryCopy(dstPtr, srcPtr, sizeof(uint32_t), nullptr, 1, &zeEvent, false);
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, sizeof(uint32_t), nullptr, 1, &zeEvent, false, false);
 
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
 
@@ -260,7 +260,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenc
     auto zeEvent = event->toHandle();
     ze_copy_region_t region = {};
 
-    cmdList.appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 1, &zeEvent, false);
+    cmdList.appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 1, &zeEvent, false, false);
 
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
 
@@ -482,7 +482,7 @@ HWTEST2_F(CommandListTest,
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
     ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
-    commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 }
@@ -501,7 +501,7 @@ HWTEST2_F(CommandListTest,
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
     ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
-    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
@@ -526,7 +526,7 @@ HWTEST2_F(CommandListTest,
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
     ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
-    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
@@ -542,7 +542,7 @@ HWTEST2_F(CommandListTest,
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
-    commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 }
@@ -561,7 +561,7 @@ HWTEST2_F(CommandListTest,
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
-    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
@@ -586,7 +586,7 @@ HWTEST2_F(CommandListTest,
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
-    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
@@ -725,7 +725,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAl
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
-    commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
@@ -743,7 +743,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocat
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
-    commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
@@ -767,7 +767,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAlloc
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
-    commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr, false, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
@@ -804,7 +804,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevi
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
-    commandList->appendMemoryCopy(dstBuffer, srcPtr, size, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, size, nullptr, 0, nullptr, false, false);
 
     bool phys2Resident = false;
     for (auto alloc : commandList->getCmdContainer().getResidencyContainer()) {
@@ -851,7 +851,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedD
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
-    commandList->appendMemoryCopy(dstBuffer, srcPtr, reservationSize, nullptr, 0, nullptr, false);
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, reservationSize, nullptr, 0, nullptr, false, false);
 
     NEO::GraphicsAllocation *baseAlloc = reinterpret_cast<NEO::GraphicsAllocation *>(phPhysicalMemory);
     EXPECT_EQ(0u, baseAlloc->getExtendedBufferSize());
