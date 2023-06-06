@@ -337,8 +337,12 @@ class CommandStreamReceiver {
 
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
 
-    inline uint32_t getPostSyncWriteOffset() const {
-        return postSyncWriteOffset;
+    inline uint32_t getImmWritePostSyncWriteOffset() const {
+        return immWritePostSyncWriteOffset;
+    }
+
+    inline uint32_t getTimeStampPostSyncWriteOffset() const {
+        return timeStampPostSyncWriteOffset;
     }
 
     inline bool isMultiTileOperationEnabled() const {
@@ -504,7 +508,8 @@ class CommandStreamReceiver {
     MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::NotApplicable;
     uint32_t activePartitions = 1;
     uint32_t activePartitionsConfig = 1;
-    uint32_t postSyncWriteOffset = 0;
+    uint32_t immWritePostSyncWriteOffset = 0;
+    uint32_t timeStampPostSyncWriteOffset = 0;
     TaskCountType completionFenceValue = 0;
 
     const uint32_t rootDeviceIndex;

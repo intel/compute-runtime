@@ -36,7 +36,7 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(cons
 
         for (uint32_t i = 0; i < subDevices; i++) {
             *tagAddressToInitialize = std::numeric_limits<uint32_t>::max();
-            tagAddressToInitialize = ptrOffset(tagAddressToInitialize, this->postSyncWriteOffset);
+            tagAddressToInitialize = ptrOffset(tagAddressToInitialize, this->immWritePostSyncWriteOffset);
         }
     }
 }

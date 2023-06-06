@@ -81,7 +81,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     UNRECOVERABLE_IF(!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush) && !disableCpuCacheFlush);
 
     createDiagnostic();
-    setPostSyncOffset();
+    setImmWritePostSyncOffset();
 
     dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, inputParams.rootDeviceEnvironment);
     auto &gfxCoreHelper = inputParams.rootDeviceEnvironment.getHelper<GfxCoreHelper>();

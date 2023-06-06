@@ -235,7 +235,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByUnregisteredEngine
 HWTEST_F(DeferrableAllocationDeletionTest, givenMultiTileWhenTaskCompletedOnSingleTileThenDoNotFreeGraphicsAllocation) {
     auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
     csr->setActivePartitions(2u);
-    csr->postSyncWriteOffset = 32;
+    csr->immWritePostSyncWriteOffset = 32;
     auto hwTagNextTile = ptrOffset(hwTag, 32);
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});

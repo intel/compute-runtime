@@ -850,7 +850,7 @@ HWTEST_F(CommandQueueHwTest, GivenMultiTileQueueWhenEventNotCompletedAndFinishIs
     auto &csr = this->pCmdQ->getGpgpuCommandStreamReceiver();
     csr.setActivePartitions(2u);
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(&csr);
-    ultCsr->postSyncWriteOffset = 32;
+    ultCsr->immWritePostSyncWriteOffset = 32;
 
     auto tagAddress = csr.getTagAddress();
     *ptrOffset(tagAddress, 32) = *tagAddress;

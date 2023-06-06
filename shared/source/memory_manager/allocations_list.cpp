@@ -54,7 +54,7 @@ std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t req
     req.contextId = (commandStreamReceiver == nullptr) ? UINT32_MAX : commandStreamReceiver->getOsContext().getContextId();
     req.requiredPtr = requiredPtr;
     req.activeTileCount = (commandStreamReceiver == nullptr) ? 1u : commandStreamReceiver->getActivePartitions();
-    req.tagOffset = (commandStreamReceiver == nullptr) ? 0u : commandStreamReceiver->getPostSyncWriteOffset();
+    req.tagOffset = (commandStreamReceiver == nullptr) ? 0u : commandStreamReceiver->getImmWritePostSyncWriteOffset();
     req.forceSystemMemoryFlag = forceSystemMemoryFlag;
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));

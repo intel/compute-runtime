@@ -808,8 +808,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
     EXPECT_EQ(expectedAllocationsCount, directSubmission.makeResourcesResidentVectorSize);
 
-    uint32_t expectedOffset = NEO::ImplicitScalingDispatch<FamilyType>::getPostSyncOffset();
-    EXPECT_EQ(expectedOffset, directSubmission.postSyncOffset);
+    uint32_t expectedOffset = NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset();
+    EXPECT_EQ(expectedOffset, directSubmission.immWritePostSyncOffset);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
@@ -870,7 +870,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     hwParse.findHardwareCommands<FamilyType>();
 
-    uint32_t expectedOffset = NEO::ImplicitScalingDispatch<FamilyType>::getPostSyncOffset();
+    uint32_t expectedOffset = NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset();
 
     ASSERT_NE(hwParse.lriList.end(), hwParse.lriList.begin());
     bool partitionRegisterFound = false;

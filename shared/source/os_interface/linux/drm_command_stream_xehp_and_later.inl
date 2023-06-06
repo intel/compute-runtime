@@ -70,12 +70,12 @@ int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue) 
         UNRECOVERABLE_IF(ctxIds.size() != this->activePartitions);
         for (uint32_t i = 0; i < this->activePartitions; i++) {
             ret |= this->drm->waitUserFence(ctxIds[i], tagAddress, waitValue, Drm::ValueWidth::U64, kmdWaitTimeout, 0u);
-            tagAddress += this->postSyncWriteOffset;
+            tagAddress += this->immWritePostSyncWriteOffset;
         }
     } else {
         for (uint32_t i = 0; i < this->activePartitions; i++) {
             ret |= this->drm->waitUserFence(0u, tagAddress, waitValue, Drm::ValueWidth::U64, kmdWaitTimeout, 0u);
-            tagAddress += this->postSyncWriteOffset;
+            tagAddress += this->immWritePostSyncWriteOffset;
         }
     }
 

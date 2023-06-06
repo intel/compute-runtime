@@ -489,7 +489,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocatio
         while (*pollAddress < this->latestFlushedTaskCount) {
             this->downloadAllocation(*this->getTagAllocation());
         }
-        pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
     }
 
     auto lockCSR = this->obtainUniqueOwnership();
@@ -562,7 +562,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations() {
         while (*pollAddress < this->latestFlushedTaskCount) {
             this->downloadAllocation(*this->getTagAllocation());
         }
-        pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
     }
     auto lockCSR = this->obtainUniqueOwnership();
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {

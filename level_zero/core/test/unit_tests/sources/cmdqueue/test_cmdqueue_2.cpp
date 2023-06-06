@@ -302,11 +302,11 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
         csr->createPreemptionAllocation();
     }
-    EXPECT_NE(0u, csr->getPostSyncWriteOffset());
+    EXPECT_NE(0u, csr->getImmWritePostSyncWriteOffset());
     volatile TagAddressType *tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
         *tagAddress = 0xFF;
-        tagAddress = ptrOffset(tagAddress, csr->getPostSyncWriteOffset());
+        tagAddress = ptrOffset(tagAddress, csr->getImmWritePostSyncWriteOffset());
     }
     csr->activePartitions = 2u;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -345,11 +345,11 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
     if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
         csr->createPreemptionAllocation();
     }
-    EXPECT_NE(0u, csr->getPostSyncWriteOffset());
+    EXPECT_NE(0u, csr->getImmWritePostSyncWriteOffset());
     volatile TagAddressType *tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
         *tagAddress = 0xFF;
-        tagAddress = ptrOffset(tagAddress, csr->getPostSyncWriteOffset());
+        tagAddress = ptrOffset(tagAddress, csr->getImmWritePostSyncWriteOffset());
     }
     csr->activePartitions = 2u;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,

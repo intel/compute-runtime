@@ -386,7 +386,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {
     NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),
-                                                                    NEO::ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset());
+                                                                    NEO::ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

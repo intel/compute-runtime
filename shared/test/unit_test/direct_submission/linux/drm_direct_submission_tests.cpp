@@ -80,13 +80,13 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::getTagAddressValue;
     using BaseClass::handleNewResourcesSubmission;
     using BaseClass::handleResidency;
+    using BaseClass::immWritePostSyncOffset;
     using BaseClass::isCompleted;
     using BaseClass::isNewResourceHandleNeeded;
     using BaseClass::miMemFenceRequired;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
     using BaseClass::pciBarrierPtr;
-    using BaseClass::postSyncOffset;
     using BaseClass::ringBuffers;
     using BaseClass::ringStart;
     using BaseClass::sfenceMode;
@@ -414,7 +414,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
         EXPECT_EQ(completionFenceBaseCpuAddress, drm->waitUserFenceParams[0].address);
 
         EXPECT_EQ(expectedCompletionValueToWait, drm->waitUserFenceParams[1].value);
-        EXPECT_EQ(completionFenceBaseCpuAddress + commandStreamReceiver.getPostSyncWriteOffset(), drm->waitUserFenceParams[1].address);
+        EXPECT_EQ(completionFenceBaseCpuAddress + commandStreamReceiver.getImmWritePostSyncWriteOffset(), drm->waitUserFenceParams[1].address);
     }
     commandStreamReceiver.setupContext(*osContext);
 }
@@ -613,7 +613,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
         EXPECT_EQ(completionFenceBaseGpuAddress, mockBO.passedExecParams[0].completionGpuAddress);
         EXPECT_EQ(i + 1, mockBO.passedExecParams[0].completionValue);
 
-        EXPECT_EQ(completionFenceBaseGpuAddress + commandStreamReceiver.getPostSyncWriteOffset(), mockBO.passedExecParams[1].completionGpuAddress);
+        EXPECT_EQ(completionFenceBaseGpuAddress + commandStreamReceiver.getImmWritePostSyncWriteOffset(), mockBO.passedExecParams[1].completionGpuAddress);
         EXPECT_EQ(i + 1, mockBO.passedExecParams[1].completionValue);
     }
     ringBuffer->getBufferObjectToModify(0) = initialBO;
@@ -790,7 +790,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmDirectSubmissionTest, givenMultipleActiveTilesWh
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    uint32_t offset = directSubmission.postSyncOffset;
+    uint32_t offset = directSubmission.immWritePostSyncOffset;
     EXPECT_NE(0u, offset);
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);

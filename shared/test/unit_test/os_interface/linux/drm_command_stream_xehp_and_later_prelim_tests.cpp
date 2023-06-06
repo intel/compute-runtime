@@ -208,7 +208,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     testDrmCsr->useUserFenceWait = true;
     testDrmCsr->useContextForUserFenceWait = false;
     testDrmCsr->activePartitions = 2u;
-    EXPECT_NE(0u, testDrmCsr->postSyncWriteOffset);
+    EXPECT_NE(0u, testDrmCsr->immWritePostSyncWriteOffset);
 
     uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(testDrmCsr->getTagAddress()));
     FlushStamp handleToWait = 123;
@@ -218,7 +218,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(123u, testDrmCsr->waitUserFenceResult.waitValue);
 
     EXPECT_EQ(2u, mock->context.gemWaitUserFenceCalled);
-    EXPECT_EQ(tagAddress + testDrmCsr->postSyncWriteOffset, mock->context.receivedGemWaitUserFence.addr);
+    EXPECT_EQ(tagAddress + testDrmCsr->immWritePostSyncWriteOffset, mock->context.receivedGemWaitUserFence.addr);
     EXPECT_EQ(handleToWait, mock->context.receivedGemWaitUserFence.value);
     EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.ctxId);
     EXPECT_EQ(DrmPrelimHelper::getGTEWaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.op);

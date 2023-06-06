@@ -99,9 +99,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     testCsr->makeResident(*testCsr->getTagAllocation());
 
     testCsr->latestSentTaskCount = 2;
-    testCsr->postSyncWriteOffset = 16;
+    testCsr->immWritePostSyncWriteOffset = 16;
 
-    uint64_t expectedCompletionGpuAddress = testCsr->getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset + testCsr->postSyncWriteOffset;
+    uint64_t expectedCompletionGpuAddress = testCsr->getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset + testCsr->immWritePostSyncWriteOffset;
 
     SubmissionStatus ret = testCsr->flushInternal(batchBuffer, testCsr->getResidencyAllocations());
     EXPECT_EQ(SubmissionStatus::SUCCESS, ret);
@@ -117,7 +117,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     EngineControl &defaultEngine = device->getDefaultEngine();
     EXPECT_EQ(2u, defaultEngine.commandStreamReceiver->getActivePartitions());
 
-    uint32_t postSyncOffset = defaultEngine.commandStreamReceiver->getPostSyncWriteOffset();
+    uint32_t postSyncOffset = defaultEngine.commandStreamReceiver->getImmWritePostSyncWriteOffset();
     EXPECT_NE(0u, postSyncOffset);
 
     mock->completionFenceSupported = true;
@@ -151,7 +151,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     EngineControl &defaultEngine = device->getDefaultEngine();
     EXPECT_EQ(2u, defaultEngine.commandStreamReceiver->getActivePartitions());
 
-    uint32_t postSyncOffset = defaultEngine.commandStreamReceiver->getPostSyncWriteOffset();
+    uint32_t postSyncOffset = defaultEngine.commandStreamReceiver->getImmWritePostSyncWriteOffset();
     EXPECT_NE(0u, postSyncOffset);
 
     mock->completionFenceSupported = true;

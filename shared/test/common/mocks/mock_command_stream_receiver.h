@@ -37,6 +37,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using CommandStreamReceiver::CommandStreamReceiver;
     using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::latestSentTaskCount;
@@ -44,12 +45,12 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::numClients;
     using CommandStreamReceiver::osContext;
     using CommandStreamReceiver::ownershipMutex;
-    using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::preemptionAllocation;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::tagsMultiAllocation;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::timestampPacketAllocator;
+    using CommandStreamReceiver::timeStampPostSyncWriteOffset;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
 
@@ -261,12 +262,12 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::feSupportFlags;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::heapStorageRequiresRecyclingTag;
+    using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::isPreambleSent;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::mediaVfeStateDirty;
     using CommandStreamReceiver::nTo1SubmissionModelEnabled;
     using CommandStreamReceiver::pageTableManagerInitialized;
-    using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::requiredScratchSize;
     using CommandStreamReceiver::sbaSupportFlags;
     using CommandStreamReceiver::streamProperties;
@@ -274,6 +275,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
     using CommandStreamReceiver::timestampPacketWriteEnabled;
+    using CommandStreamReceiver::timeStampPostSyncWriteOffset;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
 

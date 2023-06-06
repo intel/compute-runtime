@@ -165,7 +165,7 @@ class DirectSubmissionHw {
     MOCKABLE_VIRTUAL void performDiagnosticMode();
     void dispatchDiagnosticModeSection();
     size_t getDiagnosticModeSection();
-    void setPostSyncOffset();
+    void setImmWritePostSyncOffset();
 
     virtual bool isCompleted(uint32_t ringBufferIndex) = 0;
 
@@ -217,7 +217,7 @@ class DirectSubmissionHw {
     uint32_t workloadMode = 0;
     uint32_t workloadModeOneExpectedValue = 0u;
     uint32_t activeTiles = 1u;
-    uint32_t postSyncOffset = 0u;
+    uint32_t immWritePostSyncOffset = 0u;
     uint32_t currentRelaxedOrderingQueueSize = 0;
     DirectSubmissionSfenceMode sfenceMode = DirectSubmissionSfenceMode::BeforeAndAfterSemaphore;
     volatile uint32_t reserved = 0u;

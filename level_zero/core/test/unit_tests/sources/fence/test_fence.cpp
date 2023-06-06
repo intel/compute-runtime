@@ -239,7 +239,7 @@ TEST_F(FenceSynchronizeTest, givenInfiniteTimeoutWhenWaitingForFenceCompletionTh
 
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     ASSERT_NE(nullptr, csr->getTagAddress());
-    csr->postSyncWriteOffset = postSyncOffset;
+    csr->immWritePostSyncWriteOffset = postSyncOffset;
     csr->activePartitions = activePartitions;
 
     Mock<CommandQueue> cmdqueue(device, csr.get());

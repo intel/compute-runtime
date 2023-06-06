@@ -238,7 +238,7 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
     uint64_t completionGpuAddress = 0;
     TaskCountType completionValue = 0;
     if (this->drm->isVmBindAvailable() && this->drm->completionFenceSupport()) {
-        completionGpuAddress = getTagAllocation()->getGpuAddress() + (index * this->postSyncWriteOffset) + TagAllocationLayout::completionFenceOffset;
+        completionGpuAddress = getTagAllocation()->getGpuAddress() + (index * this->immWritePostSyncWriteOffset) + TagAllocationLayout::completionFenceOffset;
         completionValue = this->latestSentTaskCount;
     }
 

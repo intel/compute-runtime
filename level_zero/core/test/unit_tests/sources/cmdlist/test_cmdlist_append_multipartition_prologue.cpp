@@ -98,7 +98,7 @@ HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionEpilogueIsCalledTh
 
     auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLri);
     EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, static_cast<uint64_t>(lriCmd->getRegisterOffset()));
-    EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getPostSyncOffset(), static_cast<uint32_t>(lriCmd->getDataDword()));
+    EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), static_cast<uint32_t>(lriCmd->getDataDword()));
     EXPECT_EQ(true, lriCmd->getMmioRemapEnable());
 
     auto result = commandList->close();

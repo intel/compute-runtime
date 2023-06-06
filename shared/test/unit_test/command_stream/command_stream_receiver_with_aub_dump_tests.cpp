@@ -326,7 +326,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenCrea
 
     for (uint32_t i = 0; i < subDevicesCount; i++) {
         EXPECT_EQ(std::numeric_limits<uint32_t>::max(), *tagAddressToInitialize);
-        tagAddressToInitialize = ptrOffset(tagAddressToInitialize, csrWithAubDump.aubCSR->getPostSyncWriteOffset());
+        tagAddressToInitialize = ptrOffset(tagAddressToInitialize, csrWithAubDump.aubCSR->getImmWritePostSyncWriteOffset());
     }
 }
 

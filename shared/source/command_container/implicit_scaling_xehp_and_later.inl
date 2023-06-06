@@ -234,7 +234,12 @@ inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStr
 }
 
 template <typename GfxFamily>
-inline uint32_t ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset() {
+inline uint32_t ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset() {
+    return static_cast<uint32_t>(GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw());
+}
+
+template <typename GfxFamily>
+inline uint32_t ImplicitScalingDispatch<GfxFamily>::getTimeStampPostSyncOffset() {
     return static_cast<uint32_t>(GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw());
 }
 

@@ -93,6 +93,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
     using BaseClass::CommandStreamReceiver::gsbaFor32BitProgrammed;
+    using BaseClass::CommandStreamReceiver::immWritePostSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;
     using BaseClass::CommandStreamReceiver::isBlitterDirectSubmissionEnabled;
@@ -118,7 +119,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::ownershipMutex;
     using BaseClass::CommandStreamReceiver::perfCounterAllocator;
     using BaseClass::CommandStreamReceiver::pipelineSupportFlags;
-    using BaseClass::CommandStreamReceiver::postSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
     using BaseClass::CommandStreamReceiver::requiredPrivateScratchSize;
     using BaseClass::CommandStreamReceiver::requiredScratchSize;
@@ -133,6 +133,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::taskLevel;
     using BaseClass::CommandStreamReceiver::timestampPacketAllocator;
     using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
+    using BaseClass::CommandStreamReceiver::timeStampPostSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::useGpuIdleImplicitFlush;
     using BaseClass::CommandStreamReceiver::useNewResourceImplicitFlush;
     using BaseClass::CommandStreamReceiver::useNotifyEnableForPostSync;

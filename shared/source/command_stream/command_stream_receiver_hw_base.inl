@@ -945,7 +945,7 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
     }
 
     for (uint32_t i = 0; i < this->activePartitions; i++) {
-        UNRECOVERABLE_IF(*(ptrOffset(getTagAddress(), (i * this->postSyncWriteOffset))) < taskCountToWait);
+        UNRECOVERABLE_IF(*(ptrOffset(getTagAddress(), (i * this->immWritePostSyncWriteOffset))) < taskCountToWait);
     }
 
     if (kmdNotifyHelper->quickKmdSleepForSporadicWaitsEnabled()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchPartitionRegisterConfiguration() {
     ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(ringCommandStream,
                                                                       this->workPartitionAllocation->getGpuAddress(),
-                                                                      this->postSyncOffset);
+                                                                      this->immWritePostSyncOffset);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -24,8 +24,8 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizePartitionRegiste
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setPostSyncOffset() {
-    this->postSyncOffset = ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset();
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setImmWritePostSyncOffset() {
+    this->immWritePostSyncOffset = ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset();
 }
 
 } // namespace NEO

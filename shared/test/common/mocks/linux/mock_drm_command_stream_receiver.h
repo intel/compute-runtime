@@ -33,12 +33,13 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::getTagAddress;
     using CommandStreamReceiver::getTagAllocation;
     using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::logicalStateHelper;
     using CommandStreamReceiver::makeResident;
-    using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::taskCount;
+    using CommandStreamReceiver::timeStampPostSyncWriteOffset;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
     using CommandStreamReceiver::useNotifyEnableForPostSync;

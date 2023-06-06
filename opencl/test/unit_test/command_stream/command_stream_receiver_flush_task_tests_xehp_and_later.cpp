@@ -856,7 +856,7 @@ struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public Command
             expectedWparidData = commandStreamReceiver.getWorkPartitionAllocationGpuAddress();
         }
         uint32_t expectedWparidRegister = 0x221C;
-        uint32_t expectedAddressOffsetData = commandStreamReceiver.getPostSyncWriteOffset();
+        uint32_t expectedAddressOffsetData = commandStreamReceiver.getImmWritePostSyncWriteOffset();
         uint32_t expectedAddressOffsetRegister = 0x23B4;
 
         bool wparidConfiguration = false;

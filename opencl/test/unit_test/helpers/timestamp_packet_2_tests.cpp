@@ -114,7 +114,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, TimestampPacketTests, givenEmptyWaitlistAndEventWhe
     commandStreamReceiver->staticWorkPartitioningEnabled = true;
 
     device->resetCommandStreamReceiver(commandStreamReceiver.release());
-    *ptrOffset(commandStreamReceiverPtr->tagAddress, commandStreamReceiverPtr->postSyncWriteOffset) = *commandStreamReceiverPtr->tagAddress;
+    *ptrOffset(commandStreamReceiverPtr->tagAddress, commandStreamReceiverPtr->immWritePostSyncWriteOffset) = *commandStreamReceiverPtr->tagAddress;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
     cmdQ->setProfilingEnabled();
@@ -254,7 +254,7 @@ HWTEST_F(TimestampPacketTests, givenMultiTileConfigWhenProgrammingNonStallingBar
     csr.activePartitionsConfig = 2;
     csr.staticWorkPartitioningEnabled = true;
 
-    *ptrOffset(csr.tagAddress, csr.postSyncWriteOffset) = *csr.tagAddress;
+    *ptrOffset(csr.tagAddress, csr.immWritePostSyncWriteOffset) = *csr.tagAddress;
 
     MockKernelWithInternals mockKernel(*device, context);
 

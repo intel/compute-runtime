@@ -81,7 +81,8 @@ struct ImplicitScalingDispatch {
     static void dispatchOffsetRegister(LinearStream &commandStream,
                                        uint32_t addressOffset);
 
-    static uint32_t getPostSyncOffset();
+    static uint32_t getImmediateWritePostSyncOffset();
+    static uint32_t getTimeStampPostSyncOffset();
 
     static bool platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment);
 

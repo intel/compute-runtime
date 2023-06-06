@@ -281,7 +281,7 @@ TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConc
 HWTEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachingReusableAllocationThenCheckTaskCountFinishedOnAllTiles) {
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
     csr->setActivePartitions(2u);
-    ultCsr->postSyncWriteOffset = 32;
+    ultCsr->immWritePostSyncWriteOffset = 32;
 
     auto tagAddress = csr->getTagAddress();
     *tagAddress = 0xFF;

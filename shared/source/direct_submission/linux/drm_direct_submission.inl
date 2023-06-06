@@ -100,7 +100,7 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
         auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset;
-        drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, this->postSyncOffset);
+        drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, this->immWritePostSyncOffset);
     }
     this->deallocateResources();
     if (this->pciBarrierPtr) {
@@ -170,7 +170,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
             }
             drmContextId++;
             if (completionFenceGpuAddress) {
-                completionFenceGpuAddress += this->postSyncOffset;
+                completionFenceGpuAddress += this->immWritePostSyncOffset;
             }
         }
     }
@@ -264,7 +264,7 @@ inline bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompleted(uint32_t rin
         if (*pollAddress < taskCount) {
             return false;
         }
-        pollAddress = ptrOffset(pollAddress, this->postSyncOffset);
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncOffset);
     }
     return true;
 }
@@ -280,7 +280,7 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(TaskCountType taskCountToW
     for (uint32_t i = 0; i < this->activeTiles; i++) {
         while (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
         }
-        pollAddress = ptrOffset(pollAddress, this->postSyncOffset);
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncOffset);
     }
 }
 

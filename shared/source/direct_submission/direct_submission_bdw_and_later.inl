@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizePartitionRegiste
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setPostSyncOffset() {
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setImmWritePostSyncOffset() {
 }
 
 } // namespace NEO

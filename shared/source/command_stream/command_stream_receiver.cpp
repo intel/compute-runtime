@@ -456,7 +456,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
             }
         }
 
-        partitionAddress = ptrOffset(partitionAddress, this->postSyncWriteOffset);
+        partitionAddress = ptrOffset(partitionAddress, this->immWritePostSyncWriteOffset);
     }
 
     partitionAddress = pollAddress;
@@ -464,7 +464,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
         if (*partitionAddress < taskCountToWait) {
             return WaitStatus::NotReady;
         }
-        partitionAddress = ptrOffset(partitionAddress, this->postSyncWriteOffset);
+        partitionAddress = ptrOffset(partitionAddress, this->immWritePostSyncWriteOffset);
     }
 
     return WaitStatus::Ready;
@@ -748,9 +748,9 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
     for (uint32_t i = 0; i < subDevices; i++) {
         *tagAddress = initValue;
-        tagAddress = ptrOffset(tagAddress, this->postSyncWriteOffset);
+        tagAddress = ptrOffset(tagAddress, this->immWritePostSyncWriteOffset);
         *completionFence = 0;
-        completionFence = ptrOffset(completionFence, this->postSyncWriteOffset);
+        completionFence = ptrOffset(completionFence, this->immWritePostSyncWriteOffset);
     }
     *this->debugPauseStateAddress = DebugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 
@@ -957,7 +957,7 @@ bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddr
             return false;
         }
 
-        pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
     }
     return true;
 }
@@ -1011,7 +1011,7 @@ void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait
     }
     for (uint32_t i = 0; i < activePartitions; i++) {
         PRINT_DEBUG_STRING(true, stdout, " %u", *postSyncAddress);
-        postSyncAddress = ptrOffset(postSyncAddress, this->postSyncWriteOffset);
+        postSyncAddress = ptrOffset(postSyncAddress, this->immWritePostSyncWriteOffset);
     }
     PRINT_DEBUG_STRING(true, stdout, "%s", "\n");
 }

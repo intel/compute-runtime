@@ -127,7 +127,7 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(LinearStream &csr) {
     if (this->staticWorkPartitioningEnabled) {
         uint64_t workPartitionAddress = getWorkPartitionAllocationGpuAddress();
-        ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(csr, workPartitionAddress, this->postSyncWriteOffset);
+        ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(csr, workPartitionAddress, this->immWritePostSyncWriteOffset);
     }
     this->activePartitionsConfig = this->activePartitions;
 }
@@ -217,7 +217,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::configurePostSyncWriteOffset() {
-    this->postSyncWriteOffset = ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset();
+    this->immWritePostSyncWriteOffset = ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset();
+    this->timeStampPostSyncWriteOffset = ImplicitScalingDispatch<GfxFamily>::getTimeStampPostSyncOffset();
 }
 
 } // namespace NEO

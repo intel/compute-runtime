@@ -1309,7 +1309,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DeviceBitfield devices(0b11);
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
-    csr->postSyncWriteOffset = 32u;
+    csr->immWritePostSyncWriteOffset = 32u;
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
     csr->initializeTagAllocation();
@@ -1319,7 +1319,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     auto tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
         EXPECT_EQ(*tagAddress, initialHardwareTag);
-        tagAddress = ptrOffset(tagAddress, csr->getPostSyncWriteOffset());
+        tagAddress = ptrOffset(tagAddress, csr->getImmWritePostSyncWriteOffset());
     }
 }
 
@@ -1327,7 +1327,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenEnsureTagAll
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 10u);
     DeviceBitfield devices(0b1111);
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
-    csr->postSyncWriteOffset = 32u;
+    csr->immWritePostSyncWriteOffset = 32u;
 
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
@@ -1340,7 +1340,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenEnsureTagAll
     auto tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 4; i++) {
         EXPECT_EQ(*tagAddress, initialHardwareTag);
-        tagAddress = ptrOffset(tagAddress, csr->getPostSyncWriteOffset());
+        tagAddress = ptrOffset(tagAddress, csr->getImmWritePostSyncWriteOffset());
     }
 
     auto tagsMultiAllocation = csr->getTagsMultiAllocation();
@@ -1594,9 +1594,9 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
     temporaryAllocation->updateTaskCount(0u, 0u);
     csr.getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(temporaryAllocation), TEMPORARY_ALLOCATION, 2u);
 
-    csr.postSyncWriteOffset = 32u;
+    csr.immWritePostSyncWriteOffset = 32u;
     csr.mockTagAddress[0] = 0u;
-    auto nextPartitionTagAddress = ptrOffset(&csr.mockTagAddress[0], csr.getPostSyncWriteOffset());
+    auto nextPartitionTagAddress = ptrOffset(&csr.mockTagAddress[0], csr.getImmWritePostSyncWriteOffset());
     *nextPartitionTagAddress = 0u;
 
     csr.taskCount = 3u;
@@ -1608,7 +1608,7 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
 
     CpuIntrinsicsTests::pauseAddress = &csr.mockTagAddress[0];
     CpuIntrinsicsTests::pauseValue = 3u;
-    CpuIntrinsicsTests::pauseOffset = csr.getPostSyncWriteOffset();
+    CpuIntrinsicsTests::pauseOffset = csr.getImmWritePostSyncWriteOffset();
 
     CpuIntrinsicsTests::pauseCounter = 0;
 
@@ -2250,7 +2250,7 @@ HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEn
     volatile TagAddressType *tagAddress = csr.tagAddress;
     constexpr TagAddressType tagValue = 2;
     *tagAddress = tagValue;
-    tagAddress = ptrOffset(tagAddress, csr.postSyncWriteOffset);
+    tagAddress = ptrOffset(tagAddress, csr.immWritePostSyncWriteOffset);
     *tagAddress = tagValue;
 
     WaitParams waitParams;

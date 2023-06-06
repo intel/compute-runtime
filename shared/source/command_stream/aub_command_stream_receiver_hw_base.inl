@@ -320,7 +320,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
                 volatile TagAddressType *pollAddress = this->tagAddress;
                 for (uint32_t i = 0; i < this->activePartitions; i++) {
                     *pollAddress = this->peekLatestSentTaskCount();
-                    pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
+                    pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
                 }
             }
             return SubmissionStatus::SUCCESS;
@@ -361,7 +361,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
         volatile TagAddressType *pollAddress = this->tagAddress;
         for (uint32_t i = 0; i < this->activePartitions; i++) {
             *pollAddress = this->peekLatestSentTaskCount();
-            pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
+            pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
         }
     }
 
