@@ -74,6 +74,13 @@ void DeviceImp::setDriverHandle(DriverHandle *driverHandle) {
     this->driverHandle = driverHandle;
 }
 
+ze_result_t DeviceImp::getStatus() {
+    if (this->resourcesReleased) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
     DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
     uint32_t peerRootDeviceIndex = pPeerDevice->getNEODevice()->getRootDeviceIndex();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,7 +101,7 @@ ze_result_t zeDeviceGetExternalMemoryProperties(
 
 ze_result_t zeDeviceGetStatus(
     ze_device_handle_t hDevice) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Device::fromHandle(hDevice)->getStatus();
 }
 
 ze_result_t zeDeviceGetGlobalTimestamps(

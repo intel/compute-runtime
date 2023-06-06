@@ -2421,6 +2421,18 @@ HWTEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSame
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
 }
 
+using DeviceGetStatusTest = Test<DeviceFixture>;
+TEST_F(DeviceGetStatusTest, givenCallToDeviceGetStatusThenCorrectErrorCodeIsReturnedWhenResourcesHaveBeenReleased) {
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+    ze_result_t res = device->getStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    deviceImp->releaseResources();
+    res = device->getStatus();
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
+}
+
 using DeviceTests = Test<DeviceFixture>;
 
 TEST_F(DeviceTests, WhenGettingMemoryAccessPropertiesThenSuccessIsReturned) {

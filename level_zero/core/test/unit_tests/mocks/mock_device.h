@@ -38,6 +38,7 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE(createImage, ze_result_t, ZE_RESULT_SUCCESS, (const ze_image_desc_t *desc, ze_image_handle_t *phImage));
     ADDMETHOD_NOBASE(createModule, ze_result_t, ZE_RESULT_SUCCESS, (const ze_module_desc_t *desc, ze_module_handle_t *module, ze_module_build_log_handle_t *buildLog, ModuleType type));
     ADDMETHOD_NOBASE(createSampler, ze_result_t, ZE_RESULT_SUCCESS, (const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler));
+    ADDMETHOD_NOBASE(getStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getComputeProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_compute_properties_t * pComputeProperties));
     ADDMETHOD_NOBASE(getP2PProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_device_p2p_properties_t *pP2PProperties));
     ADDMETHOD_NOBASE(getKernelProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_module_properties_t * pKernelProperties));
