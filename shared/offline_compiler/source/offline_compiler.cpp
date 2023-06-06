@@ -676,6 +676,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     for (uint32_t argIndex = 1; argIndex < argv.size(); argIndex++) {
         const auto &currArg = argv[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < numArgs);
+        const bool hasAtLeast2MoreArgs = (argIndex + 2 < numArgs);
         if ("compile" == currArg) {
             // skip it
         } else if (("-file" == currArg) && hasMoreArgs) {
@@ -713,6 +714,11 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (("-options" == currArg) && hasMoreArgs) {
             CompilerOptions::concatenateAppend(options, argv[argIndex + 1]);
             argIndex++;
+        } else if (("-device-options" == currArg) && hasAtLeast2MoreArgs) {
+            const auto &deviceName = argv[argIndex + 1];
+            const auto &options = argv[argIndex + 2];
+            CompilerOptions::concatenateAppend(perDeviceOptions[deviceName], options);
+            argIndex += 2;
         } else if (("-internal_options" == currArg) && hasMoreArgs) {
             CompilerOptions::concatenateAppend(internalOptions, argv[argIndex + 1]);
             argIndex++;
@@ -763,6 +769,10 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         }
     }
 
+    if (perDeviceOptions.find(deviceName) != perDeviceOptions.end()) {
+        CompilerOptions::concatenateAppend(options, perDeviceOptions.at(deviceName));
+    }
+
     if (!binaryOutputFile.empty() && (useGenFile || useCppFile || outputNoSuffix || !outputFile.empty())) {
         argHelper->printf("Error: options: -gen_file/-cpp_file/-output_no_suffix/-output cannot be used with -o\n");
         retVal = INVALID_COMMAND_LINE;
@@ -783,6 +793,15 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         if (deviceName.empty() && (false == onlySpirV)) {
             argHelper->printf("Error: Device name missing.\n");
             retVal = INVALID_COMMAND_LINE;
+        }
+
+        for (auto &kv : perDeviceOptions) {
+            const auto &deviceName = kv.first;
+            const auto productConfig = argHelper->productConfigHelper->getProductConfigFromAcronym(deviceName);
+            if (productConfig == AOT::UNKNOWN_ISA) {
+                argHelper->printf("Error: Invalid device acronym passed to -device-options: %s\n", deviceName.c_str());
+                retVal = INVALID_COMMAND_LINE;
+            }
         }
 
         if (inputFile.empty()) {
@@ -889,156 +908,160 @@ void OfflineCompiler::printUsage() {
 Additionally, outputs intermediate representation (e.g. spirV).
 Different input and intermediate file formats are available.
 
-Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename>] [-out_dir <output_dir>] [-options <options>] [-32|-64] [-internal_options <options>] [-llvm_text|-llvm_input|-spirv_input] [-options_name] [-q] [-cpp_file] [-output_no_suffix] [--help]
+Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename>] [-out_dir <output_dir>] [-options <options>] [-device-options <device_type> <options>] [-32|-64] [-internal_options <options>] [-llvm_text|-llvm_input|-spirv_input] [-options_name] [-q] [-cpp_file] [-output_no_suffix] [--help]
 
-  -file <filename>              The input file to be compiled
-                                (by default input source format is
-                                OpenCL C kernel language).
+  -file <filename>                          The input file to be compiled
+                                            (by default input source format is
+                                            OpenCL C kernel language).
 
-  -device <device_type>         Target device.
-                                <device_type> can be: %s, ip version  or hexadecimal value with 0x prefix
-                                - can be single or multiple target devices.
-                                The ip version can be a representation of the
-                                <major>.<minor>.<revision> or a decimal value that
-                                can be queried using the L0 ZE_extension_device_ip_version.
-                                The hexadecimal value represents device ID.
-                                If such value is provided, ocloc will try to
-                                match it with corresponding device type.
-                                For example, 0xFF20 device ID will be translated
-                                to tgllp.
-                                If multiple target devices are provided, ocloc
-                                will compile for each of these targets and will
-                                create a fatbinary archive that contains all of
-                                device binaries produced this way.
-                                Supported -device patterns examples:
-                                -device 0x4905        ; will compile 1 target (dg1)
-                                -device 12.10.0       ; will compile 1 target (dg1)
-                                -device 50495488      ; will compile 1 target (dg1)
-                                -device dg1           ; will compile 1 target
-                                -device dg1,acm-g10   ; will compile 2 targets
-                                -device dg1:acm-g10   ; will compile all targets
-                                                        in range (inclusive)
-                                -device dg1:          ; will compile all targets
-                                                        newer/same as provided
-                                -device :dg1          ; will compile all targets
-                                                        older/same as provided
-                                -device xe-hpg        ; will compile all targets
-                                                        matching the same release
-                                -device xe            ; will compile all targets
-                                                        matching the same family
-                                -device xe-hpg:xe-hpc ; will compile all targets
-                                                        in range (inclusive)
-                                -device xe-hpg:       ; will compile all targets
-                                                        newer/same as provided
-                                -device :xe-hpg       ; will compile all targets
-                                                        older/same as provided
-                                                        known to ocloc
+  -device <device_type>                     Target device.
+                                            <device_type> can be: %s, ip version  or hexadecimal value with 0x prefix
+                                            - can be single or multiple target devices.
+                                            The ip version can be a representation of the
+                                            <major>.<minor>.<revision> or a decimal value that
+                                            can be queried using the L0 ZE_extension_device_ip_version.
+                                            The hexadecimal value represents device ID.
+                                            If such value is provided, ocloc will try to
+                                            match it with corresponding device type.
+                                            For example, 0xFF20 device ID will be translated
+                                            to tgllp.
+                                            If multiple target devices are provided, ocloc
+                                            will compile for each of these targets and will
+                                            create a fatbinary archive that contains all of
+                                            device binaries produced this way.
+                                            Supported -device patterns examples:
+                                            -device 0x4905        ; will compile 1 target (dg1)
+                                            -device 12.10.0       ; will compile 1 target (dg1)
+                                            -device 50495488      ; will compile 1 target (dg1)
+                                            -device dg1           ; will compile 1 target
+                                            -device dg1,acm-g10   ; will compile 2 targets
+                                            -device dg1:acm-g10   ; will compile all targets
+                                                                    in range (inclusive)
+                                            -device dg1:          ; will compile all targets
+                                                                    newer/same as provided
+                                            -device :dg1          ; will compile all targets
+                                                                    older/same as provided
+                                            -device xe-hpg        ; will compile all targets
+                                                                    matching the same release
+                                            -device xe            ; will compile all targets
+                                                                    matching the same family
+                                            -device xe-hpg:xe-hpc ; will compile all targets
+                                                                    in range (inclusive)
+                                            -device xe-hpg:       ; will compile all targets
+                                                                    newer/same as provided
+                                            -device :xe-hpg       ; will compile all targets
+                                                                    older/same as provided
+                                                                    known to ocloc
 
-                                Deprecated notation that is still supported:
-                                <device_type> can be: %s
-                                - can be single target device.
+                                            Deprecated notation that is still supported:
+                                            <device_type> can be: %s
+                                            - can be single target device.
 
-  -o <filename>                 Optional output file name. 
-                                Must not be used with: 
-                                -gen_file | -cpp_file | -output_no_suffix | -output
+  -o <filename>                             Optional output file name. 
+                                            Must not be used with: 
+                                            -gen_file | -cpp_file | -output_no_suffix | -output
 
-  -output <filename>            Optional output file base name.
-                                Default is input file's base name.
-                                This base name will be used for all output files. 
-                                For single target device proper suffixes (describing file formats)
-                                will be added automatically.
+  -output <filename>                        Optional output file base name.
+                                            Default is input file's base name.
+                                            This base name will be used for all output files. 
+                                            For single target device proper suffixes (describing file formats)
+                                            will be added automatically.
 
-  -out_dir <output_dir>         Optional output directory.
-                                Default is current working directory.
+  -out_dir <output_dir>                     Optional output directory.
+                                            Default is current working directory.
 
-  -allow_caching                Allows caching binaries from compilation (like spirv,
-                                gen or debug data) and loading them by ocloc
-                                when the same program is compiled again.
+  -allow_caching                            Allows caching binaries from compilation (like spirv,
+                                            gen or debug data) and loading them by ocloc
+                                            when the same program is compiled again.
 
-  -cache_dir <output_dir>       Optional caching directory.
-                                Default directory is "ocloc_cache".
+  -cache_dir <output_dir>                   Optional caching directory.
+                                            Default directory is "ocloc_cache".
 
-  -options <options>            Optional OpenCL C compilation options
-                                as defined by OpenCL specification.
-                                Special options for Vector Compute:
-                                -vc-codegen <vc options> compile from SPIRV
-                                -cmc <cm-options> compile from CM sources
+  -options <options>                        Optional OpenCL C compilation options
+                                            as defined by OpenCL specification.
+                                            Special options for Vector Compute:
+                                            -vc-codegen <vc options> compile from SPIRV
+                                            -cmc <cm-options> compile from CM sources
 
-  -32                           Forces target architecture to 32-bit pointers.
-                                Default pointer size is inherited from
-                                ocloc's pointer size.
-                                This option is exclusive with -64.
+  -device-options <device_type> <options>   Optional OpenCL C compilation options
+                                            as defined by OpenCL specification - specific to a single target device.
+                                            <device_type> can be product acronym i.e. dg1
 
-  -64                           Forces target architecture to 64-bit pointers.
-                                Default pointer size is inherited from
-                                ocloc's pointer size.
-                                This option is exclusive with -32.
+  -32                                       Forces target architecture to 32-bit pointers.
+                                            Default pointer size is inherited from
+                                            ocloc's pointer size.
+                                            This option is exclusive with -64.
 
-  -internal_options <options>   Optional compiler internal options
-                                as defined by compilers used underneath.
-                                Check intel-graphics-compiler (IGC) project
-                                for details on available internal options.
-                                You also may provide explicit --help to inquire
-                                information about option, mentioned in -options
+  -64                                       Forces target architecture to 64-bit pointers.
+                                            Default pointer size is inherited from
+                                            ocloc's pointer size.
+                                            This option is exclusive with -32.
 
-  -llvm_text                    Forces intermediate representation (IR) format
-                                to human-readable LLVM IR (.ll).
-                                This option affects only output files
-                                and should not be used in combination with
-                                '-llvm_input' option.
-                                Default IR is spirV.
-                                This option is exclusive with -spirv_input.
-                                This option is exclusive with -llvm_input.
+  -internal_options <options>               Optional compiler internal options
+                                            as defined by compilers used underneath.
+                                            Check intel-graphics-compiler (IGC) project
+                                            for details on available internal options.
+                                            You also may provide explicit --help to inquire
+                                            information about option, mentioned in -options
 
-  -llvm_input                   Indicates that input file is an llvm binary.
-                                Default is OpenCL C kernel language.
-                                This option is exclusive with -spirv_input.
-                                This option is exclusive with -llvm_text.
+  -llvm_text                                Forces intermediate representation (IR) format
+                                            to human-readable LLVM IR (.ll).
+                                            This option affects only output files
+                                            and should not be used in combination with
+                                            '-llvm_input' option.
+                                            Default IR is spirV.
+                                            This option is exclusive with -spirv_input.
+                                            This option is exclusive with -llvm_input.
 
-  -spirv_input                  Indicates that input file is a spirV binary.
-                                Default is OpenCL C kernel language format.
-                                This option is exclusive with -llvm_input.
-                                This option is exclusive with -llvm_text.
+  -llvm_input                               Indicates that input file is an llvm binary.
+                                            Default is OpenCL C kernel language.
+                                            This option is exclusive with -spirv_input.
+                                            This option is exclusive with -llvm_text.
 
-  -options_name                 Will add suffix to output files.
-                                This suffix will be generated based on input
-                                options (useful when rebuilding with different 
-                                set of options so that results won't get
-                                overwritten).
-                                This suffix is added always as the last part
-                                of the filename (even after file's extension).
-                                It does not affect '--output' parameter and can
-                                be used along with it ('--output' parameter
-                                defines the base name - i.e. prefix).
+  -spirv_input                              Indicates that input file is a spirV binary.
+                                            Default is OpenCL C kernel language format.
+                                            This option is exclusive with -llvm_input.
+                                            This option is exclusive with -llvm_text.
 
-  -force_stos_opt               Will forcibly enable stateless to stateful optimization,
-                                i.e. skip "-cl-intel-greater-than-4GB-buffer-required".
+  -options_name                             Will add suffix to output files.
+                                            This suffix will be generated based on input
+                                            options (useful when rebuilding with different 
+                                            set of options so that results won't get
+                                            overwritten).
+                                            This suffix is added always as the last part
+                                            of the filename (even after file's extension).
+                                            It does not affect '--output' parameter and can
+                                            be used along with it ('--output' parameter
+                                            defines the base name - i.e. prefix).
 
-  -q                            Will silence output messages (except errors).
+  -force_stos_opt                           Will forcibly enable stateless to stateful optimization,
+                                            i.e. skip "-cl-intel-greater-than-4GB-buffer-required".
 
-  -qq                           Will silence most of output messages.
+  -q                                        Will silence output messages (except errors).
 
-  -spv_only                     Will generate only spirV file.
+  -qq                                       Will silence most of output messages.
 
-  -cpp_file                     Will generate c++ file with C-array
-                                containing Intel Compute device binary.
+  -spv_only                                 Will generate only spirV file.
 
-  -gen_file                     Will generate gen file.
+  -cpp_file                                 Will generate c++ file with C-array
+                                            containing Intel Compute device binary.
 
-  -output_no_suffix             Prevents ocloc from adding family name suffix.
+  -gen_file                                 Will generate gen file.
 
-  --help                        Print this usage message.
+  -output_no_suffix                         Prevents ocloc from adding family name suffix.
 
-  -revision_id <revision_id>    Target stepping. Can be decimal or hexadecimal value.
+  --help                                    Print this usage message.
 
-  -exclude_ir                   Excludes IR from the output binary file.
+  -revision_id <revision_id>                Target stepping. Can be decimal or hexadecimal value.
 
-  --format                      Enforce given binary format. The possible values are:
-                                --format zebin - Enforce generating zebin binary
-                                --format patchtokens - Enforce generating patchtokens (legacy) binary.
+  -exclude_ir                               Excludes IR from the output binary file.
 
-  -config                       Target hardware info config for a single device,
-                                e.g 1x4x8.
+  --format                                  Enforce given binary format. The possible values are:
+                                            --format zebin - Enforce generating zebin binary
+                                            --format patchtokens - Enforce generating patchtokens (legacy) binary.
+
+  -config                                   Target hardware info config for a single device,
+                                            e.g 1x4x8.
 
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)

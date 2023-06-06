@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace NEO {
 
@@ -140,6 +141,7 @@ All supported acronyms: %s.
     std::string binaryOutputFile;
     std::string outputDirectory;
     std::string options;
+    std::unordered_map<std::string, std::string> perDeviceOptions;
     std::string internalOptions;
     std::string sourceCode;
     std::string buildLog;

@@ -3258,6 +3258,188 @@ TEST(OfflineCompilerTest, givenOptionsWhenCmdLineParsedThenOptionsAreAppendedToO
     EXPECT_TRUE(hasSubstr(options, std::string("options2")));
 }
 
+TEST(OfflineCompilerTest, givenDeviceOptionsForCompiledDeviceWhenCmdLineParsedThenDeviceOptionsAreAppendedToOptionsString) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options",
+        "options",
+        "-device-options",
+        gEnvironment->devicePrefix.c_str(),
+        "devOptions"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(0u, output.size());
+
+    auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[gEnvironment->devicePrefix.c_str()], std::string("devOptions")));
+
+    std::string options = mockOfflineCompiler->options;
+    EXPECT_TRUE(hasSubstr(options, std::string("options")));
+    EXPECT_TRUE(hasSubstr(options, std::string("devOptions")));
+}
+
+TEST(OfflineCompilerTest, givenUnknownDeviceAcronymInDeviceOptionsWhenParsingCommandLineThenErrorLogIsPrintedAndFailureIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "compile",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options",
+        "options",
+        "-device-options",
+        "unknownDeviceName1",
+        "devOptions1",
+        "-device-options",
+        gEnvironment->devicePrefix.c_str(),
+        "devOptions2",
+        "-device-options",
+        "unknownDeviceName2",
+        "devOptions2"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    const std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+
+    const std::string expectedErrorMessage1{"Error: Invalid device acronym passed to -device-options: unknownDeviceName1\n"};
+    const std::string expectedErrorMessage2{"Error: Invalid device acronym passed to -device-options: unknownDeviceName2\n"};
+    EXPECT_TRUE(hasSubstr(output, expectedErrorMessage1));
+    EXPECT_TRUE(hasSubstr(output, expectedErrorMessage2));
+}
+
+TEST(OfflineCompilerTest, givenDeviceOptionsInWrongFormatWhenCmdLineParsedThenDeviceOptionsAreNotAppendedToOptionsString) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options",
+        "options",
+        "-device-options",
+        "devOptions"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(0u, output.size());
+
+    auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
+    EXPECT_FALSE(hasSubstr(perDeviceOptions[gEnvironment->devicePrefix.c_str()], std::string("devOptions")));
+
+    std::string options = mockOfflineCompiler->options;
+    EXPECT_TRUE(hasSubstr(options, std::string("options")));
+    EXPECT_FALSE(hasSubstr(options, std::string("devOptions")));
+}
+
+TEST(OfflineCompilerTest, givenMultipleDeviceOptionsWhenCmdLineParsedThenDeviceOptionsAreAppendedToOptionsString) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options",
+        "options",
+        "-device-options",
+        gEnvironment->devicePrefix.c_str(),
+        "devOptions1",
+        "-device-options",
+        gEnvironment->devicePrefix.c_str(),
+        "devOptions2"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(0u, output.size());
+
+    auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[gEnvironment->devicePrefix.c_str()], std::string("devOptions1")));
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[gEnvironment->devicePrefix.c_str()], std::string("devOptions2")));
+
+    std::string options = mockOfflineCompiler->options;
+    EXPECT_TRUE(hasSubstr(options, std::string("options")));
+    EXPECT_TRUE(hasSubstr(options, std::string("devOptions1")));
+    EXPECT_TRUE(hasSubstr(options, std::string("devOptions2")));
+}
+
+TEST(OfflineCompilerTest, givenMultipleDeviceOptionsForCompiledDeviceAndDeviceOptionsNotForCompiledDeviceWhenCmdLineParsedThenDeviceOptionsOnlyForCompiledDeviceAreAppendedToOptionsString) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto allEnabledDeviceAcronyms = mockOfflineCompiler->argHelper->productConfigHelper->getRepresentativeProductAcronyms();
+
+    if (allEnabledDeviceAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string notCompiledDevice;
+    for (const auto &deviceAcronym : allEnabledDeviceAcronyms) {
+        if (deviceAcronym.str() != gEnvironment->devicePrefix.c_str()) {
+            notCompiledDevice = deviceAcronym.str();
+            break;
+        }
+    }
+
+    if (notCompiledDevice == "") {
+        GTEST_SKIP();
+    }
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-device-options",
+        gEnvironment->devicePrefix.c_str(),
+        "devOptions1",
+        "-device-options",
+        notCompiledDevice,
+        "devOptions2",
+        "-options",
+        "options1",
+        "-device-options",
+        gEnvironment->devicePrefix.c_str(),
+        "devOptions3",
+        "-options",
+        "options2"};
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(0u, output.size());
+
+    auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[notCompiledDevice], std::string("devOptions2")));
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[gEnvironment->devicePrefix.c_str()], std::string("devOptions1")));
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[gEnvironment->devicePrefix.c_str()], std::string("devOptions3")));
+
+    std::string options = mockOfflineCompiler->options;
+    EXPECT_TRUE(hasSubstr(options, std::string("options1")));
+    EXPECT_TRUE(hasSubstr(options, std::string("options2")));
+    EXPECT_TRUE(hasSubstr(options, std::string("devOptions1")));
+    EXPECT_TRUE(hasSubstr(options, std::string("devOptions3")));
+    EXPECT_FALSE(hasSubstr(options, std::string("devOptions2")));
+}
+
 TEST(OfflineCompilerTest, givenDashOOptionWhenCmdLineParsedThenBinaryOutputNameIsSet) {
     std::vector<std::string> argv = {
         "ocloc",

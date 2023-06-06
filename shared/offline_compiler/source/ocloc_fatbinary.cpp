@@ -22,9 +22,11 @@
 #include "igfxfmid.h"
 #include "platforms.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <set>
 
 namespace NEO {
 bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper) {
@@ -296,11 +298,13 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
     std::string outputDirectory = "";
     bool spirvInput = false;
     bool excludeIr = false;
+    std::set<std::string> deviceAcronymsFromDeviceOptions;
 
     std::vector<std::string> argsCopy(args);
     for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
         const auto &currArg = args[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < args.size());
+        const bool hasAtLeast2MoreArgs = (argIndex + 2 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
             deviceArgIndex = argIndex + 1;
             ++argIndex;
@@ -321,6 +325,10 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
             excludeIr = true;
         } else if (ConstStringRef("-spirv_input") == currArg) {
             spirvInput = true;
+        } else if (("-device-options" == currArg) && hasAtLeast2MoreArgs) {
+            const auto &deviceName = args[argIndex + 1];
+            deviceAcronymsFromDeviceOptions.insert(deviceName);
+            argIndex += 2;
         }
     }
 
@@ -341,6 +349,13 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         argHelper->printf("Failed to parse target devices from : %s\n", args[deviceArgIndex].c_str());
         return 1;
     }
+
+    for (const auto &deviceAcronym : deviceAcronymsFromDeviceOptions) {
+        if (std::find(targetProducts.begin(), targetProducts.end(), deviceAcronym) == targetProducts.end()) {
+            argHelper->printf("Warning! -device-options set for non-compiled device: %s\n", deviceAcronym.c_str());
+        }
+    }
+
     for (const auto &product : targetProducts) {
         int retVal = 0;
         argsCopy[deviceArgIndex] = product.str();

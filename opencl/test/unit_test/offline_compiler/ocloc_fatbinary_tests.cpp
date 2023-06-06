@@ -17,6 +17,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 
 #include "environment.h"
 #include "mock/mock_argument_helper.h"
@@ -1072,6 +1073,67 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinar
 
         EXPECT_STREQ(output.c_str(), resString.str().c_str());
     }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForNotCompiledDeviceAndListOfProductsWhenFatBinaryBuildIsInvokedThenWarningIsPrinted) {
+    if (enabledProductsAcronyms.size() < 3) {
+        GTEST_SKIP();
+    }
+
+    std::stringstream products;
+    products << enabledProductsAcronyms[0].str() << "," << enabledProductsAcronyms[1].str();
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        products.str().c_str(),
+        "-device-options",
+        enabledProductsAcronyms[2].str(),
+        "deviceOptions"};
+
+    testing::internal::CaptureStdout();
+    [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+
+    std::stringstream expectedErrorMessage;
+    expectedErrorMessage << "Warning! -device-options set for non-compiled device: " + enabledProductsAcronyms[2].str() + "\n";
+    EXPECT_TRUE(hasSubstr(output, expectedErrorMessage.str()));
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForCompiledDeviceAndListOfProductsWhenFatBinaryBuildIsInvokedThenWarningIsNotPrinted) {
+    if (enabledProductsAcronyms.size() < 2) {
+        GTEST_SKIP();
+    }
+
+    std::stringstream products;
+    products << enabledProductsAcronyms[0].str() + "," + enabledProductsAcronyms[1].str();
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        products.str().c_str(),
+        "-device-options",
+        enabledProductsAcronyms[0].str(),
+        "deviceOptions"};
+
+    testing::internal::CaptureStdout();
+    [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+
+    std::stringstream errorMessage1, errorMessage2;
+    errorMessage1 << "Warning! -device-options set for non-compiled device: " << enabledProductsAcronyms[0].str() << "\n";
+    errorMessage2 << "Warning! -device-options set for non-compiled device: " << enabledProductsAcronyms[1].str() << "\n";
+
+    EXPECT_FALSE(hasSubstr(output, errorMessage1.str()));
+    EXPECT_FALSE(hasSubstr(output, errorMessage2.str()));
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
