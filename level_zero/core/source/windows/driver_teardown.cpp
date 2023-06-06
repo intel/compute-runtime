@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/global_teardown.h"
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 #include "level_zero/tools/source/sysman/sysman.h"
@@ -14,16 +15,20 @@
 namespace L0 {
 
 ze_result_t setDriverTeardownHandleInLoader(std::string loaderLibraryName) {
-    HMODULE handle = nullptr;
-    ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-    handle = GetModuleHandleA(loaderLibraryName.c_str());
-    if (handle) {
-        zelSetDriverTeardown_fn setDriverTeardown = reinterpret_cast<zelSetDriverTeardown_fn>(GetProcAddress(handle, "zelSetDriverTeardown"));
-        if (setDriverTeardown) {
-            result = setDriverTeardown();
+    if (L0::LevelZeroDriverInitialized) {
+        HMODULE handle = nullptr;
+        ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        handle = GetModuleHandleA(loaderLibraryName.c_str());
+        if (handle) {
+            zelSetDriverTeardown_fn setDriverTeardown = reinterpret_cast<zelSetDriverTeardown_fn>(GetProcAddress(handle, "zelSetDriverTeardown"));
+            if (setDriverTeardown) {
+                result = setDriverTeardown();
+            }
         }
+        return result;
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    return result;
 }
 
 } // namespace L0

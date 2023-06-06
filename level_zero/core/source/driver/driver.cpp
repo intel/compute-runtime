@@ -24,6 +24,7 @@
 namespace L0 {
 
 _ze_driver_handle_t *GlobalDriverHandle;
+bool LevelZeroDriverInitialized = false;
 uint32_t driverCount = 1;
 
 void DriverImp::initialize(ze_result_t *result) {
@@ -125,9 +126,17 @@ static DriverImp driverImp;
 Driver *Driver::driver = &driverImp;
 
 ze_result_t init(ze_init_flags_t flags) {
-    if (flags && !(flags & ZE_INIT_FLAG_GPU_ONLY))
+    if (flags && !(flags & ZE_INIT_FLAG_GPU_ONLY)) {
+        L0::LevelZeroDriverInitialized = false;
         return ZE_RESULT_ERROR_UNINITIALIZED;
-    else
-        return Driver::get()->driverInit(flags);
+    } else {
+        ze_result_t result = Driver::get()->driverInit(flags);
+        if (result == ZE_RESULT_SUCCESS) {
+            L0::LevelZeroDriverInitialized = true;
+        } else {
+            L0::LevelZeroDriverInitialized = false;
+        }
+        return result;
+    }
 }
 } // namespace L0
