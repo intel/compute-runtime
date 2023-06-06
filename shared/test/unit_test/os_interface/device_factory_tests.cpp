@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -46,6 +47,27 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
     EXPECT_TRUE(success);
     EXPECT_EQ(config, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
     EXPECT_NE(0u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
+}
+
+TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenReleaseHelperContainsCorrectIpVersion) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto config = defaultHwInfo.get()->ipVersion.value;
+    DebugManager.flags.OverrideHwIpVersion.set(config);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    ASSERT_TRUE(success);
+    auto *releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+
+    if (releaseHelper == nullptr) {
+        GTEST_SKIP();
+    }
+    class ReleaseHelperExpose : public ReleaseHelper {
+      public:
+        using ReleaseHelper::hardwareIpVersion;
+    };
+
+    ReleaseHelperExpose *exposedReleaseHelper = static_cast<ReleaseHelperExpose *>(releaseHelper);
+    EXPECT_EQ(config, exposedReleaseHelper->hardwareIpVersion.value);
 }
 
 TEST_F(DeviceFactoryTests, givenHwIpVersionAndDeviceIdOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCorrectValueIsSet) {

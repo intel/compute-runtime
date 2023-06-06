@@ -57,7 +57,13 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
-        rootDeviceEnvironment.setHwInfoAndInitHelpers(hwInfoConst);
+        rootDeviceEnvironment.setHwInfo(hwInfoConst);
+
+        rootDeviceEnvironment.initProductHelper();
+        rootDeviceEnvironment.initGfxCoreHelper();
+        rootDeviceEnvironment.initApiGfxCoreHelper();
+        rootDeviceEnvironment.initCompilerProductHelper();
+
         auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
 
         if (DebugManager.flags.OverrideRevision.get() != -1) {
@@ -91,6 +97,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         if (DebugManager.flags.OverrideHwIpVersion.get() != -1) {
             hardwareInfo->ipVersion = DebugManager.flags.OverrideHwIpVersion.get();
         }
+
+        rootDeviceEnvironment.initReleaseHelper();
 
         if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));

@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -87,6 +88,49 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
 
     EXPECT_TRUE(isEmpty(::testing::internal::GetCapturedStdout()));
     EXPECT_TRUE(isEmpty(::testing::internal::GetCapturedStderr()));
+}
+
+TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpVersion) {
+    struct DrmMockToQuerySystemInfo : public DrmMock {
+        DrmMockToQuerySystemInfo(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+        bool querySystemInfo() override { return false; }
+    };
+
+    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+      public:
+        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        void setupIpVersion() override {
+            drm.getRootDeviceEnvironment().getMutableHardwareInfo()->ipVersion.architecture = 12u;
+            drm.getRootDeviceEnvironment().getMutableHardwareInfo()->ipVersion.release = 55u;
+        }
+    };
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->releaseHelper.reset(nullptr);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerProductHelper &) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    int ret = drm.setupHardwareInfo(&device, false);
+    ASSERT_EQ(ret, 0);
+
+    auto *releaseHelper = drm.getRootDeviceEnvironment().getReleaseHelper();
+
+    if (releaseHelper == nullptr) {
+        GTEST_SKIP();
+    }
+    class ReleaseHelperExpose : public ReleaseHelper {
+      public:
+        using ReleaseHelper::hardwareIpVersion;
+    };
+
+    ReleaseHelperExpose *exposedReleaseHelper = static_cast<ReleaseHelperExpose *>(releaseHelper);
+    EXPECT_EQ(12u, exposedReleaseHelper->hardwareIpVersion.architecture);
+    EXPECT_EQ(55u, exposedReleaseHelper->hardwareIpVersion.release);
 }
 
 TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsNonZeros) {

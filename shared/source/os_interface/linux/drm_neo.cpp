@@ -430,7 +430,11 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     auto deviceId = hwInfo->platform.usDeviceID;
     auto revisionId = hwInfo->platform.usRevId;
 
-    rootDeviceEnvironment.setHwInfoAndInitHelpers(device->pHwInfo);
+    rootDeviceEnvironment.setHwInfo(device->pHwInfo);
+    rootDeviceEnvironment.initProductHelper();
+    rootDeviceEnvironment.initGfxCoreHelper();
+    rootDeviceEnvironment.initApiGfxCoreHelper();
+    rootDeviceEnvironment.initCompilerProductHelper();
 
     hwInfo->platform.usDeviceID = deviceId;
     hwInfo->platform.usRevId = revisionId;
@@ -438,6 +442,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     const auto productFamily = hwInfo->platform.eProductFamily;
     setupIoctlHelper(productFamily);
     ioctlHelper->setupIpVersion();
+    rootDeviceEnvironment.initReleaseHelper();
 
     Drm::QueryTopologyData topologyData = {};
 

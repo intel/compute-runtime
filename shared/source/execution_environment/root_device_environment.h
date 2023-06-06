@@ -55,6 +55,7 @@ struct RootDeviceEnvironment {
     MOCKABLE_VIRTUAL const HardwareInfo *getHardwareInfo() const;
     HardwareInfo *getMutableHardwareInfo() const;
     void setHwInfoAndInitHelpers(const HardwareInfo *hwInfo);
+    void setHwInfo(const HardwareInfo *hwInfo);
     bool isFullRangeSvm() const;
     bool isWddmOnLinux() const;
 
