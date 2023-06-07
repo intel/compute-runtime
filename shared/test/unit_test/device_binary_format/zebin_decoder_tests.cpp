@@ -1530,6 +1530,62 @@ kernels:
     EXPECT_EQ(KernelDescriptor::BindlessAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenStatefulArgsWhenDecodingZeInfoThenNumberOfStatefulArgsIsCorrect) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            4
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+        - arg_type:        arg_bypointer
+          offset:          8
+          size:            4
+          arg_index:       1
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+
+    EXPECT_EQ(2u, kernelDescriptor->kernelAttributes.numArgsStateful);
+
+    ConstStringRef zeinfo2 = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            4
+          arg_index:       0
+          addrmode:        stateful
+          addrspace:       global
+          access_type:     readwrite
+        - arg_type:        arg_bypointer
+          offset:          8
+          size:            4
+          arg_index:       1
+          addrmode:        stateful
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+    err = decodeZeInfoKernelEntry(zeinfo2);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+
+    EXPECT_EQ(2u, kernelDescriptor->kernelAttributes.numArgsStateful);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessImageAddressingWhenDecodingZeInfoThenImageAddressingModeIsBindless) {
     ConstStringRef zeinfo = R"===(
 kernels:

@@ -42,7 +42,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace NEO {
-void populatePointerKernelArg(ArgDescPointer &dst,
+void populatePointerKernelArg(KernelDescriptor &desc, ArgDescPointer &dst,
                               CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless,
                               KernelDescriptor::AddressingMode addressingMode);
 }

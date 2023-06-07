@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 using namespace NEO;
 namespace NEO {
-void populatePointerKernelArg(ArgDescPointer &dst,
+void populatePointerKernelArg(KernelDescriptor &kernelDesc, ArgDescPointer &dst,
                               CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless,
                               KernelDescriptor::AddressingMode addressingMode);
 }
@@ -29,7 +29,7 @@ void MockKernelInfo::addArgAccelerator(uint32_t index, SurfaceStateHeapOffset bi
 void MockKernelInfo::addArgBuffer(uint32_t index, CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless) {
     resizeArgsIfIndexTooBig(index);
 
-    populatePointerKernelArg(argAt(index).as<ArgDescPointer>(true), stateless, pointerSize, bindful, bindless, kernelDescriptor.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(kernelDescriptor, argAt(index).as<ArgDescPointer>(true), stateless, pointerSize, bindful, bindless, kernelDescriptor.kernelAttributes.bufferAddressingMode);
 }
 
 void MockKernelInfo::addArgDevQueue(uint32_t index, CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful) {
@@ -126,7 +126,7 @@ void MockKernelInfo::addExtendedVmeDescriptor(uint32_t index, CrossThreadDataOff
 }
 
 void MockKernelInfo::populatePointerArg(ArgDescPointer &arg, uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful) {
-    populatePointerKernelArg(arg, stateless, pointerSize, bindful, bindful, kernelDescriptor.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(kernelDescriptor, arg, stateless, pointerSize, bindful, bindful, kernelDescriptor.kernelAttributes.bufferAddressingMode);
 }
 
 void MockKernelInfo::setPrintfSurface(uint8_t dataParamSize, CrossThreadDataOffset crossThreadDataOffset, SurfaceStateHeapOffset sshOffset) {

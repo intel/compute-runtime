@@ -272,6 +272,8 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     EXPECT_EQ(privateSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
     EXPECT_EQ(privateSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindless));
+    EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
+    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateStatelessPrivateSurface = nullptr;
 
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless));
@@ -288,6 +290,8 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     EXPECT_EQ(constantSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize);
     EXPECT_EQ(constantSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless));
+    EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
+    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateStatelessConstantMemorySurfaceWithInitialization = nullptr;
 
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless));
@@ -304,6 +308,8 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     EXPECT_EQ(globalsSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
     EXPECT_EQ(globalsSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless));
+    EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
+    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization = nullptr;
 
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesPrintf);
@@ -322,6 +328,8 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     EXPECT_EQ(printfSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.pointerSize);
     EXPECT_EQ(printfSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.bindless));
+    EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
+    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateStatelessPrintfSurface = nullptr;
 
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.stateless));
@@ -338,6 +346,8 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     EXPECT_EQ(eventPoolSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.pointerSize);
     EXPECT_EQ(eventPoolSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindless));
+    EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
+    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateStatelessEventPoolSurface = nullptr;
 
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.stateless));
@@ -354,6 +364,8 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     EXPECT_EQ(defaultDeviceQueueSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.pointerSize);
     EXPECT_EQ(defaultDeviceQueueSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindless));
+    EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
+    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateStatelessDefaultDeviceQueueSurface = nullptr;
 
     EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.perThreadSystemThreadSurfaceSize);
@@ -371,6 +383,8 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     EXPECT_EQ(0U, kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.pointerSize);
     EXPECT_EQ(systemThreadSurface.Offset, kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindless));
+    EXPECT_EQ(0u, kernelDescriptor.kernelAttributes.numArgsStateful);
+    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateSystemThreadSurface = nullptr;
 
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesSyncBuffer);
@@ -389,6 +403,8 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     EXPECT_EQ(defaultDeviceQueueSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.pointerSize);
     EXPECT_EQ(defaultDeviceQueueSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.bindless));
+    EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
+    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateSyncBuffer = nullptr;
 }
 

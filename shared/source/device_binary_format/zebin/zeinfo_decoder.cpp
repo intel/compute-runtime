@@ -1165,6 +1165,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
                 sampler.bindful = maxIndirectSamplerStateSize + maxSamplerStateSize * src.samplerIndex;
                 dst.payloadMappings.samplerTable.numSamplers = std::max<uint8_t>(dst.payloadMappings.samplerTable.numSamplers, static_cast<uint8_t>(src.samplerIndex + 1));
             }
+            dst.kernelAttributes.numArgsStateful++;
             break;
         case Types::Kernel::PayloadArgument::MemoryAddressingModeStateless:
             if (false == dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
@@ -1183,6 +1184,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
             } else {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).bindless = src.offset;
             }
+            dst.kernelAttributes.numArgsStateful++;
             break;
         case Types::Kernel::PayloadArgument::MemoryAddressingModeSharedLocalMemory:
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).slmOffset = src.offset;

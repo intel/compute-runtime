@@ -126,7 +126,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchKernelAttribute
     dst.kernelAttributes.flags.isInvalid = (attributes.find(invalidKernelAttrBeg.data()) != std::string::npos);
 }
 
-void populatePointerKernelArg(ArgDescPointer &dst,
+void populatePointerKernelArg(KernelDescriptor &kernelDesc, ArgDescPointer &dst,
                               CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless,
                               KernelDescriptor::AddressingMode addressingMode) {
     switch (addressingMode) {
@@ -142,6 +142,7 @@ void populatePointerKernelArg(ArgDescPointer &dst,
         dst.stateless = stateless;
         dst.bindless = undefined<CrossThreadDataOffset>;
         dst.pointerSize = pointerSize;
+        kernelDesc.kernelAttributes.numArgsStateful++;
         break;
 
     case KernelDescriptor::BindlessAndStateless:
@@ -149,41 +150,42 @@ void populatePointerKernelArg(ArgDescPointer &dst,
         dst.stateless = stateless;
         dst.bindless = bindless;
         dst.pointerSize = pointerSize;
+        kernelDesc.kernelAttributes.numArgsStateful++;
         break;
     }
 }
 
 template <typename TokenT>
-void populatePointerKernelArg(ArgDescPointer &dst, const TokenT &src, KernelDescriptor::AddressingMode addressingMode) {
-    populatePointerKernelArg(dst, src.DataParamOffset, src.DataParamSize, src.SurfaceStateHeapOffset, src.SurfaceStateHeapOffset, addressingMode);
+void populatePointerKernelArg(KernelDescriptor &kernelDesc, ArgDescPointer &dst, const TokenT &src, KernelDescriptor::AddressingMode addressingMode) {
+    populatePointerKernelArg(kernelDesc, dst, src.DataParamOffset, src.DataParamSize, src.SurfaceStateHeapOffset, src.SurfaceStateHeapOffset, addressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrivateSurface &token) {
     dst.kernelAttributes.flags.usesPrivateMemory = true;
     dst.kernelAttributes.perHwThreadPrivateMemorySize = static_cast<uint32_t>(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(token, dst.kernelAttributes.simdSize));
-    populatePointerKernelArg(dst.payloadMappings.implicitArgs.privateMemoryAddress, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.privateMemoryAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization &token) {
-    populatePointerKernelArg(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization &token) {
-    populatePointerKernelArg(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrintfSurface &token) {
     dst.kernelAttributes.flags.usesPrintf = true;
     dst.kernelAttributes.flags.usesStringMapForPrintf = true;
-    populatePointerKernelArg(dst.payloadMappings.implicitArgs.printfSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.printfSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessEventPoolSurface &token) {
-    populatePointerKernelArg(dst.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessDefaultDeviceQueueSurface &token) {
-    populatePointerKernelArg(dst.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSystemThreadSurface &token) {
@@ -193,11 +195,11 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSystemT
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSyncBuffer &token) {
     dst.kernelAttributes.flags.usesSyncBuffer = true;
-    populatePointerKernelArg(dst.payloadMappings.implicitArgs.syncBufferAddress, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.syncBufferAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateRTGlobalBuffer &token) {
-    populatePointerKernelArg(dst.payloadMappings.implicitArgs.rtDispatchGlobals, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.rtDispatchGlobals, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchString &token) {
@@ -227,9 +229,11 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
     auto &argImage = dst.payloadMappings.explicitArgs[argNum].as<ArgDescImage>(true);
     if (KernelDescriptor::Bindful == dst.kernelAttributes.imageAddressingMode) {
         argImage.bindful = token.Offset;
+        dst.kernelAttributes.numArgsStateful++;
     }
     if (KernelDescriptor::Bindless == dst.kernelAttributes.imageAddressingMode) {
         argImage.bindless = token.Offset;
+        dst.kernelAttributes.numArgsStateful++;
     }
 
     if (token.Type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA) {
@@ -273,9 +277,11 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
     if (dst.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindlessAndStateless) {
         argPointer.bindless = token.Offset;
         argPointer.bindful = undefined<SurfaceStateHeapOffset>;
+        dst.kernelAttributes.numArgsStateful++;
     } else {
         argPointer.bindful = token.Offset;
         argPointer.bindless = undefined<CrossThreadDataOffset>;
+        dst.kernelAttributes.numArgsStateful++;
     }
 
     argPointer.stateless = undefined<CrossThreadDataOffset>;
@@ -288,7 +294,7 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
     auto &argPointer = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
     dst.payloadMappings.explicitArgs[argNum].getTraits().addressQualifier = KernelArgMetadata::AddrGlobal;
 
-    populatePointerKernelArg(argPointer, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, argPointer, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPatchStatelessConstantMemoryObjectKernelArgument &token) {
@@ -297,7 +303,7 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
     auto &argPointer = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
     dst.payloadMappings.explicitArgs[argNum].getTraits().addressQualifier = KernelArgMetadata::AddrConstant;
 
-    populatePointerKernelArg(argPointer, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, argPointer, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPatchStatelessDeviceQueueKernelArgument &token) {
@@ -308,7 +314,7 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
 
     dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().isDeviceQueue = true;
 
-    populatePointerKernelArg(argPointer, token, dst.kernelAttributes.bufferAddressingMode);
+    populatePointerKernelArg(dst, argPointer, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
 void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPatchDataParameterBuffer &token) {
