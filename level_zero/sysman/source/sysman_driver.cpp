@@ -23,6 +23,7 @@ namespace L0 {
 namespace Sysman {
 _ze_driver_handle_t *GlobalSysmanDriverHandle = nullptr;
 uint32_t driverCount = 0;
+bool sysmanOnlyInit = false;
 
 void SysmanDriverImp::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -76,6 +77,9 @@ ze_result_t SysmanDriverImp::driverInit(zes_init_flags_t flags) {
         ze_result_t result;
         this->initialize(&result);
         initStatus = result;
+        if (result == ZE_RESULT_SUCCESS) {
+            sysmanOnlyInit = true;
+        }
     });
     return initStatus;
 }

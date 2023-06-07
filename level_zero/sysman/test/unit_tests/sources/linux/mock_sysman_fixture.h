@@ -19,6 +19,7 @@
 #include "level_zero/sysman/source/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_device.h"
+#include "level_zero/sysman/source/sysman_driver.h"
 #include "level_zero/sysman/source/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_drm.h"
@@ -71,6 +72,8 @@ class SysmanDeviceFixture : public ::testing::Test {
         pSysmanDevice = driverHandle->sysmanDevices[0];
         L0::Sysman::GlobalSysmanDriver = driverHandle.get();
 
+        L0::Sysman::sysmanOnlyInit = true;
+
         pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
@@ -78,6 +81,7 @@ class SysmanDeviceFixture : public ::testing::Test {
     }
     void TearDown() override {
         L0::Sysman::GlobalSysmanDriver = nullptr;
+        L0::Sysman::sysmanOnlyInit = false;
     }
 
     L0::Sysman::SysmanDevice *pSysmanDevice = nullptr;
@@ -119,12 +123,15 @@ class SysmanMultiDeviceFixture : public ::testing::Test {
         driverHandle->initialize(*execEnv);
         pSysmanDevice = driverHandle->sysmanDevices[0];
 
+        L0::Sysman::sysmanOnlyInit = true;
+
         pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
         pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
     }
     void TearDown() override {
+        L0::Sysman::sysmanOnlyInit = false;
     }
 
     L0::Sysman::SysmanDevice *pSysmanDevice = nullptr;

@@ -27,6 +27,7 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDrivers);
 
 extern uint32_t driverCount;
 extern _ze_driver_handle_t *GlobalSysmanDriverHandle;
+extern bool sysmanOnlyInit;
 
 } // namespace Sysman
 } // namespace L0

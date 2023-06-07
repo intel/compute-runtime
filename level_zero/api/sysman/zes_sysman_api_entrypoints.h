@@ -14,6 +14,7 @@
 #include "level_zero/tools/source/sysman/sysman.h"
 
 namespace L0 {
+
 ze_result_t zesInit(
     zes_init_flags_t flags) {
     return L0::Sysman::init(flags);
@@ -22,14 +23,22 @@ ze_result_t zesInit(
 ze_result_t zesDriverGet(
     uint32_t *pCount,
     zes_driver_handle_t *phDrivers) {
-    return L0::Sysman::driverHandleGet(pCount, phDrivers);
+    if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::driverHandleGet(pCount, phDrivers);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
 }
 
 ze_result_t zesDeviceGet(
     zes_driver_handle_t hDriver,
     uint32_t *pCount,
     zes_device_handle_t *phDevices) {
-    return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getDevice(pCount, phDevices);
+    if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getDevice(pCount, phDevices);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
 }
 
 ze_result_t zesDeviceGetProperties(
@@ -37,8 +46,10 @@ ze_result_t zesDeviceGetProperties(
     zes_device_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::deviceGetProperties(hDevice, pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::deviceGetProperties(hDevice, pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -47,8 +58,10 @@ ze_result_t zesDeviceGetState(
     zes_device_state_t *pState) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::deviceGetState(hDevice, pState);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::deviceGetState(hDevice, pState);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -58,8 +71,10 @@ ze_result_t zesDeviceEnumSchedulers(
     zes_sched_handle_t *phScheduler) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::schedulerGet(hDevice, pCount, phScheduler);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::schedulerGet(hDevice, pCount, phScheduler);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -68,8 +83,10 @@ ze_result_t zesSchedulerGetProperties(
     zes_sched_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Scheduler::fromHandle(hScheduler)->schedulerGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Scheduler::fromHandle(hScheduler)->schedulerGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -78,8 +95,10 @@ ze_result_t zesSchedulerGetCurrentMode(
     zes_sched_mode_t *pMode) {
     if (L0::sysmanInitFromCore) {
         return L0::Scheduler::fromHandle(hScheduler)->getCurrentMode(pMode);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Scheduler::fromHandle(hScheduler)->getCurrentMode(pMode);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -89,8 +108,10 @@ ze_result_t zesSchedulerGetTimeoutModeProperties(
     zes_sched_timeout_properties_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::Scheduler::fromHandle(hScheduler)->getTimeoutModeProperties(getDefaults, pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Scheduler::fromHandle(hScheduler)->getTimeoutModeProperties(getDefaults, pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -100,8 +121,10 @@ ze_result_t zesSchedulerGetTimesliceModeProperties(
     zes_sched_timeslice_properties_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::Scheduler::fromHandle(hScheduler)->getTimesliceModeProperties(getDefaults, pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Scheduler::fromHandle(hScheduler)->getTimesliceModeProperties(getDefaults, pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -111,8 +134,10 @@ ze_result_t zesSchedulerSetTimeoutMode(
     ze_bool_t *pNeedReload) {
     if (L0::sysmanInitFromCore) {
         return L0::Scheduler::fromHandle(hScheduler)->setTimeoutMode(pProperties, pNeedReload);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Scheduler::fromHandle(hScheduler)->setTimeoutMode(pProperties, pNeedReload);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -122,8 +147,10 @@ ze_result_t zesSchedulerSetTimesliceMode(
     ze_bool_t *pNeedReload) {
     if (L0::sysmanInitFromCore) {
         return L0::Scheduler::fromHandle(hScheduler)->setTimesliceMode(pProperties, pNeedReload);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Scheduler::fromHandle(hScheduler)->setTimesliceMode(pProperties, pNeedReload);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -132,8 +159,10 @@ ze_result_t zesSchedulerSetExclusiveMode(
     ze_bool_t *pNeedReload) {
     if (L0::sysmanInitFromCore) {
         return L0::Scheduler::fromHandle(hScheduler)->setExclusiveMode(pNeedReload);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Scheduler::fromHandle(hScheduler)->setExclusiveMode(pNeedReload);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -142,8 +171,10 @@ ze_result_t zesSchedulerSetComputeUnitDebugMode(
     ze_bool_t *pNeedReload) {
     if (L0::sysmanInitFromCore) {
         return L0::Scheduler::fromHandle(hScheduler)->setComputeUnitDebugMode(pNeedReload);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Scheduler::fromHandle(hScheduler)->setComputeUnitDebugMode(pNeedReload);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -153,8 +184,10 @@ ze_result_t zesDeviceProcessesGetState(
     zes_process_state_t *pProcesses) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::processesGetState(hDevice, pCount, pProcesses);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::processesGetState(hDevice, pCount, pProcesses);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -163,8 +196,10 @@ ze_result_t zesDeviceReset(
     ze_bool_t force) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::deviceReset(hDevice, force);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::deviceReset(hDevice, force);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -173,8 +208,10 @@ ze_result_t zesDevicePciGetProperties(
     zes_pci_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::pciGetProperties(hDevice, pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::pciGetProperties(hDevice, pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -183,8 +220,10 @@ ze_result_t zesDevicePciGetState(
     zes_pci_state_t *pState) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::pciGetState(hDevice, pState);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::pciGetState(hDevice, pState);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -194,8 +233,10 @@ ze_result_t zesDevicePciGetBars(
     zes_pci_bar_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::pciGetBars(hDevice, pCount, pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::pciGetBars(hDevice, pCount, pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -204,8 +245,10 @@ ze_result_t zesDevicePciGetStats(
     zes_pci_stats_t *pStats) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::pciGetStats(hDevice, pStats);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::pciGetStats(hDevice, pStats);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -215,8 +258,10 @@ ze_result_t zesDeviceEnumPowerDomains(
     zes_pwr_handle_t *phPower) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::powerGet(hDevice, pCount, phPower);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::powerGet(hDevice, pCount, phPower);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -225,8 +270,10 @@ ze_result_t zesDeviceGetCardPowerDomain(
     zes_pwr_handle_t *phPower) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::powerGetCardDomain(hDevice, phPower);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::powerGetCardDomain(hDevice, phPower);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -235,8 +282,10 @@ ze_result_t zesPowerGetProperties(
     zes_power_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Power::fromHandle(hPower)->powerGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Power::fromHandle(hPower)->powerGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -245,8 +294,10 @@ ze_result_t zesPowerGetEnergyCounter(
     zes_power_energy_counter_t *pEnergy) {
     if (L0::sysmanInitFromCore) {
         return L0::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -257,8 +308,10 @@ ze_result_t zesPowerGetLimits(
     zes_power_peak_limit_t *pPeak) {
     if (L0::sysmanInitFromCore) {
         return L0::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -269,8 +322,10 @@ ze_result_t zesPowerSetLimits(
     const zes_power_peak_limit_t *pPeak) {
     if (L0::sysmanInitFromCore) {
         return L0::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -280,8 +335,10 @@ ze_result_t zesPowerGetLimitsExt(
     zes_power_limit_ext_desc_t *pSustained) {
     if (L0::sysmanInitFromCore) {
         return L0::Power::fromHandle(hPower)->powerGetLimitsExt(pCount, pSustained);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Power::fromHandle(hPower)->powerGetLimitsExt(pCount, pSustained);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -291,8 +348,10 @@ ze_result_t zesPowerSetLimitsExt(
     zes_power_limit_ext_desc_t *pSustained) {
     if (L0::sysmanInitFromCore) {
         return L0::Power::fromHandle(hPower)->powerSetLimitsExt(pCount, pSustained);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Power::fromHandle(hPower)->powerSetLimitsExt(pCount, pSustained);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -301,8 +360,10 @@ ze_result_t zesPowerGetEnergyThreshold(
     zes_energy_threshold_t *pThreshold) {
     if (L0::sysmanInitFromCore) {
         return L0::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -311,8 +372,10 @@ ze_result_t zesPowerSetEnergyThreshold(
     double threshold) {
     if (L0::sysmanInitFromCore) {
         return L0::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -322,8 +385,10 @@ ze_result_t zesDeviceEnumFrequencyDomains(
     zes_freq_handle_t *phFrequency) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::frequencyGet(hDevice, pCount, phFrequency);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::frequencyGet(hDevice, pCount, phFrequency);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -332,8 +397,10 @@ ze_result_t zesFrequencyGetProperties(
     zes_freq_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -343,8 +410,10 @@ ze_result_t zesFrequencyGetAvailableClocks(
     double *phFrequency) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -353,8 +422,10 @@ ze_result_t zesFrequencyGetRange(
     zes_freq_range_t *pLimits) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -363,8 +434,10 @@ ze_result_t zesFrequencySetRange(
     const zes_freq_range_t *pLimits) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -373,8 +446,10 @@ ze_result_t zesFrequencyGetState(
     zes_freq_state_t *pState) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyGetState(pState);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetState(pState);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -383,8 +458,10 @@ ze_result_t zesFrequencyGetThrottleTime(
     zes_freq_throttle_time_t *pThrottleTime) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyGetThrottleTime(pThrottleTime);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetThrottleTime(pThrottleTime);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -393,8 +470,10 @@ ze_result_t zesFrequencyOcGetFrequencyTarget(
     double *pCurrentOcFrequency) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetFrequencyTarget(pCurrentOcFrequency);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetFrequencyTarget(pCurrentOcFrequency);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -403,8 +482,10 @@ ze_result_t zesFrequencyOcSetFrequencyTarget(
     double currentOcFrequency) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetFrequencyTarget(currentOcFrequency);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetFrequencyTarget(currentOcFrequency);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -414,8 +495,10 @@ ze_result_t zesFrequencyOcGetVoltageTarget(
     double *pCurrentVoltageOffset) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetVoltageTarget(pCurrentVoltageTarget, pCurrentVoltageOffset);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetVoltageTarget(pCurrentVoltageTarget, pCurrentVoltageOffset);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -425,8 +508,10 @@ ze_result_t zesFrequencyOcSetVoltageTarget(
     double currentVoltageOffset) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetVoltageTarget(currentVoltageTarget, currentVoltageOffset);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetVoltageTarget(currentVoltageTarget, currentVoltageOffset);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -435,8 +520,10 @@ ze_result_t zesFrequencyOcSetMode(
     zes_oc_mode_t currentOcMode) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetMode(currentOcMode);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetMode(currentOcMode);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -445,8 +532,10 @@ ze_result_t zesFrequencyOcGetMode(
     zes_oc_mode_t *pCurrentOcMode) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetMode(pCurrentOcMode);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetMode(pCurrentOcMode);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -455,8 +544,10 @@ ze_result_t zesFrequencyOcGetCapabilities(
     zes_oc_capabilities_t *pOcCapabilities) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetCapabilities(pOcCapabilities);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetCapabilities(pOcCapabilities);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -465,8 +556,10 @@ ze_result_t zesFrequencyOcGetIccMax(
     double *pOcIccMax) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetIccMax(pOcIccMax);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetIccMax(pOcIccMax);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -475,8 +568,10 @@ ze_result_t zesFrequencyOcSetIccMax(
     double ocIccMax) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetIccMax(ocIccMax);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetIccMax(ocIccMax);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -485,8 +580,10 @@ ze_result_t zesFrequencyOcGetTjMax(
     double *pOcTjMax) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcGeTjMax(pOcTjMax);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGeTjMax(pOcTjMax);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -495,8 +592,10 @@ ze_result_t zesFrequencyOcSetTjMax(
     double ocTjMax) {
     if (L0::sysmanInitFromCore) {
         return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetTjMax(ocTjMax);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetTjMax(ocTjMax);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -506,8 +605,10 @@ ze_result_t zesDeviceEnumEngineGroups(
     zes_engine_handle_t *phEngine) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::engineGet(hDevice, pCount, phEngine);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::engineGet(hDevice, pCount, phEngine);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -516,8 +617,10 @@ ze_result_t zesEngineGetProperties(
     zes_engine_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Engine::fromHandle(hEngine)->engineGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Engine::fromHandle(hEngine)->engineGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -526,8 +629,10 @@ ze_result_t zesEngineGetActivity(
     zes_engine_stats_t *pStats) {
     if (L0::sysmanInitFromCore) {
         return L0::Engine::fromHandle(hEngine)->engineGetActivity(pStats);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Engine::fromHandle(hEngine)->engineGetActivity(pStats);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -537,8 +642,10 @@ ze_result_t zesDeviceEnumStandbyDomains(
     zes_standby_handle_t *phStandby) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::standbyGet(hDevice, pCount, phStandby);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::standbyGet(hDevice, pCount, phStandby);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -547,8 +654,10 @@ ze_result_t zesStandbyGetProperties(
     zes_standby_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Standby::fromHandle(hStandby)->standbyGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Standby::fromHandle(hStandby)->standbyGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -557,8 +666,10 @@ ze_result_t zesStandbyGetMode(
     zes_standby_promo_mode_t *pMode) {
     if (L0::sysmanInitFromCore) {
         return L0::Standby::fromHandle(hStandby)->standbyGetMode(pMode);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Standby::fromHandle(hStandby)->standbyGetMode(pMode);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -567,8 +678,10 @@ ze_result_t zesStandbySetMode(
     zes_standby_promo_mode_t mode) {
     if (L0::sysmanInitFromCore) {
         return L0::Standby::fromHandle(hStandby)->standbySetMode(mode);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Standby::fromHandle(hStandby)->standbySetMode(mode);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -578,8 +691,10 @@ ze_result_t zesDeviceEnumFirmwares(
     zes_firmware_handle_t *phFirmware) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::firmwareGet(hDevice, pCount, phFirmware);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::firmwareGet(hDevice, pCount, phFirmware);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -588,8 +703,10 @@ ze_result_t zesFirmwareGetProperties(
     zes_firmware_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Firmware::fromHandle(hFirmware)->firmwareGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -599,8 +716,10 @@ ze_result_t zesFirmwareFlash(
     uint32_t size) {
     if (L0::sysmanInitFromCore) {
         return L0::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -610,8 +729,10 @@ ze_result_t zesDeviceEnumMemoryModules(
     zes_mem_handle_t *phMemory) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::memoryGet(hDevice, pCount, phMemory);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::memoryGet(hDevice, pCount, phMemory);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -620,8 +741,10 @@ ze_result_t zesMemoryGetProperties(
     zes_mem_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Memory::fromHandle(hMemory)->memoryGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -630,8 +753,10 @@ ze_result_t zesMemoryGetState(
     zes_mem_state_t *pState) {
     if (L0::sysmanInitFromCore) {
         return L0::Memory::fromHandle(hMemory)->memoryGetState(pState);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetState(pState);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -640,8 +765,10 @@ ze_result_t zesMemoryGetBandwidth(
     zes_mem_bandwidth_t *pBandwidth) {
     if (L0::sysmanInitFromCore) {
         return L0::Memory::fromHandle(hMemory)->memoryGetBandwidth(pBandwidth);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetBandwidth(pBandwidth);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -651,8 +778,10 @@ ze_result_t zesDeviceEnumFabricPorts(
     zes_fabric_port_handle_t *phPort) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::fabricPortGet(hDevice, pCount, phPort);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::fabricPortGet(hDevice, pCount, phPort);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -661,8 +790,10 @@ ze_result_t zesFabricPortGetProperties(
     zes_fabric_port_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::FabricPort::fromHandle(hPort)->fabricPortGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -671,8 +802,10 @@ ze_result_t zesFabricPortGetLinkType(
     zes_fabric_link_type_t *pLinkType) {
     if (L0::sysmanInitFromCore) {
         return L0::FabricPort::fromHandle(hPort)->fabricPortGetLinkType(pLinkType);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetLinkType(pLinkType);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -681,8 +814,10 @@ ze_result_t zesFabricPortGetConfig(
     zes_fabric_port_config_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::FabricPort::fromHandle(hPort)->fabricPortGetConfig(pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetConfig(pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -691,8 +826,10 @@ ze_result_t zesFabricPortSetConfig(
     const zes_fabric_port_config_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::FabricPort::fromHandle(hPort)->fabricPortSetConfig(pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortSetConfig(pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -701,8 +838,10 @@ ze_result_t zesFabricPortGetState(
     zes_fabric_port_state_t *pState) {
     if (L0::sysmanInitFromCore) {
         return L0::FabricPort::fromHandle(hPort)->fabricPortGetState(pState);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetState(pState);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -711,8 +850,10 @@ ze_result_t zesFabricPortGetThroughput(
     zes_fabric_port_throughput_t *pThroughput) {
     if (L0::sysmanInitFromCore) {
         return L0::FabricPort::fromHandle(hPort)->fabricPortGetThroughput(pThroughput);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetThroughput(pThroughput);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -722,8 +863,10 @@ ze_result_t zesDeviceEnumTemperatureSensors(
     zes_temp_handle_t *phTemperature) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::temperatureGet(hDevice, pCount, phTemperature);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::temperatureGet(hDevice, pCount, phTemperature);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -732,8 +875,10 @@ ze_result_t zesTemperatureGetProperties(
     zes_temp_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -742,8 +887,10 @@ ze_result_t zesTemperatureGetConfig(
     zes_temp_config_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -752,8 +899,10 @@ ze_result_t zesTemperatureSetConfig(
     const zes_temp_config_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -762,8 +911,10 @@ ze_result_t zesTemperatureGetState(
     double *pTemperature) {
     if (L0::sysmanInitFromCore) {
         return L0::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -792,8 +943,10 @@ ze_result_t zesDeviceEnumFans(
     zes_fan_handle_t *phFan) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::fanGet(hDevice, pCount, phFan);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::fanGet(hDevice, pCount, phFan);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -802,8 +955,10 @@ ze_result_t zesFanGetProperties(
     zes_fan_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Fan::fromHandle(hFan)->fanGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Fan::fromHandle(hFan)->fanGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -812,8 +967,10 @@ ze_result_t zesFanGetConfig(
     zes_fan_config_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::Fan::fromHandle(hFan)->fanGetConfig(pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Fan::fromHandle(hFan)->fanGetConfig(pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -821,8 +978,10 @@ ze_result_t zesFanSetDefaultMode(
     zes_fan_handle_t hFan) {
     if (L0::sysmanInitFromCore) {
         return L0::Fan::fromHandle(hFan)->fanSetDefaultMode();
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Fan::fromHandle(hFan)->fanSetDefaultMode();
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -831,8 +990,10 @@ ze_result_t zesFanSetFixedSpeedMode(
     const zes_fan_speed_t *speed) {
     if (L0::sysmanInitFromCore) {
         return L0::Fan::fromHandle(hFan)->fanSetFixedSpeedMode(speed);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Fan::fromHandle(hFan)->fanSetFixedSpeedMode(speed);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -841,8 +1002,10 @@ ze_result_t zesFanSetSpeedTableMode(
     const zes_fan_speed_table_t *speedTable) {
     if (L0::sysmanInitFromCore) {
         return L0::Fan::fromHandle(hFan)->fanSetSpeedTableMode(speedTable);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Fan::fromHandle(hFan)->fanSetSpeedTableMode(speedTable);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -852,8 +1015,10 @@ ze_result_t zesFanGetState(
     int32_t *pSpeed) {
     if (L0::sysmanInitFromCore) {
         return L0::Fan::fromHandle(hFan)->fanGetState(units, pSpeed);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Fan::fromHandle(hFan)->fanGetState(units, pSpeed);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -894,8 +1059,10 @@ ze_result_t zesDeviceEnumRasErrorSets(
     zes_ras_handle_t *phRas) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::rasGet(hDevice, pCount, phRas);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::rasGet(hDevice, pCount, phRas);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -904,8 +1071,10 @@ ze_result_t zesRasGetProperties(
     zes_ras_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Ras::fromHandle(hRas)->rasGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -914,8 +1083,10 @@ ze_result_t zesRasGetConfig(
     zes_ras_config_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::Ras::fromHandle(hRas)->rasGetConfig(pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasGetConfig(pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -924,8 +1095,10 @@ ze_result_t zesRasSetConfig(
     const zes_ras_config_t *pConfig) {
     if (L0::sysmanInitFromCore) {
         return L0::Ras::fromHandle(hRas)->rasSetConfig(pConfig);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasSetConfig(pConfig);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -935,8 +1108,10 @@ ze_result_t zesRasGetState(
     zes_ras_state_t *pState) {
     if (L0::sysmanInitFromCore) {
         return L0::Ras::fromHandle(hRas)->rasGetState(pState, clear);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasGetState(pState, clear);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -945,8 +1120,11 @@ ze_result_t zesDeviceEventRegister(
     zes_event_type_flags_t events) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::deviceEventRegister(hDevice, events);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::deviceEventRegister(hDevice, events);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    return L0::Sysman::SysmanDevice::deviceEventRegister(hDevice, events);
 }
 
 ze_result_t zesDriverEventListen(
@@ -958,8 +1136,11 @@ ze_result_t zesDriverEventListen(
     zes_event_type_flags_t *pEvents) {
     if (L0::sysmanInitFromCore) {
         return L0::DriverHandle::fromHandle(hDriver)->sysmanEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ze_result_t zesDriverEventListenEx(
@@ -971,8 +1152,11 @@ ze_result_t zesDriverEventListenEx(
     zes_event_type_flags_t *pEvents) {
     if (L0::sysmanInitFromCore) {
         return L0::DriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ze_result_t zesDeviceEnumDiagnosticTestSuites(
@@ -981,8 +1165,10 @@ ze_result_t zesDeviceEnumDiagnosticTestSuites(
     zes_diag_handle_t *phDiagnostics) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::diagnosticsGet(hDevice, pCount, phDiagnostics);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::diagnosticsGet(hDevice, pCount, phDiagnostics);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -991,8 +1177,10 @@ ze_result_t zesDiagnosticsGetProperties(
     zes_diag_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1002,8 +1190,10 @@ ze_result_t zesDiagnosticsGetTests(
     zes_diag_test_t *pTests) {
     if (L0::sysmanInitFromCore) {
         return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetTests(pCount, pTests);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetTests(pCount, pTests);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1014,8 +1204,10 @@ ze_result_t zesDiagnosticsRunTests(
     zes_diag_result_t *pResult) {
     if (L0::sysmanInitFromCore) {
         return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsRunTests(startIndex, endIndex, pResult);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsRunTests(startIndex, endIndex, pResult);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1025,8 +1217,10 @@ ze_result_t zesDeviceEnumPerformanceFactorDomains(
     zes_perf_handle_t *phPerf) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::performanceGet(hDevice, pCount, phPerf);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::performanceGet(hDevice, pCount, phPerf);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1035,8 +1229,10 @@ ze_result_t zesPerformanceFactorGetProperties(
     zes_perf_properties_t *pProperties) {
     if (L0::sysmanInitFromCore) {
         return L0::Performance::fromHandle(hPerf)->performanceGetProperties(pProperties);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Performance::fromHandle(hPerf)->performanceGetProperties(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1045,8 +1241,10 @@ ze_result_t zesPerformanceFactorGetConfig(
     double *pFactor) {
     if (L0::sysmanInitFromCore) {
         return L0::Performance::fromHandle(hPerf)->performanceGetConfig(pFactor);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Performance::fromHandle(hPerf)->performanceGetConfig(pFactor);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1055,8 +1253,10 @@ ze_result_t zesPerformanceFactorSetConfig(
     double factor) {
     if (L0::sysmanInitFromCore) {
         return L0::Performance::fromHandle(hPerf)->performanceSetConfig(factor);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Performance::fromHandle(hPerf)->performanceSetConfig(factor);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1065,8 +1265,10 @@ ze_result_t zesDeviceEccAvailable(
     ze_bool_t *pAvailable) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::deviceEccAvailable(hDevice, pAvailable);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::deviceEccAvailable(hDevice, pAvailable);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1075,8 +1277,10 @@ ze_result_t zesDeviceEccConfigurable(
     ze_bool_t *pConfigurable) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::deviceEccConfigurable(hDevice, pConfigurable);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::deviceEccConfigurable(hDevice, pConfigurable);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1085,8 +1289,10 @@ ze_result_t zesDeviceGetEccState(
     zes_device_ecc_properties_t *pState) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::deviceGetEccState(hDevice, pState);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::deviceGetEccState(hDevice, pState);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
@@ -1096,8 +1302,10 @@ ze_result_t zesDeviceSetEccState(
     zes_device_ecc_properties_t *pState) {
     if (L0::sysmanInitFromCore) {
         return L0::SysmanDevice::deviceSetEccState(hDevice, newState, pState);
-    } else {
+    } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::SysmanDevice::deviceSetEccState(hDevice, newState, pState);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 

@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/debug_env_reader.h"
-
 #include "level_zero/source/inc/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
@@ -30,14 +28,6 @@ zesGetDeviceProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetProperties = L0::zesDeviceGetProperties;
     pDdiTable->pfnGetState = L0::zesDeviceGetState;
@@ -90,13 +80,6 @@ zesGetGlobalProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
     pDdiTable->pfnInit = L0::zesInit;
 
     return result;
@@ -112,14 +95,6 @@ zesGetDriverProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnEventListen = L0::zesDriverEventListen;
     pDdiTable->pfnEventListenEx = L0::zesDriverEventListenEx;
@@ -138,14 +113,6 @@ zesGetDiagnosticsProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetProperties = L0::zesDiagnosticsGetProperties;
     pDdiTable->pfnGetTests = L0::zesDiagnosticsGetTests;
@@ -166,14 +133,6 @@ zesGetEngineProcAddrTable(
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
-
     pDdiTable->pfnGetProperties = L0::zesEngineGetProperties;
     pDdiTable->pfnGetActivity = L0::zesEngineGetActivity;
 
@@ -190,14 +149,6 @@ zesGetFabricPortProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetProperties = L0::zesFabricPortGetProperties;
     pDdiTable->pfnGetLinkType = L0::zesFabricPortGetLinkType;
@@ -220,14 +171,6 @@ zesGetFanProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
-
     pDdiTable->pfnGetProperties = L0::zesFanGetProperties;
     pDdiTable->pfnGetConfig = L0::zesFanGetConfig;
     pDdiTable->pfnSetDefaultMode = L0::zesFanSetDefaultMode;
@@ -249,14 +192,6 @@ zesGetFirmwareProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
-
     pDdiTable->pfnGetProperties = L0::zesFirmwareGetProperties;
     pDdiTable->pfnFlash = L0::zesFirmwareFlash;
 
@@ -274,14 +209,6 @@ zesGetFrequencyProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetProperties = L0::zesFrequencyGetProperties;
     pDdiTable->pfnGetAvailableClocks = L0::zesFrequencyGetAvailableClocks;
@@ -315,14 +242,6 @@ zesGetLedProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
-
     pDdiTable->pfnGetProperties = L0::zesLedGetProperties;
     pDdiTable->pfnGetState = L0::zesLedGetState;
     pDdiTable->pfnSetState = L0::zesLedSetState;
@@ -342,14 +261,6 @@ zesGetMemoryProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
-
     pDdiTable->pfnGetProperties = L0::zesMemoryGetProperties;
     pDdiTable->pfnGetState = L0::zesMemoryGetState;
     pDdiTable->pfnGetBandwidth = L0::zesMemoryGetBandwidth;
@@ -368,14 +279,6 @@ zesGetPerformanceFactorProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
-
     pDdiTable->pfnGetProperties = L0::zesPerformanceFactorGetProperties;
     pDdiTable->pfnGetConfig = L0::zesPerformanceFactorGetConfig;
     pDdiTable->pfnSetConfig = L0::zesPerformanceFactorSetConfig;
@@ -393,14 +296,6 @@ zesGetPowerProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetProperties = L0::zesPowerGetProperties;
     pDdiTable->pfnGetEnergyCounter = L0::zesPowerGetEnergyCounter;
@@ -425,14 +320,6 @@ zesGetPsuProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
-
     pDdiTable->pfnGetProperties = L0::zesPsuGetProperties;
     pDdiTable->pfnGetState = L0::zesPsuGetState;
 
@@ -449,14 +336,6 @@ zesGetRasProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetProperties = L0::zesRasGetProperties;
     pDdiTable->pfnGetConfig = L0::zesRasGetConfig;
@@ -476,14 +355,6 @@ zesGetSchedulerProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetProperties = L0::zesSchedulerGetProperties;
     pDdiTable->pfnGetCurrentMode = L0::zesSchedulerGetCurrentMode;
@@ -508,14 +379,6 @@ zesGetStandbyProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
-
     pDdiTable->pfnGetProperties = L0::zesStandbyGetProperties;
     pDdiTable->pfnGetMode = L0::zesStandbyGetMode;
     pDdiTable->pfnSetMode = L0::zesStandbySetMode;
@@ -533,14 +396,6 @@ zesGetTemperatureProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetProperties = L0::zesTemperatureGetProperties;
     pDdiTable->pfnGetConfig = L0::zesTemperatureGetConfig;
@@ -561,14 +416,6 @@ zesGetOverclockProcAddrTable(
         ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    NEO::EnvironmentVariableReader envReader;
-    bool isSysManEnabled =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    if (false == isSysManEnabled) {
-        *pDdiTable = {};
-        return result;
-    }
 
     pDdiTable->pfnGetDomainProperties = L0::zesOverclockGetDomainProperties;
     pDdiTable->pfnGetDomainVFProperties = L0::zesOverclockGetDomainVFProperties;

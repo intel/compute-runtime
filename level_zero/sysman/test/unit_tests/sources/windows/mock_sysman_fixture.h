@@ -9,6 +9,7 @@
 
 #include "shared/test/common/helpers/default_hw_info.h"
 
+#include "level_zero/sysman/source/sysman_driver.h"
 #include "level_zero/sysman/source/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
@@ -42,6 +43,8 @@ class SysmanDeviceFixture : public ::testing::Test {
         driverHandle->initialize(*execEnv);
         pSysmanDevice = driverHandle->sysmanDevices[0];
 
+        L0::Sysman::sysmanOnlyInit = true;
+
         pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pWddmSysmanImp = static_cast<PublicWddmSysmanImp *>(pOsSysman);
@@ -49,6 +52,7 @@ class SysmanDeviceFixture : public ::testing::Test {
     }
 
     void TearDown() override {
+        L0::Sysman::sysmanOnlyInit = false;
     }
 
     L0::Sysman::SysmanDevice *pSysmanDevice = nullptr;

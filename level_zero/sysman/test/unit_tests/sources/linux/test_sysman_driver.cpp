@@ -204,6 +204,7 @@ struct SysmanDriverHandleTest : public ::testing::Test {
         driverHandle = L0::Sysman::SysmanDriverHandle::create(*executionEnvironment, &returnValue);
         L0::Sysman::GlobalSysmanDriverHandle = driverHandle;
         L0::Sysman::driverCount = 1;
+        L0::Sysman::sysmanOnlyInit = true;
     }
     void TearDown() override {
         if (driverHandle) {
@@ -212,6 +213,7 @@ struct SysmanDriverHandleTest : public ::testing::Test {
         L0::Sysman::GlobalSysmanDriver = nullptr;
         L0::Sysman::GlobalSysmanDriverHandle = nullptr;
         L0::Sysman::driverCount = 0;
+        L0::Sysman::sysmanOnlyInit = false;
     }
     L0::Sysman::SysmanDriverHandle *driverHandle;
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
