@@ -242,6 +242,7 @@ DECLARE_DEBUG_VARIABLE(int64_t, OverrideEventSynchronizeTimeout, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlush, -1, "-1: default,  0: Tlb flush disabled, 1: Tlb Flush enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugSetMemoryDiagnosticsDelay, -1, "-1: default, >=0: delay time in minutes necessary for completion of Memory diagnostics")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceStateVerification, -1, "-1: default, 0: disable, 1: enable check of device state before submit on Windows")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableDynamicPostSyncAllocLayout, -1, "-1: default, 0: Keep Timestamp size layout, 1: Use write immediate layout (qword) and switch dynamically to TS for profiling")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

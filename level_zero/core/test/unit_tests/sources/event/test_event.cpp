@@ -2790,6 +2790,39 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
     }
 }
 
+HWTEST_F(EventTests, givenDebugFlagSetWhenCreatingNonTimestampEventsThenPacketsSizeIsQword) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    const ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
+
+    std::unique_ptr<L0::EventPool> timestampPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    eventPoolDesc.flags = 0;
+    std::unique_ptr<L0::EventPool> regularPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    ze_event_handle_t timestampEventHandle = nullptr;
+    ze_event_handle_t regularEventHandle = nullptr;
+
+    timestampPool->createEvent(&eventDesc, &timestampEventHandle);
+    regularPool->createEvent(&eventDesc, &regularEventHandle);
+
+    auto timestampEvent = Event::fromHandle(timestampEventHandle);
+    auto regularEvent = Event::fromHandle(regularEventHandle);
+
+    EXPECT_EQ(NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize(), timestampEvent->getSinglePacketSize());
+    EXPECT_EQ(sizeof(uint64_t), regularEvent->getSinglePacketSize());
+
+    timestampEvent->destroy();
+    regularEvent->destroy();
+}
+
 HWTEST_F(EventTests,
          WhenHostEventSyncThenExpectDownloadEventAllocationWithEachQuery) {
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;

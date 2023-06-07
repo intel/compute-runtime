@@ -1421,6 +1421,52 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     EXPECT_EQ(4u, commandList->partitionCount);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenDebugVariableSetWhenUsingNonTimestampEventThenDontOverridePostSyncMode) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
+    eventDesc.index = 0;
+    auto deviceHandle = device->toHandle();
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(device->getDriverHandle(), context, 1, &deviceHandle, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::unique_ptr<L0::Event> event(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+
+    EXPECT_FALSE(event->isUsingContextEndOffset());
+
+    ze_event_handle_t hEventHandle = event->toHandle();
+
+    ze_group_count_t groupCount{256, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, hEventHandle, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(4u, event->getPacketsInUse());
+    EXPECT_EQ(4u, commandList->partitionCount);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, commandList->getCmdContainer().getCommandStream()->getCpuBase(), commandList->getCmdContainer().getCommandStream()->getUsed()));
+
+    auto itorWalker = find<WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    auto cmd = genCmdCast<WALKER_TYPE *>(*itorWalker);
+    ASSERT_NE(nullptr, cmd);
+
+    EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
+
+    auto &postSync = cmd->getPostSync();
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+}
+
 HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenSetProperPartitionSize, IsAtLeastXeHpCore) {
     ze_group_count_t groupCount{16, 1, 1};
 

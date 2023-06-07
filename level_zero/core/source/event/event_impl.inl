@@ -30,6 +30,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
     if (eventPool->isEventPoolTimestampFlagSet()) {
         event->setEventTimestampFlag(true);
+        event->setSinglePacketSize(NEO::TimestampPackets<TagSizeT>::getSinglePacketSize());
     }
     auto &hwInfo = neoDevice->getHardwareInfo();
 
@@ -51,7 +52,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->kernelEventCompletionData =
         std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
 
-    bool useContextEndOffset = eventPool->isImplicitScalingCapableFlagSet();
+    bool useContextEndOffset = eventPool->isImplicitScalingCapableFlagSet() && !NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled();
     int32_t overrideUseContextEndOffset = NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.get();
     if (overrideUseContextEndOffset != -1) {
         useContextEndOffset = !!overrideUseContextEndOffset;

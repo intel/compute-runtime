@@ -10,6 +10,7 @@
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
@@ -235,6 +236,9 @@ inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStr
 
 template <typename GfxFamily>
 inline uint32_t ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset() {
+    if (ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+        return static_cast<uint32_t>(sizeof(uint64_t));
+    }
     return static_cast<uint32_t>(GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw());
 }
 

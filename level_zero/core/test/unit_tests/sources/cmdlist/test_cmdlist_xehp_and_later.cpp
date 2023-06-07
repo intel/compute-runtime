@@ -827,6 +827,9 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
     void testAppendSignalEventForProfiling() {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+        bool dynamicAllocSize = (ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset() != ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset());
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         auto engineType = copyOnly == 1 ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::Compute;
@@ -860,6 +863,14 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
 
+        if (dynamicAllocSize) {
+            auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*cmdList.begin());
+            ASSERT_NE(nullptr, lriCmd);
+
+            EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, lriCmd->getRegisterOffset());
+            EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset(), lriCmd->getDataDword());
+        }
+
         auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
 
         if constexpr (limitEventPacketes == 1) {
@@ -886,6 +897,14 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
                 }
                 gpuAddress += (event->getSinglePacketSize() * commandList->partitionCount);
             }
+        }
+
+        if (dynamicAllocSize) {
+            auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*cmdList.rbegin());
+            ASSERT_NE(nullptr, lriCmd);
+
+            EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, lriCmd->getRegisterOffset());
+            EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), lriCmd->getDataDword());
         }
     }
 
@@ -1301,6 +1320,19 @@ HWTEST2_F(MultiTileCommandListSignalAllEventPacketTest, givenSignalPacketsImmedi
 }
 
 HWTEST2_F(MultiTileCommandListSignalAllEventPacketTest, givenSignalPacketsEventWhenAppendSignalProfilingEventThenAllPacketCompletionDispatched, IsAtLeastXeHpCore) {
+    testAppendSignalEventForProfiling<gfxCoreFamily>();
+}
+
+struct MultiTileCommandListSignalAllocLayoutTest : public MultiTileCommandListSignalAllEventPacketTest {
+    void SetUp() override {
+        DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+        MultiTileCommandListSignalAllEventPacketTest::SetUp();
+    }
+};
+
+HWTEST2_F(MultiTileCommandListSignalAllocLayoutTest, givenDynamicLayoutEnabledWhenAppendEventForProfilingCalledThenProgramOffsetMmio, IsAtLeastXeHpCore) {
+    EXPECT_NE(ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset());
+
     testAppendSignalEventForProfiling<gfxCoreFamily>();
 }
 

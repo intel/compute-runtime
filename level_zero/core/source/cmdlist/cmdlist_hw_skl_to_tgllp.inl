@@ -293,4 +293,8 @@ inline NEO::PreemptionMode CommandListCoreFamily<gfxCoreFamily>::obtainKernelPre
     return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendDispatchOffsetRegister(bool workloadPartitionEvent, bool beforeProfilingCmds) {
+}
+
 } // namespace L0

@@ -49,6 +49,16 @@ TEST(ApiSpecificConfigOclTests, WhenCheckingIfDeviceAllocationCacheIsEnabledThen
     EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
 }
 
+TEST(ApiSpecificConfigOclTests, WhenCheckingIfDynamicPostSyncAllocLayoutEnabledThenReturnFalse) {
+    DebugManagerStateRestore restore;
+
+    EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
+
+    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+
+    EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
+}
+
 TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmGpuAllocationThenPreferCompressedBuffer) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);

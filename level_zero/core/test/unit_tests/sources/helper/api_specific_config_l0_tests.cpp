@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 
@@ -44,6 +45,16 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturn
 
 TEST(ApiSpecificConfigL0Tests, WhenCheckingIfDeviceAllocationCacheIsEnabledThenReturnFalse) {
     EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
+}
+
+TEST(ApiSpecificConfigL0Tests, GivenDebugFlagSetWhenCheckingIfDynamicPostSyncAllocLayoutEnabledThenReturnTrue) {
+    DebugManagerStateRestore restore;
+
+    EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
+
+    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+
+    EXPECT_TRUE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
 }
 
 TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportEnabled) {

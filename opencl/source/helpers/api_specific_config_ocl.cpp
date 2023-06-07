@@ -35,6 +35,10 @@ bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
     return false;
 }
 
+bool ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled() {
+    return false;
+}
+
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::OCL;
 }

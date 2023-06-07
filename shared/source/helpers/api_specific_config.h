@@ -18,6 +18,7 @@ struct ApiSpecificConfig {
     static bool getGlobalBindlessHeapConfiguration();
     static bool getBindlessMode();
     static bool isDeviceAllocationCacheEnabled();
+    static bool isDynamicPostSyncAllocLayoutEnabled();
     static ApiType getApiType();
     static std::string getName();
     static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);

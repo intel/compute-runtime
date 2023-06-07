@@ -119,6 +119,9 @@ struct Event : _ze_event_handle_t {
     size_t getSinglePacketSize() const {
         return singlePacketSize;
     }
+    void setSinglePacketSize(size_t size) {
+        singlePacketSize = size;
+    }
     size_t getTimestampSizeInDw() const {
         return timestampSizeInDw;
     }

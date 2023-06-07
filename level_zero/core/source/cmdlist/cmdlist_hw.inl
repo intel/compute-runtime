@@ -2320,6 +2320,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
         }
 
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+        bool workloadPartition = isTimestampEventForMultiTile(event);
+
+        appendDispatchOffsetRegister(workloadPartition, true);
 
         if (beforeWalker) {
             event->resetKernelCountAndPacketUsedCount();
@@ -2339,9 +2342,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
 
             uint64_t baseAddr = event->getGpuAddress(this->device);
             NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, false, rootDeviceEnvironment);
-            bool workloadPartition = isTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, beforeWalker, true, workloadPartition);
         }
+
+        appendDispatchOffsetRegister(workloadPartition, false);
     }
 }
 

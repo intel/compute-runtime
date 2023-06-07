@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/timestamp_packet.h"
 
 #include "level_zero/core/source/event/event.h"
@@ -33,6 +34,10 @@ struct EventImp : public Event {
         globalEndOffset = NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset();
         timestampSizeInDw = (sizeof(TagSizeT) / sizeof(uint32_t));
         singlePacketSize = NEO::TimestampPackets<TagSizeT>::getSinglePacketSize();
+
+        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+            singlePacketSize = sizeof(uint64_t);
+        }
     }
 
     ~EventImp() override {}
