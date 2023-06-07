@@ -227,7 +227,7 @@ struct WddmLinuxTest : public ::testing::Test {
         auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
         wddm->gmmMemory = std::make_unique<MockGmmMemoryWddmLinux>(gmmHelper->getClientContext());
-        *wddm->gfxPlatform = NEO::defaultHwInfo->platform;
+        static_cast<PLATFORM &>(*wddm->gfxPlatform) = NEO::defaultHwInfo->platform;
 
         rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
         rootDeviceEnvironment.osInterface->setDriverModel(std::move(wddm));
@@ -829,7 +829,7 @@ TEST(OSTimeWinLinuxTests, givenOSInterfaceWhenGetCpuGpuTimeThenGetCpuTimeFromOsT
     std::unique_ptr<NEO::OSInterface> osInterface(new NEO::OSInterface());
 
     std::unique_ptr<MockWddmLinux> wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), mockRootDeviceEnvironment);
-    *wddm->gfxPlatform = NEO::defaultHwInfo->platform;
+    static_cast<PLATFORM &>(*wddm->gfxPlatform) = NEO::defaultHwInfo->platform;
     mockRootDeviceEnvironment.setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
     auto mockDeviceTimeWddm = std::make_unique<MockDeviceTimeWddm>(wddm.get());
     osInterface->setDriverModel(std::move(wddm));

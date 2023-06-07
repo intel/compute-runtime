@@ -64,7 +64,7 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
     featureTable.reset(new FeatureTable());
     workaroundTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
-    gfxPlatform.reset(new PLATFORM);
+    gfxPlatform.reset(new PLATFORM_KMD);
     memset(gtSystemInfo.get(), 0, sizeof(*gtSystemInfo));
     memset(gfxPlatform.get(), 0, sizeof(*gfxPlatform));
     this->enablePreemptionRegValue = NEO::readEnablePreemptionRegKey();
@@ -262,7 +262,7 @@ bool Wddm::queryAdapterInfo() {
     // translate
     if (status == STATUS_SUCCESS) {
         memcpy_s(gtSystemInfo.get(), sizeof(GT_SYSTEM_INFO), &adapterInfo.SystemInfo, sizeof(GT_SYSTEM_INFO));
-        memcpy_s(gfxPlatform.get(), sizeof(PLATFORM), &adapterInfo.GfxPlatform, sizeof(PLATFORM));
+        memcpy_s(gfxPlatform.get(), sizeof(PLATFORM_KMD), &adapterInfo.GfxPlatform, sizeof(PLATFORM_KMD));
 
         SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), &adapterInfo);
         SkuInfoReceiver::receiveWaTableFromAdapterInfo(workaroundTable.get(), &adapterInfo);
@@ -1234,6 +1234,14 @@ PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
 PhysicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
     PhysicalDevicePciSpeedInfo speedInfo{};
     return speedInfo;
+}
+
+void Wddm::populateIpVersion(HardwareInfo &hwInfo) {
+    hwInfo.ipVersion.value = gfxPlatform->sRenderBlockID.Value;
+    if (hwInfo.ipVersion.value == 0) {
+        auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+        hwInfo.ipVersion.value = compilerProductHelper.getHwIpVersion(hwInfo);
+    }
 }
 
 } // namespace NEO

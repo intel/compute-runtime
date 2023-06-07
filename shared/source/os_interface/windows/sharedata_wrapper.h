@@ -22,11 +22,13 @@
 using SKU_FEATURE_TABLE_GMM = SKU_FEATURE_TABLE;
 using WA_TABLE_GMM = WA_TABLE;
 using ADAPTER_INFO_GMM = ADAPTER_INFO;
+using PLATFORM_GMM = PLATFORM;
 
 #if defined(UMD_KMD_COMMAND_BUFFER_REV_ID)
 using SKU_FEATURE_TABLE_KMD = SKU_FEATURE_TABLE_GMM;
 using WA_TABLE_KMD = WA_TABLE_GMM;
 using ADAPTER_INFO_KMD = ADAPTER_INFO_GMM;
+using PLATFORM_KMD = PLATFORM_GMM;
 
 inline void propagateData(ADAPTER_INFO_KMD &) {
 }
@@ -161,11 +163,21 @@ struct CREATECONTEXT_PVTDATA { // NOLINT(readability-identifier-naming)
     BOOLEAN NoRingFlushes;      // NOLINT(readability-identifier-naming)
 };
 
+struct PLATFORM_KMD : PLATFORM_GMM { // NOLINT(readability-identifier-naming)
+
+    struct HwIpVersion {
+        uint32_t Value; // NOLINT(readability-identifier-naming)
+    };
+
+    HwIpVersion sRenderBlockID;
+};
+
 struct ADAPTER_INFO_KMD : ADAPTER_INFO_GMM { // NOLINT(readability-identifier-naming)
     SKU_FEATURE_TABLE_KMD SkuTable;          // NOLINT(readability-identifier-naming)
     WA_TABLE_KMD WaTable;                    // NOLINT(readability-identifier-naming)
     GMM_GFX_PARTITIONING GfxPartition;       // NOLINT(readability-identifier-naming)
     ADAPTER_BDF stAdapterBDF;
+    PLATFORM_KMD GfxPlatform; // NOLINT(readability-identifier-naming)
 };
 
 static constexpr COMMAND_BUFFER_HEADER initCommandBufferHeader(uint32_t umdContextType, uint32_t umdPatchList, uint32_t usesResourceStreamer, uint32_t perfTag) {
@@ -187,5 +199,6 @@ inline void propagateData(ADAPTER_INFO_KMD &adapterInfo) {
     ADAPTER_INFO &base = static_cast<ADAPTER_INFO &>(adapterInfo);
     base.SkuTable = adapterInfo.SkuTable;
     base.WaTable = adapterInfo.WaTable;
+    base.GfxPlatform = adapterInfo.GfxPlatform;
 }
 #endif

@@ -36,7 +36,7 @@ UINT64 PagingFence = 0;
 
 void mockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo, uint64_t gpuAddressSpace) {
     if (pGfxPlatform != NULL) {
-        gAdapterInfo.GfxPlatform = *(PLATFORM *)pGfxPlatform;
+        static_cast<PLATFORM &>(gAdapterInfo.GfxPlatform) = *reinterpret_cast<const PLATFORM *>(pGfxPlatform);
     }
     if (pGTSystemInfo != NULL) {
         gAdapterInfo.SystemInfo = *(GT_SYSTEM_INFO *)pGTSystemInfo;

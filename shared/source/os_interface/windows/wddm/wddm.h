@@ -240,7 +240,7 @@ class Wddm : public DriverModel {
     uint64_t dedicatedVideoMemory = 0;
 
     // Adapter information
-    std::unique_ptr<PLATFORM> gfxPlatform;
+    std::unique_ptr<PLATFORM_KMD> gfxPlatform;
     std::unique_ptr<GT_SYSTEM_INFO> gtSystemInfo;
     std::unique_ptr<FeatureTable> featureTable;
     std::unique_ptr<WorkaroundTable> workaroundTable;

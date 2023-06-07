@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2884,9 +2884,36 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             tokGfxPlatform = tokGfxPlatform + 1 + tokGfxPlatform->valueDwordCount;
                         } else {
                             auto varLen = reinterpret_cast<const TokenVariableLength *>(tokGfxPlatform);
-                            if (tokGfxPlatform->flags.flag3IsMandatory) {
-                                return false;
-                            }
+                            switch (tokGfxPlatform->id) {
+                            default:
+                                if (tokGfxPlatform->flags.flag3IsMandatory) {
+                                    return false;
+                                }
+                                break;
+                            case TOK_FS_PLATFORM_STR__S_RENDER_BLOCK_ID: {
+                                const TokenHeader *tokSRenderBlockID = varLen->getValue<TokenHeader>();
+                                const TokenHeader *tokSRenderBlockIDEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                while (tokSRenderBlockID < tokSRenderBlockIDEnd) {
+                                    if (false == tokSRenderBlockID->flags.flag4IsVariableLength) {
+                                        switch (tokSRenderBlockID->id) {
+                                        default:
+                                            if (tokSRenderBlockID->flags.flag3IsMandatory) {
+                                                return false;
+                                            }
+                                            break;
+                                        case TOK_FBD_GFX_GMD_ID_DEF__ANONYMOUS7345__VALUE:
+                                            dst.GfxPlatform.sRenderBlockID.Value = readTokValue<decltype(dst.GfxPlatform.sRenderBlockID.Value)>(*tokSRenderBlockID);
+                                            break;
+                                        };
+                                        tokSRenderBlockID = tokSRenderBlockID + 1 + tokSRenderBlockID->valueDwordCount;
+                                    } else {
+                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokSRenderBlockID);
+                                        tokSRenderBlockID = tokSRenderBlockID + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                    }
+                                }
+                                WCH_ASSERT(tokSRenderBlockID == tokSRenderBlockIDEnd);
+                            } break;
+                            };
                             tokGfxPlatform = tokGfxPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                         }
                     }
