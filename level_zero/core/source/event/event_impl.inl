@@ -134,17 +134,16 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
-    auto node = this->inOrderTimestampPacket->peekNodes()[0];
-
+    auto hostAddress = static_cast<uint64_t *>(this->inOrderExecDataAllocation->getUnderlyingBuffer());
     bool signaled = true;
 
     for (uint32_t i = 0; i < this->getPacketsInUse(); i++) {
-        auto hostAddress = static_cast<TagSizeT const *>(node->getContextEndAddress(i));
-
-        if (!NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(hostAddress, NEO::TimestampPacketConstants::initValue, std::not_equal_to<TagSizeT>())) {
+        if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, this->inOrderExecSignalValue, std::greater_equal<uint64_t>())) {
             signaled = false;
             break;
         }
+
+        hostAddress = ptrOffset(hostAddress, sizeof(uint64_t));
     }
 
     if (!signaled) {
@@ -222,10 +221,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         for (auto &csr : csrs) {
             csr->downloadAllocation(this->getAllocation(this->device));
             if (inOrderExecEvent) {
-                auto node = this->inOrderTimestampPacket->peekNodes()[0];
-                auto nodeAlloc = node->getBaseGraphicsAllocation()->getGraphicsAllocation(this->device->getRootDeviceIndex());
-
-                csr->downloadAllocation(*nodeAlloc);
+                csr->downloadAllocation(*this->inOrderExecDataAllocation);
             }
         }
     }
@@ -397,7 +393,8 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
     if (inOrderExecEvent) {
         inOrderExecEvent = false;
-        inOrderTimestampPacket->releaseNodes();
+        inOrderExecDataAllocation = nullptr;
+        inOrderExecSignalValue = 0;
     }
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);

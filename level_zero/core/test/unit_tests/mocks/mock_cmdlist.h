@@ -155,7 +155,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::csr;
-    using BaseClass::deferredTimestampPackets;
     using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::engineGroupType;
@@ -164,11 +163,12 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::immediateCmdListHeapSharing;
+    using BaseClass::inOrderDependencyCounter;
+    using BaseClass::inOrderDependencyCounterAllocation;
     using BaseClass::isBcsSplitNeeded;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
-    using BaseClass::obtainNewTimestampPacketNode;
     using BaseClass::partitionCount;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
@@ -178,7 +178,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::synchronizeInOrderExecution;
-    using BaseClass::timestampPacketContainer;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 };

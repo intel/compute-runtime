@@ -24,7 +24,6 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -1402,13 +1401,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     addToMappedEventList(signalEvent);
 
     if (this->inOrderExecutionEnabled && (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed)) {
-        obtainNewTimestampPacketNode();
-
         if (!signalEvent && !isCopyOnly()) {
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
         }
-        appendSignalInOrderDependencyTimestampPacket();
+        appendSignalInOrderDependencyCounter();
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -1497,8 +1494,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
 
     if (this->inOrderExecutionEnabled && isCopyOnly() && inOrderCopyOnlySignalingAllowed) {
-        obtainNewTimestampPacketNode();
-        appendSignalInOrderDependencyTimestampPacket();
+        appendSignalInOrderDependencyCounter();
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -2128,14 +2124,14 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies) {
-    auto hasInOrderDependencies = this->timestampPacketContainer.get() && (this->timestampPacketContainer->peekNodes().size() > 0);
+    auto hasInOrderDependencies = (inOrderDependencyCounter > 0);
 
     if (relaxedOrderingAllowed && (numWaitEvents > 0 || hasInOrderDependencies)) {
         NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
     }
 
     if (hasInOrderDependencies) {
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(relaxedOrderingAllowed);
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, relaxedOrderingAllowed);
     }
 
     if (numWaitEvents > 0) {
@@ -2175,11 +2171,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync);
 
     if (this->inOrderExecutionEnabled) {
-        obtainNewTimestampPacketNode();
-
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(1, &hEvent, false, false, false);
-
-        appendSignalInOrderDependencyTimestampPacket();
+        appendSignalInOrderDependencyCounter();
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -2194,15 +2186,28 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(bool relaxedOrderingAllowed) {
-    auto node = this->timestampPacketContainer->peekNodes()[0];
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint64_t waitValue, bool relaxedOrderingAllowed) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    commandContainer.addToResidencyContainer(node->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));
+    UNRECOVERABLE_IF(waitValue >= std::numeric_limits<uint32_t>::max());
 
-    if (relaxedOrderingAllowed) {
-        NEO::TimestampPacketHelper::programConditionalBbStartForRelaxedOrdering<GfxFamily>(*commandContainer.getCommandStream(), *node);
-    } else {
-        NEO::TimestampPacketHelper::programSemaphore<GfxFamily>(*commandContainer.getCommandStream(), *node);
+    commandContainer.addToResidencyContainer(dependencyCounterAllocation);
+
+    uint64_t gpuAddress = dependencyCounterAllocation->getGpuAddress();
+
+    for (uint32_t i = 0; i < this->partitionCount; i++) {
+        if (relaxedOrderingAllowed) {
+            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, static_cast<uint32_t>(waitValue),
+                                                                                                   NEO::CompareOperation::Less, true);
+
+        } else {
+            NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                       gpuAddress,
+                                                                       static_cast<uint32_t>(waitValue),
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+        }
+
+        gpuAddress += sizeof(uint64_t);
     }
 }
 
@@ -2251,13 +2256,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             continue;
         }
 
-        if (isInOrderExecutionEnabled() && event->isInOrderExecEvent()) {
-            auto const cmdListNode = this->timestampPacketContainer->peekNodes()[0];
-            auto const eventNode = event->getInOrderTimestampPacket()->peekNodes()[0];
+        if (event->isInOrderExecEvent()) {
+            bool eventFromPreviousAppend = (event->getInOrderExecDataAllocation() == this->inOrderDependencyCounterAllocation) &&
+                                           (event->getInOrderExecSignalValue() == this->inOrderDependencyCounter);
 
-            if (cmdListNode == eventNode) {
-                continue;
+            if (!eventFromPreviousAppend) {
+                CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), relaxedOrderingAllowed);
             }
+            continue;
         }
 
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
@@ -2289,9 +2295,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     }
 
     if (signalInOrderCompletion) {
-        obtainNewTimestampPacketNode();
-
-        appendSignalInOrderDependencyTimestampPacket();
+        appendSignalInOrderDependencyCounter();
     }
 
     makeResidentDummyAllocation();
@@ -2308,8 +2312,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyTimestampPacket() {
-    NEO::TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(*commandContainer.getCommandStream(), *this->timestampPacketContainer->peekNodes()[0], (this->partitionCount > 1));
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter() {
+    uint64_t signalValue = this->inOrderDependencyCounter + 1;
+    auto lowPart = static_cast<uint32_t>(signalValue & 0x0000FFFFFFFFULL);
+    auto highPart = static_cast<uint32_t>(signalValue >> 32);
+
+    NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(*commandContainer.getCommandStream(), this->inOrderDependencyCounterAllocation->getGpuAddress(),
+                                                           lowPart, highPart, true, (this->partitionCount > 1));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3232,18 +3241,6 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
         constexpr bool appendLastPipeControl = false;
         dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope());
     }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::obtainNewTimestampPacketNode() {
-    auto allocator = this->csr->getTimestampPacketAllocator();
-
-    timestampPacketContainer->moveNodesToNewContainer(*deferredTimestampPackets);
-
-    auto tag = allocator->getTag();
-    tag->setPacketsUsed(this->partitionCount);
-
-    timestampPacketContainer->add(tag);
 }
 
 } // namespace L0

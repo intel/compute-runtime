@@ -1315,10 +1315,6 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
 
     size_t offset = cmdStream->getUsed();
 
-    ASSERT_EQ(1u, cmdList->timestampPacketContainer->peekNodes().size());
-
-    auto previousNode = cmdList->timestampPacketContainer->peekNodes()[0];
-
     cmdList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
     GenCmdList genCmdList;
@@ -1333,9 +1329,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     lrrCmd++;
     lrrCmd++;
 
-    auto compareAddress = NEO::TimestampPacketHelper::getContextEndGpuAddress(*previousNode);
-
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, compareAddress, 1, NEO::CompareOperation::Equal, true));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, cmdList->inOrderDependencyCounterAllocation->getGpuAddress(), 2, NEO::CompareOperation::Less, true));
 }
 
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {

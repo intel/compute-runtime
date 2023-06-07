@@ -52,7 +52,7 @@ struct EncodeDispatchKernelArgs {
     std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     uint32_t partitionCount = 0u;
-    uint32_t postSyncImmValue = 0;
+    uint64_t postSyncImmValue = 0;
     bool isIndirect = false;
     bool isPredicate = false;
     bool isTimestampEvent = false;

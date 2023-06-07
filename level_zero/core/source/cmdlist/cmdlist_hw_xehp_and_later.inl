@@ -14,7 +14,6 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/simd_helper.h"
-#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -262,7 +261,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
         this->partitionCount,                                   // partitionCount
-        static_cast<uint32_t>(Event::STATE_SIGNALED),           // postSyncImmValue
+        static_cast<uint64_t>(Event::STATE_SIGNALED),           // postSyncImmValue
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate
         isTimestampEvent,                                       // isTimestampEvent
@@ -279,13 +278,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
 
-    if (inOrderExecSignalRequired) {
-        obtainNewTimestampPacketNode();
-    }
-
     if (inOrderExecSignalRequired && !event) {
-        dispatchKernelArgs.isTimestampEvent = true;
-        dispatchKernelArgs.eventAddress = this->timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+        dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
+        dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
@@ -310,7 +305,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         auto eventHandle = event->toHandle();
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(1, &eventHandle, false, false, false);
 
-        appendSignalInOrderDependencyTimestampPacket();
+        appendSignalInOrderDependencyCounter();
     }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing) {
@@ -401,12 +396,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
         uint64_t writeValue = 0;
 
         if (this->inOrderExecutionEnabled) {
-            obtainNewTimestampPacketNode();
-            auto node = this->timestampPacketContainer->peekNodes()[0];
-
             postSyncMode = NEO::PostSyncMode::ImmediateData;
-            gpuWriteAddress = node->getGpuAddress() + node->getContextEndOffset();
-            writeValue = 0;
+            gpuWriteAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
+            writeValue = this->inOrderDependencyCounter + 1;
         }
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), postSyncMode, gpuWriteAddress, writeValue, args);

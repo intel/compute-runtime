@@ -169,8 +169,8 @@ struct CommandListCoreFamily : CommandListImp {
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool signalInOrderCompletion) override;
-    void appendWaitOnInOrderDependency(bool relaxedOrderingAllowed);
-    void appendSignalInOrderDependencyTimestampPacket();
+    void appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint64_t waitValue, bool relaxedOrderingAllowed);
+    void appendSignalInOrderDependencyCounter();
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
@@ -186,7 +186,6 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t executeCommandListImmediate(bool performMigration) override;
     ze_result_t executeCommandListImmediateImpl(bool performMigration, L0::CommandQueue *cmdQImmediate);
     size_t getReserveSshSize();
-    void obtainNewTimestampPacketNode();
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,

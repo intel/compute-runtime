@@ -210,9 +210,10 @@ struct Event : _ze_event_handle_t {
     void setMetricStreamer(MetricStreamer *metricStreamer) {
         this->metricStreamer = metricStreamer;
     }
-    void enableInOrderExecMode(const NEO::TimestampPacketContainer &inOrderSyncNodes);
+    void enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue);
     bool isInOrderExecEvent() const { return inOrderExecEvent; }
-    const NEO::TimestampPacketContainer *getInOrderTimestampPacket() const { return inOrderTimestampPacket.get(); }
+    NEO::GraphicsAllocation *getInOrderExecDataAllocation() const { return inOrderExecDataAllocation; }
+    uint64_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
     void setReferenceTs(NEO::TimeStampData &timestamp) {
         referenceTs = timestamp;
     }
@@ -226,6 +227,8 @@ struct Event : _ze_event_handle_t {
     uint64_t contextStartTS = 1;
     uint64_t contextEndTS = 1;
     NEO::TimeStampData referenceTs{};
+
+    uint64_t inOrderExecSignalValue = 0;
 
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
     std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
@@ -249,7 +252,7 @@ struct Event : _ze_event_handle_t {
     Device *device = nullptr;
     EventPool *eventPool = nullptr;
     Kernel *kernelWithPrintf = nullptr;
-    std::unique_ptr<NEO::TimestampPacketContainer> inOrderTimestampPacket;
+    NEO::GraphicsAllocation *inOrderExecDataAllocation = nullptr;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;

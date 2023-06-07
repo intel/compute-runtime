@@ -75,6 +75,8 @@ ze_result_t CommandListImp::destroy() {
         }
     }
 
+    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(inOrderDependencyCounterAllocation);
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }
@@ -232,8 +234,15 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
 void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(inOrderExecutionEnabled);
 
-    timestampPacketContainer = std::make_unique<NEO::TimestampPacketContainer>();
-    deferredTimestampPackets = std::make_unique<NEO::TimestampPacketContainer>();
+    auto device = this->device->getNEODevice();
+
+    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), sizeof(uint32_t), NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, device->getDeviceBitfield()};
+
+    inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+
+    UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
+
+    memset(inOrderDependencyCounterAllocation->getUnderlyingBuffer(), 0, inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
 
     inOrderExecutionEnabled = true;
 }

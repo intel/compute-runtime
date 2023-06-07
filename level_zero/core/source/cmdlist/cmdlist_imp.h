@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -43,8 +42,8 @@ struct CommandListImp : CommandList {
 
   protected:
     std::unique_ptr<NEO::LogicalStateHelper> nonImmediateLogicalStateHelper;
-    std::unique_ptr<NEO::TimestampPacketContainer> deferredTimestampPackets;
-    std::unique_ptr<NEO::TimestampPacketContainer> timestampPacketContainer;
+    NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;
+    uint64_t inOrderDependencyCounter = 0;
     bool inOrderExecutionEnabled = false;
 
     ~CommandListImp() override = default;

@@ -390,14 +390,11 @@ void Event::setIsCompleted() {
     }
 }
 
-void Event::enableInOrderExecMode(const NEO::TimestampPacketContainer &inOrderSyncNodes) {
+void Event::enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue) {
     inOrderExecEvent = true;
 
-    if (!inOrderTimestampPacket) {
-        inOrderTimestampPacket = std::make_unique<NEO::TimestampPacketContainer>();
-    }
-
-    inOrderTimestampPacket->assignAndIncrementNodesRefCounts(inOrderSyncNodes);
+    inOrderExecSignalValue = signalValue;
+    inOrderExecDataAllocation = &inOrderDependenciesAllocation;
 }
 
 } // namespace L0
