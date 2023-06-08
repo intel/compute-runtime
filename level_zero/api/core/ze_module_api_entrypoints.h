@@ -202,6 +202,14 @@ ze_result_t zeModuleGetProperties(
     return L0::Module::fromHandle(hModule)->getProperties(pModuleProperties);
 }
 
+ze_result_t zeModuleInspectLinkageExt(
+    ze_linkage_inspection_ext_desc_t *pInspectDesc,
+    uint32_t numModules,
+    ze_module_handle_t *phModules,
+    ze_module_build_log_handle_t *phLog) {
+    return L0::Module::fromHandle(phModules[0])->inspectLinkage(pInspectDesc, numModules, phModules, phLog);
+}
+
 ze_result_t zeKernelSetCacheConfig(
     ze_kernel_handle_t hKernel,
     ze_cache_config_flags_t flags) {

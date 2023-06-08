@@ -48,6 +48,10 @@ struct Module : _ze_module_handle_t {
     virtual ze_result_t performDynamicLink(uint32_t numModules,
                                            ze_module_handle_t *phModules,
                                            ze_module_build_log_handle_t *phLinkLog) = 0;
+    virtual ze_result_t inspectLinkage(ze_linkage_inspection_ext_desc_t *pInspectDesc,
+                                       uint32_t numModules,
+                                       ze_module_handle_t *phModules,
+                                       ze_module_build_log_handle_t *phLog) = 0;
 
     virtual const KernelImmutableData *getKernelImmutableData(const char *kernelName) const = 0;
     virtual const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const = 0;

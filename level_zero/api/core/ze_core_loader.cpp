@@ -523,6 +523,7 @@ zeGetModuleProcAddrTable(
     pDdiTable->pfnGetKernelNames = L0::zeModuleGetKernelNames;
     pDdiTable->pfnGetFunctionPointer = L0::zeModuleGetFunctionPointer;
     pDdiTable->pfnGetProperties = L0::zeModuleGetProperties;
+    pDdiTable->pfnInspectLinkageExt = L0::zeModuleInspectLinkageExt;
     driverDdiTable.coreDdiTable.Module = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnCreate = zeModuleCreateTracing;

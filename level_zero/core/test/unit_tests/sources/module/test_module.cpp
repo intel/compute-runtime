@@ -1226,6 +1226,203 @@ struct ModuleDynamicLinkTests : public Test<DeviceFixture> {
     std::unique_ptr<WhiteBox<::L0::Module>> module2;
 };
 
+struct ModuleInspectionTests : public ModuleDynamicLinkTests {};
+
+TEST_F(ModuleInspectionTests, givenCallToInspectionOnModulesWithoutUnresolvedSymbolsThenUnresolvedSymbolsAreReturnedInTheLog) {
+    ze_linkage_inspection_ext_desc_t inspectDesc;
+    inspectDesc.stype = ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC;
+    inspectDesc.flags = ZE_LINKAGE_INSPECTION_EXT_FLAG_UNRESOLVABLE_IMPORTS;
+    inspectDesc.pNext = nullptr;
+    uint32_t numModules = 2;
+    ze_module_build_log_handle_t linkageLog;
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+    ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(linkageLog);
+}
+
+TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolWhenTheOtherModuleDefinesTheSymbolThenInspectedLinkageShowsSymbolsAreResolvedInTheLog) {
+
+    uint64_t gpuAddress = 0x12345;
+    uint32_t offset = 0x20;
+
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+    unresolvedRelocation.offset = offset;
+    unresolvedRelocation.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::Linker::UnresolvedExternal unresolvedExternal;
+    unresolvedExternal.unresolvedRelocation = unresolvedRelocation;
+
+    NEO::SymbolInfo symbolInfo{};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
+
+    char kernelHeap[MemoryConstants::pageSize] = {};
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
+    module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+
+    module0->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module0->unresolvedExternalsInfo[0].instructionsSegmentId = 0u;
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
+    module0->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    module1->symbols[unresolvedRelocation.symbolName] = relocatedSymbol;
+
+    ze_linkage_inspection_ext_desc_t inspectDesc;
+    inspectDesc.stype = ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC;
+    inspectDesc.flags = ZE_LINKAGE_INSPECTION_EXT_FLAG_IMPORTS;
+    inspectDesc.pNext = nullptr;
+    uint32_t numModules = 2;
+    ze_module_build_log_handle_t linkageLog;
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+    ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(linkageLog);
+}
+
+TEST_F(ModuleInspectionTests, givenModuleWithExportSymolsThenInspectedLinkageShowsSymbolsInTheLog) {
+
+    uint64_t gpuAddress = 0x12345;
+    uint32_t offset = 0x20;
+
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+    unresolvedRelocation.offset = offset;
+    unresolvedRelocation.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::SymbolInfo symbolInfo{};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
+
+    module1->symbols[unresolvedRelocation.symbolName] = relocatedSymbol;
+
+    ze_linkage_inspection_ext_desc_t inspectDesc;
+    inspectDesc.stype = ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC;
+    inspectDesc.flags = ZE_LINKAGE_INSPECTION_EXT_FLAG_EXPORTS;
+    inspectDesc.pNext = nullptr;
+    uint32_t numModules = 1;
+    ze_module_build_log_handle_t linkageLog;
+    std::vector<ze_module_handle_t> hModules = {module1->toHandle()};
+    ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(linkageLog);
+}
+
+TEST_F(ModuleInspectionTests, givenModuleWithFunctionDependenciesWhenOtherModuleDefinesThisFunctionThenExportedFunctionsAreDefinedInLog) {
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+
+    auto linkerInput = new ::WhiteBox<NEO::LinkerInput>();
+    linkerInput->extFunDependencies.push_back({"funMod1", "funMod0"});
+    linkerInput->kernelDependencies.push_back({"funMod1", "kernel"});
+    module0->translationUnit->programInfo.linkerInput.reset(linkerInput);
+
+    module0->translationUnit->programInfo.externalFunctions.push_back({"funMod0", 1U, 128U, 8U});
+    KernelInfo *ki = new KernelInfo();
+    ki->kernelDescriptor.kernelMetadata.kernelName = "kernel";
+    module0->translationUnit->programInfo.kernelInfos.push_back(ki);
+
+    module1->translationUnit->programInfo.externalFunctions.push_back({"funMod1", 3U, 128U, 8U});
+
+    ze_linkage_inspection_ext_desc_t inspectDesc;
+    inspectDesc.stype = ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC;
+    inspectDesc.flags = ZE_LINKAGE_INSPECTION_EXT_FLAG_EXPORTS;
+    inspectDesc.pNext = nullptr;
+    uint32_t numModules = 2;
+    ze_module_build_log_handle_t linkageLog;
+    ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(linkageLog);
+}
+
+TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedImportsButFullyLinkedThenImportedFunctionsAreDefinedInLog) {
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module0->isFullyLinked = true;
+
+    ze_linkage_inspection_ext_desc_t inspectDesc;
+    inspectDesc.stype = ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC;
+    inspectDesc.flags = ZE_LINKAGE_INSPECTION_EXT_FLAG_IMPORTS;
+    inspectDesc.pNext = nullptr;
+    uint32_t numModules = 1;
+    ze_module_build_log_handle_t linkageLog;
+    std::vector<ze_module_handle_t> linkModules = {module0->toHandle()};
+    ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, linkModules.data(), &linkageLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(linkageLog);
+}
+
+TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolsNotPresentInOtherModulesWhenInspectLinkageThenUnresolvedSymbolsReturned) {
+
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+
+    module1->isFunctionSymbolExportEnabled = true;
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+
+    ze_linkage_inspection_ext_desc_t inspectDesc;
+    inspectDesc.stype = ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC;
+    inspectDesc.flags = ZE_LINKAGE_INSPECTION_EXT_FLAG_UNRESOLVABLE_IMPORTS;
+    inspectDesc.pNext = nullptr;
+    uint32_t numModules = 2;
+    ze_module_build_log_handle_t linkageLog;
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+    ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(linkageLog);
+}
+
 TEST_F(ModuleDynamicLinkTests, givenCallToDynamicLinkOnModulesWithoutUnresolvedSymbolsThenSuccessIsReturned) {
     std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), nullptr);

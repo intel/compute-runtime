@@ -1138,6 +1138,80 @@ ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) 
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t ModuleImp::inspectLinkage(
+    ze_linkage_inspection_ext_desc_t *pInspectDesc,
+    uint32_t numModules,
+    ze_module_handle_t *phModules,
+    ze_module_build_log_handle_t *phLog) {
+    ModuleBuildLog *moduleLinkageLog = nullptr;
+    moduleLinkageLog = ModuleBuildLog::create();
+    *phLog = moduleLinkageLog->toHandle();
+
+    for (auto i = 0u; i < numModules; i++) {
+        auto moduleId = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
+
+        std::vector<std::string> unresolvedSymbolLogMessages;
+        std::vector<std::string> resolvedSymbolLogMessages;
+        std::vector<std::string> exportedSymbolLogMessages;
+        std::stringstream logMessage;
+
+        auto &programInfo = moduleId->translationUnit->programInfo;
+
+        // Add External Functions to the Exported Symbols Log
+        for (auto externalFunction : programInfo.externalFunctions) {
+            logMessage.clear();
+            logMessage << "Module <" << moduleId << ">: "
+                       << " Exported Symbol <" << externalFunction.functionName << ">"
+                       << "\n";
+            exportedSymbolLogMessages.push_back(logMessage.str());
+        }
+        for (const auto &unresolvedExternal : moduleId->unresolvedExternalsInfo) {
+            bool resolvedSymbol = false;
+            for (auto resolvedModuleIndex = 0u; resolvedModuleIndex < numModules; resolvedModuleIndex++) {
+                auto moduleHandle = static_cast<ModuleImp *>(Module::fromHandle(phModules[resolvedModuleIndex]));
+                auto symbolIt = moduleHandle->symbols.find(unresolvedExternal.unresolvedRelocation.symbolName);
+                if (symbolIt != moduleHandle->symbols.end() || moduleId->isFullyLinked) {
+                    // Add Imported Symbols to the Imported Symbols Log if the modules included would resolve the symbol or this module has been fully linked
+                    logMessage.clear();
+                    logMessage << "Module <" << moduleId << ">: "
+                               << " Imported Symbol <" << unresolvedExternal.unresolvedRelocation.symbolName << ">"
+                               << "\n";
+                    resolvedSymbolLogMessages.push_back(logMessage.str());
+                    resolvedSymbol = true;
+                    break;
+                }
+            }
+            // Add the Symbol to the Unresolved Imports Log if none of the included modules would be able to resolve the symbol.
+            if (!resolvedSymbol) {
+                logMessage.clear();
+                logMessage << "Module <" << moduleId << ">: "
+                           << " Unresolved Imported Symbol <" << unresolvedExternal.unresolvedRelocation.symbolName << ">"
+                           << "\n";
+                unresolvedSymbolLogMessages.push_back(logMessage.str());
+            }
+        }
+
+        if (pInspectDesc->flags & ZE_LINKAGE_INSPECTION_EXT_FLAG_IMPORTS) {
+            for (auto logIndex = 0u; logIndex < resolvedSymbolLogMessages.size(); logIndex++) {
+                moduleLinkageLog->appendString(resolvedSymbolLogMessages[logIndex].c_str(), resolvedSymbolLogMessages[logIndex].size());
+            }
+        }
+
+        if (pInspectDesc->flags & ZE_LINKAGE_INSPECTION_EXT_FLAG_UNRESOLVABLE_IMPORTS) {
+            for (auto logIndex = 0u; logIndex < unresolvedSymbolLogMessages.size(); logIndex++) {
+                moduleLinkageLog->appendString(unresolvedSymbolLogMessages[logIndex].c_str(), unresolvedSymbolLogMessages[logIndex].size());
+            }
+        }
+
+        if (pInspectDesc->flags & ZE_LINKAGE_INSPECTION_EXT_FLAG_EXPORTS) {
+            for (auto logIndex = 0u; logIndex < exportedSymbolLogMessages.size(); logIndex++) {
+                moduleLinkageLog->appendString(exportedSymbolLogMessages[logIndex].c_str(), exportedSymbolLogMessages[logIndex].size());
+            }
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_handle_t *phModules,
                                           ze_module_build_log_handle_t *phLinkLog) {
