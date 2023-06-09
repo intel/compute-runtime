@@ -4513,5 +4513,20 @@ TEST(DeviceReturnSubDevicesAsApiDevicesTest, GivenReturnSubDevicesAsApiDevicesIs
     multiDeviceFixture.tearDown();
 }
 
+TEST_F(DeviceTest, GivenValidDeviceWhenQueryingKernelTimestampsProptertiesThenCorrectPropertiesIsReturned) {
+    ze_device_properties_t devProps;
+    ze_event_query_kernel_timestamps_ext_properties_t tsProps;
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &tsProps;
+
+    tsProps.stype = ZE_STRUCTURE_TYPE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_PROPERTIES;
+    tsProps.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_NE(0u, tsProps.flags & ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_FLAG_KERNEL);
+    EXPECT_NE(0u, tsProps.flags & ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_FLAG_SYNCHRONIZED);
+}
+
 } // namespace ult
 } // namespace L0

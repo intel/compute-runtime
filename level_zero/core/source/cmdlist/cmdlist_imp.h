@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/timestamp_packet_container.h"
+#include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
@@ -36,6 +37,9 @@ struct CommandListImp : CommandList {
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
     void enableInOrderExecution();
     bool isInOrderExecutionEnabled() const { return inOrderExecutionEnabled; }
+    void storeReferenceTsToMappedEvents(bool clear);
+    void addToMappedEventList(Event *event);
+    const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
 
   protected:
     std::unique_ptr<NEO::LogicalStateHelper> nonImmediateLogicalStateHelper;
@@ -51,6 +55,8 @@ struct CommandListImp : CommandList {
     static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
     static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
     static constexpr bool cmdListDefaultGlobalAtomics = false;
+    std::vector<Event *> mappedTsEventList{};
+    NEO::TimeStampData previousSynchronizedTimestamp{};
 };
 
 } // namespace L0

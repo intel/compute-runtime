@@ -9,6 +9,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_time.h"
@@ -32,6 +33,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->setEventTimestampFlag(true);
         event->setSinglePacketSize(NEO::TimestampPackets<TagSizeT>::getSinglePacketSize());
     }
+    event->hasKerneMappedTsCapability = eventPool->isEventPoolKerneMappedTsFlagSet();
     auto &hwInfo = neoDevice->getHardwareInfo();
 
     event->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
@@ -492,6 +494,85 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *cou
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <typename TagSizeT>
+void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,
+                                                         const uint32_t count, const ze_kernel_timestamp_result_t *pKernelTimestampsBuffer) {
+
+    auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
+    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+    const auto frequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
+    auto deviceTsInNs = gfxCoreHelper.getGpuTimeStampInNS(referenceTs.gpuTimeStamp, frequency);
+    const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
+
+    auto getDuration = [&](uint64_t startTs, uint64_t endTs) {
+        const uint64_t maxValue = maxKernelTsValue;
+        startTs &= maxValue;
+        endTs &= maxValue;
+
+        if (startTs > endTs) {
+            // Resolve overflows
+            return endTs + (maxValue - startTs);
+        } else {
+            return endTs - startTs;
+        }
+    };
+
+    const auto &referenceHostTsInNs = referenceTs.cpuTimeinNS;
+
+    // High Level Approach:
+    // startTimeStamp = (referenceHostTsInNs - submitDeviceTs) + kernelDeviceTsStart
+    // deviceDuration = kernelDeviceTsEnd - kernelDeviceTsStart
+    // endTimeStamp = startTimeStamp + deviceDuration
+
+    // Get offset between Device and Host timestamps
+    const int64_t tsOffsetInNs = referenceHostTsInNs - deviceTsInNs;
+
+    auto calculateSynchronizedTs = [&](ze_synchronized_timestamp_data_ext_t *synchronizedTs, const ze_kernel_timestamp_data_t *deviceTs) {
+        // Add the offset to the kernel timestamp to find the start timestamp on the CPU timescale
+        int64_t offset = tsOffsetInNs;
+        uint64_t startTimeStampInNs = static_cast<uint64_t>(deviceTs->kernelStart * frequency) + offset;
+        if (startTimeStampInNs < referenceHostTsInNs) {
+            offset += static_cast<uint64_t>(maxNBitValue(gfxCoreHelper.getGlobalTimeStampBits()) * frequency);
+            startTimeStampInNs = static_cast<uint64_t>(deviceTs->kernelStart * frequency) + offset;
+        }
+
+        // Get the kernel timestamp duration
+        uint64_t deviceDuration = getDuration(deviceTs->kernelStart, deviceTs->kernelEnd);
+        uint64_t deviceDurationNs = static_cast<uint64_t>(deviceDuration * frequency);
+        // Add the duration to the startTimeStamp to get the endTimeStamp
+        uint64_t endTimeStampInNs = startTimeStampInNs + deviceDurationNs;
+
+        synchronizedTs->kernelStart = startTimeStampInNs;
+        synchronizedTs->kernelEnd = endTimeStampInNs;
+    };
+
+    for (uint32_t index = 0; index < count; index++) {
+        calculateSynchronizedTs(&pSynchronizedTimestampsBuffer[index].global, &pKernelTimestampsBuffer[index].global);
+
+        pSynchronizedTimestampsBuffer[index].context.kernelStart = pSynchronizedTimestampsBuffer[index].global.kernelStart;
+        uint64_t deviceDuration = getDuration(pKernelTimestampsBuffer[index].context.kernelStart,
+                                              pKernelTimestampsBuffer[index].context.kernelEnd);
+        uint64_t deviceDurationNs = static_cast<uint64_t>(deviceDuration * frequency);
+        pSynchronizedTimestampsBuffer[index].context.kernelEnd = pSynchronizedTimestampsBuffer[index].context.kernelStart +
+                                                                 deviceDurationNs;
+    }
+}
+
+template <typename TagSizeT>
+ze_result_t EventImp<TagSizeT>::queryKernelTimestampsExt(Device *device, uint32_t *pCount, ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) {
+
+    if (*pCount == 0) {
+        return queryTimestampsExp(device, pCount, nullptr);
+    }
+
+    ze_result_t status = queryTimestampsExp(device, pCount, pResults->pKernelTimestampsBuffer);
+
+    if (status == ZE_RESULT_SUCCESS && hasKerneMappedTsCapability) {
+        getSynchronizedKernelTimestamps(pResults->pSynchronizedTimestampsBuffer, *pCount, pResults->pKernelTimestampsBuffer);
+    }
+    return status;
 }
 
 template <typename TagSizeT>

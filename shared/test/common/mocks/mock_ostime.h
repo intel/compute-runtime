@@ -88,4 +88,14 @@ class MockOSTimeWithConstTimestamp : public OSTime {
         return 0;
     }
 };
+
+class MockOSTimeWithConfigurableCpuTimestamp : public MockOSTimeWithConstTimestamp {
+  public:
+    uint64_t mockCpuTime = 0;
+    bool getCpuTime(uint64_t *timeStamp) override {
+        *timeStamp = mockCpuTime;
+        return true;
+    }
+};
+
 } // namespace NEO

@@ -2078,6 +2078,142 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
     }
 }
 
+using EventqueryKernelTimestampsExt = Test<EventUsedPacketSignalFixture<1, 1, 0, -1>>;
+
+TEST_F(EventqueryKernelTimestampsExt, givenpCountLargerThanSupportedWhenCallingQueryKernelTimestampsExtThenpCountSetProperly) {
+    uint32_t pCount = 10;
+    event->setPacketsInUse(2u);
+
+    std::vector<ze_kernel_timestamp_result_t> kernelTsBuffer(2);
+    ze_event_query_kernel_timestamps_results_ext_properties_t results{};
+    results.pKernelTimestampsBuffer = kernelTsBuffer.data();
+    results.pSynchronizedTimestampsBuffer = nullptr;
+
+    auto result = event->queryKernelTimestampsExt(device, &pCount, &results);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, pCount);
+}
+
+TEST_F(EventqueryKernelTimestampsExt, givenEventWithStaticPartitionOffThenQueryKernelTimestampsExtReturnsUnsupported) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.EnableStaticPartitioning.set(0);
+
+    event->hasKerneMappedTsCapability = true;
+
+    std::vector<ze_kernel_timestamp_result_t> kernelTsBuffer(2);
+    ze_event_query_kernel_timestamps_results_ext_properties_t results{};
+    results.pKernelTimestampsBuffer = kernelTsBuffer.data();
+    results.pSynchronizedTimestampsBuffer = nullptr;
+
+    uint32_t pCount = 10;
+    auto result = event->queryKernelTimestampsExt(device, &pCount, &results);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST_F(EventqueryKernelTimestampsExt, givenEventWithMappedTimestampCapabilityWhenQueryKernelTimestampsExtIsCalledCorrectValuesAreReturned) {
+
+    typename MockTimestampPackets32::Packet packetData[3];
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.kernelTimestampValidBits = 32;
+    auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
+    event->setPacketsInUse(3u);
+    event->hasKerneMappedTsCapability = true;
+    const auto deviceTsFrequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
+    const int64_t gpuReferenceTimeInNs = 2000;
+    const int64_t cpuReferenceTimeInNs = 3000;
+    const auto maxKernelTsValue = maxNBitValue(32);
+
+    NEO::TimeStampData referenceTs{static_cast<uint64_t>(gpuReferenceTimeInNs / deviceTsFrequency), cpuReferenceTimeInNs};
+    event->setReferenceTs(referenceTs);
+
+    auto timeToTimeStamp = [&](uint32_t timeInNs) {
+        return static_cast<uint32_t>(timeInNs / deviceTsFrequency);
+    };
+
+    packetData[0].contextStart = 50u;
+    packetData[0].contextEnd = 100u;
+    packetData[0].globalStart = timeToTimeStamp(4000u);
+    packetData[0].globalEnd = timeToTimeStamp(5000u);
+
+    // Device Ts overflow case
+    packetData[1].contextStart = 20u;
+    packetData[1].contextEnd = 30u;
+    packetData[1].globalStart = timeToTimeStamp(500u);
+    packetData[1].globalEnd = timeToTimeStamp(1500u);
+
+    packetData[2].contextStart = 20u;
+    packetData[2].contextEnd = 30u;
+    packetData[2].globalStart = timeToTimeStamp(5000u);
+    packetData[2].globalEnd = timeToTimeStamp(500u);
+
+    event->hostAddress = packetData;
+    uint32_t count = 0;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryKernelTimestampsExt(device, &count, nullptr));
+    EXPECT_EQ(count, 3u);
+
+    std::vector<ze_kernel_timestamp_result_t> kernelTsBuffer(count);
+    std::vector<ze_synchronized_timestamp_result_ext_t> synchronizedTsBuffer(count);
+
+    ze_event_query_kernel_timestamps_results_ext_properties_t results{};
+    results.pKernelTimestampsBuffer = kernelTsBuffer.data();
+    results.pSynchronizedTimestampsBuffer = synchronizedTsBuffer.data();
+
+    for (uint32_t packetId = 0; packetId < count; packetId++) {
+        event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
+        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryKernelTimestampsExt(device, &count, &results));
+    uint64_t errorOffset = 5;
+    // Packet 1
+    auto expectedGlobalStart = (cpuReferenceTimeInNs - gpuReferenceTimeInNs) + 4000u;
+    auto expectedGlobalEnd = (cpuReferenceTimeInNs - gpuReferenceTimeInNs) + 5000u;
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[0].global.kernelStart, expectedGlobalStart - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[0].global.kernelStart, expectedGlobalStart + errorOffset);
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[0].global.kernelEnd, expectedGlobalEnd - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[0].global.kernelEnd, expectedGlobalEnd + errorOffset);
+
+    auto expectedContextStart = expectedGlobalStart;
+    auto expectedContextEnd = expectedContextStart + (packetData[0].contextEnd - packetData[0].contextStart) * deviceTsFrequency;
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[0].context.kernelStart, expectedContextStart - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[0].context.kernelStart, expectedContextStart + errorOffset);
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[0].context.kernelEnd, expectedContextEnd - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[0].context.kernelEnd, expectedContextEnd + errorOffset);
+
+    // Packet 2
+    expectedGlobalStart = (cpuReferenceTimeInNs - gpuReferenceTimeInNs) + 500u +
+                          static_cast<uint64_t>(maxNBitValue(gfxCoreHelper.getGlobalTimeStampBits()) * deviceTsFrequency);
+    expectedGlobalEnd = expectedGlobalStart + (1500 - 500);
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[1].global.kernelStart, expectedGlobalStart - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[1].global.kernelStart, expectedGlobalStart + errorOffset);
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[1].global.kernelEnd, expectedGlobalEnd - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[1].global.kernelEnd, expectedGlobalEnd + errorOffset);
+
+    expectedContextStart = expectedGlobalStart;
+    expectedContextEnd = expectedContextStart + (packetData[1].contextEnd - packetData[1].contextStart) * deviceTsFrequency;
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[1].context.kernelStart, expectedContextStart - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[1].context.kernelStart, expectedContextStart + errorOffset);
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[1].context.kernelEnd, expectedContextEnd - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[1].context.kernelEnd, expectedContextEnd + errorOffset);
+
+    // Packet 3
+    expectedGlobalStart = (cpuReferenceTimeInNs - gpuReferenceTimeInNs) + 5000u;
+    expectedGlobalEnd = expectedGlobalStart + (static_cast<uint64_t>(maxKernelTsValue * deviceTsFrequency) - 5000u + 500u);
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[2].global.kernelStart, expectedGlobalStart - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[2].global.kernelStart, expectedGlobalStart + errorOffset);
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[2].global.kernelEnd, expectedGlobalEnd - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[2].global.kernelEnd, expectedGlobalEnd + errorOffset);
+
+    expectedContextStart = expectedGlobalStart;
+    expectedContextEnd = expectedContextStart + (packetData[2].contextEnd - packetData[1].contextStart) * deviceTsFrequency;
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[2].context.kernelStart, expectedContextStart - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[2].context.kernelStart, expectedContextStart + errorOffset);
+    EXPECT_GE(results.pSynchronizedTimestampsBuffer[2].context.kernelEnd, expectedContextEnd - errorOffset);
+    EXPECT_LE(results.pSynchronizedTimestampsBuffer[2].context.kernelEnd, expectedContextEnd + errorOffset);
+}
+
 HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
     typename MockTimestampPackets32::Packet data = {};
     data.contextStart = 1u;

@@ -76,6 +76,7 @@ struct Mock<Event> : public Event {
     ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(queryKernelTimestamp, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_timestamp_result_t * dstptr));
     ADDMETHOD_NOBASE(queryTimestampsExp, ze_result_t, ZE_RESULT_SUCCESS, (::L0::Device * device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps));
+    ADDMETHOD_NOBASE(queryKernelTimestampsExt, ze_result_t, ZE_RESULT_SUCCESS, (::L0::Device * device, uint32_t *count, ze_event_query_kernel_timestamps_results_ext_properties_t *pResults));
 
     // Fake an allocation for event memory
     alignas(16) uint32_t memory = -1;
@@ -152,6 +153,9 @@ class MockEvent : public ::L0::Event {
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t queryTimestampsExp(L0::Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t queryKernelTimestampsExt(L0::Device *device, uint32_t *count, ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) override {
         return ZE_RESULT_SUCCESS;
     }
     uint32_t getPacketsUsedInLastKernel() override { return 1; }

@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
@@ -235,6 +236,34 @@ void CommandListImp::enableInOrderExecution() {
     deferredTimestampPackets = std::make_unique<NEO::TimestampPacketContainer>();
 
     inOrderExecutionEnabled = true;
+}
+
+void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {
+    if (mappedTsEventList.size()) {
+        uint64_t currentCpuTimeStamp = 0;
+        device->getNEODevice()->getOSTime()->getCpuTime(&currentCpuTimeStamp);
+        const auto recalculate =
+            (currentCpuTimeStamp - previousSynchronizedTimestamp.cpuTimeinNS) > timestampRefreshIntervalInNanoSec;
+        if (previousSynchronizedTimestamp.cpuTimeinNS == 0 || recalculate) {
+            device->getNEODevice()->getOSTime()->getCpuGpuTime(&previousSynchronizedTimestamp);
+        }
+
+        for (auto &event : mappedTsEventList) {
+            event->setReferenceTs(previousSynchronizedTimestamp);
+        }
+
+        if (isClearEnabled) {
+            mappedTsEventList.clear();
+        }
+    }
+}
+
+void CommandListImp::addToMappedEventList(Event *event) {
+    if (event && event->hasKerneMappedTsCapability) {
+        if (std::find(mappedTsEventList.begin(), mappedTsEventList.end(), event) == mappedTsEventList.end()) {
+            mappedTsEventList.push_back(event);
+        }
+    }
 }
 
 } // namespace L0

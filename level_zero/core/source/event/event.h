@@ -9,6 +9,7 @@
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
+#include "shared/source/os_interface/os_time.h"
 
 #include <level_zero/ze_api.h>
 
@@ -69,6 +70,8 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t reset() = 0;
     virtual ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) = 0;
     virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) = 0;
+    virtual ze_result_t queryKernelTimestampsExt(Device *device, uint32_t *pCount, ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) = 0;
+
     enum State : uint32_t {
         STATE_SIGNALED = 0u,
         HOST_CACHING_DISABLED_PERMANENT = std::numeric_limits<uint32_t>::max() - 2,
@@ -210,6 +213,10 @@ struct Event : _ze_event_handle_t {
     void enableInOrderExecMode(const NEO::TimestampPacketContainer &inOrderSyncNodes);
     bool isInOrderExecEvent() const { return inOrderExecEvent; }
     const NEO::TimestampPacketContainer *getInOrderTimestampPacket() const { return inOrderTimestampPacket.get(); }
+    void setReferenceTs(NEO::TimeStampData &timestamp) {
+        referenceTs = timestamp;
+    }
+    bool hasKerneMappedTsCapability = false;
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
@@ -218,6 +225,7 @@ struct Event : _ze_event_handle_t {
     uint64_t globalEndTS = 1;
     uint64_t contextStartTS = 1;
     uint64_t contextEndTS = 1;
+    NEO::TimeStampData referenceTs{};
 
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
     std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
@@ -268,6 +276,9 @@ struct EventPool : _ze_event_pool_handle_t {
                                               DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
     EventPool(const ze_event_pool_desc_t *desc) : EventPool(desc->count) {
         eventPoolFlags = desc->flags;
+        if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
+            eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+        }
     }
     virtual ~EventPool();
     MOCKABLE_VIRTUAL ze_result_t destroy();
@@ -294,6 +305,13 @@ struct EventPool : _ze_event_pool_handle_t {
 
     bool isEventPoolDeviceAllocationFlagSet() const {
         if (!(eventPoolFlags & ZE_EVENT_POOL_FLAG_HOST_VISIBLE)) {
+            return true;
+        }
+        return false;
+    }
+
+    bool isEventPoolKerneMappedTsFlagSet() const {
+        if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
             return true;
         }
         return false;

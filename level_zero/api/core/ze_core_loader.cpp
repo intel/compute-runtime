@@ -447,6 +447,7 @@ zeGetEventProcAddrTable(
     pDdiTable->pfnQueryStatus = L0::zeEventQueryStatus;
     pDdiTable->pfnHostReset = L0::zeEventHostReset;
     pDdiTable->pfnQueryKernelTimestamp = L0::zeEventQueryKernelTimestamp;
+    pDdiTable->pfnQueryKernelTimestampsExt = L0::zeEventQueryKernelTimestampsExt;
     driverDdiTable.coreDdiTable.Event = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnCreate = zeEventCreateTracing;

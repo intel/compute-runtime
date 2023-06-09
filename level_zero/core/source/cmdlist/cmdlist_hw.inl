@@ -18,6 +18,7 @@
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
@@ -133,6 +134,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->ownedPrivateAllocations.clear();
     cmdListCurrentStartOffset = 0;
 
+    mappedTsEventList.clear();
+    previousSynchronizedTimestamp = {};
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -232,6 +236,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
 
     createLogicalStateHelper();
 
+    const auto frequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
+    const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
+    if (hwInfo.capabilityTable.kernelTimestampValidBits < 64u) {
+        this->timestampRefreshIntervalInNanoSec = static_cast<uint64_t>(maxKernelTsValue * frequency);
+    } else {
+        this->timestampRefreshIntervalInNanoSec = maxKernelTsValue;
+    }
+    if (NEO::DebugManager.flags.CommandListTimestampRefreshIntervalInMilliSec.get() != -1) {
+        constexpr uint32_t milliSecondsToNanoSeconds = 1000000u;
+        const uint32_t refreshTime = NEO::DebugManager.flags.CommandListTimestampRefreshIntervalInMilliSec.get();
+        this->timestampRefreshIntervalInNanoSec = refreshTime * milliSecondsToNanoSeconds;
+    }
+
     return returnType;
 }
 
@@ -320,7 +337,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 
     auto res = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), threadGroupDimensions,
                                             event, launchParams);
-
+    addToMappedEventList(event);
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
             *commandContainer.getCommandStream(),
@@ -352,8 +369,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
-    return appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), launchKernelArgs,
-                                        event, launchParams);
+
+    ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), launchKernelArgs,
+                                       event, launchParams);
+    addToMappedEventList(event);
+    return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -382,6 +402,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     launchParams.isIndirect = true;
     ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), pDispatchArgumentsBuffer,
                                        nullptr, launchParams);
+    addToMappedEventList(event);
     appendSignalEventPostWalker(event);
 
     return ret;
@@ -427,7 +448,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
             return ret;
         }
     }
-
+    addToMappedEventList(event);
     appendSignalEventPostWalker(event);
 
     return ret;
@@ -496,6 +517,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     appendEventForProfiling(signalEvent, true);
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
     appendSignalEventPostWalker(signalEvent);
+    addToMappedEventList(signalEvent);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -562,9 +584,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     }
 
     if (isCopyOnly()) {
-        return appendCopyImageBlit(allocationStruct.alloc, image->getAllocation(),
-                                   {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, rowPitch, slicePitch,
-                                   rowPitch, slicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize, event);
+        auto status = appendCopyImageBlit(allocationStruct.alloc, image->getAllocation(),
+                                          {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, rowPitch, slicePitch,
+                                          rowPitch, slicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize, event);
+        addToMappedEventList(Event::fromHandle(hEvent));
+        return status;
     }
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
@@ -639,9 +663,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &kernelArgs,
-                                                                    event, numWaitEvents, phWaitEvents,
-                                                                    launchParams, relaxedOrderingDispatch);
+
+    auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &kernelArgs,
+                                                                           event, numWaitEvents, phWaitEvents,
+                                                                           launchParams, relaxedOrderingDispatch);
+    addToMappedEventList(Event::fromHandle(hEvent));
+    return status;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -706,9 +733,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     }
 
     if (isCopyOnly()) {
-        return appendCopyImageBlit(image->getAllocation(), allocationStruct.alloc,
-                                   {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, rowPitch, slicePitch,
-                                   rowPitch, slicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event);
+        auto status = appendCopyImageBlit(image->getAllocation(), allocationStruct.alloc,
+                                          {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, rowPitch, slicePitch,
+                                          rowPitch, slicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event);
+        addToMappedEventList(event);
+        return status;
     }
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
@@ -791,6 +820,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
     ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &kernelArgs,
                                                                    event, numWaitEvents, phWaitEvents, launchParams, relaxedOrderingDispatch);
+    addToMappedEventList(event);
 
     addFlushRequiredCommand(allocationStruct.needsFlush, event);
 
@@ -890,9 +920,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         auto dstSlicePitch =
             (dstImage->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : dstRegion.height) * dstRowPitch;
 
-        return appendCopyImageBlit(srcImage->getAllocation(), dstImage->getAllocation(),
-                                   {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
-                                   dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize, event);
+        auto status = appendCopyImageBlit(srcImage->getAllocation(), dstImage->getAllocation(),
+                                          {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
+                                          dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize, event);
+        addToMappedEventList(event);
+        return status;
     }
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
@@ -929,9 +961,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), &kernelArgs,
-                                                                    event, numWaitEvents, phWaitEvents,
-                                                                    launchParams, relaxedOrderingDispatch);
+    auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), &kernelArgs,
+                                                                           event, numWaitEvents, phWaitEvents,
+                                                                           launchParams, relaxedOrderingDispatch);
+    addToMappedEventList(event);
+    return status;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1154,7 +1188,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
     appendEventForProfiling(signalEvent, true);
-
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), dummyBlitWa);
     makeResidentDummyAllocation();
 
@@ -1366,6 +1399,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
+    addToMappedEventList(signalEvent);
 
     if (this->inOrderExecutionEnabled && (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed)) {
         obtainNewTimestampPacketNode();
@@ -1459,6 +1493,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         return result;
     }
 
+    addToMappedEventList(signalEvent);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
 
     if (this->inOrderExecutionEnabled && isCopyOnly() && inOrderCopyOnlySignalingAllowed) {
@@ -1680,7 +1715,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     if (isCopyOnly()) {
-        return appendBlitFill(ptr, pattern, patternSize, size, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        auto status = appendBlitFill(ptr, pattern, patternSize, size, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        addToMappedEventList(signalEvent);
+        return status;
     }
 
     ze_result_t res = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, false);
@@ -1873,6 +1910,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
     }
 
+    addToMappedEventList(signalEvent);
     appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
     addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent);
 
@@ -2407,6 +2445,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     }
     commandContainer.addToResidencyContainer(allocationStruct.alloc);
 
+    addToMappedEventList(signalEvent);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2517,6 +2557,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     if (appendResult != ZE_RESULT_SUCCESS) {
         return appendResult;
     }
+
+    addToMappedEventList(Event::fromHandle(hSignalEvent));
 
     return ZE_RESULT_SUCCESS;
 }
@@ -2886,6 +2928,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         appendComputeBarrierCommand();
     }
 
+    addToMappedEventList(signalEvent);
     appendSignalEventPostWalker(signalEvent);
     return ZE_RESULT_SUCCESS;
 }

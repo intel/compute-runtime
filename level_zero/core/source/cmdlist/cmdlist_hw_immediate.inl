@@ -104,6 +104,8 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask
         hasRelaxedOrderingDependencies // hasRelaxedOrderingDependencies
     );
 
+    CommandListImp::storeReferenceTsToMappedEvents(true);
+
     return csr->flushBcsTask(cmdStreamTask, taskStartOffset, dispatchBcsFlags, this->device->getHwInfo());
 }
 
@@ -197,6 +199,8 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
             *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
         }
     }
+
+    CommandListImp::storeReferenceTsToMappedEvents(true);
 
     return this->csr->flushTask(
         cmdStreamTask,
@@ -875,6 +879,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     }
 
     if (signalEvent) {
+        CommandListImp::addToMappedEventList(signalEvent);
+        CommandListImp::storeReferenceTsToMappedEvents(true);
         signalEvent->setGpuStartTimestamp();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/device_time_drm.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include <chrono>
 #include <time.h>
 
 namespace NEO {

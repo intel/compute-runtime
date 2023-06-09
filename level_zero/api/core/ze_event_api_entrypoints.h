@@ -100,6 +100,14 @@ ze_result_t zeEventQueryKernelTimestamp(
     ze_kernel_timestamp_result_t *timestampType) {
     return L0::Event::fromHandle(hEvent)->queryKernelTimestamp(timestampType);
 }
+
+ze_result_t zeEventQueryKernelTimestampsExt(
+    ze_event_handle_t hEvent,
+    ze_device_handle_t hDevice,
+    uint32_t *pCount,
+    ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) {
+    return L0::Event::fromHandle(hEvent)->queryKernelTimestampsExt(L0::Device::fromHandle(hDevice), pCount, pResults);
+}
 } // namespace L0
 
 extern "C" {
@@ -221,6 +229,18 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeEventQueryKernelTimestamp(
     return L0::zeEventQueryKernelTimestamp(
         hEvent,
         dstptr);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventQueryKernelTimestampsExt(
+    ze_event_handle_t hEvent,
+    ze_device_handle_t hDevice,
+    uint32_t *pCount,
+    ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) {
+    return L0::zeEventQueryKernelTimestampsExt(
+        hEvent,
+        hDevice,
+        pCount,
+        pResults);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(

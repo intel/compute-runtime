@@ -222,6 +222,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->programStateSipEndWA(ctx.stateSipRequired, child);
     this->assignCsrTaskCountToFenceIfAvailable(hFence);
     this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, child);
+
+    for (auto i = 0u; i < numCommandLists; ++i) {
+        auto commandList = static_cast<CommandListImp *>(CommandList::fromHandle(commandListHandles[i]));
+        commandList->storeReferenceTsToMappedEvents(false);
+    }
+
     auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, child);
 
     this->csr->setPreemptionMode(ctx.statePreemption);
@@ -288,6 +294,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     this->assignCsrTaskCountToFenceIfAvailable(hFence);
 
     this->programLastCommandListReturnBbStart(child, ctx);
+
+    for (auto i = 0u; i < numCommandLists; ++i) {
+        auto commandList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
+        commandList->storeReferenceTsToMappedEvents(false);
+    }
     this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, child);
 
     this->makeCsrTagAllocationResident();

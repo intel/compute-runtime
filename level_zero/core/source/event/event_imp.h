@@ -52,6 +52,7 @@ struct EventImp : public Event {
 
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
     ze_result_t queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) override;
+    ze_result_t queryKernelTimestampsExt(Device *device, uint32_t *pCount, ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) override;
 
     void resetDeviceCompletionData(bool resetAllPackets);
     void resetKernelCountAndPacketUsedCount() override;
@@ -74,6 +75,8 @@ struct EventImp : public Event {
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
     MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
     void setRemainingPackets(TagSizeT eventVal, void *nextPacketAddress, uint32_t packetsAlreadySet);
+    void getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,
+                                         const uint32_t count, const ze_kernel_timestamp_result_t *pKernelTimestampsBuffer);
 };
 
 } // namespace L0

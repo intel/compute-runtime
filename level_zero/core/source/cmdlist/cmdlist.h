@@ -396,6 +396,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t commandListPerThreadPrivateScratchSize = 0u;
     uint32_t partitionCount = 1;
     uint32_t defaultMocsIndex = 0;
+    uint64_t timestampRefreshIntervalInNanoSec = 0;
 
     bool isFlushTaskSubmissionEnabled = false;
     bool isSyncModeQueue = false;
