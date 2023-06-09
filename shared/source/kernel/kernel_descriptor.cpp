@@ -108,4 +108,17 @@ void KernelDescriptor::updateCrossThreadDataSize() {
     this->kernelAttributes.crossThreadDataSize = std::max<uint16_t>(this->kernelAttributes.crossThreadDataSize, static_cast<uint16_t>(alignUp(crossThreadDataSize, 32)));
 }
 
+bool KernelDescriptor::isBindlessAddressingKernel(const KernelDescriptor &desc) {
+    bool bindlessBuffers = false;
+    bool bindlessImages = false;
+    if (desc.kernelAttributes.bufferAddressingMode == KernelDescriptor::Bindless || desc.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindlessAndStateless) {
+        bindlessBuffers = true;
+    }
+    if (desc.kernelAttributes.flags.usesImages && desc.kernelAttributes.imageAddressingMode == KernelDescriptor::Bindless) {
+        bindlessImages = true;
+    }
+
+    return bindlessBuffers || bindlessImages;
+}
+
 } // namespace NEO

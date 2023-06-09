@@ -114,16 +114,18 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     idd.setSharedLocalMemorySize(slmSize);
 
     auto bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
-    auto bufferAddressingMode = kernelDescriptor.kernelAttributes.bufferAddressingMode;
+    bool skipSshProgramming = false;
 
     if (productHelper.isSkippingStatefulInformationRequired(kernelDescriptor)) {
         bindingTableStateCount = 0u;
-        bufferAddressingMode = KernelDescriptor::Stateless;
+        skipSshProgramming = true;
     }
 
     uint32_t bindingTablePointer = 0u;
-    if ((bufferAddressingMode == KernelDescriptor::BindfulAndStateless) ||
-        kernelDescriptor.kernelAttributes.flags.usesImages) {
+
+    bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernelDescriptor);
+
+    if (!isBindlessKernel && !skipSshProgramming) {
         container.prepareBindfulSsh();
         if (bindingTableStateCount > 0u) {
             auto ssh = args.surfaceStateHeap;

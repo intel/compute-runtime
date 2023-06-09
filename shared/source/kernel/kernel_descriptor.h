@@ -26,6 +26,8 @@ using StringMap = std::unordered_map<uint32_t, std::string>;
 using InstructionsSegmentOffset = uint16_t;
 
 struct KernelDescriptor {
+    static bool isBindlessAddressingKernel(const KernelDescriptor &desc);
+
     enum AddressingMode : uint8_t {
         AddrNone,
         Stateless,

@@ -99,7 +99,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     uint32_t bindingTablePointer = 0u;
-    bool isBindlessKernel = kernelDescriptor.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindlessAndStateless;
+    bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernelDescriptor);
+
     if (!isBindlessKernel) {
         container.prepareBindfulSsh();
         if (bindingTableStateCount > 0u) {

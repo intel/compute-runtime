@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,4 +106,24 @@ TEST(KernelDescriptorAttributesSupportsBuffersBiggerThan4Gb, GivenStatefulBuffer
     EXPECT_FALSE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
     desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     EXPECT_FALSE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
+}
+
+TEST(KernelDescriptor, GivenBufferOrImageBindlessAddressingWhenIsBindlessAddressingKernelCalledThenTrueIsReturned) {
+    NEO::KernelDescriptor desc;
+    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::Bindful;
+    EXPECT_FALSE(NEO::KernelDescriptor::isBindlessAddressingKernel(desc));
+
+    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
+    EXPECT_FALSE(NEO::KernelDescriptor::isBindlessAddressingKernel(desc));
+
+    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::Bindless;
+    EXPECT_TRUE(NEO::KernelDescriptor::isBindlessAddressingKernel(desc));
+
+    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    EXPECT_TRUE(NEO::KernelDescriptor::isBindlessAddressingKernel(desc));
+
+    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::AddrNone;
+    desc.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+    desc.kernelAttributes.flags.usesImages = true;
+    EXPECT_TRUE(NEO::KernelDescriptor::isBindlessAddressingKernel(desc));
 }
