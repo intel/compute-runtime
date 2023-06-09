@@ -215,6 +215,7 @@ struct KernelDescriptor {
 
         uint16_t compiledSubGroupsNumber = 0U;
         uint8_t requiredSubGroupSize = 0U;
+        bool isGeneratedByIgc = true;
     } kernelMetadata;
 
     struct {

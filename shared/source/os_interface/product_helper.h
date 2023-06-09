@@ -206,6 +206,7 @@ class ProductHelper {
     virtual bool is48bResourceNeededForRayTracing() const = 0;
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCachingOnCpuAvailable() const = 0;
+    virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
 
     virtual ~ProductHelper() = default;
 

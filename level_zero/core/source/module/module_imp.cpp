@@ -310,6 +310,8 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
             this->debugDataSize = singleDeviceBinary.debugData.size();
         }
 
+        this->isGeneratedByIgc = singleDeviceBinary.generator == NEO::GeneratorType::Igc;
+
         bool rebuild = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
         rebuild |= NEO::isRebuiltToPatchtokensRequired(device->getNEODevice(), archive, this->options, this->isBuiltIn, false);
         if (rebuild && irBinarySize == 0) {
@@ -598,9 +600,12 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos, false);
     auto isUserKernel = (type == ModuleType::User);
 
+    auto isGeneratedByIgc = translationUnit->isGeneratedByIgc;
+
     auto failBuildProgram = containsStatefulAccess &&
                             isUserKernel &&
-                            NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(rootDeviceEnvironment);
+                            NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(rootDeviceEnvironment) &&
+                            isGeneratedByIgc;
 
     if (failBuildProgram) {
         result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;

@@ -178,6 +178,16 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckCopyEngineSelectorEnab
     EXPECT_FALSE(productHelper->isCopyEngineSelectorEnabled(hwInfo));
 }
 
+PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsSkippingStatefulInformationRequiredThenCorrectResultIsReturned) {
+
+    KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelMetadata.isGeneratedByIgc = true;
+    EXPECT_FALSE(productHelper->isSkippingStatefulInformationRequired(kernelDescriptor));
+
+    kernelDescriptor.kernelMetadata.isGeneratedByIgc = false;
+    EXPECT_TRUE(productHelper->isSkippingStatefulInformationRequired(kernelDescriptor));
+}
+
 PVCTEST_F(PvcProductHelper, givenProductHelperAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandDisabledWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);

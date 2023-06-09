@@ -1354,6 +1354,50 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindles
     EXPECT_NE(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
 }
 
+using NgenGeneratorDispatchKernelEncodeTest = Test<CommandEncodeStatesFixture>;
+
+HWTEST2_F(NgenGeneratorDispatchKernelEncodeTest, givenBindfulKernelAndIsNotGeneratedByIgcWhenEncodeDispatchKernelThenCmdContainerDoesNotHaveSsh, IsPVC) {
+    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
+
+    for (auto isGeneratedByIgc : {false, true}) {
+        auto commandContainer = std::make_unique<MyMockCommandContainer>();
+        commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+        commandContainer->setDirtyStateForAllHeaps(false);
+        commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
+
+        if (isGeneratedByIgc == false) {
+            commandContainer->indirectHeaps[HeapType::SURFACE_STATE].reset(nullptr);
+        }
+
+        uint32_t numBindingTable = 1;
+        BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
+
+        uint32_t dims[] = {1, 1, 1};
+        std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+        dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
+        dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
+        dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
+        dispatchInterface->kernelDescriptor.kernelMetadata.isGeneratedByIgc = isGeneratedByIgc;
+
+        const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
+        dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);
+        dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
+
+        bool requiresUncachedMocs = false;
+
+        EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+        EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dispatchArgs, nullptr);
+
+        if (isGeneratedByIgc) {
+            EXPECT_NE(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
+        } else {
+            EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
+        }
+    }
+}
+
 HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThenReturnCorrectValues) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;

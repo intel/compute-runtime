@@ -3258,17 +3258,19 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
     moduleDesc.inputSize = src.size();
 
-    std::array<std::tuple<ze_result_t, bool, ModuleType, int32_t>, 5> testParams = {{
-        {ZE_RESULT_SUCCESS, false, ModuleType::Builtin, -1},
-        {ZE_RESULT_SUCCESS, true, ModuleType::Builtin, 0},
-        {ZE_RESULT_SUCCESS, true, ModuleType::User, 0},
-        {ZE_RESULT_SUCCESS, true, ModuleType::Builtin, 1},
-        {ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, true, ModuleType::User, 1},
+    std::array<std::tuple<ze_result_t, bool, bool, ModuleType, int32_t>, 6> testParams = {{
+        {ZE_RESULT_SUCCESS, false, true, ModuleType::Builtin, -1},
+        {ZE_RESULT_SUCCESS, true, true, ModuleType::Builtin, 0},
+        {ZE_RESULT_SUCCESS, true, true, ModuleType::User, 0},
+        {ZE_RESULT_SUCCESS, true, true, ModuleType::Builtin, 1},
+        {ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, true, true, ModuleType::User, 1},
+        {ZE_RESULT_SUCCESS, true, false, ModuleType::User, 1},
     }};
 
-    for (auto &[expectedResult, isStateful, moduleType, debugKey] : testParams) {
+    for (auto &[expectedResult, isStateful, isIgcGenerated, moduleType, debugKey] : testParams) {
         MockModuleImp module(device, nullptr, moduleType);
         module.translationUnit = std::make_unique<MyMockModuleTU>(device);
+        module.translationUnit->isGeneratedByIgc = isIgcGenerated;
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debugKey);
         module.setAddressingMode(isStateful);
         EXPECT_EQ(expectedResult, module.initialize(&moduleDesc, device->getNEODevice()));

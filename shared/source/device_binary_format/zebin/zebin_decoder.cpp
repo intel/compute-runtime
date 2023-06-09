@@ -75,10 +75,10 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_
     return true;
 }
 
-template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
-template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
+template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType);
+template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType);
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
-bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning) {
+bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
     AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
@@ -106,6 +106,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
             auto targetMetadataPacked = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
             targetMetadata.packed = static_cast<uint32_t>(*targetMetadataPacked);
+            generatorType = static_cast<GeneratorType>(targetMetadata.generatorId);
             break;
         }
         case Elf::IntelGTSectionType::ZebinVersion: {

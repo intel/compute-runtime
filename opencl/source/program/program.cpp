@@ -195,6 +195,8 @@ cl_int Program::createProgramFromBinary(
             this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
             this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
 
+            this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::Igc;
+
             auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
             bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed);
             rebuild |= DebugManager.flags.RebuildPrecompiledKernels.get();
@@ -207,6 +209,7 @@ cl_int Program::createProgramFromBinary(
                 this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = singleDeviceBinary.deviceBinary.size();
                 this->buildInfos[rootDeviceIndex].packedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(archive.begin()), archive.size());
                 this->buildInfos[rootDeviceIndex].packedDeviceBinarySize = archive.size();
+
             } else {
                 this->isCreatedFromBinary = false;
                 this->requiresRebuild = true;

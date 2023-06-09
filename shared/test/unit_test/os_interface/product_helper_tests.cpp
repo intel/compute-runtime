@@ -342,6 +342,16 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfHeapInLocalMemThenFals
     EXPECT_FALSE(productHelper->heapInLocalMem(pInHwInfo));
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsSkippingStatefulInformationRequiredThenFalseIsReturned, IsNotPVC) {
+
+    KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelMetadata.isGeneratedByIgc = true;
+    EXPECT_FALSE(productHelper->isSkippingStatefulInformationRequired(kernelDescriptor));
+
+    kernelDescriptor.kernelMetadata.isGeneratedByIgc = false;
+    EXPECT_FALSE(productHelper->isSkippingStatefulInformationRequired(kernelDescriptor));
+}
+
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenSettingCapabilityCoherencyFlagThenFlagIsSet, IsAtMostGen11) {
 
     bool coherency = false;

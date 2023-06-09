@@ -212,4 +212,11 @@ template <>
 uint32_t ProductHelperHw<gfxProduct>::getNumberOfPartsInTileForConcurrentKernel() const {
     return PVC::numberOfpartsInTileForConcurrentKernels;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const {
+    bool isGeneratedByNgen = !kernelDescriptor.kernelMetadata.isGeneratedByIgc;
+    return isGeneratedByNgen;
+}
+
 } // namespace NEO

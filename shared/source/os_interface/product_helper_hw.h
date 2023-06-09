@@ -159,6 +159,7 @@ class ProductHelperHw : public ProductHelper {
     bool is48bResourceNeededForRayTracing() const override;
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isCachingOnCpuAvailable() const override;
+    bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const override;
 
     ~ProductHelperHw() override = default;
 

@@ -37,6 +37,11 @@ enum class DecodeError : uint8_t {
     UnhandledBinary
 };
 
+enum class GeneratorType : uint8_t {
+    Unknown,
+    Igc
+};
+
 inline const char *asString(DecodeError err) {
     switch (err) {
     default:
@@ -73,6 +78,7 @@ struct SingleDeviceBinary {
     ArrayRef<const uint8_t> packedTargetDeviceBinary;
     ConstStringRef buildOptions;
     TargetDevice targetDevice;
+    GeneratorType generator = GeneratorType::Igc;
 };
 
 template <DeviceBinaryFormat Format>

@@ -168,9 +168,10 @@ cl_int Program::build(
         auto containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray, skipLastExplicitArg);
         auto isUserKernel = !isBuiltIn;
 
-        auto failBuildProgram = (containsStatefulAccess &&
-                                 isUserKernel &&
-                                 AddressingModeHelper::failBuildProgramWithStatefulAccess(clDevices[0]->getRootDeviceEnvironment()));
+        auto failBuildProgram = containsStatefulAccess &&
+                                isUserKernel &&
+                                AddressingModeHelper::failBuildProgramWithStatefulAccess(clDevices[0]->getRootDeviceEnvironment()) &&
+                                isGeneratedByIgc;
 
         if (failBuildProgram) {
             retVal = CL_BUILD_PROGRAM_FAILURE;

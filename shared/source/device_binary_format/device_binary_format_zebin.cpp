@@ -59,7 +59,7 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
 
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ELF_MACHINE::EM_INTELGT) {
-        validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning);
+        validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret.generator);
     } else {
         const auto &flags = reinterpret_cast<const NEO::Zebin::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
         validForTarget &= flags.machineEntryUsesGfxCoreInsteadOfProductFamily
@@ -67,6 +67,8 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
                               : (requestedTargetDevice.productFamily == static_cast<PRODUCT_FAMILY>(elf.elfFileHeader->machine));
         validForTarget &= (0 == flags.validateRevisionId) | ((requestedTargetDevice.stepping >= flags.minHwRevisionId) & (requestedTargetDevice.stepping <= flags.maxHwRevisionId));
         validForTarget &= (requestedTargetDevice.maxPointerSizeInBytes >= static_cast<uint32_t>(numBits == Elf::EI_CLASS_32 ? 4 : 8));
+
+        ret.generator = static_cast<GeneratorType>(flags.generatorId);
     }
 
     if (false == validForTarget) {
@@ -117,6 +119,12 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
     auto decodeError = NEO::Zebin::decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
     if (DecodeError::Success != decodeError) {
         return decodeError;
+    }
+
+    bool isGeneratedByIgc = src.generator == GeneratorType::Igc;
+
+    for (auto &kernelInfo : dst.kernelInfos) {
+        kernelInfo->kernelDescriptor.kernelMetadata.isGeneratedByIgc = isGeneratedByIgc;
     }
 
     prepareLinkerInputForZebin<numBits>(dst, elf);

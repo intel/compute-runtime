@@ -114,8 +114,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     idd.setSharedLocalMemorySize(slmSize);
 
     auto bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
+    auto bufferAddressingMode = kernelDescriptor.kernelAttributes.bufferAddressingMode;
+
+    if (productHelper.isSkippingStatefulInformationRequired(kernelDescriptor)) {
+        bindingTableStateCount = 0u;
+        bufferAddressingMode = KernelDescriptor::Stateless;
+    }
+
     uint32_t bindingTablePointer = 0u;
-    if ((kernelDescriptor.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindfulAndStateless) ||
+    if ((bufferAddressingMode == KernelDescriptor::BindfulAndStateless) ||
         kernelDescriptor.kernelAttributes.flags.usesImages) {
         container.prepareBindfulSsh();
         if (bindingTableStateCount > 0u) {

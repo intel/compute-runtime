@@ -1872,6 +1872,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         using Program::irBinary;
         using Program::irBinarySize;
         using Program::isBuiltIn;
+        using Program::isGeneratedByIgc;
         using Program::options;
         using Program::Program;
         using Program::sourceCode;
@@ -1898,11 +1899,12 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         }
     };
 
-    std::array<std::tuple<int, bool, int32_t>, 3> testParams = {{{CL_SUCCESS, false, -1},
-                                                                 {CL_SUCCESS, true, 0},
-                                                                 {CL_BUILD_PROGRAM_FAILURE, true, 1}}};
+    std::array<std::tuple<int, bool, bool, int32_t>, 4> testParams = {{{CL_SUCCESS, false, true, -1},
+                                                                       {CL_SUCCESS, true, true, 0},
+                                                                       {CL_BUILD_PROGRAM_FAILURE, true, true, 1},
+                                                                       {CL_SUCCESS, true, false, 1}}};
 
-    for (auto &[result, isStatefulAccess, debuyKey] : testParams) {
+    for (auto &[result, isStatefulAccess, isIgcGenerated, debuyKey] : testParams) {
 
         if (!compilerProductHelper.isForceToStatelessRequired()) {
             result = CL_SUCCESS;
@@ -1911,6 +1913,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         program.isBuiltIn = false;
         program.sourceCode = "test_kernel";
         program.createdFrom = Program::CreatedFrom::SOURCE;
+        program.isGeneratedByIgc = isIgcGenerated;
         program.setAddressingMode(isStatefulAccess);
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debuyKey);
         EXPECT_EQ(result, program.build(toClDeviceVector(*pClDevice), nullptr));

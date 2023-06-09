@@ -20,6 +20,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
     class MyMockCommandContainer : public CommandContainer {
       public:
         using CommandContainer::dirtyHeaps;
+        using CommandContainer::indirectHeaps;
 
         IndirectHeap *getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment) override {
             getHeapWithRequiredSizeAndAlignmentCalled++;

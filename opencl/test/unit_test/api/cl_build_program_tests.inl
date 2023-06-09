@@ -168,6 +168,52 @@ HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreating
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryGeneratedByNgenAsInputWhenCreatingProgramWithSourceThenProgramBuildReturnsSuccess, IsAtLeastXeHpcCore) {
+
+    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
+
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_SUCCESS;
+
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
+    const auto &src = zebinData->storage;
+
+    auto &flags = reinterpret_cast<NEO::Zebin::Elf::ZebinTargetFlags &>(zebinData->elfHeader->flags);
+    flags.generatorId = 0u; // ngen generated
+
+    ASSERT_NE(nullptr, src.data());
+    ASSERT_NE(0u, src.size());
+
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
+    const size_t binarySize = src.size();
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        1,
+        &testedClDevice,
+        &binarySize,
+        binaries,
+        &binaryStatus,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &testedClDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMultipleDevicesThenProgramBuildSucceeds) {
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;

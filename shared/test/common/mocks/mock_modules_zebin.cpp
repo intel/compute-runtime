@@ -239,6 +239,8 @@ ZebinCopyBufferSimdModule<numBits>::ZebinCopyBufferSimdModule(const NEO::Hardwar
     elfHeader.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
 
     elfHeader.machine = hwInfo.platform.eProductFamily;
+    auto &flags = reinterpret_cast<NEO::Zebin::Elf::ZebinTargetFlags &>(elfHeader.flags);
+    flags.generatorId = 1u;
 
     const uint8_t testKernelData[0x2c0] = {0u};
 

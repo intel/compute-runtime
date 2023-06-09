@@ -85,6 +85,7 @@ struct ModuleTranslationUnit {
 
     NEO::specConstValuesMap specConstantsValues;
     bool isBuiltIn{false};
+    bool isGeneratedByIgc = true;
 };
 
 struct ModuleImp : public Module {

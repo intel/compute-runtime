@@ -192,6 +192,9 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
 
             this->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinarySize);
             this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = singleDeviceBinarySize;
+
+            this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::Igc;
+
         } else {
             return CL_INVALID_BINARY;
         }
