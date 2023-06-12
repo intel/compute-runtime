@@ -60,6 +60,11 @@ uint32_t CompilerProductHelperHw<IGFX_PVC>::matchRevisionIdWithProductConfig(Har
     return pvcConfig.value;
 }
 
+template <>
+bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithStatefulAccessPreference() const {
+    return true;
+}
+
 static EnableCompilerProductHelper<IGFX_PVC> enableCompilerProductHelperPVC;
 
 } // namespace NEO

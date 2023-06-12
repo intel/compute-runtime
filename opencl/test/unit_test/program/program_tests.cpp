@@ -1899,15 +1899,17 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         }
     };
 
-    std::array<std::tuple<int, bool, bool, int32_t>, 4> testParams = {{{CL_SUCCESS, false, true, -1},
+    std::array<std::tuple<int, bool, bool, int32_t>, 6> testParams = {{{CL_SUCCESS, true, true, -1},
+                                                                       {CL_SUCCESS, true, false, -1},
+                                                                       {CL_SUCCESS, false, true, -1},
                                                                        {CL_SUCCESS, true, true, 0},
                                                                        {CL_BUILD_PROGRAM_FAILURE, true, true, 1},
                                                                        {CL_SUCCESS, true, false, 1}}};
 
-    for (auto &[result, isStatefulAccess, isIgcGenerated, debuyKey] : testParams) {
+    for (auto &[expectedResult, isStatefulAccess, isIgcGenerated, debuyKey] : testParams) {
 
         if (!compilerProductHelper.isForceToStatelessRequired()) {
-            result = CL_SUCCESS;
+            expectedResult = CL_SUCCESS;
         }
         MyMockProgram program(pContext, false, toClDeviceVector(*pClDevice));
         program.isBuiltIn = false;
@@ -1916,7 +1918,13 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         program.isGeneratedByIgc = isIgcGenerated;
         program.setAddressingMode(isStatefulAccess);
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debuyKey);
-        EXPECT_EQ(result, program.build(toClDeviceVector(*pClDevice), nullptr));
+        if (isStatefulAccess && debuyKey == -1 && isIgcGenerated == true) {
+            if (compilerProductHelper.failBuildProgramWithStatefulAccessPreference() == true) {
+                expectedResult = CL_BUILD_PROGRAM_FAILURE;
+            }
+        }
+
+        EXPECT_EQ(expectedResult, program.build(toClDeviceVector(*pClDevice), nullptr));
     }
 
     {

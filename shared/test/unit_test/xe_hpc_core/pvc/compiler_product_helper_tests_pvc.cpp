@@ -29,3 +29,10 @@ PVCTEST_F(CompilerProductHelperPvcTest, givenPvcConfigsWhenMatchConfigWithRevIdT
         EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x2f), AOT::PVC_XT_C0);
     }
 }
+
+PVCTEST_F(CompilerProductHelperPvcTest, givenPvcWhenFailBuildProgramWithStatefulAccessPreferenceThenTrueIsReturned) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    EXPECT_TRUE(compilerProductHelper.failBuildProgramWithStatefulAccessPreference());
+}

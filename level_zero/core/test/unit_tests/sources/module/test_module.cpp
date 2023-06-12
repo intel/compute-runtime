@@ -2203,6 +2203,8 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 using ContextModuleCreateTest = Test<DeviceFixture>;
 
 HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
 
@@ -2237,6 +2239,7 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
     }
 
     ze_result_t createFromNativeBinary(const char *input, size_t inputSize) override {
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         wasCreateFromNativeBinaryCalled = true;
         return L0::ModuleTranslationUnit::createFromNativeBinary(input, inputSize);
     }
@@ -2244,6 +2247,7 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
     bool callRealBuildFromSpirv = false;
     bool wasBuildFromSpirVCalled = false;
     bool wasCreateFromNativeBinaryCalled = false;
+    DebugManagerStateRestore restore;
 };
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
@@ -2924,6 +2928,8 @@ TEST(ModuleBuildLog, WhenTooSmallBufferIsPassedToGetStringThenErrorIsReturned) {
 using PrintfModuleTest = Test<DeviceFixture>;
 
 HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
 
@@ -3258,8 +3264,10 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
     moduleDesc.inputSize = src.size();
 
-    std::array<std::tuple<ze_result_t, bool, bool, ModuleType, int32_t>, 6> testParams = {{
+    std::array<std::tuple<ze_result_t, bool, bool, ModuleType, int32_t>, 8> testParams = {{
         {ZE_RESULT_SUCCESS, false, true, ModuleType::Builtin, -1},
+        {ZE_RESULT_SUCCESS, true, true, ModuleType::User, -1},
+        {ZE_RESULT_SUCCESS, true, false, ModuleType::User, -1},
         {ZE_RESULT_SUCCESS, true, true, ModuleType::Builtin, 0},
         {ZE_RESULT_SUCCESS, true, true, ModuleType::User, 0},
         {ZE_RESULT_SUCCESS, true, true, ModuleType::Builtin, 1},
@@ -3273,6 +3281,13 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
         module.translationUnit->isGeneratedByIgc = isIgcGenerated;
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debugKey);
         module.setAddressingMode(isStateful);
+
+        if (isStateful && debugKey == -1 && isIgcGenerated == true) {
+            if (compilerProductHelper.failBuildProgramWithStatefulAccessPreference() == true) {
+                expectedResult = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+            }
+        }
+
         EXPECT_EQ(expectedResult, module.initialize(&moduleDesc, device->getNEODevice()));
     }
 }
@@ -3917,6 +3932,8 @@ HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpd
 
 using ModuleKernelImmDatasTest = Test<ModuleFixture>;
 TEST_F(ModuleKernelImmDatasTest, givenDeviceOOMWhenMemoryManagerFailsToAllocateMemoryThenReturnInformativeErrorToTheCaller) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;

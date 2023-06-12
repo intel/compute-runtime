@@ -3131,6 +3131,8 @@ TEST_F(MultipleDevicePeerAllocationFailTest,
 
 struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     void createModuleFromMockBinary(L0::Device *device, ModuleType type = ModuleType::User) {
+        DebugManagerStateRestore restorer;
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
         const auto &src = zebinData->storage;
         ze_module_desc_t moduleDesc = {};
@@ -3145,6 +3147,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
 
     void SetUp() override {
         DebugManagerStateRestore restorer;
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);

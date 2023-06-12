@@ -139,6 +139,8 @@ class UmStatelessCompressionWithStatefulAccess : public ProgramFixture,
     void SetUp() override {
         DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
         DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+
         compareCompressedMemory = GetParam();
 
         ProgramFixture::setUp();
