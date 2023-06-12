@@ -731,12 +731,32 @@ TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenIni
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionIsSet) {
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (productHelper.isPlatformQuerySupported() == false) {
+        GTEST_SKIP();
+    }
+
     auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
     ipVersion = {};
     drm->ioctlHelper->setupIpVersion();
     EXPECT_EQ(ipVersion.revision, 1u);
     EXPECT_EQ(ipVersion.release, 2u);
     EXPECT_EQ(ipVersion.architecture, 3u);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperAndPlatformQueryNotSupportedWhenSetupIpVersionThenIpVersionIsSetFromHelper) {
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (productHelper.isPlatformQuerySupported() == true) {
+        GTEST_SKIP();
+    }
+
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    auto &ipVersion = hwInfo->ipVersion;
+    ipVersion = {};
+    drm->ioctlHelper->setupIpVersion();
+    auto config = compilerProductHelper.getHwIpVersion(*hwInfo);
+    EXPECT_EQ(config, ipVersion.value);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsCorrect) {
@@ -751,6 +771,12 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpV
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnInitializationThenErrorIsPrinted) {
+
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (productHelper.isPlatformQuerySupported() == false) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore restore;
     DebugManager.flags.PrintDebugMessages.set(true);
 

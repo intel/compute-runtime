@@ -835,15 +835,22 @@ bool IoctlHelperPrelim20::initialize() {
 void IoctlHelperPrelim20::setupIpVersion() {
     auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::EngineClassRender)), 0};
-    int ret = 0;
-    bool result = queryHwIpVersion(engineInfo, hwInfo->ipVersion, ret);
     auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
-    if (result == false && ret != 0 && productHelper.isPlatformQuerySupported()) {
-        int err = drm.getErrno();
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
-                           "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+    EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::EngineClassRender)), 0};
+    int ret = 0;
+
+    auto isPlatformQuerySupported = productHelper.isPlatformQuerySupported();
+    bool result = false;
+
+    if (isPlatformQuerySupported) {
+        result = queryHwIpVersion(engineInfo, hwInfo->ipVersion, ret);
+
+        if (result == false && ret != 0) {
+            int err = drm.getErrno();
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+                               "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        }
     }
 
     if (result == false) {
