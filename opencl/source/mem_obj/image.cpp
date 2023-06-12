@@ -143,11 +143,10 @@ Image *Image::create(Context *context,
         pRootDeviceIndices = &context->getRootDeviceIndices();
     } else {
         for (const auto &device : memoryProperties.associatedDevices) {
-            rootDeviceIndices.push_back(device->getRootDeviceIndex());
+            rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
         }
         defaultDevice = memoryProperties.associatedDevices[0];
         defaultRootDeviceIndex = rootDeviceIndices[0];
-        rootDeviceIndices.remove_duplicates();
         pRootDeviceIndices = &rootDeviceIndices;
     }
 

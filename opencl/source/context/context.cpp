@@ -230,10 +230,9 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     bool containsDeviceWithSubdevices = false;
     for (const auto &device : inputDevices) {
-        rootDeviceIndices.push_back(device->getRootDeviceIndex());
+        rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
         containsDeviceWithSubdevices |= device->getNumGenericSubDevices() > 1;
     }
-    rootDeviceIndices.remove_duplicates();
 
     this->driverDiagnostics = driverDiagnostics.release();
     if (rootDeviceIndices.size() > 1 && containsDeviceWithSubdevices && !DebugManager.flags.EnableMultiRootDeviceContexts.get()) {

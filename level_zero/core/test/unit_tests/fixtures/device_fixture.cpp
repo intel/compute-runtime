@@ -255,7 +255,7 @@ void GetMemHandlePtrTestFixture::setUp() {
     EXPECT_NE(context, nullptr);
     context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
     auto neoDevice = device->getNEODevice();
-    context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+    context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 }
 

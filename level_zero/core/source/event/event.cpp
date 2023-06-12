@@ -69,14 +69,13 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         }
 
         devices.push_back(eventDevice);
-        rootDeviceIndices.push_back(eventDevice->getNEODevice()->getRootDeviceIndex());
+        rootDeviceIndices.pushUnique(eventDevice->getNEODevice()->getRootDeviceIndex());
         if (maxRootDeviceIndex < eventDevice->getNEODevice()->getRootDeviceIndex()) {
             maxRootDeviceIndex = eventDevice->getNEODevice()->getRootDeviceIndex();
         }
 
         isImplicitScalingCapable |= eventDevice->isImplicitScalingCapable();
     }
-    rootDeviceIndices.remove_duplicates();
 
     auto &rootDeviceEnvironment = getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();

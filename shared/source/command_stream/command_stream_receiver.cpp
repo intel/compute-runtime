@@ -481,7 +481,7 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
 MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
     RootDeviceIndicesContainer rootDeviceIndices;
 
-    rootDeviceIndices.push_back(rootDeviceIndex);
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
 
     auto maxRootDeviceIndex = static_cast<uint32_t>(this->executionEnvironment.rootDeviceEnvironments.size() - 1);
     auto allocations = new MultiGraphicsAllocation(maxRootDeviceIndex);

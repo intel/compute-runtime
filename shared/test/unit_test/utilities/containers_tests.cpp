@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1704,34 +1704,21 @@ TEST(StackVec, GivenStackVecWithDynamicMemWhenSelfAssignedThenMemoryIsReused) {
     }
 }
 
-TEST(StackVec, GivenVectorWithDuplicatesWhenRemovingDuplicatesThenVectorIsSortedAndDuplicatesRemoved) {
-    StackVec<uint32_t, 8> stackVec = {6, 5, 4, 3, 2, 1, 5, 4, 5, 4, 2, 4, 3, 1, 6, 1};
-    ASSERT_EQ(stackVec.size(), 16u);
+TEST(StackVec, whenPushingUniqueToRootDeviceIndicesContainerThenOnlyUniqueValuesArePopulated) {
+    StackVec<uint32_t, 8> input = {6, 5, 4, 3, 2, 1, 5, 4, 5, 4, 2, 4, 3, 1, 6, 1};
+    ASSERT_EQ(input.size(), 16u);
 
-    stackVec.remove_duplicates();
-    EXPECT_EQ(stackVec.size(), 6u);
-    const StackVec<uint32_t, 8> expectedStackVec = {1, 2, 3, 4, 5, 6};
-    EXPECT_EQ(stackVec, expectedStackVec);
-}
+    RootDeviceIndicesContainer rootDeviceIndices{};
 
-TEST(StackVec, GivenVectorWithoutDuplicatesWhenRemovingDuplicatesThenVectorIsSorted) {
-    StackVec<uint32_t, 8> stackVec = {16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
-    ASSERT_EQ(stackVec.size(), 16u);
+    for (auto &index : input) {
+        rootDeviceIndices.pushUnique(index);
+    }
 
-    stackVec.remove_duplicates();
-    EXPECT_EQ(stackVec.size(), 16u);
-    const StackVec<uint32_t, 8> expectedStackVec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    EXPECT_EQ(stackVec, expectedStackVec);
-}
-
-TEST(StackVec, GivenSortedVectorWithoutDuplicatesWhenRemovingDuplicatesThenVectorIsUnchanged) {
-    StackVec<uint32_t, 8> stackVec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    ASSERT_EQ(stackVec.size(), 16u);
-
-    stackVec.remove_duplicates();
-    EXPECT_EQ(stackVec.size(), 16u);
-    const StackVec<uint32_t, 8> expectedStackVec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    EXPECT_EQ(stackVec, expectedStackVec);
+    EXPECT_EQ(rootDeviceIndices.size(), 6u);
+    const RootDeviceIndicesContainer expectedContainer = {6, 5, 4, 3, 2, 1};
+    for (auto i = 0u; i < rootDeviceIndices.size(); i++) {
+        EXPECT_EQ(rootDeviceIndices[i], expectedContainer[i]);
+    }
 }
 
 int sum(ArrayRef<int> a) {

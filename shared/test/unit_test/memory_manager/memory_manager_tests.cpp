@@ -197,10 +197,10 @@ HWTEST_F(MemoryhManagerMultiContextResourceTests, givenAllocationUsedByManyOsCon
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressFromGfxPartitionIsUsed) {
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    RootDeviceIndicesContainer rootDevices;
-    rootDevices.push_back(0);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 10;
-    auto addressRange = memoryManager.reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memoryManager.reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved);
     auto gmmHelper = memoryManager.getGmmHelper(0);
     EXPECT_EQ(0u, rootDeviceIndexReserved);
     EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
@@ -212,10 +212,10 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReserv
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedOnIndex1AndFreedThenAddressFromGfxPartitionIsUsed) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    RootDeviceIndicesContainer rootDevices;
-    rootDevices.push_back(1);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(1);
     uint32_t rootDeviceIndexReserved = 10;
-    auto addressRange = memoryManager.reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memoryManager.reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved);
     auto gmmHelper = memoryManager.getGmmHelper(1);
     EXPECT_EQ(1u, rootDeviceIndexReserved);
     EXPECT_LE(memoryManager.getGfxPartition(1)->getHeapBase(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
@@ -227,22 +227,22 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReserv
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressReservationIsAttemptedWihtInvalidSizeThenFailureReturnsNullAddressRange) {
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    RootDeviceIndicesContainer rootDevices;
-    rootDevices.push_back(0);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 10;
     // emulate GPU address space exhaust
     memoryManager.getGfxPartition(0)->heapInit(HeapIndex::HEAP_STANDARD, 0x0, 0x10000);
-    auto addressRange = memoryManager.reserveGpuAddress(0ull, (size_t)(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD) * 2), rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memoryManager.reserveGpuAddress(0ull, (size_t)(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD) * 2), rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(static_cast<int>(addressRange.address), 0);
 }
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressReservationIsAttemptedWithAnInvalidRequiredPtrThenADifferentRangeIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    RootDeviceIndicesContainer rootDevices;
-    rootDevices.push_back(0);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 10;
-    auto addressRange = memoryManager.reserveGpuAddress(0x1234, MemoryConstants::pageSize, rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memoryManager.reserveGpuAddress(0x1234, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(0u, rootDeviceIndexReserved);
     EXPECT_NE(static_cast<int>(addressRange.address), 0x1234);
     EXPECT_NE(static_cast<int>(addressRange.size), 0);

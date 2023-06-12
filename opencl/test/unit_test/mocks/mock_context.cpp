@@ -100,9 +100,8 @@ std::unique_ptr<AsyncEventsHandler> &MockContext::getAsyncEventsHandlerUniquePtr
 void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSpecialQueue) {
     for (auto &pClDevice : devices) {
         pClDevice->incRefInternal();
-        rootDeviceIndices.push_back(pClDevice->getRootDeviceIndex());
+        rootDeviceIndices.pushUnique(pClDevice->getRootDeviceIndex());
     }
-    rootDeviceIndices.remove_duplicates();
     maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
     specialQueues.resize(maxRootDeviceIndex + 1u);
 

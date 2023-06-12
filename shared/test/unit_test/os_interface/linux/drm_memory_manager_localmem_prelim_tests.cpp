@@ -107,7 +107,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
-        rootDeviceIndices.push_back(i);
+        rootDeviceIndices.pushUnique(i);
     }
 
     memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
@@ -157,7 +157,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
-        rootDeviceIndices.push_back(i);
+        rootDeviceIndices.pushUnique(i);
     }
 
     memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
@@ -198,7 +198,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
-        rootDeviceIndices.push_back(i);
+        rootDeviceIndices.pushUnique(i);
     }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
 
@@ -269,7 +269,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
-        rootDeviceIndices.push_back(i);
+        rootDeviceIndices.pushUnique(i);
     }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
 

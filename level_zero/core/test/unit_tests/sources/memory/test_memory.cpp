@@ -1132,7 +1132,7 @@ struct ZexHostPointerTests : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -1294,7 +1294,7 @@ struct FreeExtTests : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -1787,7 +1787,7 @@ struct OutOfMemoryTests : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -1863,7 +1863,7 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -2370,7 +2370,7 @@ struct MemoryExportImportFailTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -3087,10 +3087,9 @@ struct MultipleDevicePeerAllocationFailTest : public ::testing::Test {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
-        context->rootDeviceIndices.remove_duplicates();
     }
 
     DebugManagerStateRestore restorer;
@@ -3177,10 +3176,9 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
-        context->rootDeviceIndices.remove_duplicates();
 
         currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, driverHandle->devices[0]->isImplicitScalingCapable());
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
@@ -4009,7 +4007,7 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -4047,7 +4045,7 @@ struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -4329,7 +4327,7 @@ struct MemoryBitfieldTest : testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -4390,7 +4388,7 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     EXPECT_NE(context, nullptr);
     context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
     auto neoDevice = device->getNEODevice();
-    context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+    context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 
     memoryManager->recentlyPassedDeviceBitfield = {};
@@ -4825,7 +4823,7 @@ struct SharedAllocFailTests : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -4897,10 +4895,9 @@ struct SharedAllocMultiDeviceTests : public ::testing::Test {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
-        context->rootDeviceIndices.remove_duplicates();
     }
 
     void TearDown() override {
@@ -4974,10 +4971,9 @@ struct MemAllocMultiSubDeviceTests : public ::testing::Test {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
-        context->rootDeviceIndices.remove_duplicates();
     }
 
     void TearDown() override {
@@ -5121,10 +5117,9 @@ struct MultipleDevicePeerImageTest : public ::testing::Test {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
-        context->rootDeviceIndices.remove_duplicates();
     }
 
     void TearDown() override {}

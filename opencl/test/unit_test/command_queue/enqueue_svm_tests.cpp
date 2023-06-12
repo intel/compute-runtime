@@ -1790,10 +1790,9 @@ HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
     auto maxRootDeviceIndex = numDevices - 1u;
 
     RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.reserve(numDevices);
-    rootDeviceIndices.push_back(0u);
-    rootDeviceIndices.push_back(1u);
-    rootDeviceIndices.push_back(2u);
+    rootDeviceIndices.pushUnique(0u);
+    rootDeviceIndices.pushUnique(1u);
+    rootDeviceIndices.pushUnique(2u);
 
     auto rootDeviceIndex = rootDeviceIndices.at(0);
     auto deviceBitfield = device0->getDeviceBitfield();
@@ -1836,9 +1835,8 @@ HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
     auto maxRootDeviceIndex = numDevices - 1u;
 
     RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.reserve(numDevices);
-    rootDeviceIndices.push_back(0u);
-    rootDeviceIndices.push_back(2u);
+    rootDeviceIndices.pushUnique(0u);
+    rootDeviceIndices.pushUnique(2u);
 
     auto noProgramedRootDeviceIndex = 1u;
     auto rootDeviceIndex = rootDeviceIndices.at(0);

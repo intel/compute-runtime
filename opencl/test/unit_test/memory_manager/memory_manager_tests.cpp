@@ -3045,7 +3045,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWithLocalMemoryWhenCreatingMultiGraphi
     memoryManager.freeGraphicsMemory(localMemoryAllocation);
 
     RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.push_back(mockRootDeviceIndex);
+    rootDeviceIndices.pushUnique(mockRootDeviceIndex);
 
     MultiGraphicsAllocation multiGraphicsAllocation(mockRootDeviceIndex);
 
@@ -3067,11 +3067,11 @@ TEST(MemoryManagerTest, givenDuplicateRootDeviceIndicesWhenCreatingMultiGraphics
     AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::SVM_GPU, systemMemoryBitfield};
 
     RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.push_back(mockRootDeviceIndex);
-    rootDeviceIndices.push_back(mockRootDeviceIndex);
-    rootDeviceIndices.push_back(mockRootDeviceIndex);
+    rootDeviceIndices.pushUnique(mockRootDeviceIndex);
+    rootDeviceIndices.pushUnique(mockRootDeviceIndex);
+    rootDeviceIndices.pushUnique(mockRootDeviceIndex);
 
-    EXPECT_EQ(3u, rootDeviceIndices.size());
+    EXPECT_EQ(1u, rootDeviceIndices.size());
 
     MultiGraphicsAllocation multiGraphicsAllocation(mockRootDeviceIndex);
 

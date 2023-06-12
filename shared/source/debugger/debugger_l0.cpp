@@ -52,10 +52,10 @@ void DebuggerL0::initialize() {
                                          device->getDeviceBitfield()};
 
     if (!singleAddressSpaceSbaTracking) {
-        RootDeviceIndicesContainer rootDevices;
-        rootDevices.push_back(device->getRootDeviceIndex());
+        RootDeviceIndicesContainer rootDeviceIndices;
+        rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
         uint32_t rootDeviceIndexReserved = 0;
-        sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDevices, &rootDeviceIndexReserved);
+        sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved);
         UNRECOVERABLE_IF(sbaTrackingGpuVa.address == 0u);
         properties.gpuAddress = sbaTrackingGpuVa.address;
     }

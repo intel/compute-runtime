@@ -47,10 +47,10 @@ class WddmMemManagerFixture {
 typedef ::Test<WddmMemManagerFixture> WddmMemoryReservationTests;
 
 TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressFromGfxPartitionIsUsed) {
-    RootDeviceIndicesContainer rootDevices;
-    rootDevices.push_back(0);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
-    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     auto gmmHelper = memManager->getGmmHelper(0);
 
     EXPECT_EQ(rootDeviceIndexReserved, 0u);
@@ -60,11 +60,11 @@ TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReserve
 }
 
 TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReservedWithInvalidStartAddresThenDifferentAddressReserved) {
-    RootDeviceIndicesContainer rootDevices;
-    rootDevices.push_back(0);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
     uint64_t invalidAddress = 0x1234;
-    auto addressRange = memManager->reserveGpuAddress(invalidAddress, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memManager->reserveGpuAddress(invalidAddress, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     auto gmmHelper = memManager->getGmmHelper(0);
     EXPECT_NE(invalidAddress, addressRange.address);
 
@@ -75,13 +75,13 @@ TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReserve
 }
 
 TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReservedWithValidStartAddresThenSameAddressReserved) {
-    RootDeviceIndicesContainer rootDevices;
-    rootDevices.push_back(0);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
-    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     auto previousAddress = addressRange.address;
     memManager->freeGpuAddress(addressRange, 0);
-    auto newAddressRange = memManager->reserveGpuAddress(previousAddress, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto newAddressRange = memManager->reserveGpuAddress(previousAddress, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     auto gmmHelper = memManager->getGmmHelper(0);
     EXPECT_EQ(previousAddress, addressRange.address);
 
@@ -106,10 +106,10 @@ TEST(WddmMemoryReservationFailTest, givenWddmMemoryManagerWhenGpuAddressReservat
     wddm->failReserveGpuVirtualAddress = true;
     memManager = std::unique_ptr<MemoryReservationMock>(new MemoryReservationMock(*executionEnvironment));
 
-    RootDeviceIndicesContainer rootDevices;
-    rootDevices.push_back(0);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
-    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(addressRange.address, 0ull);
     EXPECT_EQ(addressRange.size, 0u);
 }

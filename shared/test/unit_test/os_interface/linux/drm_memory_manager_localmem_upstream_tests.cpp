@@ -163,7 +163,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
-        rootDeviceIndices.push_back(i);
+        rootDeviceIndices.pushUnique(i);
     }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
 
@@ -210,7 +210,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
-        rootDeviceIndices.push_back(i);
+        rootDeviceIndices.pushUnique(i);
     }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
 
@@ -269,7 +269,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
 
-    rootDeviceIndices.push_back(rootDeviceIndex);
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
 
@@ -302,7 +302,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemo
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
-        rootDeviceIndices.push_back(i);
+        rootDeviceIndices.pushUnique(i);
     }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
 

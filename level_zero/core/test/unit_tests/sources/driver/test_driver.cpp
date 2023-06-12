@@ -684,6 +684,47 @@ TEST_F(DriverTestMultipleFamilySupport, whenInitializingDriverWithArrayOfDevices
     L0::GlobalDriver = nullptr;
 }
 
+TEST(MultiRootDeviceDriverTest, whenInitializingDriverHandleWithMultipleDevicesThenOrderInRootDeviceIndicesMatchesOrderInDeviceVector) {
+    Mock<DriverHandle> driverHandle;
+    for (auto &device : driverHandle.devices) {
+        delete device;
+    }
+    driverHandle.devices.clear();
+
+    UltDeviceFactory deviceFactory{3, 0};
+    NEO::DeviceVector inputDevices;
+    inputDevices.push_back(std::unique_ptr<NEO::Device>(deviceFactory.rootDevices[2]));
+    inputDevices.push_back(std::unique_ptr<NEO::Device>(deviceFactory.rootDevices[0]));
+    inputDevices.push_back(std::unique_ptr<NEO::Device>(deviceFactory.rootDevices[1]));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle.initialize(std::move(inputDevices)));
+
+    EXPECT_EQ(3u, driverHandle.devices.size());
+    EXPECT_EQ(3u, driverHandle.rootDeviceIndices.size());
+    EXPECT_EQ(2u, driverHandle.rootDeviceIndices[0]);
+    EXPECT_EQ(0u, driverHandle.rootDeviceIndices[1]);
+    EXPECT_EQ(1u, driverHandle.rootDeviceIndices[2]);
+}
+
+TEST(MultiSubDeviceDriverTest, whenInitializingDriverHandleWithMultipleDevicesWithSameRootDeviceIndexThenIndicesInRootDeviceIndicesAreNotDuplicated) {
+    Mock<DriverHandle> driverHandle;
+    for (auto &device : driverHandle.devices) {
+        delete device;
+    }
+    driverHandle.devices.clear();
+
+    UltDeviceFactory deviceFactory{1, 3};
+    NEO::DeviceVector inputDevices;
+    inputDevices.push_back(std::unique_ptr<NEO::Device>(deviceFactory.subDevices[2]));
+    inputDevices.push_back(std::unique_ptr<NEO::Device>(deviceFactory.subDevices[0]));
+    inputDevices.push_back(std::unique_ptr<NEO::Device>(deviceFactory.subDevices[1]));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle.initialize(std::move(inputDevices)));
+    EXPECT_EQ(3u, driverHandle.devices.size());
+    EXPECT_EQ(1u, driverHandle.rootDeviceIndices.size());
+    EXPECT_EQ(0u, driverHandle.rootDeviceIndices[0]);
+}
+
 struct DriverTestMultipleFamilyNoSupport : public ::testing::Test {
     void SetUp() override {
 

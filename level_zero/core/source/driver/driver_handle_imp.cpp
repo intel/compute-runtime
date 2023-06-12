@@ -70,7 +70,7 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
         for (auto device : this->devices) {
             auto neoDevice = device->getNEODevice();
             context->getDevices().insert(std::make_pair(neoDevice->getRootDeviceIndex(), device->toHandle()));
-            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
                                              neoDevice->getDeviceBitfield()});
             context->addDeviceHandle(device->toHandle());
@@ -79,13 +79,11 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
         for (uint32_t i = 0; i < numDevices; i++) {
             auto neoDevice = Device::fromHandle(phDevices[i])->getNEODevice();
             context->getDevices().insert(std::make_pair(neoDevice->getRootDeviceIndex(), phDevices[i]));
-            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
                                              neoDevice->getDeviceBitfield()});
         }
     }
-
-    context->rootDeviceIndices.remove_duplicates();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -216,7 +214,8 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         enableRootDeviceDebugger(neoDevice);
 
-        this->rootDeviceIndices.push_back(rootDeviceIndex);
+        this->rootDeviceIndices.pushUnique(rootDeviceIndex);
+
         this->deviceBitfields.insert({rootDeviceIndex, neoDevice->getDeviceBitfield()});
 
         auto pNeoDevice = neoDevice.release();
@@ -234,7 +233,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
             return returnValue;
         }
     }
-    this->rootDeviceIndices.remove_duplicates();
 
     if (this->devices.size() == 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;

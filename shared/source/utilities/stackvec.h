@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <algorithm>
+#include <bitset>
 #include <cstdint>
 #include <limits>
 #include <tuple>
@@ -247,22 +248,6 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         ++onStackSize;
     }
 
-    void sort() {
-        std::sort(this->begin(), this->end());
-    }
-
-    void remove_duplicates() { // NOLINT(readability-identifier-naming)
-        if (1 >= this->size()) {
-            return;
-        }
-        this->sort();
-        const auto last = std::unique(this->begin(), this->end());
-        auto currentEnd = this->end();
-        while (last != currentEnd--) {
-            this->pop_back();
-        }
-    }
-
     void pop_back() { // NOLINT(readability-identifier-naming)
         if (usesDynamicMem()) {
             dynamicMem->pop_back();
@@ -481,5 +466,23 @@ bool operator!=(const StackVec<T, LhsStackCaps> &lhs,
 }
 
 constexpr size_t MaxRootDeviceIndices = 16;
-using RootDeviceIndicesContainer = StackVec<uint32_t, MaxRootDeviceIndices>;
+class RootDeviceIndicesContainer : protected StackVec<uint32_t, MaxRootDeviceIndices> {
+  public:
+    using StackVec<uint32_t, MaxRootDeviceIndices>::StackVec;
+    using StackVec<uint32_t, MaxRootDeviceIndices>::at;
+    using StackVec<uint32_t, MaxRootDeviceIndices>::begin;
+    using StackVec<uint32_t, MaxRootDeviceIndices>::end;
+    using StackVec<uint32_t, MaxRootDeviceIndices>::size;
+    using StackVec<uint32_t, MaxRootDeviceIndices>::operator[];
+
+    inline void pushUnique(uint32_t rootDeviceIndex) {
+        if (!indexPresent.test(rootDeviceIndex)) {
+            push_back(rootDeviceIndex);
+            indexPresent.set(rootDeviceIndex);
+        }
+    }
+
+  protected:
+    std::bitset<MaxRootDeviceIndices> indexPresent{};
+};
 using RootDeviceIndicesMap = StackVec<std::tuple<uint32_t, uint32_t>, MaxRootDeviceIndices>;
