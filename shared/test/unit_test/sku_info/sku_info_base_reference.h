@@ -57,6 +57,7 @@ struct SkuInfoBaseReference {
         refWaTable.WaUntypedBufferCompression = 1;
         refWaTable.WaAuxTable16KGranular = 1;
         refWaTable.WaAuxTable64KGranular = 1;
+        refWaTable.Wa_15010089951 = 1;
     }
 
     static void fillReferenceFtrToReceive(FeatureTable &refFtrTable) {
@@ -136,6 +137,7 @@ struct SkuInfoBaseReference {
         refWaTable.flags.waAuxTable16KGranular = true;
         refWaTable.flags.waDisableFusedThreadScheduling = true;
         refWaTable.flags.waAuxTable64KGranular = true;
+        refWaTable.flags.wa_15010089951 = true;
     }
 }; // namespace SkuInfoBaseReference
 } // namespace NEO

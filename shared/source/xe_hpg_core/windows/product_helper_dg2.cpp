@@ -31,6 +31,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     enableBlitterOperationsSupport(hwInfo);
 
     disableRcsExposure(hwInfo);
+    hwInfo->workaroundTable.flags.wa_15010089951 = true;
 
     return 0;
 }

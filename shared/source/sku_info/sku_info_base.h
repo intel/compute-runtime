@@ -103,7 +103,8 @@ struct WorkaroundTableBase {
         uint32_t waAuxTable16KGranular : 1;
         uint32_t waDisableFusedThreadScheduling : 1;
         uint32_t waAuxTable64KGranular : 1;
-        uint32_t reserved : 11;
+        uint32_t wa_15010089951 : 1; // NOLINT(readability-identifier-naming)
+        uint32_t reserved : 10;
     };
 
     union {

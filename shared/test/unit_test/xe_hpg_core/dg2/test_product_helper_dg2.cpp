@@ -107,3 +107,10 @@ DG2TEST_F(Dg2ProductHelper, givenDG2WhenGettingLocalMemoryAccessModeThenCorrectV
     pInHwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
     EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
+
+DG2TEST_F(Dg2ProductHelper, whenConfiguringHardwareInfoThenWa15010089951IsSet) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.workaroundTable = {};
+    productHelper->configureHardwareCustom(&hwInfo, nullptr);
+    EXPECT_TRUE(hwInfo.workaroundTable.flags.wa_15010089951);
+}
