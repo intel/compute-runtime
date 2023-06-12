@@ -1568,3 +1568,34 @@ HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeT
     numGrfRequired = GrfConfig::DefaultGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, defaultMaxGroupSize));
 }
+
+HWTEST2_F(GfxCoreHelperTest, givenParamsWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue, IsAtMostXeHpcCore) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    std::array<std::array<uint32_t, 3>, 8> values = {{
+        {32u, 32u, 1u}, // SIMT Size, totalWorkItems, Max Num of threads
+        {32u, 64u, 2u},
+        {32u, 128u, 4u},
+        {32u, 1024u, 32u},
+        {16u, 32u, 2u},
+        {16u, 64u, 4u},
+        {16u, 128u, 8u},
+        {16u, 1024u, 64u},
+    }};
+
+    for (auto &[simtSize, totalWgSize, expectedNumThreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, 32u, true));
+    }
+}
+
+HWTEST_F(GfxCoreHelperTest, givenFlagForceNumberOfThreadsInGpgpuThreadGroupWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue) {
+    DebugManagerStateRestore dbgRestore;
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    uint32_t expectedNumThreadsPerThreadGroup = 10u;
+    DebugManager.flags.ForceNumberOfThreadsInGpgpuThreadGroup.set(expectedNumThreadsPerThreadGroup);
+    EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(32u, 100u, 32u, true));
+
+    expectedNumThreadsPerThreadGroup = 20u;
+    DebugManager.flags.ForceNumberOfThreadsInGpgpuThreadGroup.set(expectedNumThreadsPerThreadGroup);
+    EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(32u, 100u, 32u, true));
+}

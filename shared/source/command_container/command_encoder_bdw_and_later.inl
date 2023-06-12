@@ -354,9 +354,9 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 
     walkerCmd.setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
 
-    auto localWorkSize = workGroupSizes[0] * workGroupSizes[1] * workGroupSizes[2];
+    auto localWorkSize = static_cast<uint32_t>(workGroupSizes[0] * workGroupSizes[1] * workGroupSizes[2]);
     if (threadsPerThreadGroup == 0) {
-        threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkSize));
+        threadsPerThreadGroup = getThreadsPerWG(simd, localWorkSize);
     }
     walkerCmd.setThreadWidthCounterMaximum(threadsPerThreadGroup);
 

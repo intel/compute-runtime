@@ -20,7 +20,7 @@ struct PerThreadDataHelper {
         uint32_t grfSize,
         uint32_t numChannels,
         size_t localWorkSize) {
-        return getThreadsPerWG(simd, localWorkSize) * getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
+        return getThreadsPerWG(simd, static_cast<uint32_t>(localWorkSize)) * getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
     }
 }; // namespace PerThreadDataHelper
 } // namespace NEO

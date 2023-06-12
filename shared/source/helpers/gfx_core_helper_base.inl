@@ -16,6 +16,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -684,5 +685,13 @@ uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupSize(const uint32_t numGr
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalGrfSize() const {
     return 128u;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalGeneration) const {
+    if (DebugManager.flags.ForceNumberOfThreadsInGpgpuThreadGroup.get() != -1) {
+        return DebugManager.flags.ForceNumberOfThreadsInGpgpuThreadGroup.get();
+    }
+    return getThreadsPerWG(simd, totalWorkItems);
 }
 } // namespace NEO

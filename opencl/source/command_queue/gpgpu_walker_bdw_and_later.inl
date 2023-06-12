@@ -29,10 +29,10 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     bool localIdsGenerationByRuntime,
     bool inlineDataProgrammingRequired,
     uint32_t requiredWorkgroupOrder) {
-    auto localWorkSize = localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2];
+    auto localWorkSize = static_cast<uint32_t>(localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2]);
 
     auto threadsPerWorkGroup = getThreadsPerWG(simd, localWorkSize);
-    walkerCmd->setThreadWidthCounterMaximum(static_cast<uint32_t>(threadsPerWorkGroup));
+    walkerCmd->setThreadWidthCounterMaximum(threadsPerWorkGroup);
 
     walkerCmd->setThreadGroupIdXDimension(static_cast<uint32_t>(numWorkGroups[0]));
     walkerCmd->setThreadGroupIdYDimension(static_cast<uint32_t>(numWorkGroups[1]));

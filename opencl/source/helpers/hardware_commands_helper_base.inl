@@ -240,9 +240,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
                                                                        kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
                                                                        device.getRootDeviceEnvironment());
     }
-
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    auto grfSize = kernel.getDescriptor().kernelAttributes.numGrfRequired;
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
-    auto threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkItems));
+    auto threadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkItems), grfSize, localIdsGenerationByRuntime);
 
     uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize();
 

@@ -729,7 +729,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     // only X is present
     auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf);
     sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
-    size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
+    size_t perThreadTotalDataSize = getThreadsPerWG(simd, static_cast<uint32_t>(lws[0])) * sizePerThreadData;
 
     uint32_t expectedIndirectDataLength = alignUp(static_cast<uint32_t>(perThreadTotalDataSize), COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
@@ -832,13 +832,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     // only X is present
     uint32_t localIdSizePerThread = getPerThreadSizeLocalIDs(simd, sizeGrf);
     localIdSizePerThread = std::max(localIdSizePerThread, sizeGrf);
-    auto sizePerThreadData = getThreadsPerWG(simd, lws[0]) * localIdSizePerThread;
+    auto sizePerThreadData = getThreadsPerWG(simd, static_cast<uint32_t>(lws[0])) * localIdSizePerThread;
 
     auto crossThreadDataSize = kernel->mockKernel->getCrossThreadDataSize();
     crossThreadDataSize -= std::min(static_cast<uint32_t>(sizeof(INLINE_DATA)), crossThreadDataSize);
 
     // second GRF in indirect
-    uint32_t expectedIndirectDataLength = static_cast<uint32_t>(sizePerThreadData + crossThreadDataSize);
+    uint32_t expectedIndirectDataLength = sizePerThreadData + crossThreadDataSize;
     expectedIndirectDataLength = alignUp(expectedIndirectDataLength, COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
 

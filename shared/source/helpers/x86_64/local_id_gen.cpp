@@ -45,7 +45,7 @@ LocalIDHelper LocalIDHelper::initializer;
 
 // traditional function to generate local IDs
 void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize) {
-    auto threadsPerWorkGroup = static_cast<uint16_t>(getThreadsPerWG(simd, localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]));
+    auto threadsPerWorkGroup = static_cast<uint16_t>(getThreadsPerWG(simd, static_cast<uint32_t>(localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2])));
     bool useLayoutForImages = isImageOnlyKernel && isCompatibleWithLayoutForImages(localWorkgroupSize, dimensionsOrder, simd);
     if (useLayoutForImages) {
         generateLocalIDsWithLayoutForImages(buffer, localWorkgroupSize, simd);

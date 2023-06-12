@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,9 +33,9 @@ std::unique_lock<std::mutex> LocalIdsCache::lock() {
 }
 
 size_t LocalIdsCache::getLocalIdsSizeForGroup(const Vec3<uint16_t> &group) const {
-    const auto numElementsInGroup = Math::computeTotalElementsCount({group[0], group[1], group[2]});
+    const auto numElementsInGroup = static_cast<uint32_t>(Math::computeTotalElementsCount({group[0], group[1], group[2]}));
     const auto numberOfThreads = getThreadsPerWG(simdSize, numElementsInGroup);
-    return numberOfThreads * static_cast<size_t>(localIdsSizePerThread);
+    return static_cast<size_t>(numberOfThreads * localIdsSizePerThread);
 }
 
 size_t LocalIdsCache::getLocalIdsSizePerThread() const {

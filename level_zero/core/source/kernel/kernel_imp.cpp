@@ -317,16 +317,21 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         }
     }
 
-    auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
-    this->numThreadsPerThreadGroup = static_cast<uint32_t>((itemsInGroup + simdSize - 1u) / simdSize);
     patchWorkgroupSizeInCrossThreadData(groupSizeX, groupSizeY, groupSizeZ);
 
+    auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
     auto remainderSimdLanes = itemsInGroup & (simdSize - 1u);
     threadExecutionMask = static_cast<uint32_t>(maxNBitValue(remainderSimdLanes));
     if (!threadExecutionMask) {
         threadExecutionMask = static_cast<uint32_t>(maxNBitValue((simdSize == 1) ? 32 : simdSize));
     }
     evaluateIfRequiresGenerationOfLocalIdsByRuntime(kernelDescriptor);
+
+    auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
+    auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+    this->numThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(
+        simdSize, static_cast<uint32_t>(itemsInGroup), grfSize, kernelRequiresGenerationOfLocalIdsByRuntime);
 
     if (kernelRequiresGenerationOfLocalIdsByRuntime) {
         auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;

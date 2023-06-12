@@ -16,7 +16,7 @@ inline uint32_t getGRFsPerThread(uint32_t simd, uint32_t grfSize) {
     return (simd == 32 && grfSize == 32) ? 2 : 1;
 }
 
-inline size_t getThreadsPerWG(uint32_t simd, size_t lws) {
+inline uint32_t getThreadsPerWG(uint32_t simd, uint32_t lws) {
     auto result = lws + simd - 1;
 
     // Original logic:

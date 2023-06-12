@@ -40,7 +40,7 @@ HWTEST_F(LocalIdTests, GivenSimd32AndNon32GrfSizeWhenGettingGrfsPerThreadThenTwo
 }
 
 TEST(LocalID, GivenSimd32AndLws33WhenGettingThreadsPerWorkgroupThenTwoIsReturned) {
-    size_t lws = 33;
+    uint32_t lws = 33;
     uint32_t simd = 32;
     EXPECT_EQ(2u, getThreadsPerWG(simd, lws));
 }
@@ -313,7 +313,7 @@ HWTEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
 }
 
 TEST_P(LocalIDFixture, WhenThreadsPerWgAreGeneratedThenSizeCalculationAreCorrect) {
-    auto workItems = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
+    auto workItems = static_cast<uint32_t>(localWorkSizeX * localWorkSizeY * localWorkSizeZ);
     auto sizeTotalPerThreadData = getThreadsPerWG(simd, workItems) * getPerThreadSizeLocalIDs(simd, grfSize);
 
     // Should be multiple of GRFs
