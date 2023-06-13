@@ -522,7 +522,7 @@ if(BUILD_WITH_L0)
 
   if(UNIX)
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/zet_intel_gpu_debug.h"
-            TYPE INCLUDE
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/level_zero
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
     )
   endif()

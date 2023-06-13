@@ -99,7 +99,7 @@ cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu/
 %config(noreplace)
 
 %files devel
-%{_includedir}/zet_intel_gpu_debug.h
+%{_includedir}/level_zero/zet_intel_gpu_debug.h
 
 %doc
 
