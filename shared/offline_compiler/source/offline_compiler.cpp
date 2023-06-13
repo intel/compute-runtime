@@ -13,6 +13,7 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/compiler_interface/tokenized_string.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
@@ -30,6 +31,7 @@
 #include <iomanip>
 #include <iterator>
 #include <list>
+#include <set>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -672,6 +674,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     int retVal = SUCCESS;
     bool compile32 = false;
     bool compile64 = false;
+    std::set<std::string> deviceAcronymsFromDeviceOptions;
 
     for (uint32_t argIndex = 1; argIndex < argv.size(); argIndex++) {
         const auto &currArg = argv[argIndex];
@@ -715,9 +718,12 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             CompilerOptions::concatenateAppend(options, argv[argIndex + 1]);
             argIndex++;
         } else if (("-device-options" == currArg) && hasAtLeast2MoreArgs) {
-            const auto &deviceName = argv[argIndex + 1];
+            const auto deviceAcronyms = CompilerOptions::tokenize(argv[argIndex + 1], ',');
             const auto &options = argv[argIndex + 2];
-            CompilerOptions::concatenateAppend(perDeviceOptions[deviceName], options);
+            for (const auto &deviceAcronym : deviceAcronyms) {
+                deviceAcronymsFromDeviceOptions.insert(deviceAcronym.str());
+                CompilerOptions::concatenateAppend(perDeviceOptions[deviceAcronym.str()], options);
+            }
             argIndex += 2;
         } else if (("-internal_options" == currArg) && hasMoreArgs) {
             CompilerOptions::concatenateAppend(internalOptions, argv[argIndex + 1]);
@@ -795,12 +801,23 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             retVal = INVALID_COMMAND_LINE;
         }
 
-        for (auto &kv : perDeviceOptions) {
-            const auto &deviceName = kv.first;
-            const auto productConfig = argHelper->productConfigHelper->getProductConfigFromAcronym(deviceName);
+        for (const auto &device : deviceAcronymsFromDeviceOptions) {
+            auto productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(device);
             if (productConfig == AOT::UNKNOWN_ISA) {
-                argHelper->printf("Error: Invalid device acronym passed to -device-options: %s\n", deviceName.c_str());
-                retVal = INVALID_COMMAND_LINE;
+                auto productName = device;
+                std::transform(productName.begin(), productName.end(), productName.begin(), ::tolower);
+                std::vector<PRODUCT_FAMILY> allSupportedProduct{ALL_SUPPORTED_PRODUCT_FAMILIES};
+                auto isDeprecatedName = false;
+                for (const auto &product : allSupportedProduct) {
+                    if (0 == strcmp(productName.c_str(), hardwarePrefix[product])) {
+                        isDeprecatedName = true;
+                        break;
+                    }
+                }
+                if (!isDeprecatedName) {
+                    argHelper->printf("Error: Invalid device acronym passed to -device-options: %s\n", device.c_str());
+                    retVal = INVALID_COMMAND_LINE;
+                }
             }
         }
 
@@ -985,7 +1002,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -device-options <device_type> <options>   Optional OpenCL C compilation options
                                             as defined by OpenCL specification - specific to a single target device.
-                                            <device_type> can be product acronym i.e. dg1
+                                            Multiple product acronyms may be provided - separated by commas.
+                                            <device_type> can be product acronym or version passed in -device i.e. dg1 or 12.10.0
 
   -32                                       Forces target architecture to 32-bit pointers.
                                             Default pointer size is inherited from

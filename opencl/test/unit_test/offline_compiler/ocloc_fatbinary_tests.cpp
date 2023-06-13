@@ -1136,6 +1136,40 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForCompiledDeviceAn
     EXPECT_FALSE(hasSubstr(output, errorMessage2.str()));
 }
 
+TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForMultipleDevicesSeparatedByCommasWhenFatBinaryBuildIsInvokedThenWarningIsNotPrinted) {
+    if (enabledProductsAcronyms.size() < 3) {
+        GTEST_SKIP();
+    }
+
+    std::stringstream products, productsForDeviceOptions;
+    products << enabledProductsAcronyms[0].str() << ","
+             << enabledProductsAcronyms[1].str() << ","
+             << enabledProductsAcronyms[2].str();
+
+    productsForDeviceOptions << enabledProductsAcronyms[0].str() << ","
+                             << enabledProductsAcronyms[1].str();
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        products.str().c_str(),
+        "-device-options",
+        productsForDeviceOptions.str().c_str(),
+        "deviceOptions"};
+
+    testing::internal::CaptureStdout();
+    [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+
+    std::stringstream expectedErrorMessage;
+    expectedErrorMessage << "Warning! -device-options set for non-compiled device";
+    EXPECT_FALSE(hasSubstr(output, expectedErrorMessage.str()));
+}
+
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
     if (enabledReleasesAcronyms.size() < 3) {
         GTEST_SKIP();

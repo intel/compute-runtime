@@ -3286,6 +3286,42 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForCompiledDeviceWhenCmdLineParsedTh
     EXPECT_TRUE(hasSubstr(options, std::string("devOptions")));
 }
 
+TEST(OfflineCompilerTest, givenDeviceOptionsWithDeprecatedDeviceAcronymWhenCmdLineParsedThenDeviceNameIsRecognized) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto deprecatedAcronyms = mockOfflineCompiler->argHelper->productConfigHelper->getDeprecatedAcronyms();
+    if (deprecatedAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+
+    const auto deviceName = deprecatedAcronyms[0].str();
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "compile",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        deviceName.c_str(),
+        "-options",
+        "options",
+        "-device-options",
+        deviceName.c_str(),
+        "devOptions"};
+
+    testing::internal::CaptureStdout();
+    const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(0u, output.size());
+    EXPECT_NE(OclocErrorCode::INVALID_COMMAND_LINE, result);
+
+    std::stringstream expectedErrorMessage;
+    expectedErrorMessage << "Error: Invalid device acronym passed to -device-options: " << deviceName;
+    EXPECT_FALSE(hasSubstr(output, expectedErrorMessage.str()));
+}
+
 TEST(OfflineCompilerTest, givenUnknownDeviceAcronymInDeviceOptionsWhenParsingCommandLineThenErrorLogIsPrintedAndFailureIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -3438,6 +3474,98 @@ TEST(OfflineCompilerTest, givenMultipleDeviceOptionsForCompiledDeviceAndDeviceOp
     EXPECT_TRUE(hasSubstr(options, std::string("devOptions1")));
     EXPECT_TRUE(hasSubstr(options, std::string("devOptions3")));
     EXPECT_FALSE(hasSubstr(options, std::string("devOptions2")));
+}
+
+TEST(OfflineCompilerTest, givenDeviceOptionsForMultipleDevicesSeparatedByCommasWhenCmdLineParsedThenDeviceOptionsAreParsedCorrectly) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto allEnabledDeviceAcronyms = mockOfflineCompiler->argHelper->productConfigHelper->getRepresentativeProductAcronyms();
+    if (allEnabledDeviceAcronyms.size() < 3) {
+        GTEST_SKIP();
+    }
+
+    auto product = allEnabledDeviceAcronyms[0].str();
+    auto productForDeviceOptions0 = allEnabledDeviceAcronyms[0].str();
+    auto productForDeviceOptions1 = allEnabledDeviceAcronyms[1].str();
+
+    std::stringstream productsForDeviceOptions;
+    productsForDeviceOptions << productForDeviceOptions0 << ","
+                             << productForDeviceOptions1;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-device",
+        product.c_str(),
+        "-device-options",
+        productsForDeviceOptions.str().c_str(),
+        "devOptions1",
+        "-options",
+        "options1",
+        "-device-options",
+        productForDeviceOptions1.c_str(),
+        "devOptions2"};
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(0u, output.size());
+
+    auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[productForDeviceOptions0], std::string("devOptions1")));
+    EXPECT_FALSE(hasSubstr(perDeviceOptions[productForDeviceOptions0], std::string("devOptions2")));
+
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[productForDeviceOptions1], std::string("devOptions1")));
+    EXPECT_TRUE(hasSubstr(perDeviceOptions[productForDeviceOptions1], std::string("devOptions2")));
+
+    std::string options = mockOfflineCompiler->options;
+    EXPECT_TRUE(hasSubstr(options, std::string("options1")));
+    EXPECT_TRUE(hasSubstr(options, std::string("devOptions1")));
+    EXPECT_FALSE(hasSubstr(options, std::string("devOptions2")));
+}
+
+TEST(OfflineCompilerTest, givenDeviceOptionsForMultipleDevicesSeparatedByCommasWithSpacesAfterCommasWhenCmdLineParsedThenErrorLogIsPrintedAndFailureIsReturned) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto allEnabledDeviceAcronyms = mockOfflineCompiler->argHelper->productConfigHelper->getRepresentativeProductAcronyms();
+    if (allEnabledDeviceAcronyms.size() < 3) {
+        GTEST_SKIP();
+    }
+
+    auto product = allEnabledDeviceAcronyms[0].str();
+    auto productForDeviceOptions0 = allEnabledDeviceAcronyms[0].str();
+    auto productForDeviceOptions1 = allEnabledDeviceAcronyms[1].str();
+
+    std::stringstream productsForDeviceOptions;
+    productsForDeviceOptions << productForDeviceOptions0 << ", " << productForDeviceOptions1;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-device",
+        product.c_str(),
+        "-device-options",
+        productsForDeviceOptions.str().c_str(),
+        "devOptions1",
+        "-options",
+        "options1",
+        "-device-options",
+        productForDeviceOptions1.c_str(),
+        "devOptions2"};
+
+    testing::internal::CaptureStdout();
+    const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    const std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+    EXPECT_NE(0u, output.size());
+
+    std::stringstream expectedErrorMessage;
+    expectedErrorMessage << "Error: Invalid device acronym passed to -device-options: "
+                         << " " << productForDeviceOptions1 << "\n";
+
+    EXPECT_TRUE(hasSubstr(output, expectedErrorMessage.str()));
 }
 
 TEST(OfflineCompilerTest, givenDashOOptionWhenCmdLineParsedThenBinaryOutputNameIsSet) {

@@ -326,8 +326,10 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         } else if (ConstStringRef("-spirv_input") == currArg) {
             spirvInput = true;
         } else if (("-device-options" == currArg) && hasAtLeast2MoreArgs) {
-            const auto &deviceName = args[argIndex + 1];
-            deviceAcronymsFromDeviceOptions.insert(deviceName);
+            const auto deviceAcronyms = CompilerOptions::tokenize(args[argIndex + 1], ',');
+            for (const auto &deviceAcronym : deviceAcronyms) {
+                deviceAcronymsFromDeviceOptions.insert(deviceAcronym.str());
+            }
             argIndex += 2;
         }
     }
