@@ -646,6 +646,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.SplitBcsCopy.set(1);
+    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
