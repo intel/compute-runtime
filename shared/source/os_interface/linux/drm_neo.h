@@ -103,9 +103,6 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
-    ADAPTER_BDF getAdapterBDF() const {
-        return adapterBDF;
-    }
     int queryAdapterBDF();
     MOCKABLE_VIRTUAL int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
@@ -245,9 +242,6 @@ class Drm : public DriverModel {
         pciDomain = domain;
     }
 
-    uint32_t getPciDomain() {
-        return pciDomain;
-    }
     MOCKABLE_VIRTUAL std::vector<uint8_t> getMemoryRegions();
 
     MOCKABLE_VIRTUAL bool completionFenceSupport();

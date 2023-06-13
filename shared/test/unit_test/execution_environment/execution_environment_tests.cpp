@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/unit_test/execution_environment/execution_environment_tests.h"
+
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
@@ -23,6 +25,7 @@
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
@@ -324,11 +327,11 @@ TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMe
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }
 
-uint64_t isDriverAvailableCounter = 0u;
+uint32_t isDriverAvailableCounter = 0u;
 
-class DriverModelMock : public DriverModel {
+class DefaultDriverModelMock : public MockDriverModel {
   public:
-    DriverModelMock(DriverModelType driverModelType) : DriverModel(driverModelType) {
+    DefaultDriverModelMock(DriverModelType driverModelType) : MockDriverModel(driverModelType) {
     }
 
     bool isDriverAvailable() override {
@@ -358,43 +361,12 @@ class DriverModelMock : public DriverModel {
     }
 };
 
-class DefaultDriverModelMock : public DriverModel {
-  public:
-    DefaultDriverModelMock(DriverModelType driverModelType) : DriverModel(driverModelType) {
-    }
-
-    bool isDriverAvailable() override {
-        return true;
-    }
-    void setGmmInputArgs(void *args) override {
-    }
-
-    uint32_t getDeviceHandle() const override {
-        return 0;
-    }
-
-    PhysicalDevicePciBusInfo getPciBusInfo() const override {
-        return {};
-    }
-    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override {
-        return {};
-    }
-
-    bool skipResourceCleanup() const {
-        return skipResourceCleanupVar;
-    }
-
-    bool isGpuHangDetected(OsContext &osContext) override {
-        return false;
-    }
-};
-
 TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvailableIsCalled) {
-    VariableBackup<uint64_t> varBackup = &isDriverAvailableCounter;
+    VariableBackup<uint32_t> varBackup{&isDriverAvailableCounter, 0u};
     ExecutionEnvironment executionEnvironment{};
 
     std::unique_ptr<OSInterface> osInterface = std::make_unique<OSInterface>();
-    osInterface->setDriverModel(std::make_unique<DriverModelMock>(DriverModelType::UNKNOWN));
+    osInterface->setDriverModel(std::make_unique<DefaultDriverModelMock>(DriverModelType::UNKNOWN));
 
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::move(osInterface);
@@ -462,4 +434,44 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSettingFP64EmulationEnab
     ASSERT_FALSE(executionEnvironment.isFP64EmulationEnabled());
     executionEnvironment.setFP64EmulationEnabled();
     EXPECT_TRUE(executionEnvironment.isFP64EmulationEnabled());
+}
+
+void ExecutionEnvironmentSortTests::SetUp() {
+    executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        setupOsSpecifcEnvironment(rootDeviceIndex);
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    }
+    executionEnvironment.rootDeviceEnvironments[1]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true; // {0,0,2,0}
+    executionEnvironment.rootDeviceEnvironments[3]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true; // {0,1,2,1}
+}
+TEST_F(ExecutionEnvironmentSortTests, givenEnabledPciIdDeviceOrderFlagWhenSortingDevicesThenRootDeviceEnvironmentsAreSortedByPciId) {
+    DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(1);
+
+    NEO::PhysicalDevicePciBusInfo expectedBusInfos[numRootDevices] = {{0, 0, 2, 0}, {0, 0, 2, 1}, {0, 1, 2, 1}, {0, 1, 3, 0}, {3, 1, 2, 0}, {3, 1, 2, 1}};
+
+    executionEnvironment.sortNeoDevices();
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        auto pciBusInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->getPciBusInfo();
+        EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciDomain, pciBusInfo.pciDomain);
+        EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciBus, pciBusInfo.pciBus);
+        EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciDevice, pciBusInfo.pciDevice);
+        EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciFunction, pciBusInfo.pciFunction);
+    }
+}
+
+TEST_F(ExecutionEnvironmentSortTests, givenDisabledPciIdDeviceOrderFlagWhenSortingDevicesThenRootDeviceEnvironmentsAreSortedByTypeThenByPciOrder) {
+    DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(0);
+    NEO::PhysicalDevicePciBusInfo expectedBusInfos[numRootDevices] = {{0, 0, 2, 1}, {0, 1, 3, 0}, {3, 1, 2, 0}, {3, 1, 2, 1}, {0, 0, 2, 0}, {0, 1, 2, 1}};
+
+    executionEnvironment.sortNeoDevices();
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        auto pciBusInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->getPciBusInfo();
+        EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciDomain, pciBusInfo.pciDomain);
+        EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciBus, pciBusInfo.pciBus);
+        EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciDevice, pciBusInfo.pciDevice);
+        EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciFunction, pciBusInfo.pciFunction);
+    }
 }

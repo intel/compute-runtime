@@ -36,18 +36,13 @@ TEST(osInterfaceTests, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     uint32_t function = 0x56;
     adapterBDF.Function = function;
 
-    auto adapterBDFretrieved = wddm->getAdapterBDF();
-    EXPECT_EQ(bus, adapterBDFretrieved.Bus);
-    EXPECT_EQ(device, adapterBDFretrieved.Device);
-    EXPECT_EQ(function, adapterBDFretrieved.Function);
-
     GMM_INIT_IN_ARGS gmmInputArgs = {};
-    EXPECT_NE(0, memcmp(&wddm->getAdapterBDF(), &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
+    EXPECT_NE(0, memcmp(&wddm->adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
     EXPECT_STRNE(expectedRegistryPath, gmmInputArgs.DeviceRegistryPath);
 
     rootDeviceEnvironment.osInterface->getDriverModel()->setGmmInputArgs(&gmmInputArgs);
 
-    EXPECT_EQ(0, memcmp(&wddm->getAdapterBDF(), &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
+    EXPECT_EQ(0, memcmp(&wddm->adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, gmmInputArgs.ClientType);
     EXPECT_STREQ(expectedRegistryPath, gmmInputArgs.DeviceRegistryPath);
 }

@@ -18,7 +18,8 @@ namespace NEO {
 
 class MockDriverModel : public NEO::DriverModel {
   public:
-    MockDriverModel() : NEO::DriverModel(NEO::DriverModelType::UNKNOWN) {}
+    MockDriverModel() : MockDriverModel(NEO::DriverModelType::UNKNOWN) {}
+    MockDriverModel(DriverModelType driverModelType) : DriverModel(driverModelType) {}
 
     void setGmmInputArgs(void *args) override {}
 

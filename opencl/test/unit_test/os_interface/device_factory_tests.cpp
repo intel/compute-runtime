@@ -326,7 +326,7 @@ TEST_F(DeviceFactoryTest, givenPrepareDeviceEnvironmentsCallWhenItIsDoneThenOsIn
     EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->osInterface);
 }
 
-TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenVectorReturnedWouldContainFirstDiscreteDevicesThenIntegratedDevices) {
+TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenVectorReturnedWouldContainDevicesInTheSameOrder) {
     uint32_t numRootDevices = 8u;
     NEO::HardwareInfo hwInfo[8];
     auto executionEnvironment = new NEO::ExecutionEnvironment();
@@ -345,11 +345,8 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
     executionEnvironment->rootDeviceEnvironments[6]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
     executionEnvironment->rootDeviceEnvironments[7]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
     auto devices = DeviceFactory::createDevices(*executionEnvironment);
-    for (auto iterator = 0u; iterator < 3; iterator++) {
-        EXPECT_FALSE(devices[iterator]->getHardwareInfo().capabilityTable.isIntegratedDevice); // Initial entries would be for discrete devices
-    }
-    for (auto iterator = 3u; iterator < 8u; iterator++) {
-        EXPECT_TRUE(devices[iterator]->getHardwareInfo().capabilityTable.isIntegratedDevice); // Later entries would be for integrated
+    for (auto iterator = 0u; iterator < 8; iterator++) {
+        EXPECT_EQ(iterator, devices[iterator]->getRootDeviceIndex());
     }
 }
 
