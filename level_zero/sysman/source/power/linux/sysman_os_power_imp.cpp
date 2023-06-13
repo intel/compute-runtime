@@ -28,11 +28,6 @@ const std::string LinuxPowerImp::defaultPowerLimit("power_default_limit");
 const std::string LinuxPowerImp::minPowerLimit("power_min_limit");
 const std::string LinuxPowerImp::maxPowerLimit("power_max_limit");
 
-void powerGetTimestamp(uint64_t &timestamp) {
-    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
-    timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
-}
-
 ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subdeviceId;
@@ -75,7 +70,7 @@ ze_result_t LinuxPowerImp::getPmtEnergyCounter(zes_power_energy_counter_t *pEner
     return result;
 }
 ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
-    powerGetTimestamp(pEnergy->timestamp);
+    pEnergy->timestamp = SysmanDevice::getSysmanTimestamp();
     ze_result_t result = pSysfsAccess->read(i915HwmonDir + "/" + energyCounterNode, pEnergy->energy);
     if (result != ZE_RESULT_SUCCESS) {
         if (pPmt != nullptr) {

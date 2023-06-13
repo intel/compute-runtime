@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/power/windows/sysman_os_power_imp.h"
 
+#include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/source/windows/sysman_kmd_sys_manager.h"
 #include "level_zero/sysman/source/windows/zes_os_sysman_imp.h"
 
@@ -70,7 +71,6 @@ ze_result_t WddmPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoper
 
 ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
     uint64_t energyCounter64Bit = 0;
-    uint64_t valueTimeStamp = 0;
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
@@ -83,8 +83,7 @@ ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) 
     if (status == ZE_RESULT_SUCCESS) {
         memcpy_s(&energyCounter64Bit, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
         pEnergy->energy = energyCounter64Bit;
-        memcpy_s(&valueTimeStamp, sizeof(uint64_t), (response.dataBuffer + sizeof(uint64_t)), sizeof(uint64_t));
-        pEnergy->timestamp = valueTimeStamp;
+        pEnergy->timestamp = SysmanDevice::getSysmanTimestamp();
     }
 
     return status;

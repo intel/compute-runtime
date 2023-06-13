@@ -307,4 +307,9 @@ ze_result_t SysmanDevice::deviceSetEccState(zes_device_handle_t hDevice, const z
     return pSysmanDevice->deviceSetEccState(newState, pState);
 }
 
+uint64_t SysmanDevice::getSysmanTimestamp() {
+    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+}
+
 } // namespace L0

@@ -159,5 +159,10 @@ ze_result_t SysmanDevice::deviceEventRegister(zes_device_handle_t hDevice, zes_e
     return pSysmanDevice->deviceEventRegister(events);
 }
 
+uint64_t SysmanDevice::getSysmanTimestamp() {
+    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+}
+
 } // namespace Sysman
 } // namespace L0

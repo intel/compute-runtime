@@ -60,6 +60,7 @@ struct SysmanDevice : _ze_device_handle_t {
     static ze_result_t deviceGetEccState(zes_device_handle_t hDevice, zes_device_ecc_properties_t *pState);
     static ze_result_t deviceSetEccState(zes_device_handle_t hDevice, const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState);
     static bool deviceEventListen(zes_device_handle_t hDevice, zes_event_type_flags_t &pEvent, uint64_t timeout);
+    static uint64_t getSysmanTimestamp();
 
     virtual ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) = 0;
     virtual ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) = 0;

@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
+#include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
 template <typename I>
@@ -211,8 +212,7 @@ ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
         pBandwidth->writeCounter = retValu64;
     }
 
-    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
-    pBandwidth->timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+    pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
 
     return ZE_RESULT_SUCCESS;
 }

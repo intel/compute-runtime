@@ -156,7 +156,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(energyCounter.energy, pKmdSysManager->mockEnergyCounter64Bit);
-        EXPECT_EQ(energyCounter.timestamp, pKmdSysManager->mockTimeStamp);
+        EXPECT_GT(energyCounter.timestamp, 0u);
     }
 }
 

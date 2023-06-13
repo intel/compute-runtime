@@ -605,7 +605,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     for (auto &handle : handles) {
         zes_mem_bandwidth_t bandwidth{};
         uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
-        uint64_t expectedTimestamp = 0, expectedBandwidth = 0;
+        uint64_t expectedBandwidth = 0;
         zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
         zesMemoryGetProperties(handle, &properties);
 
@@ -623,10 +623,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
         expectedWriteCounters = vF0Hbm0WriteValue + vF0Hbm1WriteValue + vF0Hbm2WriteValue + vF0Hbm3WriteValue;
         EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
-        expectedTimestamp |= vF0TimestampHValue;
-        expectedTimestamp = (expectedTimestamp << 32) | vF0TimestampLValue;
-        EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
-        EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
+        EXPECT_GT(bandwidth.timestamp, 0u);
         expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
         EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
     }
@@ -639,7 +636,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     for (auto &handle : handles) {
         zes_mem_bandwidth_t bandwidth{};
         uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
-        uint64_t expectedTimestamp = 0, expectedBandwidth = 0;
+        uint64_t expectedBandwidth = 0;
         zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
         zesMemoryGetProperties(handle, &properties);
 
@@ -657,9 +654,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
         expectedWriteCounters = vF1Hbm0WriteValue + vF1Hbm1WriteValue + vF1Hbm2WriteValue + vF1Hbm3WriteValue;
         EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
-        expectedTimestamp |= vF1TimestampHValue;
-        expectedTimestamp = (expectedTimestamp << 32) | vF1TimestampLValue;
-        EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
+        EXPECT_GT(bandwidth.timestamp, 0u);
         expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
         EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
     }

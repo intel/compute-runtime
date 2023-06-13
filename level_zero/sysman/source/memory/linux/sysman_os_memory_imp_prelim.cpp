@@ -27,11 +27,6 @@ namespace Sysman {
 
 const std::string LinuxMemoryImp::deviceMemoryHealth("device_memory_health");
 
-void memoryGetTimeStamp(uint64_t &timestamp) {
-    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
-    timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
-}
-
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = pLinuxSysmanImp->getDrm();
@@ -187,13 +182,11 @@ ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) 
         return result;
     }
     pBandwidth->maxBandwidth = 0u;
-    uint64_t timeStampVal = 0;
     const std::string maxBwFile = "prelim_lmem_max_bw_Mbps";
     uint64_t maxBw = 0;
     pSysfsAccess->read(maxBwFile, maxBw);
     pBandwidth->maxBandwidth = maxBw * MbpsToBytesPerSecond;
-    memoryGetTimeStamp(timeStampVal);
-    pBandwidth->timestamp = timeStampVal;
+    pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
     return result;
 }
 
@@ -258,10 +251,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_b
     pBandwidth->writeCounter = writeCounterH;
     pBandwidth->writeCounter = (pBandwidth->writeCounter << 32) | static_cast<uint64_t>(writeCounterL);
     pBandwidth->writeCounter = (pBandwidth->writeCounter * transactionSize);
-
-    uint64_t timeStampVal = 0;
-    memoryGetTimeStamp(timeStampVal);
-    pBandwidth->timestamp = timeStampVal;
+    pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
 
     uint64_t hbmFrequency = 0;
     getHbmFrequency(productFamily, stepping, hbmFrequency);
@@ -311,24 +301,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     constexpr uint64_t transactionSize = 32;
     pBandwidth->readCounter = pBandwidth->readCounter * transactionSize;
     pBandwidth->writeCounter = pBandwidth->writeCounter * transactionSize;
-
-    uint32_t timeStampL = 0;
-    std::string timeStamp = vfId + "_TIMESTAMP_L";
-    result = pPmt->readValue(timeStamp, timeStampL);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for timeStampL returning error:0x%x \n", __FUNCTION__, result);
-        return result;
-    }
-
-    uint32_t timeStampH = 0;
-    timeStamp = vfId + "_TIMESTAMP_H";
-    result = pPmt->readValue(timeStamp, timeStampH);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for timeStampH returning error:0x%x \n", __FUNCTION__, result);
-        return result;
-    }
-    pBandwidth->timestamp = timeStampH;
-    pBandwidth->timestamp = (pBandwidth->timestamp << 32) | static_cast<uint64_t>(timeStampL);
+    pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
 
     uint64_t hbmFrequency = 0;
     getHbmFrequency(productFamily, stepping, hbmFrequency);
