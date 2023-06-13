@@ -132,7 +132,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     ASSERT_GT(expectedSlmSize, 0u);
     EXPECT_EQ(expectedSlmSize, pSrcIDData->getSharedLocalMemorySize());
     EXPECT_EQ(kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(), pSrcIDData->getBarrierEnable());
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL, pSrcIDData->getDenormMode());
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_FTZ, pSrcIDData->getDenormMode());
 
     if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
         EXPECT_EQ(4u, pSrcIDData->getBindingTableEntryCount());
