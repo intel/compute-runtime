@@ -728,6 +728,12 @@ HWTEST_F(CommandStreamReceiverTest, givenNoDirectSubmissionWhenCheckTaskCountFro
     EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckKmdWaitOnTaskCountEnabledThenReturnsFalse) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.callBaseIsKmdWaitOnTaskCountAllowed = true;
+    EXPECT_FALSE(csr.isKmdWaitOnTaskCountAllowed());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckTaskCountFromWaitEnabledThenProperValueReturned) {
     DebugManagerStateRestore restorer;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

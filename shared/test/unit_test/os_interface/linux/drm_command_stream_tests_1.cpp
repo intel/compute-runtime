@@ -825,6 +825,11 @@ struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily,
     DrmDirectSubmissionFunctionsCalled &functionsCalled;
 };
 
+HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenCheckingIsKmdWaitOnTaskCountAllowedThenTrueIsReturned) {
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+    EXPECT_TRUE(csr->isKmdWaitOnTaskCountAllowed());
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenDtorIsCalledButRingIsNotStartedThenDontCallStopRingBufferNorWaitForTagValue) {
     DrmDirectSubmissionFunctionsCalled functionsCalled{};
     auto directSubmission = std::make_unique<MockDrmDirectSubmissionToTestDtor<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver, functionsCalled);

@@ -280,7 +280,7 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModeAndCal
     EXPECT_EQ(1, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
-HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButThereIsNoFlushStampeAndCallWaitThenTimeoutIsDisabled) {
+HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButThereIsNoFlushStampAndCallWaitThenTimeoutIsDisabled) {
     overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
 
@@ -290,6 +290,19 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButTher
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(false, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
     EXPECT_EQ(0, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+}
+
+HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModAndThereIsNoFlushStampButKmdWaitOnTaskCountAllowedAndCallWaitThenTimeoutIsEnabled) {
+    overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
+    auto csr = createMockCsr<FamilyType>();
+    csr->isKmdWaitOnTaskCountAllowedValue = true;
+
+    cmdQ->throttle = QueueThrottle::LOW;
+
+    cmdQ->waitUntilComplete(1, {}, 0, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(1, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIsDisabledThenDontOverrideQuickSleepRequest) {

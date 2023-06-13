@@ -442,6 +442,9 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, R
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", getHwTag());
 
     if (!skipWait) {
+        if (flushStampToWait == 0 && getGpgpuCommandStreamReceiver().isKmdWaitOnTaskCountAllowed()) {
+            flushStampToWait = gpgpuTaskCountToWait;
+        }
         waitStatus = getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait,
                                                                                            flushStampToWait,
                                                                                            useQuickKmdSleep,

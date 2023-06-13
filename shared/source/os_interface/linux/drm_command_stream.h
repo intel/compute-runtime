@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
     bool isKmdWaitModeActive() override;
+    bool isKmdWaitOnTaskCountAllowed() const override;
 
     DrmMemoryManager *getMemoryManager() const;
     GmmPageTableMngr *createPageTableManager() override;

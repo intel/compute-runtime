@@ -65,6 +65,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenEnabledDirectSubmissionWhenGetting
     *csr.completionFenceValuePointer = 0;
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDisabledDirectSubmissionWhenCheckingIsKmdWaitOnTaskCountAllowedThenFalseIsReturned) {
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isKmdWaitOnTaskCountAllowed());
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionAddressThenOffsettedTagAddressIsReturned) {
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAddress());

@@ -297,6 +297,10 @@ class CommandStreamReceiver {
         return false;
     }
 
+    virtual bool isKmdWaitOnTaskCountAllowed() const {
+        return false;
+    }
+
     virtual void stopDirectSubmission() {}
 
     bool isStaticWorkPartitioningEnabled() const {

@@ -341,4 +341,9 @@ template <typename GfxFamily>
 inline bool DrmCommandStreamReceiver<GfxFamily>::isUserFenceWaitActive() {
     return (this->drm->isVmBindAvailable() && useUserFenceWait);
 }
+
+template <typename GfxFamily>
+bool DrmCommandStreamReceiver<GfxFamily>::isKmdWaitOnTaskCountAllowed() const {
+    return this->isDirectSubmissionEnabled();
+}
 } // namespace NEO

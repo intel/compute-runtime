@@ -362,6 +362,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return blitterDirectSubmissionAvailable;
     }
 
+    bool isKmdWaitOnTaskCountAllowed() const override {
+        if (callBaseIsKmdWaitOnTaskCountAllowed) {
+            return BaseClass::isKmdWaitOnTaskCountAllowed();
+        }
+        return isKmdWaitOnTaskCountAllowedValue;
+    }
+
     bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
         createAllocationForHostSurfaceCalled++;
         cpuCopyForHostPtrSurfaceAllowed = surface.peekIsPtrCopyAllowed();
@@ -449,6 +456,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool callBaseFlushBcsTask{true};
     bool callBaseSendRenderStateCacheFlush = true;
     bool forceReturnGpuHang = false;
+    bool callBaseIsKmdWaitOnTaskCountAllowed = false;
+    bool isKmdWaitOnTaskCountAllowedValue = false;
 };
 
 } // namespace NEO
