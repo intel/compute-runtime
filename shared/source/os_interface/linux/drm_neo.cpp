@@ -786,7 +786,6 @@ int Drm::queryAdapterBDF() {
 
 void Drm::setGmmInputArgs(void *args) {
     auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
-    auto adapterBDF = this->getAdapterBDF();
 #if defined(__linux__)
     gmmInArgs->FileDescriptor = adapterBDF.Data;
 #endif

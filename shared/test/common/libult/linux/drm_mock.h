@@ -24,6 +24,7 @@ using namespace NEO;
 
 class DrmMock : public Drm {
   public:
+    using Drm::adapterBDF;
     using Drm::bindAvailable;
     using Drm::cacheInfo;
     using Drm::checkQueueSliceSupport;

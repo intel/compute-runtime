@@ -58,6 +58,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment);
 
   protected:
+    static bool comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2);
     void parseCcsCountLimitations();
     void adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const;
     void configureNeoEnvironment();

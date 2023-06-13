@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,4 +14,4 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideDefaultFP64Settings, -1, "-1: dont overr
 DECLARE_DEBUG_VARIABLE(bool, NEO_CAL_ENABLED, false, "Set by the Compute Aggregation Layer.")
 DECLARE_DEBUG_VARIABLE(std::string, ZE_AFFINITY_MASK, std::string("default"), "Refer to the Level Zero Specification for a description")
 DECLARE_DEBUG_VARIABLE(std::string, ZEX_NUMBER_OF_CCS, std::string("default"), "Define number of CCS engines per root device, e.g. setting Root Device Index 0 to 4 CCS, and Root Device Index 1 To 1 CCS: ZEX_NUMBER_OF_CCS=0:4,1:1")
-DECLARE_DEBUG_VARIABLE(bool, ZE_ENABLE_PCI_ID_DEVICE_ORDER, true, "Refer to the Level Zero Specification for a description")
+DECLARE_DEBUG_VARIABLE(bool, ZE_ENABLE_PCI_ID_DEVICE_ORDER, false, "Refer to the Level Zero Specification for a description")

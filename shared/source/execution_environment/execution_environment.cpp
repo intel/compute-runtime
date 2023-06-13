@@ -19,6 +19,7 @@
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -312,4 +313,34 @@ void ExecutionEnvironment::configureNeoEnvironment() {
         DebugManager.flags.SplitBcsSize.setIfDefault(256);
     }
 }
+
+bool ExecutionEnvironment::comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2) {
+    const auto pciOrderVar = DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.get();
+    if (!pciOrderVar) {
+        auto isIntegrated1 = rootDeviceEnvironment1->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+        auto isIntegrated2 = rootDeviceEnvironment2->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+        if (isIntegrated1 != isIntegrated2) {
+            return isIntegrated2;
+        }
+    }
+
+    // BDF sample format is : 00:02.0
+    auto pciBusInfo1 = rootDeviceEnvironment1->osInterface->getDriverModel()->getPciBusInfo();
+    auto pciBusInfo2 = rootDeviceEnvironment2->osInterface->getDriverModel()->getPciBusInfo();
+
+    if (pciBusInfo1.pciDomain != pciBusInfo2.pciDomain) {
+        return (pciBusInfo1.pciDomain < pciBusInfo2.pciDomain);
+    }
+
+    if (pciBusInfo1.pciBus != pciBusInfo2.pciBus) {
+        return (pciBusInfo1.pciBus < pciBusInfo2.pciBus);
+    }
+
+    if (pciBusInfo1.pciDevice != pciBusInfo2.pciDevice) {
+        return (pciBusInfo1.pciDevice < pciBusInfo2.pciDevice);
+    }
+
+    return (pciBusInfo1.pciFunction < pciBusInfo2.pciFunction);
+}
+
 } // namespace NEO

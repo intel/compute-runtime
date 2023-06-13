@@ -229,18 +229,9 @@ std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvir
         return devices;
     }
 
-    auto discreteDeviceIndex = 0u;
     for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
         auto device = createRootDeviceFunc(executionEnvironment, rootDeviceIndex);
         if (device) {
-            if (device->getHardwareInfo().capabilityTable.isIntegratedDevice == false) {
-                // If we are here, it means we are processing entry for discrete device.
-                // And lets first insert discrete device's entry in devices vector.
-                devices.insert(devices.begin() + discreteDeviceIndex, std::move(device));
-                discreteDeviceIndex++;
-                continue;
-            }
-            // Ensure to push integrated device's entry at the end of devices vector
             devices.push_back(std::move(device));
         }
     }

@@ -193,10 +193,6 @@ class Wddm : public DriverModel {
 
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
 
-    ADAPTER_BDF getAdapterBDF() const {
-        return adapterBDF;
-    }
-
     PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override;
     bool buildTopologyMapping();
 
