@@ -80,6 +80,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::getTagAddressValue;
     using BaseClass::handleNewResourcesSubmission;
     using BaseClass::handleResidency;
+    using BaseClass::handleSwitchRingBuffers;
     using BaseClass::immWritePostSyncOffset;
     using BaseClass::isCompleted;
     using BaseClass::isNewResourceHandleNeeded;
@@ -881,4 +882,58 @@ HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherAndMultiTileDeviceWhenCr
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
+}
+HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenHandleSwitchRingBufferCalledThenPrevRingBufferHasUpdatedFenceValue) {
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    auto prevCompletionFenceVal = 1u;
+    auto prevRingBufferIndex = 0u;
+    auto newCompletionFenceValue = 10u;
+    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
+    drmDirectSubmission.handleSwitchRingBuffers();
+    EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
+}
+HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTagUpdateWaEnabledAndRingNotStartedThenCompletionFenceIsNotUpdated) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableRingSwitchTagUpdateWa.set(1);
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    auto prevCompletionFenceVal = 1u;
+    auto prevRingBufferIndex = 0u;
+    auto newCompletionFenceValue = 10u;
+
+    drmDirectSubmission.ringStart = false;
+
+    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
+    drmDirectSubmission.handleSwitchRingBuffers();
+    EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, prevCompletionFenceVal);
+}
+HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTagUpdateWaEnabledAndRingStartedThenCompletionFenceIsUpdated) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableRingSwitchTagUpdateWa.set(1);
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    auto prevCompletionFenceVal = 1u;
+    auto prevRingBufferIndex = 0u;
+    auto newCompletionFenceValue = 10u;
+
+    drmDirectSubmission.ringStart = true;
+
+    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
+    drmDirectSubmission.handleSwitchRingBuffers();
+    EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
+    drmDirectSubmission.ringStart = false;
+}
+HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTagUpdateWaDisabledThenCompletionFenceIsUpdated) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableRingSwitchTagUpdateWa.set(0);
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    auto prevCompletionFenceVal = 1u;
+    auto prevRingBufferIndex = 0u;
+    auto newCompletionFenceValue = 10u;
+
+    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
+    drmDirectSubmission.handleSwitchRingBuffers();
+    EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
 }
