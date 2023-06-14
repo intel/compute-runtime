@@ -19,7 +19,7 @@ bool operator<(const HeapChunk &hc1, const HeapChunk &hc2) {
 }
 
 uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
-    if (alignment < this->allocationAlignment) {
+    if (alignment == 0) {
         alignment = this->allocationAlignment;
     }
 

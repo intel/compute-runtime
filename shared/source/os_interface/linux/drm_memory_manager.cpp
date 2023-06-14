@@ -619,7 +619,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
                                      allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
     size_t bufferSize = allocationData.size;
-    uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB, allocationData.alignment);
+    uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
 
     GemCreate create{};
     create.size = bufferSize;
@@ -1601,9 +1601,6 @@ AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapA
             }
 
             alignment.heap = HeapIndex::HEAP_EXTENDED;
-        }
-        if (alignment.alignment < allocationData.alignment) {
-            alignment.alignment = allocationData.alignment;
         }
         gpuAddress = gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(alignment.heap, sizeAllocated, alignment.alignment));
         break;
