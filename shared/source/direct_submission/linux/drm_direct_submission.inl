@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,9 +199,9 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
     if (this->disableMonitorFence) {
         this->currentTagData.tagValue++;
 
-        bool updateCompletionFences = this->ringStart;
-        if (DebugManager.flags.EnableRingSwitchTagUpdateWa.get() == 0) {
-            updateCompletionFences = true;
+        bool updateCompletionFences = true;
+        if (DebugManager.flags.EnableRingSwitchTagUpdateWa.get() != -1) {
+            updateCompletionFences = !DebugManager.flags.EnableRingSwitchTagUpdateWa.get() || this->ringStart;
         }
 
         if (updateCompletionFences) {
