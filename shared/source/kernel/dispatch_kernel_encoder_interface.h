@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,5 +46,6 @@ struct DispatchKernelEncoderI {
     virtual bool requiresGenerationOfLocalIdsByRuntime() const = 0;
 
     virtual ImplicitArgs *getImplicitArgs() const = 0;
+    virtual void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const = 0;
 };
 } // namespace NEO

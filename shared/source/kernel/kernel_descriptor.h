@@ -17,12 +17,14 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
 namespace NEO {
 
 using StringMap = std::unordered_map<uint32_t, std::string>;
+using BindlessToSurfaceStateMap = std::unordered_map<CrossThreadDataOffset, uint32_t>;
 using InstructionsSegmentOffset = uint16_t;
 
 struct KernelDescriptor {
@@ -41,6 +43,10 @@ struct KernelDescriptor {
     virtual ~KernelDescriptor() = default;
 
     void updateCrossThreadDataSize();
+    void initBindlessOffsetToSurfaceState();
+    const BindlessToSurfaceStateMap &getBindlessOffsetToSurfaceState() const {
+        return bindlessArgsMap;
+    }
 
     struct KernelAttributes {
         uint32_t slmInlineSize = 0U;
@@ -229,6 +235,9 @@ struct KernelDescriptor {
 
     std::vector<uint8_t> generatedSsh;
     std::vector<uint8_t> generatedDsh;
+
+    BindlessToSurfaceStateMap bindlessArgsMap;
+    std::once_flag initBindlessArgsMapOnce;
 };
 
 } // namespace NEO

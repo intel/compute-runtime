@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -355,6 +356,51 @@ TEST(DecodeSingleDeviceBinary, GivenArFormatThenDecodingFails) {
     EXPECT_EQ(NEO::DeviceBinaryFormat::Archive, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_STREQ("Device binary format is packed", decodeErrors.c_str());
+}
+
+TEST(DecodeSingleDeviceBinary, GivenBindlessKernelInZebinWhenDecodingThenKernelDescriptorInitilizesBindlessOffsetToSurfaceIndex) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+
+    std::string validZeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : kernel_bindless
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            4
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+
+    uint8_t kernelIsa[8]{0U};
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_bindless", {kernelIsa, sizeof(kernelIsa)});
+    zebin.elfHeader->machine = NEO::defaultHwInfo->platform.eProductFamily;
+
+    NEO::ProgramInfo programInfo;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    NEO::SingleDeviceBinary bin;
+    bin.deviceBinary = zebin.storage;
+    NEO::DecodeError status;
+    NEO::DeviceBinaryFormat format;
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::Success, status);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
+    EXPECT_TRUE(decodeWarnings.empty());
+
+    ASSERT_EQ(1u, programInfo.kernelInfos.size());
+
+    EXPECT_TRUE(NEO::KernelDescriptor::isBindlessAddressingKernel(programInfo.kernelInfos[0]->kernelDescriptor));
+    EXPECT_EQ(1u, programInfo.kernelInfos[0]->kernelDescriptor.bindlessArgsMap.size());
 }
 
 TEST(PackDeviceBinary, GivenRequestToPackThenUsesOclElfFormat) {

@@ -527,6 +527,10 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     if (DebugManager.flags.UpdateCrossThreadDataSize.get()) {
         dst.updateCrossThreadDataSize();
     }
+
+    if (KernelDescriptor::isBindlessAddressingKernel(dst)) {
+        dst.initBindlessOffsetToSurfaceState();
+    }
 }
 
 } // namespace NEO

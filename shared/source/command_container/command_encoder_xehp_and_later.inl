@@ -122,21 +122,34 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     uint32_t bindingTablePointer = 0u;
-
     bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernelDescriptor);
 
-    if (!isBindlessKernel && !skipSshProgramming) {
-        container.prepareBindfulSsh();
-        if (bindingTableStateCount > 0u) {
-            auto ssh = args.surfaceStateHeap;
-            if (ssh == nullptr) {
-                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    if (!skipSshProgramming) {
+        if (!isBindlessKernel) {
+            container.prepareBindfulSsh();
+            if (bindingTableStateCount > 0u) {
+                auto ssh = args.surfaceStateHeap;
+                if (ssh == nullptr) {
+                    ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                }
+                bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
+                    *ssh,
+                    args.dispatchInterface->getSurfaceStateHeapData(),
+                    args.dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
+                    kernelDescriptor.payloadMappings.bindingTable.tableOffset));
             }
-            bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
-                *ssh,
-                args.dispatchInterface->getSurfaceStateHeapData(),
-                args.dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
-                kernelDescriptor.payloadMappings.bindingTable.tableOffset));
+        } else {
+            if (args.dispatchInterface->getSurfaceStateHeapDataSize() > 0u) {
+                auto ssh = args.surfaceStateHeap;
+                if (ssh == nullptr) {
+                    ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                }
+                uint64_t bindlessSshBaseOffset = ptrDiff(ssh->getSpace(0), ssh->getCpuBase());
+                // Allocate space for new ssh data
+                auto dstSurfaceState = ssh->getSpace(args.dispatchInterface->getSurfaceStateHeapDataSize());
+                memcpy_s(dstSurfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), args.dispatchInterface->getSurfaceStateHeapData(), args.dispatchInterface->getSurfaceStateHeapDataSize());
+                args.dispatchInterface->patchBindlessOffsetsInCrossThreadData(bindlessSshBaseOffset);
+            }
         }
     }
     idd.setBindingTablePointer(bindingTablePointer);

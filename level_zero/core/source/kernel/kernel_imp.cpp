@@ -118,6 +118,14 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
         memcpy_s(surfaceStateHeapTemplate.get(), surfaceStateHeapSize,
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
+    } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
+        auto &gfxCoreHelper = deviceImp->getNEODevice()->getGfxCoreHelper();
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+
+        this->surfaceStateHeapSize = kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize;
+        UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful != kernelInfo->kernelDescriptor.getBindlessOffsetToSurfaceState().size());
+
+        surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
     }
 
     if (kernelInfo->heapInfo.dynamicStateHeapSize != 0) {
@@ -1165,4 +1173,45 @@ void KernelImp::setAssertBuffer() {
                       static_cast<uintptr_t>(assertHandler->getAssertBuffer()->getGpuAddressToPatch()));
     this->residencyContainer.push_back(assertHandler->getAssertBuffer());
 }
+
+void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const {
+
+    auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    for (size_t argIndex = 0; argIndex < kernelImmData->getDescriptor().payloadMappings.explicitArgs.size(); argIndex++) {
+        const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex];
+
+        auto crossThreadOffset = NEO::undefined<NEO::CrossThreadDataOffset>;
+        if (arg.type == NEO::ArgDescriptor::ArgTPointer) {
+            crossThreadOffset = arg.as<NEO::ArgDescPointer>().bindless;
+        } else if (arg.type == NEO::ArgDescriptor::ArgTImage) {
+            crossThreadOffset = arg.as<NEO::ArgDescImage>().bindless;
+        } else {
+            continue;
+        }
+
+        if (NEO::isValidOffset(crossThreadOffset)) {
+            auto patchLocation = ptrOffset(getCrossThreadData(), crossThreadOffset);
+            auto index = getSurfaceStateIndexForBindlessOffset(crossThreadOffset);
+
+            if (index < std::numeric_limits<uint32_t>::max()) {
+                auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + index * surfaceStateSize);
+                auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
+
+                patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+            }
+        }
+    }
+}
+
+uint32_t KernelImp::getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const {
+    const auto &iter = getKernelDescriptor().getBindlessOffsetToSurfaceState().find(bindlessOffset);
+    if (iter != getKernelDescriptor().getBindlessOffsetToSurfaceState().end()) {
+        return iter->second;
+    }
+    DEBUG_BREAK_IF(true);
+    return std::numeric_limits<uint32_t>::max();
+}
+
 } // namespace L0

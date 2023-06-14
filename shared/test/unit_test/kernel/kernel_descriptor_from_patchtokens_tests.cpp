@@ -1591,3 +1591,33 @@ TEST(KernelDescriptorFromPatchtokens, givenDataParameterImplArgBufferTokenWhenPo
     EXPECT_EQ(offset, kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
+
+TEST(KernelDescriptorFromPatchtokens, GivenBindlessArgsWhenPopulatingDescriptorThenBindlessOffsetToSurfaceStateIndexIsInitialized) {
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
+    iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
+    kernelTokens.header = &kernelHeader;
+    NEO::KernelDescriptor kernelDescriptor;
+
+    iOpenCL::SPatchExecutionEnvironment execEnv = {};
+    execEnv.UseBindlessMode = 1;
+    kernelTokens.tokens.executionEnvironment = &execEnv;
+
+    iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.ArgumentNumber = 0;
+    globalMemArg.Offset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(1);
+    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
+
+    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, sizeof(void *));
+
+    EXPECT_EQ(NEO::KernelDescriptor::BindlessAndStateless, kernelDescriptor.kernelAttributes.bufferAddressingMode);
+
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bindful));
+    EXPECT_EQ(0x40, kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bindless);
+
+    ASSERT_EQ(1u, kernelDescriptor.bindlessArgsMap.size());
+    EXPECT_EQ(0u, kernelDescriptor.bindlessArgsMap[0x40]);
+    EXPECT_EQ(1u, kernelDescriptor.bindlessArgsMap.size());
+}

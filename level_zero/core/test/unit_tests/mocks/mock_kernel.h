@@ -54,6 +54,7 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using ::L0::KernelImp::midThreadPreemptionDisallowedForRayTracingKernels;
     using ::L0::KernelImp::module;
     using ::L0::KernelImp::numThreadsPerThreadGroup;
+    using ::L0::KernelImp::patchBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::patchBindlessSurfaceState;
     using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
     using ::L0::KernelImp::perThreadDataSize;

@@ -55,12 +55,18 @@ struct KernelHw : public KernelImp {
         }
         void *surfaceStateAddress = nullptr;
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
-        if (NEO::isValidOffset(argInfo.bindless)) {
-            surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
-        } else {
+
+        if (NEO::isValidOffset(argInfo.bindful)) {
             surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
+            surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
+
+        } else if (NEO::isValidOffset(argInfo.bindless)) {
+            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper()) {
+                surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
+            } else {
+                surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE));
+            }
         }
-        surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
 
         uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();

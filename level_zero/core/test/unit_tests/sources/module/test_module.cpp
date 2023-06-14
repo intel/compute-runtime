@@ -231,6 +231,8 @@ HWTEST_F(ModuleTest, givenStatefulBufferWhenOffsetIsPatchedThenAllocBaseAddressI
 
     uint32_t argIndex = 0u;
     uint32_t offset = 0x1234;
+
+    // Bindful arg
     const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bufferOffset = 0;
     const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bindful = 0x80;
     kernelImp->setBufferSurfaceState(argIndex, ptrOffset(devicePtr, offset), gpuAlloc);
@@ -238,6 +240,17 @@ HWTEST_F(ModuleTest, givenStatefulBufferWhenOffsetIsPatchedThenAllocBaseAddressI
     auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
     auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+    EXPECT_EQ(devicePtr, reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
+
+    // Bindless arg
+    surfaceStateAddress->setSurfaceBaseAddress(0);
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>() = ArgDescPointer();
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bufferOffset = 0x8;
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bindless = 0;
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->bindlessArgsMap[0] = 0;
+    kernelImp->setBufferSurfaceState(argIndex, ptrOffset(devicePtr, offset), gpuAlloc);
+
+    surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(kernelImp->getSurfaceStateHeapData()));
     EXPECT_EQ(devicePtr, reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
 
     Kernel::fromHandle(kernelHandle)->destroy();

@@ -114,6 +114,18 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 args.dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
                 kernelDescriptor.payloadMappings.bindingTable.tableOffset));
         }
+    } else {
+        if (args.dispatchInterface->getSurfaceStateHeapDataSize() > 0u) {
+            auto ssh = args.surfaceStateHeap;
+            if (ssh == nullptr) {
+                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            }
+            uint64_t bindlessSshBaseOffset = ptrDiff(ssh->getSpace(0), ssh->getCpuBase());
+            // Allocate space for new ssh data
+            auto dstSurfaceState = ssh->getSpace(args.dispatchInterface->getSurfaceStateHeapDataSize());
+            memcpy_s(dstSurfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), args.dispatchInterface->getSurfaceStateHeapData(), args.dispatchInterface->getSurfaceStateHeapDataSize());
+            args.dispatchInterface->patchBindlessOffsetsInCrossThreadData(bindlessSshBaseOffset);
+        }
     }
     idd.setBindingTablePointer(bindingTablePointer);
 

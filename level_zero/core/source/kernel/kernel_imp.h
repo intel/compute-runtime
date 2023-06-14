@@ -164,6 +164,7 @@ struct KernelImp : Kernel {
 
     NEO::GraphicsAllocation *allocatePrivateMemoryGraphicsAllocation() override;
     void patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) override;
+    void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const override;
 
     NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() override {
         return privateMemoryGraphicsAllocation;
@@ -189,6 +190,7 @@ struct KernelImp : Kernel {
     void setAssertBuffer();
     virtual void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) = 0;
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
+    uint32_t getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const;
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;

@@ -121,4 +121,45 @@ bool KernelDescriptor::isBindlessAddressingKernel(const KernelDescriptor &desc) 
     return bindlessBuffers || bindlessImages;
 }
 
+void KernelDescriptor::initBindlessOffsetToSurfaceState() {
+    std::call_once(initBindlessArgsMapOnce, [this]() {
+        uint32_t index = 0;
+
+        for (size_t i = 0; i < this->payloadMappings.explicitArgs.size(); i++) {
+
+            switch (this->payloadMappings.explicitArgs[i].type) {
+            case ArgDescriptor::ArgType::ArgTImage: {
+                auto &argImage = this->payloadMappings.explicitArgs[i].as<ArgDescImage>();
+                if (isValidOffset(argImage.bindless)) {
+                    this->bindlessArgsMap.emplace(std::pair{argImage.bindless, index++});
+                }
+            } break;
+            case ArgDescriptor::ArgType::ArgTPointer: {
+                auto &argPtr = payloadMappings.explicitArgs[i].as<ArgDescPointer>();
+                if (isValidOffset(argPtr.bindless)) {
+                    this->bindlessArgsMap.emplace(std::pair{argPtr.bindless, index++});
+                }
+            } break;
+            default:
+                break;
+            }
+        }
+
+        StackVec<ArgDescPointer *, 8> implicitArgsVec({&this->payloadMappings.implicitArgs.printfSurfaceAddress,
+                                                       &this->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
+                                                       &this->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
+                                                       &this->payloadMappings.implicitArgs.privateMemoryAddress,
+                                                       &this->payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress,
+                                                       &this->payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress,
+                                                       &this->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
+                                                       &this->payloadMappings.implicitArgs.syncBufferAddress});
+
+        for (size_t i = 0; i < implicitArgsVec.size(); i++) {
+            if (isValidOffset(implicitArgsVec[i]->bindless)) {
+                this->bindlessArgsMap.emplace(std::pair{implicitArgsVec[i]->bindless, index++});
+            }
+        }
+    });
+}
+
 } // namespace NEO

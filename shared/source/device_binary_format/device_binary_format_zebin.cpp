@@ -125,6 +125,10 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
 
     for (auto &kernelInfo : dst.kernelInfos) {
         kernelInfo->kernelDescriptor.kernelMetadata.isGeneratedByIgc = isGeneratedByIgc;
+
+        if (KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
+            kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
+        }
     }
 
     prepareLinkerInputForZebin<numBits>(dst, elf);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,8 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     }
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return nullptr; }
+
+    void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const override { return; };
 
     MockGraphicsAllocation mockAllocation{};
     static constexpr uint32_t crossThreadSize = 0x40;

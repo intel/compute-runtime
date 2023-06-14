@@ -73,7 +73,7 @@ struct XeHpgCore {
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {
-                uint32_t bindlessSurfaceOffset : 25;
+                uint32_t bindlessSurfaceOffset : 26;
                 uint32_t reserved : 6;
             };
             uint32_t packed;
