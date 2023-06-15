@@ -344,10 +344,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             levelClosed = true;
             // if we guard with ppc, flush dc as well to speed up completion latency
             if (dispatchFlags.guardCommandBufferWithPipeControl) {
-                const auto &productHelper = getProductHelper();
-                if (productHelper.isDcFlushAllowed()) {
-                    dispatchFlags.dcFlush = true;
-                }
+                dispatchFlags.dcFlush = this->dcFlushSupport;
             }
         }
 
