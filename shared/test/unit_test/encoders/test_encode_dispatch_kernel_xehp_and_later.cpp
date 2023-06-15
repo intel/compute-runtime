@@ -85,7 +85,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpAndLaterWhenDispa
     auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_FTZ, idd.getDenormMode());
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL, idd.getDenormMode());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpDebuggingEnabledAndAssertInKernelWhenDispatchingKernelThenSwExceptionsAreEnabled) {

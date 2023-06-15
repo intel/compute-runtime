@@ -137,6 +137,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     // # of threads in thread group should be based on LWS.
     interfaceDescriptor.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
 
+    interfaceDescriptor.setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
+
     auto slmTotalSize = kernel.getSlmTotalSize();
 
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,

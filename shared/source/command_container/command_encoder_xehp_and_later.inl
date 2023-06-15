@@ -98,6 +98,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     auto threadsPerThreadGroup = args.dispatchInterface->getNumThreadsPerThreadGroup();
     idd.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
+    idd.setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 
     EncodeDispatchKernel<Family>::programBarrierEnable(idd,
                                                        kernelDescriptor.kernelAttributes.barrierCount,
