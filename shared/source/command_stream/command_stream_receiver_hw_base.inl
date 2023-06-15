@@ -277,6 +277,28 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     flushData.stateComputeModeFullConfigurationNeeded = getStateComputeModeDirty();
     flushData.stateBaseAddressFullConfigurationNeeded = getGSBAStateDirty();
 
+    if (this->requiredScratchSize > 0 || this->requiredPrivateScratchSize > 0) {
+        bool checkFeStateDirty = false;
+        bool checkSbaStateDirty = false;
+        scratchSpaceController->setRequiredScratchSpace(dispatchFlags.sshCpuBase,
+                                                        0u,
+                                                        this->requiredScratchSize,
+                                                        this->requiredPrivateScratchSize,
+                                                        this->taskCount,
+                                                        *this->osContext,
+                                                        checkSbaStateDirty,
+                                                        checkFeStateDirty);
+        flushData.frontEndFullConfigurationNeeded |= checkFeStateDirty;
+        flushData.stateBaseAddressFullConfigurationNeeded |= checkSbaStateDirty;
+
+        if (scratchSpaceController->getScratchSpaceAllocation()) {
+            makeResident(*scratchSpaceController->getScratchSpaceAllocation());
+        }
+        if (scratchSpaceController->getPrivateScratchSpaceAllocation()) {
+            makeResident(*scratchSpaceController->getPrivateScratchSpaceAllocation());
+        }
+    }
+
     handleImmediateFlushPipelineSelectState(dispatchFlags, flushData);
     handleImmediateFlushFrontEndState(dispatchFlags, flushData);
     handleImmediateFlushStateComputeModeState(dispatchFlags, flushData);

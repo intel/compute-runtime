@@ -3603,3 +3603,71 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
     EXPECT_EQ(nullptr, bindingTableAddress);
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenNextDispatchRequiresScratchSpaceThenFrontEndCommandIsDispatched,
+          IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    ASSERT_NE(nullptr, frontEndCmd);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.setRequiredScratchSizes(0x100, 0);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    ASSERT_NE(nullptr, frontEndCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getScratchSpaceAllocation()));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenNextDispatchRequiresPrivateScratchSpaceThenFrontEndCommandIsDispatched,
+          IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    ASSERT_NE(nullptr, frontEndCmd);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.setRequiredScratchSizes(0, 0x100);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    ASSERT_NE(nullptr, frontEndCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getPrivateScratchSpaceAllocation()));
+}

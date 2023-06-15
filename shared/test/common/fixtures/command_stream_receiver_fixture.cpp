@@ -36,6 +36,7 @@ void CommandStreamReceiverFixture::setUp() {
 
     requiredStreamProperties.initSupport(pDevice->getRootDeviceEnvironment());
     immediateFlushTaskFlags.requiredState = &requiredStreamProperties;
+    immediateFlushTaskFlags.sshCpuBase = sshBuffer;
 }
 
 void CommandStreamReceiverFixture::tearDown() {
