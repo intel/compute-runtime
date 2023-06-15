@@ -7,15 +7,29 @@
 
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/client_context/map_gpu_va_gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/os_interface/windows/gdi_interface.h"
 
 namespace NEO {
 uint64_t GmmClientContext::mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpuVa) {
-    GMM_MAPGPUVIRTUALADDRESS gmmMapAddress = {pMapGpuVa->mapGpuVirtualAddressParams, 1, pMapGpuVa->resourceInfoHandle, pMapGpuVa->outVirtualAddress};
-    return clientContext->MapGpuVirtualAddress(&gmmMapAddress);
+    auto gmmResourceFlags = pMapGpuVa->resourceInfoHandle->getResourceFlags()->Info;
+    if (gmmResourceFlags.MediaCompressed || gmmResourceFlags.RenderCompressed) {
+        auto gmmResourceInfo = pMapGpuVa->resourceInfoHandle->peekGmmResourceInfo();
+        GMM_MAPGPUVIRTUALADDRESS gmmMapAddress = {pMapGpuVa->mapGpuVirtualAddressParams, 1, &gmmResourceInfo, pMapGpuVa->outVirtualAddress};
+        return clientContext->MapGpuVirtualAddress(&gmmMapAddress);
+    } else {
+        return pMapGpuVa->gdi->mapGpuVirtualAddress(pMapGpuVa->mapGpuVirtualAddressParams);
+    }
 }
 uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
-    GMM_FREEGPUVIRTUALADDRESS gmmFreeAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size, 1, pFreeGpuVa->resourceInfoHandle};
-    return clientContext->FreeGpuVirtualAddress(&gmmFreeAddress);
+    auto gmmResourceFlags = pFreeGpuVa->resourceInfoHandle->getResourceFlags()->Info;
+    if (gmmResourceFlags.MediaCompressed || gmmResourceFlags.RenderCompressed) {
+        auto gmmResourceInfo = pFreeGpuVa->resourceInfoHandle->peekGmmResourceInfo();
+        GMM_FREEGPUVIRTUALADDRESS gmmFreeAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size, 1, &gmmResourceInfo};
+        return clientContext->FreeGpuVirtualAddress(&gmmFreeAddress);
+    } else {
+        return 0;
+    }
 }
 
 } // namespace NEO
