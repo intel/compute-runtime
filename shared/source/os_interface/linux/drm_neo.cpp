@@ -359,7 +359,7 @@ int Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bo
         gcc.flags |= ioctlHelper->getDrmParamValue(DrmParam::ContextCreateFlagsUseExtensions);
     }
 
-    if (DebugManager.flags.CreateContextWithAccessCounters.get() != -1) {
+    if (DebugManager.flags.CreateContextWithAccessCounters.get() > 0) {
         return ioctlHelper->createContextWithAccessCounters(gcc);
     }
 

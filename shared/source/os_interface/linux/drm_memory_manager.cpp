@@ -2293,9 +2293,11 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         return nullptr;
     }
 
-    MemAdviseFlags memAdviseFlags{};
-    memAdviseFlags.devicePreferredLocation = true;
-    [[maybe_unused]] auto success = allocation->setMemAdvise(&drm, memAdviseFlags);
+    PreferredLocation preferredLocation = PreferredLocation::Device;
+    if (NEO::DebugManager.flags.CreateContextWithAccessCounters.get() > 0) {
+        preferredLocation = PreferredLocation::None;
+    }
+    [[maybe_unused]] auto success = allocation->setPreferredLocation(&drm, preferredLocation);
     DEBUG_BREAK_IF(!success);
 
     if (allocationData.usmInitialPlacement == GraphicsAllocation::UsmInitialPlacement::GPU) {

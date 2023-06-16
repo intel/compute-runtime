@@ -102,7 +102,7 @@ TEST(DrmQueryTest, givenForceRunAloneContextFlagSetWhenCreateDrmContextThenRunAl
 
 TEST(DrmQueryTest, givenCreateContextWithAccessCountersWhenDrmContextIsCreatedThenProgramAccessCountersWithDefaultGranularity) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateContextWithAccessCounters.set(0);
+    DebugManager.flags.CreateContextWithAccessCounters.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -141,7 +141,7 @@ TEST(DrmQueryTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
 
 TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThenProgramAccessCountersWithSpecifiedTriggeringThreshold) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateContextWithAccessCounters.set(0);
+    DebugManager.flags.CreateContextWithAccessCounters.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -175,7 +175,7 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThe
 
 TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThenProgramAccessCountersWithSpecifiedGranularity) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateContextWithAccessCounters.set(0);
+    DebugManager.flags.CreateContextWithAccessCounters.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
