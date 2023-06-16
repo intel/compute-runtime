@@ -69,6 +69,7 @@ lint:
       validate: mail
       skip_mails:
         - compute-runtime-validation@intel.com
+        - ocldev@intel.com
 
   commit_message_subject:
     types:
