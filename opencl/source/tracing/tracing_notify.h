@@ -13,7 +13,6 @@
 
 #include <atomic>
 #include <thread>
-#include <vector>
 
 namespace HostSideTracing {
 
@@ -28,20 +27,29 @@ namespace HostSideTracing {
 #define TRACING_ZERO_CLIENT_COUNTER(state) ((state) & (HostSideTracing::TRACING_STATE_ENABLED_BIT | HostSideTracing::TRACING_STATE_LOCKED_BIT))
 #define TRACING_GET_CLIENT_COUNTER(state) ((state) & (~(HostSideTracing::TRACING_STATE_ENABLED_BIT | HostSideTracing::TRACING_STATE_LOCKED_BIT)))
 
-#define TRACING_ENTER(name, ...)                                                                  \
-    bool isHostSideTracingEnabled_##name = false;                                                 \
-    HostSideTracing::name##Tracer tracer_##name;                                                  \
-    if (TRACING_GET_ENABLED_BIT(HostSideTracing::tracingState.load(std::memory_order_acquire))) { \
-        isHostSideTracingEnabled_##name = HostSideTracing::addTracingClient();                    \
-        if (isHostSideTracingEnabled_##name) {                                                    \
-            tracer_##name.enter(__VA_ARGS__);                                                     \
-        }                                                                                         \
+inline thread_local bool tracingInProgress = false;
+
+#define TRACING_ENTER(name, ...)                                                                                                                   \
+    bool isHostSideTracingEnabled_##name = false;                                                                                                  \
+    bool currentlyTracedCall = false;                                                                                                              \
+    HostSideTracing::name##Tracer tracer_##name;                                                                                                   \
+    if ((false == HostSideTracing::tracingInProgress) && TRACING_GET_ENABLED_BIT(HostSideTracing::tracingState.load(std::memory_order_acquire))) { \
+        HostSideTracing::tracingInProgress = true;                                                                                                 \
+        currentlyTracedCall = true;                                                                                                                \
+        isHostSideTracingEnabled_##name = HostSideTracing::addTracingClient();                                                                     \
+        if (isHostSideTracingEnabled_##name) {                                                                                                     \
+            tracer_##name.enter(__VA_ARGS__);                                                                                                      \
+        }                                                                                                                                          \
     }
 
-#define TRACING_EXIT(name, ...)                 \
-    if (isHostSideTracingEnabled_##name) {      \
-        tracer_##name.exit(__VA_ARGS__);        \
-        HostSideTracing::removeTracingClient(); \
+#define TRACING_EXIT(name, ...)                     \
+    if (currentlyTracedCall) {                      \
+        if (isHostSideTracingEnabled_##name) {      \
+            tracer_##name.exit(__VA_ARGS__);        \
+            HostSideTracing::removeTracingClient(); \
+        }                                           \
+        HostSideTracing::tracingInProgress = false; \
+        currentlyTracedCall = false;                \
     }
 
 typedef enum _tracing_notify_state_t {
