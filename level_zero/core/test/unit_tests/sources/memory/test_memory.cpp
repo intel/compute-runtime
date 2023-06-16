@@ -1174,7 +1174,7 @@ TEST_F(ZexHostPointerTests, whenAllocatingSharedMemoryWithUseHostPtrFlagThenCrea
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectly) {
+TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectlyAndMemoryIsAligned) {
     const size_t size = 1;
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -1193,6 +1193,67 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectly) {
         ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, alignment, &ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, ptr);
+        if (alignment != 0) {
+            EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
+        }
+        result = context->freeMem(ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    } while (alignment != 0);
+}
+
+TEST_F(MemoryTest, whenAllocatingHostMemoryThenAlignmentIsPassedCorrectlyAndMemoryIsAligned) {
+    const size_t size = 1;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = nullptr;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+
+    size_t alignment = 8 * MemoryConstants::megaByte;
+    do {
+        alignment >>= 1;
+        memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
+            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize));
+        };
+        void *ptr = nullptr;
+        ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+        if (alignment != 0) {
+            EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
+        }
+        result = context->freeMem(ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    } while (alignment != 0);
+}
+
+TEST_F(MemoryTest, whenAllocatingSharedMemoryThenAlignmentIsPassedCorrectlyAndMemoryIsAligned) {
+    const size_t size = 1;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    deviceDesc.pNext = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = nullptr;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+
+    size_t alignment = 8 * MemoryConstants::megaByte;
+    do {
+        alignment >>= 1;
+        memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
+            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize64k));
+        };
+        void *ptr = nullptr;
+        ze_result_t result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+        if (alignment != 0) {
+            EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
+        }
         result = context->freeMem(ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } while (alignment != 0);

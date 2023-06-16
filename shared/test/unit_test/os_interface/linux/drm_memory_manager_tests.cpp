@@ -1624,6 +1624,30 @@ TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAlloc
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, GivenSizeAndAlignmentWhenAskedToCreateGraphicsAllocationThenValidAllocationIsReturnedAndMemoryIsAligned) {
+    allocationData.size = 1;
+    int ioctlCnt = 0;
+    size_t alignment = 8 * MemoryConstants::megaByte;
+
+    do {
+        alignment >>= 1;
+        allocationData.alignment = alignment;
+        auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+        EXPECT_NE(nullptr, allocation);
+        auto gpuAddr = allocation->getGpuAddress();
+        EXPECT_NE(0u, gpuAddr);
+        if (alignment != 0) {
+            EXPECT_EQ(gpuAddr & (~(alignment - 1)), gpuAddr);
+        }
+        memoryManager->freeGraphicsMemory(allocation);
+        ioctlCnt += 1;
+    } while (alignment != 0);
+
+    mock->ioctlExpected.gemCreate = ioctlCnt;
+    mock->ioctlExpected.gemWait = ioctlCnt;
+    mock->ioctlExpected.gemClose = ioctlCnt;
+}
+
 TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllocationThenItContainsAllFragmentsWithProperGpuAdrresses) {
     mock->ioctlExpected.gemUserptr = 3;
     mock->ioctlExpected.gemWait = 3;
