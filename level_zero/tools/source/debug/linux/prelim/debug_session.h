@@ -245,10 +245,12 @@ struct DebugSessionLinux : DebugSessionImp {
         return 0.5;
     }
 
+    uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle);
     bool handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
     void handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam);
     void handleAttentionEvent(prelim_drm_i915_debug_event_eu_attention *attention);
     void handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines);
+    void handlePageFaultEvent(prelim_drm_i915_debug_event_page_fault *pf);
     virtual bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
     virtual bool ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle);
 

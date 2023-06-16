@@ -718,7 +718,6 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
                                 (int)attention->base.flags, (uint64_t)attention->base.seqno, (uint64_t)attention->base.size,
                                 (uint64_t)attention->client_handle, (uint64_t)attention->flags, (uint32_t)attention->ci.engine_class,
                                 (uint32_t)attention->ci.engine_instance, (uint32_t)attention->bitmask_size, uint64_t(attention->ctx_handle));
-
         handleAttentionEvent(attention);
     } break;
 
@@ -726,6 +725,17 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
         prelim_drm_i915_debug_event_engines *engines = reinterpret_cast<prelim_drm_i915_debug_event_engines *>(event);
         handleEnginesEvent(engines);
     } break;
+
+    case PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT: {
+        prelim_drm_i915_debug_event_page_fault *pf = reinterpret_cast<prelim_drm_i915_debug_event_page_fault *>(event);
+        PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT type: PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT flags = %d, address = %llu seqno = %d, size = %llu"
+                                " client_handle = %llu flags = %llu class = %lu instance = %lu bitmask_size = %lu ctx_handle = %llu\n",
+                                (int)pf->base.flags, (uint64_t)pf->page_fault_address, (uint64_t)pf->base.seqno, (uint64_t)pf->base.size,
+                                (uint64_t)pf->client_handle, (uint64_t)pf->flags, (uint32_t)pf->ci.engine_class,
+                                (uint32_t)pf->ci.engine_instance, (uint32_t)pf->bitmask_size, uint64_t(pf->ctx_handle));
+        handlePageFaultEvent(pf);
+    } break;
+
     default:
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT type: UNHANDLED %d flags = %d size = %llu\n", (int)event->type, (int)event->flags, (uint64_t)event->size);
         break;
@@ -805,20 +815,14 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
 
 ze_result_t DebugSessionLinux::readEventImp(prelim_drm_i915_debug_event *drmDebugEvent) {
     auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_EVENT, drmDebugEvent);
-
     if (ret != 0) {
         PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT failed: retCode: %d errno = %d\n", ret, errno);
-    } else {
-        if ((drmDebugEvent->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE) == 0 &&
-            (drmDebugEvent->flags & PRELIM_DRM_I915_DEBUG_EVENT_DESTROY) == 0 &&
-            (drmDebugEvent->flags & PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE) == 0) {
-
-            PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT unsupported flag = %d\n", (int)drmDebugEvent->flags);
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_NOT_READY;
+    } else if (drmDebugEvent->flags & ~static_cast<uint32_t>(PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_DESTROY | PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
+        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT unsupported flag = %d\n", (int)drmDebugEvent->flags);
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
-    return ZE_RESULT_NOT_READY;
+    return ZE_RESULT_SUCCESS;
 }
 
 bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind) {
@@ -1254,6 +1258,25 @@ void DebugSessionLinux::handleContextParamEvent(prelim_drm_i915_debug_event_cont
     }
 }
 
+uint64_t DebugSessionLinux::getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) {
+
+    if (clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end()) {
+        return invalidHandle;
+    }
+
+    auto &clientConnection = clientHandleToConnection[clientHandle];
+    if (clientConnection->lrcToContextHandle.find(lrcHandle) == clientConnection->lrcToContextHandle.end()) {
+        return invalidHandle;
+    }
+
+    auto contextHandle = clientConnection->lrcToContextHandle[lrcHandle];
+    if (clientConnection->contextsCreated.find(contextHandle) == clientConnection->contextsCreated.end()) {
+        return invalidHandle;
+    }
+
+    return clientConnection->contextsCreated[contextHandle].vm;
+}
+
 void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_attention *attention) {
     NEO::EngineClassInstance engineClassInstance = {attention->ci.engine_class, attention->ci.engine_instance};
     auto tileIndex = DrmHelper::getEngineTileIndex(connectedDevice, engineClassInstance);
@@ -1264,23 +1287,10 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
         return;
     }
 
-    newAttentionRaised(tileIndex);
+    newAttentionRaised(
+        tileIndex);
 
-    if (clientHandleToConnection.find(attention->client_handle) == clientHandleToConnection.end()) {
-        return;
-    }
-
-    auto &clientConnection = clientHandleToConnection[attention->client_handle];
-    if (clientConnection->lrcToContextHandle.find(attention->lrc_handle) == clientConnection->lrcToContextHandle.end()) {
-        return;
-    }
-
-    auto contextHandle = clientConnection->lrcToContextHandle[attention->lrc_handle];
-    if (clientConnection->contextsCreated.find(contextHandle) == clientConnection->contextsCreated.end()) {
-        return;
-    }
-
-    auto vmHandle = clientConnection->contextsCreated[contextHandle].vm;
+    auto vmHandle = getVmHandleFromClientAndlrcHandle(attention->client_handle, attention->lrc_handle);
     if (vmHandle == invalidHandle) {
         return;
     }
@@ -1354,6 +1364,78 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
     } else {
         checkTriggerEventsForAttention();
     }
+}
+
+void DebugSessionLinux::handlePageFaultEvent(prelim_drm_i915_debug_event_page_fault *pf) {
+    NEO::EngineClassInstance engineClassInstance = {pf->ci.engine_class, pf->ci.engine_instance};
+    auto tileIndex = DrmHelper::getEngineTileIndex(connectedDevice, engineClassInstance);
+
+    DEBUG_BREAK_IF(pf->bitmask_size % 3u != 0u);
+    size_t size = pf->bitmask_size / 3;
+    uint8_t *bitmaskBefore = &pf->bitmask[0];
+    uint8_t *bitmaskAfter = &pf->bitmask[size];
+    uint8_t *bitmaskResolved = &pf->bitmask[size * 2];
+    PRINT_DEBUGGER_INFO_LOG("PageFault event BEFORE", 0);
+    printBitmask(bitmaskBefore, size);
+    PRINT_DEBUGGER_INFO_LOG("PageFault event AFTER", 0);
+    printBitmask(bitmaskAfter, size);
+    PRINT_DEBUGGER_INFO_LOG("PageFault event RESOLVED", 0);
+    printBitmask(bitmaskResolved, size);
+
+    auto vmHandle = getVmHandleFromClientAndlrcHandle(pf->client_handle, pf->lrc_handle);
+    if (vmHandle == invalidHandle) {
+        return;
+    }
+
+    if (!connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex)) {
+        return;
+    }
+
+    std::unique_ptr<uint8_t[]> bitmaskPF = std::make_unique<uint8_t[]>(size);
+    std::transform(bitmaskAfter, bitmaskAfter + size, bitmaskResolved, bitmaskPF.get(), std::bit_xor<uint8_t>());
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+    auto threadsWithPF = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmaskPF.get(), size);
+    auto stoppedThreads = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmaskResolved, size);
+
+    if (threadsWithPF.size() == 0) {
+        zet_debug_event_t debugEvent = {};
+        debugEvent.type = ZET_DEBUG_EVENT_TYPE_PAGE_FAULT;
+        PRINT_DEBUGGER_INFO_LOG("PageFault event for unknown thread", 0);
+        enqueueApiEvent(debugEvent);
+    }
+
+    auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
+    auto stateSaveAreaSize = getContextStateSaveAreaSize(vmHandle);
+    allocateStateSaveAreaMemory(stateSaveAreaSize);
+    auto stateSaveReadResult = readGpuMemory(vmHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
+    if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
+
+        std::unique_lock<std::mutex> lock;
+        if (tileSessionsEnabled) {
+            lock = std::unique_lock<std::mutex>(static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->threadStateMutex);
+        } else {
+            lock = std::unique_lock<std::mutex>(threadStateMutex);
+        }
+        for (auto threadId : threadsWithPF) {
+            PRINT_DEBUGGER_INFO_LOG("PageFault event for thread %s", EuThread::toString(threadId).c_str());
+            allThreads[threadId]->setPageFault(true);
+        }
+        for (auto threadId : stoppedThreads) {
+            if (tileSessionsEnabled) {
+                static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
+            } else {
+                addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
+            }
+        }
+    }
+
+    if (tileSessionsEnabled) {
+        static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->checkTriggerEventsForAttention();
+    } else {
+        checkTriggerEventsForAttention();
+    }
+    return;
 }
 
 void DebugSessionLinux::handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,7 @@ using NEO::PrelimI915::prelim_drm_i915_debug_event_context;
 using NEO::PrelimI915::prelim_drm_i915_debug_event_context_param;
 using NEO::PrelimI915::prelim_drm_i915_debug_event_engines;
 using NEO::PrelimI915::prelim_drm_i915_debug_event_eu_attention;
+using NEO::PrelimI915::prelim_drm_i915_debug_event_page_fault;
 using NEO::PrelimI915::prelim_drm_i915_debug_event_uuid;
 using NEO::PrelimI915::prelim_drm_i915_debug_event_vm;
 using NEO::PrelimI915::prelim_drm_i915_debug_event_vm_bind;
