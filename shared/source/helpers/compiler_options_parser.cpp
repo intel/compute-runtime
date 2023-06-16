@@ -38,6 +38,18 @@ bool requiresOpenClCFeatures(const std::string &compileOptions) {
 bool requiresAdditionalExtensions(const std::string &compileOptions) {
     return (getMajorVersion(compileOptions) == 2);
 }
+
+void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions) {
+    if (requiresAdditionalExtensions(compileOptions)) {
+        extensions.erase(extensions.length() - 1);
+        extensions += ",+cl_khr_3d_image_writes ";
+    }
+    if (std::string::npos != internalOptions.find("-cl-fp64-gen-emu")) {
+        extensions.erase(extensions.length() - 1);
+        extensions += ",+__opencl_c_fp64,+cl_khr_fp64 ";
+    }
+}
+
 void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions) {
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);

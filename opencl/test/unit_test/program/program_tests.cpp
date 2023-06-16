@@ -914,6 +914,22 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAndExtraExtensionsA
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, std::string{"+cl_khr_3d_image_writes "}));
 }
 
+TEST_F(ProgramFromSourceTest, givenFp64EmulationEnabledWhenBuildingProgramThenExtraExtensionsAreAdded) {
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = static_cast<ClDevice *>(devices[0]);
+    pClDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    auto extensionsOption = pClDevice->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
+    EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, std::string{"+__opencl_c_fp64"}));
+    EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, std::string{"+cl_khr_fp64"}));
+
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
+    EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, std::string{"+__opencl_c_fp64"}));
+    EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, std::string{"+cl_khr_fp64"}));
+}
+
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC20ThenExtraExtensionsAreAdded) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
@@ -994,6 +1010,25 @@ TEST_F(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAndExtraExtensions
     EXPECT_TRUE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsOption));
     EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsWithFeaturesOption));
     EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, std::string{"+cl_khr_3d_image_writes "}));
+    EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
+}
+
+TEST_F(ProgramFromSourceTest, givenFp64EmulationEnabledWhenCompilingProgramThenExtraExtensionsAreAdded) {
+    auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = static_cast<ClDevice *>(devices[0]);
+    pClDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+    auto extensionsOption = pClDevice->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
+    EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, std::string{"+__opencl_c_fp64"}));
+    EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, std::string{"+cl_khr_fp64"}));
+
+    MockProgram::getInternalOptionsCalled = 0;
+    retVal = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(hasSubstr(pCompilerInterface->buildInternalOptions, std::string{"+__opencl_c_fp64"}));
+    EXPECT_TRUE(hasSubstr(pCompilerInterface->buildInternalOptions, std::string{"+cl_khr_fp64"}));
+
     EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
 }
 

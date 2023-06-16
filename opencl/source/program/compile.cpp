@@ -120,10 +120,8 @@ cl_int Program::compile(
         // set parameters for compilation
         std::string extensions = requiresOpenClCFeatures(options) ? defaultClDevice->peekCompilerExtensionsWithFeatures()
                                                                   : defaultClDevice->peekCompilerExtensions();
-        if (requiresAdditionalExtensions(options)) {
-            extensions.erase(extensions.length() - 1);
-            extensions += ",+cl_khr_3d_image_writes ";
-        }
+
+        appendAdditionalExtensions(extensions, options, internalOptions);
         CompilerOptions::concatenateAppend(internalOptions, extensions);
 
         if (isKernelDebugEnabled()) {
