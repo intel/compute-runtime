@@ -67,8 +67,8 @@ struct MockDiagnosticsFwInterface : public L0::Sysman::FirmwareUtil {
     ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
 };
 struct MockGlobalOperationsEngineHandleContext : public L0::Sysman::EngineHandleContext {
-    MockGlobalOperationsEngineHandleContext(L0::Sysman::OsSysman *pOsSysman) : L0::Sysman::EngineHandleContext(pOsSysman) {}
-    void init(uint32_t subDeviceCount) override {}
+    MockGlobalOperationsEngineHandleContext(L0::Sysman::OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}
+    ADDMETHOD_NOBASE_VOIDRETURN(init, (uint32_t subDeviceCount));
 };
 
 struct MockDiagFsAccess : public L0::Sysman::FsAccess {

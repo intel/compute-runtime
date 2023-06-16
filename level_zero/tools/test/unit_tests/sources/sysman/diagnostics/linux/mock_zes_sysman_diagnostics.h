@@ -68,7 +68,7 @@ struct MockDiagnosticsFwInterface : public FirmwareUtil {
 };
 struct MockGlobalOperationsEngineHandleContext : public EngineHandleContext {
     MockGlobalOperationsEngineHandleContext(OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}
-    void init(std::vector<ze_device_handle_t> &deviceHandles) override {}
+    ADDMETHOD_NOBASE_VOIDRETURN(init, (std::vector<ze_device_handle_t> & deviceHandles));
 };
 
 struct MockDiagFsAccess : public FsAccess {
