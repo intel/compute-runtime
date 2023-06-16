@@ -44,6 +44,7 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     ze_result_t getVFIDString(std::string &vfID);
     ze_result_t getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth);
     ze_result_t getHbmBandwidth(uint32_t numHbmModules, zes_mem_bandwidth_t *pBandwidth);
+    ze_result_t getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_bandwidth_t *pBandwidth);
     ze_result_t getHbmBandwidthEx(uint32_t numHbmModules, uint32_t counterMaxValue, uint64_t *pReadCounters, uint64_t *pWriteCounters, uint64_t *pMaxBandwidth, uint64_t timeout);
     static const std::string deviceMemoryHealth;
     bool isSubdevice = false;

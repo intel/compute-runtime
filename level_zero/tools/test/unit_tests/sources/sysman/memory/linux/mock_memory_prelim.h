@@ -20,6 +20,14 @@
 
 using namespace NEO;
 
+constexpr uint32_t VF0HbmLRead = 16;
+constexpr uint32_t VF0HbmHRead = 2;
+constexpr uint32_t VF0HbmLWrite = 8;
+constexpr uint32_t VF0HbmHWrite = 2;
+constexpr uint32_t VF1HbmLRead = 16;
+constexpr uint32_t VF1HbmHRead = 2;
+constexpr uint32_t VF1HbmLWrite = 8;
+constexpr uint32_t VF1HbmHWrite = 2;
 constexpr uint16_t vF0VfidIndex = 88;
 constexpr uint16_t vF0Hbm0ReadIndex = 92;
 constexpr uint16_t vF0Hbm0WriteIndex = 96;
@@ -299,6 +307,14 @@ struct MockMemoryPmt : public PlatformMonitoringTech {
             val = vF0Hbm3ReadValue;
         } else if (key.compare("VF0_HBM3_WRITE") == 0) {
             val = vF0Hbm3WriteValue;
+        } else if (key.compare("VF0_HBM_READ_L") == 0) {
+            val = VF0HbmLRead;
+        } else if (key.compare("VF0_HBM_READ_H") == 0) {
+            val = VF0HbmHRead;
+        } else if (key.compare("VF0_HBM_WRITE_L") == 0) {
+            val = VF0HbmLWrite;
+        } else if (key.compare("VF0_HBM_WRITE_H") == 0) {
+            val = VF0HbmHWrite;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -330,6 +346,14 @@ struct MockMemoryPmt : public PlatformMonitoringTech {
             val = vF1Hbm3ReadValue;
         } else if (key.compare("VF1_HBM3_WRITE") == 0) {
             val = vF1Hbm3WriteValue;
+        } else if (key.compare("VF1_HBM_READ_L") == 0) {
+            val = VF1HbmLRead;
+        } else if (key.compare("VF1_HBM_READ_H") == 0) {
+            val = VF1HbmHRead;
+        } else if (key.compare("VF1_HBM_WRITE_L") == 0) {
+            val = VF1HbmLWrite;
+        } else if (key.compare("VF1_HBM_WRITE_H") == 0) {
+            val = VF1HbmHWrite;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }

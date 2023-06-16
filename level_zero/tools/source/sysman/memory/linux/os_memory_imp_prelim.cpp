@@ -259,6 +259,75 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     return result;
 }
 
+ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_bandwidth_t *pBandwidth) {
+    pBandwidth->readCounter = 0;
+    pBandwidth->writeCounter = 0;
+    pBandwidth->timestamp = 0;
+    pBandwidth->maxBandwidth = 0;
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    std::string vfId = "";
+    result = getVFIDString(vfId);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
+        return result;
+    }
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    auto productFamily = hwInfo.platform.eProductFamily;
+    auto &productHelper = pDevice->getNEODevice()->getProductHelper();
+    auto stepping = productHelper.getSteppingFromHwRevId(hwInfo);
+
+    uint32_t readCounterL = 0;
+    std::string readCounterKey = vfId + "_HBM_READ_L";
+    result = pPmt->readValue(readCounterKey, readCounterL);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterL returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    uint32_t readCounterH = 0;
+    readCounterKey = vfId + "_HBM_READ_H";
+    result = pPmt->readValue(readCounterKey, readCounterH);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterH returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    constexpr uint64_t transactionSize = 32;
+    pBandwidth->readCounter = readCounterH;
+    pBandwidth->readCounter = (pBandwidth->readCounter << 32) | static_cast<uint64_t>(readCounterL);
+    pBandwidth->readCounter = (pBandwidth->readCounter * transactionSize);
+
+    uint32_t writeCounterL = 0;
+    std::string writeCounterKey = vfId + "_HBM_WRITE_L";
+    result = pPmt->readValue(writeCounterKey, writeCounterL);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterL returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    uint32_t writeCounterH = 0;
+    writeCounterKey = vfId + "_HBM_WRITE_H";
+    result = pPmt->readValue(writeCounterKey, writeCounterH);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterH returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    pBandwidth->writeCounter = writeCounterH;
+    pBandwidth->writeCounter = (pBandwidth->writeCounter << 32) | static_cast<uint64_t>(writeCounterL);
+    pBandwidth->writeCounter = (pBandwidth->writeCounter * transactionSize);
+
+    uint64_t timeStampVal = 0;
+    memoryGetTimeStamp(timeStampVal);
+    pBandwidth->timestamp = timeStampVal;
+
+    uint64_t hbmFrequency = 0;
+    getHbmFrequency(productFamily, stepping, hbmFrequency);
+
+    pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules; // Value in bytes/secs
+    return result;
+}
+
 ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     if (pPmt == nullptr) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -277,7 +346,7 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
         break;
     case IGFX_PVC:
         numHbmModules = 4u;
-        result = getHbmBandwidth(numHbmModules, pBandwidth);
+        result = getHbmBandwidthPVC(numHbmModules, pBandwidth);
         break;
     default:
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
