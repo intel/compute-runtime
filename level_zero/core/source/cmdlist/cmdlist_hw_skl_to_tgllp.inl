@@ -31,8 +31,8 @@ struct DeviceImp;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    return gfxCoreHelper.getRenderSurfaceStateSize();
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    return sizeof(RENDER_SURFACE_STATE);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

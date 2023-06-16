@@ -150,8 +150,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->flags = flags;
 
     auto &hwInfo = device->getHwInfo();
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto neoDevice = device->getNEODevice();
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
     this->dcFlushSupport = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
@@ -168,8 +170,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->defaultMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
     this->l1CachePolicyData.init(productHelper);
     this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
-    this->dummyBlitWa.rootDeviceEnvironment = &(device->getNEODevice()->getRootDeviceEnvironmentRef());
+    this->dummyBlitWa.rootDeviceEnvironment = &(neoDevice->getRootDeviceEnvironmentRef());
     this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, this->cmdListType == CommandListType::TYPE_REGULAR);
+    this->useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps();
+    this->maxFillPaternSizeForCopyEngine = gfxCoreHelper.getMaxFillPaternSizeForCopyEngine();
 
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
@@ -181,7 +185,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->commandContainer.setUsingPrimaryBuffer(this->dispatchCmdListBatchBufferAsPrimary);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
-        this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
+        this->partitionCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
     }
 
     if (this->isFlushTaskSubmissionEnabled) {
@@ -201,8 +205,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
                                              !device->isImplicitScalingCapable() &&
                                              this->csr &&
                                              this->csr->isAnyDirectSubmissionEnabled() &&
-                                             !deviceImp->getNEODevice()->getExecutionEnvironment()->areMetricsEnabled() &&
-                                             deviceImp->getNEODevice()->getMemoryManager()->isLocalMemorySupported(deviceImp->getRootDeviceIndex());
+                                             !neoDevice->getExecutionEnvironment()->areMetricsEnabled() &&
+                                             neoDevice->getMemoryManager()->isLocalMemorySupported(neoDevice->getRootDeviceIndex());
 
     if (NEO::DebugManager.flags.DirectSubmissionFlatRingBuffer.get() != -1) {
         createSecondaryCmdBufferInHostMem &= !!NEO::DebugManager.flags.DirectSubmissionFlatRingBuffer.get();
@@ -1891,9 +1895,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                  Event *signalEvent,
                                                                  uint32_t numWaitEvents,
                                                                  ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    auto neoDevice = device->getNEODevice();
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    if (gfxCoreHelper.getMaxFillPaternSizeForCopyEngine() < patternSize) {
+    if (this->maxFillPaternSizeForCopyEngine < patternSize) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
     } else {
         ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, false);
@@ -1901,6 +1903,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
             return ret;
         }
 
+        auto neoDevice = device->getNEODevice();
         appendEventForProfiling(signalEvent, true);
         NEO::GraphicsAllocation *gpuAllocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr,
                                                                                                             size,
@@ -2460,13 +2463,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     UNRECOVERABLE_IF(!result);
 
     Kernel *builtinKernel = nullptr;
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u;
+    auto useOnlyGlobalTimestampsValue = this->useOnlyGlobalTimestamps ? 1u : 0u;
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     if (pOffsets == nullptr) {
         builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps);
-        builtinKernel->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestamps);
+        builtinKernel->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
     } else {
         auto pOffsetAllocationStruct = getAlignedAllocationData(this->device, pOffsets, sizeof(size_t) * numEvents, false);
         if (pOffsetAllocationStruct.alloc == nullptr) {
@@ -2476,7 +2478,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
         builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestampsWithOffsets);
         builtinKernel->setArgBufferWithAlloc(2, offsetValPtr, pOffsetAllocationStruct.alloc, nullptr);
-        builtinKernel->setArgumentValue(3u, sizeof(uint32_t), &useOnlyGlobalTimestamps);
+        builtinKernel->setArgumentValue(3u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
         offsetValPtr += sizeof(size_t);
     }
 
@@ -2577,8 +2579,8 @@ inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_co
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
     bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
-    auto &productHelper = device->getProductHelper();
-    if (productHelper.isCalculationForDisablingEuFusionWithDpasNeeded(device->getHwInfo())) {
+    if (static_cast<DeviceImp *>(device)->calculationForDisablingEuFusionWithDpasNeeded) {
+        auto &productHelper = device->getProductHelper();
         if (threadGroupDimensions) {
             uint32_t *groupCountPtr = nullptr;
             uint32_t groupCount[3] = {};

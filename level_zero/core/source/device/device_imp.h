@@ -132,6 +132,7 @@ struct DeviceImp : public Device {
     BcsSplit bcsSplit;
 
     bool resourcesReleased = false;
+    bool calculationForDisablingEuFusionWithDpasNeeded = false;
     void releaseResources();
 
     NEO::SVMAllocsManager::MapBasedAllocationTracker peerAllocations;

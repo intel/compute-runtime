@@ -382,6 +382,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
     size_t cmdListCurrentStartOffset = 0;
+    size_t maxFillPaternSizeForCopyEngine = 0;
 
     unsigned long numThreads = 1u;
 
@@ -423,6 +424,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool kernelWithAssertAppended = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool copyThroughLockedPtrEnabled = false;
+    bool useOnlyGlobalTimestamps = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

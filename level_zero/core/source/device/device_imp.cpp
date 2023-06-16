@@ -1252,7 +1252,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     device->resourcesReleased = false;
 
     device->populateSubDeviceCopyEngineGroups();
-
+    auto &productHelper = device->getProductHelper();
+    device->calculationForDisablingEuFusionWithDpasNeeded = productHelper.isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo);
     return device;
 }
 
