@@ -325,7 +325,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
             excludeIr = true;
         } else if (ConstStringRef("-spirv_input") == currArg) {
             spirvInput = true;
-        } else if (("-device-options" == currArg) && hasAtLeast2MoreArgs) {
+        } else if (("-device_options" == currArg) && hasAtLeast2MoreArgs) {
             const auto deviceAcronyms = CompilerOptions::tokenize(args[argIndex + 1], ',');
             for (const auto &deviceAcronym : deviceAcronyms) {
                 deviceAcronymsFromDeviceOptions.insert(deviceAcronym.str());
@@ -354,7 +354,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
 
     for (const auto &deviceAcronym : deviceAcronymsFromDeviceOptions) {
         if (std::find(targetProducts.begin(), targetProducts.end(), deviceAcronym) == targetProducts.end()) {
-            argHelper->printf("Warning! -device-options set for non-compiled device: %s\n", deviceAcronym.c_str());
+            argHelper->printf("Warning! -device_options set for non-compiled device: %s\n", deviceAcronym.c_str());
         }
     }
 

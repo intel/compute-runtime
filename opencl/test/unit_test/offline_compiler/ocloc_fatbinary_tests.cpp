@@ -1091,7 +1091,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForNotCompiledDevic
         clFiles + "copybuffer.cl",
         "-device",
         products.str().c_str(),
-        "-device-options",
+        "-device_options",
         enabledProductsAcronyms[2].str(),
         "deviceOptions"};
 
@@ -1100,7 +1100,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForNotCompiledDevic
     auto output = testing::internal::GetCapturedStdout();
 
     std::stringstream expectedErrorMessage;
-    expectedErrorMessage << "Warning! -device-options set for non-compiled device: " + enabledProductsAcronyms[2].str() + "\n";
+    expectedErrorMessage << "Warning! -device_options set for non-compiled device: " + enabledProductsAcronyms[2].str() + "\n";
     EXPECT_TRUE(hasSubstr(output, expectedErrorMessage.str()));
 }
 
@@ -1120,7 +1120,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForCompiledDeviceAn
         clFiles + "copybuffer.cl",
         "-device",
         products.str().c_str(),
-        "-device-options",
+        "-device_options",
         enabledProductsAcronyms[0].str(),
         "deviceOptions"};
 
@@ -1129,8 +1129,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForCompiledDeviceAn
     auto output = testing::internal::GetCapturedStdout();
 
     std::stringstream errorMessage1, errorMessage2;
-    errorMessage1 << "Warning! -device-options set for non-compiled device: " << enabledProductsAcronyms[0].str() << "\n";
-    errorMessage2 << "Warning! -device-options set for non-compiled device: " << enabledProductsAcronyms[1].str() << "\n";
+    errorMessage1 << "Warning! -device_options set for non-compiled device: " << enabledProductsAcronyms[0].str() << "\n";
+    errorMessage2 << "Warning! -device_options set for non-compiled device: " << enabledProductsAcronyms[1].str() << "\n";
 
     EXPECT_FALSE(hasSubstr(output, errorMessage1.str()));
     EXPECT_FALSE(hasSubstr(output, errorMessage2.str()));
@@ -1157,7 +1157,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForMultipleDevicesS
         clFiles + "copybuffer.cl",
         "-device",
         products.str().c_str(),
-        "-device-options",
+        "-device_options",
         productsForDeviceOptions.str().c_str(),
         "deviceOptions"};
 
@@ -1166,7 +1166,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForMultipleDevicesS
     auto output = testing::internal::GetCapturedStdout();
 
     std::stringstream expectedErrorMessage;
-    expectedErrorMessage << "Warning! -device-options set for non-compiled device";
+    expectedErrorMessage << "Warning! -device_options set for non-compiled device";
     EXPECT_FALSE(hasSubstr(output, expectedErrorMessage.str()));
 }
 

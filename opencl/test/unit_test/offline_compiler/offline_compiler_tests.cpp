@@ -3265,7 +3265,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForCompiledDeviceWhenCmdLineParsedTh
         gEnvironment->devicePrefix.c_str(),
         "-options",
         "options",
-        "-device-options",
+        "-device_options",
         gEnvironment->devicePrefix.c_str(),
         "devOptions"};
 
@@ -3306,7 +3306,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsWithDeprecatedDeviceAcronymWhenCmdLi
         deviceName.c_str(),
         "-options",
         "options",
-        "-device-options",
+        "-device_options",
         deviceName.c_str(),
         "devOptions"};
 
@@ -3318,7 +3318,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsWithDeprecatedDeviceAcronymWhenCmdLi
     EXPECT_NE(OclocErrorCode::INVALID_COMMAND_LINE, result);
 
     std::stringstream expectedErrorMessage;
-    expectedErrorMessage << "Error: Invalid device acronym passed to -device-options: " << deviceName;
+    expectedErrorMessage << "Error: Invalid device acronym passed to -device_options: " << deviceName;
     EXPECT_FALSE(hasSubstr(output, expectedErrorMessage.str()));
 }
 
@@ -3332,13 +3332,13 @@ TEST(OfflineCompilerTest, givenUnknownDeviceAcronymInDeviceOptionsWhenParsingCom
         gEnvironment->devicePrefix.c_str(),
         "-options",
         "options",
-        "-device-options",
+        "-device_options",
         "unknownDeviceName1",
         "devOptions1",
-        "-device-options",
+        "-device_options",
         gEnvironment->devicePrefix.c_str(),
         "devOptions2",
-        "-device-options",
+        "-device_options",
         "unknownDeviceName2",
         "devOptions2"};
 
@@ -3351,8 +3351,8 @@ TEST(OfflineCompilerTest, givenUnknownDeviceAcronymInDeviceOptionsWhenParsingCom
 
     EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
 
-    const std::string expectedErrorMessage1{"Error: Invalid device acronym passed to -device-options: unknownDeviceName1\n"};
-    const std::string expectedErrorMessage2{"Error: Invalid device acronym passed to -device-options: unknownDeviceName2\n"};
+    const std::string expectedErrorMessage1{"Error: Invalid device acronym passed to -device_options: unknownDeviceName1\n"};
+    const std::string expectedErrorMessage2{"Error: Invalid device acronym passed to -device_options: unknownDeviceName2\n"};
     EXPECT_TRUE(hasSubstr(output, expectedErrorMessage1));
     EXPECT_TRUE(hasSubstr(output, expectedErrorMessage2));
 }
@@ -3364,7 +3364,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsInWrongFormatWhenCmdLineParsedThenDe
         gEnvironment->devicePrefix.c_str(),
         "-options",
         "options",
-        "-device-options",
+        "-device_options",
         "devOptions"};
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
@@ -3391,10 +3391,10 @@ TEST(OfflineCompilerTest, givenMultipleDeviceOptionsWhenCmdLineParsedThenDeviceO
         gEnvironment->devicePrefix.c_str(),
         "-options",
         "options",
-        "-device-options",
+        "-device_options",
         gEnvironment->devicePrefix.c_str(),
         "devOptions1",
-        "-device-options",
+        "-device_options",
         gEnvironment->devicePrefix.c_str(),
         "devOptions2"};
 
@@ -3443,15 +3443,15 @@ TEST(OfflineCompilerTest, givenMultipleDeviceOptionsForCompiledDeviceAndDeviceOp
         "ocloc",
         "-device",
         gEnvironment->devicePrefix.c_str(),
-        "-device-options",
+        "-device_options",
         gEnvironment->devicePrefix.c_str(),
         "devOptions1",
-        "-device-options",
+        "-device_options",
         notCompiledDevice,
         "devOptions2",
         "-options",
         "options1",
-        "-device-options",
+        "-device_options",
         gEnvironment->devicePrefix.c_str(),
         "devOptions3",
         "-options",
@@ -3497,12 +3497,12 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForMultipleDevicesSeparatedByCommasW
         "ocloc",
         "-device",
         product.c_str(),
-        "-device-options",
+        "-device_options",
         productsForDeviceOptions.str().c_str(),
         "devOptions1",
         "-options",
         "options1",
-        "-device-options",
+        "-device_options",
         productForDeviceOptions1.c_str(),
         "devOptions2"};
 
@@ -3545,12 +3545,12 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForMultipleDevicesSeparatedByCommasW
         "ocloc",
         "-device",
         product.c_str(),
-        "-device-options",
+        "-device_options",
         productsForDeviceOptions.str().c_str(),
         "devOptions1",
         "-options",
         "options1",
-        "-device-options",
+        "-device_options",
         productForDeviceOptions1.c_str(),
         "devOptions2"};
 
@@ -3562,7 +3562,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForMultipleDevicesSeparatedByCommasW
     EXPECT_NE(0u, output.size());
 
     std::stringstream expectedErrorMessage;
-    expectedErrorMessage << "Error: Invalid device acronym passed to -device-options: "
+    expectedErrorMessage << "Error: Invalid device acronym passed to -device_options: "
                          << " " << productForDeviceOptions1 << "\n";
 
     EXPECT_TRUE(hasSubstr(output, expectedErrorMessage.str()));

@@ -717,7 +717,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (("-options" == currArg) && hasMoreArgs) {
             CompilerOptions::concatenateAppend(options, argv[argIndex + 1]);
             argIndex++;
-        } else if (("-device-options" == currArg) && hasAtLeast2MoreArgs) {
+        } else if (("-device_options" == currArg) && hasAtLeast2MoreArgs) {
             const auto deviceAcronyms = CompilerOptions::tokenize(argv[argIndex + 1], ',');
             const auto &options = argv[argIndex + 2];
             for (const auto &deviceAcronym : deviceAcronyms) {
@@ -815,7 +815,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                     }
                 }
                 if (!isDeprecatedName) {
-                    argHelper->printf("Error: Invalid device acronym passed to -device-options: %s\n", device.c_str());
+                    argHelper->printf("Error: Invalid device acronym passed to -device_options: %s\n", device.c_str());
                     retVal = INVALID_COMMAND_LINE;
                 }
             }
@@ -925,7 +925,7 @@ void OfflineCompiler::printUsage() {
 Additionally, outputs intermediate representation (e.g. spirV).
 Different input and intermediate file formats are available.
 
-Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename>] [-out_dir <output_dir>] [-options <options>] [-device-options <device_type> <options>] [-32|-64] [-internal_options <options>] [-llvm_text|-llvm_input|-spirv_input] [-options_name] [-q] [-cpp_file] [-output_no_suffix] [--help]
+Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename>] [-out_dir <output_dir>] [-options <options>] [-device_options <device_type> <options>] [-32|-64] [-internal_options <options>] [-llvm_text|-llvm_input|-spirv_input] [-options_name] [-q] [-cpp_file] [-output_no_suffix] [--help]
 
   -file <filename>                          The input file to be compiled
                                             (by default input source format is
@@ -1000,7 +1000,7 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                             -vc-codegen <vc options> compile from SPIRV
                                             -cmc <cm-options> compile from CM sources
 
-  -device-options <device_type> <options>   Optional OpenCL C compilation options
+  -device_options <device_type> <options>   Optional OpenCL C compilation options
                                             as defined by OpenCL specification - specific to a single target device.
                                             Multiple product acronyms may be provided - separated by commas.
                                             <device_type> can be product acronym or version passed in -device i.e. dg1 or 12.10.0
