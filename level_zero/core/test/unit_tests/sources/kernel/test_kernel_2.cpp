@@ -112,6 +112,71 @@ TEST_F(KernelImp, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
     EXPECT_EQ(1U, groupSize[2]);
 }
 
+TEST_F(KernelImp, WhenSuggestingGroupSizeThenCacheValues) {
+    DebugManagerStateRestore restorer;
+
+    WhiteBox<KernelImmutableData> kernelInfo = {};
+    NEO::KernelDescriptor descriptor;
+    kernelInfo.kernelDescriptor = &descriptor;
+
+    NEO::DebugManager.flags.EnableComputeWorkSizeND.set(false);
+
+    Mock<Module> module(device, nullptr);
+    module.getMaxGroupSizeResult = 8;
+
+    Mock<Kernel> kernel;
+    kernel.kernelImmData = &kernelInfo;
+    kernel.module = &module;
+
+    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 0u);
+
+    uint32_t groupSize[3];
+    kernel.KernelImp::suggestGroupSize(256, 1, 1, groupSize, groupSize + 1, groupSize + 2);
+
+    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[0], 256u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[1], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[2], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[0], 8u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[1], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[2], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[0], groupSize[0]);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[1], groupSize[1]);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[2], groupSize[2]);
+
+    kernel.KernelImp::suggestGroupSize(256, 1, 1, groupSize, groupSize + 1, groupSize + 2);
+
+    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[0], 256u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[1], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[2], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[0], 8u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[1], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[2], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[0], groupSize[0]);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[1], groupSize[1]);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[2], groupSize[2]);
+
+    kernel.KernelImp::suggestGroupSize(2048, 1, 1, groupSize, groupSize + 1, groupSize + 2);
+
+    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 2u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[0], 256u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[1], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].first[2], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[0], 8u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[1], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[2], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[1].first[0], 2048u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[1].first[1], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[1].first[2], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[1].second[0], 8u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[1].second[1], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[1].second[2], 1u);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[0], groupSize[0]);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[1], groupSize[1]);
+    EXPECT_EQ(kernel.suggestGroupSizeCache[0].second[2], groupSize[2]);
+}
+
 class KernelImpSuggestGroupSize : public DeviceFixture, public ::testing::TestWithParam<uint32_t> {
   public:
     void SetUp() override {
@@ -201,24 +266,14 @@ TEST_P(KernelImpSuggestGroupSize, WhenSlmSizeExceedsLocalMemorySizeAndSuggesting
     function.kernelImmData = &funcInfo;
     function.module = &module;
     uint32_t groupSize[3];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, function.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2));
+
+    ::testing::internal::CaptureStderr();
 
     auto localMemSize = static_cast<uint32_t>(device->getNEODevice()->getDeviceInfo().localMemSize);
-
-    ::testing::internal::CaptureStderr();
-
-    funcInfo.kernelDescriptor->kernelAttributes.slmInlineSize = localMemSize - 10u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, function.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2));
-
-    std::string output = testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string(""), output);
-
-    ::testing::internal::CaptureStderr();
-
     funcInfo.kernelDescriptor->kernelAttributes.slmInlineSize = localMemSize + 10u;
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, function.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2));
 
-    output = testing::internal::GetCapturedStderr();
+    auto output = testing::internal::GetCapturedStderr();
     const auto &slmInlineSize = funcInfo.kernelDescriptor->kernelAttributes.slmInlineSize;
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);

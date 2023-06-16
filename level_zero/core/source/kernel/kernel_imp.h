@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -16,6 +17,7 @@
 
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace L0 {
 
@@ -236,6 +238,9 @@ struct KernelImp : Kernel {
 
     std::unique_ptr<KernelExt> pExtension;
     std::mutex printfLock;
+
+    using SuggestGroupSizeCacheT = std::vector<std::pair<Vec3<size_t>, Vec3<size_t>>>;
+    SuggestGroupSizeCacheT suggestGroupSizeCache;
 };
 
 } // namespace L0

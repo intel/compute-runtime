@@ -63,6 +63,7 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using ::L0::KernelImp::requiredWorkgroupOrder;
     using ::L0::KernelImp::residencyContainer;
     using ::L0::KernelImp::setAssertBuffer;
+    using ::L0::KernelImp::suggestGroupSizeCache;
     using ::L0::KernelImp::surfaceStateHeapData;
     using ::L0::KernelImp::surfaceStateHeapDataSize;
     using ::L0::KernelImp::unifiedMemoryControls;
