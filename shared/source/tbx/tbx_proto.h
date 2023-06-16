@@ -6,7 +6,10 @@
  */
 
 #pragma once
+
 #include <cstdint>
+
+namespace NEO {
 
 enum HAS_MSG_TYPE {
     HAS_MMIO_REQ_TYPE = 0,
@@ -462,3 +465,5 @@ enum mem_types : uint32_t {
     MEM_TYPE_LOCALMEM = 1,
     MEM_TYPE_MAX = 4
 };
+
+} // namespace NEO
