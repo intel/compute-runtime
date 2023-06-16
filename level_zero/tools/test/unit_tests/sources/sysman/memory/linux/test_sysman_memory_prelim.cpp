@@ -398,6 +398,274 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     for (auto &handle : handles) {
         zes_mem_bandwidth_t bandwidth{};
         uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
+        uint64_t expectedBandwidth = 0;
+        zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
+        zesMemoryGetProperties(handle, &properties);
+
+        auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+        auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
+        hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+
+        pPmt->mockVfid0Status = true;
+        pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
+        pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
+
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
+        expectedReadCounters |= VF0HbmHRead;
+        expectedReadCounters = (expectedReadCounters << 32) | VF0HbmLRead;
+        expectedReadCounters = expectedReadCounters * transactionSize;
+        EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
+        expectedWriteCounters |= VF0HbmHWrite;
+        expectedWriteCounters = (expectedWriteCounters << 32) | VF0HbmLWrite;
+        expectedWriteCounters = expectedWriteCounters * transactionSize;
+        EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
+        expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
+        EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenVFID1IsActiveThenSuccessIsReturnedAndBandwidthIsValid, IsPVC) {
+    setLocalSupportedAndReinit(true);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_bandwidth_t bandwidth{};
+        uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
+        uint64_t expectedBandwidth = 0;
+        zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
+        zesMemoryGetProperties(handle, &properties);
+
+        auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+        auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
+        hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+
+        pPmt->mockVfid1Status = true;
+        pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
+        pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
+
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
+        expectedReadCounters |= VF0HbmHRead;
+        expectedReadCounters = (expectedReadCounters << 32) | VF0HbmLRead;
+        expectedReadCounters = expectedReadCounters * transactionSize;
+        EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
+        expectedWriteCounters |= VF0HbmHWrite;
+        expectedWriteCounters = (expectedWriteCounters << 32) | VF0HbmLWrite;
+        expectedWriteCounters = expectedWriteCounters * transactionSize;
+        EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
+        expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
+        EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthAndVF0_HBM_READ_LFailsThenFailureIsReturned, IsPVC) {
+    setLocalSupportedAndReinit(true);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_properties_t properties = {};
+        zesMemoryGetProperties(handle, &properties);
+
+        zes_mem_bandwidth_t bandwidth;
+
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->mockReadArgumentValue.push_back(1);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
+        pPmt->mockReadArgumentValue.push_back(0);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF1_VFID
+        pPmt->mockReadArgumentValue.push_back(2);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthAndVF0_HBM_READ_HFailsThenFailureIsReturned, IsPVC) {
+    setLocalSupportedAndReinit(true);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_properties_t properties = {};
+        zesMemoryGetProperties(handle, &properties);
+
+        zes_mem_bandwidth_t bandwidth;
+
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->mockReadArgumentValue.push_back(1);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
+        pPmt->mockReadArgumentValue.push_back(0);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF1_VFID
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(2);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthAndVF0_HBM_WRITE_LFailsThenFailureIsReturned, IsPVC) {
+    setLocalSupportedAndReinit(true);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_properties_t properties = {};
+        zesMemoryGetProperties(handle, &properties);
+
+        zes_mem_bandwidth_t bandwidth;
+
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->mockReadArgumentValue.push_back(1);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
+        pPmt->mockReadArgumentValue.push_back(0);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF1_VFID
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(2);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthAndVF0_HBM_WRITE_HFailsThenFailureIsReturned, IsPVC) {
+    setLocalSupportedAndReinit(true);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_properties_t properties = {};
+        zesMemoryGetProperties(handle, &properties);
+
+        zes_mem_bandwidth_t bandwidth;
+
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->mockReadArgumentValue.push_back(1);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
+        pPmt->mockReadArgumentValue.push_back(0);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF1_VFID
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(2);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenVFID0IsActiveThenSuccessIsReturnedAndBandwidthIsValid) {
+    setLocalSupportedAndReinit(true);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.platform.eProductFamily = IGFX_XE_HP_SDV;
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_bandwidth_t bandwidth{};
+        uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
+        uint64_t expectedTimestamp = 0;
+        zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
+        zesMemoryGetProperties(handle, &properties);
+
+        auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+        auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
+        hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+
+        pPmt->mockVfid0Status = true;
+        pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
+        pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
+
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
+        expectedReadCounters = vF0Hbm0ReadValue + vF0Hbm1ReadValue;
+        EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
+        expectedWriteCounters = vF0Hbm0WriteValue + vF0Hbm1WriteValue;
+        EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
+        expectedTimestamp |= vF0TimestampHValue;
+        expectedTimestamp = (expectedTimestamp << 32) | vF0TimestampLValue;
+        EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthAndVF0_VFIDFailsThenFailureIsReturned) {
+    setLocalSupportedAndReinit(true);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.platform.eProductFamily = IGFX_XE_HP_SDV;
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_properties_t properties = {};
+        zesMemoryGetProperties(handle, &properties);
+
+        zes_mem_bandwidth_t bandwidth;
+
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->mockReadArgumentValue.push_back(2);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthAndVF0_HBM_READFailsThenFailureIsReturned) {
+    setLocalSupportedAndReinit(true);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.platform.eProductFamily = IGFX_XE_HP_SDV;
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_properties_t properties = {};
+        zesMemoryGetProperties(handle, &properties);
+
+        zes_mem_bandwidth_t bandwidth;
+
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->mockReadArgumentValue.push_back(1);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(0);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthAndVF0_HBM_WRITEFailsThenFailureIsReturned) {
+    setLocalSupportedAndReinit(true);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.platform.eProductFamily = IGFX_XE_HP_SDV;
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_properties_t properties = {};
+        zesMemoryGetProperties(handle, &properties);
+
+        zes_mem_bandwidth_t bandwidth;
+
+        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->mockReadArgumentValue.push_back(1);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
+        pPmt->mockReadArgumentValue.push_back(0);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF1_VFID
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS);
+        pPmt->mockReadArgumentValue.push_back(4);
+        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenVFID0IsActiveThenSuccessIsReturnedAndBandwidthIsValid, IsXEHP) {
+    setLocalSupportedAndReinit(true);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto &handle : handles) {
+        zes_mem_bandwidth_t bandwidth{};
+        uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
         uint64_t expectedTimestamp = 0, expectedBandwidth = 0;
         zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
         zesMemoryGetProperties(handle, &properties);
@@ -425,7 +693,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     }
 }
 
-HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenVFID1IsActiveThenSuccessIsReturnedAndBandwidthIsValid, IsPVC) {
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenVFID1IsActiveThenSuccessIsReturnedAndBandwidthIsValid, IsXEHP) {
     setLocalSupportedAndReinit(true);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
