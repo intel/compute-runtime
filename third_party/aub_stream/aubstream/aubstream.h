@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,7 @@ constexpr uint32_t aubFile = 0;
 constexpr uint32_t tbx = 1;
 constexpr uint32_t aubFileAndTbx = 2;
 constexpr uint32_t tbxShm = 3;
+constexpr uint32_t tbxShm3 = 4;
 } // namespace mode
 
 namespace clearColorType {
