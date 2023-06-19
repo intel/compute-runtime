@@ -20,6 +20,14 @@ set(BUILTIN_OPTIONS_STATELESS
     "-cl-intel-greater-than-4GB-buffer-required"
 )
 
+set(bindless_OPTIONS
+    -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode"
+)
+
+set(bindful_OPTIONS
+    ""
+)
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   list(APPEND __ocloc__options__ "-D DEBUG")
 endif()
