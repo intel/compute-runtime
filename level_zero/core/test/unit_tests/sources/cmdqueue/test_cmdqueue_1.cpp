@@ -720,6 +720,29 @@ HWTEST_F(CommandQueueCreate, givenOutOfMemoryThenSubmitBatchBufferReturnsOutOfMe
     commandQueue->destroy();
 }
 
+TEST_F(CommandQueueCreate, WhenSubmitBatchBufferThenDisableFlatRingBuffer) {
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    commandQueue->startingCmdBuffer = &commandQueue->commandStream;
+    ResidencyContainer container;
+    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+
+    EXPECT_EQ(ret, NEO::SubmissionStatus::SUCCESS);
+    EXPECT_TRUE(csr->latestFlushedBatchBuffer.disableFlatRingBuffer);
+
+    commandQueue->destroy();
+}
+
 TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitializedWithExpectedSize) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;

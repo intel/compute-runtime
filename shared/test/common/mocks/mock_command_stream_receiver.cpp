@@ -10,6 +10,7 @@
 volatile TagAddressType MockCommandStreamReceiver::mockTagAddress[MockCommandStreamReceiver::tagSize];
 
 SubmissionStatus MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    this->latestFlushedBatchBuffer = batchBuffer;
     return SubmissionStatus::SUCCESS;
 }
 

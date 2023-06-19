@@ -215,6 +215,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     std::optional<bool> testTaskCountReadyReturnValue{};
     WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::Ready};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    BatchBuffer latestFlushedBatchBuffer = {};
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {

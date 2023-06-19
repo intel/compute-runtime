@@ -900,7 +900,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::copyCommandBufferIntoRing(BatchB
     /* Command buffer can't be copied into ring if implicit scaling or metrics are enabled,
        because those features uses GPU VAs of command buffer which would be invalid after copy. */
 
-    auto ret = this->osContext.getNumSupportedDevices() == 1u &&
+    auto ret = !batchBuffer.disableFlatRingBuffer &&
+               this->osContext.getNumSupportedDevices() == 1u &&
                !this->rootDeviceEnvironment.executionEnvironment.areMetricsEnabled() &&
                !batchBuffer.chainedBatchBuffer &&
                batchBuffer.commandBufferAllocation &&

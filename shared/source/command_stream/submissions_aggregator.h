@@ -56,6 +56,7 @@ struct BatchBuffer {
     bool hasStallingCmds = false;
     bool hasRelaxedOrderingDependencies = false;
     bool ringBufferRestartRequest = false;
+    bool disableFlatRingBuffer = false;
 };
 
 struct CommandBuffer : public IDNode<CommandBuffer> {

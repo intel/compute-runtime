@@ -126,6 +126,7 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::Res
     NEO::BatchBuffer batchBuffer(this->startingCmdBuffer->getGraphicsAllocation(), offset, 0, 0, nullptr, false, false,
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
                                  this->startingCmdBuffer->getUsed(), this->startingCmdBuffer, endingCmdPtr, csr->getNumClients(), false, false);
+    batchBuffer.disableFlatRingBuffer = true;
 
     if (this->startingCmdBuffer != &this->commandStream) {
         this->csr->makeResident(*this->commandStream.getGraphicsAllocation());
