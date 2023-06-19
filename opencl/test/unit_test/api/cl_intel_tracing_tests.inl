@@ -8,6 +8,7 @@
 #include "opencl/source/tracing/tracing_api.h"
 #include "opencl/source/tracing/tracing_notify.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
 
 using namespace NEO;
 
@@ -938,6 +939,64 @@ TEST_F(IntelClGetDeviceInfoTwoHandlesTracingCollectTest, GivenTwoHandlesWhenTrac
 
     EXPECT_EQ(2u, enterCount);
     EXPECT_EQ(2u, exitCount);
+}
+
+struct IntelClCreateContextFromTypeTracingTest : public IntelTracingTest, PlatformFixture {
+  public:
+    void SetUp() override {
+        PlatformFixture::setUp();
+        IntelTracingTest::setUp();
+
+        status = clCreateTracingHandleINTEL(devices[0], callback, this, &handle);
+        ASSERT_NE(nullptr, handle);
+        ASSERT_EQ(CL_SUCCESS, status);
+
+        status = clSetTracingPointINTEL(handle, CL_FUNCTION_clCreateContextFromType, CL_TRUE);
+        ASSERT_EQ(CL_SUCCESS, status);
+
+        status = clEnableTracingINTEL(handle);
+        ASSERT_EQ(CL_SUCCESS, status);
+    }
+    void TearDown() override {
+        status = clDisableTracingINTEL(handle);
+        ASSERT_EQ(CL_SUCCESS, status);
+
+        status = clDestroyTracingHandleINTEL(handle);
+        ASSERT_EQ(CL_SUCCESS, status);
+        IntelTracingTest::tearDown();
+        PlatformFixture::tearDown();
+    }
+
+  protected:
+    void call() {
+        context = clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, nullptr, nullptr, nullptr);
+    }
+
+    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+        ASSERT_EQ(CL_FUNCTION_clCreateContextFromType, fid);
+        if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
+            ++enterCount;
+        } else if (callbackData->site == CL_CALLBACK_SITE_EXIT) {
+            obtainedContextCallback = *reinterpret_cast<cl_context *>(callbackData->functionReturnValue);
+            ++exitCount;
+        }
+    }
+
+    cl_context context = nullptr;
+    cl_context obtainedContextCallback = nullptr;
+    uint16_t enterCount = 0;
+    uint16_t exitCount = 0;
+};
+
+TEST_F(IntelClCreateContextFromTypeTracingTest, givenCreateContextFromTypeCallTracingWhenInvokingCallbackThenPointersFromCallAndCallbackPointToTheSameAddress) {
+    call();
+    EXPECT_EQ(1u, enterCount);
+    EXPECT_EQ(1u, exitCount);
+
+    EXPECT_NE(nullptr, context);
+    EXPECT_NE(nullptr, obtainedContextCallback);
+    EXPECT_EQ(context, obtainedContextCallback);
+    clReleaseContext(context);
 }
 
 } // namespace ULT

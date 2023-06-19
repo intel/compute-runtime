@@ -457,7 +457,7 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("properties", properties, "deviceType", deviceType, "funcNotify", funcNotify, "userData", userData);
-    Context *pContext = nullptr;
+    cl_context context = nullptr;
 
     do {
         if (funcNotify == nullptr && userData != nullptr) {
@@ -482,14 +482,14 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
 
         ClDeviceVector deviceVector(&device, 1);
-        pContext = Context::create<Context>(properties, deviceVector, funcNotify, userData, retVal);
+        context = Context::create<Context>(properties, deviceVector, funcNotify, userData, retVal);
     } while (false);
 
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    TRACING_EXIT(ClCreateContextFromType, (cl_context *)&pContext);
-    return pContext;
+    TRACING_EXIT(ClCreateContextFromType, &context);
+    return context;
 }
 
 cl_int CL_API_CALL clRetainContext(cl_context context) {
