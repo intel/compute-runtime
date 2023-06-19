@@ -422,20 +422,18 @@ CacheRegion IoctlHelperXe::closFree(CacheRegion closIndex) {
 }
 
 int IoctlHelperXe::xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value,
-                                   struct drm_xe_engine_class_instance *eci,
                                    int64_t timeout) {
     struct drm_xe_wait_user_fence wait = {};
     wait.addr = addr;
     wait.op = op;
-    wait.flags = !eci ? DRM_XE_UFENCE_WAIT_SOFT_OP : 0;
+    wait.flags = DRM_XE_UFENCE_WAIT_SOFT_OP;
     wait.value = value;
     wait.mask = mask;
     wait.timeout = timeout;
-    wait.num_engines = eci ? 1 : 0;
-    wait.instances = eci ? castToUint64(eci) : 0;
+    wait.num_engines = 0;
+    wait.instances = 0;
     auto retVal = IoctlHelper::ioctl(DrmIoctl::GemWaitUserFence, &wait);
-    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx engine=[0x%x, 0x%x] T=0x%llx F=0x%x retVal=0x%x\n", __FUNCTION__, addr, value,
-          eci ? eci->engine_class : -1, eci ? eci->engine_instance : -1,
+    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x retVal=0x%x\n", __FUNCTION__, addr, value,
           timeout, wait.flags, retVal);
     return retVal;
 }
@@ -463,7 +461,7 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
         timeout = TimeoutControls::maxTimeout;
     }
     if (address) {
-        return xeWaitUserFence(mask, DRM_XE_UFENCE_WAIT_GTE, address, value, NULL, timeout);
+        return xeWaitUserFence(mask, DRM_XE_UFENCE_WAIT_GTE, address, value, timeout);
     }
     return 0;
 }
@@ -503,8 +501,7 @@ uint32_t IoctlHelperXe::getDirectSubmissionFlag() {
 
 uint16_t IoctlHelperXe::getWaitUserFenceSoftFlag() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return PRELIM_I915_UFENCE_WAIT_SOFT;
-    ;
+    return 0;
 };
 
 int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) {
@@ -1241,7 +1238,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
 
         return xeWaitUserFence(DRM_XE_UFENCE_WAIT_U64, DRM_XE_UFENCE_WAIT_EQ,
                                sync[0].addr,
-                               sync[0].timeline_value, NULL, XE_ONE_SEC);
+                               sync[0].timeline_value, XE_ONE_SEC);
     }
 
     xeLog(" -> IoctlHelperXe::%s %s found=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx r=%d\n",

@@ -160,7 +160,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     EXPECT_EQ(0, xeIoctlHelper->queryDistances(queryItems, distanceInfos));
     EXPECT_EQ(0u, distanceInfos.size());
 
-    EXPECT_EQ(PRELIM_I915_UFENCE_WAIT_SOFT, xeIoctlHelper->getWaitUserFenceSoftFlag());
+    EXPECT_EQ(0u, xeIoctlHelper->getWaitUserFenceSoftFlag());
 
     EXPECT_EQ(0, xeIoctlHelper->execBuffer(nullptr, 0, 0));
 

@@ -119,7 +119,7 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetBindOpName(int bindOp);
     const char *xeGetengineClassName(uint32_t engineClass);
     std::vector<uint8_t> queryData(uint32_t queryId);
-    int xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, struct drm_xe_engine_class_instance *eci, int64_t timeout);
+    int xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout);
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
 
     struct UserFenceExtension {
