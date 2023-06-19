@@ -61,7 +61,7 @@ class DirectSubmissionController {
     std::atomic_bool runControlling = false;
 
     SteadyClock::time_point lastTerminateCpuTimestamp{};
-    std::chrono::microseconds maxTimeout{defaultTimeout};
+    std::chrono::microseconds maxTimeout{200'000};
     std::chrono::microseconds timeout{defaultTimeout};
     int timeoutDivisor = 1;
 };

@@ -34,6 +34,13 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllertimeoutDivi
     EXPECT_EQ(controller.timeoutDivisor, 4);
 }
 
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenCreateObjectThenDefaultTimeoutValuesAreCorrect) {
+    DirectSubmissionControllerMock controller;
+
+    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.maxTimeout.count(), 200'000);
+}
+
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterDirectSubmissionWorksThenItIsMonitoringItsState) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
