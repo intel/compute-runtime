@@ -35,6 +35,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         bool stateComputeModeDirty = false;
         bool stateBaseAddressFullConfigurationNeeded = false;
         bool stateBaseAddressDirty = false;
+        bool contextOneTimeInit = false;
     };
 
   public:
@@ -247,6 +248,11 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     inline void dispatchImmediateFlushStateComputeModeCommand(ImmediateFlushData &flushData, LinearStream &csrStream);
     inline void handleImmediateFlushStateBaseAddressState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device);
     inline void dispatchImmediateFlushStateBaseAddressCommand(ImmediateFlushData &flushData, LinearStream &csrStream, Device &device);
+
+    inline void handleImmediateFlushOneTimeContextInitState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
+    inline void dispatchImmediateFlushOneTimeContextInitCommand(ImmediateFlushData &flushData, LinearStream &csrStream);
+
+    inline void handleImmediateFlushAllocationsResidency();
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

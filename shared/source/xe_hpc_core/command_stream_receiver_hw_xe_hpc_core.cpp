@@ -49,7 +49,7 @@ template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPrologue() const {
     if (!this->isEnginePrologueSent) {
         if (globalFenceAllocation) {
-            return sizeof(Family::STATE_SYSTEM_MEM_FENCE_ADDRESS);
+            return EncodeMemoryFence<Family>::getSystemMemoryFenceSize();
         }
     }
     return 0u;

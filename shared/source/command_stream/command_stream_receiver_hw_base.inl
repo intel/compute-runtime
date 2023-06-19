@@ -303,6 +303,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     handleImmediateFlushFrontEndState(dispatchFlags, flushData);
     handleImmediateFlushStateComputeModeState(dispatchFlags, flushData);
     handleImmediateFlushStateBaseAddressState(dispatchFlags, flushData, device);
+    handleImmediateFlushOneTimeContextInitState(dispatchFlags, flushData);
 
     auto &csrCommandStream = getCS(flushData.estimatedSize);
 
@@ -310,6 +311,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     dispatchImmediateFlushFrontEndCommand(scratchAddress, flushData, device, csrCommandStream);
     dispatchImmediateFlushStateComputeModeCommand(flushData, csrCommandStream);
     dispatchImmediateFlushStateBaseAddressCommand(flushData, csrCommandStream, device);
+    dispatchImmediateFlushOneTimeContextInitCommand(flushData, csrCommandStream);
+
+    handleImmediateFlushAllocationsResidency();
 
     CompletionStamp completionStamp = {
         this->taskCount,
@@ -1994,6 +1998,29 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushStateBaseAddressC
         programStateBaseAddressCommon(nullptr, nullptr, nullptr, &this->streamProperties.stateBaseAddress,
                                       0, 0, flushData.pipelineSelectArgs, device, csrStream, btCommandNeeded, device.getNumGenericSubDevices() > 1);
         this->streamProperties.stateBaseAddress.clearIsDirty();
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData) {
+    size_t size = 0;
+    size = getCmdSizeForPrologue();
+
+    flushData.contextOneTimeInit = size > 0;
+    flushData.estimatedSize += size;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextInitCommand(ImmediateFlushData &flushData, LinearStream &csrStream) {
+    if (flushData.contextOneTimeInit) {
+        programEnginePrologue(csrStream);
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidency() {
+    if (globalFenceAllocation) {
+        makeResident(*globalFenceAllocation);
     }
 }
 

@@ -3671,3 +3671,36 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getPrivateScratchSpaceAllocation()));
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenOneTimeContextSystemFenceRequiredThenExpectOneTimeSystemFenceCommand,
+          IsAtLeastXeHpcCore) {
+    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto systemFenceCmd = hwParserCsr.getCommand<STATE_SYSTEM_MEM_FENCE_ADDRESS>();
+    ASSERT_NE(nullptr, systemFenceCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getGlobalFenceAllocation()));
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    systemFenceCmd = hwParserCsr.getCommand<STATE_SYSTEM_MEM_FENCE_ADDRESS>();
+    EXPECT_EQ(nullptr, systemFenceCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getGlobalFenceAllocation()));
+}
