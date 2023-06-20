@@ -1820,19 +1820,23 @@ struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerRelaxedSizeMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createUnifiedMemoryAllocation(size_t size,
                                         const UnifiedMemoryProperties &svmProperties) override {
+        validateMemoryProperties(svmProperties);
         return alignedMalloc(4096u, 4096u);
     }
 
     void *createSharedUnifiedMemoryAllocation(size_t size,
                                               const UnifiedMemoryProperties &svmProperties,
                                               void *cmdQ) override {
+        validateMemoryProperties(svmProperties);
         return alignedMalloc(4096u, 4096u);
     }
 
     void *createHostUnifiedMemoryAllocation(size_t size,
                                             const UnifiedMemoryProperties &memoryProperties) override {
+        validateMemoryProperties(memoryProperties);
         return alignedMalloc(4096u, 4096u);
     }
+    std::function<void(const UnifiedMemoryProperties &)> validateMemoryProperties = [](const UnifiedMemoryProperties &properties) -> void {};
 };
 
 struct ContextRelaxedSizeMock : public ContextImp {
@@ -1872,7 +1876,7 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
         delete currSvmAllocsManager;
     }
     NEO::SVMAllocsManager *prevSvmAllocsManager;
-    NEO::SVMAllocsManager *currSvmAllocsManager;
+    SVMAllocsManagerRelaxedSizeMock *currSvmAllocsManager;
     std::unique_ptr<DriverHandleImp> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -2250,7 +2254,7 @@ TEST_F(MemoryRelaxedSizeTests,
 }
 
 TEST_F(MemoryRelaxedSizeTests,
-       givenCallToSharedAllocWithLargerThanAllowedSizeAndRelaxedDescriptorWithWrongStypeThenUnsupportedSizeIsReturned) {
+       givenCallToSharedAllocWithLargerThanAllowedSizeAndRelaxedDescriptorWithWrongStypeThenUnsupportedEnumerationErrorIsReturned) {
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2266,7 +2270,7 @@ TEST_F(MemoryRelaxedSizeTests,
                                                  &deviceDesc,
                                                  &hostDesc,
                                                  size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, result);
     EXPECT_EQ(nullptr, ptr);
 }
 
@@ -5361,6 +5365,67 @@ HWTEST2_F(MultipleDevicePeerImageTest,
 
     result = image->destroy();
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryRelaxedSizeTests, givenMultipleExtensionsPassedToCreateSharedMemThenAllExtensionsAreParsed) {
+    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is48bResourceNeededForRayTracingResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    currSvmAllocsManager->validateMemoryProperties = [](const SVMAllocsManager::UnifiedMemoryProperties &memoryProperties) -> void {
+        EXPECT_TRUE(memoryProperties.allocationFlags.flags.resource48Bit);
+    };
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
+    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
+    relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
+
+    ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
+
+    rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
+
+    {
+        deviceDesc.pNext = &relaxedSizeDesc;
+        rtDesc.pNext = nullptr;
+        relaxedSizeDesc.pNext = &rtDesc;
+        ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                     &deviceDesc,
+                                                     &hostDesc,
+                                                     size, alignment, &ptr);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+
+        result = context->freeMem(ptr);
+        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    }
+    {
+        deviceDesc.pNext = &rtDesc;
+        rtDesc.pNext = &relaxedSizeDesc;
+        relaxedSizeDesc.pNext = nullptr;
+        ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                     &deviceDesc,
+                                                     &hostDesc,
+                                                     size, alignment, &ptr);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+
+        result = context->freeMem(ptr);
+        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    }
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
 }
 
 } // namespace ult

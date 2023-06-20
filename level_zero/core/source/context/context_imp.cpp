@@ -270,24 +270,16 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     }
     auto neoDevice = device->getNEODevice();
 
-    bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
-    bool rayTracingAllocation = false;
+    StructuresLookupTable lookupTable = {};
 
-    if (deviceDesc->pNext) {
-        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
-            const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
-                reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
-            if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            relaxedSizeAllowed = true;
-        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC) {
-            rayTracingAllocation = true;
-        }
+    lookupTable.relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, deviceDesc->pNext);
+
+    if (parseResult != ZE_RESULT_SUCCESS) {
+        return parseResult;
     }
 
-    if (relaxedSizeAllowed == false &&
+    if (lookupTable.relaxedSizeAllowed == false &&
         (size > neoDevice->getDeviceInfo().maxMemAllocSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
@@ -299,7 +291,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     if ((!device->isImplicitScalingCapable()) && (numSubDevices > 1)) {
         globalMemSize = globalMemSize / numSubDevices;
     }
-    if (relaxedSizeAllowed &&
+    if (lookupTable.relaxedSizeAllowed &&
         (size > globalMemSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
@@ -337,7 +329,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         unifiedMemoryProperties.allocationFlags.allocFlags.usmInitialPlacementCpu = 1;
     }
 
-    if (rayTracingAllocation) {
+    if (lookupTable.rayTracingMemory) {
         auto &productHelper = neoDevice->getProductHelper();
         unifiedMemoryProperties.allocationFlags.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
     }
