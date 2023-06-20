@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -68,6 +69,69 @@ bool IoctlHelperPrelim20::isChunkingAvailable() {
     }
 
     return chunkSupported;
+}
+
+bool IoctlHelperPrelim20::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
+
+    auto request = this->getDrmParamValue(DrmParam::QueryComputeSlices);
+    auto engineInfo = drm.getEngineInfo();
+    auto nTiles = hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount;
+
+    auto useNewQuery = DebugManager.flags.UseNewQueryTopoIoctl.get() &&
+                       engineInfo &&
+                       (nTiles > 0);
+
+    if (useNewQuery) {
+
+        bool success = true;
+
+        int sliceCount = 0;
+        int subSliceCount = 0;
+        int euCount = 0;
+
+        for (auto i = 0u; i < nTiles; i++) {
+            auto classInstance = engineInfo->getEngineInstance(i, hwInfo.capabilityTable.defaultEngineType);
+            UNRECOVERABLE_IF(!classInstance);
+
+            uint32_t flags = classInstance->engineClass;
+            flags |= (classInstance->engineInstance << 8);
+
+            auto dataQuery = drm.query(request, flags);
+            if (dataQuery.empty()) {
+                success = false;
+                break;
+            }
+
+            auto data = reinterpret_cast<QueryTopologyInfo *>(dataQuery.data());
+            DrmQueryTopologyData tileTopologyData = {};
+            TopologyMapping mapping;
+            if (!this->translateTopologyInfo(data, tileTopologyData, mapping)) {
+                success = false;
+                break;
+            }
+
+            // pick smallest config
+            sliceCount = (sliceCount == 0) ? tileTopologyData.sliceCount : std::min(sliceCount, tileTopologyData.sliceCount);
+            subSliceCount = (subSliceCount == 0) ? tileTopologyData.subSliceCount : std::min(subSliceCount, tileTopologyData.subSliceCount);
+            euCount = (euCount == 0) ? tileTopologyData.euCount : std::min(euCount, tileTopologyData.euCount);
+
+            topologyData.maxSliceCount = std::max(topologyData.maxSliceCount, tileTopologyData.maxSliceCount);
+            topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, tileTopologyData.maxSubSliceCount);
+            topologyData.maxEuCount = std::max(topologyData.maxEuCount, static_cast<int>(data->maxEusPerSubslice));
+
+            topologyMap[i] = mapping;
+        }
+
+        if (success) {
+            topologyData.sliceCount = sliceCount;
+            topologyData.subSliceCount = subSliceCount;
+            topologyData.euCount = euCount;
+            return true;
+        }
+    }
+
+    // fallback to DRM_I915_QUERY_TOPOLOGY_INFO
+    return IoctlHelper::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
 }
 
 bool IoctlHelperPrelim20::isVmBindAvailable() {

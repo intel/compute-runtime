@@ -85,6 +85,16 @@ struct QueryTopologyInfo {
     uint8_t data[];
 };
 
+struct DrmQueryTopologyData {
+    int sliceCount = 0;
+    int subSliceCount = 0;
+    int euCount = 0;
+
+    int maxSliceCount = 0;
+    int maxSubSliceCount = 0;
+    int maxEuCount = 0;
+};
+
 struct MemoryClassInstance {
     uint16_t memoryClass;
     uint16_t memoryInstance;

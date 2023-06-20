@@ -444,7 +444,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
 
-    Drm::QueryTopologyData topologyData = {};
+    DrmQueryTopologyData topologyData = {};
 
     bool status = queryTopology(*hwInfo, topologyData);
 
@@ -679,73 +679,6 @@ void Drm::setNewResourceBoundToVM(BufferObject *bo, uint32_t vmHandleId) {
             osContextLinux->setNewResourceBound();
         }
     }
-}
-
-bool Drm::translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping) {
-    int sliceCount = 0;
-    int subSliceCount = 0;
-    int euCount = 0;
-    int maxSliceCount = 0;
-    int maxSubSliceCountPerSlice = 0;
-    std::vector<int> sliceIndices;
-    sliceIndices.reserve(maxSliceCount);
-
-    for (int x = 0; x < queryTopologyInfo->maxSlices; x++) {
-        bool isSliceEnable = (queryTopologyInfo->data[x / 8] >> (x % 8)) & 1;
-        if (!isSliceEnable) {
-            continue;
-        }
-        sliceIndices.push_back(x);
-        sliceCount++;
-
-        std::vector<int> subSliceIndices;
-        subSliceIndices.reserve(queryTopologyInfo->maxSubslices);
-
-        for (int y = 0; y < queryTopologyInfo->maxSubslices; y++) {
-            size_t yOffset = (queryTopologyInfo->subsliceOffset + x * queryTopologyInfo->subsliceStride + y / 8);
-            bool isSubSliceEnabled = (queryTopologyInfo->data[yOffset] >> (y % 8)) & 1;
-            if (!isSubSliceEnabled) {
-                continue;
-            }
-            subSliceCount++;
-            subSliceIndices.push_back(y);
-
-            for (int z = 0; z < queryTopologyInfo->maxEusPerSubslice; z++) {
-                size_t zOffset = (queryTopologyInfo->euOffset + (x * queryTopologyInfo->maxSubslices + y) * queryTopologyInfo->euStride + z / 8);
-                bool isEUEnabled = (queryTopologyInfo->data[zOffset] >> (z % 8)) & 1;
-                if (!isEUEnabled) {
-                    continue;
-                }
-                euCount++;
-            }
-        }
-
-        if (subSliceIndices.size()) {
-            maxSubSliceCountPerSlice = std::max(maxSubSliceCountPerSlice, subSliceIndices[subSliceIndices.size() - 1] + 1);
-        }
-
-        // single slice available
-        if (sliceCount == 1) {
-            mapping.subsliceIndices = std::move(subSliceIndices);
-        }
-    }
-
-    if (sliceIndices.size()) {
-        maxSliceCount = sliceIndices[sliceIndices.size() - 1] + 1;
-        mapping.sliceIndices = std::move(sliceIndices);
-    }
-
-    if (sliceCount != 1) {
-        mapping.subsliceIndices.clear();
-    }
-
-    data.sliceCount = sliceCount;
-    data.subSliceCount = subSliceCount;
-    data.euCount = euCount;
-    data.maxSliceCount = maxSliceCount;
-    data.maxSubSliceCount = maxSubSliceCountPerSlice;
-
-    return (data.sliceCount && data.subSliceCount && data.euCount);
 }
 
 PhysicalDevicePciBusInfo Drm::getPciBusInfo() const {
@@ -1048,77 +981,10 @@ void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     }
 }
 
-bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyData) {
-    topologyData.sliceCount = 0;
-    topologyData.subSliceCount = 0;
-    topologyData.euCount = 0;
+bool Drm::queryTopology(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData) {
 
-    int sliceCount = 0;
-    int subSliceCount = 0;
-    int euCount = 0;
-
-    auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryComputeSlices);
-    if (DebugManager.flags.UseNewQueryTopoIoctl.get() && this->engineInfo && hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount > 0 && request != 0) {
-        bool success = true;
-
-        for (uint32_t i = 0; i < hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount; i++) {
-            auto classInstance = this->engineInfo->getEngineInstance(i, hwInfo.capabilityTable.defaultEngineType);
-            UNRECOVERABLE_IF(!classInstance);
-
-            uint32_t flags = classInstance->engineClass;
-            flags |= (classInstance->engineInstance << 8);
-
-            auto dataQuery = this->query(request, flags);
-            if (dataQuery.empty()) {
-                success = false;
-                break;
-            }
-            auto data = reinterpret_cast<QueryTopologyInfo *>(dataQuery.data());
-
-            QueryTopologyData tileTopologyData = {};
-            TopologyMapping mapping;
-            if (!translateTopologyInfo(data, tileTopologyData, mapping)) {
-                success = false;
-                break;
-            }
-
-            // pick smallest config
-            sliceCount = (sliceCount == 0) ? tileTopologyData.sliceCount : std::min(sliceCount, tileTopologyData.sliceCount);
-            subSliceCount = (subSliceCount == 0) ? tileTopologyData.subSliceCount : std::min(subSliceCount, tileTopologyData.subSliceCount);
-            euCount = (euCount == 0) ? tileTopologyData.euCount : std::min(euCount, tileTopologyData.euCount);
-
-            topologyData.maxSliceCount = std::max(topologyData.maxSliceCount, tileTopologyData.maxSliceCount);
-            topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, tileTopologyData.maxSubSliceCount);
-            topologyData.maxEuCount = std::max(topologyData.maxEuCount, static_cast<int>(data->maxEusPerSubslice));
-
-            this->topologyMap[i] = mapping;
-        }
-
-        if (success) {
-            topologyData.sliceCount = sliceCount;
-            topologyData.subSliceCount = subSliceCount;
-            topologyData.euCount = euCount;
-            return true;
-        }
-    }
-
-    // fallback to DRM_I915_QUERY_TOPOLOGY_INFO
-
-    request = ioctlHelper->getDrmParamValue(DrmParam::QueryTopologyInfo);
-    auto dataQuery = this->query(request, 0);
-    if (dataQuery.empty()) {
-        return false;
-    }
-    auto data = reinterpret_cast<QueryTopologyInfo *>(dataQuery.data());
-
-    TopologyMapping mapping;
-    auto retVal = translateTopologyInfo(data, topologyData, mapping);
-    topologyData.maxEuCount = data->maxEusPerSubslice;
-
-    this->topologyMap.clear();
-    this->topologyMap[0] = mapping;
-
-    return retVal;
+    auto result = this->ioctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+    return result;
 }
 
 void Drm::queryPageFaultSupport() {

@@ -92,7 +92,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override;
     std::string getDrmParamString(DrmParam param) const override;
-
+    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     std::string getFileForMaxGpuFrequency() const override;
     std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const override;
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const override;
@@ -101,8 +101,8 @@ class IoctlHelperXe : public IoctlHelper {
     bool isWaitBeforeBindRequired(bool bind) const override;
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
-
-    std::vector<uint8_t> xeRebuildi915Topology(std::vector<uint8_t> *geomDss, std::vector<uint8_t> *computeDss, std::vector<uint8_t> *euDss);
+    void getTopologyData(uint32_t nTiles, std::vector<std::bitset<8>> geomDss[2], std::vector<std::bitset<8>> computeDss[2], std::vector<std::bitset<8>> euDss[2], DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
+    void getTopologyMap(uint32_t nTiles, std::vector<std::bitset<8>> dssInfo[2], TopologyMap &topologyMap);
 
   private:
     template <typename... XeLogArgs>
@@ -144,7 +144,6 @@ class IoctlHelperXe : public IoctlHelper {
     int instance = 0;
     uint32_t xeTimestampFrequency = 0;
     std::vector<uint8_t> hwconfigFakei915;
-    std::vector<uint8_t> topologyFakei915;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
     std::vector<drm_xe_engine_class_instance> allEngines;
 };

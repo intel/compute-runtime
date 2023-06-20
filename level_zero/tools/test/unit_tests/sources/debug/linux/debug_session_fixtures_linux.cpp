@@ -30,7 +30,7 @@ void DebugApiLinuxFixture::setUp(NEO::HardwareInfo *hwInfo) {
         mockDrm->storedSSVal = hwInfo->gtSystemInfo.SubSliceCount;
         mockDrm->storedEUVal = hwInfo->gtSystemInfo.EUCount;
     }
-    NEO::Drm::QueryTopologyData topologyData = {};
+    NEO::DrmQueryTopologyData topologyData = {};
     mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
     auto &rootDeviceEnvironment = *neoDevice->executionEnvironment->rootDeviceEnvironments[0];
     auto gtSystemInfo = &rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo;
@@ -61,7 +61,7 @@ void DebugApiLinuxMultiDeviceFixture::setUp() {
     auto engineInfo = mockDrm->getEngineInfo();
     ASSERT_NE(nullptr, engineInfo->getEngineInstance(1, hwInfo.capabilityTable.defaultEngineType));
 
-    NEO::Drm::QueryTopologyData topologyData = {};
+    NEO::DrmQueryTopologyData topologyData = {};
     mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
     auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
     auto gtSystemInfo = &rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo;

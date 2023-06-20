@@ -73,7 +73,7 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     auto gtSystemInfo = &outHwInfo->gtSystemInfo;
     auto featureTable = &outHwInfo->featureTable;
 
-    Drm::QueryTopologyData topologyData = {};
+    DrmQueryTopologyData topologyData = {};
 
     bool status = drm->queryTopology(*outHwInfo, topologyData);
 

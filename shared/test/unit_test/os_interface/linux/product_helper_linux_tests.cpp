@@ -118,7 +118,7 @@ TEST_F(MockProductHelperTestLinux, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->storedSSVal = storedSSVal;
         drm->storedEUVal = 0;
 
-        Drm::QueryTopologyData topologyData = {};
+        DrmQueryTopologyData topologyData = {};
         EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
     }
 
@@ -128,7 +128,7 @@ TEST_F(MockProductHelperTestLinux, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->storedSSVal = 0;
         drm->storedEUVal = storedEUVal;
 
-        Drm::QueryTopologyData topologyData = {};
+        DrmQueryTopologyData topologyData = {};
         EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
     }
 
@@ -138,7 +138,7 @@ TEST_F(MockProductHelperTestLinux, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->storedSSVal = storedSSVal;
         drm->storedEUVal = storedEUVal;
 
-        Drm::QueryTopologyData topologyData = {};
+        DrmQueryTopologyData topologyData = {};
         EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
     }
 }

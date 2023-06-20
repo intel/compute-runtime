@@ -51,7 +51,6 @@ class DrmMock : public Drm {
     using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;
-    using Drm::translateTopologyInfo;
     using Drm::virtualMemoryIds;
 
     DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment);

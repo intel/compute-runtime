@@ -18,7 +18,7 @@ TEST(DrmQueryTopologyTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSe
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    Drm::QueryTopologyData topologyData = {};
+    DrmQueryTopologyData topologyData = {};
 
     EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
@@ -35,7 +35,7 @@ TEST(DrmQueryTopologyTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingRet
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drmMock{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    Drm::QueryTopologyData topologyData = {};
+    DrmQueryTopologyData topologyData = {};
 
     EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 

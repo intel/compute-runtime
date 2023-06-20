@@ -70,16 +70,6 @@ class Drm : public DriverModel {
 
     static SubmissionStatus getSubmissionStatusFromReturnCode(int32_t retCode);
 
-    struct QueryTopologyData {
-        int sliceCount;
-        int subSliceCount;
-        int euCount;
-
-        int maxSliceCount;
-        int maxSubSliceCount;
-        int maxEuCount;
-    };
-
     ~Drm() override;
 
     virtual int ioctl(DrmIoctl request, void *arg);
@@ -123,7 +113,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL bool sysmanQueryEngineInfo();
     MOCKABLE_VIRTUAL bool queryEngineInfo(bool isSysmanEnabled);
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
-    bool queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &data);
+    bool queryTopology(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData);
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId) const;
@@ -266,7 +256,6 @@ class Drm : public DriverModel {
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
     int getQueueSliceCount(GemContextParamSseu *sseu);
-    bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
     void printIoctlStatistics();

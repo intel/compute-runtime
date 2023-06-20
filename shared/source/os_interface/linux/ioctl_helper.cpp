@@ -405,6 +405,92 @@ std::unique_ptr<MemoryInfo> IoctlHelper::createMemoryInfo() {
     return {};
 }
 
+bool IoctlHelper::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
+
+    auto request = this->getDrmParamValue(DrmParam::QueryTopologyInfo);
+    auto dataQuery = drm.query(request, 0);
+    if (dataQuery.empty()) {
+        return false;
+    }
+    auto topologyInfo = reinterpret_cast<QueryTopologyInfo *>(dataQuery.data());
+
+    TopologyMapping mapping;
+    auto retVal = this->translateTopologyInfo(topologyInfo, topologyData, mapping);
+    topologyData.maxEuCount = topologyInfo->maxEusPerSubslice;
+
+    topologyMap.clear();
+    topologyMap[0] = mapping;
+
+    return retVal;
+}
+
+bool IoctlHelper::translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping) {
+    int sliceCount = 0;
+    int subSliceCount = 0;
+    int euCount = 0;
+    int maxSliceCount = 0;
+    int maxSubSliceCountPerSlice = 0;
+    std::vector<int> sliceIndices;
+    sliceIndices.reserve(maxSliceCount);
+
+    for (int x = 0; x < queryTopologyInfo->maxSlices; x++) {
+        bool isSliceEnable = (queryTopologyInfo->data[x / 8] >> (x % 8)) & 1;
+        if (!isSliceEnable) {
+            continue;
+        }
+        sliceIndices.push_back(x);
+        sliceCount++;
+
+        std::vector<int> subSliceIndices;
+        subSliceIndices.reserve(queryTopologyInfo->maxSubslices);
+
+        for (int y = 0; y < queryTopologyInfo->maxSubslices; y++) {
+            size_t yOffset = (queryTopologyInfo->subsliceOffset + x * queryTopologyInfo->subsliceStride + y / 8);
+            bool isSubSliceEnabled = (queryTopologyInfo->data[yOffset] >> (y % 8)) & 1;
+            if (!isSubSliceEnabled) {
+                continue;
+            }
+            subSliceCount++;
+            subSliceIndices.push_back(y);
+
+            for (int z = 0; z < queryTopologyInfo->maxEusPerSubslice; z++) {
+                size_t zOffset = (queryTopologyInfo->euOffset + (x * queryTopologyInfo->maxSubslices + y) * queryTopologyInfo->euStride + z / 8);
+                bool isEUEnabled = (queryTopologyInfo->data[zOffset] >> (z % 8)) & 1;
+                if (!isEUEnabled) {
+                    continue;
+                }
+                euCount++;
+            }
+        }
+
+        if (subSliceIndices.size()) {
+            maxSubSliceCountPerSlice = std::max(maxSubSliceCountPerSlice, subSliceIndices[subSliceIndices.size() - 1] + 1);
+        }
+
+        // single slice available
+        if (sliceCount == 1) {
+            mapping.subsliceIndices = std::move(subSliceIndices);
+        }
+    }
+
+    if (sliceIndices.size()) {
+        maxSliceCount = sliceIndices[sliceIndices.size() - 1] + 1;
+        mapping.sliceIndices = std::move(sliceIndices);
+    }
+
+    if (sliceCount != 1) {
+        mapping.subsliceIndices.clear();
+    }
+
+    topologyData.sliceCount = sliceCount;
+    topologyData.subSliceCount = subSliceCount;
+    topologyData.euCount = euCount;
+    topologyData.maxSliceCount = maxSliceCount;
+    topologyData.maxSubSliceCount = maxSubSliceCountPerSlice;
+
+    return (sliceCount && subSliceCount && euCount);
+}
+
 std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) {
     auto request = getDrmParamValue(DrmParam::QueryEngineInfo);
     auto enginesQuery = drm.query(request, 0);

@@ -26,6 +26,7 @@
 #include "drm/i915_drm_prelim.h"
 #include "drm/xe_drm.h"
 
+#include <algorithm>
 #include <iostream>
 
 #define XE_FIND_INVALID_INSTANCE 16
@@ -55,9 +56,6 @@ int IoctlHelperXe::xeGetQuery(Query *data) {
         switch (queryItem->queryId) {
         case static_cast<int>(DrmParam::QueryHwconfigTable):
             queryData = &hwconfigFakei915;
-            break;
-        case static_cast<int>(DrmParam::QueryTopologyInfo):
-            queryData = &topologyFakei915;
             break;
         default:
             xeLog("error: bad query 0x%x\n", queryItem->queryId);
@@ -141,7 +139,6 @@ bool IoctlHelperXe::initialize() {
     DebugManager.flags.ForceUserptrAlignment.set(64);
     DebugManager.flags.UseVmBind.set(1);
     DebugManager.flags.EnableImmediateVmBindExt.set(1);
-    DebugManager.flags.UseNewQueryTopoIoctl.set(0);
     DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
 
     struct drm_xe_device_query queryConfig = {};
@@ -194,50 +191,6 @@ bool IoctlHelperXe::initialize() {
     queryConfig.data = castToUint64(hwconfigFakei915.data());
     IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
 
-    memset(&queryConfig, 0, sizeof(queryConfig));
-    queryConfig.query = DRM_XE_DEVICE_QUERY_GT_TOPOLOGY;
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-    std::vector<uint8_t> topology(queryConfig.size);
-    queryConfig.data = castToUint64(topology.data());
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-    std::vector<uint8_t> geomDss;
-    std::vector<uint8_t> computeDss;
-    std::vector<uint8_t> euDss;
-    uint32_t topologySize = queryConfig.size;
-    uint8_t *dataPtr = reinterpret_cast<uint8_t *>(topology.data());
-    while (topologySize >= sizeof(struct drm_xe_query_topology_mask)) {
-        struct drm_xe_query_topology_mask *topo = reinterpret_cast<struct drm_xe_query_topology_mask *>(dataPtr);
-        uint32_t itemSize = sizeof(struct drm_xe_query_topology_mask) + topo->num_bytes;
-        std::vector<uint8_t> *toFill = nullptr;
-
-        switch (topo->type) {
-        case XE_TOPO_DSS_GEOMETRY:
-            toFill = &geomDss;
-            break;
-        case XE_TOPO_DSS_COMPUTE:
-            toFill = &computeDss;
-            break;
-        case XE_TOPO_EU_PER_DSS:
-            toFill = &euDss;
-            break;
-        default:
-            xeLog("Un handle GT Topo type: %d\n", topo->type);
-            break;
-        }
-        if (toFill != nullptr) {
-            for (uint32_t j = 0; j < topo->num_bytes; j++)
-                toFill->push_back(topo->mask[j]);
-        }
-        topologySize -= itemSize;
-        dataPtr += itemSize;
-    }
-    topologyFakei915 = xeRebuildi915Topology(&geomDss, &computeDss, &euDss);
-    if (topologyFakei915.size()) {
-        ret = true;
-    } else {
-        xeLog("can't get i915 topology\n", "");
-        UNRECOVERABLE_IF(true);
-    }
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = chipsetId;
     hwInfo->platform.usRevId = revId;
@@ -367,6 +320,120 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         xeTimestampFrequency = xeGtsData->gts[i].clock_freq;
     }
     return std::make_unique<MemoryInfo>(regionsContainer, drm);
+}
+
+void IoctlHelperXe::getTopologyData(uint32_t nTiles, std::vector<std::bitset<8>> geomDss[2], std::vector<std::bitset<8>> computeDss[2], std::vector<std::bitset<8>> euDss[2], DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty) {
+    int subSliceCount = 0;
+    int euPerDss = 0;
+
+    for (auto tileId = 0u; tileId < nTiles; tileId++) {
+
+        int subSliceCountPerTile = 0;
+
+        for (auto byte = 0u; byte < computeDss[tileId].size(); byte++) {
+            subSliceCountPerTile += computeDss[tileId][byte].count();
+        }
+
+        if (subSliceCountPerTile == 0) {
+            isComputeDssEmpty = true;
+            for (auto byte = 0u; byte < geomDss[tileId].size(); byte++) {
+                subSliceCountPerTile += geomDss[tileId][byte].count();
+            }
+        }
+
+        int euPerDssPerTile = 0;
+        for (auto byte = 0u; byte < euDss[tileId].size(); byte++) {
+            euPerDssPerTile += euDss[tileId][byte].count();
+        }
+
+        // pick smallest config
+        subSliceCount = (subSliceCount == 0) ? subSliceCountPerTile : std::min(subSliceCount, subSliceCountPerTile);
+        euPerDss = (euPerDss == 0) ? euPerDssPerTile : std::min(euPerDss, euPerDssPerTile);
+
+        // pick max config
+        topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, subSliceCountPerTile);
+        topologyData.maxEuCount = std::max(topologyData.maxEuCount, euPerDssPerTile * subSliceCountPerTile);
+    }
+
+    topologyData.sliceCount = 1;
+    topologyData.subSliceCount = subSliceCount;
+    topologyData.euCount = subSliceCount * euPerDss;
+    topologyData.maxSliceCount = 1;
+}
+
+void IoctlHelperXe::getTopologyMap(uint32_t nTiles, std::vector<std::bitset<8>> dssInfo[2], TopologyMap &topologyMap) {
+    for (auto tileId = 0u; tileId < nTiles; tileId++) {
+        std::vector<int> sliceIndices;
+        std::vector<int> subSliceIndices;
+
+        sliceIndices.push_back(0);
+
+        for (auto byte = 0u; byte < dssInfo[tileId].size(); byte++) {
+            for (auto bit = 0u; bit < 8u; bit++) {
+                if (dssInfo[tileId][byte].test(bit)) {
+                    auto subSliceIndex = byte * 8 + bit;
+                    subSliceIndices.push_back(subSliceIndex);
+                }
+            }
+        }
+
+        topologyMap[tileId].sliceIndices = std::move(sliceIndices);
+        topologyMap[tileId].subsliceIndices = std::move(subSliceIndices);
+    }
+}
+
+bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
+
+    auto queryGtTopology = queryData(DRM_XE_DEVICE_QUERY_GT_TOPOLOGY);
+
+    auto fillMask = [](std::vector<std::bitset<8>> &vec, drm_xe_query_topology_mask *topo) {
+        for (uint32_t j = 0; j < topo->num_bytes; j++) {
+            vec.push_back(topo->mask[j]);
+        }
+    };
+
+    std::vector<std::bitset<8>> geomDss[2];
+    std::vector<std::bitset<8>> computeDss[2];
+    std::vector<std::bitset<8>> euDss[2];
+    auto topologySize = queryGtTopology.size();
+    uint8_t *dataPtr = reinterpret_cast<uint8_t *>(queryGtTopology.data());
+
+    auto nTiles = 1u;
+
+    while (topologySize >= sizeof(drm_xe_query_topology_mask)) {
+        drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
+        UNRECOVERABLE_IF(topo == nullptr);
+
+        uint32_t tileId = topo->gt_id;
+        nTiles = std::max(tileId + 1, nTiles);
+
+        switch (topo->type) {
+        case XE_TOPO_DSS_GEOMETRY:
+            fillMask(geomDss[tileId], topo);
+            break;
+        case XE_TOPO_DSS_COMPUTE:
+            fillMask(computeDss[tileId], topo);
+            break;
+        case XE_TOPO_EU_PER_DSS:
+            fillMask(euDss[tileId], topo);
+            break;
+        default:
+            xeLog("Unhandle GT Topo type: %d\n", topo->type);
+            return false;
+        }
+
+        uint32_t itemSize = sizeof(drm_xe_query_topology_mask) + topo->num_bytes;
+        topologySize -= itemSize;
+        dataPtr += itemSize;
+    }
+
+    bool isComputeDssEmpty = false;
+    getTopologyData(nTiles, geomDss, computeDss, euDss, topologyData, isComputeDssEmpty);
+
+    auto &dssInfo = isComputeDssEmpty ? geomDss : computeDss;
+    getTopologyMap(nTiles, dssInfo, topologyMap);
+
+    return true;
 }
 
 int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
@@ -1379,87 +1446,6 @@ bool IoctlHelperXe::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint3
 
 bool IoctlHelperXe::isWaitBeforeBindRequired(bool bind) const {
     return true;
-}
-
-static uint32_t getVectorGetMax(std::vector<uint8_t> *data) {
-    uint32_t ret = 0;
-    for (uint32_t i = 0; i < static_cast<uint32_t>(data->size()); i++) {
-        for (uint32_t j = 0; j < 8; j++) {
-            if ((*data)[i] & (1 << j)) {
-                ret = (j + 1 + (i * 8));
-            }
-        }
-    }
-    return ret;
-}
-
-static uint32_t isBitOn(std::vector<uint8_t> *data, uint32_t n) {
-    if (n / 8 < static_cast<uint32_t>(data->size())) {
-        return isBitSet((*data)[n / 8], n % 8);
-    }
-    return 0;
-}
-
-std::vector<uint8_t> IoctlHelperXe::xeRebuildi915Topology(std::vector<uint8_t> *geomDss,
-                                                          std::vector<uint8_t> *computeDss,
-                                                          std::vector<uint8_t> *euDss) {
-    std::vector<uint8_t> ret;
-    xeLog("GeomDss %ld %d\n", geomDss->size(), getVectorGetMax(geomDss));
-    xeLog("ComputeDss %ld %d\n", computeDss->size(), getVectorGetMax(computeDss));
-    xeLog("EuDss %ld %d\n", euDss->size(), getVectorGetMax(euDss));
-    uint32_t maxEuPerDss = getVectorGetMax(euDss);
-    uint32_t maxSubslice = getVectorGetMax(geomDss);
-    std::vector<uint8_t> *currentDss = geomDss;
-    if (!maxSubslice) {
-        maxSubslice = getVectorGetMax(computeDss);
-        currentDss = computeDss;
-        if (!maxSubslice) {
-            xeLog("incorrect number of slices !\n", "");
-            return {};
-        }
-    }
-    uint32_t ssStride = static_cast<uint32_t>(Math::divideAndRoundUp(maxSubslice, 8));
-    uint32_t euStride = static_cast<uint32_t>(Math::divideAndRoundUp(maxEuPerDss, 8));
-    uint32_t maxSlice = 1;
-    uint32_t sliceLength = 1;
-    uint32_t subsliceLength = maxSlice * ssStride;
-    uint32_t euLength = maxSlice * maxSubslice * euStride;
-    uint32_t totalLength = sizeof(struct drm_i915_query_topology_info) + sliceLength + subsliceLength + euLength;
-
-    xeLog("maxSlice:%d maxSubslice:%d maxEuPerDss:%d euStride:%d ssStride:%d\n",
-          maxSlice, maxSubslice, maxEuPerDss, euStride, ssStride);
-    xeLog("subsliceLength:%d euLength:%d totalLength:%d total_eu:%d\n",
-          subsliceLength, euLength, totalLength, maxEuPerDss * maxSubslice);
-
-    {
-        ret.resize(sizeof(struct drm_i915_query_topology_info));
-        auto topology = reinterpret_cast<struct drm_i915_query_topology_info *>(ret.data());
-        topology->max_slices = maxSlice;
-        topology->max_subslices = maxSubslice;
-        topology->max_eus_per_subslice = maxEuPerDss;
-        topology->subslice_offset = sliceLength;
-        topology->subslice_stride = ssStride;
-        topology->eu_offset = sliceLength + subsliceLength;
-        topology->eu_stride = euStride;
-    }
-    ret.push_back(maxSlice);
-    for (uint32_t i = 0; i < ssStride; i++) {
-        ret.push_back((*currentDss)[i]);
-    }
-    for (uint32_t i = 0; i < maxSubslice; i++) {
-        if (isBitOn(currentDss, i)) {
-            for (uint32_t j = 0; j < euStride; j++)
-                ret.push_back((*euDss)[j]);
-        } else {
-            for (uint32_t j = 0; j < euStride; j++)
-                ret.push_back(0);
-        }
-    }
-    if (ret.size() != totalLength) {
-        xeLog("Error while rebuilding i915 topology %ld %d\n", ret.size(), totalLength);
-        return {};
-    }
-    return ret;
 }
 
 } // namespace NEO

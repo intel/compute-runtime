@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -28,6 +29,8 @@ enum class PreferredLocation : int16_t;
 struct HardwareInfo;
 struct HardwareIpVersion;
 struct EngineInfo;
+struct DrmQueryTopologyData;
+
 class MemoryInfo;
 
 struct MemoryRegion {
@@ -151,6 +154,8 @@ class IoctlHelper {
     uint32_t getFlagsForPrimeHandleToFd() const;
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo();
     virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled);
+    virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap);
+    bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping);
 
   protected:
     Drm &drm;
@@ -283,6 +288,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool isWaitBeforeBindRequired(bool bind) const override;
     void *pciBarrierMmap() override;
     void setupIpVersion() override;
+    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
 
   protected:
     bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);

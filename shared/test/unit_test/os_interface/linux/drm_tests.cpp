@@ -1001,7 +1001,7 @@ TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopolo
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.disableSomeTopology = true;
 
-    Drm::QueryTopologyData topologyData = {};
+    DrmQueryTopologyData topologyData = {};
     drm.storedSVal = 4;
     drm.storedSSVal = drm.storedSVal * 7;
     drm.storedEUVal = drm.storedSSVal * 4;
@@ -1022,7 +1022,7 @@ TEST(DrmQueryTest, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
     *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
     DrmMock drmMock{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    Drm::QueryTopologyData topologyData = {};
+    DrmQueryTopologyData topologyData = {};
 
     EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
@@ -1041,7 +1041,7 @@ TEST(DrmQueryTest, GivenSingleSliceConfigWhenQueryingTopologyInfoThenSubsliceInd
     *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    Drm::QueryTopologyData topologyData = {};
+    DrmQueryTopologyData topologyData = {};
     drm.storedSVal = 1;
     drm.storedSSVal = drm.storedSVal * 7;
     drm.storedEUVal = drm.storedSSVal * 4;
@@ -1073,7 +1073,7 @@ TEST(DrmQueryTest, GivenMultiSliceConfigWhenQueryingTopologyInfoThenSubsliceIndi
     *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    Drm::QueryTopologyData topologyData = {};
+    DrmQueryTopologyData topologyData = {};
     drm.storedSVal = 2;
     drm.storedSSVal = drm.storedSVal * 7;
     drm.storedEUVal = drm.storedSSVal * 4;
