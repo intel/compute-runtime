@@ -14,7 +14,8 @@ class WddmSysmanImp;
 class FirmwareUtil;
 
 FirmwareUtil *EccImp::getFirmwareUtilInterface(OsSysman *pOsSysman) {
-    return nullptr;
+    WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
+    return pWddmSysmanImp->getFwUtilInterface();
 }
 
 } // namespace Sysman
