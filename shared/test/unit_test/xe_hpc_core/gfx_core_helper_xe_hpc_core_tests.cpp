@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -93,9 +94,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallGetAmountOfAlloca
 
 HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenReturnFalse, IGFX_XE_HPC_CORE);
 
-XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenReturnFalse) {
+XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenCheckApiSpecificConfig) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
-    EXPECT_FALSE(gfxCoreHelper.isRelaxedOrderingSupported());
+    EXPECT_EQ(ApiSpecificConfig::isRelaxedOrderingEnabled(), gfxCoreHelper.isRelaxedOrderingSupported());
 }

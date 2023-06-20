@@ -13,6 +13,7 @@ using Family = NEO::XeHpcCoreFamily;
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
@@ -425,7 +426,7 @@ uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
 
 template <>
 bool GfxCoreHelperHw<Family>::isRelaxedOrderingSupported() const {
-    return false;
+    return ApiSpecificConfig::isRelaxedOrderingEnabled();
 }
 
 } // namespace NEO

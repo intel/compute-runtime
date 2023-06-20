@@ -39,6 +39,10 @@ bool ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled() {
     return (NEO::DebugManager.flags.EnableDynamicPostSyncAllocLayout.get() == 1);
 }
 
+bool ApiSpecificConfig::isRelaxedOrderingEnabled() {
+    return false;
+}
+
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::L0;
 }
