@@ -21,8 +21,7 @@
 #include "level_zero/sysman/source/linux/pmu/sysman_pmu.h"
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/pci/linux/sysman_os_pci_imp.h"
-
-#include <linux/pci_regs.h>
+#include "level_zero/sysman/source/pci/sysman_pci_utils.h"
 
 namespace L0 {
 namespace Sysman {

@@ -45,10 +45,6 @@ struct MockPciSysfsAccess : public L0::Sysman::SysfsAccess {
 
     bool isStringSymLinkEmpty = false;
 
-    bool isRootUser() override {
-        return true;
-    }
-
     ze_result_t getValStringSymLinkEmpty(const std::string file, std::string &val) {
         if (file.compare(deviceDir) == 0) {
             val = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/";
@@ -91,6 +87,8 @@ struct MockPciSysfsAccess : public L0::Sysman::SysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
+    ADDMETHOD_NOBASE(isRootUser, bool, true, ());
+
     MockPciSysfsAccess() = default;
 };
 
@@ -98,10 +96,7 @@ class PublicLinuxPciImp : public L0::Sysman::LinuxPciImp {
   public:
     PublicLinuxPciImp(L0::Sysman::OsSysman *pOsSysman) : L0::Sysman::LinuxPciImp(pOsSysman) {}
     using L0::Sysman::LinuxPciImp::closeFunction;
-    using L0::Sysman::LinuxPciImp::configMemory;
     using L0::Sysman::LinuxPciImp::openFunction;
-    using L0::Sysman::LinuxPciImp::pciCardBusConfigRead;
-    using L0::Sysman::LinuxPciImp::pciExtendedConfigRead;
     using L0::Sysman::LinuxPciImp::preadFunction;
     using L0::Sysman::LinuxPciImp::pSysfsAccess;
 };

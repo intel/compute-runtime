@@ -13,8 +13,6 @@
 
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 
-#include <linux/pci_regs.h>
-
 namespace L0 {
 namespace Sysman {
 const std::string LinuxDiagnosticsImp::deviceDir("device");

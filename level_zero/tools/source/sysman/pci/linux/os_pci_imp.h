@@ -28,6 +28,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     static uint32_t getRebarCapabilityPos(uint8_t *configMemory, bool isVfBar);
+    static uint16_t getLinkCapabilityPos(uint8_t *configMem);
     LinuxPciImp() = default;
     LinuxPciImp(OsSysman *pOsSysman);
     ~LinuxPciImp() override = default;
@@ -35,10 +36,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    std::unique_ptr<uint8_t[]> configMemory;
-    std::unique_ptr<uint8_t[]> uspConfigMemory;
-    void pciExtendedConfigRead();
-    void pciCardBusConfigRead();
+    bool getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &configMem);
     decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
     decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
@@ -49,17 +47,6 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     static const std::string maxLinkSpeedFile;
     static const std::string maxLinkWidthFile;
     bool isLmemSupported = false;
-    static inline uint32_t getDwordFromConfig(uint32_t pos, uint8_t *configMemory) {
-        return configMemory[pos] | (configMemory[pos + 1] << 8) |
-               (configMemory[pos + 2] << 16) | (configMemory[pos + 3] << 24);
-    }
-    uint16_t getWordFromConfig(uint32_t pos, uint8_t *configMem) {
-        return configMem[pos] | (configMem[pos + 1] << 8);
-    }
-    uint8_t getByteFromConfig(uint32_t pos, uint8_t *configMem) {
-        return configMem[pos];
-    }
-    uint16_t getLinkCapabilityPos();
 };
 
 } // namespace L0
