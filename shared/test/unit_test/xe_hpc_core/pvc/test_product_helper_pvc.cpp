@@ -291,7 +291,7 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperAndKernelBinaryFormatsWhenCheck
     {
         kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Zebin;
         kernelDescriptor.kernelAttributes.simdSize = 8u;
-        EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
+        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
     }
 }
 
