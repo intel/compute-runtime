@@ -270,6 +270,25 @@ MTLTEST_F(MtlProductHelper, givenMtlWhenCallIsAdjustWalkOrderAvailableThenReturn
     }
 }
 
+MTLTEST_F(MtlProductHelper, givenMtlWhenCallIsGetMediaFrequencyTileIndexThenReturnProperValue) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    unsigned int gmdReleases[] = {70, 71};
+    defaultHwInfo->ipVersion.architecture = 12;
+
+    for (auto gmdRelease : gmdReleases) {
+        defaultHwInfo->ipVersion.release = gmdRelease;
+        refreshReleaseHelper(defaultHwInfo.get());
+        uint32_t tileIndex = 0;
+        EXPECT_TRUE(productHelper->getMediaFrequencyTileIndex(releaseHelper, tileIndex));
+    }
+}
+
+MTLTEST_F(MtlProductHelper, givenMtlAndReleaseHelperNullptrWhenCallingGetMediaFrequencyTileIndexThenReturnFalse) {
+    uint32_t tileIndex = 0;
+    ReleaseHelper *releaseHelper = nullptr;
+    EXPECT_FALSE(productHelper->getMediaFrequencyTileIndex(releaseHelper, tileIndex));
+}
+
 MTLTEST_F(MtlProductHelper, givenMtlAndReleaseHelperNullptrWhengetIsMatrixMultiplyAccumulateSupportedThenReturnsFalse) {
     auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     ReleaseHelper *releaseHelper = nullptr;

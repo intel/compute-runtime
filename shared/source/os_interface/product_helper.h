@@ -208,6 +208,7 @@ class ProductHelper {
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
+    virtual bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const = 0;
 
     virtual ~ProductHelper() = default;
 
