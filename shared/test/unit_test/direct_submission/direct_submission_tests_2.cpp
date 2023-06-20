@@ -1609,6 +1609,15 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispa
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier * batchBuffer.numCsrClients, directSubmission.currentRelaxedOrderingQueueSize);
     EXPECT_TRUE(findStaticSchedulerUpdate(directSubmission.ringCommandStream, offset, RelaxedOrderingHelper::queueSizeMultiplier * batchBuffer.numCsrClients));
+
+    offset = directSubmission.ringCommandStream.getUsed();
+    batchBuffer.numCsrClients = 5;
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
+    EXPECT_TRUE((RelaxedOrderingHelper::queueSizeMultiplier * batchBuffer.numCsrClients) > RelaxedOrderingHelper::maxQueueSize);
+    EXPECT_EQ(RelaxedOrderingHelper::maxQueueSize, directSubmission.currentRelaxedOrderingQueueSize);
+    EXPECT_FALSE(findStaticSchedulerUpdate(directSubmission.ringCommandStream, offset, RelaxedOrderingHelper::queueSizeMultiplier * batchBuffer.numCsrClients));
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStaticScheduler, IsAtLeastXeHpcCore) {

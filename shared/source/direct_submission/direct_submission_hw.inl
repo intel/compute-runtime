@@ -34,6 +34,7 @@
 
 #include "create_direct_submission_hw.inl"
 
+#include <algorithm>
 #include <cstring>
 
 namespace NEO {
@@ -745,6 +746,8 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         dispatchTaskStoreSection(batchBuffer.taskStartAddress);
 
         uint32_t expectedQueueSize = batchBuffer.numCsrClients * RelaxedOrderingHelper::queueSizeMultiplier;
+        expectedQueueSize = std::min(expectedQueueSize, RelaxedOrderingHelper::maxQueueSize);
+
         if (expectedQueueSize > this->currentRelaxedOrderingQueueSize && DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() == -1) {
             updateRelaxedOrderingQueueSize(expectedQueueSize);
         }

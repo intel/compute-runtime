@@ -17,6 +17,7 @@ namespace RelaxedOrderingHelper {
 bool isRelaxedOrderingDispatchAllowed(const CommandStreamReceiver &csr, uint32_t numWaitEvents);
 
 static constexpr uint32_t queueSizeMultiplier = 4;
+static constexpr uint32_t maxQueueSize = 16;
 
 template <typename GfxFamily>
 void encodeRegistersBeforeDependencyCheckers(LinearStream &cmdStream) {
