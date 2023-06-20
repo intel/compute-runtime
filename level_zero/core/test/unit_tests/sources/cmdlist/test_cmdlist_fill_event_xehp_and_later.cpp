@@ -812,7 +812,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 2;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
@@ -835,7 +835,7 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
 
     if (input.signalAllPackets) {
         arg.expectStoreDataImm = testEvent->getMaxPacketsCount() - 1;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillManyImmediateKernels<gfxCoreFamily>(input, arg);
@@ -856,7 +856,7 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
 
     if (input.signalAllPackets) {
         arg.expectStoreDataImm = testEvent->getMaxPacketsCount() - 1;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
@@ -872,7 +872,7 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
 
     if (input.signalAllPackets) {
         arg.expectStoreDataImm = testEvent->getMaxPacketsCount() - 1;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillSingleKernel<gfxCoreFamily>(input, arg);
@@ -975,7 +975,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 2;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testMultiTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
@@ -990,6 +990,10 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     // cache flush with event signal
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
+
+    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+        arg.expectedWalkerPostSyncOp = 1;
+    }
 
     input.eventPoolFlags = 0;
 
@@ -1023,7 +1027,7 @@ HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
         if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             constexpr uint32_t reminderPostSyncOps = 1;
             arg.expectStoreDataImm = reminderPostSyncOps;
-            input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+            input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
         }
     }
 
@@ -1133,7 +1137,7 @@ HWTEST2_F(AppendFillCompactL3EventTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 2;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);

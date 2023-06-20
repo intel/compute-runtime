@@ -529,6 +529,10 @@ HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushDisabledTest,
     arg.expectedWalkerPostSyncOp = 3;
     arg.postSyncAddressZero = false;
 
+    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+        arg.expectedWalkerPostSyncOp = 1;
+    }
+
     input.eventPoolFlags = 0;
 
     testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
