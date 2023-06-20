@@ -10,7 +10,9 @@
 #include "level_zero/sysman/test/unit_tests/sources/scheduler/linux/mock_sysfs_scheduler.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr uint32_t handleComponentCount = 4u;
 constexpr uint64_t convertMilliToMicro = 1000u;
 constexpr uint64_t defaultTimeoutMilliSecs = 650u;
@@ -636,4 +638,5 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingSchedProperti
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

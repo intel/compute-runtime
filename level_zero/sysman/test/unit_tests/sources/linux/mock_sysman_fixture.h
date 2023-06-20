@@ -28,7 +28,9 @@
 using namespace NEO;
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
   public:
     using LinuxSysmanImp::mapOfSubDeviceIdToPmtObject;
@@ -155,4 +157,5 @@ class PublicLinuxSysmanDriverImp : public L0::Sysman::LinuxSysmanDriverImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

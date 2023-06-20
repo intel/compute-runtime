@@ -10,6 +10,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 struct MockEngineKmdSysManager : public MockKmdSysManager {
@@ -77,4 +78,5 @@ struct MockEngineKmdSysManager : public MockKmdSysManager {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

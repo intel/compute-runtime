@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
@@ -17,6 +18,7 @@
 #endif
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 template <typename Type>
@@ -49,6 +51,7 @@ struct WhiteBox<::NEO::OsAgnosticMemoryManager> : public ::NEO::OsAgnosticMemory
 using MemoryManagerMock = WhiteBox<::NEO::OsAgnosticMemoryManager>;
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0
 
 #if defined(__clang__)

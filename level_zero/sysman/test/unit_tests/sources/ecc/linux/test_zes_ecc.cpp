@@ -10,6 +10,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/ecc/linux/mock_ecc.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 enum eccState : uint8_t {
@@ -182,4 +183,5 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleWhenCallingEccSetStateAndEccGetState
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -9,6 +9,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t powerHandleComponentCount = 1u;
@@ -286,4 +287,5 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPower
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

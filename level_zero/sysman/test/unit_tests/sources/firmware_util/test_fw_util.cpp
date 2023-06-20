@@ -12,6 +12,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 static uint32_t mockFwUtilDeviceCloseCallCount = 0;
@@ -49,24 +50,25 @@ TEST(FwUtilDeleteTest, GivenLibraryWasSetWhenFirmwareUtilInterfaceIsDeletedThenL
 }
 
 TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceAndGetProcAddressFailsThenFirmwareUtilInterfaceIsNotCreated) {
-    L0::Sysman::FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
+    L0::Sysman::FirmwareUtilImp::osLibraryLoadFunction = L0::Sysman::ult::MockFwUtilOsLibrary::load;
     L0::Sysman::FirmwareUtil *pFwUtil = L0::Sysman::FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);
 }
 
 TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceAndIgscDeviceIterCreateFailsThenFirmwareUtilInterfaceIsNotCreated) {
 
-    L0::Sysman::FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
+    L0::Sysman::FirmwareUtilImp::osLibraryLoadFunction = L0::Sysman::ult::MockFwUtilOsLibrary::load;
     L0::Sysman::FirmwareUtil *pFwUtil = L0::Sysman::FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);
 }
 
 TEST(FwUtilTest, GivenLibraryWasNotSetWhenCreatingFirmwareUtilInterfaceThenFirmwareUtilInterfaceIsNotCreated) {
-    L0::ult::MockFwUtilOsLibrary::mockLoad = false;
-    L0::Sysman::FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
+    L0::Sysman::ult::MockFwUtilOsLibrary::mockLoad = false;
+    L0::Sysman::FirmwareUtilImp::osLibraryLoadFunction = L0::Sysman::ult::MockFwUtilOsLibrary::load;
     L0::Sysman::FirmwareUtil *pFwUtil = L0::Sysman::FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

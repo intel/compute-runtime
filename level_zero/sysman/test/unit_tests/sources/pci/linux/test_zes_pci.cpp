@@ -11,7 +11,9 @@
 #include <string>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr uint32_t expectedBus = 0u;
 constexpr uint32_t expectedDevice = 2u;
 constexpr uint32_t expectedFunction = 0u;
@@ -219,7 +221,7 @@ class ZesPciFixture : public SysmanDeviceFixture {
     L0::Sysman::FsAccess *pOriginalFsAccess = nullptr;
     L0::Sysman::PciImp *pPciImp;
     L0::Sysman::OsPci *pOsPciPrev;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<L0::ult::Mock<L0::DriverHandleImp>> driverHandle;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -651,4 +653,5 @@ TEST_F(ZesPciFixture, WhenConvertingLinkSpeedFromGigatransfersPerSecondToBytesPe
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

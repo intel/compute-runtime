@@ -17,6 +17,8 @@ extern L0::Sysman::pIgscIfrGetStatusExt L0::Sysman::deviceIfrGetStatusExt;
 extern L0::Sysman::pIgscIfrRunMemPPRTest L0::Sysman::deviceIfrRunMemPPRTest;
 extern L0::Sysman::pIgscGetEccConfig getEccConfig;
 extern L0::Sysman::pIgscSetEccConfig setEccConfig;
+
+namespace Sysman {
 namespace ult {
 
 constexpr static uint32_t mockMaxTileCount = 2;
@@ -424,4 +426,5 @@ TEST(FwGetMemHealthIndicatorTest, GivenFwGetHealthIndicatorProcAddrIsNullWhenMem
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -11,7 +11,9 @@
 #include <cmath>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 struct SysmanPmuFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockPmuInterface> pPmuInterface;
@@ -128,4 +130,5 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenAndDomainErrorOccursThenDomainEr
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

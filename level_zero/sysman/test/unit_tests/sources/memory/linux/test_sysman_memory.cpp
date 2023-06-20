@@ -12,6 +12,7 @@
 #include "gtest/gtest.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t memoryHandleComponentCount = 1u;
@@ -137,4 +138,5 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingMemoryPropert
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

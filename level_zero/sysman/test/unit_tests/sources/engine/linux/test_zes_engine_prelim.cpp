@@ -12,7 +12,9 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr uint32_t handleComponentCount = 13u;
 constexpr uint32_t handleCountForMultiDeviceFixture = 7u;
 class ZesEngineFixture : public SysmanDeviceFixture {
@@ -386,4 +388,5 @@ TEST_F(ZesEngineMultiFixture, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFail
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

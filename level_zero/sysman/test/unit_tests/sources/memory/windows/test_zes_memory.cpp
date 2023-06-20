@@ -10,6 +10,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t memoryHandleComponentCount = 1u;
@@ -166,4 +167,5 @@ TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingBand
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

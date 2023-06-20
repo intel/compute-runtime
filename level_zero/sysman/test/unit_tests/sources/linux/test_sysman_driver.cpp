@@ -24,8 +24,8 @@
 #include <cstring>
 
 namespace L0 {
-namespace ult {
 namespace Sysman {
+namespace ult {
 
 TEST(zesInit, whenCallingZesInitThenInitializeOnDriverIsCalled) {
     MockSysmanDriver driver;
@@ -294,6 +294,6 @@ TEST_F(SysmanDriverHandleTest, whenQueryingForDevicesWithCountGreaterThanZeroAnd
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, result);
 }
 
-} // namespace Sysman
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

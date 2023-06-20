@@ -5,12 +5,14 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/sysman_hw_device_id_linux.h"
-
 #pragma once
 
+#include "level_zero/sysman/source/linux/sysman_hw_device_id_linux.h"
+
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 class MockSysmanHwDeviceIdDrm : public L0::Sysman::SysmanHwDeviceIdDrm {
   public:
     using L0::Sysman::SysmanHwDeviceIdDrm::SysmanHwDeviceIdDrm;
@@ -27,4 +29,5 @@ class MockSysmanHwDeviceIdDrm : public L0::Sysman::SysmanHwDeviceIdDrm {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

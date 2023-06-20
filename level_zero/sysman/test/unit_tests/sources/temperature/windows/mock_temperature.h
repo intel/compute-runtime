@@ -6,10 +6,12 @@
  */
 
 #pragma once
+
 #include "level_zero/sysman/source/temperature/sysman_temperature_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t temperatureHandleComponentCount = 3u;
@@ -80,4 +82,5 @@ struct TemperatureKmdSysManager : public MockKmdSysManager {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

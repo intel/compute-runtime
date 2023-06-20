@@ -6,12 +6,14 @@
  */
 
 #pragma once
+
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/pci/linux/sysman_os_pci_imp.h"
 #include "level_zero/sysman/source/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string deviceDir("device");
@@ -105,4 +107,5 @@ class PublicLinuxPciImp : public L0::Sysman::LinuxPciImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -6,10 +6,12 @@
  */
 
 #pragma once
+
 #include "level_zero/sysman/source/performance/windows/sysman_os_performance_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 struct PerformanceKmdSysManager : public MockKmdSysManager {
@@ -85,4 +87,5 @@ class PublicWddmPerformanceImp : public L0::Sysman::WddmPerformanceImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

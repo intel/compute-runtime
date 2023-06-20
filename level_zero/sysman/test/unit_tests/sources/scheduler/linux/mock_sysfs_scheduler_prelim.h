@@ -16,6 +16,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string preemptTimeoutMilliSecs("preempt_timeout_ms");
@@ -597,4 +598,5 @@ class PublicLinuxSchedulerImp : public L0::Sysman::LinuxSchedulerImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

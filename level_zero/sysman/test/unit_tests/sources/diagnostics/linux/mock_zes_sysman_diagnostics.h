@@ -6,10 +6,12 @@
  */
 
 #pragma once
+
 #include "level_zero/sysman/source/diagnostics/linux/sysman_os_diagnostics_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 uint32_t mockDiagHandleCount = 2;
@@ -260,5 +262,7 @@ class PublicLinuxDiagnosticsImp : public L0::Sysman::LinuxDiagnosticsImp {
     using L0::Sysman::LinuxDiagnosticsImp::pSysfsAccess;
     using L0::Sysman::LinuxDiagnosticsImp::waitForQuiescentCompletion;
 };
+
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint64_t memSize1 = 2048;
@@ -940,4 +941,5 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenS
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

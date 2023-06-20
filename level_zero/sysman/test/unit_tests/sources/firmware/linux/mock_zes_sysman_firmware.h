@@ -6,10 +6,12 @@
  */
 
 #pragma once
+
 #include "level_zero/sysman/source/firmware/linux/sysman_os_firmware_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t mockHandleCount = 2;
@@ -83,5 +85,7 @@ class PublicLinuxFirmwareImp : public L0::Sysman::LinuxFirmwareImp {
   public:
     using LinuxFirmwareImp::pFwInterface;
 };
+
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -18,6 +18,7 @@
 #include <limits>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr auto maxNumPorts = 32u;
@@ -558,4 +559,5 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortG
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

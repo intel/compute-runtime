@@ -17,6 +17,7 @@
 using namespace NEO;
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class PublicWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
@@ -60,4 +61,5 @@ class SysmanDeviceFixture : public ::testing::Test {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

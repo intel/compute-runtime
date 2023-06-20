@@ -8,6 +8,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/power/linux/mock_sysfs_power_prelim.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 static int fakeFileDescriptor = 123;
@@ -791,4 +792,5 @@ TEST_F(SysmanDevicePowerMultiDeviceFixture, GivenValidPowerHandleWhenGettingPowe
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

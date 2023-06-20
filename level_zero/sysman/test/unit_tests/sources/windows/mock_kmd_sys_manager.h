@@ -11,6 +11,7 @@
 #include "level_zero/zes_api.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t mockKmdVersionMajor = 1;
@@ -511,4 +512,5 @@ struct MockKmdSysManager : public L0::Sysman::KmdSysManager {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -16,6 +16,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory_prelim.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr int32_t memoryBusWidth = 128; // bus width in bits
@@ -824,4 +825,5 @@ TEST_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysma
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

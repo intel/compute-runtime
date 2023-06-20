@@ -17,6 +17,7 @@
 #include <map>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class MyNlattr {
@@ -159,4 +160,5 @@ class MockNlApi : public L0::Sysman::NlApi {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

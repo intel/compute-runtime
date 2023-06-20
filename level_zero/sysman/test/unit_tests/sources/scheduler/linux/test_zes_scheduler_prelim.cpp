@@ -12,7 +12,9 @@
 using namespace NEO;
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr uint32_t handleComponentCount = 5u;
 constexpr uint32_t handleComponentCountForMultiDeviceFixture = 4u;
 constexpr uint64_t convertMilliToMicro = 1000u;
@@ -1037,4 +1039,5 @@ TEST_F(SysmanMultiDeviceSchedulerFixture, GivenComponentCountZeroWithEngineInfoR
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

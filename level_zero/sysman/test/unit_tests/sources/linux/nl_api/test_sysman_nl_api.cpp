@@ -8,6 +8,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_dll.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class PublicNlApi : public L0::Sysman::NlApi {
@@ -206,5 +207,7 @@ TEST_F(SysmanNlApiFixture, GivenNlApiWhenCompleteMockNlDllThenVerifyNlmsgAttrlen
 TEST_F(SysmanNlApiFixture, GivenNlApiWhenCompleteMockNlDllThenVerifyNlmsgHdrReturnsNlmsghdr) {
     EXPECT_EQ(&MockNlDll::mockNlmsghdr, testNlApi.nlmsgHdr(&MockNlDll::mockNlMsg));
 }
+
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

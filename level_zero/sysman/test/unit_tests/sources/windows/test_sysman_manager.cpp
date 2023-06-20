@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class SysmanKmdManagerFixture : public ::testing::Test {
@@ -239,4 +240,5 @@ TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsFalseAndTDROccuredWhenRequestM
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
@@ -16,7 +17,9 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr uint64_t setEnergyCounter = (83456u * 1048576u);
 constexpr uint64_t offset = 0x400;
 const std::string deviceName("device");
@@ -452,4 +455,5 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

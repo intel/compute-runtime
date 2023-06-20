@@ -14,6 +14,7 @@
 #include <limits>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class ZesFabricPortFixture : public SysmanDeviceFixture {
@@ -217,4 +218,5 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortG
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -10,6 +10,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/temperature/linux/mock_sysfs_temperature.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t handleComponentCountForTwoTileDevices = 6u;
@@ -373,4 +374,5 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempera
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

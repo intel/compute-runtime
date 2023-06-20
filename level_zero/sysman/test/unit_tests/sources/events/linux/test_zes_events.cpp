@@ -13,6 +13,7 @@
 extern bool sysmanUltsEnable;
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t mockHandleCount = 2u;
@@ -2008,4 +2009,5 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForUnsupportedEve
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

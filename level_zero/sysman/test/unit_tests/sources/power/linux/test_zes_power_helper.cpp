@@ -8,6 +8,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/power/linux/mock_sysfs_power.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t powerHandleComponentCount = 1u;
@@ -63,4 +64,5 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDirectoriesFailAndPmt
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -8,6 +8,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/firmware/linux/mock_zes_sysman_firmware.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class ZesFirmwareFixture : public SysmanDeviceFixture {
@@ -255,4 +256,5 @@ class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

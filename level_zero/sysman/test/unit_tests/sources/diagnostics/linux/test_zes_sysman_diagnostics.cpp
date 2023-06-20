@@ -10,6 +10,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 static int mockFileDescriptor = 123;
@@ -815,5 +816,6 @@ HWTEST2_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWh
     EXPECT_EQ(count, mockDiagHandleCount);
 }
 
-}; // namespace ult
-}; // namespace L0
+} // namespace ult
+} // namespace Sysman
+} // namespace L0

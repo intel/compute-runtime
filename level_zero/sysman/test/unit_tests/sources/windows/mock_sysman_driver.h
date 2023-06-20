@@ -6,9 +6,11 @@
  */
 
 #pragma once
+
 #include "level_zero/sysman/source/sysman_driver_imp.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 struct MockSysmanDriver : public ::L0::Sysman::SysmanDriverImp {
@@ -30,4 +32,5 @@ struct MockSysmanDriver : public ::L0::Sysman::SysmanDriverImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

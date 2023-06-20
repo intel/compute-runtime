@@ -9,6 +9,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/standby/linux/mock_sysfs_standby.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr int standbyModeDefault = 1;
@@ -334,4 +335,5 @@ TEST_F(ZesStandbyMultiDeviceFixture, GivenOnSubdeviceNotSetWhenValidatingosStand
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

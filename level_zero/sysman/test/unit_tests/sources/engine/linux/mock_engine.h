@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -17,8 +18,11 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 using namespace NEO;
+
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t mockTimestamp = 87654321;
 constexpr uint64_t mockActiveTime = 987654321;
@@ -118,4 +122,5 @@ struct MockEngineSysfsAccess : public L0::Sysman::SysfsAccess {
 using DrmMockEngineInfoFailing = DrmMock;
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

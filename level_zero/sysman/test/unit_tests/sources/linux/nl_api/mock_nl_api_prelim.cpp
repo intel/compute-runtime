@@ -10,6 +10,7 @@
 #include "level_zero/sysman/source/linux/nl_api/sysman_iaf_nl_api.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 void MockNlApi::validateId(bool checkFabricId, bool checkAttachId, bool checkPortNumber) {
@@ -495,4 +496,5 @@ int MockNlApi::genlUnregisterFamily(struct genl_ops *ops) {
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

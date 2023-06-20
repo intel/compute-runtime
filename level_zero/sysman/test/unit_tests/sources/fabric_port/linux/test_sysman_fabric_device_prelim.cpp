@@ -15,6 +15,7 @@
 #include <limits>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class PublicFabricDeviceAccessNl : public L0::Sysman::FabricDeviceAccessNl {
@@ -384,4 +385,5 @@ TEST_F(SysmanFabricDeviceFixture, GivenFabricDeviceAccessNlWhenGetPortsCalledWit
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

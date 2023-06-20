@@ -13,6 +13,7 @@
 #include <cstring>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 TEST(zesInit, whenCallingZesInitThenInitializeOnDriverIsCalled) {
@@ -40,4 +41,5 @@ TEST(zesInit, whenCallingZesInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCal
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

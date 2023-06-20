@@ -10,6 +10,7 @@
 #include "level_zero/sysman/source/linux/nl_api/sysman_iaf_nl_api.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 ze_result_t MockIafNlApi::fPortStatusQuery(const L0::Sysman::IafPortId portId, L0::Sysman::IafPortState &state) {
@@ -274,4 +275,5 @@ ze_result_t MockIafNlApi::fportProperties(const L0::Sysman::IafPortId portId, ui
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

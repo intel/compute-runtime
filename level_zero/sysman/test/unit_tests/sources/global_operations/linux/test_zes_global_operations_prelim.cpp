@@ -9,6 +9,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class SysmanGlobalOperationsHelperFixture : public SysmanDeviceFixture {
@@ -112,4 +113,5 @@ TEST_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetD
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

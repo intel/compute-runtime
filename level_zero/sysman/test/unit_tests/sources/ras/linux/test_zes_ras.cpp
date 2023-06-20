@@ -11,6 +11,7 @@
 #include "mock_fs_ras.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t mockHandleCount = 0;
@@ -169,4 +170,5 @@ TEST_F(SysmanRasFixture, GivenValidInstanceWhenOsRasImplementationIsNullThenDest
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

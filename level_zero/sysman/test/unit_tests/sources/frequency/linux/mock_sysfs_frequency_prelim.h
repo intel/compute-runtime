@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/frequency/linux/sysman_os_frequency_imp_prelim.h"
@@ -14,6 +15,7 @@
 #include "igfxfmid.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string minFreqFile("gt/gt0/rps_min_freq_mhz");
@@ -354,4 +356,5 @@ class PublicLinuxFrequencyImp : public L0::Sysman::LinuxFrequencyImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

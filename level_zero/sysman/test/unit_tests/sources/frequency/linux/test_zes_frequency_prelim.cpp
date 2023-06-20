@@ -11,6 +11,7 @@
 #include <cmath>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr double minFreq = 300.0;
@@ -856,4 +857,5 @@ TEST_F(FreqMultiDeviceFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyG
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

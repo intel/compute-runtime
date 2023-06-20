@@ -5,10 +5,13 @@
  *
  */
 
+#include "level_zero/sysman/source/performance/linux/sysman_os_performance_imp.h"
+#include "level_zero/sysman/source/performance/sysman_performance.h"
+#include "level_zero/sysman/source/performance/sysman_performance_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
-#include "level_zero/sysman/test/unit_tests/sources/performance/linux/mock_sysfs_performance.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t mockHandleCount = 5;
@@ -74,4 +77,5 @@ TEST_F(ZesPerformanceFixture, GivenValidOsSysmanPointerWhenCreatingOsPerformance
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

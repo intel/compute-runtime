@@ -16,6 +16,7 @@
 #include <cstring>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 TEST(sysmanHwDeviceIdTest, whenOpenFileDescriptorIsCalledMultipleTimesThenOpenIsCalledOnlyOnce) {
@@ -55,4 +56,5 @@ TEST(sysmanHwDeviceIdTest, whenOpenFileDescriptorIsCalledMultipleTimesThenCloseI
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -10,6 +10,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 constexpr uint32_t memoryHandleComponentCount = 1u;
@@ -204,4 +205,5 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingMemoryPropert
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

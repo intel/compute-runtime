@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
@@ -73,7 +74,9 @@ constexpr uint64_t numberMcChannels = 16;
 constexpr uint64_t transactionSize = 32;
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 uint32_t mockMemoryType = INTEL_HWCONFIG_MEMORY_TYPE_HBM2e;
 std::string mockPhysicalSize = "0x00000040000000";
 uint64_t hbmRP0Frequency = 4200; // in MHz
@@ -455,4 +458,5 @@ class PublicLinuxMemoryImp : public L0::Sysman::LinuxMemoryImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

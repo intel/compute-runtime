@@ -6,12 +6,14 @@
  */
 
 #pragma once
+
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/performance/linux/sysman_os_performance_imp_prelim.h"
 #include "level_zero/sysman/source/performance/sysman_performance.h"
 #include "level_zero/sysman/source/performance/sysman_performance_imp.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string mediaFreqFactorSubDevice0("gt/gt0/media_freq_factor");
@@ -160,4 +162,5 @@ class PublicLinuxPerformanceImp : public L0::Sysman::LinuxPerformanceImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -12,7 +12,9 @@
 #include "mock_engine.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr uint32_t handleComponentCount = 6u;
 class ZesEngineFixture : public SysmanDeviceFixture {
   protected:
@@ -216,4 +218,5 @@ TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQueryFailsThenFailureIsReturned
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

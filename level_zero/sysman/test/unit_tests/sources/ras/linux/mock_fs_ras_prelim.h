@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
@@ -20,7 +21,9 @@
 #include "drm/intel_hwconfig_types.h"
 
 using namespace NEO;
+
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string deviceDir("device");
@@ -688,4 +691,5 @@ class PublicLinuxRasImp : public L0::Sysman::LinuxRasImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

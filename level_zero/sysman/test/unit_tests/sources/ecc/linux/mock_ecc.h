@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/ecc/sysman_ecc_imp.h"
@@ -13,6 +14,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 struct MockEccFwInterface : public L0::Sysman::FirmwareUtil {
@@ -64,4 +66,5 @@ struct MockEccFwInterface : public L0::Sysman::FirmwareUtil {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

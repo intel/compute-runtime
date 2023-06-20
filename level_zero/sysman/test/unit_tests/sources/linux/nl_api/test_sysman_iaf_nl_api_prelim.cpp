@@ -16,14 +16,14 @@
 #include <limits>
 #include <netlink/handlers.h>
 
-struct nl_sock {
-};
+struct nl_sock {};
 
 namespace NEO {
 extern std::map<std::string, std::vector<std::string>> directoryFilesMap;
 }
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class PublicIafNlApi : public L0::Sysman::IafNlApi {
@@ -957,4 +957,5 @@ TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenGetPortsIsCalledAndFportPropertie
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

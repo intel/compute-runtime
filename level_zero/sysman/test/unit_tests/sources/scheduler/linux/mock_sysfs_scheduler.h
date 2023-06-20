@@ -6,10 +6,12 @@
  */
 
 #pragma once
+
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/scheduler/linux/sysman_os_scheduler_imp.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string preemptTimeoutMilliSecs("preempt_timeout_ms");
@@ -298,4 +300,5 @@ class PublicLinuxSchedulerImp : public L0::Sysman::LinuxSchedulerImp {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

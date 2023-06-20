@@ -10,6 +10,7 @@
 #include <level_zero/zes_api.h>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 extern "C" {
@@ -260,4 +261,5 @@ void MockNlDll::deleteEntryPoint(const std::string &procName) {
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

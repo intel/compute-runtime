@@ -12,6 +12,7 @@
 #include "level_zero/sysman/source/standby/linux/sysman_os_standby_imp.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string standbyModeFile("gt/gt0/rc6_enable");
@@ -104,5 +105,7 @@ class PublicLinuxStandbyImp : public L0::Sysman::LinuxStandbyImp {
     PublicLinuxStandbyImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::LinuxStandbyImp(pOsSysman, onSubdevice, subdeviceId) {}
     using L0::Sysman::LinuxStandbyImp::pSysfsAccess;
 };
+
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

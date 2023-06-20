@@ -10,8 +10,11 @@
 #include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
 
 using namespace NEO;
+
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr uint64_t mockEventVal = 2u;
 constexpr uint64_t mockTimeStamp = 100u;
 constexpr int64_t mockPmuFd = 5;
@@ -50,4 +53,5 @@ struct MockPmuFsAccess : public L0::Sysman::FsAccess {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

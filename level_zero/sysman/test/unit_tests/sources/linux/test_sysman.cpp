@@ -15,7 +15,9 @@ namespace SysCalls {
 extern bool allowFakeDevicePath;
 } // namespace SysCalls
 } // namespace NEO
+
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 inline static int mockAccessFailure(const char *pathname, int mode) {
@@ -224,4 +226,5 @@ TEST(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysm
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

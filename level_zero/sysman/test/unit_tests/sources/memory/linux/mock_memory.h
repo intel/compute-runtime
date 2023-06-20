@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 
@@ -15,6 +16,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 using namespace NEO;
+
 constexpr uint64_t probedSizeRegionZero = 8 * GB;
 constexpr uint64_t probedSizeRegionOne = 16 * GB;
 constexpr uint64_t probedSizeRegionTwo = 4 * GB;
@@ -23,7 +25,9 @@ constexpr uint64_t unallocatedSizeRegionZero = 6 * GB;
 constexpr uint64_t unallocatedSizeRegionOne = 12 * GB;
 constexpr uint64_t unallocatedSizeRegionTwo = 25 * GB;
 constexpr uint64_t unallocatedSizeRegionThree = 3 * GB;
+
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 struct MockMemoryNeoDrm : public Drm {
@@ -51,4 +55,5 @@ struct MockMemoryNeoDrm : public Drm {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -16,6 +16,7 @@
 #include "gmock/gmock.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const uint32_t mockNumPorts = 2;
@@ -77,4 +78,5 @@ class MockFabricSysFsAccess : public L0::Sysman::SysfsAccess {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

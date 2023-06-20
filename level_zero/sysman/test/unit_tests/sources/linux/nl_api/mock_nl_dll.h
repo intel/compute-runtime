@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/sysman/source/linux/nl_api/sysman_nl_api.h"
@@ -13,13 +14,12 @@
 #include "gmock/gmock.h"
 
 // Define opaque types so variables can be allocated
-struct nl_sock {
-};
+struct nl_sock {};
 
-struct nl_msg {
-};
+struct nl_msg {};
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class MockNlDll : public NEO::OsLibrary {
@@ -65,4 +65,5 @@ class MockNlDll : public NEO::OsLibrary {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

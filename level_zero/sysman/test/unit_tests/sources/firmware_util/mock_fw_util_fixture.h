@@ -17,6 +17,7 @@
 using namespace NEO;
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 struct MockFwUtilInterface : public L0::Sysman::FirmwareUtil {
@@ -71,4 +72,5 @@ struct MockFwUtilOsLibrary : public OsLibrary {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

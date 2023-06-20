@@ -12,8 +12,11 @@
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_fs_ras_prelim.h"
 
 class OsRas;
+
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 constexpr uint32_t mockHandleCount = 2u;
 constexpr uint32_t mockHandleCountForSubDevice = 4u;
 struct SysmanRasFixture : public SysmanDeviceFixture {
@@ -646,4 +649,5 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetState
 }
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

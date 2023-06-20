@@ -10,7 +10,9 @@
 #include "mock_pmt.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
+
 static int fakeFileDescriptor = 123;
 
 const std::map<std::string, uint64_t> dummyKeyOffsetMap = {
@@ -273,4 +275,5 @@ class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
 TEST_F(ZesPmtFixtureNoSubDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenValidPmtHandlesForAllSubdevicesWillBeCreated) {}
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -17,6 +18,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string vendorIntel("Intel(R) Corporation");
@@ -576,4 +578,5 @@ class PublicLinuxGlobalOperationsImp : public L0::Sysman::LinuxGlobalOperationsI
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

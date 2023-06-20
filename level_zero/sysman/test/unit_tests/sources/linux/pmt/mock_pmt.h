@@ -10,6 +10,7 @@
 #include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
@@ -156,4 +157,5 @@ class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0

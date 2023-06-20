@@ -14,6 +14,7 @@
 #include <sstream>
 
 namespace L0 {
+namespace Sysman {
 namespace ult {
 
 class MockIafNlApi : public L0::Sysman::IafNlApi {
@@ -113,4 +114,5 @@ class MockIafNlApi : public L0::Sysman::IafNlApi {
 };
 
 } // namespace ult
+} // namespace Sysman
 } // namespace L0
