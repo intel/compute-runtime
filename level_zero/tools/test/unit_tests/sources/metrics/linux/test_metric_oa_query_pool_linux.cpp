@@ -224,27 +224,27 @@ class MetricEnumerationTestLinux : public MetricContextFixture,
 
 TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxDrmAdapterWhenGettingOATimerResolutionThenReturnSuccess) {
 
-    std::unique_ptr<MetricOAOsInterface> OAOsInterface = MetricOAOsInterface::create(*device);
+    std::unique_ptr<MetricOAOsInterface> oaOsInterface = MetricOAOsInterface::create(*device);
     uint64_t timerResolution;
-    OAOsInterface->getMetricsTimerResolution(timerResolution);
-    EXPECT_EQ(OAOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_SUCCESS);
+    oaOsInterface->getMetricsTimerResolution(timerResolution);
+    EXPECT_EQ(oaOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_SUCCESS);
     EXPECT_EQ(timerResolution, 123456UL);
 }
 
 TEST_F(MetricEnumerationTestLinux, givenDrmFailureWhenGettingOATimerResolutionThenReturnError) {
 
-    std::unique_ptr<MetricOAOsInterface> OAOsInterface = MetricOAOsInterface::create(*device);
+    std::unique_ptr<MetricOAOsInterface> oaOsInterface = MetricOAOsInterface::create(*device);
     uint64_t timerResolution;
-    OAOsInterface->getMetricsTimerResolution(timerResolution);
+    oaOsInterface->getMetricsTimerResolution(timerResolution);
     auto drm = static_cast<DrmMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
     drm->storedRetVal = -1;
 
-    EXPECT_EQ(OAOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(oaOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(timerResolution, 0UL);
 
     drm->storedRetVal = 0;
     drm->storedOaTimestampFrequency = 0;
-    EXPECT_EQ(OAOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(oaOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(timerResolution, 0UL);
 }
 
