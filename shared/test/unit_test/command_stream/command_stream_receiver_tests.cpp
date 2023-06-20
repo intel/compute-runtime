@@ -3741,3 +3741,43 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getWorkPartitionAllocation()));
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenRayTracingAllocationCreatedThenOneTimeRayTracingCommandDispatched,
+          IsAtLeastXeHpgCore) {
+    using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto btdStateCmd = hwParserCsr.getCommand<_3DSTATE_BTD>();
+    EXPECT_EQ(nullptr, btdStateCmd);
+
+    pDevice->initializeRayTracing(8);
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    btdStateCmd = hwParserCsr.getCommand<_3DSTATE_BTD>();
+    ASSERT_NE(nullptr, btdStateCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(pDevice->getRTMemoryBackedBuffer()));
+
+    usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    btdStateCmd = hwParserCsr.getCommand<_3DSTATE_BTD>();
+    EXPECT_EQ(nullptr, btdStateCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(pDevice->getRTMemoryBackedBuffer()));
+}

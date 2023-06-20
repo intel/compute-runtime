@@ -249,10 +249,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     inline void handleImmediateFlushStateBaseAddressState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device);
     inline void dispatchImmediateFlushStateBaseAddressCommand(ImmediateFlushData &flushData, LinearStream &csrStream, Device &device);
 
-    inline void handleImmediateFlushOneTimeContextInitState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
-    inline void dispatchImmediateFlushOneTimeContextInitCommand(ImmediateFlushData &flushData, LinearStream &csrStream);
+    inline void handleImmediateFlushOneTimeContextInitState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device);
+    inline void dispatchImmediateFlushOneTimeContextInitCommand(ImmediateFlushData &flushData, LinearStream &csrStream, Device &device);
 
-    inline void handleImmediateFlushAllocationsResidency();
+    inline void handleImmediateFlushAllocationsResidency(Device &device);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

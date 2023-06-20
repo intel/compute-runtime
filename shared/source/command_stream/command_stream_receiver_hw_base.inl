@@ -303,7 +303,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     handleImmediateFlushFrontEndState(dispatchFlags, flushData);
     handleImmediateFlushStateComputeModeState(dispatchFlags, flushData);
     handleImmediateFlushStateBaseAddressState(dispatchFlags, flushData, device);
-    handleImmediateFlushOneTimeContextInitState(dispatchFlags, flushData);
+    handleImmediateFlushOneTimeContextInitState(dispatchFlags, flushData, device);
 
     auto &csrCommandStream = getCS(flushData.estimatedSize);
 
@@ -311,9 +311,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     dispatchImmediateFlushFrontEndCommand(scratchAddress, flushData, device, csrCommandStream);
     dispatchImmediateFlushStateComputeModeCommand(flushData, csrCommandStream);
     dispatchImmediateFlushStateBaseAddressCommand(flushData, csrCommandStream, device);
-    dispatchImmediateFlushOneTimeContextInitCommand(flushData, csrCommandStream);
+    dispatchImmediateFlushOneTimeContextInitCommand(flushData, csrCommandStream, device);
 
-    handleImmediateFlushAllocationsResidency();
+    handleImmediateFlushAllocationsResidency(device);
 
     CompletionStamp completionStamp = {
         this->taskCount,
@@ -2002,7 +2002,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushStateBaseAddressC
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData) {
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device) {
     size_t size = 0;
     size = getCmdSizeForPrologue();
 
@@ -2013,27 +2013,40 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
         flushData.contextOneTimeInit = true;
         flushData.estimatedSize += this->getCmdSizeForActivePartitionConfig();
     }
+
+    if (this->isRayTracingStateProgramingNeeded(device)) {
+        flushData.contextOneTimeInit = true;
+        flushData.estimatedSize += this->getCmdSizeForPerDssBackedBuffer(peekHwInfo());
+    }
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextInitCommand(ImmediateFlushData &flushData, LinearStream &csrStream) {
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextInitCommand(ImmediateFlushData &flushData, LinearStream &csrStream, Device &device) {
     if (flushData.contextOneTimeInit) {
         programEnginePrologue(csrStream);
 
         if (this->isProgramActivePartitionConfigRequired()) {
             this->programActivePartitionConfig(csrStream);
         }
+
+        if (this->isRayTracingStateProgramingNeeded(device)) {
+            this->dispatchRayTracingStateCommand(csrStream, device);
+        }
     }
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidency() {
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidency(Device &device) {
     if (globalFenceAllocation) {
         makeResident(*globalFenceAllocation);
     }
 
     if (workPartitionAllocation) {
         makeResident(*workPartitionAllocation);
+    }
+
+    if (device.getRTMemoryBackedBuffer()) {
+        makeResident(*device.getRTMemoryBackedBuffer());
     }
 }
 
