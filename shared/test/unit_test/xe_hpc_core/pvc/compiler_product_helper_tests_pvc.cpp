@@ -30,9 +30,9 @@ PVCTEST_F(CompilerProductHelperPvcTest, givenPvcConfigsWhenMatchConfigWithRevIdT
     }
 }
 
-PVCTEST_F(CompilerProductHelperPvcTest, givenPvcWhenFailBuildProgramWithStatefulAccessPreferenceThenFalseIsReturned) {
+PVCTEST_F(CompilerProductHelperPvcTest, givenPvcWhenFailBuildProgramWithStatefulAccessPreferenceThenTrueIsReturned) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    EXPECT_FALSE(compilerProductHelper.failBuildProgramWithStatefulAccessPreference());
+    EXPECT_TRUE(compilerProductHelper.failBuildProgramWithStatefulAccessPreference());
 }
