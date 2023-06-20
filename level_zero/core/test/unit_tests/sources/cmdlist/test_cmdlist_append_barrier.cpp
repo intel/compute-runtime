@@ -363,13 +363,23 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         EXPECT_EQ(2u, eventTimeStamp->getPacketsInUse());
 
         size_t totaSizedBarrierWithTimestampEvent = multiTileBarrierSize + timestampRegisters + stopRegisters;
+        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+            totaSizedBarrierWithTimestampEvent += 4 * sizeof(MI_LOAD_REGISTER_IMM);
+        }
+
         EXPECT_EQ(totaSizedBarrierWithTimestampEvent, (useSizeAfter - useSizeBefore));
 
         void *cmdBuffer = ptrOffset(cmdListStream->getCpuBase(), useSizeBefore);
         GenCmdList cmdList;
+
+        auto registersSizeToParse = timestampRegisters;
+        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+            registersSizeToParse += sizeof(MI_LOAD_REGISTER_IMM);
+        }
+
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                           cmdBuffer,
-                                                          timestampRegisters));
+                                                          registersSizeToParse));
         auto begin = cmdList.begin();
         validateTimestampRegisters<FamilyType>(cmdList,
                                                begin,
@@ -377,7 +387,12 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
                                                GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
                                                true);
 
-        auto gpuBaseAddress = cmdListStream->getGraphicsAllocation()->getGpuAddress() + useSizeBefore + timestampRegisters;
+        auto barrierOffset = timestampRegisters;
+        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+            barrierOffset += 2 * sizeof(MI_LOAD_REGISTER_IMM);
+        }
+
+        auto gpuBaseAddress = cmdListStream->getGraphicsAllocation()->getGpuAddress() + useSizeBefore + barrierOffset;
 
         auto gpuCrossTileSyncAddress = gpuBaseAddress +
                                        beforeControlSectionOffset;
@@ -388,7 +403,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         auto gpuStartAddress = gpuBaseAddress +
                                bbStartOffset;
 
-        cmdBuffer = ptrOffset(cmdBuffer, timestampRegisters);
+        cmdBuffer = ptrOffset(cmdBuffer, barrierOffset);
         size_t parsedOffset = 0;
 
         validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true, !usePrimaryBuffer);
@@ -398,7 +413,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         cmdList.clear();
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                           cmdBuffer,
-                                                          timestampRegisters));
+                                                          registersSizeToParse));
         begin = cmdList.begin();
         validateTimestampRegisters<FamilyType>(cmdList,
                                                begin,

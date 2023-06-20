@@ -1763,7 +1763,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
     ASSERT_NE(nullptr, semaphoreCmd);
 
     EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(nodeGpuVa + events[0]->getSinglePacketSize(), semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(nodeGpuVa + NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize(), semaphoreCmd->getSemaphoreGraphicsAddress());
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSyncAllocationThenEnablePartitionOffset, IsAtLeastXeHpCore) {

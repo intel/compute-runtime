@@ -34,6 +34,7 @@
 
 namespace NEO {
 constexpr size_t TimestampDestinationAddressAlignment = 16;
+constexpr size_t ImmWriteDestinationAddressAlignment = 8;
 
 template <typename Family>
 void EncodeDispatchKernel<Family>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf,
@@ -299,12 +300,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     if (args.eventAddress != 0) {
         postSync.setDataportPipelineFlush(true);
         if (args.isTimestampEvent) {
+            UNRECOVERABLE_IF(!(isAligned<TimestampDestinationAddressAlignment>(args.eventAddress)));
+
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
         } else {
+            UNRECOVERABLE_IF(!(isAligned<ImmWriteDestinationAddressAlignment>(args.eventAddress)));
+
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA);
             postSync.setImmediateData(args.postSyncImmValue);
         }
-        UNRECOVERABLE_IF(!(isAligned<TimestampDestinationAddressAlignment>(args.eventAddress)));
         postSync.setDestinationAddress(args.eventAddress);
 
         EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, args.dcFlushEnable);

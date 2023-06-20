@@ -747,7 +747,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
             reminderPostSyncOps = 2;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillManyImmediateKernels<gfxCoreFamily>(input, arg);
@@ -772,7 +772,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
             reminderPostSyncOps = 2;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
@@ -792,7 +792,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
             reminderPostSyncOps = 3;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillSingleKernel<gfxCoreFamily>(input, arg);
@@ -919,7 +919,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 1;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testMultiTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
@@ -931,6 +931,10 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 2;
     arg.expectedWalkerPostSyncOp = 3;
+    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+        arg.expectedWalkerPostSyncOp = 1;
+    }
+
     arg.expectedPostSyncPipeControls = 0;
     if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         // last kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
@@ -1070,7 +1074,7 @@ HWTEST2_F(AppendFillCompactL3EventTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 1;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillManyImmediateKernels<gfxCoreFamily>(input, arg);
@@ -1092,7 +1096,7 @@ HWTEST2_F(AppendFillCompactL3EventTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 1;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
@@ -1109,7 +1113,7 @@ HWTEST2_F(AppendFillCompactL3EventTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 2;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryFillSingleKernel<gfxCoreFamily>(input, arg);
@@ -1184,7 +1188,7 @@ HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
     if (input.signalAllPackets) {
         constexpr uint32_t partitionCount = 2;
         arg.expectStoreDataImm = (testEvent->getMaxPacketsCount() - arg.expectedPacketsInUse) / partitionCount;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testMultiTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
@@ -1204,6 +1208,9 @@ HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
         arg.expectedPacketsInUse = 4;
         arg.expectedKernelCount = 2;
         arg.expectedWalkerPostSyncOp = 3;
+        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+            arg.expectedWalkerPostSyncOp = 1;
+        }
         arg.expectedPostSyncPipeControls = 0;
         arg.postSyncAddressZero = false;
         input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();

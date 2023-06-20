@@ -2722,7 +2722,11 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     EXPECT_EQ(timestampPacketTypeSize * 2, eventObj0->getContextEndOffset());
     EXPECT_EQ(timestampPacketTypeSize * 3, eventObj0->getGlobalEndOffset());
 
-    EXPECT_EQ(timestampPacketTypeSize * 4, eventObj0->getSinglePacketSize());
+    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+        EXPECT_EQ(sizeof(uint64_t), eventObj0->getSinglePacketSize());
+    } else {
+        EXPECT_EQ(timestampPacketTypeSize * 4, eventObj0->getSinglePacketSize());
+    }
 
     auto hostPtrDiff = ptrDiff(eventObj1->getHostAddress(), eventObj0->getHostAddress());
     EXPECT_EQ(expectedSize, hostPtrDiff);

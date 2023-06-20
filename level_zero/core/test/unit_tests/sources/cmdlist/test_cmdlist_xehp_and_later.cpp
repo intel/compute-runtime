@@ -637,6 +637,11 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         if (multiTile == 0 && eventPoolFlags == 0 && !eventPool->isImplicitScalingCapableFlagSet()) {
             expectedWalkerPostSyncOp = 1;
         }
+
+        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled() && expectedWalkerPostSyncOp == 3 && eventPoolFlags == 0 && multiTile != 0) {
+            expectedWalkerPostSyncOp = 1;
+        }
+
         auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
         EXPECT_EQ(static_cast<OPERATION>(expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
 
@@ -863,7 +868,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
 
-        if (dynamicAllocSize) {
+        if (dynamicAllocSize && commandList->partitionCount > 1) {
             auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*cmdList.begin());
             ASSERT_NE(nullptr, lriCmd);
 
@@ -899,7 +904,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             }
         }
 
-        if (dynamicAllocSize) {
+        if (dynamicAllocSize && commandList->partitionCount > 1) {
             auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*cmdList.rbegin());
             ASSERT_NE(nullptr, lriCmd);
 

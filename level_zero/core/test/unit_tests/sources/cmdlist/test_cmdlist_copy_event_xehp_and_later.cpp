@@ -944,7 +944,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
             reminderPostSyncOps = 3;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
@@ -1228,7 +1228,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
             reminderPostSyncOps = 3;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testMultiTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
@@ -1479,7 +1479,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 2;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testSingleTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
@@ -1613,7 +1613,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
     if (input.signalAllPackets) {
         constexpr uint32_t reminderPostSyncOps = 2;
         arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
+        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     }
 
     testMultiTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
