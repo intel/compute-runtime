@@ -1172,6 +1172,10 @@ void KernelImp::setAssertBuffer() {
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.assertBufferAddress,
                       static_cast<uintptr_t>(assertHandler->getAssertBuffer()->getGpuAddressToPatch()));
     this->residencyContainer.push_back(assertHandler->getAssertBuffer());
+
+    if (pImplicitArgs) {
+        pImplicitArgs->assertBufferPtr = static_cast<uintptr_t>(assertHandler->getAssertBuffer()->getGpuAddressToPatch());
+    }
 }
 
 void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const {

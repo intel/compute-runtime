@@ -37,7 +37,8 @@ struct ImplicitArgs {
     uint32_t groupCountZ;
     uint32_t padding0;
     uint64_t rtGlobalBufferPtr;
-    uint8_t reserved[24];
+    uint64_t assertBufferPtr;
+    uint8_t reserved[16];
 };
 
 static_assert((sizeof(ImplicitArgs) & 31) == 0, "Implicit args size need to be aligned to 32");

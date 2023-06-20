@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_assert_handler.h"
@@ -87,6 +88,41 @@ TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferI
 
     EXPECT_TRUE(memcmp(kernel.crossThreadData.get(), &assertBufferAddress, sizeof(assertBufferAddress)) == 0);
     EXPECT_TRUE(std::find(kernel.getResidencyContainer().begin(), kernel.getResidencyContainer().end(), assertHandler->getAssertBuffer()) != kernel.getResidencyContainer().end());
+}
+
+TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThenImplicitArgsAssertBufferPtrIsSet) {
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto assertHandler = new MockAssertHandler(neoDevice);
+    neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    MockModule module(&l0Device, nullptr, ModuleType::User);
+    Mock<Kernel> kernel;
+    kernel.module = &module;
+
+    kernel.descriptor.kernelMetadata.kernelName = "test";
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+    kernel.descriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
+    kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(16);
+    kernel.crossThreadDataSize = sizeof(uint8_t[16]);
+
+    module.kernelImmData = &kernel.immutableData;
+    char heap[8];
+    kernel.info.heapInfo.pKernelHeap = heap;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "test";
+
+    auto result = kernel.initialize(&kernelDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto assertBufferAddress = assertHandler->getAssertBuffer()->getGpuAddressToPatch();
+    auto implicitArgs = kernel.getImplicitArgs();
+    ASSERT_NE(nullptr, implicitArgs);
+    EXPECT_EQ(assertBufferAddress, implicitArgs->assertBufferPtr);
 }
 
 TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenAssertHandlerIsCreated) {
