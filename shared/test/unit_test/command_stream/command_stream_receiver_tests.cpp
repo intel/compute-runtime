@@ -3704,3 +3704,40 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getGlobalFenceAllocation()));
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenOneTimeContextPartitionConfigRequiredThenExpectOneTimeWparidRegisterCommand,
+          IsXeHpcCore) {
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.staticWorkPartitioningEnabled = true;
+    commandStreamReceiver.activePartitions = 2;
+
+    commandStreamReceiver.workPartitionAllocation = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto loadRegisterMemCmd = hwParserCsr.getCommand<MI_LOAD_REGISTER_MEM>();
+    ASSERT_NE(nullptr, loadRegisterMemCmd);
+    constexpr uint32_t wparidRegister = 0x221C;
+    EXPECT_EQ(wparidRegister, loadRegisterMemCmd->getRegisterAddress());
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getWorkPartitionAllocation()));
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    loadRegisterMemCmd = hwParserCsr.getCommand<MI_LOAD_REGISTER_MEM>();
+    EXPECT_EQ(nullptr, loadRegisterMemCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getWorkPartitionAllocation()));
+}

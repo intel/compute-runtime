@@ -2008,12 +2008,21 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
 
     flushData.contextOneTimeInit = size > 0;
     flushData.estimatedSize += size;
+
+    if (this->isProgramActivePartitionConfigRequired()) {
+        flushData.contextOneTimeInit = true;
+        flushData.estimatedSize += this->getCmdSizeForActivePartitionConfig();
+    }
 }
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextInitCommand(ImmediateFlushData &flushData, LinearStream &csrStream) {
     if (flushData.contextOneTimeInit) {
         programEnginePrologue(csrStream);
+
+        if (this->isProgramActivePartitionConfigRequired()) {
+            this->programActivePartitionConfig(csrStream);
+        }
     }
 }
 
@@ -2021,6 +2030,10 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidency() {
     if (globalFenceAllocation) {
         makeResident(*globalFenceAllocation);
+    }
+
+    if (workPartitionAllocation) {
+        makeResident(*workPartitionAllocation);
     }
 }
 
