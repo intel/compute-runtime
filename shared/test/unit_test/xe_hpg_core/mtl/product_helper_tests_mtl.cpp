@@ -67,6 +67,11 @@ MTLTEST_F(MtlProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
     EXPECT_EQ(aub_stream::ProductFamily::Mtl, productHelper->getAubStreamProductFamily());
 }
 
+MTLTEST_F(MtlProductHelper, givenMtlProductHelperWhenCheckDirectSubmissionConstantCacheInvalidationNeededThenTrueIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_TRUE(productHelper->isDirectSubmissionConstantCacheInvalidationNeeded(hwInfo));
+}
+
 MTLTEST_F(MtlProductHelper, givenMtlProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }

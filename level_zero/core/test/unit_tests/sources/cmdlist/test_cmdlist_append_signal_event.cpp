@@ -343,6 +343,69 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
+            auto &productHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+            EXPECT_EQ(productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(device->getHwInfo()) && productHelper.isDirectSubmissionSupported(device->getHwInfo()), cmd->getConstantCacheInvalidationEnable());
+            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+            postSyncFound++;
+            gpuAddress += event->getSinglePacketSize();
+        }
+    }
+    EXPECT_EQ(1u, postSyncFound);
+}
+
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
+          givenMultiTileImmediateCommandListWhenAppendingScopeEventSignalAfterWalkerThenExpectPartitionedPipeControl, IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    auto commandList = std::make_unique<::L0::ult::MockCommandListImmediateHw<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    size_t useSize = cmdStream->getAvailableSpace();
+    useSize -= sizeof(MI_BATCH_BUFFER_END);
+    cmdStream->getSpace(useSize);
+
+    constexpr uint32_t packets = 2u;
+
+    event->setEventTimestampFlag(false);
+    event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    commandList->partitionCount = packets;
+    commandList->appendSignalEventPostWalker(event.get());
+    EXPECT_EQ(packets, event->getPacketsInUse());
+
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
+
+    size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
+    size_t usedSize = cmdStream->getUsed();
+    EXPECT_EQ(expectedSize, usedSize);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        cmdStream->getCpuBase(),
+        usedSize));
+
+    auto pipeControlList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControlList.size());
+    uint32_t postSyncFound = 0;
+    for (auto &it : pipeControlList) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
+            auto &productHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+            EXPECT_EQ(productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(device->getHwInfo()) && commandList->csr->isDirectSubmissionEnabled(), cmd->getConstantCacheInvalidationEnable());
             EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncFound++;
             gpuAddress += event->getSinglePacketSize();

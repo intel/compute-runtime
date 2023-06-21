@@ -173,6 +173,11 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckDirectSubmissionSuppor
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported(hwInfo));
 }
 
+PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckDirectSubmissionConstantCacheInvalidationNeededThenFalseIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_FALSE(productHelper->isDirectSubmissionConstantCacheInvalidationNeeded(hwInfo));
+}
+
 PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckCopyEngineSelectorEnabledThenFalseIsReturned) {
     auto hwInfo = *defaultHwInfo;
     EXPECT_FALSE(productHelper->isCopyEngineSelectorEnabled(hwInfo));

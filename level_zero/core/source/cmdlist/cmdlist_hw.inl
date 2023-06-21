@@ -3141,6 +3141,15 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
         pipeControlArgs.dcFlushEnable = getDcFlushRequired(signalScope);
         pipeControlArgs.workloadPartitionOffset = eventOperations.workPartitionOperation;
 
+        const auto &productHelper = this->device->getNEODevice()->getRootDeviceEnvironment().template getHelper<NEO::ProductHelper>();
+        if (productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(this->device->getHwInfo())) {
+            if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
+                pipeControlArgs.constantCacheInvalidationEnable = this->csr->isDirectSubmissionEnabled();
+            } else {
+                pipeControlArgs.constantCacheInvalidationEnable = productHelper.isDirectSubmissionSupported(this->device->getHwInfo());
+            }
+        }
+
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
             NEO::PostSyncMode::ImmediateData,

@@ -103,6 +103,7 @@ class ProductHelper {
     virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const = 0;
     virtual std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const = 0;
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) = 0;

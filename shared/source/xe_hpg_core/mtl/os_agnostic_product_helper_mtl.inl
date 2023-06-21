@@ -42,6 +42,11 @@ uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo 
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
 std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     auto isBasicWARequired = true;
     if (releaseHelper) {

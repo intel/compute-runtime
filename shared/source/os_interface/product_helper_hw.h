@@ -56,6 +56,7 @@ class ProductHelperHw : public ProductHelper {
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     bool isNewResidencyModelSupported() const override;
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
+    bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const override;
     std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const override;
     bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
     void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) override;

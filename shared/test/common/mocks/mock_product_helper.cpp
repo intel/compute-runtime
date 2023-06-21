@@ -166,6 +166,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported(const HardwareIn
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 LocalMemoryAccessMode ProductHelperHw<IGFX_UNKNOWN>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     return LocalMemoryAccessMode::Default;
 }

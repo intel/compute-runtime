@@ -323,6 +323,11 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }

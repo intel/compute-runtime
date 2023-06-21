@@ -198,6 +198,7 @@ struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreF
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
+    using BaseClass::partitionCount;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::requiredStreamState;
     using CommandList::kernelWithAssertAppended;
@@ -567,6 +568,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
   public:
     using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
     MockCommandListImmediateHw() : BaseClass() {}
+    using BaseClass::appendSignalEventPostWalker;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::cmdListType;
     using BaseClass::copyThroughLockedPtrEnabled;
