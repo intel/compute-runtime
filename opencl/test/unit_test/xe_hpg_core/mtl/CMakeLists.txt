@@ -13,6 +13,7 @@ if(TESTS_MTL)
   set(IGDRCL_SRCS_tests_xe_hpg_core_mtl
       ${IGDRCL_SRCS_tests_xe_hpg_core_mtl_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/buffer_pool_alloc_tests_mtl.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_tests_mtl.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_mtl.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_mtl.cpp

@@ -96,4 +96,9 @@ bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
     return false;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return true;
+}
+
 } // namespace NEO

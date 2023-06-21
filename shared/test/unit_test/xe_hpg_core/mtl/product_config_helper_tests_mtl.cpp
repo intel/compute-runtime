@@ -6,14 +6,17 @@
  */
 
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_mtl.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "platforms.h"
 
 using namespace NEO;
 using ProductConfigHelperMtlTests = ::testing::Test;
+using ProductHelperMtlTests = ProductHelperTest;
 
 MTLTEST_F(ProductConfigHelperMtlTests, givenXeLpgReleaseWhenSearchForDeviceAcronymThenObjectIsFound) {
     auto productConfigHelper = std::make_unique<ProductConfigHelper>();
@@ -39,4 +42,8 @@ MTLTEST_F(ProductConfigHelperMtlTests, givenMtlConfigsWhenSearchForDeviceAcronym
         auto acronym = productConfigHelper->getAcronymForProductConfig(config);
         EXPECT_NE(std::find(deviceAcronyms.begin(), deviceAcronyms.end(), acronym), deviceAcronyms.end());
     }
+}
+
+MTLTEST_F(ProductHelperMtlTests, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
