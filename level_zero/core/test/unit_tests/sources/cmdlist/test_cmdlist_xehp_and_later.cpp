@@ -90,6 +90,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     EXPECT_TRUE(cmdSba->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
 }
 
+HWTEST2_F(CommandListTests, givenDebugFlagSetWhenCallingRegisterOffsetThenDontProgramMmio, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto &commandContainer = pCommandList->getCmdContainer();
+
+    auto offset = commandContainer.getCommandStream()->getUsed();
+
+    pCommandList->appendDispatchOffsetRegister(true, true);
+
+    EXPECT_EQ(offset, commandContainer.getCommandStream()->getUsed());
+}
+
 HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandIsEnabledThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed, IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

@@ -33,6 +33,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::allocateKernelPrivateMemoryIfNeeded;
     using BaseClass::appendBlitFill;
     using BaseClass::appendCopyImageBlit;
+    using BaseClass::appendDispatchOffsetRegister;
     using BaseClass::appendEventForProfiling;
     using BaseClass::appendEventForProfilingCopyCommand;
     using BaseClass::appendLaunchKernelWithParams;

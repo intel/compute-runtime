@@ -51,14 +51,14 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfRelaxedOrderingIsEnabledThenReturnF
     EXPECT_FALSE(ApiSpecificConfig::isRelaxedOrderingEnabled());
 }
 
-TEST(ApiSpecificConfigL0Tests, GivenDebugFlagSetWhenCheckingIfDynamicPostSyncAllocLayoutEnabledThenReturnTrue) {
+TEST(ApiSpecificConfigL0Tests, GivenDebugFlagSetWhenCheckingIfDynamicPostSyncAllocLayoutEnabledThenReturnFalse) {
     DebugManagerStateRestore restore;
 
-    EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
-
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
-
     EXPECT_TRUE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
+
+    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
+
+    EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
 }
 
 TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportEnabled) {
