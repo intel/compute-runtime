@@ -53,9 +53,7 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
 }
 
 ze_result_t CommandQueueImp::destroy() {
-    if (this->clientId != CommandQueue::clientNotRegistered) {
-        this->csr->unregisterClient();
-    }
+    unregisterCsrClient();
 
     if (commandStream.getCpuBase() != nullptr) {
         commandStream.replaceGraphicsAllocation(nullptr);
@@ -250,6 +248,13 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     }
 
     return commandQueue;
+}
+
+void CommandQueueImp::unregisterCsrClient() {
+    if (getClientId() != CommandQueue::clientNotRegistered) {
+        this->csr->unregisterClient();
+        setClientId(CommandQueue::clientNotRegistered);
+    }
 }
 
 ze_command_queue_mode_t CommandQueueImp::getSynchronousMode() const {

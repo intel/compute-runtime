@@ -37,6 +37,7 @@ struct EventPool;
 struct MetricStreamer;
 struct ContextImp;
 struct Context;
+struct CommandQueue;
 struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
@@ -214,6 +215,7 @@ struct Event : _ze_event_handle_t {
     bool isInOrderExecEvent() const { return inOrderExecEvent; }
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const { return inOrderExecDataAllocation; }
     uint64_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
+    void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
     void setReferenceTs(NEO::TimeStampData &timestamp) {
         referenceTs = timestamp;
     }
@@ -221,6 +223,8 @@ struct Event : _ze_event_handle_t {
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
+
+    void unsetCmdQueue(bool unregisterClient);
 
     uint64_t globalStartTS = 1;
     uint64_t globalEndTS = 1;
@@ -253,6 +257,7 @@ struct Event : _ze_event_handle_t {
     EventPool *eventPool = nullptr;
     Kernel *kernelWithPrintf = nullptr;
     NEO::GraphicsAllocation *inOrderExecDataAllocation = nullptr;
+    CommandQueue *latestUsedCmdQueue = nullptr;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;

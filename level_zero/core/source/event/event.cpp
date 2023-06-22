@@ -388,6 +388,7 @@ void Event::setIsCompleted() {
     if (this->isCompleted.load() == STATE_CLEARED) {
         this->isCompleted = STATE_SIGNALED;
     }
+    unsetCmdQueue(true);
 }
 
 void Event::enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue) {
@@ -395,6 +396,17 @@ void Event::enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAl
 
     inOrderExecSignalValue = signalValue;
     inOrderExecDataAllocation = &inOrderDependenciesAllocation;
+}
+
+void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {
+    this->latestUsedCmdQueue = newCmdQ;
+}
+
+void Event::unsetCmdQueue(bool unregisterClient) {
+    if (latestUsedCmdQueue && unregisterClient) {
+        latestUsedCmdQueue->unregisterCsrClient();
+    }
+    latestUsedCmdQueue = nullptr;
 }
 
 } // namespace L0

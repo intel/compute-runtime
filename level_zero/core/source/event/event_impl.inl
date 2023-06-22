@@ -163,6 +163,7 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
         }
     }
     this->setIsCompleted();
+    unsetCmdQueue(true);
     for (auto &csr : csrs) {
         csr->getInternalAllocationStorage()->cleanAllocationList(csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
@@ -396,6 +397,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
         inOrderExecDataAllocation = nullptr;
         inOrderExecSignalValue = 0;
     }
+    unsetCmdQueue(false);
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();

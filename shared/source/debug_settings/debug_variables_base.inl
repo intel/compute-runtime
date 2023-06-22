@@ -245,6 +245,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DebugSetMemoryDiagnosticsDelay, -1, "-1: default
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceStateVerification, -1, "-1: default, 0: disable, 1: enable check of device state before submit on Windows")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDynamicPostSyncAllocLayout, -1, "-1: default, 0: Keep Timestamp size layout, 1: Use write immediate layout (qword) and switch dynamically to TS for profiling")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintTimestampPacketUsage, -1, "-1: default, 0: Disabled, 1: Print when TSP is allocated, initialized, returned to pool, etc.")
+DECLARE_DEBUG_VARIABLE(int32_t, TrackNumCsrClientsOnSyncPoints, -1, "-1: default, 0: Disabled, 1: If set, synchronization points like zeEventHostSynchronize will unregister CmdQ from CSR clients")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

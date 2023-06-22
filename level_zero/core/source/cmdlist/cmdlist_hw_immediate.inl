@@ -727,6 +727,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds,
                                                                           bool hasRelaxedOrderingDependencies, ze_event_handle_t hSignalEvent) {
+    auto signalEvent = Event::fromHandle(hSignalEvent);
+
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (isInOrderExecutionEnabled()) {
             inOrderDependencyCounter++;
@@ -735,13 +737,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
         }
 
         if (this->isFlushTaskSubmissionEnabled) {
+            if (signalEvent && (NEO::DebugManager.flags.TrackNumCsrClientsOnSyncPoints.get() != 0)) {
+                signalEvent->setLatestUsedCmdQueue(this->cmdQImmediate);
+            }
             inputRet = executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies);
         } else {
             inputRet = executeCommandListImmediate(performMigration);
         }
     }
-
-    auto signalEvent = Event::fromHandle(hSignalEvent);
 
     if (signalEvent) {
         signalEvent->setCsr(this->csr);
