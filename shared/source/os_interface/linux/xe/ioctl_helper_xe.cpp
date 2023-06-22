@@ -134,7 +134,6 @@ IoctlHelperXe::IoctlHelperXe(Drm &drmArg) : IoctlHelper(drmArg) {
 }
 
 bool IoctlHelperXe::initialize() {
-    bool ret = false;
     xeLog("IoctlHelperXe::initialize\n", "");
     DebugManager.flags.ForceUserptrAlignment.set(64);
     DebugManager.flags.UseVmBind.set(1);
@@ -194,7 +193,7 @@ bool IoctlHelperXe::initialize() {
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = chipsetId;
     hwInfo->platform.usRevId = revId;
-    return ret;
+    return true;
 }
 
 IoctlHelperXe::~IoctlHelperXe() {
