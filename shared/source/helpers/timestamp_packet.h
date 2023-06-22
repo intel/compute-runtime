@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/csr_deps.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -94,6 +95,10 @@ struct TimestampPacketHelper {
     template <typename GfxFamily>
     static void programSemaphore(LinearStream &cmdStream, TagNodeBase &timestampPacketNode) {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+        if (DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
+            printf("\nPID: %u, TSP used for Semaphore: 0x%" PRIu64 ", cmdBuffer pos: 0x%" PRIu64, SysCalls::getProcessId(), timestampPacketNode.getGpuAddress(), cmdStream.getCurrentGpuAddressPosition());
+        }
 
         auto compareAddress = getContextEndGpuAddress(timestampPacketNode);
 

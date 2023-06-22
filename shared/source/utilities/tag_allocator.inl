@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 
 namespace NEO {
 template <typename TagType>
@@ -31,6 +33,11 @@ TagNodeBase *TagAllocator<TagType>::getTag() {
     usedTags.pushFrontOne(*node);
     node->incRefCount();
     node->initialize();
+
+    if (DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
+        printf("\nPID: %u, TSP taken from pool and initialized: 0x%" PRIu64, SysCalls::getProcessId(), node->getGpuAddress());
+    }
+
     return node;
 }
 
@@ -39,6 +46,10 @@ void TagAllocator<TagType>::returnTagToFreePool(TagNodeBase *node) {
     auto nodeT = static_cast<NodeType *>(node);
     [[maybe_unused]] auto usedNode = usedTags.removeOne(*nodeT).release();
     DEBUG_BREAK_IF(usedNode == nullptr);
+
+    if (DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
+        printf("\nPID: %u, TSP returned to pool: 0x%" PRIu64, SysCalls::getProcessId(), nodeT->getGpuAddress());
+    }
 
     freeTags.pushFrontOne(*nodeT);
 }
@@ -60,6 +71,9 @@ void TagAllocator<TagType>::releaseDeferredTags() {
     while (currentNode != nullptr) {
         auto nextNode = currentNode->next;
         if (currentNode->canBeReleased()) {
+            if (DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
+                printf("\nPID: %u, TSP returned to pool: 0x%" PRIu64, SysCalls::getProcessId(), currentNode->getGpuAddress());
+            }
             pendingFreeTags.pushFrontOne(*currentNode);
         } else {
             pendingDeferredTags.pushFrontOne(*currentNode);
