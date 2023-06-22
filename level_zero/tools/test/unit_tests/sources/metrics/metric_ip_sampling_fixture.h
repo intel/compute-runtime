@@ -67,8 +67,8 @@ class MetricIpSamplingFixture : public MultiDeviceFixture,
 class MetricIpSamplingTimestampFixture : public DeviceFixture,
                                          public ::testing::Test {
   public:
-    void SetUp();
-    void TearDown();
+    void SetUp() override;
+    void TearDown() override;
 
     DebugManagerStateRestore restorer;
     std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
