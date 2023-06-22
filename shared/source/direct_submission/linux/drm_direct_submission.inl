@@ -51,7 +51,7 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
     auto &drm = osContextLinux->getDrm();
     drm.setDirectSubmissionActive(true);
 
-    auto usePciBarrier = true;
+    auto usePciBarrier = !this->hwInfo->capabilityTable.isIntegratedDevice;
     if (DebugManager.flags.DirectSubmissionPCIBarrier.get() != -1) {
         usePciBarrier = DebugManager.flags.DirectSubmissionPCIBarrier.get();
     }

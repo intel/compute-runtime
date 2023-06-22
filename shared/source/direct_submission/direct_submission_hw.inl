@@ -21,6 +21,7 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -61,7 +62,13 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
     }
 
-    miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
+    if (hwInfo->capabilityTable.isIntegratedDevice) {
+        miMemFenceRequired = false;
+        sfenceMode = DirectSubmissionSfenceMode::Disabled;
+    } else {
+        miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
+    }
+
     if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0) {
         miMemFenceRequired = false;
     }
