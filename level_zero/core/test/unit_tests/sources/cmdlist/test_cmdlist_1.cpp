@@ -10,6 +10,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -1106,6 +1107,113 @@ HWTEST2_F(CommandListCreate, whenDispatchingThenPassNumCsrClients, IsAtLeastXeHp
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.numCsrClients, ultCsr->getNumClients());
+}
+
+HWTEST_F(CommandListCreate, givenSignalEventWhenCallingSynchronizeThenUnregisterClient) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 3;
+
+    ze_event_desc_t eventDesc = {};
+
+    ze_event_handle_t event1 = nullptr;
+    ze_event_handle_t event2 = nullptr;
+    ze_event_handle_t event3 = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event1));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event2));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event3));
+
+    EXPECT_EQ(ultCsr->getNumClients(), 0u);
+
+    {
+        commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event1, 0, nullptr, launchParams, false);
+        EXPECT_EQ(ultCsr->getNumClients(), 1u);
+
+        Event::fromHandle(event1)->setIsCompleted();
+
+        zeEventHostSynchronize(event1, std::numeric_limits<uint64_t>::max());
+        EXPECT_EQ(ultCsr->getNumClients(), 0u);
+    }
+
+    {
+        commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event2, 0, nullptr, launchParams, false);
+        EXPECT_EQ(ultCsr->getNumClients(), 1u);
+
+        *reinterpret_cast<uint32_t *>(Event::fromHandle(event2)->getHostAddress()) = static_cast<uint32_t>(Event::STATE_SIGNALED);
+
+        zeEventHostSynchronize(event2, std::numeric_limits<uint64_t>::max());
+        EXPECT_EQ(ultCsr->getNumClients(), 0u);
+    }
+
+    {
+        commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event3, 0, nullptr, launchParams, false);
+        EXPECT_EQ(ultCsr->getNumClients(), 1u);
+
+        zeEventHostReset(event3);
+
+        zeEventHostSynchronize(event3, 1);
+        EXPECT_EQ(ultCsr->getNumClients(), 1u);
+    }
+
+    zeEventDestroy(event1);
+    zeEventDestroy(event2);
+    zeEventDestroy(event3);
+}
+
+HWTEST_F(CommandListCreate, givenDebugFlagSetWhenCallingSynchronizeThenDontUnregister) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.TrackNumCsrClientsOnSyncPoints.set(0);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+
+    EXPECT_EQ(ultCsr->getNumClients(), 0u);
+    commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ultCsr->getNumClients(), 1u);
+
+    Event::fromHandle(event)->setIsCompleted();
+
+    zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ultCsr->getNumClients(), 1u);
+
+    zeEventDestroy(event);
 }
 
 HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsAtLeastXeHpcCore) {

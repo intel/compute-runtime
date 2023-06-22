@@ -389,6 +389,7 @@ void Event::setIsCompleted() {
     if (this->isCompleted.load() == STATE_CLEARED) {
         this->isCompleted = STATE_SIGNALED;
     }
+    unsetCmdQueue(true);
 }
 
 void Event::enableInOrderExecMode(const NEO::TimestampPacketContainer &inOrderSyncNodes) {
@@ -399,6 +400,17 @@ void Event::enableInOrderExecMode(const NEO::TimestampPacketContainer &inOrderSy
     }
 
     inOrderTimestampPacket->assignAndIncrementNodesRefCounts(inOrderSyncNodes);
+}
+
+void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {
+    this->latestUsedCmdQueue = newCmdQ;
+}
+
+void Event::unsetCmdQueue(bool unregisterClient) {
+    if (latestUsedCmdQueue && unregisterClient) {
+        latestUsedCmdQueue->unregisterCsrClient();
+    }
+    latestUsedCmdQueue = nullptr;
 }
 
 } // namespace L0

@@ -91,6 +91,7 @@ struct CommandQueueImp : public CommandQueue {
     void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override;
     void printKernelsPrintfOutput(bool hangDetected);
     void checkAssert();
+    void unregisterCsrClient() override;
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,

@@ -241,6 +241,7 @@ DECLARE_DEBUG_VARIABLE(int64_t, OverrideEventSynchronizeTimeout, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlush, -1, "-1: default,  0: Tlb flush disabled, 1: Tlb Flush enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugSetMemoryDiagnosticsDelay, -1, "-1: default, >=0: delay time in minutes necessary for completion of Memory diagnostics")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceStateVerification, -1, "-1: default, 0: disable, 1: enable check of device state before submit on Windows")
+DECLARE_DEBUG_VARIABLE(int32_t, TrackNumCsrClientsOnSyncPoints, -1, "-1: default, 0: Disabled, 1: If set, synchronization points like zeEventHostSynchronize will unregister CmdQ from CSR clients")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

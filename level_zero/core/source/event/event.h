@@ -36,6 +36,7 @@ struct EventPool;
 struct MetricStreamer;
 struct ContextImp;
 struct Context;
+struct CommandQueue;
 struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
@@ -205,9 +206,12 @@ struct Event : _ze_event_handle_t {
         this->metricStreamer = metricStreamer;
     }
     void enableInOrderExecMode(const NEO::TimestampPacketContainer &inOrderSyncNodes);
+    void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
+
+    void unsetCmdQueue(bool unregisterClient);
 
     uint64_t globalStartTS = 1;
     uint64_t globalEndTS = 1;
@@ -237,6 +241,7 @@ struct Event : _ze_event_handle_t {
     EventPool *eventPool = nullptr;
     Kernel *kernelWithPrintf = nullptr;
     std::unique_ptr<NEO::TimestampPacketContainer> inOrderTimestampPacket;
+    CommandQueue *latestUsedCmdQueue = nullptr;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;
