@@ -23,7 +23,7 @@ std::string getCurrentLibraryPath() {
                                                  reinterpret_cast<LPCWSTR>(&getCurrentLibraryPath), &handle);
     if (status != 0) {
 
-        status = NEO::SysCalls::getModuleFileName(handle, pathW, sizeof(pathW));
+        status = NEO::SysCalls::getModuleFileName(handle, pathW, MAX_PATH);
         if (status != 0) {
             std::wcstombs(path, pathW, MAX_PATH);
             returnValue.append(path);
