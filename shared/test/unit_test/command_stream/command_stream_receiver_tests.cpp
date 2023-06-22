@@ -3781,3 +3781,35 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(pDevice->getRTMemoryBackedBuffer()));
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenCsrHasPreambleCommandsThenDispatchIndirectJumpToImmediateBatchBuffer,
+          IsAtLeastXeHpCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto startOffset = commandStream.getUsed();
+    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+    uint64_t immediateStartAddress = commandStream.getGpuBase() + startOffset;
+
+    commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto bbStartCmd = hwParserCsr.getCommand<MI_BATCH_BUFFER_START>();
+    ASSERT_NE(nullptr, bbStartCmd);
+    EXPECT_EQ(immediateStartAddress, bbStartCmd->getBatchBufferStartAddress());
+
+    startOffset = commandStream.getUsed();
+    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    bbStartCmd = hwParserCsr.getCommand<MI_BATCH_BUFFER_START>();
+    ASSERT_EQ(nullptr, bbStartCmd);
+}

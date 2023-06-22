@@ -17,7 +17,7 @@ struct CommandStreamReceiverFixture : public NEO::DeviceFixture {
     void setUp();
     void tearDown();
 
-    static constexpr size_t bufferSize = 256;
+    static constexpr size_t bufferSize = 1024;
     uint8_t cmdBuffer[bufferSize];
     uint8_t dshBuffer[bufferSize];
     uint8_t iohBuffer[bufferSize];

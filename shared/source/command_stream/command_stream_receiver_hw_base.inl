@@ -305,6 +305,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     handleImmediateFlushStateBaseAddressState(dispatchFlags, flushData, device);
     handleImmediateFlushOneTimeContextInitState(dispatchFlags, flushData, device);
 
+    handleImmediateFlushJumpToImmediate(flushData);
+
     auto &csrCommandStream = getCS(flushData.estimatedSize);
 
     dispatchImmediateFlushPipelineSelectCommand(flushData, csrCommandStream);
@@ -312,6 +314,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     dispatchImmediateFlushStateComputeModeCommand(flushData, csrCommandStream);
     dispatchImmediateFlushStateBaseAddressCommand(flushData, csrCommandStream, device);
     dispatchImmediateFlushOneTimeContextInitCommand(flushData, csrCommandStream, device);
+
+    dispatchImmediateFlushJumpToImmediateCommand(immediateCommandStream, immediateCommandStreamStart, flushData, csrCommandStream);
 
     handleImmediateFlushAllocationsResidency(device);
 
@@ -2047,6 +2051,27 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
 
     if (device.getRTMemoryBackedBuffer()) {
         makeResident(*device.getRTMemoryBackedBuffer());
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushJumpToImmediate(ImmediateFlushData &flushData) {
+    if (flushData.estimatedSize > 0) {
+        flushData.estimatedSize += EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
+        flushData.estimatedSize = alignUp(flushData.estimatedSize, MemoryConstants::cacheLineSize);
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushJumpToImmediateCommand(LinearStream &immediateCommandStream,
+                                                                                      size_t immediateCommandStreamStart,
+                                                                                      ImmediateFlushData &flushData,
+                                                                                      LinearStream &csrStream) {
+    if (flushData.estimatedSize > 0) {
+        uint64_t immediateStartAddress = immediateCommandStream.getGpuBase() + immediateCommandStreamStart;
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&csrStream, immediateStartAddress, false, false, false);
+        EncodeNoop<GfxFamily>::alignToCacheLine(csrStream);
     }
 }
 
