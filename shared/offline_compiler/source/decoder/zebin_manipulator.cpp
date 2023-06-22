@@ -14,24 +14,45 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/directory.h"
 
 #include <algorithm>
 
 namespace NEO::Zebin::Manipulator {
 
-ErrorCode parseIntelGTNotesSectionForDevice(const std::vector<Zebin::Elf::IntelGTNote> &intelGTNotes, IgaWrapper *iga) {
+ErrorCode parseIntelGTNotesSectionForDevice(const std::vector<Zebin::Elf::IntelGTNote> &intelGTNotes, IgaWrapper *iga, OclocArgHelper *argHelper) {
     size_t productFamilyNoteId = std::numeric_limits<size_t>::max();
     size_t gfxCoreNoteId = std::numeric_limits<size_t>::max();
+    size_t productConfigNoteId = std::numeric_limits<size_t>::max();
+
     for (size_t i = 0; i < intelGTNotes.size(); i++) {
         if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::ProductFamily) {
             productFamilyNoteId = i;
         } else if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::GfxCore) {
             gfxCoreNoteId = i;
+        } else if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::ProductConfig) {
+            productConfigNoteId = i;
         }
     }
 
-    if (productFamilyNoteId != std::numeric_limits<size_t>::max()) {
+    if (productConfigNoteId != std::numeric_limits<size_t>::max()) {
+        UNRECOVERABLE_IF(sizeof(uint32_t) != intelGTNotes[productConfigNoteId].data.size());
+        auto productConfig = *reinterpret_cast<const uint32_t *>(intelGTNotes[productConfigNoteId].data.begin());
+
+        NEO::HardwareInfo hwInfo;
+        const auto &deviceAotMap = argHelper->productConfigHelper->getDeviceAotInfo();
+        for (auto &deviceConfig : deviceAotMap) {
+            if (deviceConfig.aotConfig.value == productConfig) {
+                hwInfo = *deviceConfig.hwInfo;
+                break;
+            }
+        }
+        if (IGFX_UNKNOWN != hwInfo.platform.eProductFamily) {
+            iga->setProductFamily(hwInfo.platform.eProductFamily);
+            return OclocErrorCode::SUCCESS;
+        }
+    } else if (productFamilyNoteId != std::numeric_limits<size_t>::max()) {
         UNRECOVERABLE_IF(sizeof(PRODUCT_FAMILY) != intelGTNotes[productFamilyNoteId].data.size());
         auto productFamily = *reinterpret_cast<const PRODUCT_FAMILY *>(intelGTNotes[productFamilyNoteId].data.begin());
         iga->setProductFamily(productFamily);
@@ -160,7 +181,7 @@ ErrorCode ZebinDecoder<numBits>::decode() {
             return OclocErrorCode::INVALID_FILE;
         }
 
-        retVal = parseIntelGTNotesSectionForDevice(intelGTNotes, iga.get());
+        retVal = parseIntelGTNotesSectionForDevice(intelGTNotes, iga.get(), argHelper);
         if (retVal != OclocErrorCode::SUCCESS) {
             argHelper->printf("Error while parsing Intel GT Notes section for device.\n");
             return retVal;
@@ -380,7 +401,7 @@ ErrorCode ZebinEncoder<numBits>::encode() {
 
     auto intelGTNotesSectionData = getIntelGTNotesSection(sectionInfos);
     auto intelGTNotes = getIntelGTNotes(intelGTNotesSectionData);
-    retVal = parseIntelGTNotesSectionForDevice(intelGTNotes, iga.get());
+    retVal = parseIntelGTNotesSectionForDevice(intelGTNotes, iga.get(), argHelper);
     if (retVal != OclocErrorCode::SUCCESS) {
         argHelper->printf("Error while parsing Intel GT Notes section for device.\n");
         return retVal;

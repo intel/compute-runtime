@@ -129,6 +129,9 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             productConfig = static_cast<AOT::PRODUCT_CONFIG>(*productConfigData);
             break;
         }
+        case Elf::IntelGTSectionType::vISAAbiVersion: {
+            break;
+        }
         default:
             outWarning.append("DeviceBinaryFormat::Zebin : Unrecognized IntelGTNote type: " + std::to_string(intelGTNote.type) + "\n");
             break;

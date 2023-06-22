@@ -22,6 +22,7 @@
 #include "igfxfmid.h"
 
 #include <fstream>
+#include <platforms.h>
 
 template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
 struct MockZebin {
@@ -268,7 +269,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithProductFamilyWhenParsingIntelGT
     intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&productFamily, 1);
 
     auto iga = std::make_unique<MockIgaWrapper>();
-    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
+    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), nullptr);
     EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
     EXPECT_TRUE(iga->setProductFamilyWasCalled);
 }
@@ -281,16 +282,50 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithGfxCoreFamilyWhenParsingIntelGT
     intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&gfxCore, 1);
 
     auto iga = std::make_unique<MockIgaWrapper>();
-    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
+    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), nullptr);
     EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
     EXPECT_TRUE(iga->setGfxCoreWasCalled);
+}
+
+TEST(ZebinManipulatorTests, GivenIntelGTNotesWithValidProductConfigWhenParsingIntelGTNoteSectionsForDeviceThenIgaProductFamilyIsSetAndSuccessIsReturned) {
+    MockOclocArgHelper::FilesMap files;
+    files.insert({"binary.bin", "000000000000000"});
+    MockOclocArgHelper argHelper(files);
+
+    const auto &aotInfo = argHelper.productConfigHelper->getDeviceAotInfo().back();
+    auto productConfig = aotInfo.aotConfig;
+    std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
+    intelGTnotes.resize(1);
+    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductConfig;
+    intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&productConfig, 1u);
+
+    auto iga = std::make_unique<MockIgaWrapper>();
+    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), &argHelper);
+    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_TRUE(iga->setProductFamilyWasCalled);
+}
+
+TEST(ZebinManipulatorTests, GivenIntelGTNotesWithInvalidProductConfigWhenParsingIntelGTNoteSectionsForDeviceThenReturnError) {
+    MockOclocArgHelper::FilesMap files;
+    files.insert({"binary.bin", "000000000000000"});
+    MockOclocArgHelper argHelper(files);
+
+    AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::UNKNOWN_ISA;
+    std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
+    intelGTnotes.resize(1);
+    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductConfig;
+    intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&productConfig, 1u);
+
+    auto iga = std::make_unique<MockIgaWrapper>();
+    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), &argHelper);
+    EXPECT_EQ(NEO::OclocErrorCode::INVALID_DEVICE, retVal);
 }
 
 TEST(ZebinManipulatorTests, GivenIntelGTNotesWithoutProductFamilyOrGfxCoreFamilyEntryWhenParsingIntelGTNoteSectionsForDeviceThenReturnError) {
     std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
 
     auto iga = std::make_unique<MockIgaWrapper>();
-    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
+    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), nullptr);
     EXPECT_EQ(NEO::OclocErrorCode::INVALID_DEVICE, retVal);
 }
 

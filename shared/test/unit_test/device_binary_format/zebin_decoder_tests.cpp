@@ -5342,8 +5342,9 @@ class IntelGTNotesFixture : public ::testing::Test {
 
 TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSectionThenReturnsIntelGTNotes) {
     std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
+    size_t numNotes = 5;
 
-    for (auto i = 0; i < 4; i++) {
+    for (size_t i = 0; i < numNotes; i++) {
         auto &inserted = elfNoteSections.emplace_back();
         inserted.nameSize = 8u;
         inserted.descSize = 4u;
@@ -5352,6 +5353,7 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSection
     elfNoteSections.at(1).type = Zebin::Elf::IntelGTSectionType::GfxCore;
     elfNoteSections.at(2).type = Zebin::Elf::IntelGTSectionType::TargetMetadata;
     elfNoteSections.at(3).type = Zebin::Elf::IntelGTSectionType::ZebinVersion;
+    elfNoteSections.at(4).type = Zebin::Elf::IntelGTSectionType::vISAAbiVersion; // not handled by the runtime, but should be recognized
 
     Zebin::Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
@@ -5371,8 +5373,9 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSection
     memcpy_s(metadataPackedData, 4, &targetMetadata.packed, 4);
     descData.push_back(metadataPackedData);
 
-    uint8_t zebinaryVersionData[4] = {0x0, 0x0, 0x0, 0x0};
-    descData.push_back(zebinaryVersionData);
+    uint8_t mockData[4] = {0x0, 0x0, 0x0, 0x0}; // mock data for ZebinVersion and vISAAbiVersion notes
+    descData.push_back(mockData);
+    descData.push_back(mockData);
     const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
                                                  [](auto totalSize, const auto &elfNoteSection) {
                                                      return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
@@ -5392,7 +5395,7 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSection
     EXPECT_EQ(DecodeError::Success, decodeError);
     EXPECT_TRUE(outWarning.empty());
     EXPECT_TRUE(outErrReason.empty());
-    EXPECT_EQ(4U, intelGTNotesRead.size());
+    EXPECT_EQ(numNotes, intelGTNotesRead.size());
 
     auto validNotes = true;
     for (size_t i = 0; i < intelGTNotesRead.size(); ++i) {

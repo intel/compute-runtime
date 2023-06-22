@@ -64,7 +64,8 @@ enum IntelGTSectionType : uint32_t {
     GfxCore = 2,
     TargetMetadata = 3,
     ZebinVersion = 4,
-    ProductConfig = 5,
+    vISAAbiVersion = 5, // for debugger only
+    ProductConfig = 6,
     LastSupported = ProductConfig
 };
 struct IntelGTNote {
