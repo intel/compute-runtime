@@ -104,6 +104,7 @@ struct KernelHw : public KernelImp {
         args.isDebuggerActive = isDebuggerActive;
 
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+        UNRECOVERABLE_IF(surfaceStateAddress == nullptr);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
     }
 
