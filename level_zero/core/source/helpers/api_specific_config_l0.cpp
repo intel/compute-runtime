@@ -15,10 +15,6 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return false;
 }
 
-bool ApiSpecificConfig::isBcsSplitWaSupported() {
-    return true;
-}
-
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }

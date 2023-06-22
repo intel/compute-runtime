@@ -31,10 +31,6 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfStatelessCompressionIsSupportedThen
     EXPECT_FALSE(ApiSpecificConfig::isStatelessCompressionSupported());
 }
 
-TEST(ApiSpecificConfigL0Tests, WhenCheckingIfBcsSplitWaIsSupportedThenReturnTrue) {
-    EXPECT_TRUE(ApiSpecificConfig::isBcsSplitWaSupported());
-}
-
 TEST(ApiSpecificConfigL0Tests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeThenReturnSameValue) {
     EXPECT_EQ(1024u, ApiSpecificConfig::getReducedMaxAllocSize(1024));
 }

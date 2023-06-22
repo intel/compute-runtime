@@ -14,7 +14,6 @@ struct ApiSpecificConfig {
     enum ApiType { OCL,
                    L0 };
     static bool isStatelessCompressionSupported();
-    static bool isBcsSplitWaSupported();
     static bool getGlobalBindlessHeapConfiguration();
     static bool getBindlessMode();
     static bool isDeviceAllocationCacheEnabled();

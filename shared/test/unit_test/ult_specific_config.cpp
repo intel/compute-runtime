@@ -37,9 +37,6 @@ bool isStatelessCompressionSupportedForUlts = true;
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return isStatelessCompressionSupportedForUlts;
 }
-bool ApiSpecificConfig::isBcsSplitWaSupported() {
-    return false;
-}
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }
