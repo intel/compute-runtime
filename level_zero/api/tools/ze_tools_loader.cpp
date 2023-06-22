@@ -235,6 +235,8 @@ zetGetMetricGroupExpProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     pDdiTable->pfnCalculateMultipleMetricValuesExp = L0::zetMetricGroupCalculateMultipleMetricValuesExp;
     pDdiTable->pfnGetGlobalTimestampsExp = L0::zetMetricGroupGetGlobalTimestampsExp;
+    pDdiTable->pfnGetExportDataExp = L0::zetMetricGroupGetExportDataExp;
+    pDdiTable->pfnCalculateMetricExportDataExp = L0::zetDriverCalculateMetricExportDataExp;
 
     return result;
 }

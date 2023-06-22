@@ -37,6 +37,9 @@ struct MetricEnumeration {
     bool readGlobalSymbol(const char *name, uint64_t &symbolValue);
     MetricsDiscovery::IMetricsDevice_1_5 *getMetricDevice() { return pMetricsDevice; };
 
+    MetricsDiscovery::IMetricsDevice_1_5 *getMdapiDevice() { return pMetricsDevice; }
+    MetricsDiscovery::IAdapter_1_9 *getMdapiAdapter() { return pAdapter; }
+
   protected:
     ze_result_t initialize();
 
@@ -130,6 +133,8 @@ struct OaMetricGroupImp : MetricGroup {
         zet_device_handle_t hDevice,
         const zet_metric_query_pool_desc_t *desc,
         zet_metric_query_pool_handle_t *phMetricQueryPool) override;
+    ze_result_t getExportData(const uint8_t *pRawData, size_t rawDataSize, size_t *pExportDataSize,
+                              uint8_t *pExportData) override;
     static MetricGroup *create(zet_metric_group_properties_t &properties,
                                MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
@@ -140,6 +145,7 @@ struct OaMetricGroupImp : MetricGroup {
     static ze_result_t getProperties(const zet_metric_group_handle_t handle, zet_metric_group_properties_t *pProperties);
     uint32_t getRawReportSize();
     const MetricEnumeration &getMetricEnumeration() const;
+    void setCachedExportDataHeapSize(size_t size);
 
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,
@@ -153,6 +159,7 @@ struct OaMetricGroupImp : MetricGroup {
     ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t, const size_t rawDataSize, const uint8_t *pRawData,
                                           uint32_t &metricValueCount,
                                           zet_typed_value_t *pCalculatedData);
+    ze_result_t getExportDataHeapSize(size_t &exportDataHeapSize);
 
     // Cached metrics.
     std::vector<Metric *> metrics;
@@ -161,8 +168,8 @@ struct OaMetricGroupImp : MetricGroup {
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
 
     std::vector<zet_metric_group_handle_t> metricGroups;
-
     OaMetricSourceImp *metricSource;
+    size_t cachedExportDataHeapSize = 0;
 
   private:
     ze_result_t openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,

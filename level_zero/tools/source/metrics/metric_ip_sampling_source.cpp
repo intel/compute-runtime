@@ -13,6 +13,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/include/zet_intel_gpu_metric.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
@@ -146,6 +147,35 @@ ze_result_t IpSamplingMetricSourceImp::appendMetricMemoryBarrier(CommandList &co
 
 void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingpOsInterface) {
     this->metricIPSamplingpOsInterface = std::move(metricIPSamplingpOsInterface);
+}
+
+ze_result_t IpSamplingMetricGroupBase::getExportData(const uint8_t *pRawData, size_t rawDataSize, size_t *pExportDataSize,
+                                                     uint8_t *pExportData) {
+    const auto expectedExportDataSize = sizeof(zet_intel_metric_df_gpu_export_data_format_t) + rawDataSize;
+
+    if (*pExportDataSize == 0u) {
+        *pExportDataSize = expectedExportDataSize;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    if (*pExportDataSize < expectedExportDataSize) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "Error:Incorrect Size Passed at %s():%d returning 0x%x\n",
+                              __FUNCTION__, __LINE__, ZE_RESULT_ERROR_INVALID_SIZE);
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
+    zet_intel_metric_df_gpu_export_data_format_t *exportData = reinterpret_cast<zet_intel_metric_df_gpu_export_data_format_t *>(pExportData);
+    exportData->header.type = ZET_INTEL_METRIC_DF_SOURCE_TYPE_IPSAMPLING;
+    exportData->header.version.major = ZET_INTEL_GPU_METRIC_VERSION_MAJOR;
+    exportData->header.version.minor = ZET_INTEL_GPU_METRIC_VERSION_MINOR;
+    exportData->header.rawDataOffset = sizeof(zet_intel_metric_df_gpu_export_data_format_t);
+    exportData->header.rawDataSize = rawDataSize;
+
+    // Append the rawData
+    memcpy_s(reinterpret_cast<void *>(pExportData + exportData->header.rawDataOffset), rawDataSize, pRawData, rawDataSize);
+
+    return ZE_RESULT_SUCCESS;
 }
 
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,

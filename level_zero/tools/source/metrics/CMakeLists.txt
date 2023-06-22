@@ -16,6 +16,8 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_query_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_source.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_source.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_export_data.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_export_data.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_source.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_source.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_streamer.h

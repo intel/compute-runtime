@@ -1031,6 +1031,15 @@ const MetricEnumeration &OaMetricGroupImp::getMetricEnumeration() const {
     return metricSource->getMetricEnumeration();
 }
 
+void OaMetricGroupImp::setCachedExportDataHeapSize(size_t size) {
+    for (auto &metricGroupHanlde : metricGroups) {
+        auto metricGroup = L0::MetricGroup::fromHandle(metricGroupHanlde);
+        auto oaMetricGroupImp = static_cast<OaMetricGroupImp *>(metricGroup);
+        oaMetricGroupImp->setCachedExportDataHeapSize(size);
+    }
+    cachedExportDataHeapSize = size;
+}
+
 ze_result_t OaMetricImp::getProperties(zet_metric_properties_t *pProperties) {
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;

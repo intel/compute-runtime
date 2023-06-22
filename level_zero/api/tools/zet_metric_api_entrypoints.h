@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,6 +144,31 @@ ze_result_t zetMetricQueryGetData(
     size_t *pRawDataSize,
     uint8_t *pRawData) {
     return L0::MetricQuery::fromHandle(hMetricQuery)->getData(pRawDataSize, pRawData);
+}
+
+ze_result_t ZE_APICALL
+zetMetricGroupGetExportDataExp(
+    zet_metric_group_handle_t hMetricGroup,
+    const uint8_t *pRawData,
+    size_t rawDataSize,
+    size_t *pExportDataSize,
+    uint8_t *pExportData) {
+    return L0::MetricGroup::fromHandle(hMetricGroup)->getExportData(pRawData, rawDataSize, pExportDataSize, pExportData);
+}
+
+ze_result_t ZE_APICALL
+zetDriverCalculateMetricExportDataExp(
+    ze_driver_handle_t hDriver,
+    zet_metric_group_calculation_type_t type,
+    size_t exportDataSize,
+    const uint8_t *pExportData,
+    zet_metric_calculate_exp_desc_t *pCalculateDescriptor,
+    uint32_t *pSetCount,
+    uint32_t *pTotalMetricValueCount,
+    uint32_t *pMetricCounts,
+    zet_typed_value_t *pMetricValues) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0
@@ -335,5 +360,30 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zetMetricQueryGetData(
         hMetricQuery,
         pRawDataSize,
         pRawData);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricGroupGetExportDataExp(
+    zet_metric_group_handle_t hMetricGroup,
+    const uint8_t *pRawData,
+    size_t rawDataSize,
+    size_t *pExportDataSize,
+    uint8_t *pExportData) {
+    return L0::zetMetricGroupGetExportDataExp(hMetricGroup, pRawData, rawDataSize, pExportDataSize, pExportData);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetDriverCalculateMetricExportDataExp(
+    ze_driver_handle_t hDriver,
+    zet_metric_group_calculation_type_t type,
+    size_t exportDataSize,
+    const uint8_t *pExportData,
+    zet_metric_calculate_exp_desc_t *pCalculateDescriptor,
+    uint32_t *pSetCount,
+    uint32_t *pTotalMetricValueCount,
+    uint32_t *pMetricCounts,
+    zet_typed_value_t *pMetricValues) {
+    return L0::zetDriverCalculateMetricExportDataExp(hDriver, type, exportDataSize, pExportData, pCalculateDescriptor,
+                                                     pSetCount, pTotalMetricValueCount, pMetricCounts, pMetricValues);
 }
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,6 +13,7 @@ if(UNIX)
                  zello_metrics_workload.cpp
                  zello_metrics.cpp
                  zello_metrics_util.cpp
+                 zello_metrics_export.cpp
                  zello_metrics_util.h
                  zello_metrics.h
   )

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,5 +94,6 @@ zet_metric_group_handle_t findMetricGroup(const char *groupName,
 ze_event_pool_handle_t createHostVisibleEventPool(ze_context_handle_t contextHandle, ze_device_handle_t deviceHandle);
 ze_event_handle_t createHostVisibleEvent(ze_event_pool_handle_t hostVisibleEventPool);
 void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *rawData, uint32_t rawDataSize);
+void showMetricsExportData(uint8_t *pExportData, size_t exportDataSize);
 
 } // namespace ZelloMetricsUtility

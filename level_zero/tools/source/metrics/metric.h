@@ -119,6 +119,8 @@ struct MetricGroup : _zet_metric_group_handle_t {
         const zet_metric_query_pool_desc_t *desc,
         zet_metric_query_pool_handle_t *phMetricQueryPool) = 0;
     ze_result_t getMetricGroupExtendedProperties(MetricSource &metricSource, void *pnext);
+    virtual ze_result_t getExportData(const uint8_t *pRawData, size_t rawDataSize, size_t *pExportDataSize,
+                                      uint8_t *pExportData) = 0;
 };
 
 struct MetricGroupCalculateHeader {

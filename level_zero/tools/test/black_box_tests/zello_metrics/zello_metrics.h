@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -183,6 +183,9 @@ class CopyBufferToBuffer : public Workload {
 };
 
 class SingleMetricCollector : public Collector {
+
+  public:
+    zet_metric_group_handle_t getMetricGroup() { return metricGroup; }
 
   protected:
     SingleMetricCollector(ExecutionContext *executionCtxt,

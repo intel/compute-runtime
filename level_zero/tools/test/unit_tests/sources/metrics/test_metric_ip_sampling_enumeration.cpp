@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/include/zet_intel_gpu_metric.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
@@ -986,6 +987,70 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenAppendMe
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
     EXPECT_EQ(zetCommandListAppendMetricMemoryBarrier(commandListHandle), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+using MetricExportDataIpSamplingTest = MetricIpSamplingEnumerationTest;
+
+TEST_F(MetricExportDataIpSamplingTest, WhenMetricGroupGetExportDataIsCalledThenReturnSuccess) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    for (auto device : testDevices) {
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_EQ(metricGroupCount, 1u);
+
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+
+        uint8_t dummyRawData = 8;
+        size_t exportDataSize = 0;
+        const auto dummyRawDataSize = 1u;
+        EXPECT_EQ(zetMetricGroupGetExportDataExp(metricGroups[0],
+                                                 &dummyRawData, dummyRawDataSize, &exportDataSize, nullptr),
+                  ZE_RESULT_SUCCESS);
+        EXPECT_GE(exportDataSize, 0u);
+        std::vector<uint8_t> exportDataMem(exportDataSize);
+        EXPECT_EQ(zetMetricGroupGetExportDataExp(metricGroups[0],
+                                                 &dummyRawData, dummyRawDataSize, &exportDataSize, exportDataMem.data()),
+                  ZE_RESULT_SUCCESS);
+        zet_intel_metric_df_gpu_export_data_format_t *exportData = reinterpret_cast<zet_intel_metric_df_gpu_export_data_format_t *>(exportDataMem.data());
+        EXPECT_EQ(exportData->header.type, ZET_INTEL_METRIC_DF_SOURCE_TYPE_IPSAMPLING);
+        EXPECT_EQ(dummyRawData, exportDataMem[exportData->header.rawDataOffset]);
+    }
+}
+
+TEST_F(MetricExportDataIpSamplingTest, GivenIncorrectExportDataSizeWhenMetricGroupGetExportDataIsCalledThenErrorIsReturned) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    for (auto device : testDevices) {
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_EQ(metricGroupCount, 1u);
+
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+
+        uint8_t dummyRawData = 0;
+        size_t exportDataSize = 0;
+        const auto dummyRawDataSize = 1u;
+        EXPECT_EQ(zetMetricGroupGetExportDataExp(metricGroups[0],
+                                                 &dummyRawData, dummyRawDataSize, &exportDataSize, nullptr),
+                  ZE_RESULT_SUCCESS);
+        EXPECT_GE(exportDataSize, 0u);
+        exportDataSize -= 1;
+        std::vector<uint8_t> exportDataMem(exportDataSize);
+        EXPECT_EQ(zetMetricGroupGetExportDataExp(metricGroups[0],
+                                                 &dummyRawData, dummyRawDataSize, &exportDataSize, exportDataMem.data()),
+                  ZE_RESULT_ERROR_INVALID_SIZE);
+    }
 }
 
 } // namespace ult

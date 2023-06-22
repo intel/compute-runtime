@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,6 +27,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_initialization.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_ip_sampling_enumeration.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_ip_sampling_streamer.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_export.cpp
 
 )
 

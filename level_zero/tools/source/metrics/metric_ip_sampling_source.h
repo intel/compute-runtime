@@ -65,6 +65,7 @@ struct IpSamplingMetricGroupBase : public MetricGroup {
         zet_device_handle_t hDevice,
         const zet_metric_query_pool_desc_t *desc,
         zet_metric_query_pool_handle_t *phMetricQueryPool) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t getExportData(const uint8_t *pRawData, size_t rawDataSize, size_t *pExportDataSize, uint8_t *pExportData) override;
 };
 
 struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {

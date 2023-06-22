@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -274,6 +274,17 @@ IAdapter_1_8 *IAdapterGroup_1_8::GetAdapter(uint32_t index) {
 }
 
 IAdapter_1_6 *IAdapterGroup_1_6::GetAdapter(uint32_t index) {
+    UNRECOVERABLE_IF(true);
+    return nullptr;
+}
+
+IEquation_1_0::~IEquation_1_0() {}
+uint32_t IEquation_1_0::GetEquationElementsCount(void) {
+    UNRECOVERABLE_IF(true);
+    return 0;
+}
+
+TEquationElement_1_0 *IEquation_1_0::GetEquationElement(uint32_t index) {
     UNRECOVERABLE_IF(true);
     return nullptr;
 }

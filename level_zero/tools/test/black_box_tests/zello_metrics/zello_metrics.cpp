@@ -888,6 +888,43 @@ bool collectIndefinitely() {
     return status;
 }
 
+bool testExportData() {
+
+    auto deviceId = 0;
+    auto subDeviceId = -1;
+    if (!zmu::isDeviceAvailable(deviceId, subDeviceId)) {
+        return false;
+    }
+
+    auto testSettings = zmu::TestSettings::get();
+
+    std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt;
+    executionCtxt = std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
+    std::unique_ptr<SingleMetricStreamerCollector> collector =
+        std::make_unique<SingleMetricStreamerCollector>(executionCtxt.get(), testSettings->metricGroupName.get().c_str());
+
+    uint8_t rawData[256];
+    size_t exportDataSize = 0;
+    auto res = zetMetricGroupGetExportDataExp(collector->getMetricGroup(), rawData, 256, &exportDataSize, nullptr);
+    if (res != ZE_RESULT_SUCCESS) {
+        LOG(zmu::LogLevel::DEBUG) << "export data size query status: " << res << std::endl;
+        return false;
+    }
+
+    LOG(zmu::LogLevel::INFO) << "ExportData Size: " << exportDataSize << std::endl;
+    std::vector<uint8_t> exportData(exportDataSize);
+
+    res = zetMetricGroupGetExportDataExp(collector->getMetricGroup(), rawData, 256, &exportDataSize, exportData.data());
+    if (res != ZE_RESULT_SUCCESS) {
+        LOG(zmu::LogLevel::DEBUG) << "export data status: " << res << std::endl;
+        return false;
+    }
+
+    zmu::showMetricsExportData(exportData.data(), exportDataSize);
+
+    return true;
+}
+
 int main(int argc, char *argv[]) {
 
     std::map<std::string, std::function<bool()>> tests;
@@ -903,6 +940,7 @@ int main(int argc, char *argv[]) {
     tests["displayAllMetricGroups"] = displayAllMetricGroups;
     tests["queryImmediateCommandListTest"] = queryImmediateCommandListTest;
     tests["collectIndefinitely"] = collectIndefinitely;
+    tests["testExportData"] = testExportData;
 
     auto testSettings = zmu::TestSettings::get();
     testSettings->parseArguments(argc, argv);
