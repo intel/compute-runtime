@@ -35,10 +35,6 @@ bool ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled() {
     return false;
 }
 
-bool ApiSpecificConfig::isRelaxedOrderingEnabled() {
-    return true;
-}
-
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::OCL;
 }

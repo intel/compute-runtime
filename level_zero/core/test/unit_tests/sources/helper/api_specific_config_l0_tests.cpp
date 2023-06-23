@@ -43,10 +43,6 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfDeviceAllocationCacheIsEnabledThenR
     EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
 }
 
-TEST(ApiSpecificConfigL0Tests, WhenCheckingIfRelaxedOrderingIsEnabledThenReturnFalse) {
-    EXPECT_FALSE(ApiSpecificConfig::isRelaxedOrderingEnabled());
-}
-
 TEST(ApiSpecificConfigL0Tests, GivenDebugFlagSetWhenCheckingIfDynamicPostSyncAllocLayoutEnabledThenReturnFalse) {
     DebugManagerStateRestore restore;
 

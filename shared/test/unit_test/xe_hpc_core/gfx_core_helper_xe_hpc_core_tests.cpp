@@ -94,9 +94,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallGetAmountOfAlloca
 
 HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenReturnFalse, IGFX_XE_HPC_CORE);
 
-XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenCheckApiSpecificConfig) {
+XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenReturnTrue) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
-    EXPECT_EQ(ApiSpecificConfig::isRelaxedOrderingEnabled(), gfxCoreHelper.isRelaxedOrderingSupported());
+    EXPECT_TRUE(gfxCoreHelper.isRelaxedOrderingSupported());
 }
