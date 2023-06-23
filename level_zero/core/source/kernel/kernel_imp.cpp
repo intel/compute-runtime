@@ -383,12 +383,13 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     dim = (globalSizeZ > 1U) ? 3 : dim;
 
     auto cachedGroupSize = std::find_if(this->suggestGroupSizeCache.begin(), this->suggestGroupSizeCache.end(), [&](const auto &other) {
-        return other.first == workItems;
+        return other.groupSize == workItems &&
+               other.slmArgsTotalSize == this->getSlmTotalSize();
     });
     if (cachedGroupSize != this->suggestGroupSizeCache.end()) {
-        *groupSizeX = static_cast<uint32_t>(cachedGroupSize->second.x);
-        *groupSizeY = static_cast<uint32_t>(cachedGroupSize->second.y);
-        *groupSizeZ = static_cast<uint32_t>(cachedGroupSize->second.z);
+        *groupSizeX = static_cast<uint32_t>(cachedGroupSize->suggestedGroupSize.x);
+        *groupSizeY = static_cast<uint32_t>(cachedGroupSize->suggestedGroupSize.y);
+        *groupSizeZ = static_cast<uint32_t>(cachedGroupSize->suggestedGroupSize.z);
         return ZE_RESULT_SUCCESS;
     }
 
@@ -420,7 +421,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     *groupSizeX = static_cast<uint32_t>(retGroupSize[0]);
     *groupSizeY = static_cast<uint32_t>(retGroupSize[1]);
     *groupSizeZ = static_cast<uint32_t>(retGroupSize[2]);
-    this->suggestGroupSizeCache.push_back(std::make_pair(Vec3(workItems), Vec3(retGroupSize)));
+    this->suggestGroupSizeCache.emplace_back(workItems, this->getSlmTotalSize(), retGroupSize);
 
     return ZE_RESULT_SUCCESS;
 }

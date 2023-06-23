@@ -241,8 +241,14 @@ struct KernelImp : Kernel {
     std::unique_ptr<KernelExt> pExtension;
     std::mutex printfLock;
 
-    using SuggestGroupSizeCacheT = std::vector<std::pair<Vec3<size_t>, Vec3<size_t>>>;
-    SuggestGroupSizeCacheT suggestGroupSizeCache;
+    struct SuggestGroupSizeCacheEntry {
+        Vec3<size_t> groupSize;
+        uint32_t slmArgsTotalSize = 0u;
+
+        Vec3<size_t> suggestedGroupSize;
+        SuggestGroupSizeCacheEntry(size_t groupSize[3], uint32_t slmArgsTotalSize, size_t suggestedGroupSize[3]) : groupSize(groupSize), slmArgsTotalSize(slmArgsTotalSize), suggestedGroupSize(suggestedGroupSize){};
+    };
+    std::vector<SuggestGroupSizeCacheEntry> suggestGroupSizeCache;
 };
 
 } // namespace L0
