@@ -33,55 +33,54 @@ const PLATFORM MTL::platform = {
 
 const RuntimeCapabilityTable MTL::capabilityTable{
     EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_RCS, {true, true}},
-        {aub_stream::ENGINE_CCS, {true, true}}},   // directSubmissionEngines
-    {0, 0, 0, 0, false, false, false, false},      // kmdNotifyProperties
-    MemoryConstants::max48BitAddress,              // gpuAddressSpace
-    0,                                             // sharedSystemMemCapabilities
-    83.333,                                        // defaultProfilingTimerResolution
-    MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    "",                                            // deviceName
-    PreemptionMode::ThreadGroup,                   // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                        // defaultEngineType
-    0,                                             // maxRenderFrequency
-    30,                                            // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Mtl, // aubDeviceId
-    0,                                             // extraQuantityThreadsPerEU
-    64,                                            // slmSize
-    sizeof(MTL::GRF),                              // grfSize
-    36u,                                           // timestampValidBits
-    32u,                                           // kernelTimestampValidBits
-    false,                                         // blitterOperationsSupported
-    true,                                          // ftrSupportsInteger64BitAtomics
-    true,                                          // ftrSupportsFP64
-    false,                                         // ftrSupportsFP64Emulation
-    true,                                          // ftrSupports64BitMath
-    true,                                          // ftrSvm
-    false,                                         // ftrSupportsCoherency
-    false,                                         // ftrSupportsVmeAvcTextureSampler
-    false,                                         // ftrSupportsVmeAvcPreemption
-    false,                                         // ftrRenderCompressedBuffers
-    false,                                         // ftrRenderCompressedImages
-    true,                                          // ftr64KBpages
-    true,                                          // instrumentationEnabled
-    false,                                         // sourceLevelDebuggerSupported
-    false,                                         // supportsVme
-    true,                                          // supportCacheFlushAfterWalker
-    true,                                          // supportsImages
-    false,                                         // supportsDeviceEnqueue
-    false,                                         // supportsPipes
-    true,                                          // supportsOcl21Features
-    false,                                         // supportsOnDemandPageFaults
-    false,                                         // supportsIndependentForwardProgress
-    false,                                         // hostPtrTrackingEnabled
-    true,                                          // levelZeroSupported
-    true,                                          // isIntegratedDevice
-    true,                                          // supportsMediaBlock
-    false,                                         // p2pAccessSupported
-    false,                                         // p2pAtomicAccessSupported
-    true,                                          // fusedEuEnabled
-    true,                                          // l0DebuggerSupported
-    true                                           // supportsFloatAtomics
+        {aub_stream::ENGINE_CCS, {true, false, false, true}}}, // directSubmissionEngines
+    {0, 0, 0, 0, false, false, false, false},                  // kmdNotifyProperties
+    MemoryConstants::max48BitAddress,                          // gpuAddressSpace
+    0,                                                         // sharedSystemMemCapabilities
+    83.333,                                                    // defaultProfilingTimerResolution
+    MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
+    "",                                                        // deviceName
+    PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
+    aub_stream::ENGINE_CCS,                                    // defaultEngineType
+    0,                                                         // maxRenderFrequency
+    30,                                                        // clVersionSupport
+    CmdServicesMemTraceVersion::DeviceValues::Mtl,             // aubDeviceId
+    0,                                                         // extraQuantityThreadsPerEU
+    64,                                                        // slmSize
+    sizeof(MTL::GRF),                                          // grfSize
+    36u,                                                       // timestampValidBits
+    32u,                                                       // kernelTimestampValidBits
+    false,                                                     // blitterOperationsSupported
+    true,                                                      // ftrSupportsInteger64BitAtomics
+    true,                                                      // ftrSupportsFP64
+    false,                                                     // ftrSupportsFP64Emulation
+    true,                                                      // ftrSupports64BitMath
+    true,                                                      // ftrSvm
+    false,                                                     // ftrSupportsCoherency
+    false,                                                     // ftrSupportsVmeAvcTextureSampler
+    false,                                                     // ftrSupportsVmeAvcPreemption
+    false,                                                     // ftrRenderCompressedBuffers
+    false,                                                     // ftrRenderCompressedImages
+    true,                                                      // ftr64KBpages
+    true,                                                      // instrumentationEnabled
+    false,                                                     // sourceLevelDebuggerSupported
+    false,                                                     // supportsVme
+    true,                                                      // supportCacheFlushAfterWalker
+    true,                                                      // supportsImages
+    false,                                                     // supportsDeviceEnqueue
+    false,                                                     // supportsPipes
+    true,                                                      // supportsOcl21Features
+    false,                                                     // supportsOnDemandPageFaults
+    false,                                                     // supportsIndependentForwardProgress
+    false,                                                     // hostPtrTrackingEnabled
+    true,                                                      // levelZeroSupported
+    true,                                                      // isIntegratedDevice
+    true,                                                      // supportsMediaBlock
+    false,                                                     // p2pAccessSupported
+    false,                                                     // p2pAtomicAccessSupported
+    true,                                                      // fusedEuEnabled
+    true,                                                      // l0DebuggerSupported
+    true                                                       // supportsFloatAtomics
 };
 
 WorkaroundTable MTL::workaroundTable = {};

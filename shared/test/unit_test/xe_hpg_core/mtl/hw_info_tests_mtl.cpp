@@ -55,6 +55,31 @@ MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_TRUE(workaroundTable.flags.waUntypedBufferCompression);
 }
 
+MTLTEST_F(MtlHwInfoTests, givenMtlCapabilityTableWhenCheckDirectSubmissionEnginesThenProperValuesAreSetToTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &directSubmissionEngines = hwInfo.capabilityTable.directSubmissionEngines;
+
+    for (uint32_t i = 0; i < aub_stream::NUM_ENGINES; i++) {
+        switch (i) {
+        case aub_stream::ENGINE_CCS:
+            EXPECT_TRUE(directSubmissionEngines.data[i].engineSupported);
+            EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
+            EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
+            break;
+        default:
+            EXPECT_FALSE(directSubmissionEngines.data[i].engineSupported);
+            EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useRootDevice);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
+        }
+    }
+}
+
 MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValueOfFtrLinearCCS) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
