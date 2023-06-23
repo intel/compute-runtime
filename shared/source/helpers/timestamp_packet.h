@@ -97,7 +97,7 @@ struct TimestampPacketHelper {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
         if (DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-            printf("\nPID: %u, TSP used for Semaphore: 0x%" PRIu64 ", cmdBuffer pos: 0x%" PRIu64, SysCalls::getProcessId(), timestampPacketNode.getGpuAddress(), cmdStream.getCurrentGpuAddressPosition());
+            printf("\nPID: %u, TSP used for Semaphore: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), timestampPacketNode.getGpuAddress(), cmdStream.getCurrentGpuAddressPosition());
         }
 
         auto compareAddress = getContextEndGpuAddress(timestampPacketNode);

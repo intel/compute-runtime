@@ -127,7 +127,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     if (walkerArgs.currentTimestampPacketNodes && DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
         auto gpuVa = walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex]->getGpuAddress();
-        printf("\nPID:%u, TSP used for Walker: 0x%" PRIu64 ", cmdBuffer pos: 0x%" PRIu64, SysCalls::getProcessId(), gpuVa, commandStream.getCurrentGpuAddressPosition());
+        printf("\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), gpuVa, commandStream.getCurrentGpuAddressPosition());
     }
 
     if (partitionWalker) {
