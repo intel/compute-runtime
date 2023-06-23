@@ -1587,15 +1587,23 @@ HWTEST2_F(GfxCoreHelperTest, givenParamsWhenCalculateNumThreadsPerThreadGroupThe
     }
 }
 
-HWTEST_F(GfxCoreHelperTest, givenFlagForceNumberOfThreadsInGpgpuThreadGroupWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue) {
+HWTEST_F(GfxCoreHelperTest, givenFlagRemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroupWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue) {
     DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup.set(1);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    uint32_t expectedNumThreadsPerThreadGroup = 10u;
-    DebugManager.flags.ForceNumberOfThreadsInGpgpuThreadGroup.set(expectedNumThreadsPerThreadGroup);
-    EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(32u, 100u, 32u, true));
+    std::array<std::array<uint32_t, 5>, 8> values = {{
+        {32u, 32u, 128u, 1, 1u}, // SIMT Size, totalWorkItems, Max Num of threads, Grf size, Hw local id generation
+        {32u, 64u, 32u, 1, 2u},
+        {32u, 128u, 256u, 1, 4u},
+        {32u, 1024u, 128u, 1, 32u},
+        {16u, 32u, 32u, 0, 2u},
+        {16u, 64u, 256u, 0, 4u},
+        {16u, 128u, 128u, 0, 8u},
+        {16u, 1024u, 256u, 0, 64u},
+    }};
 
-    expectedNumThreadsPerThreadGroup = 20u;
-    DebugManager.flags.ForceNumberOfThreadsInGpgpuThreadGroup.set(expectedNumThreadsPerThreadGroup);
-    EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(32u, 100u, 32u, true));
+    for (auto &[simtSize, totalWgSize, grfsize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfsize, isHwLocalIdGeneration));
+    }
 }

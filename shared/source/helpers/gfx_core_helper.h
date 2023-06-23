@@ -168,7 +168,7 @@ class GfxCoreHelper {
     virtual bool isChipsetUniqueUUIDSupported() const = 0;
     virtual bool isTimestampShiftRequired() const = 0;
     virtual bool isRelaxedOrderingSupported() const = 0;
-    virtual uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalGeneration) const = 0;
+    virtual uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const = 0;
     static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
     virtual ~GfxCoreHelper() = default;
 
@@ -381,7 +381,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isChipsetUniqueUUIDSupported() const override;
     bool isTimestampShiftRequired() const override;
     bool isRelaxedOrderingSupported() const override;
-    uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalGeneration) const override;
+    uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const override;
 
     ~GfxCoreHelperHw() override = default;
 

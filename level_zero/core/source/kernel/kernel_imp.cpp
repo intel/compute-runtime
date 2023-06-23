@@ -339,7 +339,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     this->numThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(
-        simdSize, static_cast<uint32_t>(itemsInGroup), grfSize, kernelRequiresGenerationOfLocalIdsByRuntime);
+        simdSize, static_cast<uint32_t>(itemsInGroup), grfSize, !kernelRequiresGenerationOfLocalIdsByRuntime);
 
     if (kernelRequiresGenerationOfLocalIdsByRuntime) {
         auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;

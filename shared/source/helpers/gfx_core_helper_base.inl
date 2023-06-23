@@ -688,10 +688,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalGrfSize() const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalGeneration) const {
-    if (DebugManager.flags.ForceNumberOfThreadsInGpgpuThreadGroup.get() != -1) {
-        return DebugManager.flags.ForceNumberOfThreadsInGpgpuThreadGroup.get();
-    }
+uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const {
     return getThreadsPerWG(simd, totalWorkItems);
 }
 } // namespace NEO

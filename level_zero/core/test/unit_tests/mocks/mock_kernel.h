@@ -120,7 +120,11 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
     }
 
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {}
-    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
+    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
+        if (enableForcingOfGenerateLocalIdByHw) {
+            kernelRequiresGenerationOfLocalIdsByRuntime = !forceGenerateLocalIdByHw;
+        }
+    }
     ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {
         return ZE_RESULT_SUCCESS;
     }
@@ -135,6 +139,8 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
     NEO::KernelInfo info;
     uint32_t printPrintfOutputCalledTimes = 0;
     bool hangDetectedPassedToPrintfOutput = false;
+    bool enableForcingOfGenerateLocalIdByHw = false;
+    bool forceGenerateLocalIdByHw = false;
 };
 
 } // namespace ult
