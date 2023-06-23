@@ -425,7 +425,7 @@ uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
 
 template <>
 bool GfxCoreHelperHw<Family>::isRelaxedOrderingSupported() const {
-    return false;
+    return true;
 }
 
 } // namespace NEO
