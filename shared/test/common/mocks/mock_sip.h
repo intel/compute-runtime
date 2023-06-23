@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,5 +47,6 @@ extern bool useMockSip;
 
 void clearUseFlags();
 std::vector<char> createStateSaveAreaHeader(uint32_t version);
+std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum);
 } // namespace MockSipData
 } // namespace NEO

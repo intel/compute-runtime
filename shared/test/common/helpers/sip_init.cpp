@@ -29,6 +29,10 @@ void clearUseFlags() {
 }
 
 std::vector<char> createStateSaveAreaHeader(uint32_t version) {
+    return createStateSaveAreaHeader(version, 128);
+}
+
+std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum) {
     SIP::StateSaveAreaHeader stateSaveAreaHeader = {
         {
             // versionHeader
@@ -43,32 +47,32 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version) {
         },
         {
             // regHeader
-            1,                   // num_slices
-            6,                   // num_subslices_per_slice
-            16,                  // num_eus_per_subslice
-            7,                   // num_threads_per_eu
-            0,                   // state_area_offset
-            6144,                // state_save_size
-            0,                   // slm_area_offset
-            0,                   // slm_bank_size
-            0,                   // slm_bank_valid
-            4740,                // sr_magic_offset
-            {0, 128, 256, 32},   // grf
-            {4096, 1, 256, 32},  // addr
-            {4128, 2, 32, 4},    // flag
-            {4156, 1, 32, 4},    // emask
-            {4160, 2, 128, 16},  // sr
-            {4192, 1, 128, 16},  // cr
-            {4256, 1, 96, 12},   // notification
-            {4288, 1, 128, 16},  // tdr
-            {4320, 10, 256, 32}, // acc
-            {0, 0, 0, 0},        // mme
-            {4672, 1, 32, 4},    // ce
-            {4704, 1, 128, 16},  // sp
-            {0, 0, 0, 0},        // cmd
-            {4640, 1, 128, 16},  // tm
-            {0, 1, 32, 4},       // fc
-            {4736, 1, 32, 4},    // dbg
+            1,                    // num_slices
+            6,                    // num_subslices_per_slice
+            16,                   // num_eus_per_subslice
+            7,                    // num_threads_per_eu
+            0,                    // state_area_offset
+            6144,                 // state_save_size
+            0,                    // slm_area_offset
+            0,                    // slm_bank_size
+            0,                    // slm_bank_valid
+            4740,                 // sr_magic_offset
+            {0, grfNum, 256, 32}, // grf
+            {4096, 1, 256, 32},   // addr
+            {4128, 2, 32, 4},     // flag
+            {4156, 1, 32, 4},     // emask
+            {4160, 2, 128, 16},   // sr
+            {4192, 1, 128, 16},   // cr
+            {4256, 1, 96, 12},    // notification
+            {4288, 1, 128, 16},   // tdr
+            {4320, 10, 256, 32},  // acc
+            {0, 0, 0, 0},         // mme
+            {4672, 1, 32, 4},     // ce
+            {4704, 1, 128, 16},   // sp
+            {0, 0, 0, 0},         // cmd
+            {4640, 1, 128, 16},   // tm
+            {0, 1, 32, 4},        // fc
+            {4736, 1, 32, 4},     // dbg
         },
     };
 
@@ -96,7 +100,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version) {
             0,                       // slm_bank_size
             0,                       // slm_bank_valid
             4740,                    // sr_magic_offset
-            {0, 128, 256, 32},       // grf
+            {0, grfNum, 256, 32},    // grf
             {4096, 1, 256, 32},      // addr
             {4128, 2, 32, 4},        // flag
             {4156, 1, 32, 4},        // emask

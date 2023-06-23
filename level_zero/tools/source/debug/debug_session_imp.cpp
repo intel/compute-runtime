@@ -1192,6 +1192,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
     auto parseRegsetDesc = [&](const SIP::regset_desc &regsetDesc, zet_debug_regset_type_intel_gpu_t regsetType) {
         if (regsetDesc.num) {
             if (totalRegsetNum < *pCount) {
+                uint16_t num = (regsetType == ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU) ? 128 : regsetDesc.num;
                 zet_debug_regset_properties_t regsetProps = {
                     ZET_STRUCTURE_TYPE_DEBUG_REGSET_PROPERTIES,
                     nullptr,
@@ -1199,7 +1200,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
                     0,
                     DebugSessionImp::typeToRegsetFlags(regsetType),
                     0,
-                    regsetDesc.num,
+                    num,
                     regsetDesc.bits,
                     regsetDesc.bytes,
                 };

@@ -318,6 +318,21 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
 }
 
+TEST_F(DebugApiTest, givenSIPHeaderGRFCountNotEqualTo128ThenGetRegisterSetPropertiesReturns128) {
+    mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(12u, count);
+
+    std::vector<zet_debug_regset_properties_t> regsetProps(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
+
+    EXPECT_EQ(12u, count);
+    EXPECT_EQ(128u, regsetProps[0].count);
+}
+
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturned) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
