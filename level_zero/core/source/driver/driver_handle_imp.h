@@ -139,6 +139,13 @@ struct DriverHandleImp : public DriverHandle {
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
     uint8_t powerHint = 0;
+
+    // Error messages per thread, variable initialized / destoryed per thread,
+    // not based on the lifetime of the object of a class.
+    std::unordered_map<std::thread::id, std::string> errorDescs;
+    std::mutex errorDescsMutex;
+    int setErrorDescription(const char *fmt, ...) override;
+    ze_result_t getErrorDescription(const char **ppString) override;
 };
 
 extern struct DriverHandleImp *GlobalDriver;

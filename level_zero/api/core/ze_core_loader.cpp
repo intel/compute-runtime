@@ -44,6 +44,7 @@ zeGetDriverProcAddrTable(
     pDdiTable->pfnGetApiVersion = L0::zeDriverGetApiVersion;
     pDdiTable->pfnGetProperties = L0::zeDriverGetProperties;
     pDdiTable->pfnGetIpcProperties = L0::zeDriverGetIpcProperties;
+    pDdiTable->pfnGetLastErrorDescription = L0::zeDriverGetLastErrorDescription;
     pDdiTable->pfnGetExtensionProperties = L0::zeDriverGetExtensionProperties;
     pDdiTable->pfnGetExtensionFunctionAddress = L0::zeDriverGetExtensionFunctionAddress;
     driverDdiTable.coreDdiTable.Driver = *pDdiTable;

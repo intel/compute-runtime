@@ -901,6 +901,40 @@ TEST_F(DriverHandleTest, givenValidDriverHandleWhenGetSvmAllocManagerIsCalledThe
     EXPECT_NE(nullptr, svmAllocsManager);
 }
 
+TEST_F(DriverHandleTest, givenValidDriverHandleWhenSetErrorDescriptionIsCalledThenGetErrorDecriptionGetsStringCorrectly) {
+    std::string errorString = "we manually created error";
+    std::string errorString2 = "here's the next string to pass with arguments: ";
+    std::string errorString2Fmt = errorString2 + std::string("%d");
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    driverHandle->setErrorDescription(errorString.c_str());
+
+    const char *pStr = nullptr;
+    result = zeDriverGetLastErrorDescription(driverHandle->toHandle(), &pStr);
+    EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    driverHandle->setErrorDescription(errorString2Fmt.c_str(), 4);
+    result = zeDriverGetLastErrorDescription(driverHandle->toHandle(), &pStr);
+    std::string expectedString = errorString2 + "4";
+    EXPECT_EQ(0, strcmp(expectedString.c_str(), pStr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(DriverHandleTest, givenValidDriverHandleWhenGetErrorDescriptionIsCalledThenEmptyStringIsReturned) {
+    std::string errorString = "";
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    const char *pStr = nullptr;
+    result = zeDriverGetLastErrorDescription(driverHandle->toHandle(), &pStr);
+    EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    driverHandle->setErrorDescription(errorString.c_str());
+    result = zeDriverGetLastErrorDescription(driverHandle->toHandle(), &pStr);
+    EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetPropertiesIsCalled) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     Mock<DriverHandle> driverHandle;

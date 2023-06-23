@@ -311,6 +311,10 @@ TEST_P(KernelImpSuggestGroupSize, WhenSlmSizeExceedsLocalMemorySizeAndSuggesting
     const auto &slmInlineSize = funcInfo.kernelDescriptor->kernelAttributes.slmInlineSize;
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);
+
+    const char *errorMsg = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getDriverHandle()->getErrorDescription(&errorMsg));
+    EXPECT_EQ(0, strcmp(expectedOutput.c_str(), errorMsg));
 }
 
 TEST_F(KernelImp, GivenInvalidValuesWhenSettingGroupSizeThenInvalidArgumentErrorIsReturned) {

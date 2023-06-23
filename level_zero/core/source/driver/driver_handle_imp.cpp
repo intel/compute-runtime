@@ -30,6 +30,7 @@
 
 #include "driver_version_l0.h"
 
+#include <cstdarg>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -896,6 +897,45 @@ uint32_t DriverHandleImp::getEventMaxKernelCount(uint32_t numDevices, ze_device_
     }
 
     return maxCount;
+}
+
+int DriverHandleImp::setErrorDescription(const char *fmt, ...) {
+    int result = 0;
+    int size = -1;
+    va_list args;
+
+    auto threadId = std::this_thread::get_id();
+    {
+        std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
+        if (errorDescs.find(threadId) == errorDescs.end()) {
+            errorDescs[threadId] = std::string();
+        }
+    }
+    errorDescs[threadId].clear();
+    va_start(args, fmt);
+    size = vsnprintf(nullptr, 0, fmt, args); // NOLINT(clang-analyzer-valist.Uninitialized)
+    va_end(args);
+    if (size > 0) {
+        va_start(args, fmt);
+        errorDescs[threadId].resize(size + 1); // to temporarilly copy \0
+        result = vsnprintf(errorDescs[threadId].data(), size + 1, fmt, args);
+        errorDescs[threadId].resize(size); // to remove \0
+        va_end(args);
+    }
+
+    return result;
+}
+
+ze_result_t DriverHandleImp::getErrorDescription(const char **ppString) {
+    auto threadId = std::this_thread::get_id();
+    {
+        std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
+        if (errorDescs.find(threadId) == errorDescs.end()) {
+            errorDescs[threadId] = std::string();
+        }
+    }
+    *ppString = errorDescs[threadId].c_str();
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

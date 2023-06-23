@@ -41,6 +41,12 @@ ze_result_t zeDriverGetIpcProperties(
     return L0::DriverHandle::fromHandle(hDriver)->getIPCProperties(pIPCProperties);
 }
 
+ze_result_t zeDriverGetLastErrorDescription(
+    ze_driver_handle_t hDriver,
+    const char **ppString) {
+    return L0::DriverHandle::fromHandle(hDriver)->getErrorDescription(ppString);
+}
+
 ze_result_t zeDriverGetExtensionProperties(
     ze_driver_handle_t hDriver,
     uint32_t *pCount,
@@ -54,6 +60,7 @@ ze_result_t zeDriverGetExtensionFunctionAddress(
     void **ppFunctionAddress) {
     return L0::BaseDriver::fromHandle(hDriver)->getExtensionFunctionAddress(name, ppFunctionAddress);
 }
+
 } // namespace L0
 
 extern "C" {
@@ -93,6 +100,14 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetIpcProperties(
     return L0::zeDriverGetIpcProperties(
         hDriver,
         pIpcProperties);
+}
+
+ZE_APIEXPORT ze_result_t zeDriverGetLastErrorDescription(
+    ze_driver_handle_t hDriver,
+    const char **ppString) {
+    return L0::zeDriverGetLastErrorDescription(
+        hDriver,
+        ppString);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetExtensionProperties(

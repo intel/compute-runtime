@@ -73,6 +73,9 @@ struct DriverHandle : BaseDriver {
     virtual uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const = 0;
     virtual uint32_t getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const = 0;
 
+    virtual int setErrorDescription(const char *fmt, ...) = 0;
+    virtual ze_result_t getErrorDescription(const char **ppString) = 0;
+
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }
 
