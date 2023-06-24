@@ -62,7 +62,7 @@ HWTEST2_F(MockProductHelperTestLinux, givenDebugFlagSetWhenEnablingBlitterOperat
 HWTEST2_F(MockProductHelperTestLinux, givenUnsupportedChipsetUniqueUUIDWhenGettingUuidThenReturnFalse, IsAtMostGen11) {
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     std::array<uint8_t, ProductHelper::uuidSize> id;
-    EXPECT_FALSE(productHelper.getUuid(nullptr, id));
+    EXPECT_FALSE(productHelper.getUuid(nullptr, 0u, 0u, id));
 }
 
 TEST_F(MockProductHelperTestLinux, GivenDummyConfigThenEdramIsDetected) {

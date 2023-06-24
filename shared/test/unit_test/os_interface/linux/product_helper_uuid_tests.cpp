@@ -138,7 +138,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
     uint8_t expectedUuid[16] = {};
     std::memcpy(expectedUuid, &expectedVal, sizeof(expectedVal));
     auto &productHelper = devices[0]->getProductHelper();
-    EXPECT_EQ(true, productHelper.getUuid(devices[0].get(), uuid));
+    EXPECT_EQ(true, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
 
     uint32_t subDeviceCount = numSubDevices;
@@ -150,7 +150,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
         std::memcpy(expectedUuid, &expectedVal, sizeof(expectedVal));
         expectedUuid[15] = i + 1;
 
-        EXPECT_EQ(true, productHelper.getUuid(subDevices[i], uuid));
+        EXPECT_EQ(true, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), subDeviceCount, i + 1, uuid));
         EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
     }
 }
@@ -246,7 +246,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
     uint8_t expectedUuid[16] = {};
     std::memcpy(expectedUuid, &expectedVal, sizeof(expectedVal));
     auto &productHelper = devices[0]->getProductHelper();
-    EXPECT_EQ(true, productHelper.getUuid(devices[0].get(), uuid));
+    EXPECT_EQ(true, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
 
     uint32_t subDeviceCount = numSubDevices;
@@ -257,7 +257,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
         uint8_t expectedUuid[16] = {0};
         std::memcpy(expectedUuid, &expectedVal, sizeof(expectedVal));
         expectedUuid[15] = i + 1;
-        EXPECT_EQ(true, productHelper.getUuid(subDevices[i], uuid));
+        EXPECT_EQ(true, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), subDeviceCount, i + 1, uuid));
         EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
     }
 }
@@ -293,7 +293,7 @@ HWTEST2_F(MultipleDeviceUuidTest, givenTelemDirectoriesAreLessThanExpectedWhenRe
     auto &productHelper = devices[0]->getProductHelper();
     for (auto i = 0u; i < subDeviceCount; i++) {
         std::array<uint8_t, 16> uuid;
-        EXPECT_EQ(false, productHelper.getUuid(subDevices[i], uuid));
+        EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), subDeviceCount, i + 1, uuid));
     }
 }
 
@@ -357,7 +357,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingGuidWhenRetrievingUuidForSubDevice
     auto &productHelper = devices[0]->getProductHelper();
     for (auto i = 0u; i < subDeviceCount; i++) {
         std::array<uint8_t, 16> uuid;
-        EXPECT_EQ(false, productHelper.getUuid(subDevices[i], uuid));
+        EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), subDeviceCount, i + 1, uuid));
     }
 }
 
@@ -404,7 +404,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectGuidWhenRetrievingUuidForSubDevi
     auto &productHelper = devices[0]->getProductHelper();
     for (auto i = 0u; i < subDeviceCount; i++) {
         std::array<uint8_t, 16> uuid;
-        EXPECT_EQ(false, productHelper.getUuid(subDevices[i], uuid));
+        EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), subDeviceCount, i + 1, uuid));
     }
 }
 
@@ -461,7 +461,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingOffsetWhenRetrievingUuidForSubDevi
     auto &productHelper = devices[0]->getProductHelper();
     for (auto i = 0u; i < subDeviceCount; i++) {
         std::array<uint8_t, 16> uuid;
-        EXPECT_EQ(false, productHelper.getUuid(subDevices[i], uuid));
+        EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), subDeviceCount, i + 1, uuid));
     }
 }
 
@@ -517,7 +517,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectOffsetWhenRetrievingUuidForSubDe
     auto &productHelper = devices[0]->getProductHelper();
     for (auto i = 0u; i < subDeviceCount; i++) {
         std::array<uint8_t, 16> uuid;
-        EXPECT_EQ(false, productHelper.getUuid(subDevices[i], uuid));
+        EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), subDeviceCount, i + 1, uuid));
     }
 }
 
@@ -570,7 +570,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingTelemNodeWhenRetrievingUuidThenFai
 
     std::array<uint8_t, 16> uuid;
     auto &productHelper = devices[0]->getProductHelper();
-    EXPECT_EQ(false, productHelper.getUuid(devices[0].get(), uuid));
+    EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
 }
 
 HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectTelemNodeWhenRetrievingUuidThenFailureIsReturned, IsXEHP) {
@@ -623,7 +623,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectTelemNodeWhenRetrievingUuidThenF
 
     std::array<uint8_t, 16> uuid;
     auto &productHelper = devices[0]->getProductHelper();
-    EXPECT_EQ(false, productHelper.getUuid(devices[0].get(), uuid));
+    EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
 }
 
 HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectGuidValueWhenRetrievingUuidThenFailureIsReturned, IsXEHP) {
@@ -677,7 +677,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectGuidValueWhenRetrievingUuidThenF
 
     std::array<uint8_t, 16> uuid;
     auto &productHelper = devices[0]->getProductHelper();
-    EXPECT_EQ(false, productHelper.getUuid(devices[0].get(), uuid));
+    EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
 }
 
 HWTEST2_F(MultipleDeviceUuidTest, GivenDeviceLinkIsNotAvailableWhenRetrievingUuidForRootDeviceThenFailureIsReturned, IsXEHP) {
@@ -696,7 +696,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenDeviceLinkIsNotAvailableWhenRetrievingUui
 
     std::array<uint8_t, 16> uuid;
     auto &productHelper = devices[0]->getProductHelper();
-    EXPECT_EQ(false, productHelper.getUuid(devices[0].get(), uuid));
+    EXPECT_EQ(false, productHelper.getUuid(devices[0].get()->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
 }
 
 TEST(PmtUtilTest, givenDataPtrIsNullWhenPmtUtilReadTelemIsCalledThenVerifyZeroIsReturned) {
@@ -750,7 +750,7 @@ HWTEST2_F(SysfsBasedUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsReceived,
     const uint64_t expectedUuidValue = 0x6769df256e271362;
     std::array<uint8_t, 16> uuid;
     auto &productHelper = device->getProductHelper();
-    EXPECT_TRUE(productHelper.getUuid(device, uuid));
+    EXPECT_EQ(true, productHelper.getUuid(device->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), &expectedUuidValue, sizeof(expectedUuidValue)));
     NEO::directoryFilesMap.clear();
 }
@@ -765,7 +765,7 @@ HWTEST2_F(SysfsBasedUuidTest, givenSysfsFileNotAvailableWhenRetrievingDeviceUuid
 
     std::array<uint8_t, 16> uuid;
     auto &productHelper = device->getProductHelper();
-    EXPECT_FALSE(productHelper.getUuid(device, uuid));
+    EXPECT_EQ(false, productHelper.getUuid(device->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
     NEO::directoryFilesMap.clear();
 }
 
@@ -785,7 +785,7 @@ HWTEST2_F(SysfsBasedUuidTest, givenIncorrectUuidWhenRetrievingDeviceUuidThenFail
 
     std::array<uint8_t, 16> uuid;
     auto &productHelper = device->getProductHelper();
-    EXPECT_FALSE(productHelper.getUuid(device, uuid));
+    EXPECT_EQ(false, productHelper.getUuid(device->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
     NEO::directoryFilesMap.clear();
 }
 
@@ -806,7 +806,7 @@ HWTEST2_F(SysfsBasedUuidTest, givenErrnoIsSetWhenRetrievingDeviceUuidThenFailure
 
     std::array<uint8_t, 16> uuid;
     auto &productHelper = device->getProductHelper();
-    EXPECT_FALSE(productHelper.getUuid(device, uuid));
+    EXPECT_EQ(false, productHelper.getUuid(device->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
     NEO::directoryFilesMap.clear();
 }
 
@@ -817,5 +817,5 @@ HWTEST2_F(SysfsBasedUuidTest, givenDriverModelIsNotDrmWhenRetrievingDeviceUuidTh
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(driverModelMock));
     std::array<uint8_t, 16> uuid;
     auto &productHelper = device->getProductHelper();
-    EXPECT_FALSE(productHelper.getUuid(device, uuid));
+    EXPECT_EQ(false, productHelper.getUuid(device->getRootDeviceEnvironment().osInterface->getDriverModel(), 0u, 0u, uuid));
 }

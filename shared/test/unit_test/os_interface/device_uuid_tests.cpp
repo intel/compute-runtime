@@ -277,7 +277,7 @@ class MockProductHelperHwUuidEnablementTest : public ProductHelperHw<gfxProduct>
   public:
     bool returnStatus;
     MockProductHelperHwUuidEnablementTest() {}
-    bool getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {
+    bool getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {
         uuid.fill(255u);
         return returnStatus;
     }
@@ -348,5 +348,22 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDe
 
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
     EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+}
+
+HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsTrueWhenDeviceIsCreatedAndGetHelperReturnsFalseThenGetUuidReturnsFalse, IsPVC) {
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
+    RAIIProductHelperFactory<MockProductHelperHwUuidEnablementTest<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->returnStatus = false;
+
+    DebugManager.flags.EnableChipsetUniqueUUID.set(1);
+    std::array<uint8_t, 16> uuid;
+    uuid.fill(0u);
+
+    PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
+    deviceFactory = createDevices(pciBusInfo, 2, mockExecutionEnvironment.release());
+
+    EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
 }
 } // namespace NEO

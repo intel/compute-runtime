@@ -45,6 +45,12 @@ ze_result_t GlobalOperationsImp::processesGetState(uint32_t *pCount, zes_process
 ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pProperties) {
     initGlobalOperations();
     sysmanProperties.numSubdevices = pOsSysman->getSubDeviceCount();
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+    bool uuidValid = pOsGlobalOperations->getUuid(deviceUuid);
+    if (uuidValid) {
+        std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(sysmanProperties.core.uuid.id));
+    }
     *pProperties = sysmanProperties;
     return ZE_RESULT_SUCCESS;
 }

@@ -6,7 +6,11 @@
  */
 
 #pragma once
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/global_operations/sysman_os_global_operations.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
@@ -28,9 +32,16 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     ze_result_t reset(ze_bool_t force) override;
     ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
     ze_result_t deviceGetState(zes_device_state_t *pState) override;
+    bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
+    bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
     LinuxGlobalOperationsImp() = default;
     LinuxGlobalOperationsImp(OsSysman *pOsSysman);
     ~LinuxGlobalOperationsImp() override = default;
+
+    struct {
+        bool isValid = false;
+        std::array<uint8_t, NEO::ProductHelper::uuidSize> id;
+    } uuid;
 
   protected:
     FsAccess *pFsAccess = nullptr;

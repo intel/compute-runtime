@@ -180,6 +180,78 @@ void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING
     return;
 }
 
+bool LinuxGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+    if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
+        uuid.fill(0);
+
+        /* Device UUID uniquely identifies a device within a system.
+         * We generate it based on device information along with PCI information
+         * This guarantees uniqueness of UUIDs on a system even when multiple
+         * identical Intel GPUs are present.
+         */
+
+        /* We want to have UUID matching between different GPU APIs (including outside
+         * of compute_runtime project - i.e. other than L0 or OCL). This structure definition
+         * has been agreed upon by various Intel driver teams.
+         *
+         * Consult other driver teams before changing this.
+         */
+
+        struct DeviceUUID {
+            uint16_t vendorID;
+            uint16_t deviceID;
+            uint16_t revisionID;
+            uint16_t pciDomain;
+            uint8_t pciBus;
+            uint8_t pciDev;
+            uint8_t pciFunc;
+            uint8_t reserved[4];
+            uint8_t subDeviceID;
+        };
+
+        auto &hwInfo = pLinuxSysmanImp->getParentSysmanDeviceImp()->getHardwareInfo();
+        DeviceUUID deviceUUID = {};
+        deviceUUID.vendorID = 0x8086; // Intel
+        deviceUUID.deviceID = hwInfo.platform.usDeviceID;
+        deviceUUID.revisionID = hwInfo.platform.usRevId;
+        deviceUUID.pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+        deviceUUID.pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+        deviceUUID.pciDev = static_cast<uint8_t>(pciBusInfo.pciDevice);
+        deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
+        deviceUUID.subDeviceID = 0;
+
+        static_assert(sizeof(DeviceUUID) == NEO::ProductHelper::uuidSize);
+
+        memcpy_s(uuid.data(), NEO::ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
+
+        return true;
+    }
+    return false;
+}
+
+bool LinuxGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+    auto driverModel = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel();
+    auto &gfxCoreHelper = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    auto &productHelper = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
+    if (NEO::DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
+        if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
+            this->uuid.isValid = productHelper.getUuid(driverModel, subDeviceCount, 0u, this->uuid.id);
+        }
+    }
+
+    if (!this->uuid.isValid && pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().osInterface != nullptr) {
+        NEO::PhysicalDevicePciBusInfo pciBusInfo = driverModel->getPciBusInfo();
+        this->uuid.isValid = generateUuidFromPciBusInfo(pciBusInfo, this->uuid.id);
+    }
+
+    if (this->uuid.isValid) {
+        uuid = this->uuid.id;
+    }
+
+    return this->uuid.isValid;
+}
+
 ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     if (!pSysfsAccess->isRootUser()) {
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
@@ -480,6 +552,7 @@ LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
     devicePciBdf = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
     rootDeviceIndex = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceIndex();
+    uuid.isValid = false;
 }
 
 OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {

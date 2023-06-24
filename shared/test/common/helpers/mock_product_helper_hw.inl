@@ -15,7 +15,7 @@ bool MockProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const Hardwar
 }
 
 template <>
-bool MockProductHelperHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
+bool MockProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
     return false;
 }
 

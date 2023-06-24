@@ -34,6 +34,12 @@ void WddmGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
 }
 void WddmGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
 }
+bool WddmGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+    return false;
+}
+bool WddmGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+    return false;
+}
 ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {
     uint32_t value = 0;
     KmdSysman::RequestProperty request;

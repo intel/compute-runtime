@@ -159,6 +159,11 @@ void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_ha
         VALIDATECALL(zeDeviceGetProperties(device, &deviceProperties));
         if (verbose) {
             std::cout << "Device Name = " << deviceProperties.name << std::endl;
+            std::cout << "UUID: " << std::endl;
+            for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
+                std::cout << static_cast<uint8_t>(deviceProperties.uuid.id[i]) << " ";
+            }
+            std::cout << std::endl;
         }
     }
 }
@@ -1240,6 +1245,11 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
         std::cout << "properties.modelName = " << properties.modelName << std::endl;
         std::cout << "properties.vendorName = " << properties.vendorName << std::endl;
         std::cout << "properties.driverVersion= " << properties.driverVersion << std::endl;
+        std::cout << "properties.core.uuid= " << std::endl;
+        for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
+            std::cout << static_cast<uint8_t>(properties.core.uuid.id[i]) << " ";
+        }
+        std::cout << std::endl;
     }
 
     uint32_t count = 0;

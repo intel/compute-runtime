@@ -280,7 +280,7 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const Hard
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
     return false;
 }
 

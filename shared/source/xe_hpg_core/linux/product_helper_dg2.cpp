@@ -48,28 +48,20 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
-
-    UNRECOVERABLE_IF(device == nullptr);
-    if (device->getRootDeviceEnvironment().osInterface == nullptr) {
-        return false;
-    }
-
-    const auto driverModel = device->getRootDeviceEnvironment().osInterface->getDriverModel();
+bool ProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
     if (driverModel->getDriverModelType() != DriverModelType::DRM) {
         return false;
     }
 
     auto pDrm = driverModel->as<Drm>();
-    std::string readString(64u, '\0');
     errno = 0;
+    std::string readString(64u, '\0');
     if (pDrm->readSysFsAsString("/prelim_csc_unique_id", readString) == false) {
         return false;
     }
-
     char *endPtr = nullptr;
     uint64_t uuidValue = std::strtoull(readString.data(), &endPtr, 16);
-    if ((endPtr == readString.data()) || (errno != 0)) {
+    if (endPtr == readString.data() || (errno != 0)) {
         return false;
     }
 

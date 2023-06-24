@@ -11,28 +11,19 @@ static inline bool uuidReadFromTelem(std::string_view telemDir, std::array<char,
 } // namespace UuidUtil
 
 template <>
-bool ProductHelperHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
-
-    UNRECOVERABLE_IF(device == nullptr);
-    if (device->getRootDeviceEnvironment().osInterface == nullptr) {
-        return false;
-    }
-
-    auto pDrm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>();
+bool ProductHelperHw<gfxProduct>::getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
+    auto pDrm = driverModel->as<Drm>();
     std::optional<std::string> rootPciPath = getPciRootPath(pDrm->getFileDescriptor());
     if (!rootPciPath.has_value()) {
         return false;
     }
-
     std::map<uint32_t, std::string> telemPciPath;
     PmtUtil::getTelemNodesInPciPath(rootPciPath.value(), telemPciPath);
-
     // number of telem nodes must be same as subdevice count + 1(root device)
-    if (telemPciPath.size() < device->getRootDevice()->getNumSubDevices() + 1) {
+    if (telemPciPath.size() < subDeviceCount + 1) {
         return false;
     }
 
-    auto deviceIndex = device->isSubDevice() ? static_cast<SubDevice *>(device)->getSubDeviceIndex() + 1 : 0;
     auto iterator = telemPciPath.begin();
     // use the root node
     std::string telemDir = iterator->second;

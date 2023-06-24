@@ -277,14 +277,19 @@ bool Device::createDeviceImpl() {
     if (!isEngineInstanced()) {
         uuid.isValid = false;
 
+        if (getRootDeviceEnvironment().osInterface == nullptr) {
+            return true;
+        }
+
         if (DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
             if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
 
-                uuid.isValid = productHelper.getUuid(this, uuid.id);
+                auto deviceIndex = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+                uuid.isValid = productHelper.getUuid(getRootDeviceEnvironment().osInterface->getDriverModel(), getRootDevice()->getNumSubDevices(), deviceIndex, uuid.id);
             }
         }
 
-        if (!uuid.isValid && getRootDeviceEnvironment().osInterface != nullptr) {
+        if (!uuid.isValid) {
             PhysicalDevicePciBusInfo pciBusInfo = getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
             uuid.isValid = generateUuidFromPciBusInfo(pciBusInfo, uuid.id);
         }

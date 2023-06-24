@@ -17,7 +17,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     using ProductHelper::getDefaultLocalMemoryAccessMode;
     std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() const override;
     bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
-    bool getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override;
+    bool getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
     uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const override;
