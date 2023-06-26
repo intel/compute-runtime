@@ -392,6 +392,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
+    if (NEO::DebugManager.flags.SynchronizeEventBeforeReset.get() != -1) {
+        if (NEO::DebugManager.flags.SynchronizeEventBeforeReset.get() == 2 && queryStatus() != ZE_RESULT_SUCCESS) {
+            printf("\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", this);
+        }
+
+        hostSynchronize(std::numeric_limits<uint64_t>::max());
+    }
     if (inOrderExecEvent) {
         inOrderExecEvent = false;
         inOrderExecDataAllocation = nullptr;

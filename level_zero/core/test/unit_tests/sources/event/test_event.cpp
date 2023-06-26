@@ -3218,6 +3218,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
 struct MockEventCompletion : public L0::EventImp<uint32_t> {
     using EventImp<uint32_t>::gpuStartTimestamp;
     using EventImp<uint32_t>::gpuEndTimestamp;
+    using EventImp<uint32_t>::hostAddress;
 
     MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device, false) {
         auto neoDevice = device->getNEODevice();
@@ -3249,8 +3250,24 @@ struct MockEventCompletion : public L0::EventImp<uint32_t> {
         return EventImp<uint32_t>::hostEventSetValue(eventValue);
     }
 
+    ze_result_t hostSynchronize(uint64_t timeout) override {
+        hostSynchronizeCalled++;
+        return L0::EventImp<uint32_t>::hostSynchronize(timeout);
+    }
+
+    ze_result_t queryStatus() override {
+        if (failOnNextQueryStatus) {
+            failOnNextQueryStatus = false;
+            return ZE_RESULT_NOT_READY;
+        }
+
+        return L0::EventImp<uint32_t>::queryStatus();
+    }
+
     bool shouldHostEventSetValueFail = false;
+    bool failOnNextQueryStatus = false;
     uint32_t assignKernelEventCompletionDataCounter = 0u;
+    uint32_t hostSynchronizeCalled = 0;
 };
 
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndReturnSuccess) {
@@ -3259,6 +3276,68 @@ TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndRetur
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 0u);
+}
+
+TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenSynchronizeBeforeReset) {
+    DebugManager.flags.SynchronizeEventBeforeReset.set(1);
+
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    event->failOnNextQueryStatus = true;
+
+    *reinterpret_cast<uint32_t *>(event->hostAddress) = Event::STATE_SIGNALED;
+
+    testing::internal::CaptureStdout();
+
+    EXPECT_EQ(0u, event->hostSynchronizeCalled);
+
+    event->reset();
+
+    EXPECT_EQ(1u, event->hostSynchronizeCalled);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedOutput("");
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBeforeReset) {
+    DebugManager.flags.SynchronizeEventBeforeReset.set(2);
+
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    *reinterpret_cast<uint32_t *>(event->hostAddress) = Event::STATE_SIGNALED;
+
+    {
+        event->failOnNextQueryStatus = false;
+
+        testing::internal::CaptureStdout();
+
+        EXPECT_EQ(0u, event->hostSynchronizeCalled);
+
+        event->reset();
+
+        EXPECT_EQ(1u, event->hostSynchronizeCalled);
+
+        std::string output = testing::internal::GetCapturedStdout();
+        std::string expectedOutput("");
+        EXPECT_EQ(expectedOutput, output);
+    }
+
+    {
+        event->failOnNextQueryStatus = true;
+
+        testing::internal::CaptureStdout();
+
+        EXPECT_EQ(1u, event->hostSynchronizeCalled);
+
+        event->reset();
+
+        EXPECT_EQ(2u, event->hostSynchronizeCalled);
+
+        std::string output = testing::internal::GetCapturedStdout();
+        char expectedStr[128] = {};
+        snprintf(expectedStr, 128, "\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", event.get());
+
+        EXPECT_EQ(std::string(expectedStr), output);
+    }
 }
 
 TEST_F(EventTests, whenAppendAdditionalCsrThenStoreUniqueCsr) {
