@@ -9,6 +9,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
+
 namespace L0 {
 namespace Sysman {
 
@@ -33,6 +35,11 @@ bool LinuxStandbyImp::isStandbySupported(void) {
 }
 
 ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
+
+    if (pSysmanKmdInterface->isStandbyModeControlAvailable() == false) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     int currentMode = -1;
     ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
     if (ZE_RESULT_SUCCESS != result) {
@@ -56,6 +63,11 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
 }
 
 ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
+
+    if (pSysmanKmdInterface->isStandbyModeControlAvailable() == false) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     if (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) {
         result = pSysfsAccess->write(standbyModeFile, standbyModeDefault);
@@ -72,18 +84,25 @@ ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
 }
 
 void LinuxStandbyImp::init() {
-    const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
+    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
+    bool baseDirectoryExists = false;
+
     if (pSysfsAccess->directoryExists(baseDir)) {
-        standbyModeFile = baseDir + "rc6_enable";
+        baseDirectoryExists = true;
+    }
+
+    auto standbyModeControlStatus = pSysmanKmdInterface->isStandbyModeControlAvailable();
+    if (standbyModeControlStatus == true) {
+        standbyModeFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, subdeviceId, baseDirectoryExists);
     } else {
-        standbyModeFile = "power/rc6_enable";
+        standbyModeFile = "";
     }
 }
 
 LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     init();
 }
 

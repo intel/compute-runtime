@@ -16,6 +16,8 @@
 namespace L0 {
 namespace Sysman {
 
+class SysmanKmdInterface;
+
 class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getMode(zes_standby_promo_mode_t &mode) override;
@@ -29,6 +31,7 @@ class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
     ~LinuxStandbyImp() override = default;
 
   protected:
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
 
   private:

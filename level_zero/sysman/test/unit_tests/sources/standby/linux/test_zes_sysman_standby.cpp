@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/standby/linux/mock_sysfs_standby.h"
 
@@ -44,6 +45,32 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
         return handles;
     }
 };
+
+TEST_F(ZesStandbyFixture, GivenKmdInterfaceWhenGettingFilenamesForStandbyForI915VersionAndBaseDirectoryExistsThenProperPathsAreReturned) {
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(pLinuxSysmanImp->getProductFamily());
+    bool baseDirectoryExists = true;
+    EXPECT_STREQ("gt/gt0/rc6_enable", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, 0, baseDirectoryExists).c_str());
+}
+
+TEST_F(ZesStandbyFixture, GivenKmdInterfaceWhenGettingFilenamesForStandbyForI915VersionAndBaseDirectoryDoesntExistThenProperPathsAreReturned) {
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(pLinuxSysmanImp->getProductFamily());
+    bool baseDirectoryExists = false;
+    EXPECT_STREQ("power/rc6_enable", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, 0, baseDirectoryExists).c_str());
+}
+
+TEST_F(ZesStandbyFixture, GivenKmdInterfaceWhenGettingFilenamesForStandbyForXeVersionThenUnsupportedFeatureIsReturned) {
+    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
+    ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
+    uint32_t subdeviceId = 0;
+    std::unique_ptr<PublicLinuxStandbyImp> pLinuxStandbyImp = std::make_unique<PublicLinuxStandbyImp>(pOsSysman, onSubdevice, subdeviceId);
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
+    pLinuxStandbyImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
+    EXPECT_FALSE(pLinuxStandbyImp->pSysmanKmdInterface->isStandbyModeControlAvailable());
+
+    zes_standby_promo_mode_t mode = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxStandbyImp->getMode(mode));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxStandbyImp->setMode(mode));
+}
 
 TEST_F(ZesStandbyFixture, GivenStandbyModeFilesNotAvailableWhenCallingEnumerateThenSuccessResultAndZeroCountIsReturned) {
     uint32_t count = 0;

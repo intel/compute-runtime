@@ -32,12 +32,12 @@ std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(const NEO::Drm &d
     return pSysmanKmdInterface;
 }
 
-std::string SysmanKmdInterfaceI915::getBasePath(int subDeviceId) const {
+std::string SysmanKmdInterfaceI915::getBasePath(uint32_t subDeviceId) const {
     return "gt/gt" + std::to_string(subDeviceId) + "/";
 }
 
-std::string SysmanKmdInterfaceXe::getBasePath(int subDeviceId) const {
-    return "device/gt" + std::to_string(subDeviceId) + "/";
+std::string SysmanKmdInterfaceXe::getBasePath(uint32_t subDeviceId) const {
+    return "device/tile" + std::to_string(subDeviceId) + "/gt" + std::to_string(subDeviceId) + "/";
 }
 
 void SysmanKmdInterfaceI915::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
@@ -62,6 +62,7 @@ void SysmanKmdInterfaceI915::initSysfsNameToFileMap(const PRODUCT_FAMILY product
     sysfsNameToFileMap[SysfsName::sysfsNameEnergyCounterNode] = std::make_pair("", "energy1_input");
     sysfsNameToFileMap[SysfsName::sysfsNameDefaultPowerLimit] = std::make_pair("", "power1_rated_max");
     sysfsNameToFileMap[SysfsName::sysfsNameCriticalPowerLimit] = std::make_pair("", (productFamily == IGFX_PVC) ? "curr1_crit" : "power1_crit");
+    sysfsNameToFileMap[SysfsName::sysfsNameStandbyModeControl] = std::make_pair("rc6_enable", "power/rc6_enable");
 }
 
 void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
@@ -88,12 +89,12 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFa
     sysfsNameToFileMap[SysfsName::sysfsNameCriticalPowerLimit] = std::make_pair("", (productFamily == IGFX_PVC) ? "curr1_crit" : "power1_crit");
 }
 
-std::string SysmanKmdInterfaceI915::getSysfsFilePath(SysfsName sysfsName, int subDeviceId, bool baseDirectoryExists) {
+std::string SysmanKmdInterfaceI915::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) {
     std::string filePath = baseDirectoryExists ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
     return filePath;
 }
 
-std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, int subDeviceId, bool baseDirectoryExists) {
+std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) {
     std::string filePath = baseDirectoryExists ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
     return filePath;
 }
@@ -126,12 +127,12 @@ int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup
     return -1;
 }
 
-std::string SysmanKmdInterfaceI915::getHwmonName(int subDeviceId, bool isSubdevice) const {
+std::string SysmanKmdInterfaceI915::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
     std::string filePath = isSubdevice ? "i915_gt" + std::to_string(subDeviceId) : "i915";
     return filePath;
 }
 
-std::string SysmanKmdInterfaceXe::getHwmonName(int subDeviceId, bool isSubdevice) const {
+std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
     std::string filePath = isSubdevice ? "xe_tile" + std::to_string(subDeviceId) : "xe";
     return filePath;
 }

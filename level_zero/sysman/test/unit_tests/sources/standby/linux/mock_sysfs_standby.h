@@ -104,6 +104,7 @@ class PublicLinuxStandbyImp : public L0::Sysman::LinuxStandbyImp {
   public:
     PublicLinuxStandbyImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::LinuxStandbyImp(pOsSysman, onSubdevice, subdeviceId) {}
     using L0::Sysman::LinuxStandbyImp::pSysfsAccess;
+    using L0::Sysman::LinuxStandbyImp::pSysmanKmdInterface;
 };
 
 } // namespace ult
