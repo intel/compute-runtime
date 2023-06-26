@@ -17,6 +17,7 @@ using NEO::I915::drm_vblank_seq_type;
 namespace PROD_DG1 {
 #undef DRM_IOCTL_I915_GEM_CREATE_EXT
 #undef __I915_EXEC_UNKNOWN_FLAGS
+#undef __I915_PMU_OTHER
 #include "third_party/uapi/dg1/drm/i915_drm.h"
 } // namespace PROD_DG1
 
