@@ -30,6 +30,7 @@ struct StateBaseAddressHelperArgs {
     uint64_t instructionHeapBaseAddress = 0;
     uint64_t globalHeapsBaseAddress = 0;
     uint64_t surfaceStateBaseAddress = 0;
+    uint64_t bindlessSurfaceStateBaseAddress = 0;
 
     STATE_BASE_ADDRESS *stateBaseAddressCmd = nullptr;
 

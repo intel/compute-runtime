@@ -1816,6 +1816,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
 
     auto stateBaseAddressCmdOffset = csrCommandStream.getUsed();
     auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
+    auto bindlessSurfStateBase = 0ull;
+
+    if (device.getBindlessHeapsHelper()) {
+        bindlessSurfStateBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+    }
 
     STATE_BASE_ADDRESS stateBaseAddressCmd;
     StateBaseAddressHelperArgs<GfxFamily> args = {
@@ -1824,6 +1829,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
         instructionHeapBaseAddress,                    // instructionHeapBaseAddress
         0,                                             // globalHeapsBaseAddress
         0,                                             // surfaceStateBaseAddress
+        bindlessSurfStateBase,                         // bindlessSurfaceStateBaseAddress
         &stateBaseAddressCmd,                          // stateBaseAddressCmd
         sbaProperties,                                 // sbaProperties
         dsh,                                           // dsh

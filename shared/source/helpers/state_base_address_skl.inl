@@ -13,11 +13,16 @@ template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     StateBaseAddressHelperArgs<GfxFamily> &args) {
 
-    if (!args.useGlobalHeapsBaseAddress && args.ssh) {
-        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
-        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
-        uint32_t size = uint32_t(args.ssh->getMaxAvailableSpace() / 64) - 1;
-        args.stateBaseAddressCmd->setBindlessSurfaceStateSize(size);
+    if (!args.useGlobalHeapsBaseAddress) {
+        if (args.bindlessSurfaceStateBaseAddress != 0) {
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.bindlessSurfaceStateBaseAddress);
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+        } else if (args.ssh) {
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
+            uint32_t size = uint32_t(args.ssh->getMaxAvailableSpace() / 64) - 1;
+            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(size);
+        }
     }
 
     StateBaseAddressHelper<GfxFamily>::appendIohParameters(args);

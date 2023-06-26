@@ -115,10 +115,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         auto kernelInfo = kernelImmutableData->getKernelInfo();
 
         auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
-        NEO::HeapReserveArguments sshReserveArgs = {
-            sshReserveConfig.indirectHeapReservation,
-            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment()};
+        NEO::HeapReserveArguments sshReserveArgs = {sshReserveConfig.indirectHeapReservation,
+                                                    NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
+                                                    NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment()};
+
+        if (device->getNEODevice()->getBindlessHeapsHelper() && NEO::KernelDescriptor::isBindlessAddressingKernel(kernelImmutableData->getDescriptor())) {
+            sshReserveArgs.size = 0;
+        }
 
         NEO::HeapReserveArguments dshReserveArgs = {};
         if (this->dynamicHeapRequired) {

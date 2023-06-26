@@ -54,7 +54,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 
     dsh->align(EncodeStates<Family>::alignIndirectStatePointer);
     uint32_t borderColorOffsetInDsh = 0;
-    if (!ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
+    if (!bindlessHeapHelper || (!bindlessHeapHelper->isGlobalDshSupported())) {
         borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
         auto borderColor = dsh->getSpace(borderColorSize);
 

@@ -2665,13 +2665,16 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps) {
         if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::SURFACE_STATE)) {
             auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
-            currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
-            currentSurfaceStateSize = ssh->getHeapSizeInPages();
+            if (ssh) {
+                currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
+                currentSurfaceStateSize = ssh->getHeapSizeInPages();
 
-            currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
-            currentBindingTablePoolSize = currentSurfaceStateSize;
+                currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
+                currentBindingTablePoolSize = currentSurfaceStateSize;
 
-            checkSsh = true;
+                checkSsh = true;
+            }
+            DEBUG_BREAK_IF(ssh == nullptr && commandContainer.isHeapDirty(NEO::IndirectHeap::Type::SURFACE_STATE));
         }
 
         if (this->dynamicHeapRequired && (currentDynamicStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::DYNAMIC_STATE))) {

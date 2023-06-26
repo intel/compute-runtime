@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -77,10 +78,13 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
+                                                               pDevice->getNumGenericSubDevices() > 1,
+                                                               pDevice->getRootDeviceIndex(),
+                                                               pDevice->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = true;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -99,10 +103,13 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
+                                                               pDevice->getNumGenericSubDevices() > 1,
+                                                               pDevice->getRootDeviceIndex(),
+                                                               pDevice->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = true;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -116,16 +123,53 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
 }
 
+HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNotUsedWhenCopyingSamplerStateThenDynamicPatternIsUsedAndOffsetFromDshProgrammed) {
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    uint32_t numSamplers = 1;
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
+                                                               pDevice->getNumGenericSubDevices() > 1,
+                                                               pDevice->getRootDeviceIndex(),
+                                                               pDevice->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = false;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
+    uint32_t borderColorSize = sizeof(SAMPLER_BORDER_COLOR_STATE);
+    SAMPLER_BORDER_COLOR_STATE samplerState;
+    samplerState.init();
+    samplerState.setBorderColorAlpha(1.0);
+    uint64_t data[sizeof(SAMPLER_BORDER_COLOR_STATE) + sizeof(SAMPLER_STATE)];
+    memset(data, 0, sizeof(data));
+    memcpy(data, &samplerState, sizeof(SAMPLER_BORDER_COLOR_STATE));
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+
+    auto usedBefore = dsh->getUsed();
+    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &data, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
+    auto expectedValue = usedBefore;
+    auto usedAfter = dsh->getUsed();
+
+    EXPECT_EQ(alignUp(usedBefore + sizeof(SAMPLER_BORDER_COLOR_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE) + sizeof(SAMPLER_STATE), usedAfter);
+
+    auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(ptrDiff(dsh->getSpace(0), sizeof(SAMPLER_STATE)));
+    EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+}
+
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRedChanelIsNotZeroThenExceptionThrown) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
+                                                               pDevice->getNumGenericSubDevices() > 1,
+                                                               pDevice->getRootDeviceIndex(),
+                                                               pDevice->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = true;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -141,10 +185,13 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGr
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
+                                                               pDevice->getNumGenericSubDevices() > 1,
+                                                               pDevice->getRootDeviceIndex(),
+                                                               pDevice->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = true;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -160,10 +207,14 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBl
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
+                                                               pDevice->getNumGenericSubDevices() > 1,
+                                                               pDevice->getRootDeviceIndex(),
+                                                               pDevice->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = true;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
@@ -178,10 +229,13 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAl
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
+                                                               pDevice->getNumGenericSubDevices() > 1,
+                                                               pDevice->getRootDeviceIndex(),
+                                                               pDevice->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = true;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;

@@ -236,6 +236,27 @@ HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
 }
 
+HWTEST2_F(SbaTest, givenNotUsedGlobalHeapBaseAndSshPassedWhenBindlessSurfStateBaseIsPassedThenBindlessSurfaceBaseIsSetToPassedValue, IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
+
+    constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
+
+    StackVec<char, 4096> buffer(4096);
+    NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(cmd, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
+    args.bindlessSurfaceStateBaseAddress = globalBindlessHeapsBaseAddress;
+    args.useGlobalHeapsBaseAddress = false;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
+    EXPECT_NE(ssh.getHeapGpuBase(), globalBindlessHeapsBaseAddress);
+}
+
 HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenNothingChanged, IsAtMostXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;

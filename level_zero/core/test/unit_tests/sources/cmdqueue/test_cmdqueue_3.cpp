@@ -95,31 +95,15 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
 
     commandQueue->programStateBaseAddress(0u, true, child, true, nullptr);
 
-    EXPECT_EQ(2u, memoryManager->getInternalHeapBaseAddressCalled);
+    EXPECT_EQ(1u, memoryManager->getInternalHeapBaseAddressCalled);
     EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[0].rootDeviceIndex);
-    EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[1].rootDeviceIndex);
-
-    if (isaInLocalMemory) {
-        EXPECT_TRUE(memoryManager->getInternalHeapBaseAddressParamsPassed[0].useLocalMemory);
-        EXPECT_TRUE(memoryManager->getInternalHeapBaseAddressParamsPassed[1].useLocalMemory);
-    } else {
-        EXPECT_TRUE(memoryManager->getInternalHeapBaseAddressParamsPassed[0].useLocalMemory);
-        EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[1].useLocalMemory);
-    }
+    EXPECT_EQ(isaInLocalMemory, memoryManager->getInternalHeapBaseAddressParamsPassed[0].useLocalMemory);
 
     commandQueue->programStateBaseAddress(0u, false, child, true, nullptr);
 
-    EXPECT_EQ(4u, memoryManager->getInternalHeapBaseAddressCalled);
-    EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[2].rootDeviceIndex);
-    EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[3].rootDeviceIndex);
-
-    if (isaInLocalMemory) {
-        EXPECT_TRUE(memoryManager->getInternalHeapBaseAddressParamsPassed[2].useLocalMemory);
-        EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[3].useLocalMemory);
-    } else {
-        EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[2].useLocalMemory);
-        EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[3].useLocalMemory);
-    }
+    EXPECT_EQ(2u, memoryManager->getInternalHeapBaseAddressCalled);
+    EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[1].rootDeviceIndex);
+    EXPECT_EQ(isaInLocalMemory, memoryManager->getInternalHeapBaseAddressParamsPassed[1].useLocalMemory);
 
     commandQueue->destroy();
 }
@@ -159,8 +143,6 @@ HWTEST2_F(CommandQueueProgramSBATest, whenProgrammingStateBaseAddressWithStatele
 HWTEST2_F(CommandQueueProgramSBATest,
           givenGlobalSshWhenProgrammingStateBaseAddressThenBindlessBaseAddressAndSizeAreSet, CommandQueueSBASupport) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
@@ -198,12 +180,56 @@ HWTEST2_F(CommandQueueProgramSBATest,
 }
 
 HWTEST2_F(CommandQueueProgramSBATest,
-          givenBindlessModeDisabledWhenProgrammingStateBaseAddressThenBindlessBaseAddressNotPassed, CommandQueueSBASupport) {
+          givenGlobalSshAndDshWhenProgrammingStateBaseAddressThenBindlessBaseAddressAndSizeAreSet, CommandQueueSBASupport) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(0);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+    bindlessHeapsHelperPtr->globalBindlessDsh = true;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
+    NEO::MockGraphicsAllocation baseAllocation;
+    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
+    baseAllocation.setGpuBaseAddress(0x123000);
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
+    commandQueue->initialize(false, false, false);
+
+    auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
+    NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
+
+    commandQueue->programStateBaseAddress(0u, true, child, true, nullptr);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
+
+    auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
+    EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddressModifyEnable(), true);
+
+    auto globalHeapsBase = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase();
+    EXPECT_EQ(globalHeapsBase, cmdSba->getBindlessSurfaceStateBaseAddress());
+
+    auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
+    EXPECT_EQ(surfaceStateCount, cmdSba->getBindlessSurfaceStateSize());
+
+    EXPECT_EQ(globalHeapsBase, cmdSba->getDynamicStateBaseAddress());
+    EXPECT_EQ(MemoryConstants::pageSize64k, cmdSba->getDynamicStateBufferSize());
+    EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
+
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueProgramSBATest,
+          givenGlobalBindlessSshWhenProgrammingStateBaseAddressThenBindlessBaseAddressIsSet, CommandQueueSBASupport) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
     bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
@@ -228,7 +254,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     ASSERT_NE(cmdList.end(), itor);
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
-    EXPECT_NE(cmdSba->getBindlessSurfaceStateBaseAddress(),
+    EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddress(),
               neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase());
 
     commandQueue->destroy();

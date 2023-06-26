@@ -47,11 +47,16 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.indirectObjectHeapBaseAddress));
     }
 
-    if (!args.useGlobalHeapsBaseAddress && args.ssh) {
-        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
-        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
-        const auto surfaceStateCount = args.ssh->getMaxAvailableSpace() / sizeof(RENDER_SURFACE_STATE);
-        args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(surfaceStateCount - 1));
+    if (!args.useGlobalHeapsBaseAddress) {
+        if (args.bindlessSurfaceStateBaseAddress != 0) {
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.bindlessSurfaceStateBaseAddress);
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+        } else if (args.ssh) {
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+            const auto surfaceStateCount = args.ssh->getMaxAvailableSpace() / sizeof(RENDER_SURFACE_STATE);
+            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(surfaceStateCount - 1));
+        }
     }
 
     args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);

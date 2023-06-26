@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,9 @@ class BindlessHeapsHelper {
     uint32_t getAlphaBorderColorOffset();
     IndirectHeap *getHeap(BindlesHeapType heapType);
     void placeSSAllocationInReuseVectorOnFreeMemory(GraphicsAllocation *gfxAllocation);
+    bool isGlobalDshSupported() {
+        return globalBindlessDsh;
+    }
 
   protected:
     void growHeap(BindlesHeapType heapType);
@@ -62,5 +65,6 @@ class BindlessHeapsHelper {
     std::unordered_map<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> surfaceStateInHeapAllocationMap;
     std::mutex mtx;
     DeviceBitfield deviceBitfield;
+    bool globalBindlessDsh = false;
 };
 } // namespace NEO

@@ -38,18 +38,21 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
     uint64_t globalHeapsBase = 0;
     uint64_t indirectObjectHeapBaseAddress = 0;
+    uint64_t bindlessSurfStateBase = 0ull;
+
+    if (neoDevice->getBindlessHeapsHelper()) {
+        if (neoDevice->getBindlessHeapsHelper()->isGlobalDshSupported()) {
+            useGlobalSshAndDsh = true;
+            globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
+        } else {
+            bindlessSurfStateBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
+        }
+    }
 
     NEO::StateBaseAddressProperties *sbaProperties = nullptr;
 
     if (streamProperties != nullptr) {
         sbaProperties = &streamProperties->stateBaseAddress;
-    } else {
-        useGlobalSshAndDsh = NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration();
-        if (useGlobalSshAndDsh) {
-            globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
-        }
-
-        indirectObjectHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), useLocalMemoryForIndirectHeap);
     }
 
     uint64_t instructionHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex()));
@@ -66,6 +69,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         instructionHeapBaseAddress,                       // instructionHeapBaseAddress
         globalHeapsBase,                                  // globalHeapsBaseAddress
         0,                                                // surfaceStateBaseAddress
+        bindlessSurfStateBase,                            // bindlessSurfaceStateBaseAddress
         &sbaCmd,                                          // stateBaseAddressCmd
         sbaProperties,                                    // sbaProperties
         nullptr,                                          // dsh

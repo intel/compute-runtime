@@ -114,7 +114,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 kernelDescriptor.payloadMappings.bindingTable.tableOffset));
         }
     } else {
-        if (args.dispatchInterface->getSurfaceStateHeapDataSize() > 0u) {
+        bool globalBindlessSsh = args.device->getBindlessHeapsHelper() != nullptr;
+        if (!globalBindlessSsh && args.dispatchInterface->getSurfaceStateHeapDataSize() > 0u) {
             auto ssh = args.surfaceStateHeap;
             if (ssh == nullptr) {
                 ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
@@ -432,13 +433,21 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto ioh = args.container->isHeapDirty(HeapType::INDIRECT_OBJECT) ? args.container->getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
     auto ssh = args.container->isHeapDirty(HeapType::SURFACE_STATE) ? args.container->getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
     auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
+    uint64_t globalHeapsBase = 0;
+    uint64_t bindlessSurfStateBase = 0;
+    bool useGlobalSshAndDsh = false;
+
+    if (device.getBindlessHeapsHelper()) {
+        bindlessSurfStateBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+    }
 
     StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {
         0,                                                  // generalStateBaseAddress
         args.container->getIndirectObjectHeapBaseAddress(), // indirectObjectHeapBaseAddress
         args.container->getInstructionHeapBaseAddress(),    // instructionHeapBaseAddress
-        0,                                                  // globalHeapsBaseAddress
+        globalHeapsBase,                                    // globalHeapsBaseAddress
         0,                                                  // surfaceStateBaseAddress
+        bindlessSurfStateBase,                              // bindlessSurfaceStateBaseAddress
         &args.sbaCmd,                                       // stateBaseAddressCmd
         args.sbaProperties,                                 // sbaProperties
         dsh,                                                // dsh
@@ -451,7 +460,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
         false,                                              // setGeneralStateBaseAddress
-        false,                                              // useGlobalHeapsBaseAddress
+        useGlobalSshAndDsh,                                 // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         args.useGlobalAtomics,                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext

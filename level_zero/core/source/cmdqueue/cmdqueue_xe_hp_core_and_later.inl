@@ -28,22 +28,33 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     uint32_t rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
     auto csr = this->getCsr();
-    bool multiOsContextCapable = device->isImplicitScalingCapable();
-    bool isRcs = csr->isRcs();
-    auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
-    bool setGeneralStateBaseAddress = false;
-    bool useGlobalSshAndDsh = false;
-
-    uint64_t globalHeapsBase = 0;
-    uint64_t indirectObjectStateBaseAddress = 0;
-    uint64_t instructionStateBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(
-        rootDeviceIndex, neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
-
-    NEO::StateBaseAddressProperties *sbaProperties = nullptr;
-
-    auto l1CachePolicyData = csr->getStoredL1CachePolicy();
 
     if (streamProperties != nullptr) {
+        bool multiOsContextCapable = device->isImplicitScalingCapable();
+        bool isRcs = csr->isRcs();
+        auto isDebuggerActive = neoDevice->getDebugger() != nullptr;
+        bool setGeneralStateBaseAddress = false;
+        bool useGlobalSshAndDsh = false;
+
+        uint64_t globalHeapsBase = 0;
+        uint64_t indirectObjectStateBaseAddress = 0;
+        uint64_t instructionStateBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(
+            rootDeviceIndex, neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
+        uint64_t bindlessSurfStateBase = 0;
+
+        if (device->getNEODevice()->getBindlessHeapsHelper()) {
+            if (device->getNEODevice()->getBindlessHeapsHelper()->isGlobalDshSupported()) {
+                useGlobalSshAndDsh = true;
+                globalHeapsBase = device->getNEODevice()->getBindlessHeapsHelper()->getGlobalHeapsBase();
+            } else {
+                bindlessSurfStateBase = device->getNEODevice()->getBindlessHeapsHelper()->getGlobalHeapsBase();
+            }
+        }
+
+        NEO::StateBaseAddressProperties *sbaProperties = nullptr;
+
+        auto l1CachePolicyData = csr->getStoredL1CachePolicy();
+
         sbaProperties = &streamProperties->stateBaseAddress;
 
         auto gmmHelper = neoDevice->getGmmHelper();
@@ -56,6 +67,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             instructionStateBaseAddress,                      // instructionHeapBaseAddress
             globalHeapsBase,                                  // globalHeapsBaseAddress
             0,                                                // surfaceStateBaseAddress
+            bindlessSurfStateBase,                            // bindlessSurfaceStateBaseAddress
             &sbaCmd,                                          // stateBaseAddressCmd
             sbaProperties,                                    // sbaProperties
             nullptr,                                          // dsh

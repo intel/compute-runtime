@@ -12,6 +12,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -1454,6 +1455,295 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(ssFirstBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
     EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+struct CommandListPrivateHeapsBindlessSshFixture : public CommandListPrivateHeapsFixture {
+    void setUp() {
+        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        CommandListPrivateHeapsFixture::setUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using CommandListBindlessSshPrivateHeapTest = Test<CommandListPrivateHeapsBindlessSshFixture>;
+
+HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
+          givenStateBaseAddressTrackingAndGlobalBindlessEnabledWhenRegularCmdListAppendKernelChangesHeapsAndExecuteThenBindlessSurfaceStateBaseIsProgrammedToGlobalBase,
+          IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice()->getMemoryManager(),
+                                                               device->getNEODevice()->getNumGenericSubDevices() > 1,
+                                                               device->getNEODevice()->getRootDeviceIndex(),
+                                                               device->getNEODevice()->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = false;
+    auto globalBindlessBase = mockHelper->getGlobalHeapsBase();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
+    EXPECT_TRUE(commandList->stateBaseAddressTracking);
+
+    auto &container = commandList->getCmdContainer();
+    auto &cmdListStream = *container.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        cmdListStream.getCpuBase(),
+        cmdListStream.getUsed()));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    uint64_t ssBaseAddress = sshHeap->getHeapGpuBase();
+    uint64_t dsBaseAddress = -1;
+    uint32_t dsBaseSize = 0;
+    uint32_t dsFirstBaseSize = 0;
+
+    auto dshHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    if (dshHeap) {
+        dsBaseAddress = dshHeap->getHeapGpuBase();
+        dsFirstBaseSize = dshHeap->getHeapSizeInPages();
+    }
+
+    uint64_t ssFirstBaseAddress = ssBaseAddress;
+    uint64_t dsFirstBaseAddress = dsBaseAddress;
+
+    sshHeap->getSpace(sshHeap->getAvailableSpace());
+    container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::SURFACE_STATE, sshHeap->getMaxAvailableSpace(), 0);
+
+    if (dshHeap) {
+        dshHeap->getSpace(dshHeap->getAvailableSpace());
+        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::DYNAMIC_STATE, dshHeap->getMaxAvailableSpace(), 0);
+    }
+
+    size_t cmdListBefore = cmdListStream.getUsed();
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ssBaseAddress = sshHeap->getGpuBase();
+    if (dshHeap) {
+        dsBaseAddress = dshHeap->getGpuBase();
+        dsBaseSize = dshHeap->getHeapSizeInPages();
+    }
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdListStream.getCpuBase(), cmdListBefore),
+        cmdListStream.getUsed() - cmdListBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    if (this->dshRequired) {
+        EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsBaseAddress, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsBaseSize, sbaCmd->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+    }
+
+    EXPECT_TRUE(sbaCmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_NE(ssBaseAddress, sbaCmd->getBindlessSurfaceStateBaseAddress());
+    EXPECT_EQ(globalBindlessBase, sbaCmd->getBindlessSurfaceStateBaseAddress());
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    if (this->dshRequired) {
+        EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsFirstBaseAddress, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsFirstBaseSize, sbaCmd->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+    }
+
+    EXPECT_TRUE(sbaCmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_NE(ssFirstBaseAddress, sbaCmd->getBindlessSurfaceStateBaseAddress());
+    EXPECT_EQ(globalBindlessBase, sbaCmd->getBindlessSurfaceStateBaseAddress());
+
+    queueBefore = cmdQueueStream.getUsed();
+    cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    queueAfter = cmdQueueStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_NE(ssFirstBaseAddress, sbaCmd->getBindlessSurfaceStateBaseAddress());
+    EXPECT_EQ(globalBindlessBase, sbaCmd->getBindlessSurfaceStateBaseAddress());
+}
+
+HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
+          givenStateBaseAddressTrackingAndGlobalBindlessSshAndDshEnabledWhenRegularCmdListExecutedThenBindlessSurfaceStateAndDynamicStateBaseIsProgrammedToGlobalBase,
+          IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice()->getMemoryManager(),
+                                                               device->getNEODevice()->getNumGenericSubDevices() > 1,
+                                                               device->getNEODevice()->getRootDeviceIndex(),
+                                                               device->getNEODevice()->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = true;
+    auto globalBindlessBase = mockHelper->getGlobalHeapsBase();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
+    EXPECT_TRUE(commandList->stateBaseAddressTracking);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    memset(kernel->dynamicStateHeapData.get(), 0, kernel->dynamicStateHeapDataSize);
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(globalBindlessBase, sbaCmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(MemoryConstants::pageSize64k, sbaCmd->getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(globalBindlessBase, sbaCmd->getBindlessSurfaceStateBaseAddress());
+}
+
+HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
+          givenBindlessKernelStateBaseAddressTrackingAndGlobalBindlessEnabledWhenRegularCmdListAppendsKernelThenReservedSshSizeIsZeroAndSbaIsNotAdded,
+          IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice()->getMemoryManager(),
+                                                               device->getNEODevice()->getNumGenericSubDevices() > 1,
+                                                               device->getNEODevice()->getRootDeviceIndex(),
+                                                               device->getNEODevice()->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = false;
+    auto globalBindlessBase = mockHelper->getGlobalHeapsBase();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
+    EXPECT_TRUE(commandList->stateBaseAddressTracking);
+
+    auto &container = commandList->getCmdContainer();
+    auto &cmdListStream = *container.getCommandStream();
+
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<KernelImp> mockKernel;
+    mockKernel.module = &mockModule;
+
+    mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTPointer);
+    argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
+    mockKernel.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
+    mockKernel.crossThreadDataSize = 4 * sizeof(uint64_t);
+    mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+    mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(mockKernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        cmdListStream.getCpuBase(),
+        cmdListStream.getUsed()));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(0u, sbaCmds.size());
+
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    EXPECT_EQ(nullptr, sshHeap);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+    EXPECT_TRUE(sbaCmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(globalBindlessBase, sbaCmd->getBindlessSurfaceStateBaseAddress());
 }
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,

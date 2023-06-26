@@ -362,7 +362,8 @@ void CommandContainer::endAlignedPrimaryBuffer() {
 }
 
 void CommandContainer::prepareBindfulSsh() {
-    if (ApiSpecificConfig::getBindlessMode()) {
+    bool globalBindlessSsh = this->device->getBindlessHeapsHelper() != nullptr;
+    if (globalBindlessSsh) {
         if (allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] == nullptr) {
             constexpr size_t heapSize = MemoryConstants::pageSize64k;
             allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] = heapHelper->getHeapAllocation(IndirectHeap::Type::SURFACE_STATE,
@@ -374,8 +375,8 @@ void CommandContainer::prepareBindfulSsh() {
 
             indirectHeaps[IndirectHeap::Type::SURFACE_STATE] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE], false);
             indirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getSpace(reservedSshSize);
+            setHeapDirty(IndirectHeap::Type::SURFACE_STATE);
         }
-        setHeapDirty(IndirectHeap::Type::SURFACE_STATE);
     }
 }
 
@@ -424,7 +425,10 @@ void CommandContainer::reserveSpaceForDispatch(HeapReserveArguments &sshReserveA
             sharedDshCsrHeap = this->initIndirectHeapReservation(dshReserveArg.indirectHeapReservation, dshReserveArg.size, dshAlignment, HeapType::DYNAMIC_STATE);
         }
     } else {
-        this->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshReserveArg.size, sshAlignment);
+        if (sshReserveArg.size > 0) {
+            prepareBindfulSsh();
+            this->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshReserveArg.size, sshAlignment);
+        }
 
         if (getDsh) {
             this->getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dshReserveArg.size, dshAlignment);

@@ -197,6 +197,7 @@ void CommandListPrivateHeapsFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
     kernel->dynamicStateHeapData.reset(new uint8_t[512]);
+    kernel->dynamicStateHeapDataSize = 512;
 
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;

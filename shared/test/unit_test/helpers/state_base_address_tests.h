@@ -71,6 +71,7 @@ struct SbaFixture : public NEO::DeviceFixture {
             0,                                        // instructionHeapBaseAddress
             0,                                        // globalHeapsBaseAddress
             0,                                        // surfaceStateBaseAddress
+            0,                                        // bindlessSurfaceStateBaseAddress
             sbaCommand,                               // stateBaseAddressCmd
             sbaProperties,                            // sbaProperties
             dsh,                                      // dsh
