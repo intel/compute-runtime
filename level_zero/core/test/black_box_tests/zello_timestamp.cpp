@@ -595,10 +595,10 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
                                   ze_driver_handle_t &driver,
                                   ze_device_handle_t &device) {
 
-    ze_command_queue_handle_t cmdQueue;
-    ze_command_list_handle_t cmdList;
-    ze_module_handle_t module;
-    ze_kernel_handle_t kernel;
+    ze_command_queue_handle_t cmdQueue = nullptr;
+    ze_command_list_handle_t cmdList = nullptr;
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
     void *srcBuffer = nullptr;
     void *dstBuffer = nullptr;
     void *timestampBuffer = nullptr;
