@@ -576,7 +576,11 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     };
 
     ImageInfo updateImgInfo = {};
-    updateImgInfo.plane = GMM_YUV_PLANE::GMM_PLANE_U;
+    NEO::ImagePlane yuvPlane = NEO::ImagePlane::NO_PLANE;
+    if (Image::convertType(GetParam()) == ImageType::Image2D) {
+        updateImgInfo.plane = GMM_YUV_PLANE::GMM_PLANE_U;
+        yuvPlane = NEO::ImagePlane::PLANE_UV;
+    }
 
     uint32_t expectCalls = 1u;
     GMM_REQ_OFFSET_INFO expectedReqInfo[2] = {};
@@ -616,11 +620,16 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     auto mockResInfo = new MyMockGmmResourceInfo(&queryGmm->resourceParams);
     queryGmm->gmmResourceInfo.reset(mockResInfo);
 
-    queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex);
+    queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex, yuvPlane);
     EXPECT_EQ(expectCalls, mockResInfo->getOffsetCalled);
 
-    EXPECT_EQ(imgDesc.imageWidth, updateImgInfo.imgDesc.imageWidth);
-    EXPECT_EQ(imgDesc.imageHeight, updateImgInfo.imgDesc.imageHeight);
+    if (yuvPlane == NEO::ImagePlane::PLANE_UV) {
+        EXPECT_EQ(imgDesc.imageWidth / 2, updateImgInfo.imgDesc.imageWidth);
+        EXPECT_EQ(imgDesc.imageHeight / 2, updateImgInfo.imgDesc.imageHeight);
+    } else {
+        EXPECT_EQ(imgDesc.imageWidth, updateImgInfo.imgDesc.imageWidth);
+        EXPECT_EQ(imgDesc.imageHeight, updateImgInfo.imgDesc.imageHeight);
+    }
     EXPECT_EQ(imgDesc.imageDepth, updateImgInfo.imgDesc.imageDepth);
     EXPECT_EQ(imgDesc.imageArraySize, updateImgInfo.imgDesc.imageArraySize);
     EXPECT_GT(updateImgInfo.imgDesc.imageRowPitch, 0u);
@@ -633,6 +642,15 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
         EXPECT_TRUE(memcmp(&expectedReqInfo[1], &mockResInfo->givenReqInfo[1], sizeof(GMM_REQ_OFFSET_INFO)) == 0);
     } else {
         EXPECT_TRUE(false);
+    }
+
+    if (yuvPlane == NEO::ImagePlane::PLANE_UV) {
+        yuvPlane = NEO::ImagePlane::PLANE_V;
+        auto uvRowPitch = updateImgInfo.imgDesc.imageRowPitch;
+        queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex, yuvPlane);
+        EXPECT_EQ(imgDesc.imageWidth / 2, updateImgInfo.imgDesc.imageWidth);
+        EXPECT_EQ(imgDesc.imageHeight / 2, updateImgInfo.imgDesc.imageHeight);
+        EXPECT_EQ(uvRowPitch / 2, updateImgInfo.imgDesc.imageRowPitch);
     }
 }
 

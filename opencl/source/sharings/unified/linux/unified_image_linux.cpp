@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/surface_format_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -18,7 +19,7 @@ void *UnifiedImage::swapGmm(GraphicsAllocation *graphicsAllocation, Context *con
     if (!graphicsAllocation->getDefaultGmm()) {
         auto gmmHelper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
         auto gmm = std::make_unique<Gmm>(gmmHelper, *imgInfo, StorageInfo{}, false);
-        gmm->updateImgInfoAndDesc(*imgInfo, 0);
+        gmm->updateImgInfoAndDesc(*imgInfo, 0, NEO::ImagePlane::NO_PLANE);
         delete graphicsAllocation->getDefaultGmm();
         graphicsAllocation->setDefaultGmm(gmm.release());
     }

@@ -259,7 +259,7 @@ uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
     return gmmResourceInfo->getQPitch();
 }
 
-void Gmm::updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex) {
+void Gmm::updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex, ImagePlane yuvPlaneType) {
     imgInfo.imgDesc.imageWidth = gmmResourceInfo->getBaseWidth();
     imgInfo.imgDesc.imageRowPitch = gmmResourceInfo->getRenderPitch();
     if (imgInfo.imgDesc.imageRowPitch == 0) {
@@ -267,6 +267,13 @@ void Gmm::updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex) {
         imgInfo.imgDesc.imageRowPitch = width * (gmmResourceInfo->getBitsPerPixel() >> 3);
     }
     imgInfo.imgDesc.imageHeight = gmmResourceInfo->getBaseHeight();
+    if ((yuvPlaneType != ImagePlane::NO_PLANE) && (yuvPlaneType != ImagePlane::PLANE_Y)) {
+        imgInfo.imgDesc.imageWidth /= 2;
+        imgInfo.imgDesc.imageHeight /= 2;
+        if (yuvPlaneType != ImagePlane::PLANE_UV) {
+            imgInfo.imgDesc.imageRowPitch /= 2;
+        }
+    }
     imgInfo.imgDesc.imageDepth = gmmResourceInfo->getBaseDepth();
     imgInfo.imgDesc.imageArraySize = gmmResourceInfo->getArraySize();
     if (imgInfo.imgDesc.imageDepth > 1 || imgInfo.imgDesc.imageArraySize > 1) {

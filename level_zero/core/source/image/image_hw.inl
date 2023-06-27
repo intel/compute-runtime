@@ -75,7 +75,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     imgInfo.plane = lookupTable.imageProperties.isPlanarExtension ? static_cast<GMM_YUV_PLANE>(lookupTable.imageProperties.planeIndex + 1u) : GMM_NO_PLANE;
     imgInfo.useLocalMemory = false;
 
-    if (!isImageView) {
+    if (!isImageView()) {
         if (lookupTable.isSharedHandle) {
             if (!lookupTable.sharedHandleType.isSupportedHandle) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
@@ -108,7 +108,14 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     auto gmmHelper = static_cast<const NEO::RootDeviceEnvironment &>(device->getNEODevice()->getRootDeviceEnvironment()).getGmmHelper();
 
     if (gmm != nullptr) {
-        gmm->updateImgInfoAndDesc(imgInfo, 0u);
+        NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::NO_PLANE;
+        if (isImageView() && (sourceImageFormatDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12)) {
+            yuvPlaneType = NEO::ImagePlane::PLANE_Y;
+            if (imgInfo.plane == GMM_PLANE_U) {
+                yuvPlaneType = NEO::ImagePlane::PLANE_UV;
+            }
+        }
+        gmm->updateImgInfoAndDesc(imgInfo, 0u, yuvPlaneType);
     }
     NEO::SurfaceOffsets surfaceOffsets = {imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane};
 

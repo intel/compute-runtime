@@ -11,6 +11,8 @@
 
 #include "level_zero/core/source/image/image.h"
 
+#include <optional>
+
 namespace L0 {
 
 struct ImageImp : public Image {
@@ -37,11 +39,15 @@ struct ImageImp : public Image {
         return ZE_RESULT_SUCCESS;
     }
 
+    bool isImageView() const {
+        return sourceImageFormatDesc.has_value();
+    }
+
   protected:
-    bool isImageView = false;
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
     ze_image_desc_t imageFormatDesc = {};
+    std::optional<ze_image_desc_t> sourceImageFormatDesc = {};
 };
 } // namespace L0

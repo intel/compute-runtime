@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ class Gmm {
     GmmHelper *getGmmHelper() const;
 
     uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
-    void updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex);
+    void updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex, ImagePlane yuvPlaneType);
     void updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex);
     uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, ImagePlane plane);
 

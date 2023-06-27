@@ -183,6 +183,9 @@ HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated
 
     ret = imageHW->createView(device, &imageViewDescPlaneY, &planeY);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto yPlaneDesc = static_cast<L0::Image *>(planeY)->getImageInfo().imgDesc;
+    EXPECT_EQ(width, yPlaneDesc.imageWidth);
+    EXPECT_EQ(height, yPlaneDesc.imageHeight);
 
     ze_image_view_planar_exp_desc_t planeUVdesc = {};
     planeUVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
@@ -203,6 +206,9 @@ HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated
     ze_image_handle_t planeUV;
     ret = imageHW->createView(device, &imageViewDescPlaneUV, &planeUV);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto uvPlaneDesc = static_cast<L0::Image *>(planeUV)->getImageInfo().imgDesc;
+    EXPECT_EQ(width / 2, uvPlaneDesc.imageWidth);
+    EXPECT_EQ(height / 2, uvPlaneDesc.imageHeight);
 
     auto nv12Allocation = imageHW->getAllocation();
 

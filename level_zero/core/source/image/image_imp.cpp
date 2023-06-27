@@ -22,7 +22,7 @@ namespace L0 {
 ImageAllocatorFn imageFactory[IGFX_MAX_PRODUCT] = {};
 
 ImageImp::~ImageImp() {
-    if (!isImageView && this->device != nullptr) {
+    if (!isImageView() && this->device != nullptr) {
         this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
     }
 }
@@ -63,8 +63,8 @@ ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze
     ImageImp *image = nullptr;
 
     image = static_cast<ImageImp *>((*allocator)());
-    image->isImageView = true;
     image->allocation = allocation;
+    image->sourceImageFormatDesc = this->imageFormatDesc;
     auto result = image->initialize(device, desc);
 
     if (result != ZE_RESULT_SUCCESS) {

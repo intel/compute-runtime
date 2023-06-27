@@ -71,16 +71,7 @@ void D3DSharing<D3D>::releaseResource(MemObj *memObject, uint32_t rootDeviceInde
 
 template <typename D3D>
 void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, ImagePlane imagePlane, cl_uint arrayIndex) {
-
-    gmm->updateImgInfoAndDesc(imgInfo, arrayIndex);
-
-    if (imagePlane == ImagePlane::PLANE_U || imagePlane == ImagePlane::PLANE_V || imagePlane == ImagePlane::PLANE_UV) {
-        imgInfo.imgDesc.imageWidth /= 2;
-        imgInfo.imgDesc.imageHeight /= 2;
-        if (imagePlane != ImagePlane::PLANE_UV) {
-            imgInfo.imgDesc.imageRowPitch /= 2;
-        }
-    }
+    gmm->updateImgInfoAndDesc(imgInfo, arrayIndex, imagePlane);
 }
 
 template <typename D3D>
