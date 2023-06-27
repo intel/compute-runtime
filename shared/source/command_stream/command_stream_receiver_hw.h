@@ -27,6 +27,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         PipelineSelectArgs pipelineSelectArgs{};
         size_t estimatedSize = 0;
         void *endPtr = nullptr;
+        size_t csrStartOffset = 0;
 
         bool pipelineSelectFullConfigurationNeeded = false;
         bool pipelineSelectDirty = false;
@@ -262,7 +263,16 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                                            LinearStream &immediateCommandStream,
                                                            ImmediateFlushData &flushData);
 
-    inline void handleImmediateFlushAllocationsResidency(Device &device);
+    inline void handleImmediateFlushAllocationsResidency(Device &device,
+                                                         LinearStream &immediateCommandStream,
+                                                         ImmediateFlushData &flushData,
+                                                         LinearStream &csrStream);
+
+    inline CompletionStamp handleImmediateFlushSendBatchBuffer(LinearStream &immediateCommandStream,
+                                                               size_t immediateCommandStreamStart,
+                                                               ImmediateDispatchFlags &dispatchFlags,
+                                                               ImmediateFlushData &flushData,
+                                                               LinearStream &csrStream);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

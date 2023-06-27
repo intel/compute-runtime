@@ -308,6 +308,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     handleImmediateFlushJumpToImmediate(flushData);
 
     auto &csrCommandStream = getCS(flushData.estimatedSize);
+    flushData.csrStartOffset = csrCommandStream.getUsed();
 
     dispatchImmediateFlushPipelineSelectCommand(flushData, csrCommandStream);
     dispatchImmediateFlushFrontEndCommand(scratchAddress, flushData, device, csrCommandStream);
@@ -318,16 +319,17 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     dispatchImmediateFlushJumpToImmediateCommand(immediateCommandStream, immediateCommandStreamStart, flushData, csrCommandStream);
 
     dispatchImmediateFlushClientBufferCommands(dispatchFlags, immediateCommandStream, flushData);
-    this->latestSentTaskCount = taskCount + 1;
 
-    handleImmediateFlushAllocationsResidency(device);
+    handleImmediateFlushAllocationsResidency(device,
+                                             immediateCommandStream,
+                                             flushData,
+                                             csrCommandStream);
 
-    ++taskCount;
-    CompletionStamp completionStamp = {
-        this->taskCount,
-        this->taskLevel,
-        flushStamp->peekStamp()};
-    return completionStamp;
+    return handleImmediateFlushSendBatchBuffer(immediateCommandStream,
+                                               immediateCommandStreamStart,
+                                               dispatchFlags,
+                                               flushData,
+                                               csrCommandStream);
 }
 
 template <typename GfxFamily>
@@ -2044,7 +2046,10 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidency(Device &device) {
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidency(Device &device,
+                                                                                  LinearStream &immediateCommandStream,
+                                                                                  ImmediateFlushData &flushData,
+                                                                                  LinearStream &csrStream) {
     this->makeResident(*tagAllocation);
 
     if (globalFenceAllocation) {
@@ -2057,6 +2062,10 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
 
     if (device.getRTMemoryBackedBuffer()) {
         makeResident(*device.getRTMemoryBackedBuffer());
+    }
+
+    if (flushData.estimatedSize > 0) {
+        makeResident(*csrStream.getGraphicsAllocation());
     }
 }
 
@@ -2099,14 +2108,61 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferComma
             this->taskCount + 1,
             peekRootDeviceEnvironment(),
             args);
-
-        this->latestFlushedTaskCount = this->taskCount + 1;
     }
 
     makeResident(*immediateCommandStream.getGraphicsAllocation());
 
     programEndingCmd(immediateCommandStream, &flushData.endPtr, isDirectSubmissionEnabled(), dispatchFlags.hasRelaxedOrderingDependencies, true);
     EncodeNoop<GfxFamily>::alignToCacheLine(immediateCommandStream);
+}
+
+template <typename GfxFamily>
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatchBuffer(LinearStream &immediateCommandStream,
+                                                                                        size_t immediateCommandStreamStart,
+                                                                                        ImmediateDispatchFlags &dispatchFlags,
+                                                                                        ImmediateFlushData &flushData,
+                                                                                        LinearStream &csrStream) {
+    this->latestSentTaskCount = taskCount + 1;
+
+    bool startFromCsr = flushData.estimatedSize > 0;
+    size_t startOffset = startFromCsr ? flushData.csrStartOffset : immediateCommandStreamStart;
+    auto &streamToSubmit = startFromCsr ? csrStream : immediateCommandStream;
+    GraphicsAllocation *chainedBatchBuffer = startFromCsr ? immediateCommandStream.getGraphicsAllocation() : nullptr;
+    size_t chainedBatchBufferStartOffset = startFromCsr ? csrStream.getUsed() : 0;
+    uint64_t taskStartAddress = immediateCommandStream.getGpuBase() + immediateCommandStreamStart;
+    bool hasStallingCmds = (startFromCsr || dispatchFlags.blockingAppend || dispatchFlags.hasStallingCmds);
+
+    constexpr bool immediateRequiresCoherency = false;
+    constexpr bool immediateLowPriority = false;
+    constexpr QueueThrottle immediateThrottle = QueueThrottle::MEDIUM;
+    constexpr uint64_t immediateSliceCount = QueueSliceCount::defaultSliceCount;
+
+    BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, taskStartAddress, chainedBatchBuffer,
+                            immediateRequiresCoherency, immediateLowPriority, immediateThrottle, immediateSliceCount,
+                            streamToSubmit.getUsed(), &streamToSubmit, flushData.endPtr, this->getNumClients(), hasStallingCmds,
+                            dispatchFlags.hasRelaxedOrderingDependencies};
+    updateStreamTaskCount(streamToSubmit, taskCount + 1);
+
+    auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
+    if (submissionStatus != SubmissionStatus::SUCCESS) {
+        --this->latestSentTaskCount;
+        updateStreamTaskCount(streamToSubmit, taskCount);
+
+        CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
+        return completionStamp;
+    } else {
+        if (dispatchFlags.blockingAppend) {
+            this->latestFlushedTaskCount = this->taskCount + 1;
+        }
+
+        ++taskCount;
+        CompletionStamp completionStamp = {
+            this->taskCount,
+            this->taskLevel,
+            flushStamp->peekStamp()};
+
+        return completionStamp;
+    }
 }
 
 } // namespace NEO

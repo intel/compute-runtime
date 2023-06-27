@@ -141,6 +141,7 @@ struct ImmediateDispatchFlags {
     void *sshCpuBase = nullptr;
     bool blockingAppend = false;
     bool hasRelaxedOrderingDependencies = false;
+    bool hasStallingCmds = false;
 };
 
 } // namespace NEO

@@ -3894,3 +3894,108 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     startOffset = commandStream.getUsed();
     EXPECT_EQ(0u, (startOffset % MemoryConstants::cacheLineSize));
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenPreambleIsUsedOrNotThenCsrBufferIsUsedOrImmediateBufferIsUsed,
+          IsAtLeastXeHpCore) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.recordFlusheBatchBuffer = true;
+
+    auto startOffset = commandStream.getUsed();
+    auto immediateListCmdBufferAllocation = commandStream.getGraphicsAllocation();
+
+    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+
+    immediateFlushTaskFlags.hasStallingCmds = true;
+    auto completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+
+    auto csrCmdBufferAllocation = commandStreamReceiver.commandStream.getGraphicsAllocation();
+
+    TaskCountType currentTaskCountType = 1u;
+
+    EXPECT_EQ(currentTaskCountType, completionStamp.taskCount);
+    EXPECT_EQ(currentTaskCountType, commandStreamReceiver.taskCount);
+    EXPECT_EQ(currentTaskCountType, commandStreamReceiver.latestSentTaskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.latestFlushedTaskCount);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(csrCmdBufferAllocation, currentTaskCountType));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation, currentTaskCountType));
+
+    BatchBuffer &recordedBatchBuffer = commandStreamReceiver.latestFlushedBatchBuffer;
+    EXPECT_EQ(csrCmdBufferAllocation, recordedBatchBuffer.commandBufferAllocation);
+    EXPECT_EQ(0u, recordedBatchBuffer.startOffset);
+    EXPECT_EQ(true, recordedBatchBuffer.hasStallingCmds);
+    EXPECT_EQ(false, recordedBatchBuffer.hasRelaxedOrderingDependencies);
+
+    startOffset = commandStream.getUsed();
+
+    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+
+    immediateFlushTaskFlags.hasRelaxedOrderingDependencies = true;
+    completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+
+    currentTaskCountType = 2u;
+
+    EXPECT_EQ(currentTaskCountType, completionStamp.taskCount);
+    EXPECT_EQ(currentTaskCountType, commandStreamReceiver.taskCount);
+    EXPECT_EQ(currentTaskCountType, commandStreamReceiver.latestSentTaskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.latestFlushedTaskCount);
+
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(csrCmdBufferAllocation, currentTaskCountType));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation, currentTaskCountType));
+
+    recordedBatchBuffer = commandStreamReceiver.latestFlushedBatchBuffer;
+    EXPECT_EQ(immediateListCmdBufferAllocation, recordedBatchBuffer.commandBufferAllocation);
+    EXPECT_EQ(startOffset, recordedBatchBuffer.startOffset);
+    EXPECT_EQ(true, recordedBatchBuffer.hasStallingCmds);
+    EXPECT_EQ(true, recordedBatchBuffer.hasRelaxedOrderingDependencies);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenFlushOperationFailsThenExpectNoBatchBufferSentAndCorrectFailCompletionReturned,
+          IsAtLeastXeHpCore) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.recordFlusheBatchBuffer = true;
+
+    auto startOffset = commandStream.getUsed();
+    auto immediateListCmdBufferAllocation = commandStream.getGraphicsAllocation();
+
+    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+
+    immediateFlushTaskFlags.blockingAppend = true;
+    commandStreamReceiver.flushReturnValue = NEO::SubmissionStatus::FAILED;
+    auto completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+
+    auto csrCmdBufferAllocation = commandStreamReceiver.commandStream.getGraphicsAllocation();
+
+    TaskCountType currentTaskCountType = 1u;
+
+    EXPECT_EQ(NEO::CompletionStamp::failed, completionStamp.taskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.latestSentTaskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.latestFlushedTaskCount);
+
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(csrCmdBufferAllocation, currentTaskCountType));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation, currentTaskCountType));
+
+    BatchBuffer &recordedBatchBuffer = commandStreamReceiver.latestFlushedBatchBuffer;
+    EXPECT_EQ(nullptr, recordedBatchBuffer.commandBufferAllocation);
+    EXPECT_EQ(0u, recordedBatchBuffer.startOffset);
+    EXPECT_EQ(false, recordedBatchBuffer.hasStallingCmds);
+    EXPECT_EQ(false, recordedBatchBuffer.hasRelaxedOrderingDependencies);
+
+    completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_EQ(NEO::CompletionStamp::failed, completionStamp.taskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.latestSentTaskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.latestFlushedTaskCount);
+
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation, currentTaskCountType));
+}
