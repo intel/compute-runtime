@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -1081,6 +1082,117 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr), true, true);
 
     verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, false), false, false);
+
+    driverHandle->releaseImportedPointer(dstPtr);
+}
+
+HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDisabledRelaxedOrderingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    auto commandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    uint8_t srcPtr[64] = {};
+    uint8_t dstPtr[64] = {};
+    const ze_copy_region_t region = {0U, 0U, 0U, 1, 1, 0U};
+
+    driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->unregisterClient();
+
+    EXPECT_FALSE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
+
+    auto verifyFlags = [&ultCsr](ze_result_t result) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasStallingCmds);
+        EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+    };
+
+    auto resetFlags = [&ultCsr]() {
+        ultCsr->recordedDispatchFlags.hasStallingCmds = false;
+        ultCsr->latestFlushedBatchBuffer.hasStallingCmds = false;
+    };
+
+    bool inOrderExecAlreadyEnabled = false;
+
+    for (bool inOrderExecution : {false, true}) {
+        if (inOrderExecution && !inOrderExecAlreadyEnabled) {
+            whiteBoxCmdList->enableInOrderExecution();
+            inOrderExecAlreadyEnabled = true;
+        }
+
+        EXPECT_EQ(inOrderExecAlreadyEnabled, inOrderExecution);
+
+        uint32_t numWaitEvents = inOrderExecution ? 0 : 1;
+        ze_event_handle_t *waitlist = inOrderExecution ? nullptr : &event;
+
+        // non-pipelined state or first in-order exec
+        resetFlags();
+        verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 1, &event, launchParams, false));
+
+        // non-pipelined state already programmed
+        resetFlags();
+        verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, numWaitEvents, waitlist, launchParams, false));
+
+        resetFlags();
+        verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, nullptr, numWaitEvents, waitlist, false));
+
+        resetFlags();
+        verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, numWaitEvents, waitlist, false));
+
+        resetFlags();
+        verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, numWaitEvents, waitlist, false));
+
+        resetFlags();
+        verifyFlags(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, nullptr, numWaitEvents, waitlist, false));
+
+        if constexpr (FamilyType::supportsSampler) {
+            auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+            auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+            mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+            auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+            ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
+            ze_image_desc_t zeDesc = {};
+            zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+            image->initialize(device, &zeDesc);
+
+            resetFlags();
+            verifyFlags(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, nullptr, numWaitEvents, waitlist, false));
+
+            resetFlags();
+            verifyFlags(commandList->appendImageCopyFromMemory(image->toHandle(), dstPtr, &imgRegion, nullptr, numWaitEvents, waitlist, false));
+
+            resetFlags();
+            verifyFlags(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, nullptr, numWaitEvents, waitlist, false));
+        }
+
+        resetFlags();
+        verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, numWaitEvents, waitlist, false));
+    }
 
     driverHandle->releaseImportedPointer(dstPtr);
 }
