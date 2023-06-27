@@ -74,6 +74,23 @@ TEST_F(OsContextWinTest, givenOsContextWinWhenQueryingForOfflineDumpContextIdThe
     EXPECT_EQ(0u, osContext->getOfflineDumpContextId(0));
 }
 
+TEST_F(OsContextWinTest, givenWddm20AndProductSupportDirectSubmissionThenDirectSubmissionIsSupported) {
+    auto &hwInfo = *this->rootDeviceEnvironment->getHardwareInfo();
+    auto &productHelper = this->rootDeviceEnvironment->getHelper<ProductHelper>();
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_EQ(productHelper.isDirectSubmissionSupported(hwInfo), osContext->isDirectSubmissionSupported(hwInfo));
+}
+
+TEST_F(OsContextWinTest, givenWddm23ThenDirectSubmissionIsNotSupported) {
+    struct WddmMock : public Wddm {
+        using Wddm::featureTable;
+    };
+    auto wddm = static_cast<WddmMock *>(osInterface->getDriverModel()->as<Wddm>());
+    wddm->featureTable.get()->flags.ftrWddmHwQueues = 1;
+    osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_FALSE(osContext->isDirectSubmissionSupported(*this->rootDeviceEnvironment->getHardwareInfo()));
+}
+
 struct OsContextWinTestNoCleanup : public WddmTestWithMockGdiDllNoCleanup {
     void SetUp() override {
         WddmTestWithMockGdiDllNoCleanup::SetUp();

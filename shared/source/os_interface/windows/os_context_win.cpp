@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 
@@ -88,6 +89,12 @@ uint32_t OsContextWin::getDeviceNodeMask() {
 
 uint64_t OsContextWin::getOfflineDumpContextId(uint32_t deviceIndex) const {
     return 0;
+}
+
+bool OsContextWin::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    auto &productHelper = wddm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+    return wddm.getWddmVersion() == WddmVersion::WDDM_2_0 && productHelper.isDirectSubmissionSupported(hwInfo);
 }
 
 OsContextWin::~OsContextWin() {
