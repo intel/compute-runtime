@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
 
@@ -99,6 +100,15 @@ bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
 template <>
 bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
     return false;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
+    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
+    if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    }
+    return enabled;
 }
 
 template <>
