@@ -409,6 +409,32 @@ TEST_F(WddmTests, GivenWddmWhenMapGpuVaCalledThenGmmClientCallsMapGpuVa) {
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmTests, givenCheckDeviceStateSetToTrueAndForceExecutionStateWhenSubmitThenProperValueIsReturned) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDebugBreak.set(false);
+
+    wddm->checkDeviceState = true;
+    uint64_t pagingFenceValue = 0u;
+    VariableBackup<uint64_t *> pagingFenceBackup(&wddm->pagingFenceAddress, &pagingFenceValue);
+    auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
+    setMockDeviceExecutionStateFcn(executionState);
+    ::testing::internal::CaptureStderr();
+    WddmSubmitArguments submitArguments{};
+    EXPECT_FALSE(wddm->submit(0, 0, nullptr, submitArguments));
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string("Device execution error, out of memory " + std::to_string(executionState) + "\n"), output);
+
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+    ::testing::internal::CaptureStderr();
+
+    COMMAND_BUFFER_HEADER commandBufferHeader{};
+    MonitoredFence monitoredFence{};
+    submitArguments.monitorFence = &monitoredFence;
+    EXPECT_TRUE(wddm->submit(0, 0, &commandBufferHeader, submitArguments));
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+}
+
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateAndForceExecutionStateThenProperMessageIsVisible) {
     DebugManagerStateRestore restorer{};
     DebugManager.flags.EnableDebugBreak.set(false);
@@ -417,13 +443,13 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateAndForceEx
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
     ::testing::internal::CaptureStderr();
-    wddm->getDeviceState();
+    EXPECT_FALSE(wddm->getDeviceState());
     std::string output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(std::string("Device execution error, out of memory " + std::to_string(executionState) + "\n"), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
     ::testing::internal::CaptureStderr();
-    wddm->getDeviceState();
+    EXPECT_TRUE(wddm->getDeviceState());
     output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
@@ -436,13 +462,13 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToFalseWhenCallGetDeviceStateAndForceE
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
     ::testing::internal::CaptureStderr();
-    wddm->getDeviceState();
+    EXPECT_TRUE(wddm->getDeviceState());
     std::string output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
     ::testing::internal::CaptureStderr();
-    wddm->getDeviceState();
+    EXPECT_TRUE(wddm->getDeviceState());
     output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }

@@ -209,7 +209,7 @@ class Wddm : public DriverModel {
     bool createPagingQueue();
     bool destroyPagingQueue();
     bool destroyDevice();
-    void getDeviceState();
+    bool getDeviceState();
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
     bool setLowPriorityContextParam(D3DKMT_HANDLE contextHandle);
     bool adjustEvictNeededParameter(bool evictNeeded) {

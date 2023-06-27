@@ -1013,7 +1013,10 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
         printf("%u: Wddm Submission with context handle %u and HwQueue handle %u\n", SysCalls::getProcessId(), submitArguments.contextHandle, submitArguments.hwQueueHandle);
     }
 
-    getDeviceState();
+    status = getDeviceState();
+    if (!status) {
+        return false;
+    }
     status = wddmInterface->submit(commandBuffer, size, commandHeader, submitArguments);
     if (status) {
         submitArguments.monitorFence->lastSubmittedFence = submitArguments.monitorFence->currentFenceValue;
@@ -1023,7 +1026,7 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
     return status;
 }
 
-void Wddm::getDeviceState() {
+bool Wddm::getDeviceState() {
     if (checkDeviceState) {
         D3DKMT_GETDEVICESTATE getDevState = {};
         NTSTATUS status = STATUS_SUCCESS;
@@ -1036,8 +1039,11 @@ void Wddm::getDeviceState() {
         PRINT_DEBUG_STRING(getDevState.ExecutionState == D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY, stderr, "Device execution error, out of memory %d\n", getDevState.ExecutionState);
         if (status == STATUS_SUCCESS) {
             DEBUG_BREAK_IF(getDevState.ExecutionState != D3DKMT_DEVICEEXECUTION_ACTIVE);
+            return getDevState.ExecutionState == D3DKMT_DEVICEEXECUTION_ACTIVE;
         }
+        return false;
     }
+    return true;
 }
 
 unsigned int Wddm::getEnablePreemptionRegValue() {
