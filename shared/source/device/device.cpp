@@ -865,6 +865,15 @@ const ReleaseHelper *Device::getReleaseHelper() const {
     return getRootDeviceEnvironment().getReleaseHelper();
 }
 
+void Device::stopDirectSubmission() {
+    for (auto &engine : allEngines) {
+        auto csr = engine.commandStreamReceiver;
+        if (csr->isAnyDirectSubmissionEnabled()) {
+            csr->stopDirectSubmission();
+        }
+    }
+}
+
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     UNRECOVERABLE_IF(rtDispatchGlobalsInfos.size() < maxBvhLevels + 1);
     UNRECOVERABLE_IF(rtDispatchGlobalsInfos[maxBvhLevels] != nullptr);

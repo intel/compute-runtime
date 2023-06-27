@@ -404,6 +404,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return *flushReturnValue;
     }
 
+    void stopDirectSubmission() override {
+        stopDirectSubmissionCalled = true;
+        BaseClass::stopDirectSubmission();
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -458,6 +463,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool forceReturnGpuHang = false;
     bool callBaseIsKmdWaitOnTaskCountAllowed = false;
     bool isKmdWaitOnTaskCountAllowedValue = false;
+    bool stopDirectSubmissionCalled = false;
 };
 
 } // namespace NEO

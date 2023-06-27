@@ -97,6 +97,48 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
     csr.blitterDirectSubmission.release();
 }
 
+HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionCalledThenCsrStopDirecttSubmissionCalled) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.directSubmission.reset(&directSubmission);
+
+    bool ret = directSubmission.initialize(true, false);
+    EXPECT_TRUE(ret);
+
+    EXPECT_FALSE(csr.stopDirectSubmissionCalled);
+    pDevice->stopDirectSubmission();
+    EXPECT_TRUE(csr.stopDirectSubmissionCalled);
+
+    csr.directSubmission.release();
+}
+
+HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionCalledThenBcsStopDirecttSubmissionCalled) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
+
+    MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+    csr.blitterDirectSubmission.reset(&directSubmission);
+    csr.setupContext(*osContext);
+
+    bool ret = directSubmission.initialize(true, false);
+    EXPECT_TRUE(ret);
+
+    EXPECT_FALSE(csr.stopDirectSubmissionCalled);
+    pDevice->stopDirectSubmission();
+    EXPECT_TRUE(csr.stopDirectSubmissionCalled);
+
+    csr.blitterDirectSubmission.release();
+}
+
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenMakingResourcesResidentThenCorrectContextIsUsed) {
     auto mockMemoryOperations = std::make_unique<MockMemoryOperations>();
 

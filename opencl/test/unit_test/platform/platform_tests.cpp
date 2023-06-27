@@ -89,6 +89,28 @@ TEST_F(PlatformTest, WhenGetDeviceIsCalledThenExpectedValuesAreReturned) {
     EXPECT_EQ(nullptr, pPlatform->getClDevice(numDevices));
 }
 
+TEST_F(PlatformTest, WhenPlatformIsDestroyedThenDirectSubmissionIsTerminated) {
+    VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createFuncBackup{&DeviceFactory::createRootDeviceFunc};
+    DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
+        return std::unique_ptr<Device>(MockDevice::create<MockDevice>(&executionEnvironment, rootDeviceIndex));
+    };
+
+    pPlatform->initializeWithNewDevices();
+
+    auto clDevice = pPlatform->getClDevice(0);
+    EXPECT_NE(nullptr, clDevice);
+
+    auto mockDevice = static_cast<MockDevice *>(&clDevice->getDevice());
+    EXPECT_FALSE(mockDevice->stopDirectSubmissionCalled);
+
+    clDevice->incRefInternal();
+
+    pPlatform = nullptr;
+    EXPECT_TRUE(mockDevice->stopDirectSubmissionCalled);
+
+    clDevice->decRefInternal();
+}
+
 TEST_F(PlatformTest, WhenGetClDevicesIsCalledThenExpectedValuesAreReturned) {
     EXPECT_EQ(nullptr, pPlatform->getClDevices());
 

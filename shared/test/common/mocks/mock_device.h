@@ -162,6 +162,11 @@ class MockDevice : public RootDevice {
     void setRTDispatchGlobalsForceAllocation() {
         rtDispatchGlobalsForceAllocation = true;
     }
+
+    void stopDirectSubmission() override {
+        stopDirectSubmissionCalled = true;
+        Device::stopDirectSubmission();
+    }
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
@@ -172,6 +177,7 @@ class MockDevice : public RootDevice {
     bool verifyAdapterLuidReturnValue = true;
     size_t maxParameterSizeFromIGC = 0u;
     bool rtDispatchGlobalsForceAllocation = true;
+    bool stopDirectSubmissionCalled = false;
 };
 
 template <>
