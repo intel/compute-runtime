@@ -247,6 +247,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableDynamicPostSyncAllocLayout, -1, "-1: defau
 DECLARE_DEBUG_VARIABLE(int32_t, PrintTimestampPacketUsage, -1, "-1: default, 0: Disabled, 1: Print when TSP is allocated, initialized, returned to pool, etc.")
 DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeEventBeforeReset, -1, "-1: default, 0: Disabled, 1: Synchronize Event completion on host before calling reset. 2: Synchronize + print extra logs.")
 DECLARE_DEBUG_VARIABLE(int32_t, TrackNumCsrClientsOnSyncPoints, -1, "-1: default, 0: Disabled, 1: If set, synchronization points like zeEventHostSynchronize will unregister CmdQ from CSR clients")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideDriverVersion, -1, "-1: default, >=0: Use value as reported driver version")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

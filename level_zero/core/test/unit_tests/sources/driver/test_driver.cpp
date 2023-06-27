@@ -134,6 +134,34 @@ TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsRet
     EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
 }
 
+TEST_F(DriverVersionTest, GivenDebugOverrideWhenGettingDriverVersionThenExpectedOverrideDriverVersionIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.OverrideDriverVersion.set(0);
+
+    ze_driver_properties_t properties;
+    ze_result_t res = driverHandle->getProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    uint32_t expectedDriverVersion = 0;
+    EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
+
+    NEO::DebugManager.flags.OverrideDriverVersion.set(10);
+
+    res = driverHandle->getProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    expectedDriverVersion = 10;
+    EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
+
+    NEO::DebugManager.flags.OverrideDriverVersion.set(DriverHandleImp::initialDriverVersionValue + 20);
+
+    res = driverHandle->getProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    expectedDriverVersion = DriverHandleImp::initialDriverVersionValue + 20;
+    EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
+}
+
 TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
 
     ze_driver_properties_t properties;
