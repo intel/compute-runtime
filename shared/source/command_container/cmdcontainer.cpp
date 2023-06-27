@@ -91,8 +91,12 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
         this->bbEndReference = gfxCoreHelper.getBatchBufferEndReference();
     }
 
+    CommandContainer *cmdcontainer = this;
+    if (this->immediateCmdListCsr) {
+        cmdcontainer = nullptr;
+    }
     commandStream = std::make_unique<LinearStream>(cmdBufferAllocation->getUnderlyingBuffer(),
-                                                   usableSize, this, this->selectedBbCmdSize);
+                                                   usableSize, cmdcontainer, this->selectedBbCmdSize);
 
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 

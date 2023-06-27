@@ -1740,7 +1740,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForIm
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
@@ -1754,12 +1754,16 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForIm
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
     // reduce available cmd buffer size, so next command can't fit in 1st and we need to use 2nd cmd buffer
-    size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - maxImmediateCommandSize + 1;
+    size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - commonImmediateCommandSize + 1;
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
+    auto oldStreamPtr = commandList->getCmdContainer().getCommandStream()->getCpuBase();
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false);
+    auto newStreamPtr = commandList->getCmdContainer().getCommandStream()->getCpuBase();
+
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(oldStreamPtr, newStreamPtr);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
     whiteBoxCmdList->csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }

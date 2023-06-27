@@ -1834,17 +1834,17 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - maxImmediateCommandSize + 1;
+    size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - commonImmediateCommandSize + 1;
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->updateTaskCount(0u, 0u);
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
-    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false);
+    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false, commonImmediateCommandSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
     auto latestFlushedTaskCount = whiteBoxCmdList->csr->peekLatestFlushedTaskCount();
-    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false);
+    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false, commonImmediateCommandSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
     EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->csr->peekLatestFlushedTaskCount());
 }
@@ -1860,18 +1860,18 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     constexpr uint32_t numEvents = 100;
     constexpr size_t eventWaitSize = numEvents * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
-    size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - (maxImmediateCommandSize + eventWaitSize) + 1;
+    size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - (commonImmediateCommandSize + eventWaitSize) + 1;
 
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->updateTaskCount(0u, 0u);
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
-    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false);
+    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
     auto latestFlushedTaskCount = whiteBoxCmdList->csr->peekLatestFlushedTaskCount();
-    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false);
+    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
     EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->csr->peekLatestFlushedTaskCount());
 }

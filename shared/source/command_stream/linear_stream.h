@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ class LinearStream {
     size_t getMaxAvailableSpace() const;
     size_t getAvailableSpace() const;
     size_t getUsed() const;
+    void *getCmdContainer() const { return cmdContainer; }
 
     uint64_t getGpuBase() const;
     void setGpuBase(uint64_t gpuAddress);

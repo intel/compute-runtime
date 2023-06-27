@@ -1073,7 +1073,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStartSecondaryBa
     for (size_t iter = 0; iter < cmdBufferCount; iter++) {
         auto allocation = cmdBufferAllocations[iter];
         uint64_t startOffset = allocation->getGpuAddress();
-        if (isCommandListImmediate && (iter == (cmdBufferCount - 1))) {
+        if (isCommandListImmediate) {
             startOffset = ptrOffset(allocation->getGpuAddress(), commandContainer.currentLinearStreamStartOffsetRef());
         }
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStream, startOffset, true, false, false);

@@ -184,12 +184,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
     this->commandContainer.setHeapAddressModel(this->cmdListHeapAddressModel);
+    this->commandContainer.setImmediateCmdListCsr(this->csr);
     this->commandContainer.setStateBaseAddressTracking(this->stateBaseAddressTracking);
     this->commandContainer.setUsingPrimaryBuffer(this->dispatchCmdListBatchBufferAsPrimary);
-
-    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
-        this->commandContainer.setImmediateCmdListCsr(this->csr);
-    }
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());

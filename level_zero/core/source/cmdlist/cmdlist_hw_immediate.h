@@ -23,7 +23,7 @@ namespace L0 {
 
 struct EventPool;
 struct Event;
-inline constexpr size_t maxImmediateCommandSize = 4 * MemoryConstants::kiloByte;
+inline constexpr size_t commonImmediateCommandSize = 4 * MemoryConstants::kiloByte;
 
 struct CpuMemCopyInfo {
     void *const dstPtr;
@@ -157,7 +157,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     NEO::CompletionStamp flushImmediateRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies);
     NEO::CompletionStamp flushBcsTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::CommandStreamReceiver *csr);
 
-    void checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies);
+    void checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize);
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
 
     ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, ze_event_handle_t hSignalEvent);

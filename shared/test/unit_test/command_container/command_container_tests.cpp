@@ -1855,3 +1855,10 @@ HWTEST_F(CommandContainerTest,
     EXPECT_EQ(nullptr, cmdContainer.getEndCmdPtr());
     EXPECT_EQ(0u, cmdContainer.getAlignedPrimarySize());
 }
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenImmediateCmdListCsrIsSetThenCommandStreamHasCmdContainerSetToNullptr) {
+    CommandContainer cmdContainer;
+    cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, false);
+    EXPECT_EQ(cmdContainer.getCommandStream()->getCmdContainer(), nullptr);
+}

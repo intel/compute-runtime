@@ -599,7 +599,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelWithImmediateListWithoutFlushTaskThenNewCmdBufferAllocated, IsWithinXeGfxFamily) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelWithImmediateListWithoutFlushTaskUnrecoverableIsCalled, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -611,7 +611,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
 
     auto &commandContainer = commandList->getCmdContainer();
     const auto stream = commandContainer.getCommandStream();
-    const auto streamCpu = stream->getCpuBase();
 
     Vec3<size_t> groupCount{1, 1, 1};
     auto sizeLeftInStream = sizeof(MI_BATCH_BUFFER_END);
@@ -641,20 +640,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,
         false,
         commandList->getDcFlushRequired(true)};
-    NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs, nullptr);
-
-    auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
-    ASSERT_GT(usedSpaceAfter, 0u);
-
-    const auto streamCpu2 = stream->getCpuBase();
-
-    EXPECT_NE(nullptr, streamCpu2);
-    EXPECT_NE(streamCpu, streamCpu2);
-
-    EXPECT_EQ(2u, commandContainer.getCmdBufferAllocations().size());
-    auto immediateHandle = commandList->toHandle();
-    returnValue = commandList->cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs, nullptr), std::exception);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenReturnErrorInvalidArgument) {
