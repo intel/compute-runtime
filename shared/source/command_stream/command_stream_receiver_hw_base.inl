@@ -317,8 +317,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
 
     dispatchImmediateFlushJumpToImmediateCommand(immediateCommandStream, immediateCommandStreamStart, flushData, csrCommandStream);
 
+    dispatchImmediateFlushClientBufferCommands(dispatchFlags, immediateCommandStream, flushData);
+    this->latestSentTaskCount = taskCount + 1;
+
     handleImmediateFlushAllocationsResidency(device);
 
+    ++taskCount;
     CompletionStamp completionStamp = {
         this->taskCount,
         this->taskLevel,
@@ -2041,6 +2045,8 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidency(Device &device) {
+    this->makeResident(*tagAllocation);
+
     if (globalFenceAllocation) {
         makeResident(*globalFenceAllocation);
     }
@@ -2073,6 +2079,34 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushJumpToImmediateCo
         EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&csrStream, immediateStartAddress, false, false, false);
         EncodeNoop<GfxFamily>::alignToCacheLine(csrStream);
     }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferCommands(ImmediateDispatchFlags &dispatchFlags,
+                                                                                    LinearStream &immediateCommandStream,
+                                                                                    ImmediateFlushData &flushData) {
+    if (dispatchFlags.blockingAppend) {
+        auto address = getTagAllocation()->getGpuAddress();
+
+        PipeControlArgs args = {};
+        args.dcFlushEnable = this->dcFlushSupport;
+        args.notifyEnable = isUsedNotifyEnableForPostSync();
+        args.workloadPartitionOffset = isMultiTileOperationEnabled();
+        MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+            immediateCommandStream,
+            PostSyncMode::ImmediateData,
+            address,
+            this->taskCount + 1,
+            peekRootDeviceEnvironment(),
+            args);
+
+        this->latestFlushedTaskCount = this->taskCount + 1;
+    }
+
+    makeResident(*immediateCommandStream.getGraphicsAllocation());
+
+    programEndingCmd(immediateCommandStream, &flushData.endPtr, isDirectSubmissionEnabled(), dispatchFlags.hasRelaxedOrderingDependencies, true);
+    EncodeNoop<GfxFamily>::alignToCacheLine(immediateCommandStream);
 }
 
 } // namespace NEO

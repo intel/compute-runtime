@@ -26,6 +26,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     struct ImmediateFlushData {
         PipelineSelectArgs pipelineSelectArgs{};
         size_t estimatedSize = 0;
+        void *endPtr = nullptr;
 
         bool pipelineSelectFullConfigurationNeeded = false;
         bool pipelineSelectDirty = false;
@@ -257,6 +258,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                                              size_t immediateCommandStreamStart,
                                                              ImmediateFlushData &flushData,
                                                              LinearStream &csrStream);
+    inline void dispatchImmediateFlushClientBufferCommands(ImmediateDispatchFlags &dispatchFlags,
+                                                           LinearStream &immediateCommandStream,
+                                                           ImmediateFlushData &flushData);
 
     inline void handleImmediateFlushAllocationsResidency(Device &device);
 

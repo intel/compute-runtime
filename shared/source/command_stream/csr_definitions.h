@@ -139,6 +139,8 @@ struct CsrSizeRequestFlags {
 struct ImmediateDispatchFlags {
     StreamProperties *requiredState = nullptr;
     void *sshCpuBase = nullptr;
+    bool blockingAppend = false;
+    bool hasRelaxedOrderingDependencies = false;
 };
 
 } // namespace NEO

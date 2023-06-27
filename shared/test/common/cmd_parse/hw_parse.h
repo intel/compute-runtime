@@ -130,6 +130,19 @@ struct HardwareParse {
         return getCommand<CmdType>(cmdList.begin(), cmdList.end());
     }
 
+    template <typename CmdType>
+    GenCmdList::iterator getCommandItor(GenCmdList::iterator itorStart, GenCmdList::iterator itorEnd) {
+        auto itorCmd = find<CmdType *>(itorStart, itorEnd);
+        return itorCmd != cmdList.end()
+                   ? itorCmd
+                   : cmdList.end();
+    }
+
+    template <typename CmdType>
+    GenCmdList::iterator getCommandItor() {
+        return getCommandItor<CmdType>(cmdList.begin(), cmdList.end());
+    }
+
     template <typename FamilyType>
     int getNumberOfPipelineSelectsThatEnablePipelineSelect() {
         using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
