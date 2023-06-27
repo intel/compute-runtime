@@ -121,13 +121,16 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         }
         return ret;
     }
-
+    void startControllingDirectSubmissions() override {
+        directSubmissionControllerStarted = true;
+    }
     int flushCalledCount = 0;
     std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
 
     bool callParentInitDirectSubmission = true;
     bool initBlitterDirectSubmission = false;
     uint32_t fillReusableAllocationsListCalled = 0;
+    bool directSubmissionControllerStarted = false;
 };
 
 class WddmCommandStreamMockGdiTest : public ::testing::Test {
@@ -1127,7 +1130,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenF
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsedAndDirectSubmissionControllerStarted) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     using MockSubmission =
         MockWddmDirectSubmission<FamilyType, Dispatcher>;
@@ -1145,6 +1148,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+    EXPECT_FALSE(mockCsr->directSubmissionControllerStarted);
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
@@ -1153,6 +1157,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     batchBuffer.endCmdPtr = commandBuffer->getUnderlyingBuffer();
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_TRUE(mockCsr->directSubmissionControllerStarted);
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
@@ -1171,7 +1176,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsedAndDirectSubmissionControllerStarted) {
     using Dispatcher = BlitterDispatcher<FamilyType>;
     using MockSubmission =
         MockWddmDirectSubmission<FamilyType, Dispatcher>;
@@ -1190,6 +1195,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
     EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());
+    EXPECT_FALSE(mockCsr->directSubmissionControllerStarted);
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
@@ -1198,6 +1204,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     batchBuffer.endCmdPtr = commandBuffer->getUnderlyingBuffer();
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_TRUE(mockCsr->directSubmissionControllerStarted);
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->blitterDirectSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();

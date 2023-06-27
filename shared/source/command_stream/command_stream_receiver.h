@@ -275,7 +275,7 @@ class CommandStreamReceiver {
 
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
 
-    void startControllingDirectSubmissions();
+    MOCKABLE_VIRTUAL void startControllingDirectSubmissions();
 
     bool isAnyDirectSubmissionEnabled() {
         return this->isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
