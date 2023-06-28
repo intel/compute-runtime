@@ -118,7 +118,7 @@ class GfxCoreHelper {
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                              const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const = 0;
-    virtual uint32_t adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, const uint32_t defaultMaxGroupSize) const = 0;
+    virtual uint32_t adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
@@ -169,6 +169,7 @@ class GfxCoreHelper {
     virtual bool isTimestampShiftRequired() const = 0;
     virtual bool isRelaxedOrderingSupported() const = 0;
     virtual uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const = 0;
+    virtual uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const = 0;
     static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
     virtual ~GfxCoreHelper() = default;
 
@@ -317,8 +318,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                      const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const override;
 
-    uint32_t adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, const uint32_t defaultMaxGroupSize) const override;
-
+    uint32_t adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize) const override;
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 
     size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const override;
@@ -382,7 +382,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isTimestampShiftRequired() const override;
     bool isRelaxedOrderingSupported() const override;
     uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const override;
-
+    uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const override;
     ~GfxCoreHelperHw() override = default;
 
   protected:

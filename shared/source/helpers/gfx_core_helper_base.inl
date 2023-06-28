@@ -677,8 +677,13 @@ bool GfxCoreHelperHw<gfxProduct>::isRelaxedOrderingSupported() const {
     return false;
 }
 
+template <typename gfxProduct>
+uint32_t GfxCoreHelperHw<gfxProduct>::overrideMaxWorkGroupSize(uint32_t maxWG) const {
+    return std::min(maxWG, 1024u);
+}
+
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, const uint32_t defaultMaxGroupSize) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize) const {
     return defaultMaxGroupSize;
 }
 

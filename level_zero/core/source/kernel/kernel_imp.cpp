@@ -788,7 +788,8 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
 
     const auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getMaxGroupSize(kernelDescriptor));
-    maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, maxKernelWorkGroupSize);
+
+    maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, !kernelRequiresGenerationOfLocalIdsByRuntime, maxKernelWorkGroupSize);
     pKernelProperties->maxNumSubgroups = maxKernelWorkGroupSize / kernelDescriptor.kernelAttributes.simdSize;
 
     void *pNext = pKernelProperties->pNext;
