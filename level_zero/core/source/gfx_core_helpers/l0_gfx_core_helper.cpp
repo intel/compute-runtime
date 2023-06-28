@@ -112,6 +112,14 @@ bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(const NEO::RootDeviceE
     return value && allowPrimary;
 }
 
+bool L0GfxCoreHelper::useImmediateComputeFlushTask(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (NEO::DebugManager.flags.UseImmediateFlushTask.get() != -1) {
+        return !!(NEO::DebugManager.flags.UseImmediateFlushTask.get());
+    }
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    return l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask();
+}
+
 } // namespace L0
 
 template <>

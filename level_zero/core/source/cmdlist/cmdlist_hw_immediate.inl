@@ -110,6 +110,11 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies) {
+    return {NEO::CompletionStamp::getTaskCountFromSubmissionStatusError(NEO::SubmissionStatus::UNSUPPORTED)};
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies) {
     NEO::DispatchFlags dispatchFlags(
         {},                                                          // csrDependencies
@@ -1153,6 +1158,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     } while (timeDiff < timeout);
 
     return status;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (L0GfxCoreHelper::useImmediateComputeFlushTask(rootDeviceEnvironment)) {
+        this->computeFlushMethod = &CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTask;
+    }
 }
 
 } // namespace L0

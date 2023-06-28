@@ -69,4 +69,9 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsPrimaryBatchBufferCmdList() cons
     return false;
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::platformSupportsImmediateComputeFlushTask() const {
+    return false;
+}
+
 } // namespace L0

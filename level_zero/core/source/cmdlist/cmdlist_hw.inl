@@ -194,6 +194,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     if (this->isFlushTaskSubmissionEnabled) {
         commandContainer.setFlushTaskUsedForImmediate(this->isFlushTaskSubmissionEnabled);
         commandContainer.setNumIddPerBlock(1);
+        this->setupFlushMethod(rootDeviceEnvironment);
     }
 
     if (this->immediateCmdListHeapSharing) {

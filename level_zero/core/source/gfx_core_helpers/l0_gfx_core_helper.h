@@ -51,6 +51,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static bool useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo);
     static NEO::HeapAddressModel getHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool dispatchCmdListBatchBufferAsPrimary(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool allowPrimary);
+    static bool useImmediateComputeFlushTask(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
 
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
@@ -76,6 +77,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual NEO::HeapAddressModel getPlatformHeapAddressModel() const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
+    virtual bool platformSupportsImmediateComputeFlushTask() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -112,6 +114,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     NEO::HeapAddressModel getPlatformHeapAddressModel() const override;
     std::vector<uint32_t> getSupportedNumGrfs() const override;
+    bool platformSupportsImmediateComputeFlushTask() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

@@ -367,5 +367,11 @@ void PrimaryBatchBufferPreamblelessCmdListFixture::tearDown() {
     PrimaryBatchBufferCmdListFixture::tearDown();
 }
 
+void ImmediateFlushTaskCmdListFixture::setUp() {
+    DebugManager.flags.UseImmediateFlushTask.set(1);
+
+    ModuleMutableCommandListFixture::setUp();
+}
+
 } // namespace ult
 } // namespace L0

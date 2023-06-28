@@ -1888,5 +1888,17 @@ HWTEST2_F(RayTracingCmdListTest,
     ultCsr->isMadeResident(rtAllocation, residentCount);
 }
 
+using ImmediateFlushTaskCmdListTests = Test<ImmediateFlushTaskCmdListFixture>;
+
+HWTEST2_F(ImmediateFlushTaskCmdListTests,
+          givenInitialVersionOfImmediateFlushTaskWhenImmediateFlushTaskSelectedThenUnsupportedErrorReturned,
+          IsAtLeastXeHpCore) {
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+}
+
 } // namespace ult
 } // namespace L0

@@ -323,6 +323,7 @@ struct CommandListCoreFamily : CommandListImp {
     void postInitComputeSetup();
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const { return false; }
+    virtual void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {}
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

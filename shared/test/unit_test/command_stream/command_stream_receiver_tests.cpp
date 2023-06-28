@@ -2672,6 +2672,7 @@ TEST(CommandStreamReceiverSimpleTest, whenTranslatingSubmissionStatusToTaskCount
     EXPECT_EQ(CompletionStamp::outOfHostMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::OUT_OF_HOST_MEMORY));
     EXPECT_EQ(CompletionStamp::outOfDeviceMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::OUT_OF_MEMORY));
     EXPECT_EQ(CompletionStamp::failed, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::FAILED));
+    EXPECT_EQ(CompletionStamp::unsupported, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::UNSUPPORTED));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThenErrorIsPropagated) {

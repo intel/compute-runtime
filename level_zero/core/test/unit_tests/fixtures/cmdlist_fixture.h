@@ -304,5 +304,9 @@ struct PrimaryBatchBufferPreamblelessCmdListFixture : public PrimaryBatchBufferC
     std::unique_ptr<L0::ult::CommandList> commandList3;
 };
 
+struct ImmediateFlushTaskCmdListFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+};
+
 } // namespace ult
 } // namespace L0
