@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915_upstream.h"
@@ -15,6 +16,7 @@
 namespace NEO {
 
 bool IoctlHelperUpstream::initialize() {
+    detectExtSetPatSupport();
     return true;
 }
 
@@ -30,39 +32,82 @@ bool IoctlHelperUpstream::isVmBindAvailable() {
     return false;
 }
 
-int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
+int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
+    bool isPatIndexValid = (patIndex != CommonConstants::unsupportedPatIndex) && (patIndex <= std::numeric_limits<uint32_t>::max());
+    bool useSetPat = this->isSetPatSupported && isPatIndexValid;
+
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {
         regions[i].memory_class = memClassInstances[i].memoryClass;
         regions[i].memory_instance = memClassInstances[i].memoryInstance;
     }
+
     drm_i915_gem_create_ext_memory_regions memRegions{};
     memRegions.num_regions = regionsSize;
     memRegions.regions = reinterpret_cast<uintptr_t>(regions.data());
     memRegions.base.name = I915_GEM_CREATE_EXT_MEMORY_REGIONS;
 
+    drm_i915_gem_create_ext_set_pat setPat{};
+    setPat.pat_index = static_cast<uint32_t>(patIndex);
+    setPat.base.name = I915_GEM_CREATE_EXT_SET_PAT;
+
     drm_i915_gem_create_ext createExt{};
     createExt.size = allocSize;
     createExt.extensions = reinterpret_cast<uintptr_t>(&memRegions);
 
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu",
-                     allocSize);
+    if (useSetPat) {
+        memRegions.base.next_extension = reinterpret_cast<uintptr_t>(&setPat);
+    }
 
     if (DebugManager.flags.PrintBOCreateDestroyResult.get()) {
+        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu",
+                         allocSize);
+
         for (uint32_t i = 0; i < regionsSize; i++) {
             auto region = regions[i];
             printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
                              region.memory_class, region.memory_instance);
         }
+
+        if (useSetPat) {
+            printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", pat index: %lu", patIndex);
+        }
+
         printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
     auto ret = ioctl(DrmIoctl::GemCreateExt, &createExt);
-
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
     handle = createExt.handle;
+
+    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS%s has returned: %d BO-%u with size: %lu\n",
+                     (useSetPat) ? " with EXT_SET_PAT" : "",
+                     ret, createExt.handle, createExt.size);
+
     return ret;
+}
+
+void IoctlHelperUpstream::detectExtSetPatSupport() {
+    drm_i915_gem_create_ext_set_pat setPat{};
+    setPat.pat_index = 0;
+    setPat.base.name = I915_GEM_CREATE_EXT_SET_PAT;
+
+    drm_i915_gem_create_ext createExt{};
+    createExt.size = 1;
+    createExt.extensions = reinterpret_cast<uintptr_t>(&setPat);
+
+    int returnValue = ioctl(DrmIoctl::GemCreateExt, &createExt);
+    this->isSetPatSupported = (returnValue == 0);
+
+    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "EXT_SET_PAT support is: %s\n",
+                     this->isSetPatSupported ? "enabled" : "disabled");
+
+    if (returnValue == 0) {
+        GemClose close{};
+        close.handle = createExt.handle;
+        returnValue = ioctl(DrmIoctl::GemClose, &close);
+        UNRECOVERABLE_IF(returnValue);
+    }
 }
 
 CacheRegion IoctlHelperUpstream::closAlloc() {

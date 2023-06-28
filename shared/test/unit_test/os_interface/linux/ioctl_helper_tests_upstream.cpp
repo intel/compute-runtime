@@ -18,6 +18,67 @@
 
 using namespace NEO;
 
+struct MockIoctlHelperUpstream : IoctlHelperUpstream {
+    using IoctlHelperUpstream::IoctlHelperUpstream;
+    using IoctlHelperUpstream::isSetPatSupported;
+
+    void detectExtSetPatSupport() override {
+        detectExtSetPatSupportCallCount++;
+        IoctlHelperUpstream::detectExtSetPatSupport();
+    }
+
+    int ioctl(DrmIoctl request, void *arg) override {
+        ioctlCallCount++;
+        if (request == DrmIoctl::GemCreateExt) {
+            lastGemCreateContainedSetPat = checkWhetherGemCreateExtContainsSetPat(arg);
+            if (overrideGemCreateExtReturnValue.has_value()) {
+                return *overrideGemCreateExtReturnValue;
+            }
+        }
+        return IoctlHelperUpstream::ioctl(request, arg);
+    }
+
+    bool checkWhetherGemCreateExtContainsSetPat(void *arg) {
+        auto &gemCreateExt = *reinterpret_cast<drm_i915_gem_create_ext *>(arg);
+        auto pExtensionBase = reinterpret_cast<i915_user_extension *>(gemCreateExt.extensions);
+        while (pExtensionBase != nullptr) {
+            if (pExtensionBase->name == I915_GEM_CREATE_EXT_SET_PAT) {
+                return true;
+            }
+            pExtensionBase = reinterpret_cast<i915_user_extension *>(pExtensionBase->next_extension);
+        }
+        return false;
+    }
+
+    size_t detectExtSetPatSupportCallCount = 0;
+    size_t ioctlCallCount = 0;
+    std::optional<int> overrideGemCreateExtReturnValue{};
+    bool lastGemCreateContainedSetPat = false;
+};
+
+TEST(IoctlHelperUpstreamTest, whenInitializeIsCalledThenDetectExtSetPatSupportFunctionIsCalled) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperUpstream mockIoctlHelper{*drm};
+    EXPECT_EQ(0u, mockIoctlHelper.detectExtSetPatSupportCallCount);
+    EXPECT_FALSE(mockIoctlHelper.lastGemCreateContainedSetPat);
+    EXPECT_EQ(0u, mockIoctlHelper.ioctlCallCount);
+
+    mockIoctlHelper.overrideGemCreateExtReturnValue = 0;
+    mockIoctlHelper.initialize();
+    EXPECT_EQ(1u, mockIoctlHelper.detectExtSetPatSupportCallCount);
+    EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedSetPat);
+    EXPECT_EQ(2u, mockIoctlHelper.ioctlCallCount); // create and close
+    EXPECT_TRUE(mockIoctlHelper.isSetPatSupported);
+
+    mockIoctlHelper.overrideGemCreateExtReturnValue = -1;
+    mockIoctlHelper.initialize();
+    EXPECT_EQ(2u, mockIoctlHelper.detectExtSetPatSupportCallCount);
+    EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedSetPat);
+    EXPECT_EQ(3u, mockIoctlHelper.ioctlCallCount); // only create
+    EXPECT_FALSE(mockIoctlHelper.isSetPatSupported);
+}
+
 TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -219,7 +280,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectVal
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
-    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks);
 
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, handle);
@@ -230,20 +291,107 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectVal
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    testing::internal::CaptureStdout();
+
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
-    ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
+    ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: 0 BO-1 with size: 1024\n");
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(IoctlHelperTestsUpstream, givenSetPatSupportedWhenCreateGemExtThenSetPatExtensionsIsAdded) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperUpstream mockIoctlHelper{*drm};
+
+    uint32_t handle = 0;
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
+    mockIoctlHelper.isSetPatSupported = false;
+    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, 0, {}, -1, false, 0);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1u, mockIoctlHelper.ioctlCallCount);
+    EXPECT_FALSE(mockIoctlHelper.lastGemCreateContainedSetPat);
+
+    mockIoctlHelper.isSetPatSupported = true;
+    ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, 0, {}, -1, false, 0);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(2u, mockIoctlHelper.ioctlCallCount);
+    EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedSetPat);
+}
+
+TEST(IoctlHelperTestsUpstream, givenInvalidPatIndexWhenCreateGemExtThenSetPatExtensionsIsNotAdded) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperUpstream mockIoctlHelper{*drm};
+
+    uint32_t handle = 0;
+    mockIoctlHelper.isSetPatSupported = true;
+    uint64_t invalidPatIndex = CommonConstants::unsupportedPatIndex;
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
+    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, invalidPatIndex, {}, -1, false, 0);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1u, mockIoctlHelper.ioctlCallCount);
+    EXPECT_FALSE(mockIoctlHelper.lastGemCreateContainedSetPat);
+
+    invalidPatIndex = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1;
+    ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, invalidPatIndex, {}, -1, false, 0);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(2u, mockIoctlHelper.ioctlCallCount);
+    EXPECT_FALSE(mockIoctlHelper.lastGemCreateContainedSetPat);
+}
+
+TEST(IoctlHelperTestsUpstream, givenSetPatSupportedWhenCreateGemExtWithDebugFlagThenPrintDebugInfoWithExtSetPat) {
+    DebugManagerStateRestore stateRestore;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperUpstream mockIoctlHelper{*drm};
+
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    testing::internal::CaptureStdout();
+
+    uint32_t handle = 0;
+    mockIoctlHelper.isSetPatSupported = true;
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
+    uint32_t numOfChunks = 0;
+    uint64_t patIndex = 5;
+    mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, patIndex, {}, -1, false, numOfChunks);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0, pat index: 5 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS with EXT_SET_PAT has returned: 0 BO-1 with size: 1024\n");
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(IoctlHelperUpstreamTest, whenDetectExtSetPatSupportIsCalledWithDebugFlagThenPrintCorrectDebugInfo) {
+    DebugManagerStateRestore stateRestore;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperUpstream mockIoctlHelper{*drm};
+
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    testing::internal::CaptureStdout();
+    mockIoctlHelper.overrideGemCreateExtReturnValue = 0;
+    mockIoctlHelper.detectExtSetPatSupport();
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedOutput("EXT_SET_PAT support is: enabled\n");
+    EXPECT_EQ(expectedOutput, output);
+
+    testing::internal::CaptureStdout();
+    mockIoctlHelper.overrideGemCreateExtReturnValue = -1;
+    mockIoctlHelper.detectExtSetPatSupport();
+    output = testing::internal::GetCapturedStdout();
+    expectedOutput = "EXT_SET_PAT support is: disabled\n";
     EXPECT_EQ(expectedOutput, output);
 }
 
