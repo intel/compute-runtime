@@ -39,6 +39,37 @@ struct MetricEnumeration {
 
     MetricsDiscovery::IMetricsDevice_1_5 *getMdapiDevice() { return pMetricsDevice; }
     MetricsDiscovery::IAdapter_1_9 *getMdapiAdapter() { return pAdapter; }
+    virtual MetricsDiscovery::IAdapter_1_9 *getAdapterFromAdapterGroup(
+        MetricsDiscovery::IAdapterGroup_1_9 *adapterGroup,
+        uint32_t index) {
+        UNRECOVERABLE_IF(pAdapterGroup == nullptr);
+        UNRECOVERABLE_IF(pAdapterGroup->GetAdapter(index) == nullptr);
+        return pAdapterGroup->GetAdapter(index);
+    }
+    virtual const MetricsDiscovery::TAdapterGroupParams_1_6 *getAdapterGroupParams(MetricsDiscovery::IAdapterGroup_1_9 *adapterGroup) {
+        return adapterGroup->GetParams();
+    }
+    virtual const MetricsDiscovery::TAdapterParams_1_9 *getAdapterParams(
+        MetricsDiscovery::IAdapter_1_9 *pAdapter) {
+        return pAdapter->GetParams();
+    }
+
+    virtual void openMetricsSubDeviceFromAdapter(MetricsDiscovery::IAdapter_1_9 *pAdapter,
+                                                 const uint32_t subDeviceIndex, MetricsDiscovery::IMetricsDevice_1_5 **metricsDevice) {
+        pAdapter->OpenMetricsSubDevice(subDeviceIndex, metricsDevice);
+    }
+
+    virtual void openMetricsDeviceFromAdapter(
+        MetricsDiscovery::IAdapter_1_9 *pAdapter,
+        MetricsDiscovery::IMetricsDevice_1_5 **metricsDevice) {
+        pAdapter->OpenMetricsDevice(metricsDevice);
+    }
+
+    virtual MetricsDiscovery::IConcurrentGroup_1_5 *getConcurrentGroupFromDevice(
+        MetricsDiscovery::IMetricsDevice_1_5 *metricDevice,
+        uint32_t index) {
+        return metricDevice->GetConcurrentGroup(index);
+    }
 
   protected:
     ze_result_t initialize();
@@ -63,6 +94,11 @@ struct MetricEnumeration {
     getMetricType(const MetricsDiscovery::TInformationType sourceInformationType) const;
     zet_value_type_t
     getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType) const;
+    virtual ze_result_t cacheExtendedMetricInformation(
+        MetricsDiscovery::IConcurrentGroup_1_5 &pConcurrentGroup,
+        const uint32_t domain) { return ZE_RESULT_SUCCESS; };
+
+    virtual void cleanupExtendedMetricInformation() {}
 
   protected:
     OaMetricSourceImp &metricSource;

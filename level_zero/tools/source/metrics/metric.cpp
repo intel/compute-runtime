@@ -22,10 +22,6 @@
 
 namespace L0 {
 
-std::unique_ptr<MetricDeviceContext> MetricDeviceContext::create(Device &device) {
-    return std::make_unique<MetricDeviceContext>(device);
-}
-
 MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevice) {
     auto deviceNeo = device.getNEODevice();
     bool isSubDevice = deviceNeo->isSubDevice();

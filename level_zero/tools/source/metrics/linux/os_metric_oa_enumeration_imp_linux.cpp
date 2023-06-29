@@ -61,15 +61,15 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
     const int32_t drmMinorPrimary = drmMinor - (drmNodePrimary * drmMaxDevices);
 
     // Enumerate metrics discovery adapters.
-    for (uint32_t index = 0, count = pAdapterGroup->GetParams()->AdapterCount;
+    for (uint32_t index = 0, count = getAdapterGroupParams(pAdapterGroup)->AdapterCount;
          index < count;
          ++index) {
 
         UNRECOVERABLE_IF(pAdapterGroup->GetAdapter(index) == nullptr);
         UNRECOVERABLE_IF(pAdapterGroup->GetAdapter(index)->GetParams() == nullptr);
 
-        auto adapter = pAdapterGroup->GetAdapter(index);
-        auto adapterParams = adapter->GetParams();
+        auto adapter = getAdapterFromAdapterGroup(pAdapterGroup, index);
+        auto adapterParams = getAdapterParams(adapter);
 
         const bool validAdapterType = adapterParams->SystemId.Type == MetricsDiscovery::ADAPTER_ID_TYPE_MAJOR_MINOR;
         const bool validAdapterMajor = adapterParams->SystemId.MajorMinor.Major == static_cast<int32_t>(drmMajor);

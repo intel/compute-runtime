@@ -48,15 +48,15 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
     UNRECOVERABLE_IF(getAdapterId(major, minor) == false);
 
     // Enumerate metrics discovery adapters.
-    for (uint32_t index = 0, count = pAdapterGroup->GetParams()->AdapterCount;
+    for (uint32_t index = 0, count = getAdapterGroupParams(pAdapterGroup)->AdapterCount;
          index < count;
          ++index) {
 
         UNRECOVERABLE_IF(pAdapterGroup->GetAdapter(index) == nullptr);
         UNRECOVERABLE_IF(pAdapterGroup->GetAdapter(index)->GetParams() == nullptr);
 
-        auto adapter = pAdapterGroup->GetAdapter(index);
-        auto adapterParams = adapter->GetParams();
+        auto adapter = getAdapterFromAdapterGroup(pAdapterGroup, index);
+        auto adapterParams = getAdapterParams(adapter);
 
         const bool validAdapterInfo = adapterParams->SystemId.Type == MetricsDiscovery::ADAPTER_ID_TYPE_LUID;
         const bool validAdapterMatch = (adapterParams->SystemId.Luid.HighPart == major) &&

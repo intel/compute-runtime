@@ -63,6 +63,9 @@ class MetricDeviceContext {
     static std::unique_ptr<MetricDeviceContext> create(Device &device);
     static ze_result_t enableMetricApi();
 
+  protected:
+    std::map<MetricSource::SourceType, std::unique_ptr<MetricSource>> metricSources;
+
   private:
     bool enable();
     ze_result_t activateAllDomains();
@@ -72,7 +75,6 @@ class MetricDeviceContext {
     std::map<uint32_t, std::pair<zet_metric_group_handle_t, bool>> domains;
     bool multiDeviceCapable = false;
     uint32_t subDeviceIndex = 0;
-    std::map<MetricSource::SourceType, std::unique_ptr<MetricSource>> metricSources;
 };
 
 struct Metric : _zet_metric_handle_t {
