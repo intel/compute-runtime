@@ -363,7 +363,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                          static_cast<uint16_t>(groupSizeY),
                                          static_cast<uint16_t>(groupSizeZ)}},
                 std::array<uint8_t, 3>{{0, 1, 2}},
-                false, grfSize);
+                false, grfSize, gfxCoreHelper);
         }
 
         this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / numThreadsPerThreadGroup;

@@ -8,6 +8,7 @@
 #include "shared/source/helpers/local_id_gen.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen_special.inl"
 #include "shared/source/utilities/cpu_info.h"
 
@@ -41,8 +42,9 @@ LocalIDHelper::LocalIDHelper() {
 
 LocalIDHelper LocalIDHelper::initializer;
 
-void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize) {
-    auto threadsPerWorkGroup = static_cast<uint16_t>(getThreadsPerWG(simd, static_cast<uint32_t>(localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2])));
+void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize, const GfxCoreHelper &gfxCoreHelper) {
+    bool localIdsGeneratedByHw = false;
+    auto threadsPerWorkGroup = static_cast<uint16_t>(gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]), grfSize, localIdsGeneratedByHw));
     bool useLayoutForImages = isImageOnlyKernel && isCompatibleWithLayoutForImages(localWorkgroupSize, dimensionsOrder, simd);
     if (useLayoutForImages) {
         generateLocalIDsWithLayoutForImages(buffer, localWorkgroupSize, simd);

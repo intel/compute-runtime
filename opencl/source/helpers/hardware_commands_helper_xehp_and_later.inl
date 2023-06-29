@@ -96,8 +96,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
             kernelAttributes.flags.requiresWorkgroupWalkOrder,
             requiredWalkOrder,
             kernelDescriptor.kernelAttributes.simdSize);
-
-        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder));
+        const auto &gfxCoreHelper = kernel.getGfxCoreHelper();
+        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder), gfxCoreHelper);
     }
 
     using InlineData = typename GfxFamily::INLINE_DATA;
