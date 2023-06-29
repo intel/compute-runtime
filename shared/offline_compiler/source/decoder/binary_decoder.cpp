@@ -35,13 +35,14 @@ T readUnaligned(const void *ptr) {
 int BinaryDecoder::decode() {
     parseTokens();
     std::stringstream ptmFile;
-    auto devBinPtr = getDevBinary();
-    if (devBinPtr == nullptr) {
+    auto [ptr, size] = getDevBinary();
+
+    if (ptr == nullptr) {
         argHelper->printf("Error! Device Binary section was not found.\n");
         abortOclocExecution(1);
         return -1;
     }
-    return processBinary(devBinPtr, ptmFile);
+    return processBinary(ptr, size, ptmFile);
 }
 
 void BinaryDecoder::dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile) {
@@ -82,13 +83,13 @@ bool isPatchtokensBinary(const ContainerT &data) {
     return intcMagic == binaryMagic;
 }
 
-const void *BinaryDecoder::getDevBinary() {
+std::pair<const void *, size_t> BinaryDecoder::getDevBinary() {
     binary = argHelper->readBinaryFile(binaryFile);
-    const void *data = nullptr;
     if (isPatchtokensBinary(binary)) {
-        return binary.data();
+        return {binary.data(), binary.size()};
     }
 
+    std::pair<const void *, size_t> data(nullptr, 0u);
     std::string decoderErrors;
     std::string decoderWarnings;
     auto input = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size());
@@ -109,7 +110,7 @@ const void *BinaryDecoder::getDevBinary() {
             break;
         }
         case NEO::Elf::SHT_OPENCL_DEV_BINARY: {
-            data = sectionData.begin();
+            data = {sectionData.begin(), sectionData.size()};
             break;
         }
         default:
@@ -333,7 +334,7 @@ Examples:
                       argHelper->createStringForArgs(argHelper->productConfigHelper->getDeviceAcronyms()).c_str());
 }
 
-int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
+int BinaryDecoder::processBinary(const void *&ptr, size_t sectionSize, std::ostream &ptmFile) {
     ptmFile << "ProgramBinaryHeader:\n";
     uint32_t numberOfKernels = 0, patchListSize = 0, device = 0;
     for (const auto &v : programHeader.fields) {
@@ -356,79 +357,100 @@ int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
     // Reading Kernels
     for (uint32_t i = 0; i < numberOfKernels; ++i) {
         ptmFile << "Kernel #" << i << '\n';
-        processKernel(ptr, ptmFile);
+        processKernel(ptr, sectionSize, ptmFile);
     }
 
     argHelper->saveOutput(pathToDump + "PTM.txt", ptmFile);
     return 0;
 }
 
-void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
-    uint32_t kernelNameSize = 0, kernelPatchListSize = 0, kernelHeapSize = 0, kernelHeapUnpaddedSize = 0,
-             generalStateHeapSize = 0, dynamicStateHeapSize = 0, surfaceStateHeapSize = 0;
+void BinaryDecoder::validateLoadedKernelData(KernelSizeData kernelLoadedData, size_t sectionSize) {
+    if (kernelLoadedData.size > sectionSize) {
+        argHelper->printf("Error! %s loaded from KernelBinaryHeader is invalid: %d.\n", kernelLoadedData.name.str().c_str(), kernelLoadedData.size);
+        abortOclocExecution(1);
+    }
+}
+
+void BinaryDecoder::processKernel(const void *&ptr, size_t sectionSize, std::ostream &ptmFile) {
+    KernelSizeData kernelPatchListSize{"PatchListSize", 0u},
+        kernelNameSize{"KernelNameSize", 0u},
+        kernelHeapSize{"KernelHeapSize", 0u},
+        kernelHeapUnpaddedSize{"KernelUnpaddedSize", 0u},
+        generalStateHeapSize{"GeneralStateHeapSize", 0u},
+        dynamicStateHeapSize{"DynamicStateHeapSize", 0u},
+        surfaceStateHeapSize{"SurfaceStateHeapSize", 0u};
+
     ptmFile << "KernelBinaryHeader:\n";
     for (const auto &v : kernelHeader.fields) {
-        if (v.name == "PatchListSize")
-            kernelPatchListSize = readUnaligned<uint32_t>(ptr);
-        else if (v.name == "KernelNameSize")
-            kernelNameSize = readUnaligned<uint32_t>(ptr);
-        else if (v.name == "KernelHeapSize")
-            kernelHeapSize = readUnaligned<uint32_t>(ptr);
-        else if (v.name == "KernelUnpaddedSize")
-            kernelHeapUnpaddedSize = readUnaligned<uint32_t>(ptr);
-        else if (v.name == "GeneralStateHeapSize")
-            generalStateHeapSize = readUnaligned<uint32_t>(ptr);
-        else if (v.name == "DynamicStateHeapSize")
-            dynamicStateHeapSize = readUnaligned<uint32_t>(ptr);
-        else if (v.name == "SurfaceStateHeapSize")
-            surfaceStateHeapSize = readUnaligned<uint32_t>(ptr);
+        if (v.name == kernelPatchListSize.name)
+            kernelPatchListSize.size = readUnaligned<uint32_t>(ptr);
+        else if (v.name == kernelNameSize.name)
+            kernelNameSize.size = readUnaligned<uint32_t>(ptr);
+        else if (v.name == kernelHeapSize.name)
+            kernelHeapSize.size = readUnaligned<uint32_t>(ptr);
+        else if (v.name == kernelHeapUnpaddedSize.name)
+            kernelHeapUnpaddedSize.size = readUnaligned<uint32_t>(ptr);
+        else if (v.name == generalStateHeapSize.name)
+            generalStateHeapSize.size = readUnaligned<uint32_t>(ptr);
+        else if (v.name == dynamicStateHeapSize.name)
+            dynamicStateHeapSize.size = readUnaligned<uint32_t>(ptr);
+        else if (v.name == surfaceStateHeapSize.name)
+            surfaceStateHeapSize.size = readUnaligned<uint32_t>(ptr);
 
         dumpField(ptr, v, ptmFile);
     }
 
-    if (kernelNameSize == 0) {
+    if (kernelNameSize.size == 0) {
         argHelper->printf("Error! KernelNameSize was 0.\n");
         abortOclocExecution(1);
     }
 
+    validateLoadedKernelData(kernelNameSize, sectionSize);
+    validateLoadedKernelData(kernelPatchListSize, sectionSize);
+    validateLoadedKernelData(kernelHeapSize, sectionSize);
+    validateLoadedKernelData(kernelHeapUnpaddedSize, sectionSize);
+    validateLoadedKernelData(generalStateHeapSize, sectionSize);
+    validateLoadedKernelData(dynamicStateHeapSize, sectionSize);
+    validateLoadedKernelData(surfaceStateHeapSize, sectionSize);
+
     ptmFile << "\tKernelName ";
-    std::string kernelName(static_cast<const char *>(ptr), 0, kernelNameSize);
+    std::string kernelName(static_cast<const char *>(ptr), 0, kernelNameSize.size);
     ptmFile << kernelName << '\n';
-    ptr = ptrOffset(ptr, kernelNameSize);
+    ptr = ptrOffset(ptr, kernelNameSize.size);
 
     std::string fileName = pathToDump + kernelName + "_KernelHeap";
     argHelper->printf("Trying to disassemble %s.krn\n", kernelName.c_str());
     std::string disassembledKernel;
-    if (iga->tryDisassembleGenISA(ptr, kernelHeapUnpaddedSize, disassembledKernel)) {
+    if (iga->tryDisassembleGenISA(ptr, kernelHeapUnpaddedSize.size, disassembledKernel)) {
         argHelper->saveOutput(fileName + ".asm", disassembledKernel.data(), disassembledKernel.size());
     } else {
         if (ignoreIsaPadding) {
-            argHelper->saveOutput(fileName + ".dat", ptr, kernelHeapUnpaddedSize);
+            argHelper->saveOutput(fileName + ".dat", ptr, kernelHeapUnpaddedSize.size);
         } else {
-            argHelper->saveOutput(fileName + ".dat", ptr, kernelHeapSize);
+            argHelper->saveOutput(fileName + ".dat", ptr, kernelHeapSize.size);
         }
     }
-    ptr = ptrOffset(ptr, kernelHeapSize);
+    ptr = ptrOffset(ptr, kernelHeapSize.size);
 
-    if (generalStateHeapSize != 0) {
+    if (generalStateHeapSize.size != 0) {
         argHelper->printf("Warning! GeneralStateHeapSize wasn't 0.\n");
         fileName = pathToDump + kernelName + "_GeneralStateHeap.bin";
-        argHelper->saveOutput(fileName, ptr, dynamicStateHeapSize);
-        ptr = ptrOffset(ptr, generalStateHeapSize);
+        argHelper->saveOutput(fileName, ptr, dynamicStateHeapSize.size);
+        ptr = ptrOffset(ptr, generalStateHeapSize.size);
     }
 
     fileName = pathToDump + kernelName + "_DynamicStateHeap.bin";
-    argHelper->saveOutput(fileName, ptr, dynamicStateHeapSize);
-    ptr = ptrOffset(ptr, dynamicStateHeapSize);
+    argHelper->saveOutput(fileName, ptr, dynamicStateHeapSize.size);
+    ptr = ptrOffset(ptr, dynamicStateHeapSize.size);
 
     fileName = pathToDump + kernelName + "_SurfaceStateHeap.bin";
-    argHelper->saveOutput(fileName, ptr, surfaceStateHeapSize);
-    ptr = ptrOffset(ptr, surfaceStateHeapSize);
+    argHelper->saveOutput(fileName, ptr, surfaceStateHeapSize.size);
+    ptr = ptrOffset(ptr, surfaceStateHeapSize.size);
 
-    if (kernelPatchListSize == 0) {
+    if (kernelPatchListSize.size == 0) {
         argHelper->printf("Warning! Kernel's patch list size was 0.\n");
     }
-    readPatchTokens(ptr, kernelPatchListSize, ptmFile);
+    readPatchTokens(ptr, kernelPatchListSize.size, ptmFile);
 }
 
 void BinaryDecoder::readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile) {

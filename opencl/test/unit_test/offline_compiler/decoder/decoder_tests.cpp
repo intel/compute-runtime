@@ -236,7 +236,7 @@ TEST(DecoderTests, GivenEmptyKernelHeaderWhenProcessingKernelThenErrorIsRaised) 
     std::stringstream ptFile;
 
     StdoutCapturer capturer{};
-    EXPECT_ANY_THROW(decoder.processKernel(memory, ptFile));
+    EXPECT_ANY_THROW(decoder.processKernel(memory, 0, ptFile));
     const auto output{capturer.acquireOutput()};
 
     EXPECT_EQ("Error! KernelNameSize was 0.\n", output);
@@ -606,7 +606,6 @@ TEST(DecoderTests, GivenValidBinaryWhenReadingPatchTokensFromBinaryThenBinaryIsR
 }
 
 TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBinaryIsReadCorrectly) {
-
     auto programHeader = createProgramBinaryHeader(1, 0);
     std::string kernelName("ExampleKernel");
     auto kernelHeader = createKernelBinaryHeaderCommon(static_cast<uint32_t>(kernelName.size() + 1), 0);
@@ -625,11 +624,38 @@ TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBin
     std::string binaryString = binarySS.str();
     std::vector<unsigned char> binary(binaryString.begin(), binaryString.end());
     const void *ptr = reinterpret_cast<void *>(binary.data());
-    int retVal = decoder.processBinary(ptr, ptmFile);
+    int retVal = decoder.processBinary(ptr, binary.size(), ptmFile);
     EXPECT_EQ(0, retVal);
 
     std::string expectedOutput = "ProgramBinaryHeader:\n\t4 Magic 1229870147\n\t4 Version 0\n\t4 Device 0\n\t4 GPUPointerSizeInBytes 0\n\t4 NumberOfKernels 1\n\t4 SteppingId 0\n\t4 PatchListSize 0\nKernel #0\nKernelBinaryHeader:\n\t4 CheckSum 4294967295\n\t8 ShaderHashCode 18446744073709551615\n\t4 KernelNameSize 14\n\t4 PatchListSize 0\n\t4 KernelHeapSize 0\n\t4 GeneralStateHeapSize 0\n\t4 DynamicStateHeapSize 0\n\t4 SurfaceStateHeapSize 0\n\t4 KernelUnpaddedSize 0\n\tKernelName ExampleKernel\n";
     EXPECT_EQ(expectedOutput, ptmFile.str());
+}
+
+TEST(DecoderTests, givenBinaryWithKernelBinaryHeaderWhenAtLeastOneOfTheKernelSizesExceedSectionSizeThenAbort) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+    std::string kernelName("ExampleKernel");
+    auto kernelHeader = createKernelBinaryHeaderCommon(static_cast<uint32_t>(kernelName.size() + 1), 0);
+    auto sectionSize = 1234u;
+    kernelHeader.DynamicStateHeapSize = sectionSize + 1;
+
+    std::stringstream binarySS;
+    binarySS.write(reinterpret_cast<char *>(&kernelHeader), sizeof(SKernelBinaryHeaderCommon));
+    binarySS.write(kernelName.c_str(), kernelHeader.KernelNameSize);
+
+    std::stringstream ptmFile;
+    MockDecoder decoder{false};
+    decoder.pathToPatch = clFiles;
+    decoder.pathToDump = "non_existing_folder/";
+    decoder.parseTokens();
+
+    std::string binaryString = binarySS.str();
+    std::vector<unsigned char> binary(binaryString.begin(), binaryString.end());
+    const void *ptr = reinterpret_cast<void *>(binary.data());
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.processKernel(ptr, sectionSize, ptmFile));
+    const auto output{capturer.acquireOutput()};
+    EXPECT_EQ("Error! DynamicStateHeapSize loaded from KernelBinaryHeader is invalid: 1235.\n", output);
 }
 
 TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPatchTokensAreReadCorrectly) {
@@ -674,7 +700,7 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     decoder.parseTokens();
 
     const void *ptr = reinterpret_cast<void *>(binary.data());
-    int retVal = decoder.processBinary(ptr, ptmFile);
+    int retVal = decoder.processBinary(ptr, binary.size(), ptmFile);
     EXPECT_EQ(0, retVal);
 
     std::string expectedOutput = "ProgramBinaryHeader:\n\t4 Magic 1229870147\n\t4 Version 0\n\t4 Device 0\n\t4 GPUPointerSizeInBytes 0\n\t4 NumberOfKernels 1\n\t4 SteppingId 0\n\t4 PatchListSize 30\nPATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO:\n\t4 Token 42\n\t4 Size 16\n\t4 ConstantBufferIndex 0\n\t4 InlineDataSize 14\n\tHex 0 1 2 3 4 5 6 7 8 9 a b c d\nKernel #0\nKernelBinaryHeader:\n\t4 CheckSum 4294967295\n\t8 ShaderHashCode 18446744073709551615\n\t4 KernelNameSize 14\n\t4 PatchListSize 12\n\t4 KernelHeapSize 0\n\t4 GeneralStateHeapSize 0\n\t4 DynamicStateHeapSize 0\n\t4 SurfaceStateHeapSize 0\n\t4 KernelUnpaddedSize 0\n\tKernelName ExampleKernel\nPATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD:\n\t4 Token 19\n\t4 Size 12\n\t4 InterfaceDescriptorDataOffset 0\n";
@@ -690,8 +716,9 @@ TEST(DecoderTests, givenNonPatchtokensBinaryFormatWhenTryingToGetDevBinaryFormat
     decoder.argHelper = mockArgHelper.get();
     files["mockgen.gen"] = "NOTMAGIC\n\n\n\n\n\n\n";
     decoder.binaryFile = "mockgen.gen";
-    auto data = decoder.getDevBinary();
+    auto [data, size] = decoder.getDevBinary();
     EXPECT_EQ(nullptr, data);
+    EXPECT_EQ(0u, size);
 }
 
 TEST(DecoderTests, givenPatchtokensBinaryFormatWhenTryingToGetDevBinaryThenRawDataIsReturned) {
@@ -702,9 +729,10 @@ TEST(DecoderTests, givenPatchtokensBinaryFormatWhenTryingToGetDevBinaryThenRawDa
     size_t dataSize = 11u;
     files["mockgen.gen"] = "CTNI\n\n\n\n\n\n\n";
     decoder.binaryFile = "mockgen.gen";
-    auto data = decoder.getDevBinary();
-    std::string dataString(static_cast<const char *>(data), dataSize);
+    auto [binaryData, binarySize] = decoder.getDevBinary();
+    std::string dataString(static_cast<const char *>(binaryData), dataSize);
     EXPECT_STREQ("CTNI\n\n\n\n\n\n\n", dataString.c_str());
+    EXPECT_EQ(dataSize, binarySize);
 }
 
 TEST(DecoderHelperTest, GivenTextSeparatedByTabsWhenSearchingForExistingTextThenItsIndexIsReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,14 @@ struct BinaryHeader {
     std::vector<PTField> fields;
     uint32_t size = 0U;
 };
+
 struct PatchToken : BinaryHeader {
     std::string name;
+};
+
+struct KernelSizeData {
+    NEO::ConstStringRef name;
+    uint32_t size = 0u;
 };
 
 using PTMap = std::unordered_map<uint8_t, std::unique_ptr<PatchToken>>;
@@ -58,12 +64,13 @@ class BinaryDecoder {
 
     void dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile);
     uint8_t getSize(const std::string &typeStr);
-    MOCKABLE_VIRTUAL const void *getDevBinary();
+    MOCKABLE_VIRTUAL std::pair<const void *, size_t> getDevBinary();
     std::vector<std::string> loadPatchList();
     MOCKABLE_VIRTUAL void parseTokens();
-    int processBinary(const void *&ptr, std::ostream &ptmFile);
-    void processKernel(const void *&ptr, std::ostream &ptmFile);
+    int processBinary(const void *&ptr, size_t sectionSize, std::ostream &ptmFile);
+    void processKernel(const void *&ptr, size_t sectionSize, std::ostream &ptmFile);
     void readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile);
     uint32_t readStructFields(const std::vector<std::string> &patchList,
                               const size_t &structPos, std::vector<PTField> &fields);
+    void validateLoadedKernelData(KernelSizeData kernelDataSize, size_t sectionSize);
 };

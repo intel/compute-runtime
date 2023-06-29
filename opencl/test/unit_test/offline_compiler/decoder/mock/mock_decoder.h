@@ -53,12 +53,11 @@ class MockDecoder : public BinaryDecoder {
         return static_cast<MockIgaWrapper *>(iga.get());
     }
 
-    const void *getDevBinary() override {
+    std::pair<const void *, size_t> getDevBinary() override {
         if (callBaseGetDevBinary) {
             return BinaryDecoder::getDevBinary();
         }
-
-        return devBinaryToReturn;
+        return {devBinaryToReturn, binarySize};
     }
 
     void parseTokens() override {
@@ -70,6 +69,7 @@ class MockDecoder : public BinaryDecoder {
     std::map<std::string, std::string> filesMap{};
     std::unique_ptr<MockOclocArgHelper> mockArgHelper{};
 
+    size_t binarySize = 0u;
     bool callBaseParseTokens{true};
     bool callBaseGetDevBinary{true};
     const void *devBinaryToReturn{nullptr};
