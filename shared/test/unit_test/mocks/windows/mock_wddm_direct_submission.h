@@ -19,13 +19,16 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::commandBufferHeader;
     using BaseClass::currentRingBuffer;
     using BaseClass::getSizeDispatch;
+    using BaseClass::getSizeNewResourceHandler;
     using BaseClass::getSizeSemaphoreSection;
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::getSizeSystemMemoryFenceAddress;
     using BaseClass::getTagAddressValue;
     using BaseClass::handleCompletionFence;
+    using BaseClass::handleNewResourcesSubmission;
     using BaseClass::handleResidency;
     using BaseClass::isCompleted;
+    using BaseClass::isNewResourceHandleNeeded;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContextWin;
     using BaseClass::ringBuffers;

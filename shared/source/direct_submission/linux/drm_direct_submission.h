@@ -27,9 +27,6 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     bool submit(uint64_t gpuAddress, size_t size) override;
 
     bool handleResidency() override;
-    bool isNewResourceHandleNeeded();
-    void handleNewResourcesSubmission() override;
-    size_t getSizeNewResourceHandler() override;
     void handleStopRingBuffer() override;
     void handleSwitchRingBuffers() override;
     uint64_t updateTagValue() override;

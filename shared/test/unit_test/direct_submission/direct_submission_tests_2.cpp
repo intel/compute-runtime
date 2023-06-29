@@ -244,7 +244,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    EXPECT_EQ(directSubmission.getSizeDispatch(false, false), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(directSubmission.getSizeDispatch(false, false) - directSubmission.getSizeNewResourceHandler(), directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
 
     HardwareParse hwParse;
@@ -431,7 +431,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     directSubmission.tagValueSetValue = 0x4343123ull;
     directSubmission.tagAddressSetValue = 0xBEEF00000ull;
     directSubmission.dispatchWorkloadSection(batchBuffer);
-    size_t expectedDispatchSize = disabledSizeDispatch;
+    size_t expectedDispatchSize = disabledSizeDispatch - directSubmission.getSizeNewResourceHandler();
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
     HardwareParse hwParse;
@@ -478,7 +478,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - flushSize));
 
     directSubmission.dispatchWorkloadSection(batchBuffer);
-    size_t expectedDispatchSize = disabledSizeDispatch;
+    size_t expectedDispatchSize = disabledSizeDispatch - directSubmission.getSizeNewResourceHandler();
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
     HardwareParse hwParse;
@@ -529,7 +529,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     directSubmission.workloadModeOneExpectedValue = 0x40u;
     directSubmission.semaphoreGpuVa = 0xAFF0000;
     directSubmission.dispatchWorkloadSection(batchBuffer);
-    size_t expectedDispatchSize = debugSizeDispatch;
+    size_t expectedDispatchSize = debugSizeDispatch - directSubmission.getSizeNewResourceHandler();
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
     HardwareParse hwParse;
@@ -571,7 +571,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     directSubmission.currentQueueWorkCount = 0x40u;
     directSubmission.dispatchWorkloadSection(batchBuffer);
-    size_t expectedDispatchSize = debugSizeDispatch;
+    size_t expectedDispatchSize = debugSizeDispatch - directSubmission.getSizeNewResourceHandler();
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
     HardwareParse hwParse;
@@ -624,7 +624,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    EXPECT_EQ(sizeUsed + directSubmission.getSizeDispatch(false, false), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(sizeUsed + directSubmission.getSizeDispatch(false, false) - directSubmission.getSizeNewResourceHandler(), directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
 
     HardwareParse hwParse;
@@ -666,7 +666,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(oldRingAllocation->getGpuAddress(), directSubmission.submitGpuAddress);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    size_t dispatchSize = submitSize + directSubmission.getSizeDispatch(false, false);
+    size_t dispatchSize = submitSize + directSubmission.getSizeDispatch(false, false) - directSubmission.getSizeNewResourceHandler();
 
     EXPECT_EQ(dispatchSize, directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
@@ -709,7 +709,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    EXPECT_EQ(directSubmission.getSizeDispatch(false, false), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(directSubmission.getSizeDispatch(false, false) - directSubmission.getSizeNewResourceHandler(), directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
 }
 
@@ -746,7 +746,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    size_t dispatchSize = submitSize + directSubmission.getSizeDispatch(false, false);
+    size_t dispatchSize = submitSize + directSubmission.getSizeDispatch(false, false) - directSubmission.getSizeNewResourceHandler();
 
     EXPECT_EQ(dispatchSize, directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);

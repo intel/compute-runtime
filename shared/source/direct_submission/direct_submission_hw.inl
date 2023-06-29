@@ -1000,11 +1000,28 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setReturnAddress(void *re
 
 template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::handleNewResourcesSubmission() {
+    if (isNewResourceHandleNeeded()) {
+        auto tlbFlushCounter = this->osContext.peekTlbFlushCounter();
+        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, this->rootDeviceEnvironment);
+        this->osContext.setTlbFlushed(tlbFlushCounter);
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeNewResourceHandler() {
-    return 0u;
+size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeNewResourceHandler() {
+    // Overestimate to avoid race
+    return Dispatcher::getSizeTlbFlush(this->rootDeviceEnvironment);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
+    auto newResourcesBound = this->osContext.isTlbFlushRequired();
+
+    if (DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get() != -1) {
+        newResourcesBound = DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get();
+    }
+
+    return newResourcesBound;
 }
 
 template <typename GfxFamily, typename Dispatcher>

@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/os_context.h"
 
@@ -28,18 +27,6 @@ class OsContextLinux : public OsContext {
     void setEngineFlag(unsigned int engineFlag) { this->engineFlag = engineFlag; }
     const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }
     const std::vector<uint32_t> &getDrmVmIds() const { return drmVmIds; }
-    void setNewResourceBound() {
-        tlbFlushCounter++;
-    };
-
-    uint32_t peekTlbFlushCounter() const { return tlbFlushCounter.load(); }
-
-    void setTlbFlushed(uint32_t newCounter) {
-        NEO::MultiThreadHelpers::interlockedMax(lastFlushedTlbFlushCounter, newCounter);
-    };
-    bool isTlbFlushRequired() const {
-        return (tlbFlushCounter.load() > lastFlushedTlbFlushCounter.load());
-    };
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
     Drm &getDrm() const;
     void waitForPagingFence();
@@ -62,8 +49,6 @@ class OsContextLinux : public OsContext {
   protected:
     bool initializeContext() override;
 
-    std::atomic<uint32_t> tlbFlushCounter{0};
-    std::atomic<uint32_t> lastFlushedTlbFlushCounter{0};
     unsigned int engineFlag = 0;
     std::vector<uint32_t> drmContextIds;
     std::vector<uint32_t> drmVmIds;

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>
@@ -57,8 +58,24 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
 
     uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
 
+    void setNewResourceBound() {
+        tlbFlushCounter++;
+    };
+
+    uint32_t peekTlbFlushCounter() const { return tlbFlushCounter.load(); }
+
+    void setTlbFlushed(uint32_t newCounter) {
+        NEO::MultiThreadHelpers::interlockedMax(lastFlushedTlbFlushCounter, newCounter);
+    };
+    bool isTlbFlushRequired() const {
+        return (tlbFlushCounter.load() > lastFlushedTlbFlushCounter.load());
+    };
+
   protected:
     virtual bool initializeContext() { return true; }
+
+    std::atomic<uint32_t> tlbFlushCounter{0};
+    std::atomic<uint32_t> lastFlushedTlbFlushCounter{0};
 
     const uint32_t rootDeviceIndex;
     const uint32_t contextId;

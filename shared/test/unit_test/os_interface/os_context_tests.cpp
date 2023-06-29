@@ -87,6 +87,23 @@ TEST(OSContext, givenOsContextWhenQueryingForOfflineDumpContextIdThenCorrectValu
     delete osContext;
 }
 
+TEST(OSContext, givenOsContextWhenSetNewResourceBoundThenTlbFLushRequired) {
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
+
+    EXPECT_EQ(osContext->peekTlbFlushCounter(), 0u);
+    EXPECT_FALSE(osContext->isTlbFlushRequired());
+
+    osContext->setNewResourceBound();
+
+    EXPECT_EQ(osContext->peekTlbFlushCounter(), 1u);
+    EXPECT_TRUE(osContext->isTlbFlushRequired());
+
+    osContext->setTlbFlushed(1u);
+
+    EXPECT_EQ(osContext->peekTlbFlushCounter(), 1u);
+    EXPECT_FALSE(osContext->isTlbFlushRequired());
+}
+
 struct DeferredOsContextCreationTests : ::testing::Test {
     void SetUp() override {
         device = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};

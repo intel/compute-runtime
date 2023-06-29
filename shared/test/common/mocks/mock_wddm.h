@@ -53,6 +53,7 @@ class WddmMock : public Wddm {
     using Wddm::populateIpVersion;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
+    using Wddm::setNewResourceBoundToPageTable;
     using Wddm::setPlatformSupportEvictIfNecessaryFlag;
     using Wddm::temporaryResources;
     using Wddm::timestampFrequency;

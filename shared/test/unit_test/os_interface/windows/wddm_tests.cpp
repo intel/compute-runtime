@@ -115,6 +115,52 @@ TEST_F(WddmTests, WhenCallingReInitializeContextWithContextCreateDisabledFlagEna
     EXPECT_EQ(0u, newContext->getWddmContextHandle());
 }
 
+TEST(WddmNewRsourceTest, whenSetNewResourcesBoundToPageTableThenSetInContextFromProperRootDeviceEnvironment) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(2);
+    WddmMock *mockWddm;
+    for (int i = 0; i < 2; ++i) {
+        *executionEnvironment.rootDeviceEnvironments[i]->getMutableHardwareInfo() = *defaultHwInfo;
+        auto wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment.rootDeviceEnvironments[i]));
+        auto wddmMockInterface = new WddmMockInterface20(*wddm);
+        wddm->wddmInterface.reset(wddmMockInterface);
+        mockWddm = wddm;
+        executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+        executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        executionEnvironment.rootDeviceEnvironments[i]->initHelpers();
+    }
+    executionEnvironment.initializeMemoryManager();
+    auto csr1 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0, 1));
+    auto csr2 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1, 1));
+    EngineDescriptor engineDesc({aub_stream::ENGINE_CCS, EngineUsage::Regular}, 1, PreemptionMode::Disabled, false, false);
+    executionEnvironment.memoryManager->createAndRegisterOsContext(csr1.get(), engineDesc);
+    executionEnvironment.memoryManager->createAndRegisterOsContext(csr2.get(), engineDesc);
+
+    auto engines = executionEnvironment.memoryManager->getRegisteredEngines(0);
+    for (const auto &engine : engines) {
+        EXPECT_EQ(engine.osContext->peekTlbFlushCounter(), 0u);
+    }
+    engines = executionEnvironment.memoryManager->getRegisteredEngines(1);
+    for (const auto &engine : engines) {
+        EXPECT_EQ(engine.osContext->peekTlbFlushCounter(), 0u);
+    }
+
+    mockWddm->setNewResourceBoundToPageTable();
+
+    engines = executionEnvironment.memoryManager->getRegisteredEngines(0);
+    for (const auto &engine : engines) {
+        EXPECT_EQ(engine.osContext->peekTlbFlushCounter(), 0u);
+    }
+    engines = executionEnvironment.memoryManager->getRegisteredEngines(1);
+    for (const auto &engine : engines) {
+        EXPECT_EQ(engine.osContext->peekTlbFlushCounter(), executionEnvironment.rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired());
+    }
+
+    executionEnvironment.memoryManager->unregisterEngineForCsr(csr1.get());
+    executionEnvironment.memoryManager->unregisterEngineForCsr(csr2.get());
+}
+
 TEST(WddmPciSpeedInfoTest, WhenGetPciSpeedInfoIsCalledThenUnknownIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);

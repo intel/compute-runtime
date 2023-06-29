@@ -306,6 +306,24 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
     EXPECT_EQ(nullptr, bbStart);
 }
 
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenHandleNewResourcesSubmissionThenDispatchProperCommands) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    bool ret = wddmDirectSubmission.initialize(false, false);
+    EXPECT_TRUE(ret);
+
+    size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
+    EXPECT_EQ(0u, usedSpace);
+
+    EXPECT_TRUE(wddmDirectSubmission.isNewResourceHandleNeeded());
+
+    wddmDirectSubmission.handleNewResourcesSubmission();
+
+    EXPECT_EQ(wddmDirectSubmission.ringCommandStream.getUsed(), usedSpace + wddmDirectSubmission.getSizeNewResourceHandler());
+}
+
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWaitFenceUpdateThenExpectNewRingBufferAllocated) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);

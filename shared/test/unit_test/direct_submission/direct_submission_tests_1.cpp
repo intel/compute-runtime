@@ -568,7 +568,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpec
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
                           Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment) +
-                          directSubmission.getSizeSemaphoreSection(false);
+                          directSubmission.getSizeSemaphoreSection(false) + directSubmission.getSizeNewResourceHandler();
 
     size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
@@ -585,7 +585,7 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = Dispatcher::getSizeStoreDwordCommand() +
                           Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
                           Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment) +
-                          directSubmission.getSizeSemaphoreSection(false);
+                          directSubmission.getSizeSemaphoreSection(false) + directSubmission.getSizeNewResourceHandler();
     size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
 }
@@ -600,7 +600,7 @@ HWTEST_F(DirectSubmissionTest,
     directSubmission.workloadMode = 2;
     size_t expectedSize = Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
                           Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment) +
-                          directSubmission.getSizeSemaphoreSection(false);
+                          directSubmission.getSizeSemaphoreSection(false) + directSubmission.getSizeNewResourceHandler();
     size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
 }
@@ -613,7 +613,7 @@ HWTEST_F(DirectSubmissionTest,
     directSubmission.disableCacheFlush = true;
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment) +
-                          directSubmission.getSizeSemaphoreSection(false);
+                          directSubmission.getSizeSemaphoreSection(false) + directSubmission.getSizeNewResourceHandler();
 
     size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
@@ -628,7 +628,7 @@ HWTEST_F(DirectSubmissionTest,
     directSubmission.disableMonitorFence = true;
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
-                          directSubmission.getSizeSemaphoreSection(false);
+                          directSubmission.getSizeSemaphoreSection(false) + directSubmission.getSizeNewResourceHandler();
 
     size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
@@ -946,7 +946,7 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = Dispatcher::getSizePreemption() +
                           directSubmission.getSizeSemaphoreSection(false) +
                           directSubmission.getDiagnosticModeSection();
-    expectedSize += expectedExecCount * directSubmission.getSizeDispatch(false, false);
+    expectedSize += expectedExecCount * (directSubmission.getSizeDispatch(false, false) - directSubmission.getSizeNewResourceHandler());
 
     if (directSubmission.miMemFenceRequired) {
         expectedSize += directSubmission.getSizeSystemMemoryFenceAddress();
@@ -1051,7 +1051,7 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = Dispatcher::getSizePreemption() +
                           directSubmission.getSizeSemaphoreSection(false);
     size_t expectedDispatch = directSubmission.getSizeSemaphoreSection(false);
-    EXPECT_EQ(expectedDispatch, directSubmission.getSizeDispatch(false, false));
+    EXPECT_EQ(expectedDispatch, directSubmission.getSizeDispatch(false, false) - directSubmission.getSizeNewResourceHandler());
     expectedSize += expectedExecCount * expectedDispatch;
 
     if (directSubmission.miMemFenceRequired) {

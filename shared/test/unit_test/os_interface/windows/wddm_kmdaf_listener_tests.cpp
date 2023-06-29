@@ -42,6 +42,7 @@ class WddmWithKmDafMock : public Wddm {
 class WddmKmDafListenerTest : public ::testing::Test {
   public:
     void SetUp() {
+        executionEnvironment.initializeMemoryManager();
         rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
         osEnvironment->gdi.reset(new MockGdi());

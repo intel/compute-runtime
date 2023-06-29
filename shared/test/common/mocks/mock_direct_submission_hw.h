@@ -44,6 +44,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeDispatch;
     using BaseClass::getSizeDispatchRelaxedOrderingQueueStall;
     using BaseClass::getSizeEnd;
+    using BaseClass::getSizeNewResourceHandler;
     using BaseClass::getSizePartitionRegisterConfigurationSection;
     using BaseClass::getSizePrefetchMitigation;
     using BaseClass::getSizeSemaphoreSection;

@@ -1171,6 +1171,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     if (directSubmission->isRelaxedOrderingEnabled()) {
         expectedSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
     }
+    expectedSize -= directSubmission->getSizeNewResourceHandler();
 
     EXPECT_EQ(expectedSize, actualDispatchSize);
     memoryManager->freeGraphicsMemory(commandBuffer);
@@ -1218,6 +1219,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     if (directSubmission->isRelaxedOrderingEnabled()) {
         expectedSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
     }
+    expectedSize -= directSubmission->getSizeNewResourceHandler();
 
     EXPECT_EQ(expectedSize, actualDispatchSize);
     memoryManager->freeGraphicsMemory(commandBuffer);

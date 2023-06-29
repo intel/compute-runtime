@@ -511,6 +511,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
     }
 
     kmDafListener->notifyMakeResident(featureTable->flags.ftrKmdDaf, getAdapter(), device, handles, count, getGdi()->escape);
+    this->setNewResourceBoundToPageTable();
 
     return success;
 }
@@ -1246,6 +1247,19 @@ void Wddm::populateIpVersion(HardwareInfo &hwInfo) {
     if (hwInfo.ipVersion.value == 0) {
         auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
         hwInfo.ipVersion.value = compilerProductHelper.getHwIpVersion(hwInfo);
+    }
+}
+
+void Wddm::setNewResourceBoundToPageTable() {
+    if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired()) {
+        return;
+    }
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        if (rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get() == &rootDeviceEnvironment) {
+            for (const auto &engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+                engine.osContext->setNewResourceBound();
+            }
+        }
     }
 }
 
