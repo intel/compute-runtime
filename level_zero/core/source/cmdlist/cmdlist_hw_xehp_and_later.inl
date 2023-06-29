@@ -395,12 +395,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
         uint64_t gpuWriteAddress = 0;
         uint64_t writeValue = 0;
 
-        if (this->inOrderExecutionEnabled) {
-            postSyncMode = NEO::PostSyncMode::ImmediateData;
-            gpuWriteAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
-            writeValue = this->inOrderDependencyCounter + 1;
-        }
-
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), postSyncMode, gpuWriteAddress, writeValue, args);
     }
 }

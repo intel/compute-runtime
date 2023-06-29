@@ -385,6 +385,23 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
     ze_event_handle_t *phWaitEvents) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
+    if (isInOrderExecutionEnabled() && numWaitEvents == 0) {
+        auto signalEvent = Event::fromHandle(hSignalEvent);
+        bool earlyReturn = true;
+
+        if (signalEvent) {
+            if (signalEvent->isEventTimestampFlagSet()) {
+                earlyReturn = false;
+            } else {
+                signalEvent->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter);
+            }
+        }
+
+        if (earlyReturn) {
+            return ZE_RESULT_SUCCESS;
+        }
+    }
+
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace(numWaitEvents, false);
         checkWaitEventsState(numWaitEvents, phWaitEvents);

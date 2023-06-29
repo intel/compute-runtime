@@ -2921,7 +2921,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 
     appendEventForProfiling(signalEvent, true);
 
-    if (isCopyOnly()) {
+    if (this->inOrderExecutionEnabled) {
+        appendSignalInOrderDependencyCounter();
+    } else if (isCopyOnly()) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         uint64_t gpuAddress = 0u;
         TaskCountType value = 0u;
