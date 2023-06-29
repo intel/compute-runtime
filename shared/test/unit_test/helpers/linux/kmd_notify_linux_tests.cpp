@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,12 +18,11 @@ class MockKmdNotifyHelper : public KmdNotifyHelper {
     MockKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties){};
 };
 
-TEST(KmdNotifyLinuxTests, givenTaskCountDiffGreaterThanOneWhenBaseTimeoutRequestedThenMultiply) {
+TEST(KmdNotifyLinuxTests, givenTaskCountDiffGreaterThanOneWhenBaseTimeoutRequestedThenDoNotMultiply) {
     auto localProperties = (defaultHwInfo->capabilityTable.kmdNotifyProperties);
     localProperties.delayKmdNotifyMicroseconds = 10;
-    const int64_t multiplier = 10;
 
     MockKmdNotifyHelper helper(&localProperties);
-    EXPECT_EQ(localProperties.delayKmdNotifyMicroseconds * multiplier, helper.getBaseTimeout(multiplier));
+    EXPECT_EQ(localProperties.delayKmdNotifyMicroseconds, helper.getBaseTimeout());
 }
 } // namespace NEO

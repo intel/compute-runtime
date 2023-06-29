@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,8 +39,8 @@ WaitParams KmdNotifyHelper::obtainTimeoutParams(bool quickKmdSleepRequest,
         return WaitParams{false, true, 1};
     }
 
-    int64_t multiplier = (currentHwTag < taskCountToWait) ? static_cast<int64_t>(taskCountToWait - currentHwTag) : 1;
-    if (!properties->enableKmdNotify && multiplier > KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine) {
+    const int64_t taskCountDiff = (currentHwTag < taskCountToWait) ? static_cast<int64_t>(taskCountToWait - currentHwTag) : 1;
+    if (!properties->enableKmdNotify && taskCountDiff > KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine) {
         updateAcLineStatus();
     }
 
@@ -54,7 +54,7 @@ WaitParams KmdNotifyHelper::obtainTimeoutParams(bool quickKmdSleepRequest,
     } else if (directSubmissionEnabled && properties->enableQuickKmdSleepForDirectSubmission) {
         params.waitTimeout = properties->delayQuickKmdSleepForDirectSubmissionMicroseconds;
     } else {
-        params.waitTimeout = getBaseTimeout(multiplier);
+        params.waitTimeout = getBaseTimeout();
     }
 
     params.enableTimeout = (properties->enableKmdNotify || !acLineConnected);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ class KmdNotifyHelper {
 
   protected:
     bool applyQuickKmdSleepForSporadicWait() const;
-    int64_t getBaseTimeout(const int64_t &multiplier) const;
+    int64_t getBaseTimeout() const;
     int64_t getMicrosecondsSinceEpoch() const;
 
     const KmdNotifyProperties *properties = nullptr;

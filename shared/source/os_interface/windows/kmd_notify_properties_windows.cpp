@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,6 @@ void KmdNotifyHelper::updateAcLineStatus() {
     }
 }
 
-int64_t KmdNotifyHelper::getBaseTimeout(const int64_t &multiplier) const {
+int64_t KmdNotifyHelper::getBaseTimeout() const {
     return properties->delayKmdNotifyMicroseconds;
 }

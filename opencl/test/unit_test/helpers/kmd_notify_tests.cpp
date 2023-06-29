@@ -455,6 +455,17 @@ TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenAcLineIsDisconnectedThe
     EXPECT_EQ(hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, params.waitTimeout);
 }
 
+TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismAndTaskCountToWaitLargerThanHwTagPlusOneAndDirectSubmissionDisabledAndQueueThrottleMediumThenDoNotApplyMultiplier) {
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
+    hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = 5;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
+
+    auto params = helper.obtainTimeoutParams(false, 1, 10, 2, QueueThrottle::MEDIUM, true, false);
+
+    EXPECT_TRUE(params.enableTimeout);
+    EXPECT_EQ(hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, params.waitTimeout);
+}
+
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcLineIsDisconnectedThenDontForceEnableTimeout) {
     hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));

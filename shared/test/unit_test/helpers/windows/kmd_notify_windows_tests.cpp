@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,10 +63,9 @@ TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnErrorThenDontUpdateAcL
 TEST(KmdNotifyWindowsTests, givenTaskCountDiffGreaterThanOneWhenBaseTimeoutRequestedThenDontMultiply) {
     auto localProperties = (defaultHwInfo->capabilityTable.kmdNotifyProperties);
     localProperties.delayKmdNotifyMicroseconds = 10;
-    const int64_t multiplier = 10;
 
     MockKmdNotifyHelper helper(&localProperties);
-    EXPECT_EQ(localProperties.delayKmdNotifyMicroseconds, helper.getBaseTimeout(multiplier));
+    EXPECT_EQ(localProperties.delayKmdNotifyMicroseconds, helper.getBaseTimeout());
 }
 
 } // namespace NEO
