@@ -571,6 +571,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass::appendSignalEventPostWalker;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::cmdListType;
+    using BaseClass::cmdQImmediate;
     using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;

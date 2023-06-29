@@ -21,6 +21,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -2949,96 +2950,128 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenAppendMemoryFil
     context->freeMem(dstBuffer);
 }
 
-using ImmediateCommandListHostSynchronize = Test<DeviceFixture>;
+struct ImmediateCommandListHostSynchronize : public Test<DeviceFixture> {
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    std::unique_ptr<MockCommandListImmediateHw<gfxCoreFamily>> createCmdList(CommandStreamReceiver *csr) {
+        const ze_command_queue_desc_t desc = {};
+
+        auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr, &desc);
+        commandQueue->initialize(false, false, false);
+
+        auto cmdList = std::make_unique<MockCommandListImmediateHw<gfxCoreFamily>>();
+        cmdList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+        cmdList->csr = csr;
+        cmdList->cmdQImmediate = commandQueue;
+        cmdList->isFlushTaskSubmissionEnabled = true;
+        cmdList->isSyncModeQueue = false;
+
+        return cmdList;
+    }
+};
+
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenCsrClientCountWhenCallingSynchronizeThenUnregister, IsAtLeastSkl) {
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
+
+    auto cmdList = createCmdList<gfxCoreFamily>(csr);
+
+    cmdList->cmdQImmediate->setClientId(csr->registerClient());
+    auto clientCount = csr->getNumClients();
+
+    EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(clientCount - 1, csr->getNumClients());
+
+    EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(clientCount - 1, csr->getNumClients());
+
+    cmdList->cmdQImmediate->setClientId(csr->registerClient());
+    clientCount = csr->getNumClients();
+
+    csr->callBaseWaitForCompletionWithTimeout = false;
+    csr->returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+
+    EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_ERROR_DEVICE_LOST);
+
+    EXPECT_EQ(clientCount, csr->getNumClients());
+}
 
 HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskEnabledAndNotSyncModeThenWaitForCompletionIsCalled, IsAtLeastSkl) {
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
-    cmdList.isFlushTaskSubmissionEnabled = true;
-    cmdList.isSyncModeQueue = false;
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
-    EXPECT_EQ(cmdList.hostSynchronize(0), ZE_RESULT_SUCCESS);
+    auto cmdList = createCmdList<gfxCoreFamily>(csr);
 
-    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
+    EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
+
+    uint32_t waitForFlushTagUpdateCalled = csr->waitForCompletionWithTimeoutTaskCountCalled;
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
 HWTEST2_F(ImmediateCommandListHostSynchronize, givenSyncModeThenWaitForCompletionIsNotCalled, IsAtLeastSkl) {
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
-    cmdList.isFlushTaskSubmissionEnabled = true;
-    cmdList.isSyncModeQueue = true;
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
-    EXPECT_EQ(cmdList.hostSynchronize(0), ZE_RESULT_SUCCESS);
+    auto cmdList = createCmdList<gfxCoreFamily>(csr);
+    cmdList->isSyncModeQueue = true;
 
-    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
+    EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
+
+    uint32_t waitForFlushTagUpdateCalled = csr->waitForCompletionWithTimeoutTaskCountCalled;
     EXPECT_EQ(waitForFlushTagUpdateCalled, 0u);
 }
 
 HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisabledThenWaitForCompletionIsNotCalled, IsAtLeastSkl) {
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
-    cmdList.isFlushTaskSubmissionEnabled = false;
-    cmdList.isSyncModeQueue = false;
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
-    EXPECT_EQ(cmdList.hostSynchronize(0), ZE_RESULT_SUCCESS);
+    auto cmdList = createCmdList<gfxCoreFamily>(csr);
+    cmdList->copyThroughLockedPtrEnabled = true;
+    cmdList->isFlushTaskSubmissionEnabled = false;
 
-    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
+    EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
+
+    uint32_t waitForFlushTagUpdateCalled = csr->waitForCompletionWithTimeoutTaskCountCalled;
     EXPECT_EQ(waitForFlushTagUpdateCalled, 0u);
 }
 
 HWTEST2_F(ImmediateCommandListHostSynchronize, givenGpuStatusIsHangThenDeviceLostIsReturned, IsAtLeastSkl) {
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
-    cmdList.isFlushTaskSubmissionEnabled = true;
-    cmdList.isSyncModeQueue = false;
-    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->callBaseWaitForCompletionWithTimeout = false;
-    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
-    EXPECT_EQ(cmdList.hostSynchronize(0), ZE_RESULT_ERROR_DEVICE_LOST);
+    auto cmdList = createCmdList<gfxCoreFamily>(csr);
 
-    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
+    csr->callBaseWaitForCompletionWithTimeout = false;
+    csr->returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+
+    EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_ERROR_DEVICE_LOST);
+
+    uint32_t waitForFlushTagUpdateCalled = csr->waitForCompletionWithTimeoutTaskCountCalled;
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
 HWTEST2_F(ImmediateCommandListHostSynchronize, givenTimeoutOtherThanMaxIsProvidedWaitParamsIsSetCorrectly, IsAtLeastSkl) {
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
-    cmdList.isFlushTaskSubmissionEnabled = true;
-    cmdList.isSyncModeQueue = false;
-    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->callBaseWaitForCompletionWithTimeout = false;
-    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
-    EXPECT_EQ(cmdList.hostSynchronize(1000), ZE_RESULT_SUCCESS);
-    auto waitParams = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->latestWaitForCompletionWithTimeoutWaitParams;
+    auto cmdList = createCmdList<gfxCoreFamily>(csr);
+
+    csr->callBaseWaitForCompletionWithTimeout = false;
+    csr->returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+
+    EXPECT_EQ(cmdList->hostSynchronize(1000), ZE_RESULT_SUCCESS);
+    auto waitParams = csr->latestWaitForCompletionWithTimeoutWaitParams;
     EXPECT_TRUE(waitParams.enableTimeout);
     EXPECT_FALSE(waitParams.indefinitelyPoll);
     EXPECT_EQ(waitParams.waitTimeout, 1);
 }
 
 HWTEST2_F(ImmediateCommandListHostSynchronize, givenMaxTimeoutIsProvidedWaitParamsIsSetCorrectly, IsAtLeastSkl) {
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
-    cmdList.isFlushTaskSubmissionEnabled = true;
-    cmdList.isSyncModeQueue = false;
-    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->callBaseWaitForCompletionWithTimeout = false;
-    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
-    EXPECT_EQ(cmdList.hostSynchronize(std::numeric_limits<uint64_t>::max()), ZE_RESULT_SUCCESS);
+    auto cmdList = createCmdList<gfxCoreFamily>(csr);
 
-    auto waitParams = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->latestWaitForCompletionWithTimeoutWaitParams;
+    csr->callBaseWaitForCompletionWithTimeout = false;
+    csr->returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+
+    EXPECT_EQ(cmdList->hostSynchronize(std::numeric_limits<uint64_t>::max()), ZE_RESULT_SUCCESS);
+
+    auto waitParams = csr->latestWaitForCompletionWithTimeoutWaitParams;
     EXPECT_FALSE(waitParams.enableTimeout);
     EXPECT_TRUE(waitParams.indefinitelyPoll);
 }

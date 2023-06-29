@@ -733,6 +733,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     }
 
     if (status == ZE_RESULT_SUCCESS) {
+        this->cmdQImmediate->unregisterCsrClient();
         this->csr->getInternalAllocationStorage()->cleanAllocationList(syncTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
 
