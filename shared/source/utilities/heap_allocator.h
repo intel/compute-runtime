@@ -38,13 +38,15 @@ class HeapAllocator {
         freedChunksSmall.reserve(50);
     }
 
+    MOCKABLE_VIRTUAL ~HeapAllocator() = default;
+
     uint64_t allocate(size_t &sizeToAllocate) {
         return allocateWithCustomAlignment(sizeToAllocate, 0u);
     }
 
     uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment);
 
-    void free(uint64_t ptr, size_t size);
+    MOCKABLE_VIRTUAL void free(uint64_t ptr, size_t size);
 
     uint64_t getLeftSize() const {
         return availableSize;
