@@ -617,7 +617,6 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EventWaitOnHost.set(1);
     NEO::DebugManager.flags.EventWaitOnHostNumClients.set(0);
-    NEO::DebugManager.flags.EventWaitOnHostNumThreads.set(0);
 
     constexpr uint32_t scratchPerThreadSize = 0x200;
     constexpr uint32_t privateScratchPerThreadSize = 0x100;
@@ -681,47 +680,9 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
-          givenEventWaitOnHostNumThreadsHigherThanNumThreadsWhenWaitForEventsFromHostThenReturnFalse, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EventWaitOnHost.set(1);
-    NEO::DebugManager.flags.EventWaitOnHostNumClients.set(0);
-    NEO::DebugManager.flags.EventWaitOnHostNumThreads.set(2);
-    EXPECT_EQ(NEO::SysCalls::getNumThreads(), 1u);
-
-    ze_command_list_handle_t cmdListHandle;
-    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    queueDesc.ordinal = 0;
-    queueDesc.index = 0;
-    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
-
-    EXPECT_FALSE(static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle))->waitForEventsFromHost());
-
-    CommandList::fromHandle(cmdListHandle)->destroy();
-}
-
-HWTEST2_F(CmdlistAppendLaunchKernelTests,
-          givenEventWaitOnHostNumThreadsNotSetWhenWaitForEventsFromHostThenReturnFalse, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EventWaitOnHost.set(1);
-    NEO::DebugManager.flags.EventWaitOnHostNumClients.set(0);
-    EXPECT_EQ(NEO::SysCalls::getNumThreads(), 1u);
-
-    ze_command_list_handle_t cmdListHandle;
-    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    queueDesc.ordinal = 0;
-    queueDesc.index = 0;
-    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
-
-    EXPECT_FALSE(static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle))->waitForEventsFromHost());
-
-    CommandList::fromHandle(cmdListHandle)->destroy();
-}
-
-HWTEST2_F(CmdlistAppendLaunchKernelTests,
           givenEventWaitOnHostNumClientsNotSetWhenWaitForEventsFromHostThenReturnFalse, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EventWaitOnHost.set(1);
-    EXPECT_EQ(NEO::SysCalls::getNumThreads(), 1u);
 
     ze_command_list_handle_t cmdListHandle;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -733,23 +694,6 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     EXPECT_EQ(static_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate)->getCsr()->getNumClients(), 0u);
 
     EXPECT_FALSE(static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle))->waitForEventsFromHost());
-
-    CommandList::fromHandle(cmdListHandle)->destroy();
-}
-
-HWTEST2_F(CmdlistAppendLaunchKernelTests,
-          givenEventWaitOnHostDisabledWhenCreateImmediateCmdListThenDoNotObtainThreadCount, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EventWaitOnHost.set(0);
-    NEO::SysCalls::getNumThreadsCalled = false;
-
-    ze_command_list_handle_t cmdListHandle;
-    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    queueDesc.ordinal = 0;
-    queueDesc.index = 0;
-    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
-
-    EXPECT_FALSE(NEO::SysCalls::getNumThreadsCalled);
 
     CommandList::fromHandle(cmdListHandle)->destroy();
 }

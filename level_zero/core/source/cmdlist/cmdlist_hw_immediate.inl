@@ -325,13 +325,6 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::waitForEventsFromHost() {
     if (numClients < numClientsLimit) {
         return false;
     };
-    auto numThreadsLimit = 2u;
-    if (NEO::DebugManager.flags.EventWaitOnHostNumThreads.get() != -1) {
-        numThreadsLimit = NEO::DebugManager.flags.EventWaitOnHostNumThreads.get();
-    }
-    if (this->numThreads < numThreadsLimit) {
-        return false;
-    }
 
     return true;
 }

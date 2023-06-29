@@ -209,10 +209,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, desc, csr);
         commandList->commandContainer.setImmediateCmdListCsr(csr);
 
-        if (commandList->isWaitForEventsFromHostEnabled()) {
-            commandList->numThreads = NEO::SysCalls::getNumThreads();
-        }
-
         commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, device->getProductHelper());
 
         return commandList;

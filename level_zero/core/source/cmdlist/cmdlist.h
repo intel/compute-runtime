@@ -384,8 +384,6 @@ struct CommandList : _ze_command_list_handle_t {
     size_t cmdListCurrentStartOffset = 0;
     size_t maxFillPaternSizeForCopyEngine = 0;
 
-    unsigned long numThreads = 1u;
-
     ze_command_list_flags_t flags = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     NEO::EngineGroupType engineGroupType;
