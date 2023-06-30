@@ -12,6 +12,8 @@
 #include "platforms.h"
 #include "release_definitions.h"
 
+#include <algorithm>
+
 namespace NEO {
 constexpr auto release = ReleaseType::release1270;
 
@@ -23,11 +25,7 @@ bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsWARe
 template <>
 int ReleaseHelperHw<release>::getProductMaxPreferredSlmSize(int preferredEnumValue) const {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-
-    if (hardwareIpVersion.value == AOT::MTL_M_A0) {
-        return static_cast<int>(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K);
-    }
-    return preferredEnumValue;
+    return std::min(preferredEnumValue, static_cast<int>(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K));
 }
 
 } // namespace NEO

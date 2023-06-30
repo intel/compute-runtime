@@ -231,55 +231,31 @@ MTLTEST_F(MtlProductHelper, givenMtlLpgWhenIsBFloat16ConversionSupportedIsCalled
     EXPECT_FALSE(compilerProductHelper.isBFloat16ConversionSupported(hwInfo));
 }
 
-MTLTEST_F(MtlProductHelper, givenMtlMA0WhenGetProductMaxPreferredSlmSizeThen96KbValueReturned) {
+MTLTEST_F(MtlProductHelper, givenMtlWhenGetProductMaxPreferredSlmSizeThenValueDoesNotExceed96K) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    PREFERRED_SLM_ALLOCATION_SIZE preferredEnumValue = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K;
-    auto hwInfo = *defaultHwInfo.get();
-    HardwareIpVersion aotConfig = {0};
-    aotConfig.value = AOT::MTL_M_A0;
-    auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-    compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
-    refreshReleaseHelper(&hwInfo);
-    preferredEnumValue = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(releaseHelper->getProductMaxPreferredSlmSize(preferredEnumValue));
-    EXPECT_EQ(preferredEnumValue, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K);
-}
 
-MTLTEST_F(MtlProductHelper, givenMtlPA0WhenGetProductMaxPreferredSlmSizeThen96KbValueReturned) {
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    PREFERRED_SLM_ALLOCATION_SIZE preferredEnumValue = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K;
-    auto hwInfo = *defaultHwInfo.get();
-    HardwareIpVersion aotConfig = {0};
-    aotConfig.value = AOT::MTL_P_A0;
-    auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-    compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
-    refreshReleaseHelper(&hwInfo);
-    preferredEnumValue = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(releaseHelper->getProductMaxPreferredSlmSize(preferredEnumValue));
-    EXPECT_EQ(preferredEnumValue, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K);
-}
-MTLTEST_F(MtlProductHelper, givenMtlMB0WhenGetProductMaxPreferredSlmSizeThenPassedValueReturned) {
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    PREFERRED_SLM_ALLOCATION_SIZE preferredEnumValue = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K;
-    auto hwInfo = *defaultHwInfo.get();
-    HardwareIpVersion aotConfig = {0};
-    aotConfig.value = AOT::MTL_M_B0;
-    auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-    compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
-    refreshReleaseHelper(&hwInfo);
-    preferredEnumValue = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(releaseHelper->getProductMaxPreferredSlmSize(preferredEnumValue));
-    EXPECT_EQ(preferredEnumValue, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K);
-}
+    for (auto &hwIpVersion : {AOT::MTL_M_A0, AOT::MTL_M_B0, AOT::MTL_P_A0, AOT::MTL_P_B0}) {
+        auto hwInfo = *defaultHwInfo.get();
+        HardwareIpVersion aotConfig = {0};
+        aotConfig.value = hwIpVersion;
+        auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+        compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
+        refreshReleaseHelper(&hwInfo);
+        for (auto &preferredSlmSize : {PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K,
+                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K,
+                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K,
+                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K,
+                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K,
+                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K}) {
 
-MTLTEST_F(MtlProductHelper, givenMtlPB0WhenGetProductMaxPreferredSlmSizeThenPassedValueReturned) {
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    PREFERRED_SLM_ALLOCATION_SIZE preferredEnumValue = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K;
-    auto hwInfo = *defaultHwInfo.get();
-    HardwareIpVersion aotConfig = {0};
-    aotConfig.value = AOT::MTL_P_B0;
-    auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-    compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
-    refreshReleaseHelper(&hwInfo);
-    preferredEnumValue = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(releaseHelper->getProductMaxPreferredSlmSize(preferredEnumValue));
-    EXPECT_EQ(preferredEnumValue, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K);
+            auto maxPreferredSlmValue = releaseHelper->getProductMaxPreferredSlmSize(preferredSlmSize);
+            EXPECT_EQ(maxPreferredSlmValue, preferredSlmSize);
+        }
+        auto preferredSlmSize96k = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K;
+        auto preferredSlmSize128k = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K;
+        auto maxPreferredSlmValue = releaseHelper->getProductMaxPreferredSlmSize(preferredSlmSize128k);
+        EXPECT_EQ(maxPreferredSlmValue, preferredSlmSize96k);
+    }
 }
 
 MTLTEST_F(MtlProductHelper, givenMtlWhenCallIsAdjustWalkOrderAvailableThenReturnProperValue) {
