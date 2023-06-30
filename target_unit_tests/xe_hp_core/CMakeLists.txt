@@ -1,9 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
-
-if(TESTS_XE_HP_CORE)
-  add_subdirectories()
-endif()

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -34,10 +34,6 @@ if(TESTS_XEHP_AND_LATER)
                  ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_and_later_1.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_and_later_2.cpp
   )
-endif()
-
-if(TESTS_XE_HP_CORE)
-  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hp.cpp)
 endif()
 
 if(TESTS_DG2_AND_LATER)
