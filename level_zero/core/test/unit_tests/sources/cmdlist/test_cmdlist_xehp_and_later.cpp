@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
@@ -1888,16 +1889,403 @@ HWTEST2_F(RayTracingCmdListTest,
     ultCsr->isMadeResident(rtAllocation, residentCount);
 }
 
-using ImmediateFlushTaskCmdListTests = Test<ImmediateFlushTaskCmdListFixture>;
+using ImmediateFlushTaskGlobalStatelessCmdListTest = Test<ImmediateFlushTaskGlobalStatelessCmdListFixture>;
 
-HWTEST2_F(ImmediateFlushTaskCmdListTests,
-          givenInitialVersionOfImmediateFlushTaskWhenImmediateFlushTaskSelectedThenUnsupportedErrorReturned,
+HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
+          givenImmediateFlushOnGlobalStatelessWhenAppendingKernelThenExpectStateBaseAddressCommandDispatchedOnce,
           IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csrImmediate.storeMakeResidentAllocations = true;
+    auto &csrStream = csrImmediate.commandStream;
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
+    size_t csrUsedBefore = csrStream.getUsed();
     auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    size_t csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto globalSurfaceHeap = commandListImmediate->csr->getGlobalStatelessHeap();
+
+    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_EQ(ioBaseAddress, sbaCmd->getGeneralStateBaseAddress());
+
+    EXPECT_TRUE(csrImmediate.isMadeResident(ioHeap->getGraphicsAllocation()));
+    EXPECT_TRUE(csrImmediate.isMadeResident(globalSurfaceHeap->getGraphicsAllocation()));
+
+    csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, sbaCmds.size());
+}
+
+HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
+          givenImmediateFlushOnGlobalStatelessWhenAppendingSecondKernelWithChangedMocsThenExpectStateBaseAddressCommandDispatchedTwiceWithChangedMocs,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t csrUsedBefore = csrStream.getUsed();
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto globalSurfaceHeap = commandListImmediate->csr->getGlobalStatelessHeap();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    uint32_t cachedStatlessMocs = getMocs(true);
+    EXPECT_EQ((cachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+
+    kernel->kernelRequiresUncachedMocsCount++;
+
+    csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    uint32_t uncachedStatlessMocs = getMocs(false);
+    EXPECT_EQ((uncachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+using ImmediateFlushTaskCsrSharedHeapCmdListTest = Test<ImmediateFlushTaskCsrSharedHeapCmdListFixture>;
+
+HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
+          givenImmediateFlushOnCsrSharedHeapsWhenAppendingKernelThenExpectStateBaseAddressCommandDispatchedOnce,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csrImmediate.storeMakeResidentAllocations = true;
+    auto &csrStream = csrImmediate.commandStream;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t csrUsedBefore = csrStream.getUsed();
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto ssHeap = commandListImmediate->getCmdContainer().getSurfaceStateHeapReserve().indirectHeapReservation;
+    auto ssBaseAddress = ssHeap->getHeapGpuBase();
+
+    uint64_t dsBaseAddress = 0;
+    if (dshRequired) {
+        auto dsHeap = commandListImmediate->getCmdContainer().getDynamicStateHeapReserve().indirectHeapReservation;
+        dsBaseAddress = dsHeap->getHeapGpuBase();
+    }
+
+    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_EQ(dshRequired, sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_EQ(dsBaseAddress, sbaCmd->getDynamicStateBaseAddress());
+
+    EXPECT_EQ(ioBaseAddress, sbaCmd->getGeneralStateBaseAddress());
+
+    EXPECT_TRUE(csrImmediate.isMadeResident(ioHeap->getGraphicsAllocation()));
+    EXPECT_TRUE(csrImmediate.isMadeResident(ssHeap->getGraphicsAllocation()));
+    if (dshRequired) {
+        auto dsHeap = commandListImmediate->getCmdContainer().getDynamicStateHeapReserve().indirectHeapReservation;
+        EXPECT_TRUE(csrImmediate.isMadeResident(dsHeap->getGraphicsAllocation()));
+    }
+
+    csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, sbaCmds.size());
+}
+
+HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
+          givenImmediateFlushOnCsrSharedHeapsWhenAppendingSecondKernelWithChangedMocsThenExpectStateBaseAddressCommandDispatchedTwiceWithChangedMocs,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t csrUsedBefore = csrStream.getUsed();
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto ssHeap = commandListImmediate->getCmdContainer().getSurfaceStateHeapReserve().indirectHeapReservation;
+    auto ssBaseAddress = ssHeap->getHeapGpuBase();
+
+    uint64_t dsBaseAddress = 0;
+    if (dshRequired) {
+        auto dsHeap = commandListImmediate->getCmdContainer().getDynamicStateHeapReserve().indirectHeapReservation;
+        dsBaseAddress = dsHeap->getHeapGpuBase();
+    }
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_EQ(dshRequired, sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_EQ(dsBaseAddress, sbaCmd->getDynamicStateBaseAddress());
+
+    uint32_t cachedStatlessMocs = getMocs(true);
+    EXPECT_EQ((cachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+
+    kernel->kernelRequiresUncachedMocsCount++;
+
+    csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    uint32_t uncachedStatlessMocs = getMocs(false);
+    EXPECT_EQ((uncachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
+          givenImmediateFlushOnCsrSharedHeapsWhenAppendingSecondKernelWithScratchThenExpectScratchStateAndAllocation,
+          IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csrImmediate.storeMakeResidentAllocations = true;
+    auto &csrStream = csrImmediate.commandStream;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t csrUsedBefore = csrStream.getUsed();
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto frontEndCommands = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, frontEndCommands.size());
+    auto frontEndCmd = reinterpret_cast<CFE_STATE *>(*frontEndCommands[0]);
+
+    EXPECT_EQ(0u, frontEndCmd->getScratchSpaceBuffer());
+
+    EXPECT_EQ(nullptr, csrImmediate.getScratchSpaceController()->getScratchSpaceAllocation());
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
+
+    csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    frontEndCommands = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, frontEndCommands.size());
+    frontEndCmd = reinterpret_cast<CFE_STATE *>(*frontEndCommands[0]);
+
+    constexpr size_t expectedScratchOffset = 2 * sizeof(RENDER_SURFACE_STATE);
+    EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
+
+    auto scratchAllocation = csrImmediate.getScratchSpaceController()->getScratchSpaceAllocation();
+    ASSERT_NE(nullptr, scratchAllocation);
+
+    EXPECT_TRUE(csrImmediate.isMadeResident(scratchAllocation));
+
+    auto ssHeap = commandListImmediate->getCmdContainer().getSurfaceStateHeapReserve().indirectHeapReservation;
+    void *scratchSurfaceStateMemory = ptrOffset(ssHeap->getCpuBase(), expectedScratchOffset);
+
+    auto scratchSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(scratchSurfaceStateMemory);
+    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_SCRATCH, scratchSurfaceState->getSurfaceType());
+    EXPECT_EQ(scratchAllocation->getGpuAddress(), scratchSurfaceState->getSurfaceBaseAddress());
+}
+
+HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
+          givenImmediateFlushOnCsrSharedHeapsWhenAppendingBarrierThenNoSurfaceHeapAllocated,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr);
+    size_t csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto ssHeap = commandListImmediate->getCmdContainer().getSurfaceStateHeapReserve().indirectHeapReservation;
+    EXPECT_EQ(nullptr, ssHeap->getGraphicsAllocation());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_FALSE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(0u, sbaCmd->getSurfaceStateBaseAddress());
+}
+
+using ImmediateFlushTaskPrivateHeapCmdListTest = Test<ImmediateFlushTaskPrivateHeapCmdListFixture>;
+
+HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
+          givenImmediateFlushOnPrivateHeapsWhenAppendingKernelThenExpectStateBaseAddressCommandDispatchedOnce,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csrImmediate.storeMakeResidentAllocations = true;
+    auto &csrStream = csrImmediate.commandStream;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t csrUsedBefore = csrStream.getUsed();
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto ssHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssBaseAddress = ssHeap->getHeapGpuBase();
+
+    uint64_t dsBaseAddress = 0;
+    if (dshRequired) {
+        auto dsHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        dsBaseAddress = dsHeap->getHeapGpuBase();
+    }
+
+    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_EQ(dshRequired, sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_EQ(dsBaseAddress, sbaCmd->getDynamicStateBaseAddress());
+
+    EXPECT_EQ(ioBaseAddress, sbaCmd->getGeneralStateBaseAddress());
+
+    EXPECT_TRUE(csrImmediate.isMadeResident(ioHeap->getGraphicsAllocation()));
+    EXPECT_TRUE(csrImmediate.isMadeResident(ssHeap->getGraphicsAllocation()));
+    if (dshRequired) {
+        auto dsHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        EXPECT_TRUE(csrImmediate.isMadeResident(dsHeap->getGraphicsAllocation()));
+    }
+
+    csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    csrUsedAfter = csrStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, sbaCmds.size());
 }
 
 } // namespace ult

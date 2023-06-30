@@ -75,13 +75,18 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     void tearDown();
     void setUpImpl();
 
+    uint32_t getMocs(bool l3On);
+
     std::unique_ptr<MockImmutableData> mockKernelImmData;
     std::unique_ptr<L0::ult::CommandList> commandList;
     std::unique_ptr<L0::ult::CommandList> commandListImmediate;
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     std::unique_ptr<VariableBackup<HardwareInfo>> backupHwInfo;
     L0::ult::CommandQueue *commandQueue;
+    size_t expectedSbaCmds = 0;
     NEO::EngineGroupType engineGroupType;
+
+    bool dshRequired = false;
 
     DebugManagerStateRestore restorer;
 };
@@ -135,10 +140,6 @@ struct CmdListLargeGrfFixture : public CmdListStateComputeModeStateFixture {
 
 struct CommandListStateBaseAddressFixture : public ModuleMutableCommandListFixture {
     void setUp();
-    uint32_t getMocs(bool l3On);
-
-    size_t expectedSbaCmds = 0;
-    bool dshRequired = false;
 };
 
 struct CommandListPrivateHeapsFixture : public CommandListStateBaseAddressFixture {
@@ -305,6 +306,18 @@ struct PrimaryBatchBufferPreamblelessCmdListFixture : public PrimaryBatchBufferC
 };
 
 struct ImmediateFlushTaskCmdListFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+};
+
+struct ImmediateFlushTaskGlobalStatelessCmdListFixture : public ImmediateFlushTaskCmdListFixture {
+    void setUp();
+};
+
+struct ImmediateFlushTaskCsrSharedHeapCmdListFixture : public ImmediateFlushTaskCmdListFixture {
+    void setUp();
+};
+
+struct ImmediateFlushTaskPrivateHeapCmdListFixture : public ImmediateFlushTaskCmdListFixture {
     void setUp();
 };
 

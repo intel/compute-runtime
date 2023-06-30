@@ -2657,6 +2657,10 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDis
     requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled);
 
     requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode);
+
+    KernelImp &kernelImp = static_cast<KernelImp &>(kernel);
+    int32_t currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
+    requiredStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

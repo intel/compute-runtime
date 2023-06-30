@@ -64,6 +64,9 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
 
 using CommandListExecuteImmediate = Test<DeviceFixture>;
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseImmediateFlushTask.set(0);
+
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &productHelper = device->getProductHelper();
 

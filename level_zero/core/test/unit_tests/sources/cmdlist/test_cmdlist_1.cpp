@@ -993,6 +993,8 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
 }
 
 HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+    bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
+
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
@@ -1028,9 +1030,13 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
     ultCsr->recordFlusheBatchBuffer = true;
 
-    auto verifyFlags = [&ultCsr](ze_result_t result, bool dispatchFlag, bool bbFlag) {
+    auto verifyFlags = [&ultCsr, useImmediateFlushTask](ze_result_t result, bool dispatchFlag, bool bbFlag) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_EQ(ultCsr->recordedDispatchFlags.hasStallingCmds, dispatchFlag);
+        if (useImmediateFlushTask) {
+            EXPECT_EQ(ultCsr->recordedImmediateDispatchFlags.hasStallingCmds, dispatchFlag);
+        } else {
+            EXPECT_EQ(ultCsr->recordedDispatchFlags.hasStallingCmds, dispatchFlag);
+        }
         EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.hasStallingCmds, bbFlag);
     };
     // non-pipelined state
@@ -1087,6 +1093,8 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 }
 
 HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDisabledRelaxedOrderingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+    bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
+
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
@@ -1125,14 +1133,22 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
 
     EXPECT_FALSE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
 
-    auto verifyFlags = [&ultCsr](ze_result_t result) {
+    auto verifyFlags = [&ultCsr, useImmediateFlushTask](ze_result_t result) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasStallingCmds);
+        if (useImmediateFlushTask) {
+            EXPECT_TRUE(ultCsr->recordedImmediateDispatchFlags.hasStallingCmds);
+        } else {
+            EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasStallingCmds);
+        }
         EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
     };
 
-    auto resetFlags = [&ultCsr]() {
-        ultCsr->recordedDispatchFlags.hasStallingCmds = false;
+    auto resetFlags = [&ultCsr, useImmediateFlushTask]() {
+        if (useImmediateFlushTask) {
+            ultCsr->recordedImmediateDispatchFlags.hasStallingCmds = false;
+        } else {
+            ultCsr->recordedDispatchFlags.hasStallingCmds = false;
+        }
         ultCsr->latestFlushedBatchBuffer.hasStallingCmds = false;
     };
 
@@ -1329,6 +1345,8 @@ HWTEST_F(CommandListCreate, givenDebugFlagSetWhenCallingSynchronizeThenDontUnreg
 }
 
 HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsAtLeastXeHpcCore) {
+    bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
+
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 
@@ -1372,9 +1390,13 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     ultCsr->registerClient();
     ultCsr->registerClient();
 
-    auto verifyFlags = [&ultCsr](ze_result_t result, bool dispatchFlag, bool bbFlag) {
+    auto verifyFlags = [&ultCsr, useImmediateFlushTask](ze_result_t result, bool dispatchFlag, bool bbFlag) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_EQ(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies, dispatchFlag);
+        if (useImmediateFlushTask) {
+            EXPECT_EQ(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies, dispatchFlag);
+        } else {
+            EXPECT_EQ(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies, dispatchFlag);
+        }
         EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies, bbFlag);
     };
 
@@ -1450,6 +1472,8 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 }
 
 HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrderingWithoutInputEventsThenCountPreviousEventAsWaitlist, IsAtLeastXeHpcCore) {
+    bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
+
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 
@@ -1491,7 +1515,11 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event, 0, nullptr, launchParams, false);
 
     commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies);
+    if (useImmediateFlushTask) {
+        EXPECT_TRUE(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies);
+    } else {
+        EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies);
+    }
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 }
 

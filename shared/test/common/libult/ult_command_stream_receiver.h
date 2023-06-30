@@ -189,6 +189,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
+    CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream,
+                                       size_t immediateCommandStreamStart,
+                                       ImmediateDispatchFlags &dispatchFlags,
+                                       Device &device) override {
+        recordedImmediateDispatchFlags = dispatchFlags;
+        this->lastFlushedCommandStream = &commandStream;
+        return BaseClass::flushImmediateTask(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+    }
+
     size_t getPreferredTagPoolSize() const override {
         return BaseClass::getPreferredTagPoolSize() + 1;
     }
@@ -431,6 +440,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
+    ImmediateDispatchFlags recordedImmediateDispatchFlags = {};
     BlitPropertiesContainer receivedBlitProperties = {};
     uint32_t createAllocationForHostSurfaceCalled = 0;
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;

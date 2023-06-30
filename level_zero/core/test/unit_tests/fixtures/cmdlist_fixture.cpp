@@ -114,6 +114,9 @@ void ModuleMutableCommandListFixture::setUpImpl() {
 
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
     createKernel(kernel.get());
+
+    this->dshRequired = device->getDeviceInfo().imageSupport;
+    this->expectedSbaCmds = commandList->doubleSbaWa ? 2 : 1;
 }
 
 void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
@@ -133,6 +136,10 @@ void ModuleMutableCommandListFixture::tearDown() {
     kernel.reset(nullptr);
     mockKernelImmData.reset(nullptr);
     ModuleImmutableDataFixture::tearDown();
+}
+
+uint32_t ModuleMutableCommandListFixture::getMocs(bool l3On) {
+    return device->getMOCS(l3On, false) >> 1;
 }
 
 void FrontEndCommandListFixtureInit::setUp(int32_t dispatchCmdBufferPrimary) {
@@ -169,13 +176,6 @@ void CommandListStateBaseAddressFixture::setUp() {
     DebugManager.flags.ForceDefaultHeapSize.set(64);
 
     ModuleMutableCommandListFixture::setUp();
-
-    this->dshRequired = device->getDeviceInfo().imageSupport;
-    this->expectedSbaCmds = commandList->doubleSbaWa ? 2 : 1;
-}
-
-uint32_t CommandListStateBaseAddressFixture::getMocs(bool l3On) {
-    return device->getMOCS(l3On, false) >> 1;
 }
 
 void CommandListPrivateHeapsFixture::setUp() {
@@ -211,6 +211,7 @@ void CommandListGlobalHeapsFixtureInit::setUp() {
 
 void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
     DebugManager.flags.SelectCmdListHeapAddressModel.set(globalHeapMode);
+    DebugManager.flags.UseImmediateFlushTask.set(0);
     CommandListStateBaseAddressFixture::setUp();
 
     DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
@@ -369,8 +370,29 @@ void PrimaryBatchBufferPreamblelessCmdListFixture::tearDown() {
 
 void ImmediateFlushTaskCmdListFixture::setUp() {
     DebugManager.flags.UseImmediateFlushTask.set(1);
+    DebugManager.flags.ForceL1Caching.set(0);
 
     ModuleMutableCommandListFixture::setUp();
+}
+
+void ImmediateFlushTaskGlobalStatelessCmdListFixture::setUp() {
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless));
+
+    ImmediateFlushTaskCmdListFixture::setUp();
+}
+
+void ImmediateFlushTaskCsrSharedHeapCmdListFixture::setUp() {
+    DebugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+
+    ImmediateFlushTaskCmdListFixture::setUp();
+}
+
+void ImmediateFlushTaskPrivateHeapCmdListFixture::setUp() {
+    DebugManager.flags.EnableImmediateCmdListHeapSharing.set(0);
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+
+    ImmediateFlushTaskCmdListFixture::setUp();
 }
 
 } // namespace ult
