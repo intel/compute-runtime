@@ -183,22 +183,31 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.ioctlHelper = std::make_unique<IoctlHelperPrelim20>(drm);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerProductHelper &) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     ::testing::internal::CaptureStdout();
+    ::testing::internal::CaptureStderr();
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintDebugMessages.set(true);
 
     drm.failQueryDeviceBlob = true;
 
     int ret = drm.setupHardwareInfo(&device, false);
+    DebugManager.flags.PrintDebugMessages.set(false);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
     EXPECT_TRUE(hasSubstr(::testing::internal::GetCapturedStdout(), "INFO: System Info query failed!\n"));
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (productHelper.isPlatformQuerySupported()) {
+        EXPECT_TRUE(hasSubstr(::testing::internal::GetCapturedStderr(), "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size\n"));
+    } else {
+        EXPECT_TRUE(::testing::internal::GetCapturedStderr().empty());
+    }
 }
 
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSystemInfoIsCreatedAndUsedToSetHardwareInfoAttributes) {
