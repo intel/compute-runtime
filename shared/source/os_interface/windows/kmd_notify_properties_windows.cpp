@@ -17,7 +17,3 @@ void KmdNotifyHelper::updateAcLineStatus() {
         acLineConnected = (systemPowerStatus.ACLineStatus == 1);
     }
 }
-
-int64_t KmdNotifyHelper::getBaseTimeout() const {
-    return properties->delayKmdNotifyMicroseconds;
-}

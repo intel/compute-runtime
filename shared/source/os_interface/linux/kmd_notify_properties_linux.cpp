@@ -10,7 +10,3 @@
 using namespace NEO;
 
 void KmdNotifyHelper::updateAcLineStatus() {}
-
-int64_t KmdNotifyHelper::getBaseTimeout() const {
-    return properties->delayKmdNotifyMicroseconds;
-}

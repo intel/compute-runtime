@@ -54,7 +54,7 @@ WaitParams KmdNotifyHelper::obtainTimeoutParams(bool quickKmdSleepRequest,
     } else if (directSubmissionEnabled && properties->enableQuickKmdSleepForDirectSubmission) {
         params.waitTimeout = properties->delayQuickKmdSleepForDirectSubmissionMicroseconds;
     } else {
-        params.waitTimeout = getBaseTimeout();
+        params.waitTimeout = properties->delayKmdNotifyMicroseconds;
     }
 
     params.enableTimeout = (properties->enableKmdNotify || !acLineConnected);
