@@ -200,7 +200,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
-    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor);
+    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, gfxCoreHelper);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     {
         auto heap = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);

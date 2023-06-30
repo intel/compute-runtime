@@ -345,7 +345,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
         uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
             static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                simdSize, grfSize, numChannels, itemsInGroup));
+                simdSize, grfSize, numChannels, itemsInGroup, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper));
         if (perThreadDataSizeForWholeThreadGroupNeeded >
             perThreadDataSizeForWholeThreadGroupAllocated) {
             alignedFree(perThreadDataForWholeThreadGroup);

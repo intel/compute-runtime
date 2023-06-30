@@ -741,10 +741,8 @@ HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenRequiredH
         CsrDependencies(),
         walkerArgs);
 
-    Vec3<size_t> localWorkgroupSize(workGroupSize);
-
     auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(kernel);
-    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel, Math::computeTotalElementsCount(localWorkgroupSize));
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel, workGroupSize);
     auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(kernel);
 
     EXPECT_LE(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
@@ -1433,7 +1431,7 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
     size_t workItems[3] = {1, 1, 1};
     size_t workGroupSize[3] = {2, 5, 10};
     cl_uint dimensions = 1;
-    Vec3<size_t> localWorkgroupSize(workGroupSize);
+
     auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
 
     kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1u;
@@ -1458,7 +1456,7 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
         CsrDependencies(),
         walkerArgsWithoutImplicitArgs);
 
-    auto iohSizeWithoutImplicitArgs = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithoutImplicitArgs, Math::computeTotalElementsCount(localWorkgroupSize));
+    auto iohSizeWithoutImplicitArgs = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithoutImplicitArgs, workGroupSize);
 
     DispatchInfo dispatchInfoWithImplicitArgs(pClDevice, const_cast<MockKernel *>(&kernelWithImplicitArgs), dimensions, workItems, workGroupSize, globalOffsets);
     dispatchInfoWithImplicitArgs.setNumberOfWorkgroups({1, 1, 1});
@@ -1473,7 +1471,7 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
         CsrDependencies(),
         walkerArgsWithImplicitArgs);
 
-    auto iohSizeWithImplicitArgs = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithImplicitArgs, Math::computeTotalElementsCount(localWorkgroupSize));
+    auto iohSizeWithImplicitArgs = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithImplicitArgs, workGroupSize);
 
     EXPECT_LE(iohSizeWithoutImplicitArgs, iohSizeWithImplicitArgs);
 
@@ -1481,9 +1479,10 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
         auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
         auto simdSize = kernelInfo.getMaxSimdSize();
         uint32_t grfSize = sizeof(typename FamilyType::GRF);
+        const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
         auto size = kernelWithImplicitArgs.getCrossThreadDataSize() +
-                    HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, Math::computeTotalElementsCount(localWorkgroupSize)) +
-                    ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernelWithImplicitArgs.getImplicitArgs(), kernelWithImplicitArgs.getDescriptor());
+                    HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, Math::computeTotalElementsCount(workGroupSize), false, gfxCoreHelper) +
+                    ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernelWithImplicitArgs.getImplicitArgs(), kernelWithImplicitArgs.getDescriptor(), false, gfxCoreHelper);
 
         size = alignUp(size, MemoryConstants::cacheLineSize);
         EXPECT_EQ(size, iohSizeWithImplicitArgs);

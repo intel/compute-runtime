@@ -104,7 +104,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const Kernel &kernel);
     static size_t getSizeRequiredIOH(
         const Kernel &kernel,
-        size_t localWorkSize = 256);
+        const size_t localWorkSizes[3]);
     static size_t getSizeRequiredSSH(
         const Kernel &kernel);
 

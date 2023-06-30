@@ -2062,7 +2062,8 @@ struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKe
     template <typename FamilyType>
     uint64_t getIndirectHeapOffsetForImplicitArgsBuffer(const Mock<::L0::KernelImp> &kernel) {
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-            auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor());
+            const auto &gfxCoreHelper = device->getGfxCoreHelper();
+            auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor(), !kernel.kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
             return implicitArgsProgrammingSize - sizeof(ImplicitArgs);
         } else {
             return 0u;

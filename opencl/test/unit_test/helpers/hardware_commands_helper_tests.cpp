@@ -365,7 +365,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
     auto sizeRequiredDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto sizeRequiredIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel, localWorkSize);
+    auto sizeRequiredIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel, localWorkSizes);
     auto sizeRequiredSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     EXPECT_GE(sizeRequiredDSH, usedAfterDSH - usedBeforeDSH);
@@ -548,11 +548,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     constexpr uint32_t grfSize = sizeof(typename FamilyType::GRF);
     size_t localWorkSize = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     auto numChannels = modifiedKernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
-    size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(modifiedKernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize);
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(modifiedKernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize, !kernelUsesLocalIds, gfxCoreHelper);
     ASSERT_LE(expectedIohSize, ioh.getUsed());
 
     auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);
-    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     generateLocalIDs(expectedLocalIds, modifiedKernelInfo.getMaxSimdSize(),
                      std::array<uint16_t, 3>{{localWorkSizeX, localWorkSizeY, localWorkSizeZ}},
                      std::array<uint8_t, 3>{{modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
@@ -1315,8 +1315,8 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
         kernel.setGlobalWorkSizeValues(static_cast<uint32_t>(expectedImplicitArgs.globalSizeX), static_cast<uint32_t>(expectedImplicitArgs.globalSizeY), static_cast<uint32_t>(expectedImplicitArgs.globalSizeZ));
         kernel.setGlobalWorkOffsetValues(static_cast<uint32_t>(expectedImplicitArgs.globalOffsetX), static_cast<uint32_t>(expectedImplicitArgs.globalOffsetY), static_cast<uint32_t>(expectedImplicitArgs.globalOffsetZ));
         kernel.setNumWorkGroupsValues(expectedImplicitArgs.groupCountX, expectedImplicitArgs.groupCountY, expectedImplicitArgs.groupCountZ);
-
-        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernel.getDescriptor());
+        const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernel.getDescriptor(), false, gfxCoreHelper);
 
         auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
         HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
@@ -1382,7 +1382,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, gfxCoreHelper);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
-    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize);
+    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, false, gfxCoreHelper);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
@@ -1416,7 +1416,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, gfxCoreHelper);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
-    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize);
+    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, false, gfxCoreHelper);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);

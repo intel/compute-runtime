@@ -41,7 +41,7 @@ uint32_t getGrfSize(uint32_t simd) {
     return 32u;
 }
 
-uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const KernelDescriptor &kernelDescriptor) {
+uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const KernelDescriptor &kernelDescriptor, bool isHwLocalIdGeneration, const GfxCoreHelper &gfxCoreHelper) {
     if (!pImplicitArgs) {
         return 0;
     }
@@ -56,15 +56,15 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
         auto itemsInGroup = Math::computeTotalElementsCount(localWorkSize);
         uint32_t localIdsSizeNeeded =
             alignUp(static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                        simdSize, grfSize, 3u, itemsInGroup)),
+                        simdSize, grfSize, 3u, itemsInGroup, isHwLocalIdGeneration, gfxCoreHelper)),
                     MemoryConstants::cacheLineSize);
         return implicitArgsSize + localIdsSizeNeeded;
     }
 }
 
 void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams, const GfxCoreHelper &gfxCoreHelper) {
-
-    auto totalSizeToProgram = getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor);
+    auto localIdsGeneratedByHw = hwGenerationOfLocalIdsParams.has_value() ? hwGenerationOfLocalIdsParams.value().first : false;
+    auto totalSizeToProgram = getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, localIdsGeneratedByHw, gfxCoreHelper);
     auto retVal = ptrOffset(ptrToPatch, totalSizeToProgram);
 
     auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);

@@ -57,8 +57,8 @@ TEST(ImplicitArgsHelperTest, givenSimdGreaterThanOneWhenGettingGrfSizeThenGrfSiz
 TEST(ImplicitArgsHelperTest, givenNoImplicitArgsWhenGettingSizeForImplicitArgsProgrammingThenZeroIsReturned) {
 
     KernelDescriptor kernelDescriptor{};
-
-    EXPECT_EQ(0u, ImplicitArgsHelper::getSizeForImplicitArgsPatching(nullptr, kernelDescriptor));
+    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_EQ(0u, ImplicitArgsHelper::getSizeForImplicitArgsPatching(nullptr, kernelDescriptor, false, *gfxCoreHelper.get()));
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
@@ -75,8 +75,9 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
     auto totalWorkgroupSize = implicitArgs.localSizeX * implicitArgs.localSizeY * implicitArgs.localSizeZ;
 
-    auto localIdsSize = alignUp(PerThreadDataHelper::getPerThreadDataSizeTotal(implicitArgs.simdWidth, 32u /* grfSize */, 3u /* num channels */, totalWorkgroupSize), MemoryConstants::cacheLineSize);
-    EXPECT_EQ(localIdsSize + implicitArgs.structSize, ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor));
+    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    auto localIdsSize = alignUp(PerThreadDataHelper::getPerThreadDataSizeTotal(implicitArgs.simdWidth, 32u /* grfSize */, 3u /* num channels */, totalWorkgroupSize, false, *gfxCoreHelper.get()), MemoryConstants::cacheLineSize);
+    EXPECT_EQ(localIdsSize + implicitArgs.structSize, ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get()));
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
@@ -90,8 +91,8 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     implicitArgs.localSizeX = 2;
     implicitArgs.localSizeY = 3;
     implicitArgs.localSizeZ = 4;
-
-    EXPECT_EQ(alignUp(implicitArgs.structSize, MemoryConstants::cacheLineSize), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor));
+    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_EQ(alignUp(implicitArgs.structSize, MemoryConstants::cacheLineSize), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get()));
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
@@ -108,8 +109,8 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
     implicitArgs.localSizeX = 2;
     implicitArgs.localSizeY = 3;
     implicitArgs.localSizeZ = 4;
-
-    auto totalSizeForPatching = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor);
+    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    auto totalSizeForPatching = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get());
 
     auto totalWorkgroupSize = implicitArgs.localSizeX * implicitArgs.localSizeY * implicitArgs.localSizeZ;
     auto localIdsPatchingSize = totalWorkgroupSize * 3 * sizeof(uint16_t);
@@ -119,7 +120,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
     uint8_t pattern = 0xcd;
 
     memset(memoryToPatch.get(), pattern, totalSizeForPatching);
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+
     auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, *gfxCoreHelper.get());
 
     EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
@@ -150,8 +151,8 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     implicitArgs.localSizeX = 2;
     implicitArgs.localSizeY = 3;
     implicitArgs.localSizeZ = 4;
-
-    auto totalSizeForPatching = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor);
+    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    auto totalSizeForPatching = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get());
 
     EXPECT_EQ(0x80u, totalSizeForPatching);
 
@@ -160,7 +161,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     uint8_t pattern = 0xcd;
 
     memset(memoryToPatch.get(), pattern, totalSizeForPatching);
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+
     auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, *gfxCoreHelper.get());
 
     EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));

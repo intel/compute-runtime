@@ -76,12 +76,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         pImplicitArgs->localIdTablePtr = indirectHeap.getGraphicsAllocation()->getGpuAddress() + offsetCrossThreadData;
 
         const auto &kernelDescriptor = kernel.getDescriptor();
-        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor);
-
-        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - sizeof(ImplicitArgs);
-        offsetCrossThreadData += sizeForLocalIdsProgramming;
-
-        auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
 
         const auto &kernelAttributes = kernelDescriptor.kernelAttributes;
         uint32_t requiredWalkOrder = 0u;
@@ -96,7 +90,15 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
             kernelAttributes.flags.requiresWorkgroupWalkOrder,
             requiredWalkOrder,
             kernelDescriptor.kernelAttributes.simdSize);
+
         const auto &gfxCoreHelper = kernel.getGfxCoreHelper();
+        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !generationOfLocalIdsByRuntime, gfxCoreHelper);
+
+        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - sizeof(ImplicitArgs);
+        offsetCrossThreadData += sizeForLocalIdsProgramming;
+
+        auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
+
         ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder), gfxCoreHelper);
     }
 

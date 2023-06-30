@@ -45,20 +45,33 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(const Kernel &kerne
 
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kernel,
-                                                             size_t localWorkSize) {
+                                                             const size_t localWorkSizes[3]) {
+    auto localWorkSize = Math::computeTotalElementsCount(localWorkSizes);
     typedef typename GfxFamily::WALKER_TYPE WALKER_TYPE;
     const auto &kernelDescriptor = kernel.getDescriptor();
     const auto &hwInfo = kernel.getHardwareInfo();
+    const auto &gfxCoreHelper = kernel.getGfxCoreHelper();
 
     auto numChannels = kernelDescriptor.kernelAttributes.numLocalIdChannels;
     uint32_t grfSize = hwInfo.capabilityTable.grfSize;
     auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
+    uint32_t requiredWalkOrder = 0u;
+    auto isHwLocalIdGeneration = !NEO::EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
+        numChannels,
+        localWorkSizes,
+        std::array<uint8_t, 3>{
+            {kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
+             kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
+             kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
+        kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
+        requiredWalkOrder,
+        simdSize);
     auto size = kernel.getCrossThreadDataSize() +
-                getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, localWorkSize);
+                getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, localWorkSize, isHwLocalIdGeneration, gfxCoreHelper);
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
-        size += ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor);
+        size += ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, gfxCoreHelper);
     }
     return alignUp(size, WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 }
@@ -94,7 +107,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(
     const MultiDispatchInfo &multiDispatchInfo) {
     return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredIOH(
                                                                                          *dispatchInfo.getKernel(),
-                                                                                         Math::computeTotalElementsCount(dispatchInfo.getLocalWorkgroupSize())); });
+                                                                                         dispatchInfo.getLocalWorkgroupSize().values); });
 }
 
 template <typename GfxFamily>

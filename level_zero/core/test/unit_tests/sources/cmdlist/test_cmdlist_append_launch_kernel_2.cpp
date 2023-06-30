@@ -991,7 +991,8 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&expectedImplicitArgs, *kernelDescriptor);
+        const auto &gfxCoreHelper = device->getGfxCoreHelper();
+        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&expectedImplicitArgs, *kernelDescriptor, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
         auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
         auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
         EXPECT_EQ(indirectHeap->getUsed(), sizeCrossThreadData + sizePerThreadDataForWholeGroup + implicitArgsProgrammingSize);
@@ -1027,7 +1028,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, gfxCoreHelper);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
-    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize);
+    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
@@ -1073,7 +1074,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, gfxCoreHelper);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
-    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize);
+    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);

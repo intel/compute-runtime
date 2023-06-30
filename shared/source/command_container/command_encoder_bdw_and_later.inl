@@ -161,7 +161,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                              sizePerThreadData, hwInfo);
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
-    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor);
+    bool isHwLocalIdGeneration = false;
+    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, gfxCoreHelper);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     uint64_t offsetThreadData = 0u;
     {
