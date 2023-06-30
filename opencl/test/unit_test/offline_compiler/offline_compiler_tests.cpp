@@ -4134,7 +4134,9 @@ TEST(OclocCompile, givenCommandLineWithoutDeviceWhenCompilingToSpirvThenSucceeds
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -D__IMAGE_SUPPORT__=1"));
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300"
+                                                 " -cl-ext=-all,+cl_khr_3d_image_writes,+__opencl_c_3d_image_writes,+__opencl_c_images"
+                                                 " -D__IMAGE_SUPPORT__=1"));
 }
 
 TEST(OclocCompile, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenInternalOptionsAreSetCorrectly) {
@@ -4176,7 +4178,9 @@ TEST(OclocCompile, givenNoDeviceAndInternalOptionsOptionWhenCompilingToSpirvThen
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -cl-ext=+custom_param"));
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300"
+                                                 " -cl-ext=-all,+cl_khr_3d_image_writes,+__opencl_c_3d_image_writes,+__opencl_c_images"
+                                                 " -cl-ext=+custom_param"));
 }
 TEST(OclocCompile, givenPackedDeviceBinaryFormatWhenGeneratingElfBinaryThenItIsReturnedAsItIs) {
     MockOfflineCompiler ocloc;
