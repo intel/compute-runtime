@@ -238,14 +238,15 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                               Device &device,
                                               LinearStream &csrCommandStream,
                                               bool dispatchBindingTableCommand,
-                                              bool areMultipleSubDevicesInContext);
+                                              bool areMultipleSubDevicesInContext,
+                                              bool setGeneralStateBaseAddress);
 
     inline void programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR);
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
     inline void handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
     inline void dispatchImmediateFlushPipelineSelectCommand(ImmediateFlushData &flushData, LinearStream &csrStream);
     inline void handleImmediateFlushFrontEndState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
-    inline void dispatchImmediateFlushFrontEndCommand(uint64_t scratchAddress, ImmediateFlushData &flushData, Device &device, LinearStream &csrStream);
+    inline void dispatchImmediateFlushFrontEndCommand(ImmediateFlushData &flushData, Device &device, LinearStream &csrStream);
     inline void handleImmediateFlushStateComputeModeState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);
     inline void dispatchImmediateFlushStateComputeModeCommand(ImmediateFlushData &flushData, LinearStream &csrStream);
     inline void handleImmediateFlushStateBaseAddressState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device);

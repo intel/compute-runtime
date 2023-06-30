@@ -3472,6 +3472,8 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
     auto stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
     ASSERT_NE(nullptr, stateBaseAddress);
+    EXPECT_EQ(0x4000u, stateBaseAddress->getGeneralStateBaseAddress());
+
     auto bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
     ASSERT_NE(nullptr, bindingTableAddress);
 
@@ -3508,6 +3510,8 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
     auto stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
     ASSERT_NE(nullptr, stateBaseAddress);
+    EXPECT_EQ(0x4000u, stateBaseAddress->getGeneralStateBaseAddress());
+
     auto bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
     ASSERT_NE(nullptr, bindingTableAddress);
 
@@ -3543,10 +3547,14 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(false, 1, -1, -1, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
+    EXPECT_EQ(0x2000, commandStreamReceiver.streamProperties.stateBaseAddress.surfaceStateBaseAddress.value);
+
     HardwareParse hwParserCsr;
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
     auto stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
     ASSERT_NE(nullptr, stateBaseAddress);
+    EXPECT_EQ(0x4000u, stateBaseAddress->getGeneralStateBaseAddress());
+
     auto bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
     EXPECT_EQ(nullptr, bindingTableAddress);
 
@@ -3580,10 +3588,14 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(false, 1, -1, -1, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
+    EXPECT_EQ(0x2000, commandStreamReceiver.streamProperties.stateBaseAddress.surfaceStateBaseAddress.value);
+
     HardwareParse hwParserCsr;
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
     auto stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
     ASSERT_NE(nullptr, stateBaseAddress);
+    EXPECT_EQ(0x4000u, stateBaseAddress->getGeneralStateBaseAddress());
+
     auto bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
     EXPECT_EQ(nullptr, bindingTableAddress);
 
@@ -3597,10 +3609,12 @@ HWTEST2_F(CommandStreamReceiverHwTest,
                                              immediateFlushTaskFlags,
                                              *pDevice);
 
+    EXPECT_EQ(0x6000, commandStreamReceiver.streamProperties.stateBaseAddress.surfaceStateBaseAddress.value);
+
     hwParserCsr.tearDown();
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
     stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
-    EXPECT_EQ(nullptr, stateBaseAddress);
+    ASSERT_NE(nullptr, stateBaseAddress);
     bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
     EXPECT_EQ(nullptr, bindingTableAddress);
 }
@@ -3609,6 +3623,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskWhenNextDispatchRequiresScratchSpaceThenFrontEndCommandIsDispatched,
           IsAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -3636,13 +3651,33 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
     ASSERT_NE(nullptr, frontEndCmd);
 
+    size_t expectedScratchOffset = 2 * sizeof(RENDER_SURFACE_STATE);
+    EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
+
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getScratchSpaceAllocation()));
+
+    commandStreamReceiver.setRequiredScratchSizes(0x400, 0);
+
+    usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    ASSERT_NE(nullptr, frontEndCmd);
+
+    expectedScratchOffset = 4 * sizeof(RENDER_SURFACE_STATE);
+    EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
 }
 
 HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskWhenNextDispatchRequiresPrivateScratchSpaceThenFrontEndCommandIsDispatched,
           IsAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -3669,6 +3704,9 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
     frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
     ASSERT_NE(nullptr, frontEndCmd);
+
+    constexpr size_t expectedScratchOffset = 2 * sizeof(RENDER_SURFACE_STATE);
+    EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getPrivateScratchSpaceAllocation()));
 }
