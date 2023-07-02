@@ -56,8 +56,8 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
     }
 }
 
-int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
-    return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks);
+int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
+    return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, vmId, pairHandle, isChunked, numOfChunks);
 }
 
 uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank) {
@@ -109,7 +109,7 @@ void MemoryInfo::printRegionSizes() {
     }
 }
 
-int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle) {
+int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
     MemRegionsVec region = {regionClassAndInstance};
@@ -121,11 +121,11 @@ int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocS
         }
     }
     uint32_t numOfChunks = 0;
-    auto ret = createGemExt(region, allocSize, handle, patIndex, vmId, pairHandle, false, numOfChunks);
+    auto ret = createGemExt(region, allocSize, handle, vmId, pairHandle, false, numOfChunks);
     return ret;
 }
 
-int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex) {
+int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};
@@ -140,11 +140,11 @@ int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t all
         currentBank++;
     }
     uint32_t numOfChunks = 0;
-    auto ret = createGemExt(memRegions, allocSize, handle, patIndex, {}, -1, false, numOfChunks);
+    auto ret = createGemExt(memRegions, allocSize, handle, {}, -1, false, numOfChunks);
     return ret;
 }
 
-int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
+int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};
@@ -158,7 +158,7 @@ int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t all
         }
         currentBank++;
     }
-    auto ret = createGemExt(memRegions, allocSize, handle, patIndex, {}, pairHandle, isChunked, numOfChunks);
+    auto ret = createGemExt(memRegions, allocSize, handle, {}, pairHandle, isChunked, numOfChunks);
     return ret;
 }
 

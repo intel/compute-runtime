@@ -77,7 +77,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsThen
 
     uint32_t handle = 0u;
     uint32_t numOfChunks = 0;
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, {}, -1, false, numOfChunks));
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndVmIdThenDummyValueIsReturned) {
@@ -96,7 +96,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndV
     uint32_t handle = 0u;
     uint32_t numOfChunks = 0;
     GemVmControl test = {};
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, test.vmId, -1, false, numOfChunks));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, test.vmId, -1, false, numOfChunks));
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsReturned) {
@@ -120,7 +120,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     MemRegionsVec memRegions{};
     uint32_t handle = 0u;
     uint32_t numOfChunks = 0;
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, {}, -1, false, numOfChunks));
 
     EXPECT_TRUE(xeIoctlHelper->isVmBindAvailable());
 

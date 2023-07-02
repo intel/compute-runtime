@@ -1804,18 +1804,18 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
     uint32_t handle = 0;
     int ret = 0;
 
-    auto patIndex = drm->getPatIndex(gmm, allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
-
     auto banks = std::bitset<4>(memoryBanks);
     if (banks.count() > 1) {
-        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex);
+        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle);
     } else {
-        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, patIndex, pairHandle);
+        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, pairHandle);
     }
 
     if (ret != 0) {
         return nullptr;
     }
+
+    auto patIndex = drm->getPatIndex(gmm, allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
 
     auto bo = new (std::nothrow) BufferObject(rootDeviceIndex, drm, patIndex, handle, size, maxOsContextCount);
     if (!bo) {
@@ -1833,13 +1833,13 @@ bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *alloc
     uint32_t handle = 0;
     auto memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
     uint32_t numOfChunks = DebugManager.flags.NumberOfBOChunks.get();
-
-    auto gmm = allocation->getGmm(0u);
-    auto patIndex = drm->getPatIndex(gmm, allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false);
-    int ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, boSize, handle, patIndex, -1, true, numOfChunks);
+    int ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, boSize, handle, -1, true, numOfChunks);
     if (ret != 0) {
         return false;
     }
+
+    auto gmm = allocation->getGmm(0u);
+    auto patIndex = drm->getPatIndex(gmm, allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false);
 
     auto bo = new (std::nothrow) BufferObject(allocation->getRootDeviceIndex(), drm, patIndex, handle, boSize, maxOsContextCount);
     UNRECOVERABLE_IF(bo == nullptr);
@@ -2236,15 +2236,15 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         auto memoryBanks = (DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0 || useChunking) ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << memoryInstance);
         auto memRegions = createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memoryBanks);
 
-        auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
-
-        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks);
+        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1, useChunking, numOfChunks);
 
         if (ret) {
             this->munmapFunction(cpuPointer, totalSizeToAlloc);
             releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             return nullptr;
         }
+
+        auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
 
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, currentSize, maxOsContextCount));
 

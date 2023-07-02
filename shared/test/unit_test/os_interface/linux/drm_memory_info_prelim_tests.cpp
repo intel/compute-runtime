@@ -373,7 +373,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
     ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t numOfChunks = 0;
-    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks);
+    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -397,7 +397,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
 
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, 0, -1);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -428,12 +428,12 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithPairHandleThenR
     uint32_t pairHandle = 0;
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, pairHandle, 0, -1);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, pairHandle, -1);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     uint32_t handle = 0;
-    ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, 0, pairHandle);
+    ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, pairHandle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
@@ -461,7 +461,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithChunkingButSize
     bool isChunked = true;
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
-    EXPECT_THROW(memoryInfo->createGemExtWithMultipleRegions(1, allocSize, handle, 0, pairHandle, isChunked, numOfChunks), std::runtime_error);
+    EXPECT_THROW(memoryInfo->createGemExtWithMultipleRegions(1, allocSize, handle, pairHandle, isChunked, numOfChunks), std::runtime_error);
 }
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithChunkingWithSizeGreaterThanAllowedThenAllocationIsCreatedWithChunking) {
@@ -487,7 +487,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithChunkingWithSiz
     bool isChunked = true;
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
-    auto ret = memoryInfo->createGemExtWithMultipleRegions(1, allocSize, handle, 0, pairHandle, isChunked, numOfChunks);
+    auto ret = memoryInfo->createGemExtWithMultipleRegions(1, allocSize, handle, pairHandle, isChunked, numOfChunks);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
@@ -511,7 +511,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExt
     ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, 0, -1);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -541,7 +541,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndNoPrivateBOSupportWhenCreatingGemE
     ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, 0, -1);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -570,7 +570,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextV
     ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, 0, -1);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -603,7 +603,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithMultipleRegions
     ASSERT_NE(nullptr, memoryInfo);
     uint32_t handle = 0;
     uint32_t memoryRegions = 0b1011;
-    auto ret = memoryInfo->createGemExtWithMultipleRegions(memoryRegions, 1024, handle, 0);
+    auto ret = memoryInfo->createGemExtWithMultipleRegions(memoryRegions, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -644,7 +644,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCallingCreatingGemExtWithMultiple
     uint32_t handle = 0;
     uint32_t memoryRegions = 0b1011;
     uint32_t numOfChunks = 2;
-    EXPECT_THROW(memoryInfo->createGemExtWithMultipleRegions(memoryRegions, MemoryConstants::chunkThreshold / (numOfChunks * 2), handle, 0, -1, true, numOfChunks), std::runtime_error);
+    EXPECT_THROW(memoryInfo->createGemExtWithMultipleRegions(memoryRegions, MemoryConstants::chunkThreshold / (numOfChunks * 2), handle, -1, true, numOfChunks), std::runtime_error);
 }
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCallingCreatingGemExtWithMultipleRegionsAndChunkingThenReturnCorrectValues) {
@@ -672,7 +672,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCallingCreatingGemExtWithMultiple
     uint32_t memoryRegions = 0b1011;
     uint32_t numOfChunks = 2;
     size_t size = MemoryConstants::chunkThreshold * numOfChunks;
-    auto ret = memoryInfo->createGemExtWithMultipleRegions(memoryRegions, size, handle, 0, -1, true, numOfChunks);
+    auto ret = memoryInfo->createGemExtWithMultipleRegions(memoryRegions, size, handle, -1, true, numOfChunks);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);

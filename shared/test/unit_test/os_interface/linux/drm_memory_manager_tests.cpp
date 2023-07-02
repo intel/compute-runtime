@@ -3645,6 +3645,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
      whenPrintBOCreateDestroyResultFlagIsSetAndCallToCreateSharedAllocationThenExpectedMessageIsPrinted) {
     DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     const uint32_t rootDeviceIndex = 0u;
@@ -3658,7 +3659,6 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     osHandle handle = 1u;
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
 
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
     testing::internal::CaptureStdout();
     auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, false, nullptr);
     ASSERT_NE(nullptr, allocation);
