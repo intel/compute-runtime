@@ -552,13 +552,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     ASSERT_LE(expectedIohSize, ioh.getUsed());
 
     auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);
-    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     generateLocalIDs(expectedLocalIds, modifiedKernelInfo.getMaxSimdSize(),
                      std::array<uint16_t, 3>{{localWorkSizeX, localWorkSizeY, localWorkSizeZ}},
                      std::array<uint8_t, 3>{{modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
                                              modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
                                              modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
-                     false, grfSize, gfxCoreHelper);
+                     false, grfSize);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, ioh.getCpuBase(), expectedIohSize));
     alignedFree(expectedLocalIds);
@@ -1378,8 +1377,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - sizeof(ImplicitArgs), MemoryConstants::cacheLineSize);
-    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, gfxCoreHelper);
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
     size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize);
@@ -1412,8 +1410,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - sizeof(ImplicitArgs), MemoryConstants::cacheLineSize);
-    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, gfxCoreHelper);
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
     size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize);

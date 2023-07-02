@@ -7,10 +7,8 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -77,16 +75,14 @@ TEST(LocalID, GivenSimd1WhenGettingPerThreadSizeLocalIdsThenValueIsEqualGrfSize)
 
     EXPECT_EQ(grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
-
-TEST(LocalIdTest, givenVariadicGrfSizeWhenLocalSizesAreEmittedThenUseFullRowSize) {
+TEST(LocalID, givenVariadicGrfSizeWhenLocalSizesAreEmittedThenUseFullRowSize) {
     auto localIdsPtr = allocateAlignedMemory(3 * 64u, MemoryConstants::cacheLineSize);
 
     uint16_t *localIdsView = reinterpret_cast<uint16_t *>(localIdsPtr.get());
     std::array<uint16_t, 3u> localSizes = {{2u, 2u, 1u}};
     std::array<uint8_t, 3u> dimensionsOrder = {{0u, 1u, 2u}};
 
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
-    generateLocalIDs(localIdsPtr.get(), 16u, localSizes, dimensionsOrder, false, 64u, *gfxCoreHelper.get());
+    generateLocalIDs(localIdsPtr.get(), 16u, localSizes, dimensionsOrder, false, 64u);
     EXPECT_EQ(localIdsView[0], 0u);
     EXPECT_EQ(localIdsView[1], 1u);
     EXPECT_EQ(localIdsView[2], 0u);
@@ -281,42 +277,37 @@ struct LocalIDFixture : ::testing::TestWithParam<std::tuple<int, int, int, int, 
 };
 
 HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenIdsAreWithinLimits) {
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize, *gfxCoreHelper.get());
+                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize);
     validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
 HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenAllWorkItemsCovered) {
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize, *gfxCoreHelper.get());
+                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
 HWTEST_P(LocalIDFixture, WhenWalkOrderIsXyzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{0, 1, 2}};
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false, grfSize, *gfxCoreHelper.get());
+                     dimensionsOrder, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
 HWTEST_P(LocalIDFixture, WhenWalkOrderIsYxzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{1, 0, 2}};
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false, grfSize, *gfxCoreHelper.get());
+                     dimensionsOrder, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
 HWTEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{2, 1, 0}};
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false, grfSize, *gfxCoreHelper.get());
+                     dimensionsOrder, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
@@ -344,8 +335,8 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
         rowWidth = simd == 32u ? 32u : 16u;
         xDelta = simd == 8u ? 2u : 4u;
     }
-
     void generateLocalIds() {
+
         auto numGrfs = (localWorkSize.at(0) * localWorkSize.at(1) + (simd - 1)) / simd;
         elemsInBuffer = 3u * simd * numGrfs;
         if (simd == 8u) {
@@ -356,8 +347,7 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
         memset(memory.get(), 0xff, size);
         buffer = reinterpret_cast<uint16_t *>(memory.get());
         EXPECT_TRUE(isCompatibleWithLayoutForImages(localWorkSize, dimensionsOrder, simd));
-        auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
-        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true, grfSize, *gfxCoreHelper.get());
+        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true, grfSize);
     }
     void validateGRF() {
         uint32_t totalLocalIds = localWorkSize.at(0) * localWorkSize.at(1);
@@ -457,9 +447,9 @@ TEST_P(LocalIdsLayoutTest, givenLocalWorkgroupSize4x4x1WhenGenerateLocalIdsThenH
     auto alignedMemory2 = allocateAlignedMemory(size, 32);
     auto buffer2 = reinterpret_cast<uint16_t *>(alignedMemory2.get());
     memset(buffer2, 0xff, size);
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
-    generateLocalIDs(buffer1, simd, localWorkSize, dimensionsOrder, false, grfSize, *gfxCoreHelper.get());
-    generateLocalIDs(buffer2, simd, localWorkSize, dimensionsOrder, true, grfSize, *gfxCoreHelper.get());
+
+    generateLocalIDs(buffer1, simd, localWorkSize, dimensionsOrder, false, grfSize);
+    generateLocalIDs(buffer2, simd, localWorkSize, dimensionsOrder, true, grfSize);
 
     for (auto i = 0u; i < elemsInBuffer / rowWidth; i++) {
         for (auto j = 0u; j < rowWidth; j++) {

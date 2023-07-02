@@ -47,7 +47,7 @@ void LocalIdsCache::setLocalIdsForEntry(LocalIdsCacheEntry &entry, void *destina
     std::memcpy(destination, entry.localIdsData, entry.localIdsSize);
 }
 
-void LocalIdsCache::setLocalIdsForGroup(const Vec3<uint16_t> &group, void *destination, const GfxCoreHelper &gfxCoreHelper) {
+void LocalIdsCache::setLocalIdsForGroup(const Vec3<uint16_t> &group, void *destination) {
     auto setLocalIdsLock = lock();
     LocalIdsCacheEntry *leastAccessedEntry = &cache[0];
     for (auto &cacheEntry : cache) {
@@ -60,11 +60,11 @@ void LocalIdsCache::setLocalIdsForGroup(const Vec3<uint16_t> &group, void *desti
         }
     }
 
-    commitNewEntry(*leastAccessedEntry, group, gfxCoreHelper);
+    commitNewEntry(*leastAccessedEntry, group);
     setLocalIdsForEntry(*leastAccessedEntry, destination);
 }
 
-void LocalIdsCache::commitNewEntry(LocalIdsCacheEntry &entry, const Vec3<uint16_t> &group, const GfxCoreHelper &gfxCoreHelper) {
+void LocalIdsCache::commitNewEntry(LocalIdsCacheEntry &entry, const Vec3<uint16_t> &group) {
     entry.localIdsSize = getLocalIdsSizeForGroup(group);
     entry.groupSize = group;
     entry.accessCounter = 0U;
@@ -74,7 +74,7 @@ void LocalIdsCache::commitNewEntry(LocalIdsCacheEntry &entry, const Vec3<uint16_
         entry.localIdsSizeAllocated = entry.localIdsSize;
     }
     NEO::generateLocalIDs(entry.localIdsData, static_cast<uint16_t>(simdSize),
-                          {group[0], group[1], group[2]}, wgDimOrder, usesOnlyImages, grfSize, gfxCoreHelper);
+                          {group[0], group[1], group[2]}, wgDimOrder, usesOnlyImages, grfSize);
 }
 
 } // namespace NEO

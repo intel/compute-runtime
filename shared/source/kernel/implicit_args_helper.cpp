@@ -62,7 +62,7 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
     }
 }
 
-void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams, const GfxCoreHelper &gfxCoreHelper) {
+void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams) {
 
     auto totalSizeToProgram = getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor);
     auto retVal = ptrOffset(ptrToPatch, totalSizeToProgram);
@@ -80,7 +80,7 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
                                      static_cast<uint16_t>(implicitArgs.localSizeY),
                                      static_cast<uint16_t>(implicitArgs.localSizeZ)}},
             dimensionOrder,
-            false, grfSize, gfxCoreHelper);
+            false, grfSize);
         auto sizeForLocalIdsProgramming = totalSizeToProgram - sizeof(NEO::ImplicitArgs);
         ptrToPatch = ptrOffset(ptrToPatch, sizeForLocalIdsProgramming);
     }

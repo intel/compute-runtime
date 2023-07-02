@@ -12,7 +12,6 @@
 #include <cstdint>
 
 namespace NEO {
-class GfxCoreHelper;
 inline uint32_t getGRFsPerThread(uint32_t simd, uint32_t grfSize) {
     return (simd == 32 && grfSize == 32) ? 2 : 1;
 }
@@ -59,7 +58,7 @@ void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroup
                           const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize);
 
 void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize,
-                      const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize, const NEO::GfxCoreHelper &gfxCoreHelper);
+                      const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize);
 void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t simd);
 
 bool isCompatibleWithLayoutForImages(const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, uint16_t simd);

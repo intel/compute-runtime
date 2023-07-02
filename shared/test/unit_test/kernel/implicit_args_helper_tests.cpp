@@ -6,13 +6,11 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
-#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -119,8 +117,8 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
     uint8_t pattern = 0xcd;
 
     memset(memoryToPatch.get(), pattern, totalSizeForPatching);
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
-    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, *gfxCoreHelper.get());
+
+    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {});
 
     EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
 
@@ -160,8 +158,8 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     uint8_t pattern = 0xcd;
 
     memset(memoryToPatch.get(), pattern, totalSizeForPatching);
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
-    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, *gfxCoreHelper.get());
+
+    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {});
 
     EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
 
