@@ -42,6 +42,10 @@ uint32_t WddmSysmanImp::getSubDeviceCount() {
     return subDeviceCount;
 }
 
+SysmanDeviceImp *WddmSysmanImp::getSysmanDeviceImp() {
+    return pParentSysmanDeviceImp;
+}
+
 void WddmSysmanImp::createFwUtilInterface() {
     const auto pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
     const uint16_t domain = static_cast<uint16_t>(pciBusInfo.pciDomain);

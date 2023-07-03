@@ -33,6 +33,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     void releaseFwUtilInterface();
 
     uint32_t getSubDeviceCount() override;
+    SysmanDeviceImp *getSysmanDeviceImp();
 
   protected:
     FirmwareUtil *pFwUtilInterface = nullptr;

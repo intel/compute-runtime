@@ -13,6 +13,7 @@
 namespace L0 {
 namespace Sysman {
 struct OsSysman;
+class KmdSysManager;
 class WddmPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getPciBdf(zes_pci_properties_t &pciProperties) override;
@@ -24,6 +25,13 @@ class WddmPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     WddmPciImp(OsSysman *pOsSysman);
     ~WddmPciImp() override = default;
+    bool isLocalMemSupported();
+
+  protected:
+    KmdSysManager *pKmdSysManager = nullptr;
+
+  private:
+    bool isLmemSupported = false;
 };
 
 } // namespace Sysman
