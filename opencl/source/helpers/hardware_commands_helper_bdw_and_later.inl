@@ -91,7 +91,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 
         auto implicitArgsGpuVA = indirectHeap.getGraphicsAllocation()->getGpuAddress() + indirectHeap.getUsed();
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
-        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, {});
+        const auto &gfxCoreHelper = kernel.getGfxCoreHelper();
+        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, {}, gfxCoreHelper);
 
         auto implicitArgsCrossThreadPtr = ptrOffset(reinterpret_cast<uint64_t *>(kernel.getCrossThreadData()), kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
         *implicitArgsCrossThreadPtr = implicitArgsGpuVA;

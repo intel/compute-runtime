@@ -7,8 +7,11 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/kernel/local_ids_cache.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -35,7 +38,8 @@ using LocalIdsCacheTest = Test<LocalIdsCacheFixture>;
 TEST_F(LocalIdsCacheTest, GivenCacheMissWhenGetLocalIdsForGroupThenNewEntryIsCommitedIntoLeastUsedEntry) {
     localIdsCache->cache.resize(2);
     localIdsCache->cache[0].accessCounter = 2U;
-    localIdsCache->setLocalIdsForGroup(groupSize, perThreadData.data());
+    auto gfxCoreHelper = NEO::GfxCoreHelper::create(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    localIdsCache->setLocalIdsForGroup(groupSize, perThreadData.data(), *gfxCoreHelper.get());
 
     EXPECT_EQ(groupSize, localIdsCache->cache[1].groupSize);
     EXPECT_NE(nullptr, localIdsCache->cache[1].localIdsData);
@@ -50,7 +54,8 @@ TEST_F(LocalIdsCacheTest, GivenEntryInCacheWhenGetLocalIdsForGroupThenEntryFromC
     localIdsCache->cache[0].localIdsSize = 512U;
     localIdsCache->cache[0].localIdsSizeAllocated = 512U;
     localIdsCache->cache[0].accessCounter = 1U;
-    localIdsCache->setLocalIdsForGroup(groupSize, perThreadData.data());
+    auto gfxCoreHelper = NEO::GfxCoreHelper::create(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    localIdsCache->setLocalIdsForGroup(groupSize, perThreadData.data(), *gfxCoreHelper.get());
     EXPECT_EQ(2U, localIdsCache->cache[0].accessCounter);
 }
 
@@ -63,7 +68,8 @@ TEST_F(LocalIdsCacheTest, GivenEntryWithBiggerBufferAllocatedWhenGetLocalIdsForG
     const auto localIdsData = localIdsCache->cache[0].localIdsData;
 
     groupSize = {2, 1, 1};
-    localIdsCache->setLocalIdsForGroup(groupSize, perThreadData.data());
+    auto gfxCoreHelper = NEO::GfxCoreHelper::create(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    localIdsCache->setLocalIdsForGroup(groupSize, perThreadData.data(), *gfxCoreHelper.get());
     EXPECT_EQ(1U, localIdsCache->cache[0].accessCounter);
     EXPECT_EQ(192U, localIdsCache->cache[0].localIdsSize);
     EXPECT_EQ(512U, localIdsCache->cache[0].localIdsSizeAllocated);

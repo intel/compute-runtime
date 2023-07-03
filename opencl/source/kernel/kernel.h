@@ -410,6 +410,10 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     size_t getLocalIdsSizeForGroup(const Vec3<uint16_t> &groupSize) const;
     size_t getLocalIdsSizePerThread() const;
 
+    const GfxCoreHelper &getGfxCoreHelper() const {
+        return getDevice().getGfxCoreHelper();
+    }
+
   protected:
     struct KernelConfig {
         Vec3<size_t> gws;
