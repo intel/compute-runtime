@@ -57,11 +57,11 @@ GmmHelper::GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironmentArg) : ro
     UNRECOVERABLE_IF(!gmmClientContext);
 }
 
-uint64_t GmmHelper::canonize(uint64_t address) {
+uint64_t GmmHelper::canonize(uint64_t address) const {
     return static_cast<int64_t>(address << (64 - addressWidth)) >> (64 - addressWidth);
 }
 
-uint64_t GmmHelper::decanonize(uint64_t address) {
+uint64_t GmmHelper::decanonize(uint64_t address) const {
     return (address & maxNBitValue(addressWidth));
 }
 

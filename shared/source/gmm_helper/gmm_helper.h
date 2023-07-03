@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,8 @@ class GmmHelper {
 
     static constexpr uint64_t maxPossiblePitch = (1ull << 31);
 
-    uint64_t canonize(uint64_t address);
-    uint64_t decanonize(uint64_t address);
+    uint64_t canonize(uint64_t address) const;
+    uint64_t decanonize(uint64_t address) const;
 
     uint32_t getAddressWidth() { return addressWidth; };
     void setAddressWidth(uint32_t width) { addressWidth = width; };

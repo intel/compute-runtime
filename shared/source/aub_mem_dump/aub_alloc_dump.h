@@ -12,6 +12,10 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
+namespace NEO {
+class GmmHelper;
+}
+
 using namespace NEO;
 
 namespace aub_stream {
@@ -75,7 +79,7 @@ inline bool isImageDumpFormat(DumpFormat dumpFormat) {
 }
 
 template <typename GfxFamily>
-aub_stream::SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, DumpFormat dumpFormat);
+aub_stream::SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, const GmmHelper &gmmHelper, DumpFormat dumpFormat);
 
 template <typename GfxFamily>
 uint32_t getImageSurfaceTypeFromGmmResourceType(GMM_RESOURCE_TYPE gmmResourceType);

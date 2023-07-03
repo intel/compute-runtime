@@ -799,7 +799,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
     auto streamLocked = getAubStream()->lockStream();
 
     if (hardwareContextController) {
-        auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, dumpFormat));
+        auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, *this->peekGmmHelper(), dumpFormat));
         if (nullptr != surfaceInfo) {
             hardwareContextController->dumpSurface(*surfaceInfo.get());
         }

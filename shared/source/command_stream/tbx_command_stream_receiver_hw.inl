@@ -614,7 +614,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
     }
 
     auto dumpFormat = AubAllocDump::getDumpFormat(gfxAllocation);
-    auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, dumpFormat));
+    auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, *this->peekGmmHelper(), dumpFormat));
     if (surfaceInfo) {
         hardwareContextController->pollForCompletion();
         hardwareContextController->dumpSurface(*surfaceInfo.get());

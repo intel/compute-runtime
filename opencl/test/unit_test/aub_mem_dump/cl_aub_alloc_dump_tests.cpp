@@ -274,8 +274,8 @@ HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWheGetDumpSurfaceIsCall
     auto mockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(gfxAllocation->getDefaultGmm()->gmmResourceInfo.get());
     mockGmmResourceInfo->mockResourceCreateParams.MSAA.NumSamples = 2;
 
-    EXPECT_EQ(nullptr, AubAllocDump::getDumpSurfaceInfo<FamilyType>(*gfxAllocation, AubAllocDump::DumpFormat::IMAGE_BMP));
-    EXPECT_EQ(nullptr, AubAllocDump::getDumpSurfaceInfo<FamilyType>(*gfxAllocation, AubAllocDump::DumpFormat::IMAGE_TRE));
+    EXPECT_EQ(nullptr, AubAllocDump::getDumpSurfaceInfo<FamilyType>(*gfxAllocation, *pDevice->getGmmHelper(), AubAllocDump::DumpFormat::IMAGE_BMP));
+    EXPECT_EQ(nullptr, AubAllocDump::getDumpSurfaceInfo<FamilyType>(*gfxAllocation, *pDevice->getGmmHelper(), AubAllocDump::DumpFormat::IMAGE_TRE));
 }
 
 struct AubSurfaceDumpTests : public AubAllocDumpTests,
@@ -300,13 +300,12 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
 
     if (AubAllocDump::isBufferDumpFormat(dumpFormat)) {
         auto bufferAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-        bufferAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
         ASSERT_NE(nullptr, bufferAllocation);
 
         MockBuffer::setAllocationType(bufferAllocation, gmmHelper, isCompressed);
 
-        std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*bufferAllocation, dumpFormat));
+        std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*bufferAllocation, *pDevice->getGmmHelper(), dumpFormat));
         if (nullptr != surfaceInfo) {
             using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
             using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
@@ -338,7 +337,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
         auto gmm = imageAllocation->getDefaultGmm();
         gmm->isCompressionEnabled = isCompressed;
 
-        std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*imageAllocation, dumpFormat));
+        std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*imageAllocation, *pDevice->getGmmHelper(), dumpFormat));
         if (nullptr != surfaceInfo) {
             EXPECT_EQ(gmmHelper->decanonize(imageAllocation->getGpuAddress()), surfaceInfo->address);
             EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth()), surfaceInfo->width);
