@@ -243,6 +243,7 @@ struct MockMemoryNeoDrm : public Drm {
 
 struct MockMemoryPmt : public PlatformMonitoringTech {
 
+    using PlatformMonitoringTech::guid;
     using PlatformMonitoringTech::keyOffsetMap;
     std::vector<ze_result_t> mockReadValueReturnStatus{};
     std::vector<uint32_t> mockReadArgumentValue{};
@@ -253,7 +254,9 @@ struct MockMemoryPmt : public PlatformMonitoringTech {
     bool mockVfid0Status = false;
     bool mockVfid1Status = false;
     bool isRepeated = false;
-
+    void setGuid(std::string guid) {
+        this->guid = guid;
+    }
     MockMemoryPmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     ze_result_t readValue(const std::string key, uint32_t &val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
