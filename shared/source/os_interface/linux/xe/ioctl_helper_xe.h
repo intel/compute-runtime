@@ -110,7 +110,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t xeSyncObjCreate(uint32_t flags);
     bool xeSyncObjWait(uint32_t *handles, uint32_t count, uint64_t absTimeoutNsec, uint32_t flags, uint32_t *firstSignaled);
     void xeSyncObjDestroy(uint32_t handle);
-    void xeShowBindTable();
+
     int xeGetQuery(Query *data);
     struct drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance);
 
@@ -122,6 +122,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::vector<uint8_t> queryData(uint32_t queryId);
     int xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout);
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
+    void xeShowBindTable();
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;

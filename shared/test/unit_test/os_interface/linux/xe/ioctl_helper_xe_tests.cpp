@@ -33,6 +33,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::xeGetBindOpName;
     using IoctlHelperXe::xeGetClassName;
     using IoctlHelperXe::xeGetengineClassName;
+    using IoctlHelperXe::xeShowBindTable;
     using IoctlHelperXe::xeTimestampFrequency;
 };
 
@@ -1448,4 +1449,29 @@ TEST(IoctlHelperXeTest, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
 
     xeIoctlHelper->setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
+}
+
+TEST(IoctlHelperXeTest, whenXeShowBindTableIsCalledThenBindLogsArePrinted) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    BindInfo mockBindInfo{};
+    mockBindInfo.handle = 1u;
+    mockBindInfo.userptr = 2u;
+    mockBindInfo.addr = 3u;
+    mockBindInfo.size = 4u;
+    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
+
+    ::testing::internal::CaptureStderr();
+
+    DebugManager.flags.PrintDebugMessages.set(true);
+    xeIoctlHelper->xeShowBindTable();
+    DebugManager.flags.PrintDebugMessages.set(false);
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expectedOutput = R"(show bind: (<index> <handle> <userptr> <addr> <size>)
+   0 x00000001 x0000000000000002 x0000000000000003 x0000000000000004
+)";
+    EXPECT_STREQ(expectedOutput.c_str(), output.c_str());
 }

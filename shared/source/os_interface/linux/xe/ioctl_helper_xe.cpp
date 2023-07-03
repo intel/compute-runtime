@@ -1145,17 +1145,17 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
 }
 
 void IoctlHelperXe::xeShowBindTable() {
-#if 1
-    std::unique_lock<std::mutex> lock(xeLock);
-    xeLog("show bind: (<index> <handle> <userptr> <addr> <size>)\n", "");
-    for (unsigned int i = 0; i < bindInfo.size(); i++) {
-        xeLog(" %3d x%08x x%016lx x%016lx x%016lx\n", i,
-              bindInfo[i].handle,
-              bindInfo[i].userptr,
-              bindInfo[i].addr,
-              bindInfo[i].size);
+    if (DebugManager.flags.PrintDebugMessages.get()) {
+        std::unique_lock<std::mutex> lock(xeLock);
+        xeLog("show bind: (<index> <handle> <userptr> <addr> <size>)\n", "");
+        for (unsigned int i = 0; i < bindInfo.size(); i++) {
+            xeLog(" %3d x%08x x%016lx x%016lx x%016lx\n", i,
+                  bindInfo[i].handle,
+                  bindInfo[i].userptr,
+                  bindInfo[i].addr,
+                  bindInfo[i].size);
+        }
     }
-#endif
 }
 
 int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
