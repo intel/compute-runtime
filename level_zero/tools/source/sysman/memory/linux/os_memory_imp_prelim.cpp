@@ -267,6 +267,10 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
 }
 
 ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_bandwidth_t *pBandwidth) {
+    std::string guid = pPmt->getGuid();
+    if (guid != guid64BitMemoryCounters) {
+        return getHbmBandwidth(numHbmModules, pBandwidth);
+    }
     pBandwidth->readCounter = 0;
     pBandwidth->writeCounter = 0;
     pBandwidth->timestamp = 0;
