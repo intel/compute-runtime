@@ -11,7 +11,6 @@
 const std::string vendorIntel("Intel(R) Corporation");
 const std::string unknown("unknown");
 const std::string intelPciId("0x8086");
-const std::string guid64BitMemoryCounters("0xb15a0ede");
 constexpr uint32_t MbpsToBytesPerSecond = 125000;
 constexpr double milliVoltsFactor = 1000.0;
 constexpr uint32_t maxRasErrorCategoryCount = 7;

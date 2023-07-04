@@ -407,7 +407,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->setGuid(guid64BitMemoryCounters);
+
         pPmt->mockVfid0Status = true;
         pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
@@ -441,7 +441,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->setGuid(guid64BitMemoryCounters);
+
         pPmt->mockVfid1Status = true;
         pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
@@ -471,30 +471,11 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         zes_mem_bandwidth_t bandwidth;
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockReadArgumentValue.push_back(1);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
         pPmt->mockReadArgumentValue.push_back(0);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF1_VFID
         pPmt->mockReadArgumentValue.push_back(2);
-        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    }
-}
-
-HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthAndVF0_VFIDFailsForOldGuidThenFailureIsReturned, IsPVC) {
-    setLocalSupportedAndReinit(true);
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto &handle : handles) {
-        zes_mem_properties_t properties = {};
-        zesMemoryGetProperties(handle, &properties);
-
-        zes_mem_bandwidth_t bandwidth;
-
-        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->setGuid("0xb15a0edd");
-        pPmt->mockReadArgumentValue.push_back(1);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
@@ -511,7 +492,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         zes_mem_bandwidth_t bandwidth;
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockReadArgumentValue.push_back(1);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
         pPmt->mockReadArgumentValue.push_back(0);
@@ -535,7 +515,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         zes_mem_bandwidth_t bandwidth;
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockReadArgumentValue.push_back(1);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
         pPmt->mockReadArgumentValue.push_back(0);
@@ -561,7 +540,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         zes_mem_bandwidth_t bandwidth;
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockReadArgumentValue.push_back(1);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
         pPmt->mockReadArgumentValue.push_back(0);
@@ -755,7 +733,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGetBandwid
     auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
     hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
     auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pPmt->setGuid(guid64BitMemoryCounters);
+
     pPmt->mockVfid1Status = true;
     pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
     pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
@@ -777,7 +755,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGetBandwid
     auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
     hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
     auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pPmt->setGuid(guid64BitMemoryCounters);
+
     pPmt->mockVfid0Status = true;
     pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
     pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
@@ -836,7 +814,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidUsRevIdForRevisionBWhenCallingzes
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
         pPmt->mockVfid1Status = true;
-        pPmt->setGuid(guid64BitMemoryCounters);
         pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
 
@@ -1051,7 +1028,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenBothVfid0AndVfid1Are
         zes_mem_bandwidth_t bandwidth;
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockReadArgumentValue.push_back(0);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
         pPmt->mockReadArgumentValue.push_back(0);

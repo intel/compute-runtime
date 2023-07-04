@@ -22,9 +22,6 @@ const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/intel_pmt")
 const std::string PlatformMonitoringTech::telem("telem");
 uint32_t PlatformMonitoringTech::rootDeviceTelemNodeIndex = 0;
 
-std::string PlatformMonitoringTech::getGuid() {
-    return guid;
-}
 ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint32_t &value) {
     auto offset = keyOffsetMap.find(key);
     if (offset == keyOffsetMap.end()) {
@@ -149,6 +146,7 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
+    std::string guid;
     std::string guidPath = baseTelemSysFSNode + std::string("/guid");
     ze_result_t result = pFsAccess->read(guidPath, guid);
     if (ZE_RESULT_SUCCESS != result) {
