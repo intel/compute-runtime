@@ -2037,6 +2037,11 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
         flushData.contextOneTimeInit = true;
         flushData.estimatedSize += this->getCmdSizeForPerDssBackedBuffer(peekHwInfo());
     }
+
+    if (this->getPreemptionMode() == PreemptionMode::Initial) {
+        flushData.contextOneTimeInit = true;
+        flushData.estimatedSize += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(device.getPreemptionMode(), this->getPreemptionMode());
+    }
 }
 
 template <typename GfxFamily>
@@ -2050,6 +2055,11 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
 
         if (this->isRayTracingStateProgramingNeeded(device)) {
             this->dispatchRayTracingStateCommand(csrStream, device);
+        }
+
+        if (this->getPreemptionMode() == PreemptionMode::Initial) {
+            PreemptionHelper::programCmdStream<GfxFamily>(csrStream, device.getPreemptionMode(), this->getPreemptionMode(), this->getPreemptionAllocation());
+            this->setPreemptionMode(device.getPreemptionMode());
         }
     }
 }

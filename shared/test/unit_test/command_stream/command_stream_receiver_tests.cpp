@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/command_stream/wait_status.h"
@@ -44,6 +45,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
+#include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 #include "gtest/gtest.h"
 
@@ -4037,4 +4039,50 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     EXPECT_EQ(0u, commandStreamReceiver.latestFlushedTaskCount);
 
     EXPECT_FALSE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation, currentTaskCountType));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenPreemptionModeProgrammingNeededThenOneTimePreemptionModeDispatchedOnSupportingPlatform,
+          IsAtLeastXeHpCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    bool preemptionModeProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(pDevice->getPreemptionMode(), commandStreamReceiver.getPreemptionMode()) > 0;
+    auto preemptionDetails = getPreemptionTestHwDetails<FamilyType>();
+
+    EXPECT_EQ(NEO::PreemptionMode::Initial, commandStreamReceiver.getPreemptionMode());
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    EXPECT_EQ(pDevice->getPreemptionMode(), commandStreamReceiver.getPreemptionMode());
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto loadRegisterImmList = hwParserCsr.getCommandsList<MI_LOAD_REGISTER_IMM>();
+    bool foundPreemptionMode = false;
+    for (const auto &it : loadRegisterImmList) {
+        auto loadRegisterImmCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(it);
+        if (loadRegisterImmCmd->getRegisterOffset() == preemptionDetails.regAddress) {
+            foundPreemptionMode = true;
+        }
+    }
+    EXPECT_EQ(preemptionModeProgramming, foundPreemptionMode);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    loadRegisterImmList = hwParserCsr.getCommandsList<MI_LOAD_REGISTER_IMM>();
+
+    foundPreemptionMode = false;
+    for (const auto &it : loadRegisterImmList) {
+        auto loadRegisterImmCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(it);
+        if (loadRegisterImmCmd->getRegisterOffset() == preemptionDetails.regAddress) {
+            foundPreemptionMode = true;
+        }
+    }
+    EXPECT_EQ(false, foundPreemptionMode);
 }
