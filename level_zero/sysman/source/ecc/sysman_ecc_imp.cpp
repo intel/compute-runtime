@@ -7,6 +7,8 @@
 
 #include "level_zero/sysman/source/ecc/sysman_ecc_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 
 namespace L0 {
@@ -25,6 +27,7 @@ zes_device_ecc_state_t EccImp::getEccState(uint8_t state) {
 ze_result_t EccImp::getEccFwUtilInterface(FirmwareUtil *&pFwUtil) {
     pFwUtil = getFirmwareUtilInterface(pOsSysman);
     if (pFwUtil == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting FirmwareUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return ZE_RESULT_SUCCESS;
@@ -34,6 +37,7 @@ ze_result_t EccImp::deviceEccAvailable(ze_bool_t *pAvailable) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }
@@ -59,6 +63,7 @@ ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }
@@ -67,6 +72,7 @@ ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
     uint8_t pendingState = 0;
     ze_result_t result = pFwInterface->fwGetEccConfig(&currentState, &pendingState);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get ecc configuration and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     pState->currentState = getEccState(currentState);
@@ -84,6 +90,7 @@ ze_result_t EccImp::setEccState(const zes_device_ecc_desc_t *newState, zes_devic
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }
@@ -96,11 +103,13 @@ ze_result_t EccImp::setEccState(const zes_device_ecc_desc_t *newState, zes_devic
     } else if (newState->state == ZES_DEVICE_ECC_STATE_DISABLED) {
         state = eccStateDisable;
     } else {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid ecc enumeration and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INVALID_ENUMERATION);
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
     ze_result_t result = pFwInterface->fwSetEccConfig(state, &currentState, &pendingState);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set ecc configuration and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
