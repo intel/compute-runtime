@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ TEST(zeCommandListAppendWriteGlobalTimestamp, whenCalledThenRedirectedToObject) 
 
 TEST(zeCommandListAppendLaunchKernel, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t dispatchKernelArguments;
 
     auto result =

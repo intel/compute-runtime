@@ -36,7 +36,7 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
             mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
         }
         std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
-            std::unique_ptr<Kernel> mockKernel(new Mock<::L0::Kernel>());
+            std::unique_ptr<Kernel> mockKernel(new Mock<::L0::KernelImp>());
 
             return std::unique_ptr<BuiltinData>(new BuiltinData{mockModule.get(), std::move(mockKernel)});
         }

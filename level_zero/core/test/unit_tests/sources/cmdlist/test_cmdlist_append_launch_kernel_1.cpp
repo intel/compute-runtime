@@ -262,7 +262,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynch
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -290,7 +290,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsync
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -323,7 +323,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchro
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -375,7 +375,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -467,7 +467,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -510,7 +510,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
 HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyThenAdditionalPCIsAdded, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandListBase(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -562,7 +562,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAn
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -617,7 +617,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.groupSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
@@ -779,7 +779,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, WhenAddingKernelsThenResidencyContainerDoesNotContainDuplicatesAfterClosingCommandList) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -804,7 +804,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAddingKernelsThenResidencyContainerD
 
 HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemaphoreToCommandStream) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -853,7 +853,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
 
 HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsThenAddSemaphoreCommands) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -951,7 +951,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenC
         ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,
         ThreadArbitrationPolicy::RoundRobinAfterDependency};
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 

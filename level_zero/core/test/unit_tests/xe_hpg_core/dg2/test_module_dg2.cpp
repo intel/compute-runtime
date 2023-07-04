@@ -57,7 +57,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenKernelInitializeCalledThen
     kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.module = module.get();
     kernel.immutableData.kernelInfo = &kernelInfo;
 
@@ -113,7 +113,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerButDebuggerActiveSetWhenPatc
     kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.module = module.get();
     kernel.immutableData.kernelInfo = &kernelInfo;
 

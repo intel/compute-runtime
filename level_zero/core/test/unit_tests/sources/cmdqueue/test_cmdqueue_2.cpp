@@ -749,7 +749,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, res)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, commandList);
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.immutableData.device = device;
     size_t size = 10;
     size_t alignment = 1u;

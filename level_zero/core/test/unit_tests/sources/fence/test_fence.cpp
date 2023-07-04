@@ -363,7 +363,7 @@ HWTEST_F(FenceTest, givenPrintfKernelWhenSynchronizingFenceThenPrintPrintfOutput
                                                           false,
                                                           false,
                                                           returnValue));
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.returnWaitForCompletionWithTimeout = WaitStatus::Ready;
@@ -406,7 +406,7 @@ HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPr
                                                           false,
                                                           returnValue));
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
@@ -443,7 +443,7 @@ HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroT
                                                           false,
                                                           false,
                                                           returnValue));
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.returnWaitForCompletionWithTimeout = WaitStatus::Ready;

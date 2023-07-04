@@ -1071,11 +1071,11 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
     commandQueue->initialize(false, false, false);
 
-    Mock<::L0::Kernel> defaultKernel;
+    Mock<::L0::KernelImp> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     defaultKernel.module = pMockModule1.get();
 
-    Mock<::L0::Kernel> cooperativeKernel;
+    Mock<::L0::KernelImp> cooperativeKernel;
     auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     cooperativeKernel.module = pMockModule2.get();
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
@@ -1227,7 +1227,7 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
     commandQueue->initialize(false, false, false);
 
-    Mock<::L0::Kernel> defaultKernel;
+    Mock<::L0::KernelImp> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     defaultKernel.module = pMockModule1.get();
 
@@ -1265,11 +1265,11 @@ HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandLi
     auto commandQueue2 = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
     commandQueue2->initialize(false, false, false);
 
-    Mock<::L0::Kernel> defaultKernel;
+    Mock<::L0::KernelImp> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     defaultKernel.module = pMockModule1.get();
 
-    Mock<::L0::Kernel> cooperativeKernel;
+    Mock<::L0::KernelImp> cooperativeKernel;
     auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     cooperativeKernel.module = pMockModule2.get();
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;

@@ -55,7 +55,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     uint32_t globalWorkSizeXOffset = 0x20u;
     uint32_t globalWorkSizeYOffset = 0x24u;
     uint32_t globalWorkSizeZOffset = 0x28u;
@@ -224,7 +224,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.crossThreadDataSize = 0x60u;
     kernel.descriptor.kernelAttributes.flags.passInlineData = true;
 
@@ -1182,7 +1182,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWitchScratchAndPrivateWhenA
 
 HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchThenSizeIsProperlyEstimated) {
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
 
@@ -1222,7 +1222,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsWhenAppendLaunchCooperativeKernelIsCalledThenReturnError, IsAtLeastSkl) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
     kernel.module = pMockModule.get();
 
@@ -1253,7 +1253,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMem
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.PrintDebugMessages.set(true);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
     kernel.module = pMockModule.get();
 
@@ -1312,7 +1312,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogethe
     auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
     memoryMgr->turnOnFakingBigAllocations();
 
-    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::Kernel>>>();
+    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::KernelImp>>>();
     for (size_t i = 0; i < kernelsNb; i++) {
         EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), i);
         kernels.push_back(this->createKernelWithName(kernelNames[i]));
@@ -1349,7 +1349,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExc
     auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
     memoryMgr->turnOnFakingBigAllocations();
 
-    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::Kernel>>>();
+    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::KernelImp>>>();
     for (size_t i = 0; i < kernelsNb; i++) {
         EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
         kernels.push_back(this->createKernelWithName(kernelNames[i]));
@@ -1367,7 +1367,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     auto defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
     auto nonDefaultThreadArbitrationPolicy = defaultThreadArbitrationPolicy + 1;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
     kernel.module = pMockModule.get();
 

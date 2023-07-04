@@ -47,7 +47,7 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
     ze_group_count_t dispatchKernelArguments;
     void *buffer = nullptr;
 
-    void initializeKernel(WhiteBox<::L0::Kernel> &kernel,
+    void initializeKernel(WhiteBox<::L0::KernelImp> &kernel,
                           WhiteBox<::L0::KernelImmutableData> &kernelData,
                           L0::Device *device) {
 
@@ -105,7 +105,7 @@ GEN9TEST_F(CommandListCreateGen9, GivenDisabledMidThreadPreemptionWhenLaunchingK
     WhiteBox<::L0::KernelImmutableData> kernelInfoThreadGroupData = {};
     NEO::KernelDescriptor kernelDescriptor;
     kernelInfoThreadGroupData.kernelDescriptor = &kernelDescriptor;
-    WhiteBox<::L0::Kernel> kernelThreadGroup;
+    WhiteBox<::L0::KernelImp> kernelThreadGroup;
 
     kernelInfoThreadGroupData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
 
@@ -132,7 +132,7 @@ GEN9TEST_F(CommandListCreateGen9, GivenUsesFencesForReadWriteImagesWhenLaunching
     WhiteBox<::L0::KernelImmutableData> kernelInfoMidBatchData = {};
     NEO::KernelDescriptor kernelDescriptor;
     kernelInfoMidBatchData.kernelDescriptor = &kernelDescriptor;
-    WhiteBox<::L0::Kernel> kernelMidBatch;
+    WhiteBox<::L0::KernelImp> kernelMidBatch;
 
     kernelInfoMidBatchData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
     kernelInfoMidBatchData.kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages = 1;
@@ -162,7 +162,7 @@ GEN9TEST_F(CommandListCreateGen9, WhenCommandListHasLowerPreemptionLevelThenDoNo
     WhiteBox<::L0::KernelImmutableData> kernelInfoThreadGroupData = {};
     NEO::KernelDescriptor kernelDescriptor;
     kernelInfoThreadGroupData.kernelDescriptor = &kernelDescriptor;
-    WhiteBox<::L0::Kernel> kernelThreadGroup;
+    WhiteBox<::L0::KernelImp> kernelThreadGroup;
 
     kernelInfoThreadGroupData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
 
@@ -172,7 +172,7 @@ GEN9TEST_F(CommandListCreateGen9, WhenCommandListHasLowerPreemptionLevelThenDoNo
     NEO::KernelDescriptor kernelDescriptor2;
     kernelInfoMidThreadData.kernelDescriptor = &kernelDescriptor2;
 
-    WhiteBox<::L0::Kernel> kernelMidThread;
+    WhiteBox<::L0::KernelImp> kernelMidThread;
 
     initializeKernel(kernelMidThread, kernelInfoMidThreadData, device);
 

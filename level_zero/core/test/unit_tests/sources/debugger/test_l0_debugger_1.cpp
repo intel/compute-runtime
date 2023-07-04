@@ -161,7 +161,7 @@ using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero, Gen12Plus) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
@@ -191,7 +191,7 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceIsProgrammedWithL3DisabledMOCS, Gen12Plus) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
@@ -555,7 +555,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThe
     raii.mockProductHelper->returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
     raii.mockProductHelper->returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
@@ -615,7 +615,7 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     kernelImmData->kernelDescriptor = kernelDescriptor.get();
     kernelImmData->isaGraphicsAllocation.reset(new MockGraphicsAllocation());
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.kernelImmData = kernelImmData.get();
 
     CmdListKernelLaunchParams launchParams = {};

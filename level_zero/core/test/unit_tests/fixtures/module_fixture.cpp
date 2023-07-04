@@ -162,16 +162,16 @@ void ModuleFixture::createKernel() {
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
 
-    kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+    kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
     kernel->module = module.get();
     kernel->initialize(&desc);
 }
 
-std::unique_ptr<WhiteBox<::L0::Kernel>> ModuleFixture::createKernelWithName(std::string name) {
+std::unique_ptr<WhiteBox<::L0::KernelImp>> ModuleFixture::createKernelWithName(std::string name) {
     ze_kernel_desc_t desc = {};
     desc.pKernelName = name.c_str();
 
-    auto kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+    auto kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
     kernel->module = module.get();
     kernel->initialize(&desc);
     return kernel;
@@ -213,7 +213,7 @@ void MultiDeviceModuleFixture::createKernel(uint32_t rootDeviceIndex) {
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
 
-    kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+    kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
     kernel->module = modules[rootDeviceIndex].get();
     kernel->initialize(&desc);
 }

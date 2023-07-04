@@ -563,7 +563,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNo
     auto pCommandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
     pCommandQueue->initialize(false, false, false);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -640,7 +640,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     auto pCommandQueue = new MockCommandQueueHw<gfxCoreFamily>{&device, pMockCsr, &desc};
     pCommandQueue->initialize(false, false, false);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(&device, nullptr));
     kernel.module = pMockModule.get();
 

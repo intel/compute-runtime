@@ -277,7 +277,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenFlushTaskSubmissionDisa
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendLaunchKernelThenSuccessIsReturned) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
 
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
 
@@ -299,7 +299,7 @@ HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOpera
     NEO::DebugManager.flags.CompactL3FlushEventPacket.set(0);
     NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount{1, 1, 1};

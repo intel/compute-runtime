@@ -223,11 +223,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
     DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
     DebugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
 
-    Mock<::L0::Kernel> defaultKernel;
+    Mock<::L0::KernelImp> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     defaultKernel.module = pMockModule1.get();
 
-    Mock<::L0::Kernel> cooperativeKernel;
+    Mock<::L0::KernelImp> cooperativeKernel;
     auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     cooperativeKernel.module = pMockModule2.get();
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
@@ -297,11 +297,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
 HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
-    Mock<::L0::Kernel> defaultKernel;
+    Mock<::L0::KernelImp> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     defaultKernel.module = pMockModule1.get();
 
-    Mock<::L0::Kernel> cooperativeKernel;
+    Mock<::L0::KernelImp> cooperativeKernel;
     auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     cooperativeKernel.module = pMockModule2.get();
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
@@ -370,7 +370,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         using OPERATION = typename POSTSYNC_DATA::OPERATION;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-        Mock<::L0::Kernel> kernel;
+        Mock<::L0::KernelImp> kernel;
         auto module = std::unique_ptr<Module>(new Mock<Module>(input.device, nullptr));
         kernel.module = module.get();
 
@@ -1268,7 +1268,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
     DebugManagerStateRestore restorer;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     std::unique_ptr<Mock<Module>> module;
     bool alignEventPacketsForReset = true;
 };
@@ -1595,7 +1595,7 @@ using RayTracingMatcher = IsAtLeastXeHpCore;
 using CommandListAppendLaunchRayTracingKernelTest = Test<CommandListAppendLaunchRayTracingKernelFixture>;
 
 HWTEST2_F(CommandListAppendLaunchRayTracingKernelTest, givenKernelUsingRayTracingWhenAppendLaunchKernelIsCalledThenSuccessIsReturned, RayTracingMatcher) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 

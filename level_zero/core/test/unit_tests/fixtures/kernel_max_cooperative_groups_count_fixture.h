@@ -52,7 +52,7 @@ class KernelImpSuggestMaxCooperativeGroupCountTests : public Test<DeviceFixture>
         kernelInfo.kernelDescriptor->kernelAttributes.slmInlineSize = usedSlm;
         kernelInfo.kernelDescriptor->kernelAttributes.barrierCount = usesBarriers;
 
-        Mock<Kernel> kernel;
+        Mock<KernelImp> kernel;
         kernel.kernelImmData = &kernelInfo;
         auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
         kernel.module = module.get();

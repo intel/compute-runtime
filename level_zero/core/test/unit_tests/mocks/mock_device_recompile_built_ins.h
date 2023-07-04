@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
         ze_result_t createKernel(const ze_kernel_desc_t *desc,
                                  ze_kernel_handle_t *kernelHandle) override {
 
-            *kernelHandle = new Mock<Kernel>();
+            *kernelHandle = new Mock<KernelImp>();
             return ZE_RESULT_SUCCESS;
         }
     };

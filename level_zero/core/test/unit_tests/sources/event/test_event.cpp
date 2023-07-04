@@ -3436,7 +3436,7 @@ TEST_F(EventTests, GivenResetAllPacketsFalseWhenResetPacketsThenKernelCountAndPa
 TEST_F(EventTests, givenCallToEventQueryStatusWithKernelPointerReturnsCounter) {
     auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     Mock<Module> mockModule(this->device, nullptr);
-    Mock<Kernel> mockKernel;
+    Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
     mockKernel.module = &mockModule;
 
@@ -3451,7 +3451,7 @@ TEST_F(EventTests, givenCallToEventQueryStatusWithKernelPointerReturnsCounter) {
 TEST_F(EventTests, givenCallToEventQueryStatusWithNullKernelPointerReturnsCounter) {
     auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     Mock<Module> mockModule(this->device, nullptr);
-    Mock<Kernel> mockKernel;
+    Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
     mockKernel.module = &mockModule;
 

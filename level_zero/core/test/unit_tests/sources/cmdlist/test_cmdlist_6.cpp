@@ -597,7 +597,7 @@ using ImageSupport = IsNotAnyGfxCores<IGFX_GEN8_CORE, IGFX_XE_HPC_CORE>;
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBuiltinFlagIsSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -617,7 +617,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBui
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToExternalHostMemoryThenBuiltinFlagAndDestinationAllocSystemIsSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -638,7 +638,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToExternalHos
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmHostMemoryThenBuiltinFlagAndDestinationAllocSystemIsSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -665,7 +665,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmHostMemo
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmDeviceMemoryThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -696,7 +696,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmDeviceMe
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBuiltinFlagIsSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();

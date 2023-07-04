@@ -115,7 +115,7 @@ using singleAddressSpaceModeTest = Test<L0DebuggerSingleAddressSpaceFixture>;
 
 HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, Gen12Plus) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -160,7 +160,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -220,7 +220,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
 HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenExecutingThenDebuggerAllocationsAreNotResident) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -259,7 +259,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenEx
 }
 
 HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned, Gen12Plus) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -276,7 +276,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImm
 }
 
 HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned, Gen12Plus) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
 

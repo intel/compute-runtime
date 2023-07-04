@@ -17,15 +17,15 @@ namespace L0 {
 namespace ult {
 
 template <>
-struct WhiteBox<::L0::DriverHandle> : public ::L0::DriverHandleImp {
+struct WhiteBox<::L0::DriverHandleImp> : public ::L0::DriverHandleImp {
     using ::L0::DriverHandleImp::devices;
     using ::L0::DriverHandleImp::enableProgramDebugging;
     using ::L0::DriverHandleImp::svmAllocsManager;
 };
 
-using DriverHandle = WhiteBox<::L0::DriverHandle>;
+using DriverHandle = WhiteBox<::L0::DriverHandleImp>;
 template <>
-struct Mock<DriverHandle> : public DriverHandleImp {
+struct Mock<DriverHandle> : public DriverHandle {
     Mock();
     ~Mock() override;
 

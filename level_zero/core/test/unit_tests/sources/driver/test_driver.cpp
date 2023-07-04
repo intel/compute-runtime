@@ -400,7 +400,7 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
     L0EnvVariables envVariables = {};
     envVariables.programDebugging = false;
 
-    auto driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandleImp *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_EQ(NEO::DebuggingMode::Disabled, driverHandle->enableProgramDebugging);
@@ -596,7 +596,7 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue1WhenCreatingDriverThenEnablePr
     L0EnvVariables envVariables = {};
     envVariables.programDebugging = 1;
 
-    auto driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandleImp *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::Online);
@@ -618,7 +618,7 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue2WhenCreatingDriverThenEnablePr
     L0EnvVariables envVariables = {};
     envVariables.programDebugging = 2;
 
-    auto driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandleImp *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::Offline);

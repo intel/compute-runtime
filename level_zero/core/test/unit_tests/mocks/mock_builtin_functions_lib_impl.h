@@ -20,7 +20,7 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
     using BuiltinFunctionsLibImpl::imageBuiltins;
     MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
 
-        dummyKernel = std::unique_ptr<WhiteBox<::L0::Kernel>>(new Mock<::L0::Kernel>());
+        dummyKernel = std::unique_ptr<WhiteBox<::L0::KernelImp>>(new Mock<::L0::KernelImp>());
         dummyModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
         dummyKernel->module = dummyModule.get();
         mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -39,7 +39,7 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
         }
     }
 
-    std::unique_ptr<WhiteBox<::L0::Kernel>> dummyKernel;
+    std::unique_ptr<WhiteBox<::L0::KernelImp>> dummyKernel;
     std::unique_ptr<Module> dummyModule;
     std::unique_ptr<Module> mockModule;
 
@@ -52,7 +52,7 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
     }
 
     std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
-        std::unique_ptr<Kernel> mockKernel(new Mock<::L0::Kernel>());
+        std::unique_ptr<Kernel> mockKernel(new Mock<::L0::KernelImp>());
 
         return std::unique_ptr<BuiltinData>(new BuiltinData{mockModule.get(), std::move(mockKernel)});
     }

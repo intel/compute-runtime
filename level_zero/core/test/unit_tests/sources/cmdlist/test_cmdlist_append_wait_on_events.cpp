@@ -766,7 +766,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
         GTEST_SKIP();
     }
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -797,7 +797,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     }
 
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3dBytes);
-    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -823,7 +823,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     }
 
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBufferBytes);
-    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();

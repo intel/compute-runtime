@@ -2703,12 +2703,12 @@ kernels:
     EXPECT_EQ(mockModule.getMaxGroupSize(reducedKernelDescriptor), (maxWorkGroupSize >> 1));
 
     uint32_t groupSize[3] = {8, 4, (maxWorkGroupSize >> 5)}; // default max WGS
-    Mock<Kernel> defaultKernel;
+    Mock<KernelImp> defaultKernel;
     defaultKernel.module = &mockModule;
     defaultKernel.descriptor.kernelAttributes = defaultKernelDescriptor.kernelAttributes;
     EXPECT_EQ(ZE_RESULT_SUCCESS, defaultKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]));
 
-    Mock<Kernel> reducedKernel;
+    Mock<KernelImp> reducedKernel;
     reducedKernel.module = &mockModule;
     reducedKernel.descriptor.kernelAttributes = reducedKernelDescriptor.kernelAttributes;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, reducedKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]));
@@ -2750,7 +2750,7 @@ kernels:
     EXPECT_EQ(mockModule.getMaxGroupSize(reducedKernelDescriptor), (maxWorkGroupSize >> 1));
 
     uint32_t groupSize[3] = {0u, 0u, 0u};
-    Mock<Kernel> defaultKernel;
+    Mock<KernelImp> defaultKernel;
     defaultKernel.module = &mockModule;
     defaultKernel.descriptor.kernelAttributes = defaultKernelDescriptor.kernelAttributes;
     EXPECT_EQ(ZE_RESULT_SUCCESS, defaultKernel.suggestGroupSize(4096u, 4096u, 4096u, &groupSize[0], &groupSize[1], &groupSize[2]));
@@ -2763,7 +2763,7 @@ kernels:
     EXPECT_LE(groupSize[0] * groupSize[1] * groupSize[2], maxWorkGroupSize);
 
     groupSize[0] = groupSize[1] = groupSize[2] = 0u;
-    Mock<Kernel> reducedKernel;
+    Mock<KernelImp> reducedKernel;
     reducedKernel.module = &mockModule;
     reducedKernel.descriptor.kernelAttributes = reducedKernelDescriptor.kernelAttributes;
     EXPECT_EQ(ZE_RESULT_SUCCESS, reducedKernel.suggestGroupSize(maxWorkGroupSize, 1u, 1u, &groupSize[0], &groupSize[1], &groupSize[2]));
@@ -3150,7 +3150,7 @@ HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAll
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto module = std::unique_ptr<L0::Module>(Module::create(device, &moduleDesc, nullptr, ModuleType::User, &result));
 
-    auto kernel = std::make_unique<Mock<Kernel>>();
+    auto kernel = std::make_unique<Mock<KernelImp>>();
     ASSERT_NE(nullptr, kernel);
 
     kernel->module = module.get();

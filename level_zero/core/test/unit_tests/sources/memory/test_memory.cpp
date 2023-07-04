@@ -3193,7 +3193,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
 
-        kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+        kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
         kernel->module = module.get();
         kernel->initialize(&desc);
     }
@@ -3217,7 +3217,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::unique_ptr<L0::Module> module;
-    std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
+    std::unique_ptr<WhiteBox<::L0::KernelImp>> kernel;
 
     const uint32_t numRootDevices = 2u;
     const uint32_t numSubDevices = 2u;

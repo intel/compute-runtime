@@ -1063,7 +1063,7 @@ HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromImageToImageThenBli
 }
 
 HWTEST2_F(CommandListAppend, givenComputeCommandListAndEventIsUsedWhenCopyFromImageToImageThenKernelImageCopyCalled, ImageSupport) {
-    Mock<::L0::Kernel> *mockKernel = static_cast<Mock<::L0::Kernel> *>(device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion));
+    Mock<::L0::KernelImp> *mockKernel = static_cast<Mock<::L0::KernelImp> *>(device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion));
     mockKernel->setArgRedescribedImageCallBase = false;
 
     MockCommandListHw<gfxCoreFamily> cmdList;

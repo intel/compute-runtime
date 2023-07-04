@@ -88,7 +88,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -265,7 +265,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhenAppendingLaunchKernelIndirectThenKernelIsStoredOnEvent, IsAtLeastSkl) {
     Mock<Module> module(this->device, nullptr);
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -293,7 +293,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhe
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelIndirectThenKernelIsNotStoredOnEvent, IsAtLeastSkl) {
     Mock<Module> module(this->device, nullptr);
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -320,7 +320,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAp
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhenAppendingLaunchKernelWithParamThenKernelIsStoredOnEvent, IsAtLeastSkl) {
     Mock<Module> module(this->device, nullptr);
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -353,7 +353,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhe
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelWithParamThenKernelIsNotStoredOnEvent, IsAtLeastSkl) {
     Mock<Module> module(this->device, nullptr);
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -437,7 +437,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsAtLeastSkl) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -493,7 +493,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenDisableOverdispatchPropertyWhenUpdateStreamPropertiesIsCalledThenRequiredStateAndFinalStateAreCorrectlySet, IsAtLeastSkl) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -572,7 +572,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllow
 HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsAndAllowMixingWhenAppendLaunchCooperativeKernelIsCalledThenReturnSuccess, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -2060,7 +2060,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
 
 struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {
     template <typename FamilyType>
-    uint64_t getIndirectHeapOffsetForImplicitArgsBuffer(const Mock<::L0::Kernel> &kernel) {
+    uint64_t getIndirectHeapOffsetForImplicitArgsBuffer(const Mock<::L0::KernelImp> &kernel) {
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
             auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor());
             return implicitArgsProgrammingSize - sizeof(ImplicitArgs);
@@ -2076,7 +2076,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
     kernel.immutableData.crossThreadDataSize = sizeof(uint64_t);

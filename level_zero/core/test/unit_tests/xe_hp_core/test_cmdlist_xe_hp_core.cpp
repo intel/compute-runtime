@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 using CommandListAppendLaunchKernelWithAtomics = Test<ModuleFixture>;
 
 HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithNoGlobalAtomicsThenLastSentGlobalAtomicsInContainerStaysFalse, IsXeHpCore) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -54,7 +54,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithNoGlobalAtomi
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomicsThenLastSentGlobalAtomicsInContainerIsSetToTrue, IsXeHpCore) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -77,7 +77,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomics
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomicsAndLastSentGlobalAtomicsInContainerTrueThenLastSentGlobalAtomicsStaysTrue, IsXeHpCore) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -100,7 +100,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomics
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithNoGlobalAtomicsAndLastSentGlobalAtomicsInContainerTrueThenLastSentGlobalAtomicsIsSetToFalse, IsXeHpCore) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -123,7 +123,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithNoGlobalAtomi
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomicsAndNoImplicitScalingThenLastSentGlobalAtomicsInContainerStaysFalse, IsXeHpCore) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -161,7 +161,7 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEv
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -219,7 +219,7 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithTimestamp
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -286,7 +286,7 @@ using CommandListAppendLaunchKernelL3Flush = Test<CommandListAppendLaunchKernelL
 HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventAndWithoutWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -323,7 +323,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventAndWithoutWa
 HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWithoutWalkerPartitionThenEventL3FlushWaSet, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -355,7 +355,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWit
 HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventZeroScopeWithoutWalkerPartitionThenEventL3FlushNotSet, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -386,7 +386,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventZeroScopeWit
 HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWithoutWalkerPartitionThenSkipOddPacketsDuringQuery, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 

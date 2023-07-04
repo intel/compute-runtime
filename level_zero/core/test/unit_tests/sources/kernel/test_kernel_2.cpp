@@ -25,9 +25,9 @@ namespace L0 {
 #include "level_zero/core/source/kernel/patch_with_implicit_surface.inl"
 namespace ult {
 
-using KernelImp = Test<DeviceFixture>;
+using KernelImpTest = Test<DeviceFixture>;
 
-TEST_F(KernelImp, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {
+TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {
     uint32_t *crossThreadData =
         reinterpret_cast<uint32_t *>(alignedMalloc(sizeof(uint32_t[6]), 32));
 
@@ -41,7 +41,7 @@ TEST_F(KernelImp, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAn
     kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[1] = 4 * sizeof(uint32_t);
     kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[2] = 5 * sizeof(uint32_t);
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData));
     kernel.crossThreadDataSize = sizeof(uint32_t[6]);
@@ -66,13 +66,13 @@ TEST_F(KernelImp, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAn
     alignedFree(crossThreadData);
 }
 
-TEST_F(KernelImp, givenExecutionMaskWithoutReminderWhenProgrammingItsValueThenSetValidNumberOfBits) {
+TEST_F(KernelImpTest, givenExecutionMaskWithoutReminderWhenProgrammingItsValueThenSetValidNumberOfBits) {
     NEO::KernelDescriptor descriptor = {};
     WhiteBox<KernelImmutableData> kernelInfo = {};
     kernelInfo.kernelDescriptor = &descriptor;
 
     Mock<Module> module(device, nullptr);
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.module = &module;
 
@@ -90,7 +90,7 @@ TEST_F(KernelImp, givenExecutionMaskWithoutReminderWhenProgrammingItsValueThenSe
     }
 }
 
-TEST_F(KernelImp, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
+TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
     DebugManagerStateRestore restorer;
 
     WhiteBox<KernelImmutableData> kernelInfo = {};
@@ -102,7 +102,7 @@ TEST_F(KernelImp, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
     Mock<Module> module(device, nullptr);
     module.getMaxGroupSizeResult = 8;
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.module = &module;
     uint32_t groupSize[3];
@@ -112,7 +112,7 @@ TEST_F(KernelImp, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
     EXPECT_EQ(1U, groupSize[2]);
 }
 
-TEST_F(KernelImp, WhenSuggestingGroupSizeThenCacheValues) {
+TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenCacheValues) {
     DebugManagerStateRestore restorer;
 
     WhiteBox<KernelImmutableData> kernelInfo = {};
@@ -124,7 +124,7 @@ TEST_F(KernelImp, WhenSuggestingGroupSizeThenCacheValues) {
     Mock<Module> module(device, nullptr);
     module.getMaxGroupSizeResult = 8;
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.module = &module;
 
@@ -238,7 +238,7 @@ TEST_P(KernelImpSuggestGroupSize, WhenSuggestingGroupThenProperGroupSizeChosen) 
 
     uint32_t size = GetParam();
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.module = &module;
     uint32_t groupSize[3];
@@ -296,7 +296,7 @@ TEST_P(KernelImpSuggestGroupSize, WhenSlmSizeExceedsLocalMemorySizeAndSuggesting
 
     uint32_t size = GetParam();
 
-    Mock<Kernel> function;
+    Mock<KernelImp> function;
     function.kernelImmData = &funcInfo;
     function.module = &module;
     uint32_t groupSize[3];
@@ -317,20 +317,20 @@ TEST_P(KernelImpSuggestGroupSize, WhenSlmSizeExceedsLocalMemorySizeAndSuggesting
     EXPECT_EQ(0, strcmp(expectedOutput.c_str(), errorMsg));
 }
 
-TEST_F(KernelImp, GivenInvalidValuesWhenSettingGroupSizeThenInvalidArgumentErrorIsReturned) {
-    Mock<Kernel> kernel;
+TEST_F(KernelImpTest, GivenInvalidValuesWhenSettingGroupSizeThenInvalidArgumentErrorIsReturned) {
+    Mock<KernelImp> kernel;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, kernel.KernelImp::setGroupSize(0U, 1U, 1U));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, kernel.KernelImp::setGroupSize(1U, 0U, 1U));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, kernel.KernelImp::setGroupSize(1U, 1U, 0U));
 }
 
-TEST_F(KernelImp, givenSetGroupSizeWithGreaterGroupSizeThanAllowedThenCorrectErrorCodeIsReturned) {
+TEST_F(KernelImpTest, givenSetGroupSizeWithGreaterGroupSizeThanAllowedThenCorrectErrorCodeIsReturned) {
     WhiteBox<KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
     kernelInfo.kernelDescriptor = &descriptor;
 
     Mock<Module> module(device, nullptr);
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.module = &module;
 
@@ -344,13 +344,13 @@ TEST_F(KernelImp, givenSetGroupSizeWithGreaterGroupSizeThanAllowedThenCorrectErr
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, kernel.KernelImp::setGroupSize(1U, 1U, maxGroupSizeZ + 1U));
 }
 
-TEST_F(KernelImp, GivenNumChannelsZeroWhenSettingGroupSizeThenLocalIdsNotGenerated) {
+TEST_F(KernelImpTest, GivenNumChannelsZeroWhenSettingGroupSizeThenLocalIdsNotGenerated) {
     WhiteBox<KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
     kernelInfo.kernelDescriptor = &descriptor;
 
     Mock<Module> module(device, nullptr);
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.module = &module;
 
@@ -375,7 +375,7 @@ TEST_F(KernelImp, GivenNumChannelsZeroWhenSettingGroupSizeThenLocalIdsNotGenerat
     EXPECT_EQ(memAfter, memBefore);
 }
 
-HWTEST_F(KernelImp, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenIsDebuggerActiveIsSetCorrectly) {
+HWTEST_F(KernelImpTest, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenIsDebuggerActiveIsSetCorrectly) {
     static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
     static size_t encodeBufferSurfaceStateCalled{};
     savedSurfaceStateArgs = {};
@@ -437,7 +437,7 @@ HWTEST_F(KernelImp, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenI
 }
 
 TEST(zeKernelGetProperties, WhenGettingKernelPropertiesThenSuccessIsReturned) {
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
 
     ze_kernel_properties_t properties = {};
 
@@ -475,7 +475,7 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     inlineSampler.isNormalized = false;
 
     Mock<Module> module(device, nullptr);
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.module = &module;
     kernel.kernelImmData = &kernelImmData;
     kernel.dynamicStateHeapData.reset(new uint8_t[64 + 16]);

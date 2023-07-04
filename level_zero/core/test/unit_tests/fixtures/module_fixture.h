@@ -139,14 +139,14 @@ struct ModuleFixture : public DeviceFixture {
 
     void createKernel();
 
-    std::unique_ptr<WhiteBox<::L0::Kernel>> createKernelWithName(std::string name);
+    std::unique_ptr<WhiteBox<::L0::KernelImp>> createKernelWithName(std::string name);
 
     void tearDown();
 
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::unique_ptr<L0::Module> module;
-    std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
+    std::unique_ptr<WhiteBox<::L0::KernelImp>> kernel;
     std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
     DebugManagerStateRestore restore;
 };
@@ -163,7 +163,7 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::vector<std::unique_ptr<L0::Module>> modules;
-    std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
+    std::unique_ptr<WhiteBox<::L0::KernelImp>> kernel;
     std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
 };
 

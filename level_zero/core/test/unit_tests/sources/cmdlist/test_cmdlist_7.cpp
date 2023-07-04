@@ -287,7 +287,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchMultipl
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchIndirectKernelIsCalledThenSuccessIsReturned, IsAtLeastSkl) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.groupSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
@@ -325,7 +325,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStr
     DebugManagerStateRestore restorer;
     auto &productHelper = device->getProductHelper();
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -377,7 +377,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     DebugManagerStateRestore restorer;
     auto &productHelper = device->getProductHelper();
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 
@@ -422,7 +422,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertes
     DebugManagerStateRestore restorer;
     auto &productHelper = device->getProductHelper();
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 

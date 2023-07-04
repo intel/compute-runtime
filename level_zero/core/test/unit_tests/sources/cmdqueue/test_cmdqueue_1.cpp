@@ -81,7 +81,7 @@ TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutput
                                                           false,
                                                           returnValue));
 
-    Mock<Kernel> kernel1, kernel2;
+    Mock<KernelImp> kernel1, kernel2;
 
     commandQueue->printfKernelContainer.push_back(&kernel1);
     commandQueue->printfKernelContainer.push_back(&kernel2);
@@ -107,7 +107,7 @@ HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingBy
                                                           false,
                                                           returnValue));
 
-    Mock<Kernel> kernel1;
+    Mock<KernelImp> kernel1;
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.callBaseWaitForCompletionWithTimeout = false;
@@ -140,7 +140,7 @@ HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingTh
                                                           false,
                                                           returnValue));
 
-    Mock<Kernel> kernel1;
+    Mock<KernelImp> kernel1;
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
@@ -325,7 +325,7 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
                                                           returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.immutableData.device = device;
 
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -378,7 +378,7 @@ HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperWhenExecutingThenMergeState
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->logicalStateHelper.reset(mockCsrLogicalStateHelper);
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.immutableData.device = device;
 
     auto commandList = std::unique_ptr<L0::ult::CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -417,7 +417,7 @@ HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperAndImmediateCmdListWhenExec
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->logicalStateHelper.reset(mockCsrLogicalStateHelper);
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.immutableData.device = device;
 
     auto commandList = std::unique_ptr<L0::ult::CommandList>(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
@@ -442,7 +442,7 @@ HWTEST2_F(CommandQueueCreate, givenOutOfHostMemoryErrorFromSubmitBatchBufferWhen
     commandQueue->initialize(false, false, false);
     commandQueue->submitBatchBufferReturnValue = NEO::SubmissionStatus::OUT_OF_HOST_MEMORY;
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.immutableData.device = device;
 
     ze_result_t returnValue;
@@ -466,7 +466,7 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
     MockCommandQueueHw<gfxCoreFamily> commandQueue(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
     commandQueue.reserveLinearStreamSizeReturnValue = NEO::WaitStatus::GpuHang;
 
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.immutableData.device = device;
 
     ze_result_t returnValue;
@@ -2165,12 +2165,12 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
                                                           returnValue));
     std::unique_lock<std::mutex> lock;
     auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
+    reinterpret_cast<WhiteBox<::L0::DriverHandleImp> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
 
     commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
     EXPECT_EQ(mockSvmAllocsManager->makeIndirectAllocationsResidentCalledTimes, 1u);
     EXPECT_EQ(mockSvmAllocsManager->addInternalAllocationsToResidencyContainerCalledTimes, 0u);
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
+    reinterpret_cast<WhiteBox<::L0::DriverHandleImp> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
     commandQueue->destroy();
 }
 
@@ -2191,12 +2191,12 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
                                                           returnValue));
     std::unique_lock<std::mutex> lock;
     auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
+    reinterpret_cast<WhiteBox<::L0::DriverHandleImp> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
 
     commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
     EXPECT_EQ(mockSvmAllocsManager->makeIndirectAllocationsResidentCalledTimes, 0u);
     EXPECT_EQ(mockSvmAllocsManager->addInternalAllocationsToResidencyContainerCalledTimes, 1u);
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
+    reinterpret_cast<WhiteBox<::L0::DriverHandleImp> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
     lock.unlock();
     commandQueue->destroy();
 }
@@ -2218,14 +2218,14 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
                                                           returnValue));
     std::unique_lock<std::mutex> lock;
     auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
+    reinterpret_cast<WhiteBox<::L0::DriverHandleImp> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
 
     commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
     std::thread th([&] {
         EXPECT_FALSE(mockSvmAllocsManager->mtxForIndirectAccess.try_lock());
     });
     th.join();
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
+    reinterpret_cast<WhiteBox<::L0::DriverHandleImp> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
     lock.unlock();
     commandQueue->destroy();
 }

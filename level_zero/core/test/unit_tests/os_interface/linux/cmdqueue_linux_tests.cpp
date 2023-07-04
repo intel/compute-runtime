@@ -52,7 +52,7 @@ HWTEST2_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecutingComman
                                                           returnValue));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    Mock<Kernel> kernel;
+    Mock<KernelImp> kernel;
     kernel.immutableData.isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
     kernel.immutableData.device = device;

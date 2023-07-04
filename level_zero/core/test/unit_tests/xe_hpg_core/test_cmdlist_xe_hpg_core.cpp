@@ -342,7 +342,7 @@ struct ProgramAllFieldsInComputeMode {
 
 HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenWithoutTrackingFieldsChangedWithTrackingUpdatedClean, ProgramAllFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto &productHelper = device->getProductHelper();
 
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -383,7 +383,7 @@ struct ProgramDirtyFieldsInComputeMode {
 
 HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceDirtyFieldsChangedAndWithTrackingIsCleanAfterFirstCall, ProgramDirtyFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
     auto commandList = std::make_unique<CommandListAdjustStateComputeMode<productFamily>>();
@@ -416,7 +416,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpgCore, givenEventWhenAppendKernelIsCa
     DebugManagerStateRestore restorer;
     DebugManager.flags.CompactL3FlushEventPacket.set(0);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 

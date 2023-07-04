@@ -33,7 +33,7 @@ using CommandListAppendLaunchKernelXeHpcCore = Test<LocalMemoryModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsXeHpcCore) {
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = device->getProductHelper();
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -671,7 +671,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 
@@ -739,7 +739,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 
@@ -865,7 +865,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 
@@ -937,7 +937,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 
@@ -1005,7 +1005,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 

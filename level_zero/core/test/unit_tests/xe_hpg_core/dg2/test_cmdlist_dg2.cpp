@@ -67,7 +67,7 @@ HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAddi
     EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
 }
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegularCommandListsCalledAndLwsIsOddThenFusedEuIsDisabled, IsDG2) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -84,7 +84,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
     EXPECT_TRUE(commandList->finalStreamState.frontEndState.disableEUFusion.value);
 }
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegularCommandListsCalledAndLwsIsNonOddThenFusedEuIsNotDisabled, IsDG2) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -102,7 +102,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
 }
 
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegularCommandListsCalledAndLwsOneAndDispatchIsIndirectThenFusedEuIsDisabled, IsDG2) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -120,7 +120,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
 }
 
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlushTaskDispatchFlagsCalledAndLwsIsOddThenFusedEuIsDisabled, IsDG2) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -137,7 +137,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
     EXPECT_TRUE(commandList->requiredStreamState.frontEndState.disableEUFusion.value);
 }
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlushTaskDispatchFlagsCalledAndLwsIsNonOddThenFusedEuIsNotDisabled, IsDG2) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -155,7 +155,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
 }
 
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlushTaskDispatchFlagsCalledAndLwsOneAndDispatchIsIndirectThenFusedEuIsDisabled, IsDG2) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
@@ -173,7 +173,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
 }
 
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlushTaskDispatchFlagsCalledAndGroupCountIsNullptrThenFusedEuIsNotDisabled, IsDG2) {
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 

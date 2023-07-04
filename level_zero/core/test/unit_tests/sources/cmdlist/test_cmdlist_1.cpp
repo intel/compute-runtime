@@ -1015,7 +1015,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1061,7 +1061,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
     if constexpr (FamilyType::supportsSampler) {
         auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-        auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
         mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
         auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
@@ -1109,7 +1109,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1171,7 +1171,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
 
         if constexpr (FamilyType::supportsSampler) {
             auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-            auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+            auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
             mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
             auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
@@ -1205,7 +1205,7 @@ HWTEST2_F(CommandListCreate, whenDispatchingThenPassNumCsrClients, IsAtLeastXeHp
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1229,7 +1229,7 @@ HWTEST_F(CommandListCreate, givenSignalEventWhenCallingSynchronizeThenUnregister
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1298,7 +1298,7 @@ HWTEST_F(CommandListCreate, givenDebugFlagSetWhenCallingSynchronizeThenDontUnreg
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1354,7 +1354,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1414,7 +1414,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
         if constexpr (FamilyType::supportsSampler) {
             auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
-            auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+            auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
             mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
             auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
@@ -1476,7 +1476,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1517,7 +1517,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     cmdList->commandContainer.setImmediateCmdListCsr(ultCsr);
     cmdList->enableInOrderExecution();
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 

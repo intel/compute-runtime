@@ -190,7 +190,7 @@ TEST_F(ModuleWithSLDTest, GivenNoDebugDataWhenInitializingModuleThenRelocatedDeb
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.module = module.get();
     kernel.immutableData.kernelInfo = kernelInfo;
 
@@ -234,7 +234,7 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithSingleRelocationWhenInitializingModu
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
 
@@ -286,7 +286,7 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithMultipleRelocationsWhenInitializingM
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
@@ -362,7 +362,7 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
     kernelInfo.heapInfo.kernelHeapSize = 1;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.module = module.get();
     kernel.immutableData.kernelInfo = &kernelInfo;
 
@@ -462,7 +462,7 @@ HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThen
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
@@ -509,7 +509,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializing
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
@@ -554,7 +554,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenBuiltinModuleWhenInitializingModuleThenM
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
@@ -602,7 +602,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
@@ -656,7 +656,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoN
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
@@ -845,7 +845,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModul
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
@@ -898,7 +898,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenDestroyingModuleThenNotif
     kernelInfo->heapInfo.kernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
 
-    Mock<::L0::Kernel> kernelMock;
+    Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;

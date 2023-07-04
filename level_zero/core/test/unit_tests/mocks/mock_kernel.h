@@ -39,7 +39,7 @@ struct WhiteBox<::L0::KernelImmutableData> : public ::L0::KernelImmutableData {
 };
 
 template <>
-struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
+struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using BaseClass = ::L0::KernelImp;
     using BaseClass::BaseClass;
     using ::L0::KernelImp::createPrintfBuffer;
@@ -79,15 +79,15 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
 };
 
 template <>
-struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
-    using BaseClass = WhiteBox<::L0::Kernel>;
+struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
+    using BaseClass = WhiteBox<::L0::KernelImp>;
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_properties_t * pKernelProperties))
 
     ADDMETHOD(setArgRedescribedImage, ze_result_t, true, ZE_RESULT_SUCCESS,
               (uint32_t argIndex, ze_image_handle_t argVal),
               (argIndex, argVal));
 
-    Mock() : BaseClass(nullptr) {
+    Mock() : BaseClass() {
         NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
         iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
         kernelTokens.header = &kernelHeader;
