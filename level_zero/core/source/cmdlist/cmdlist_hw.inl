@@ -2187,7 +2187,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed) {
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint32_t waitValue, uint32_t offset, bool relaxedOrderingAllowed) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     UNRECOVERABLE_IF(waitValue > std::numeric_limits<uint32_t>::max());
@@ -2198,13 +2198,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
 
     for (uint32_t i = 0; i < this->partitionCount; i++) {
         if (relaxedOrderingAllowed) {
-            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, static_cast<uint32_t>(waitValue),
-                                                                                                   NEO::CompareOperation::Less, true);
+            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue, NEO::CompareOperation::Less, true);
 
         } else {
             NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
-                                                                       gpuAddress,
-                                                                       static_cast<uint32_t>(waitValue),
+                                                                       gpuAddress, waitValue,
                                                                        COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
         }
 
@@ -2314,14 +2312,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter() {
-    uint64_t signalValue = this->inOrderDependencyCounter + 1;
-    auto lowPart = static_cast<uint32_t>(signalValue & 0x0000FFFFFFFFULL);
-    auto highPart = static_cast<uint32_t>(signalValue >> 32);
+    uint32_t signalValue = this->inOrderDependencyCounter + 1;
 
     uint64_t gpuVa = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
 
     NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(*commandContainer.getCommandStream(), gpuVa,
-                                                           lowPart, highPart, true, (this->partitionCount > 1));
+                                                           signalValue, 0, false, (this->partitionCount > 1));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
