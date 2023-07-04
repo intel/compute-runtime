@@ -50,6 +50,13 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
             args.stateBaseAddressCmd->setSurfaceStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->surfaceStateBaseAddress.value));
         }
+
+        if (args.sbaProperties->surfaceStateBaseAddress.value != StreamProperty64::initValue) {
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->surfaceStateBaseAddress.value));
+            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(args.sbaProperties->surfaceStateSize.value));
+        }
+
         if (args.sbaProperties->statelessMocs.value != StreamProperty::initValue) {
             args.statelessMocsIndex = static_cast<uint32_t>(args.sbaProperties->statelessMocs.value);
         }
