@@ -134,7 +134,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
-    auto hostAddress = static_cast<uint64_t *>(this->inOrderExecDataAllocation->getUnderlyingBuffer());
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(this->inOrderExecDataAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
     bool signaled = true;
 
     for (uint32_t i = 0; i < this->getPacketsInUse(); i++) {
@@ -403,6 +403,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
         inOrderExecEvent = false;
         inOrderExecDataAllocation = nullptr;
         inOrderExecSignalValue = 0;
+        inOrderAllocationOffset = 0;
     }
     unsetCmdQueue(false);
     this->resetCompletionStatus();

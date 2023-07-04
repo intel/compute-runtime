@@ -391,11 +391,12 @@ void Event::setIsCompleted() {
     unsetCmdQueue(true);
 }
 
-void Event::enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue) {
+void Event::enableInOrderExecMode(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue, uint32_t allocationOffset) {
     inOrderExecEvent = true;
 
     inOrderExecSignalValue = signalValue;
     inOrderExecDataAllocation = &inOrderDependenciesAllocation;
+    inOrderAllocationOffset = allocationOffset;
 }
 
 void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {

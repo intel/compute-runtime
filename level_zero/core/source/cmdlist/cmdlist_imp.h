@@ -44,6 +44,7 @@ struct CommandListImp : CommandList {
     std::unique_ptr<NEO::LogicalStateHelper> nonImmediateLogicalStateHelper;
     NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;
     uint64_t inOrderDependencyCounter = 0;
+    uint32_t inOrderAllocationOffset = 0;
     bool inOrderExecutionEnabled = false;
 
     ~CommandListImp() override = default;

@@ -42,6 +42,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::BaseClass;
     using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::executeCommandListImmediate;
+    using BaseClass::inOrderAllocationOffset;
     using BaseClass::isCopyOnly;
     using BaseClass::isInOrderExecutionEnabled;
 
@@ -183,8 +184,9 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     void printKernelsPrintfOutput(bool hangDetected);
     ze_result_t synchronizeInOrderExecution(uint64_t timeout) const;
-    bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch);
+    bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const;
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
+    void handleInOrderDependencyCounter();
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;

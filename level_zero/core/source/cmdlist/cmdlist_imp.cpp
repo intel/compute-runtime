@@ -232,7 +232,7 @@ void CommandListImp::enableInOrderExecution() {
 
     auto device = this->device->getNEODevice();
 
-    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), sizeof(uint32_t), NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, device->getDeviceBitfield()};
+    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, device->getDeviceBitfield()};
 
     inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
 

@@ -676,6 +676,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         using EventImp<uint32_t>::maxPacketCount;
         using EventImp<uint32_t>::inOrderExecDataAllocation;
         using EventImp<uint32_t>::inOrderExecSignalValue;
+        using EventImp<uint32_t>::inOrderAllocationOffset;
     };
 
     void SetUp() override {
@@ -766,22 +767,30 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEven
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
+    EXPECT_EQ(MemoryConstants::pageSize64k, immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
+
     EXPECT_TRUE(events[0]->inOrderExecEvent);
     EXPECT_EQ(events[0]->inOrderExecSignalValue, immCmdList->inOrderDependencyCounter);
     EXPECT_EQ(events[0]->inOrderExecDataAllocation, immCmdList->inOrderDependencyCounterAllocation);
+    EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
 
+    events[0]->inOrderAllocationOffset = 123;
     events[0]->reset();
 
     EXPECT_FALSE(events[0]->inOrderExecEvent);
 
     EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
     EXPECT_EQ(events[0]->inOrderExecDataAllocation, nullptr);
+    EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphoreForPreviousDispatch, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    uint32_t counterOffset = 64;
+
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderAllocationOffset = counterOffset;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -804,7 +813,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
 
     EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + counterOffset, semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 }
 
@@ -874,7 +883,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromAfterReset
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSemaphoreForEvent, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    uint32_t counterOffset = 64;
+
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderAllocationOffset = counterOffset;
 
     auto eventPool = createEvents<FamilyType>(1, false);
 
@@ -907,7 +919,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSem
     auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
 
     EXPECT_EQ(2u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + counterOffset, semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 }
 
@@ -1038,7 +1050,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
+    uint32_t counterOffset = 64;
+
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderAllocationOffset = counterOffset;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1059,7 +1074,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
 
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
         EXPECT_EQ(1u, postSync.getImmediateData());
-        EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), postSync.getDestinationAddress());
+        EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + counterOffset, postSync.getDestinationAddress());
     }
 
     auto offset = cmdStream->getUsed();
@@ -1096,13 +1111,13 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
         ASSERT_NE(nullptr, sdiCmd);
 
-        EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
+        EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + counterOffset, sdiCmd->getAddress());
         EXPECT_EQ(1u, sdiCmd->getStoreQword());
         EXPECT_EQ(2u, sdiCmd->getDataDword0());
         EXPECT_EQ(0u, sdiCmd->getDataDword1());
     }
 
-    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), counterOffset));
 
     *hostAddress = 1;
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(1));
@@ -1354,6 +1369,55 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEvents
     EXPECT_EQ(2u, sdiCmd->getDataDword0());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflowThenHandleItCorrectly, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderDependencyCounter = std::numeric_limits<uint32_t>::max() - 1;
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto eventHandle = events[0]->toHandle();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    uint64_t baseGpuVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
+    EXPECT_EQ(baseGpuVa, sdiCmd->getAddress());
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), sdiCmd->getDataDword0());
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++sdiCmd);
+    ASSERT_NE(nullptr, semaphoreCmd);
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), semaphoreCmd->getSemaphoreDataDword());
+    EXPECT_EQ(baseGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+
+    sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+    ASSERT_NE(nullptr, sdiCmd);
+
+    uint32_t offset = static_cast<uint32_t>(sizeof(uint64_t));
+
+    EXPECT_EQ(baseGpuVa + offset, sdiCmd->getAddress());
+    EXPECT_EQ(1u, sdiCmd->getDataDword0());
+
+    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(offset, immCmdList->inOrderAllocationOffset);
+
+    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    EXPECT_EQ(offset, events[0]->inOrderAllocationOffset);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingBarrierThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -1489,13 +1553,16 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompletion, IsAtLeastXeHpCore) {
+    uint32_t counterOffset = 64;
+
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderAllocationOffset = counterOffset;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), counterOffset));
     *hostAddress = 0;
 
     const uint32_t failCounter = 3;

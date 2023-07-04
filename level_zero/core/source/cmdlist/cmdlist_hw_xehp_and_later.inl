@@ -279,7 +279,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
 
     if (inOrderExecSignalRequired && !event) {
-        dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress();
+        dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
         dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
     }
 

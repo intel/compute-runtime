@@ -330,7 +330,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::waitForEventsFromHost() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const {
     return (!relaxedOrderingDispatch && (numWaitEvents > 0 || this->inOrderDependencyCounter > 0));
 }
 
@@ -393,7 +393,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
             if (signalEvent->isEventTimestampFlagSet()) {
                 earlyReturn = false;
             } else {
-                signalEvent->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter);
+                signalEvent->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
             }
         }
 
@@ -765,9 +765,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (isInOrderExecutionEnabled()) {
-            inOrderDependencyCounter++;
-
-            this->commandContainer.addToResidencyContainer(this->inOrderDependencyCounterAllocation);
+            handleInOrderDependencyCounter();
         }
 
         if (this->isFlushTaskSubmissionEnabled) {
@@ -784,11 +782,33 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
         signalEvent->setCsr(this->csr);
 
         if (isInOrderExecutionEnabled()) {
-            signalEvent->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter);
+            signalEvent->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
         }
     }
 
     return inputRet;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderDependencyCounter() {
+    if ((inOrderDependencyCounter + 1) == std::numeric_limits<uint32_t>::max()) {
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderDependencyCounterAllocation, inOrderDependencyCounter + 1, inOrderAllocationOffset, false);
+
+        inOrderDependencyCounter = 0;
+
+        // multitile immediate writes are uint64_t aligned
+        uint32_t offset = this->partitionCount * static_cast<uint32_t>(sizeof(uint64_t));
+
+        inOrderAllocationOffset += offset;
+
+        UNRECOVERABLE_IF(inOrderAllocationOffset + offset >= inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
+
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(); // write 1 on new offset
+    }
+
+    inOrderDependencyCounter++;
+
+    this->commandContainer.addToResidencyContainer(this->inOrderDependencyCounterAllocation);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1136,7 +1156,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
         bool signaled = true;
 
-        auto hostAddress = static_cast<uint64_t *>(this->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+        auto hostAddress = static_cast<uint64_t *>(ptrOffset(this->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
 
         for (uint32_t i = 0; i < this->partitionCount; i++) {
             if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
