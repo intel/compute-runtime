@@ -278,9 +278,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
 
-    if (inOrderExecSignalRequired && !event) {
-        dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
-        dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
+    if (inOrderExecSignalRequired) {
+        if (isTimestampEvent) {
+            dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, false, false);
+        } else {
+            dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
+            dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
+        }
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
@@ -301,9 +305,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    if (inOrderExecSignalRequired && event) {
-        auto eventHandle = event->toHandle();
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(1, &eventHandle, false, false, false);
+    if (inOrderExecSignalRequired && isTimestampEvent) {
+        appendWaitOnSingleEvent(event, false);
 
         appendSignalInOrderDependencyCounter();
     }

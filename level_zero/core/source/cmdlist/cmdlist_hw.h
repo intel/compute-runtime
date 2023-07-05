@@ -260,6 +260,8 @@ struct CommandListCoreFamily : CommandListImp {
                                           Event *signalEvent,
                                           const CmdListKernelLaunchParams &launchParams);
 
+    void appendWaitOnSingleEvent(Event *event, bool relaxedOrderingAllowed);
+
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
     void updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect);
     void updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect);

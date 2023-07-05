@@ -2212,8 +2212,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool signalInOrderCompletion) {
-    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-
     signalInOrderCompletion &= this->inOrderExecutionEnabled;
 
     NEO::Device *neoDevice = device->getNEODevice();
@@ -2227,8 +2225,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
-    uint64_t gpuAddr = 0;
-    constexpr uint32_t eventStateClear = Event::State::STATE_CLEARED;
     bool dcFlushRequired = false;
 
     if (this->dcFlushSupport) {
@@ -2266,24 +2262,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
-        gpuAddr = event->getCompletionFieldGpuAddress(this->device);
-        uint32_t packetsToWait = event->getPacketsInUse();
-        if (this->signalAllEventPackets) {
-            packetsToWait = event->getMaxPacketsCount();
-        }
-        for (uint32_t i = 0u; i < packetsToWait; i++) {
-            if (relaxedOrderingAllowed) {
-                NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddr, eventStateClear,
-                                                                                                       NEO::CompareOperation::Equal, true);
-            } else {
-                NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
-                                                                           gpuAddr,
-                                                                           eventStateClear,
-                                                                           COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-            }
 
-            gpuAddr += event->getSinglePacketSize();
-        }
+        appendWaitOnSingleEvent(event, relaxedOrderingAllowed);
     }
 
     if (this->cmdListType == TYPE_IMMEDIATE && isCopyOnly() && trackDependencies) {
@@ -3245,6 +3225,28 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
 
         constexpr bool appendLastPipeControl = false;
         dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope());
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event, bool relaxedOrderingAllowed) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    uint64_t gpuAddr = event->getCompletionFieldGpuAddress(this->device);
+    uint32_t packetsToWait = this->signalAllEventPackets ? event->getMaxPacketsCount() : event->getPacketsInUse();
+
+    for (uint32_t i = 0u; i < packetsToWait; i++) {
+        if (relaxedOrderingAllowed) {
+            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddr, Event::STATE_CLEARED,
+                                                                                                   NEO::CompareOperation::Equal, true);
+        } else {
+            NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                       gpuAddr,
+                                                                       Event::STATE_CLEARED,
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+        }
+
+        gpuAddr += event->getSinglePacketSize();
     }
 }
 

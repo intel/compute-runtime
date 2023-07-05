@@ -1095,25 +1095,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         auto &postSync = walkerCmd->getPostSync();
 
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-        EXPECT_EQ(static_cast<uint32_t>(Event::STATE_SIGNALED), postSync.getImmediateData());
-        EXPECT_EQ(events[0]->getPacketAddress(device), postSync.getDestinationAddress());
-
-        // chaining
-        auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
-
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walkerCmd);
-        ASSERT_NE(nullptr, semaphoreCmd);
-
-        EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
-        ASSERT_NE(nullptr, sdiCmd);
-
-        EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + counterOffset, sdiCmd->getAddress());
-        EXPECT_EQ(0u, sdiCmd->getStoreQword());
-        EXPECT_EQ(2u, sdiCmd->getDataDword0());
+        EXPECT_EQ(2u, postSync.getImmediateData());
+        EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + counterOffset, postSync.getDestinationAddress());
     }
 
     auto hostAddress = static_cast<uint32_t *>(ptrOffset(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), counterOffset));
@@ -1128,7 +1111,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThenChainWithSyncAllocSignaling, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignaling, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
@@ -1145,7 +1128,17 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    ASSERT_NE(nullptr, sdiCmd);
+
+    EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
+
+    auto walkerItor = find<COMPUTE_WALKER *>(sdiItor, cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
@@ -1164,7 +1157,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+    sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
     ASSERT_NE(nullptr, sdiCmd);
 
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
@@ -1371,6 +1364,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEvents
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflowThenHandleItCorrectly, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->inOrderDependencyCounter = std::numeric_limits<uint32_t>::max() - 1;
@@ -1381,28 +1375,32 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
 
     auto eventHandle = events[0]->toHandle();
 
+    uint64_t baseGpuVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle, 0, nullptr, launchParams, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), sdiItor);
+    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto &postSync = walkerCmd->getPostSync();
 
-    uint64_t baseGpuVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), postSync.getImmediateData());
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), postSync.getDestinationAddress());
 
-    EXPECT_EQ(baseGpuVa, sdiCmd->getAddress());
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), sdiCmd->getDataDword0());
+    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphoreItor);
 
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++sdiCmd);
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
     ASSERT_NE(nullptr, semaphoreCmd);
 
     EXPECT_EQ(std::numeric_limits<uint32_t>::max(), semaphoreCmd->getSemaphoreDataDword());
     EXPECT_EQ(baseGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
 
-    sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
     ASSERT_NE(nullptr, sdiCmd);
 
     uint32_t offset = static_cast<uint32_t>(sizeof(uint64_t));
