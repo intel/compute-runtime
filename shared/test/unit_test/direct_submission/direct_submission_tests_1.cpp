@@ -72,7 +72,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenStopThenRingIsNotStarted
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
-    csr.stopDirectSubmission();
+    csr.stopDirectSubmission(false);
     EXPECT_FALSE(directSubmission.ringStart);
 
     csr.directSubmission.release();
@@ -91,7 +91,7 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
-    csr.stopDirectSubmission();
+    csr.stopDirectSubmission(false);
     EXPECT_FALSE(directSubmission.ringStart);
 
     csr.blitterDirectSubmission.release();
@@ -437,7 +437,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStopWhenStopRingIsCalledThen
     size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
     uint32_t oldQueueCount = directSubmission.semaphoreData->queueWorkCount;
 
-    directSubmission.stopRingBuffer();
+    directSubmission.stopRingBuffer(false);
 
     size_t expectedDispatchSize = alreadyDispatchedSize + directSubmission.getSizeEnd(false);
     EXPECT_LE(directSubmission.ringCommandStream.getUsed(), expectedDispatchSize);
@@ -469,7 +469,7 @@ HWTEST_F(DirectSubmissionTest,
 
     directSubmission.tagValueSetValue = 0x4343123ull;
     directSubmission.tagAddressSetValue = 0xBEEF00000ull;
-    directSubmission.stopRingBuffer();
+    directSubmission.stopRingBuffer(false);
     size_t expectedDispatchSize = disabledSizeEnd;
     EXPECT_LE(directSubmission.ringCommandStream.getUsed(), expectedDispatchSize);
     EXPECT_GE(directSubmission.ringCommandStream.getUsed() + MemoryConstants::cacheLineSize, expectedDispatchSize);

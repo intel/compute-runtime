@@ -81,7 +81,7 @@ class DirectSubmissionHw {
 
     bool initialize(bool submitOnInit, bool useNotify);
 
-    MOCKABLE_VIRTUAL bool stopRingBuffer();
+    MOCKABLE_VIRTUAL bool stopRingBuffer(bool blocking);
 
     bool startRingBuffer();
 
@@ -109,6 +109,7 @@ class DirectSubmissionHw {
     bool isNewResourceHandleNeeded();
     size_t getSizeNewResourceHandler();
     virtual void handleStopRingBuffer(){};
+    virtual void ensureRingCompletion(){};
     virtual uint64_t switchRingBuffers();
     virtual void handleSwitchRingBuffers() = 0;
     GraphicsAllocation *switchRingBuffersAllocations();

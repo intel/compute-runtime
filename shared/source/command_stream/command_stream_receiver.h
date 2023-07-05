@@ -301,7 +301,7 @@ class CommandStreamReceiver {
         return false;
     }
 
-    virtual void stopDirectSubmission() {}
+    virtual void stopDirectSubmission(bool blocking) {}
 
     bool isStaticWorkPartitioningEnabled() const {
         return staticWorkPartitioningEnabled;

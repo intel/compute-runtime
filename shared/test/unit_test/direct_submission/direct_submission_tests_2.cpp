@@ -1030,7 +1030,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
 
         auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
 
-        EXPECT_TRUE(directSubmission.stopRingBuffer());
+        EXPECT_TRUE(directSubmission.stopRingBuffer(false));
 
         uint32_t expectedCount = (debugFlag == -1) ? (pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice ? 0 : 2) : static_cast<uint32_t>(debugFlag);
 
@@ -1993,7 +1993,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenStoppingRingThenProgramSched
 
     offset = directSubmission.ringCommandStream.getUsed();
 
-    directSubmission.stopRingBuffer();
+    directSubmission.stopRingBuffer(false);
 
     auto startAddress = ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset);
     auto jumpOffset = directSubmission.getSizeSemaphoreSection(true) + sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM) +
@@ -2045,7 +2045,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, WhenStoppingRingWithoutSubmissio
 
     EXPECT_FALSE(verifyDynamicSchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, staticSchedulerGpuAddress, semaphoreGpuVa, directSubmission.currentQueueWorkCount, 0, endOffset));
 
-    directSubmission.stopRingBuffer();
+    directSubmission.stopRingBuffer(false);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset);
@@ -2376,7 +2376,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndDepend
         batchBuffer.hasRelaxedOrderingDependencies = true;
         directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
 
-        directSubmission.stopRingBuffer();
+        directSubmission.stopRingBuffer(false);
         EXPECT_EQ(2u, directSubmission.dispatchRelaxedOrderingSchedulerSectionCalled);
         EXPECT_EQ(1u, directSubmission.dispatchRelaxedOrderingQueueStallCalled);
         EXPECT_EQ(1u, directSubmission.dispatchTaskStoreSectionCalled);
@@ -2463,7 +2463,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndDep
         batchBuffer.hasRelaxedOrderingDependencies = true;
         directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
 
-        directSubmission.stopRingBuffer();
+        directSubmission.stopRingBuffer(false);
         EXPECT_EQ(2u, directSubmission.dispatchRelaxedOrderingSchedulerSectionCalled);
         EXPECT_EQ(1u, directSubmission.dispatchRelaxedOrderingQueueStallCalled);
         EXPECT_EQ(1u, directSubmission.dispatchTaskStoreSectionCalled);
@@ -2550,7 +2550,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndWithou
         batchBuffer.hasRelaxedOrderingDependencies = false;
         directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
 
-        directSubmission.stopRingBuffer();
+        directSubmission.stopRingBuffer(false);
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingSchedulerSectionCalled);
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingQueueStallCalled);
         EXPECT_EQ(0u, directSubmission.dispatchTaskStoreSectionCalled);
@@ -2637,7 +2637,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndWit
         batchBuffer.hasRelaxedOrderingDependencies = false;
         directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
 
-        directSubmission.stopRingBuffer();
+        directSubmission.stopRingBuffer(false);
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingSchedulerSectionCalled);
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingQueueStallCalled);
         EXPECT_EQ(0u, directSubmission.dispatchTaskStoreSectionCalled);

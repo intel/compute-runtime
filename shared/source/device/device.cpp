@@ -869,7 +869,8 @@ void Device::stopDirectSubmission() {
     for (auto &engine : allEngines) {
         auto csr = engine.commandStreamReceiver;
         if (csr->isAnyDirectSubmissionEnabled()) {
-            csr->stopDirectSubmission();
+            auto lock = csr->obtainUniqueOwnership();
+            csr->stopDirectSubmission(false);
         }
     }
 }

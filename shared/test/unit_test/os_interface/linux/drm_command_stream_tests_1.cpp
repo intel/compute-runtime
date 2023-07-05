@@ -806,13 +806,12 @@ struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily,
     }
     ~MockDrmDirectSubmissionToTestDtor() override {
         if (ringStart) {
-            stopRingBuffer();                                           // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
-            wait(static_cast<uint32_t>(this->currentTagData.tagValue)); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+            stopRingBuffer(true); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
         }
         deallocateResources(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
     }
     using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::ringStart;
-    bool stopRingBuffer() override {
+    bool stopRingBuffer(bool blocking) override {
         functionsCalled.stopRingBuffer = true;
         return true;
     }
@@ -856,7 +855,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
     auto directSubmission = std::make_unique<MockDrmDirectSubmissionToTestRingStop<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
     ASSERT_NE(nullptr, directSubmission);
 
-    directSubmission->stopRingBuffer();
+    directSubmission->stopRingBuffer(false);
     EXPECT_FALSE(directSubmission->ringStart);
 }
 

@@ -143,7 +143,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     bool directSubmissionRelaxedOrderingEnabled() const override;
 
-    void stopDirectSubmission() override;
+    void stopDirectSubmission(bool blocking) override;
 
     virtual bool isKmdWaitModeActive() { return true; }
 

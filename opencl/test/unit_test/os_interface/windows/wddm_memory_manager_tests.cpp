@@ -26,6 +26,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -2300,7 +2301,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenD
     EXPECT_EQ(0u, mockMngr->updateAuxTableCalled);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpdateAuxTable) {
+HWTEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpdateAuxTable) {
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (!productHelper.isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
@@ -2336,7 +2337,14 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpd
 
     auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa);
     EXPECT_TRUE(result);
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr.get());
+    ultCsr->directSubmissionAvailable = true;
+    EXPECT_FALSE(ultCsr->stopDirectSubmissionCalled);
+
     memoryManager.freeGraphicsMemory(wddmAlloc);
+
+    EXPECT_TRUE(ultCsr->stopDirectSubmissionCalled);
     EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
 }
 

@@ -1472,11 +1472,11 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const 
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission() {
+inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocking) {
     if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
-        this->blitterDirectSubmission->stopRingBuffer();
+        this->blitterDirectSubmission->stopRingBuffer(blocking);
     } else {
-        this->directSubmission->stopRingBuffer();
+        this->directSubmission->stopRingBuffer(blocking);
     }
 }
 

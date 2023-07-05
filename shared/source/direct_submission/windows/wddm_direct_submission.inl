@@ -41,11 +41,15 @@ template <typename GfxFamily, typename Dispatcher>
 WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Stopping Wddm ULLS\n");
     if (this->ringStart) {
-        this->stopRingBuffer();
-        WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionFence(ringFence.lastSubmittedFence, ringFence);
+        this->stopRingBuffer(true);
     }
     this->deallocateResources();
     wddm->getWddmInterface()->destroyMonitorFence(ringFence);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
+    WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionFence(ringFence.lastSubmittedFence, ringFence);
 }
 
 template <typename GfxFamily, typename Dispatcher>

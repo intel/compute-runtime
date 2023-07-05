@@ -541,7 +541,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
     if (!ringStart) {
         return true;
     }
@@ -571,6 +571,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
 
     this->handleStopRingBuffer();
     this->ringStart = false;
+
+    if (blocking) {
+        this->ensureRingCompletion();
+    }
 
     return true;
 }
@@ -931,7 +935,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     UNRECOVERABLE_IF(batchBuffer.requiresCoherency);
 
     if (batchBuffer.ringBufferRestartRequest) {
-        this->stopRingBuffer();
+        this->stopRingBuffer(false);
     }
 
     this->startRingBuffer();

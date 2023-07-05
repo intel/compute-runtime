@@ -88,7 +88,7 @@ void DirectSubmissionController::checkNewSubmissions() {
                 continue;
             } else {
                 auto lock = csr->obtainUniqueOwnership();
-                csr->stopDirectSubmission();
+                csr->stopDirectSubmission(false);
                 state.isStopped = true;
                 shouldRecalculateTimeout = true;
             }

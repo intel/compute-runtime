@@ -413,9 +413,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return *flushReturnValue;
     }
 
-    void stopDirectSubmission() override {
+    void stopDirectSubmission(bool blocking) override {
         stopDirectSubmissionCalled = true;
-        BaseClass::stopDirectSubmission();
+        BaseClass::stopDirectSubmission(blocking);
     }
 
     std::vector<std::string> aubCommentMessages;

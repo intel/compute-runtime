@@ -90,7 +90,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
 
     ~MockDirectSubmissionHw() override {
         if (ringStart) {
-            stopRingBuffer();
+            stopRingBuffer(false);
         }
         deallocateResources();
     }

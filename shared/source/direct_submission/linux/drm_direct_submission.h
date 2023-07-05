@@ -28,6 +28,8 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     bool handleResidency() override;
     void handleStopRingBuffer() override;
+
+    void ensureRingCompletion() override;
     void handleSwitchRingBuffers() override;
     uint64_t updateTagValue() override;
     void getTagAddressValue(TagData &tagData) override;
