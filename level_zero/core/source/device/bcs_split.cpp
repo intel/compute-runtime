@@ -163,7 +163,7 @@ size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPoo
             desc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
         }
 
-        ze_event_handle_t hEvent;
+        ze_event_handle_t hEvent{};
         pool->createEvent(&desc, &hEvent);
 
         // Last event, created with host scope flag, is marker event.
