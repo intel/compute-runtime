@@ -480,6 +480,62 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedBlitEnqueueWhenUnblockingThenMake
     EXPECT_TRUE(bcsCsr->isMadeResident(eventDependency->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), bcsCsr->taskCount));
 }
 
+HWTEST_TEMPLATED_F(BcsBufferTests, givenEventWithLatestTaskCountWhenWaitCalledThenClearDeferredNodes) {
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+
+    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    bufferForBlt->forceDisallowCPUCopy = true;
+
+    TimestampPacketContainer *deferredTimestampPackets = mockCmdQ->deferredTimestampPackets.get();
+    TimestampPacketContainer *timestampPacketContainer = mockCmdQ->timestampPacketContainer.get();
+
+    cl_event event1, event2;
+
+    mockCmdQ->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, &event1);
+    mockCmdQ->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, &event2);
+
+    mockCmdQ->taskCount++;
+
+    auto event1Obj = castToObjectOrAbort<Event>(event1);
+    auto event2Obj = castToObjectOrAbort<Event>(event2);
+
+    size_t expectedSize = 1;
+    if (mockCmdQ->isCacheFlushForBcsRequired()) {
+        expectedSize += 2;
+    }
+
+    EXPECT_EQ(expectedSize, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+    // gpgpu task count not equal
+    {
+        event1Obj->wait(false, false);
+        EXPECT_EQ(expectedSize, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+        event2Obj->wait(false, false);
+        EXPECT_EQ(expectedSize, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    }
+
+    event1Obj->updateTaskCount(mockCmdQ->taskCount, event1Obj->peekBcsTaskCountFromCommandQueue() - 1);
+    event2Obj->updateTaskCount(mockCmdQ->taskCount, event1Obj->peekBcsTaskCountFromCommandQueue());
+
+    // gpgpu and bcs task count equal
+    {
+        event1Obj->wait(false, false);
+        EXPECT_EQ(expectedSize, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+        event2Obj->wait(false, false);
+        EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    }
+
+    clReleaseEvent(event1);
+    clReleaseEvent(event2);
+}
+
 HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBufferThenStoreMapAllocationInDispatchParameters) {
     DebugManager.flags.DisableZeroCopyForBuffers.set(true);
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());

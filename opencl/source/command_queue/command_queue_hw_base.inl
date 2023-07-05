@@ -171,11 +171,13 @@ bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEngine
     using TSPacketType = typename Family::TimestampPacketType;
     bool waited = false;
 
+    if (isOOQEnabled()) {
+        // TSP for OOQ dispatch is optional. We need to wait for task count.
+        return waited;
+    }
+
     if (isWaitForTimestampsEnabled()) {
         waited = waitForTimestampsWithinContainer<TSPacketType>(mainContainer, getGpgpuCommandStreamReceiver(), status);
-        if (isOOQEnabled()) {
-            waitForTimestampsWithinContainer<TSPacketType>(deferredContainer, getGpgpuCommandStreamReceiver(), status);
-        }
 
         if (waited) {
             getGpgpuCommandStreamReceiver().downloadAllocations();

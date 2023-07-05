@@ -1281,16 +1281,9 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
         return WaitStatus::GpuHang;
     }
 
-    TimestampPacketContainer nodesToRelease;
-    if (deferredTimestampPackets) {
-        deferredTimestampPackets->swapNodes(nodesToRelease);
-    }
-    TimestampPacketContainer multiRootSyncNodesToRelease;
-    if (deferredMultiRootSyncNodes.get()) {
-        deferredMultiRootSyncNodes->swapNodes(multiRootSyncNodesToRelease);
-    }
-
     waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
+
+    releaseDeferredNodes();
 
     if (printfHandler) {
         if (!printfHandler->printEnqueueOutput()) {
@@ -1376,6 +1369,17 @@ bool CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpPara
         }
     }
     return migrationHandled;
+}
+
+void CommandQueue::releaseDeferredNodes() {
+    TimestampPacketContainer nodesToRelease;
+    if (deferredTimestampPackets) {
+        deferredTimestampPackets->swapNodes(nodesToRelease);
+    }
+    TimestampPacketContainer multiRootSyncNodesToRelease;
+    if (deferredMultiRootSyncNodes.get()) {
+        deferredMultiRootSyncNodes->swapNodes(multiRootSyncNodesToRelease);
+    }
 }
 
 } // namespace NEO

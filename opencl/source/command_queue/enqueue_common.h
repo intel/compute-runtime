@@ -211,7 +211,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (isCacheFlushCommand(commandType) || isMarkerWithPostSyncWrite || isNonStallingIoqBarrierWithDependencies) {
             nodesCount = 1;
         } else if (!multiDispatchInfo.empty()) {
-            nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
+            if (isOOQEnabled() && !event) {
+                // TSP not needed. Release current node.
+                timestampPacketContainer->moveNodesToNewContainer(*deferredTimestampPackets);
+            } else {
+                nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
+            }
         }
 
         if (isCacheFlushForBcsRequired() && enqueueWithBlitAuxTranslation) {

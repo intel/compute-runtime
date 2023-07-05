@@ -68,7 +68,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     size_t numWorkGroups[3] = {walkerArgs.numberOfWorkgroups->x, walkerArgs.numberOfWorkgroups->y, walkerArgs.numberOfWorkgroups->z};
     auto threadGroupCount = static_cast<uint32_t>(walkerArgs.numberOfWorkgroups->x * walkerArgs.numberOfWorkgroups->y * walkerArgs.numberOfWorkgroups->z);
 
-    if (walkerArgs.currentTimestampPacketNodes && commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (walkerArgs.currentTimestampPacketNodes && walkerArgs.currentTimestampPacketNodes->peekNodes().size() > 0 &&
+        commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         auto timestampPacketNode = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
         GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
     }

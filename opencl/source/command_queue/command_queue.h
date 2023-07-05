@@ -374,6 +374,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     const std::array<CopyEngineState, bcsInfoMaskSize> &peekActiveBcsStates() const { return bcsStates; }
 
+    void releaseDeferredNodes();
+
+    TaskCountType peekTaskCount() const { return taskCount; }
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);

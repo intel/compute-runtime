@@ -79,7 +79,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
 
     auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
-    if (walkerArgs.currentTimestampPacketNodes && queueCsr.peekTimestampPacketWriteEnabled()) {
+
+    if (walkerArgs.currentTimestampPacketNodes && (walkerArgs.currentTimestampPacketNodes->peekNodes().size() > 0)) {
         auto timestampPacket = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
         GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacket, rootDeviceEnvironment);
     }
@@ -125,7 +126,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
 
-    if (walkerArgs.currentTimestampPacketNodes && DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
+    if (walkerArgs.currentTimestampPacketNodes && walkerArgs.currentTimestampPacketNodes->peekNodes().size() > 0 &&
+        DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
         auto gpuVa = walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex]->getGpuAddress();
         printf("\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), gpuVa, commandStream.getCurrentGpuAddressPosition());
     }
