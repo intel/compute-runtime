@@ -23,16 +23,29 @@ __kernel void kernel_copy(__global char *dst, __global char *src){
 }
 )===";
 
+const char *source2 = R"===(
+__kernel void kernel_fill(__global char *dst, char value){
+    uint gid = get_global_id(0);
+    dst[gid] = value;
+}
+)===";
+
 static std::string kernelName = "kernel_copy";
+static std::string kernelName2 = "kernel_fill";
 
 enum class ExecutionMode : uint32_t {
     CommandQueue,
     ImmSyncCmdList
 };
 
-void createModule(const ze_context_handle_t context, const ze_device_handle_t device, const std::string &deviceName, ze_module_handle_t &module) {
+void createModule(const char *sourceCode, bool bindless, const ze_context_handle_t context, const ze_device_handle_t device, const std::string &deviceName, ze_module_handle_t &module) {
     std::string buildLog;
-    auto bin = compileToNative(source, deviceName, "", "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode", buildLog);
+    std::string bindlessOptions = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
+    std::string internalOptions = "";
+    if (bindless) {
+        internalOptions = bindlessOptions;
+    }
+    auto bin = compileToNative(sourceCode, deviceName, "", internalOptions, buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -54,8 +67,8 @@ void createKernel(const ze_module_handle_t module, ze_kernel_handle_t &kernel, c
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 }
 
-void runKernel(const ze_module_handle_t &module, const ze_kernel_handle_t &kernel,
-               ze_context_handle_t &context, ze_device_handle_t &device, uint32_t id, ExecutionMode mode, bool &outputValidationSuccessful) {
+void run(const ze_kernel_handle_t &copyKernel, const ze_kernel_handle_t &fillKernel,
+         ze_context_handle_t &context, ze_device_handle_t &device, uint32_t id, ExecutionMode mode, bool &outputValidationSuccessful) {
 
     CommandHandler commandHandler;
     bool isImmediateCmdList = (mode == ExecutionMode::ImmSyncCmdList);
@@ -78,19 +91,30 @@ void runKernel(const ze_module_handle_t &module, const ze_kernel_handle_t &kerne
 
     // Initialize memory
     constexpr uint8_t val = 55;
+    constexpr uint8_t val2 = 15;
+    uint8_t finalValue = static_cast<uint8_t>(val);
     memset(srcBuffer, val, allocSize);
     memset(dstBuffer, 0, allocSize);
 
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
-
     ze_group_count_t dispatchTraits;
-    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, 32U, 1U, 1U));
     dispatchTraits.groupCountX = allocSize / 32u;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(kernel, dispatchTraits));
+    if (fillKernel != nullptr) {
+        finalValue = val2;
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(fillKernel, 0, sizeof(srcBuffer), &srcBuffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(fillKernel, 1, sizeof(char), &val2));
+        SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(fillKernel, 32U, 1U, 1U));
+        SUCCESS_OR_TERMINATE(commandHandler.appendKernel(fillKernel, dispatchTraits));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(commandHandler.cmdList, nullptr, 0, nullptr));
+    }
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(copyKernel, 32U, 1U, 1U));
+
+    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(copyKernel, dispatchTraits));
     SUCCESS_OR_TERMINATE(commandHandler.execute());
     SUCCESS_OR_TERMINATE(commandHandler.synchronize());
 
@@ -107,7 +131,10 @@ void runKernel(const ze_module_handle_t &module, const ze_kernel_handle_t &kerne
             }
         }
     } else {
-        outputValidationSuccessful = true;
+        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
+        if (dstCharBuffer[0] == finalValue) {
+            outputValidationSuccessful = true;
+        }
     }
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -127,22 +154,26 @@ int main(int argc, char *argv[]) {
     printDeviceProperties(deviceProperties);
 
     ze_module_handle_t module = nullptr;
+    ze_module_handle_t module2 = nullptr;
 
     std::stringstream ss;
     ss.setf(std::ios::hex, std::ios::basefield);
     ss << "0x" << deviceProperties.deviceId;
 
-    createModule(context, device, ss.str(), module);
+    createModule(source, true, context, device, ss.str(), module);
+    createModule(source2, false, context, device, ss.str(), module2);
 
     ExecutionMode executionModes[] = {ExecutionMode::CommandQueue, ExecutionMode::ImmSyncCmdList};
-    ze_kernel_handle_t kernel = nullptr;
-    createKernel(module, kernel, kernelName.c_str());
+    ze_kernel_handle_t copyKernel = nullptr;
+    ze_kernel_handle_t fillKernel = nullptr;
+    createKernel(module, copyKernel, kernelName.c_str());
+    createKernel(module2, fillKernel, kernelName2.c_str());
 
     for (auto mode : executionModes) {
 
         outputValidated = false;
 
-        runKernel(module, kernel, context, device, 0, mode, outputValidated);
+        run(copyKernel, fillKernel, context, device, 0, mode, outputValidated);
 
         if (!outputValidated) {
             std::cout << "Zello bindless kernel failed\n"
@@ -151,8 +182,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(copyKernel));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(fillKernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module2));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     if (outputValidated) {
