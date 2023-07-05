@@ -279,3 +279,12 @@ bool DrmMockCustom::getChunkingAvailable() {
         return getChunkingAvailableCall.returnValue;
     }
 }
+
+uint32_t DrmMockCustom::getChunkingMode() {
+    getChunkingModeCall.called++;
+    if (getChunkingModeCall.callParent) {
+        return Drm::getChunkingMode();
+    } else {
+        return getChunkingModeCall.returnValue;
+    }
+}

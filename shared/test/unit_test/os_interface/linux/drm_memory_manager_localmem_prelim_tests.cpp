@@ -366,6 +366,132 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
+       whenCreateUnifiedMemoryAllocationWithChunkingAndModeNotSetToSharedThenChunkingIsNotUsed) {
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->queryEngineInfo();
+    mock->ioctlCallsCount = 0;
+
+    mock->chunkingAvailable = true;
+    mock->callBaseIsChunkingAvailable = true;
+
+    mock->chunkingMode = 0x02;
+
+    AllocationProperties gpuProperties{0u,
+                                       MemoryConstants::chunkThreshold,
+                                       AllocationType::UNIFIED_SHARED_MEMORY,
+                                       1u};
+    gpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    gpuProperties.usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::CPU;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapPtr(), nullptr);
+    EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapSize(), 0u);
+    EXPECT_EQ(allocation->getAllocationOffset(), 0u);
+    EXPECT_FALSE(allocation->storageInfo.isChunked);
+
+    const auto &createExt = mock->context.receivedCreateGemExt.value();
+    EXPECT_EQ(1u, createExt.handle);
+
+    const auto &memRegions = createExt.memoryRegions;
+    ASSERT_EQ(memRegions.size(), 2u);
+    EXPECT_EQ(memRegions[0].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM);
+    EXPECT_EQ(memRegions[0].memoryInstance, 1u);
+    EXPECT_EQ(memRegions[1].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE);
+    EXPECT_EQ(memRegions[1].memoryInstance, regionInfo[1].region.memoryInstance);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
+       whenCreateUnifiedMemoryAllocationWithChunkingAndSizeLessThanMinimalThenChunkingIsNotUsed) {
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->queryEngineInfo();
+    mock->ioctlCallsCount = 0;
+
+    mock->chunkingAvailable = true;
+    mock->callBaseIsChunkingAvailable = true;
+
+    mock->chunkingMode = 0x01;
+
+    AllocationProperties gpuProperties{0u,
+                                       mock->minimalChunkingSize / 2,
+                                       AllocationType::UNIFIED_SHARED_MEMORY,
+                                       1u};
+    gpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    gpuProperties.usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::CPU;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapPtr(), nullptr);
+    EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapSize(), 0u);
+    EXPECT_EQ(allocation->getAllocationOffset(), 0u);
+    EXPECT_FALSE(allocation->storageInfo.isChunked);
+
+    const auto &createExt = mock->context.receivedCreateGemExt.value();
+    EXPECT_EQ(1u, createExt.handle);
+
+    const auto &memRegions = createExt.memoryRegions;
+    ASSERT_EQ(memRegions.size(), 2u);
+    EXPECT_EQ(memRegions[0].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM);
+    EXPECT_EQ(memRegions[0].memoryInstance, 1u);
+    EXPECT_EQ(memRegions[1].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE);
+    EXPECT_EQ(memRegions[1].memoryInstance, regionInfo[1].region.memoryInstance);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
+       whenCreateUnifiedMemoryAllocationWithChunkingModeSetToSharedAndSizeGreaterThanMinimalThenChunkingIsUsed) {
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->queryEngineInfo();
+    mock->ioctlCallsCount = 0;
+
+    mock->chunkingAvailable = true;
+    mock->callBaseIsChunkingAvailable = true;
+
+    mock->chunkingMode = 0x01;
+
+    AllocationProperties gpuProperties{0u,
+                                       mock->minimalChunkingSize * 2,
+                                       AllocationType::UNIFIED_SHARED_MEMORY,
+                                       1u};
+    gpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    gpuProperties.usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::CPU;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapPtr(), nullptr);
+    EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapSize(), 0u);
+    EXPECT_EQ(allocation->getAllocationOffset(), 0u);
+    EXPECT_TRUE(allocation->storageInfo.isChunked);
+
+    const auto &createExt = mock->context.receivedCreateGemExt.value();
+    EXPECT_EQ(1u, createExt.handle);
+
+    const auto &memRegions = createExt.memoryRegions;
+    ASSERT_EQ(memRegions.size(), 2u);
+    EXPECT_EQ(memRegions[0].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM);
+    EXPECT_EQ(memRegions[0].memoryInstance, 1u);
+    EXPECT_EQ(memRegions[1].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE);
+    EXPECT_EQ(memRegions[1].memoryInstance, regionInfo[1].region.memoryInstance);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
        whenCreateUnifiedMemoryAllocationWithChunkingAndNoEnableBOChunkingPreferredLocationHintSetThenGemCreateExtIsUsedWithoutPreferredLocation) {
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};

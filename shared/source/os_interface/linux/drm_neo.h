@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
@@ -151,6 +152,8 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL bool getSetPairAvailable() { return setPairAvailable; }
     MOCKABLE_VIRTUAL bool isChunkingAvailable();
     MOCKABLE_VIRTUAL bool getChunkingAvailable() { return chunkingAvailable; }
+    MOCKABLE_VIRTUAL uint32_t getChunkingMode() { return chunkingMode; }
+    uint32_t getMinimalSizeForChunking() { return minimalChunkingSize; }
 
     MOCKABLE_VIRTUAL bool useVMBindImmediate() const;
 
@@ -334,6 +337,8 @@ class Drm : public DriverModel {
     bool directSubmissionActive = false;
     bool setPairAvailable = false;
     bool chunkingAvailable = false;
+    uint32_t chunkingMode = 0;
+    uint32_t minimalChunkingSize = MemoryConstants::pageSize2Mb;
     bool contextDebugSupported = false;
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;

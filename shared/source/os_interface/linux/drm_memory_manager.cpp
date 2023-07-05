@@ -1869,20 +1869,23 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     size_t boTotalChunkSize = 0;
 
     if (AllocationType::BUFFER == allocation->getAllocationType() &&
-        drm->getChunkingAvailable()) {
+        (drm->getChunkingMode() & 0x02)) {
+
         boTotalChunkSize = allocation->getUnderlyingBufferSize();
 
         uint32_t numOfChunks = DebugManager.flags.NumberOfBOChunks.get();
         size_t chunkingSize = boTotalChunkSize / numOfChunks;
 
         // Dont chunk for sizes less than chunkThreshold
-        if (!(chunkingSize & (MemoryConstants::chunkThreshold - 1))) {
+        if (boTotalChunkSize >= drm->getMinimalSizeForChunking() &&
+            !(chunkingSize & (MemoryConstants::chunkThreshold - 1))) {
 
             handles = 1;
             allocation->resizeBufferObjects(handles);
             bos.resize(handles);
             useChunking = true;
         }
+
     } else if (storageInfo.colouringPolicy == ColouringPolicy::ChunkSizeBased) {
         handles = allocation->getNumGmms();
         allocation->resizeBufferObjects(handles);
@@ -2219,7 +2222,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     size_t chunkingSize = size / numOfChunks;
 
     // Dont chunk for sizes less than chunkThreshold
-    if (drm.getChunkingAvailable() && !(chunkingSize & (MemoryConstants::chunkThreshold - 1))) {
+    if ((drm.getChunkingMode() & 0x01) &&
+        !(chunkingSize & (MemoryConstants::chunkThreshold - 1)) &&
+        size >= drm.getMinimalSizeForChunking()) {
         numHandles = 1;
         useChunking = true;
     }

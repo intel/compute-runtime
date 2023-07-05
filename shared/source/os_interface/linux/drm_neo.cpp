@@ -1146,14 +1146,24 @@ bool Drm::isSetPairAvailable() {
 }
 
 bool Drm::isChunkingAvailable() {
-    if (DebugManager.flags.EnableBOChunking.get()) {
+    if (DebugManager.flags.EnableBOChunking.get() != 0) {
         std::call_once(checkChunkingOnce, [this]() {
             int ret = ioctlHelper->isChunkingAvailable();
             if (ret) {
                 chunkingAvailable = true;
+                chunkingMode = DebugManager.flags.EnableBOChunking.get();
             }
+
+            if (DebugManager.flags.MinimalAllocationSizeForChunking.get() != -1) {
+                minimalChunkingSize = DebugManager.flags.MinimalAllocationSizeForChunking.get();
+            }
+
             printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,
-                             "Chunking available: %d\n", chunkingAvailable);
+                             "Chunking available: %d; enabled for: shared allocations %d, device allocations %d; minimalChunkingSize: %zd\n",
+                             chunkingAvailable,
+                             (chunkingMode & 0x01),
+                             (chunkingMode & 0x02),
+                             minimalChunkingSize);
         });
     }
     return chunkingAvailable;

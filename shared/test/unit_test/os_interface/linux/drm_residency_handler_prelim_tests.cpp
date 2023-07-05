@@ -1399,8 +1399,9 @@ TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndNoDebugKeyThenFalseIsR
     EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
     drm.callBaseIsChunkingAvailable = true;
     EXPECT_FALSE(drm.isChunkingAvailable());
-    EXPECT_FALSE(drm.chunkingAvailable);
+    EXPECT_FALSE(drm.getChunkingAvailable());
     EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    EXPECT_EQ(0u, drm.getChunkingMode());
 }
 
 TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeySetAndNoSupportAvailableThenFalseIsReturned) {
@@ -1533,6 +1534,27 @@ TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndSupportAvailab
     EXPECT_TRUE(drm.isChunkingAvailable());
     EXPECT_TRUE(drm.chunkingAvailable);
     EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
+}
+
+TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndChangingMinimalSizeForChunkingAndSupportAvailableThenExpectedValuesAreReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBOChunking.set(1);
+    const uint64_t minimalSizeForChunking = 65536;
+    DebugManager.flags.MinimalAllocationSizeForChunking.set(minimalSizeForChunking);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.chunkingQueryValue = 1;
+    drm.context.chunkingQueryReturn = 0;
+    EXPECT_FALSE(drm.chunkingAvailable);
+
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    drm.callBaseIsChunkingAvailable = true;
+    EXPECT_TRUE(drm.isChunkingAvailable());
+    EXPECT_TRUE(drm.chunkingAvailable);
+    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
+
+    EXPECT_EQ(minimalSizeForChunking, drm.minimalChunkingSize);
 }
 
 TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndFailureInQueryThenFalseIsReturned) {

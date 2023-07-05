@@ -127,6 +127,12 @@ class DrmMockCustom : public Drm {
         uint32_t called = 0u;
     };
 
+    struct ChunkingModeCall {
+        bool callParent = true;
+        uint32_t returnValue = 0x00;
+        uint32_t called = 0u;
+    };
+
     DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment);
 
     int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) override;
@@ -134,6 +140,7 @@ class DrmMockCustom : public Drm {
     bool getSetPairAvailable() override;
 
     bool getChunkingAvailable() override;
+    uint32_t getChunkingMode() override;
     bool isChunkingAvailable() override;
 
     bool isVmBindAvailable() override;
@@ -181,6 +188,7 @@ class DrmMockCustom : public Drm {
     IsVmBindAvailableCall isVmBindAvailableCall{};
 
     IsChunkingAvailableCall getChunkingAvailableCall{};
+    ChunkingModeCall getChunkingModeCall{};
     IsChunkingAvailableCall isChunkingAvailableCall{};
 
     std::atomic<int> ioctlRes;
