@@ -233,7 +233,9 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
         }
         pBandwidth->writeCounter += counterValue;
     }
-
+    constexpr uint64_t transactionSize = 32;
+    pBandwidth->readCounter = pBandwidth->readCounter * transactionSize;
+    pBandwidth->writeCounter = pBandwidth->writeCounter * transactionSize;
     uint32_t timeStampL = 0;
     std::string timeStamp = vfId + "_TIMESTAMP_L";
     result = pPmt->readValue(timeStamp, timeStampL);
@@ -260,6 +262,10 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
 }
 
 ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_bandwidth_t *pBandwidth) {
+    std::string guid = pPmt->getGuid();
+    if (guid != guid64BitMemoryCounters) {
+        return getHbmBandwidth(numHbmModules, pBandwidth);
+    }
     pBandwidth->readCounter = 0;
     pBandwidth->writeCounter = 0;
     pBandwidth->timestamp = 0;
