@@ -4086,3 +4086,45 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     }
     EXPECT_EQ(false, foundPreemptionMode);
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenCsrSurfaceProgrammingNeededThenOneTimeCsrSurfaceDispatchedOnSupportingPlatform,
+          IsAtLeastXeHpCore) {
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    if (commandStreamReceiver.getPreemptionAllocation() == nullptr) {
+        auto createdPreemptionAllocation = commandStreamReceiver.createPreemptionAllocation();
+        ASSERT_TRUE(createdPreemptionAllocation);
+    }
+
+    bool csrSurfaceProgramming = NEO::PreemptionHelper::getRequiredPreambleSize<FamilyType>(*pDevice) > 0;
+
+    EXPECT_EQ(NEO::PreemptionMode::Initial, commandStreamReceiver.getPreemptionMode());
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    EXPECT_EQ(pDevice->getPreemptionMode(), commandStreamReceiver.getPreemptionMode());
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto itCsrCommand = NEO::UnitTestHelper<FamilyType>::findMidThreadPreemptionAllocationCommand(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    if (csrSurfaceProgramming) {
+        EXPECT_NE(hwParserCsr.cmdList.end(), itCsrCommand);
+    } else {
+        EXPECT_EQ(hwParserCsr.cmdList.end(), itCsrCommand);
+    }
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getPreemptionAllocation()));
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    itCsrCommand = NEO::UnitTestHelper<FamilyType>::findMidThreadPreemptionAllocationCommand(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    EXPECT_EQ(hwParserCsr.cmdList.end(), itCsrCommand);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getPreemptionAllocation()));
+}

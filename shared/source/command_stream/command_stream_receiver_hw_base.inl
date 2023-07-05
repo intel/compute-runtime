@@ -2041,6 +2041,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
     if (this->getPreemptionMode() == PreemptionMode::Initial) {
         flushData.contextOneTimeInit = true;
         flushData.estimatedSize += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(device.getPreemptionMode(), this->getPreemptionMode());
+        flushData.estimatedSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
     }
 }
 
@@ -2059,6 +2060,10 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
 
         if (this->getPreemptionMode() == PreemptionMode::Initial) {
             PreemptionHelper::programCmdStream<GfxFamily>(csrStream, device.getPreemptionMode(), this->getPreemptionMode(), this->getPreemptionAllocation());
+            PreemptionHelper::programCsrBaseAddress<GfxFamily>(csrStream,
+                                                               device,
+                                                               getPreemptionAllocation(),
+                                                               getLogicalStateHelper());
             this->setPreemptionMode(device.getPreemptionMode());
         }
     }
@@ -2085,6 +2090,10 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
 
     if (flushData.estimatedSize > 0) {
         makeResident(*csrStream.getGraphicsAllocation());
+    }
+
+    if (preemptionAllocation) {
+        makeResident(*preemptionAllocation);
     }
 }
 
