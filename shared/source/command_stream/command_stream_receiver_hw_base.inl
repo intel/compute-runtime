@@ -2043,6 +2043,13 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
         flushData.estimatedSize += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(device.getPreemptionMode(), this->getPreemptionMode());
         flushData.estimatedSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
     }
+
+    if (!this->isStateSipSent) {
+        size_t size = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
+
+        flushData.contextOneTimeInit |= size > 0;
+        flushData.estimatedSize += size;
+    }
 }
 
 template <typename GfxFamily>
@@ -2066,6 +2073,8 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
                                                                getLogicalStateHelper());
             this->setPreemptionMode(device.getPreemptionMode());
         }
+
+        programStateSip(csrStream, device);
     }
 }
 
@@ -2094,6 +2103,10 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
 
     if (preemptionAllocation) {
         makeResident(*preemptionAllocation);
+    }
+
+    if (device.isStateSipRequired()) {
+        makeResident(*SipKernel::getSipKernel(device).getSipAllocation());
     }
 }
 

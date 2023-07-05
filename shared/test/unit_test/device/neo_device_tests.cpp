@@ -858,3 +858,23 @@ TEST_F(DeviceTests, whenInitializingDeviceThenSetCorrectDefaultBcsEngineIndex) {
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engine.getEngineType());
     EXPECT_EQ(EngineUsage::Regular, engine.getEngineUsage());
 }
+
+TEST_F(DeviceTests, givenDeviceMidThreadPreemptionWhenDebuggerDisabledThenStateSipRequired) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    device->setPreemptionMode(NEO::PreemptionMode::MidThread);
+    EXPECT_TRUE(device->isStateSipRequired());
+}
+
+TEST_F(DeviceTests, givenDeviceThreadGroupPreemptionWhenDebuggerEnabledThenStateSipRequired) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->setPreemptionMode(NEO::PreemptionMode::ThreadGroup);
+    device->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(device.get());
+    EXPECT_TRUE(device->isStateSipRequired());
+}
+
+TEST_F(DeviceTests, givenDeviceThreadGroupPreemptionWhenDebuggerDisabledThenStateSipNotRequired) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->setPreemptionMode(NEO::PreemptionMode::ThreadGroup);
+    EXPECT_FALSE(device->isStateSipRequired());
+}

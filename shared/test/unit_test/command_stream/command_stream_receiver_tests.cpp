@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/command_stream/preemption.h"
@@ -4127,4 +4128,39 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     EXPECT_EQ(hwParserCsr.cmdList.end(), itCsrCommand);
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getPreemptionAllocation()));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenSipProgrammingNeededThenOneTimeSipStateDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    auto sipAllocation = NEO::SipKernel::getSipKernel(*pDevice).getSipAllocation();
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(sipAllocation));
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateSipCmd = hwParserCsr.getCommand<STATE_SIP>();
+    ASSERT_NE(nullptr, stateSipCmd);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    stateSipCmd = hwParserCsr.getCommand<STATE_SIP>();
+    EXPECT_EQ(nullptr, stateSipCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(sipAllocation));
 }

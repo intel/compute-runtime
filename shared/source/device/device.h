@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -166,6 +167,9 @@ class Device : public ReferenceTrackedObject<Device> {
     uint32_t getNumberOfRegularContextsPerEngine() const { return numberOfRegularContextsPerEngine; }
     bool isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const;
     MOCKABLE_VIRTUAL void stopDirectSubmission();
+    bool isStateSipRequired() const {
+        return getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr;
+    }
 
     std::atomic<uint32_t> debugExecutionCounter = 0;
 
