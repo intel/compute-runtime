@@ -12,6 +12,13 @@ endif()
 
 include(ExternalProject)
 
+if(NEO_ENABLE_INTERPROCEDURAL_OPTIMIZATION)
+  cmake_policy(SET CMP0069 NEW)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+  set(NEO_DISABLE_LD_LLD TRUE)
+  message(STATUS "Enabling interprocedural optimization")
+endif()
+
 # Set the runtime source directory
 if(NOT DEFINED NEO_SOURCE_DIR)
   set(NEO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
