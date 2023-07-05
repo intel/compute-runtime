@@ -482,7 +482,12 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory
                                     device->getDeviceBitfield()};
     properties.flags.forceSystemMemory = forceHostMemory && this->useSecondaryCommandStream;
 
-    return device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    auto commandBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    if (commandBufferAllocation) {
+        commandBufferAllocation->storageInfo.systemMemoryForced = properties.flags.forceSystemMemory;
+    }
+
+    return commandBufferAllocation;
 }
 
 void CommandContainer::fillReusableAllocationLists() {

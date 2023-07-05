@@ -37,6 +37,13 @@ class MyMockCommandContainer : public CommandContainer {
     using CommandContainer::getAlignedCmdBufferSize;
     using CommandContainer::immediateReusableAllocationList;
     using CommandContainer::secondaryCommandStreamForImmediateCmdList;
+
+    GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory) override {
+        allocateCommandBufferCalled[!!forceHostMemory]++;
+        return CommandContainer::allocateCommandBuffer(forceHostMemory);
+    }
+
+    uint32_t allocateCommandBufferCalled[2] = {0, 0};
 };
 
 struct CommandContainerHeapStateTests : public ::testing::Test {
@@ -1430,6 +1437,39 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusa
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenSecondCmdContainerCreatedAfterFirstCmdContainerDestroyedAndReusableAllocationsListUsedThenCommandBuffersAllocationsAreReused) {
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::defaultHeapSize, true, true);
+
+    EXPECT_EQ(1u, cmdContainer->allocateCommandBufferCalled[0]); // forceHostMemory = 0
+    EXPECT_EQ(1u, cmdContainer->allocateCommandBufferCalled[1]); // forceHostMemory = 1
+    EXPECT_TRUE(allocList.peekIsEmpty());
+
+    cmdContainer.reset();
+    EXPECT_FALSE(allocList.peekIsEmpty());
+
+    cmdContainer = std::make_unique<MyMockCommandContainer>();
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::defaultHeapSize, true, true);
+
+    EXPECT_EQ(0u, cmdContainer->allocateCommandBufferCalled[0]); // forceHostMemory = 0
+    EXPECT_EQ(0u, cmdContainer->allocateCommandBufferCalled[1]); // forceHostMemory = 1
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenAllocateCommandBufferInHostMemoryCalledThenForceSystemMemoryFlagSetInAllocationStorageInfo) {
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, true);
+
+    auto commandBufferAllocation = cmdContainer->allocateCommandBuffer(true /*forceHostMemory*/);
+    EXPECT_TRUE(commandBufferAllocation->storageInfo.systemMemoryForced);
+    pDevice->getMemoryManager()->freeGraphicsMemory(commandBufferAllocation);
+    cmdContainer.reset();
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithSharedHeapsEnabledThenOnlyOneHeapFilled) {
