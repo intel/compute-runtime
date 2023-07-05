@@ -57,6 +57,10 @@ class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<W
 
         return true;
     }
+    size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const override {
+        return hugeGfxMemoryChunkSize;
+    }
+    size_t hugeGfxMemoryChunkSize = WddmMemoryManager::getHugeGfxMemoryChunkSize(preferredAllocationMethod);
 };
 
 class WddmMemoryManagerTests : public ::testing::Test {
@@ -291,6 +295,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationWithFailingCreateInt
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
+
 TEST_F(WddmMemoryManagerTests, GivenAllocationWhenAllocationIsFreeThenFreeToGmmClientContextCalled) {
     NEO::AllocationData allocData = {};
     allocData.type = NEO::AllocationType::BUFFER;
@@ -301,6 +306,22 @@ TEST_F(WddmMemoryManagerTests, GivenAllocationWhenAllocationIsFreeThenFreeToGmmC
     memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+    EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(gmmHelper->getClientContext())->freeGpuVirtualAddressCalled, 0u);
+}
+
+TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWhenCreatingHostAllocationThenGpuAndCpuAddressesAreEqual) {
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::BUFFER_HOST_MEMORY;
+    allocData.size = 2ULL * MemoryConstants::pageSize64k;
+    allocData.forceKMDAllocation = false;
+    allocData.makeGPUVaDifferentThanCPUPtr = false;
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, true);
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+    EXPECT_EQ(graphicsAllocation->getGpuAddress(), reinterpret_cast<uintptr_t>(graphicsAllocation->getUnderlyingBuffer()));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
     EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(gmmHelper->getClientContext())->freeGpuVirtualAddressCalled, 0u);

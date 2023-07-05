@@ -163,7 +163,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(const AllocationData &allocationData, bool allowLargePages) {
     size_t sizeAligned = alignUp(allocationData.size, allowLargePages ? MemoryConstants::pageSize64k : MemoryConstants::pageSize);
     if (sizeAligned > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd)) {
-        return allocateHugeGraphicsMemory(allocationData, false);
+        const bool isBufferHostMemory = allocationData.type == NEO::AllocationType::BUFFER_HOST_MEMORY;
+        return allocateHugeGraphicsMemory(allocationData, isBufferHostMemory);
     }
 
     // algin gpu address of device part of usm shared allocation to 64kb for WSL2
@@ -240,7 +241,7 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
     } else {
         alignedSize = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         uncacheable = false;
-        hostPtr = alignedPtr = allocateSystemMemory(alignedSize, MemoryConstants::pageSize64k);
+        hostPtr = alignedPtr = allocateSystemMemory(alignedSize, MemoryConstants::pageSize2M);
         if (nullptr == hostPtr) {
             return nullptr;
         }
@@ -275,8 +276,27 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
     }
 
     wddmAllocation->storageInfo.multiStorage = true;
+    auto wddmAllocGpuPtr = sharedVirtualAddress ? hostPtr : nullptr;
 
-    if (!createWddmAllocation(wddmAllocation.get(), sharedVirtualAddress ? hostPtr : nullptr)) {
+    void *mapPtr = wddmAllocation->getAlignedCpuPtr();
+    if (allocationData.type == AllocationType::SVM_CPU) {
+        // add  padding in case mapPtr is not aligned
+        size_t reserveSizeAligned = alignedSize + allocationData.alignment;
+        bool ret = getWddm(wddmAllocation->getRootDeviceIndex()).reserveValidAddressRange(reserveSizeAligned, mapPtr);
+        if (!ret) {
+            for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
+                delete wddmAllocation->getGmm(gmmId);
+            }
+            freeSystemMemory(wddmAllocation->getDriverAllocatedCpuPtr());
+            return nullptr;
+        }
+        wddmAllocation->setReservedAddressRange(mapPtr, reserveSizeAligned);
+        size_t newAlignment = allocationData.alignment ? alignUp(allocationData.alignment, MemoryConstants::pageSize64k) : MemoryConstants::pageSize64k;
+        mapPtr = alignUp(mapPtr, newAlignment);
+        wddmAllocGpuPtr = mapPtr;
+    }
+
+    if (!createWddmAllocation(wddmAllocation.get(), wddmAllocGpuPtr)) {
         for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
             delete wddmAllocation->getGmm(gmmId);
         }
