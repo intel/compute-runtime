@@ -7,6 +7,8 @@
 
 #include "level_zero/sysman/source/fabric_port/linux/sysman_fabric_device_access_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 
 #include <limits>
@@ -57,6 +59,7 @@ ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, ze
     const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
     ze_result_t result = pIafNlApi->fPortStatusQuery(iafPortId, iafPortState);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf port status query failed for fabricId : %d, attachId : %d, portnumber : %d and returning error:0x%x \n", __FUNCTION__, iafPortId.fabricId, iafPortId.attachId, iafPortId.portNumber, result);
         return result;
     }
     readIafPortStatus(state, iafPortState);
@@ -70,6 +73,7 @@ ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, ze
 
     result = pIafNlApi->fportProperties(iafPortId, guid, portNumber, maxRxSpeed, maxTxSpeed, rxSpeed, txSpeed);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Error@ %s(): Iaf port properties query failed for fabricId : %d, attachId : %d, portnumber : %d and returning error:0x%x \n", __FUNCTION__, iafPortId.fabricId, iafPortId.attachId, iafPortId.portNumber, result);
         return result;
     }
     readIafPortSpeed(state.rxSpeed, rxSpeed);
@@ -159,6 +163,7 @@ ze_result_t FabricDeviceAccessNl::getPorts(std::vector<zes_fabric_port_id_t> &po
     pLinuxSysmanImp->getSysfsAccess().getRealPath(iafPath, iafRealPath);
     ze_result_t result = pIafNlApi->getPorts(iafRealPath, iafPorts);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf getPorts query failed to retrieve ports from %s and returning error:0x%x \n", __FUNCTION__, iafRealPath.c_str(), result);
         return result;
     }
 
