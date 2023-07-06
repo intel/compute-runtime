@@ -1155,13 +1155,11 @@ ze_result_t ModuleImp::inspectLinkage(
         std::vector<std::string> exportedSymbolLogMessages;
         std::stringstream logMessage;
 
-        auto &programInfo = moduleId->translationUnit->programInfo;
-
-        // Add External Functions to the Exported Symbols Log
-        for (auto externalFunction : programInfo.externalFunctions) {
+        // Add All Reported Symbols as Exported Symbols
+        for (auto const &symbolIt : moduleId->symbols) {
             logMessage.clear();
             logMessage << "Module <" << moduleId << ">: "
-                       << " Exported Symbol <" << externalFunction.functionName << ">"
+                       << " Exported Symbol <" << symbolIt.first << ">"
                        << "\n";
             exportedSymbolLogMessages.push_back(logMessage.str());
         }
