@@ -557,9 +557,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableStateComputeModeTracking, -1, "-1: default
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStateBaseAddressTracking, -1, "-1: default: enabled, 0: disabled, 1: enabled. This flag enables tracking state base address changes in command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, SelectCmdListHeapAddressModel, -1, "-1: default, 0: private heaps, 1: stateless, 2: bindless, 3: bindful. This flag selects default command list heap address model. Values should match HeapAddressModel enum")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableSetPair, -1, "Use SET_PAIR to pair two buffer objects behind the same file descriptor, -1: default, 0: disabled, 1: enabled")
-DECLARE_DEBUG_VARIABLE(int32_t, CommandListTimestampRefreshIntervalInMilliSec, -1, "-1: use driver default, This value sets the refresh interval for getting synchronized GPU and CPU timestamp")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreferredAllocationMethod, -1, "Sets preferred allocation method for Wddm paths; values = -1: driver default, 0: UseUmdSystemPtr, 1: AllocateByKmd")
-
+DECLARE_DEBUG_VARIABLE(int32_t, EventTimestampRefreshIntervalInMilliSec, -1, "-1: use driver default, This value sets the refresh interval for getting synchronized GPU and CPU timestamp")
 /* Binary Cache */
 DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")
 

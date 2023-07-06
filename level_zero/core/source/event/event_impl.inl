@@ -67,6 +67,19 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->resetDeviceCompletionData(true);
     }
 
+    const auto frequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
+    const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
+    if (hwInfo.capabilityTable.kernelTimestampValidBits < 64u) {
+        event->timestampRefreshIntervalInNanoSec = static_cast<uint64_t>(maxKernelTsValue * frequency) / 2;
+    } else {
+        event->timestampRefreshIntervalInNanoSec = maxKernelTsValue / 2;
+    }
+    if (NEO::DebugManager.flags.EventTimestampRefreshIntervalInMilliSec.get() != -1) {
+        constexpr uint32_t milliSecondsToNanoSeconds = 1000000u;
+        const uint32_t refreshTime = NEO::DebugManager.flags.EventTimestampRefreshIntervalInMilliSec.get();
+        event->timestampRefreshIntervalInNanoSec = refreshTime * milliSecondsToNanoSeconds;
+    }
+
     return event;
 }
 

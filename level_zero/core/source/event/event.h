@@ -221,9 +221,10 @@ struct Event : _ze_event_handle_t {
     uint32_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
-    void setReferenceTs(NEO::TimeStampData &timestamp) {
-        referenceTs = timestamp;
+    NEO::TimeStampData *peekReferenceTs() {
+        return &referenceTs;
     }
+    void setReferenceTs(uint64_t currentCpuTimeStamp);
     bool hasKerneMappedTsCapability = false;
 
   protected:
@@ -282,6 +283,7 @@ struct Event : _ze_event_handle_t {
     bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
     bool inOrderExecEvent = false;
+    uint64_t timestampRefreshIntervalInNanoSec = 0;
 };
 
 struct EventPool : _ze_event_pool_handle_t {

@@ -410,4 +410,12 @@ void Event::unsetCmdQueue(bool unregisterClient) {
     latestUsedCmdQueue = nullptr;
 }
 
+void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
+    const auto recalculate =
+        (currentCpuTimeStamp - referenceTs.cpuTimeinNS) > timestampRefreshIntervalInNanoSec;
+    if (referenceTs.cpuTimeinNS == 0 || recalculate) {
+        device->getNEODevice()->getOSTime()->getCpuGpuTime(&referenceTs);
+    }
+}
+
 } // namespace L0

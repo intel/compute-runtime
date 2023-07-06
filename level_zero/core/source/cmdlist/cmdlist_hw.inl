@@ -134,8 +134,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     cmdListCurrentStartOffset = 0;
 
     mappedTsEventList.clear();
-    previousSynchronizedTimestamp = {};
-
     return ZE_RESULT_SUCCESS;
 }
 
@@ -236,20 +234,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     createLogicalStateHelper();
-
-    const auto frequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
-    const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
-    if (hwInfo.capabilityTable.kernelTimestampValidBits < 64u) {
-        this->timestampRefreshIntervalInNanoSec = static_cast<uint64_t>(maxKernelTsValue * frequency);
-    } else {
-        this->timestampRefreshIntervalInNanoSec = maxKernelTsValue;
-    }
-    if (NEO::DebugManager.flags.CommandListTimestampRefreshIntervalInMilliSec.get() != -1) {
-        constexpr uint32_t milliSecondsToNanoSeconds = 1000000u;
-        const uint32_t refreshTime = NEO::DebugManager.flags.CommandListTimestampRefreshIntervalInMilliSec.get();
-        this->timestampRefreshIntervalInNanoSec = refreshTime * milliSecondsToNanoSeconds;
-    }
-
     return returnType;
 }
 

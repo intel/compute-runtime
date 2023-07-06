@@ -56,7 +56,6 @@ struct CommandListImp : CommandList {
     static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
     static constexpr bool cmdListDefaultGlobalAtomics = false;
     std::vector<Event *> mappedTsEventList{};
-    NEO::TimeStampData previousSynchronizedTimestamp{};
 };
 
 } // namespace L0

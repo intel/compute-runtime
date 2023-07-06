@@ -2124,8 +2124,9 @@ TEST_F(EventqueryKernelTimestampsExt, givenEventWithMappedTimestampCapabilityWhe
     const int64_t cpuReferenceTimeInNs = 3000;
     const auto maxKernelTsValue = maxNBitValue(32);
 
-    NEO::TimeStampData referenceTs{static_cast<uint64_t>(gpuReferenceTimeInNs / deviceTsFrequency), cpuReferenceTimeInNs};
-    event->setReferenceTs(referenceTs);
+    NEO::TimeStampData *referenceTs = event->peekReferenceTs();
+    referenceTs->cpuTimeinNS = cpuReferenceTimeInNs;
+    referenceTs->gpuTimeStamp = static_cast<uint64_t>(gpuReferenceTimeInNs / deviceTsFrequency);
 
     auto timeToTimeStamp = [&](uint32_t timeInNs) {
         return static_cast<uint32_t>(timeInNs / deviceTsFrequency);
@@ -2212,6 +2213,101 @@ TEST_F(EventqueryKernelTimestampsExt, givenEventWithMappedTimestampCapabilityWhe
     EXPECT_LE(results.pSynchronizedTimestampsBuffer[2].context.kernelStart, expectedContextStart + errorOffset);
     EXPECT_GE(results.pSynchronizedTimestampsBuffer[2].context.kernelEnd, expectedContextEnd - errorOffset);
     EXPECT_LE(results.pSynchronizedTimestampsBuffer[2].context.kernelEnd, expectedContextEnd + errorOffset);
+}
+
+using HostMappedEventTests = Test<DeviceFixture>;
+HWTEST_F(HostMappedEventTests, givenMappedEventsWhenSettingRefereshTimestampThenCorrectRefreshIntervalIsCalculated) {
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    const auto deviceTsFrequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
+    const auto kernelTsValidBits = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.kernelTimestampValidBits;
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    uint64_t expectedTsRefreshIntervalInNanoSec = 0u;
+    if (kernelTsValidBits >= 64) {
+        expectedTsRefreshIntervalInNanoSec = maxNBitValue(kernelTsValidBits) / 2;
+    } else {
+        expectedTsRefreshIntervalInNanoSec = static_cast<uint64_t>((maxNBitValue(kernelTsValidBits) * deviceTsFrequency) / 2);
+    }
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    auto event = std::unique_ptr<EventImp<uint64_t>>(static_cast<EventImp<uint64_t> *>(L0::Event::create<uint64_t>(eventPool.get(), &eventDesc, device)));
+    ASSERT_NE(nullptr, event);
+
+    // Reset before setting
+    NEO::TimeStampData *resetReferenceTs = event->peekReferenceTs();
+    resetReferenceTs->cpuTimeinNS = std::numeric_limits<uint64_t>::max();
+    resetReferenceTs->gpuTimeStamp = std::numeric_limits<uint64_t>::max();
+
+    event->setReferenceTs(expectedTsRefreshIntervalInNanoSec + 1);
+    EXPECT_NE(resetReferenceTs->cpuTimeinNS, std::numeric_limits<uint64_t>::max());
+    EXPECT_NE(resetReferenceTs->gpuTimeStamp, std::numeric_limits<uint64_t>::max());
+}
+
+HWTEST_F(HostMappedEventTests, givenEventTimestampRefreshIntervalInMilliSecIsSetThenCorrectRefreshIntervalIsCalculated) {
+
+    const uint32_t refereshIntervalMillisec = 10;
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EventTimestampRefreshIntervalInMilliSec.set(refereshIntervalMillisec);
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    uint64_t expectedTsRefreshIntervalInNanoSec = refereshIntervalMillisec * 1000000;
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    auto event = std::unique_ptr<EventImp<uint64_t>>(static_cast<EventImp<uint64_t> *>(L0::Event::create<uint64_t>(eventPool.get(), &eventDesc, device)));
+    ASSERT_NE(nullptr, event);
+
+    // Reset before setting
+    NEO::TimeStampData *resetReferenceTs = event->peekReferenceTs();
+    resetReferenceTs->cpuTimeinNS = 0;
+    resetReferenceTs->gpuTimeStamp = 0;
+
+    event->setReferenceTs(expectedTsRefreshIntervalInNanoSec + 1);
+    EXPECT_NE(resetReferenceTs->cpuTimeinNS, 0u);
+    EXPECT_NE(resetReferenceTs->gpuTimeStamp, 0u);
+}
+
+HWTEST_F(HostMappedEventTests, givenEventTimestampRefreshIntervalInMilliSecIsSetThenRefreshIntervalIsNotCalculatedIfCpuTimeLessThanInterval) {
+
+    const uint32_t refereshIntervalMillisec = 10;
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EventTimestampRefreshIntervalInMilliSec.set(refereshIntervalMillisec);
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    uint64_t expectedTsRefreshIntervalInNanoSec = refereshIntervalMillisec * 1000000;
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    auto event = std::unique_ptr<EventImp<uint64_t>>(static_cast<EventImp<uint64_t> *>(L0::Event::create<uint64_t>(eventPool.get(), &eventDesc, device)));
+    ASSERT_NE(nullptr, event);
+
+    // Reset before setting
+    NEO::TimeStampData *resetReferenceTs = event->peekReferenceTs();
+    resetReferenceTs->cpuTimeinNS = 1;
+    resetReferenceTs->gpuTimeStamp = 1;
+
+    event->setReferenceTs(expectedTsRefreshIntervalInNanoSec - 2);
+    EXPECT_EQ(resetReferenceTs->cpuTimeinNS, 1u);
+    EXPECT_EQ(resetReferenceTs->gpuTimeStamp, 1u);
 }
 
 HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {

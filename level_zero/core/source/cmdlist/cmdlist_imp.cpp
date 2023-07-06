@@ -246,14 +246,8 @@ void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {
     if (mappedTsEventList.size()) {
         uint64_t currentCpuTimeStamp = 0;
         device->getNEODevice()->getOSTime()->getCpuTime(&currentCpuTimeStamp);
-        const auto recalculate =
-            (currentCpuTimeStamp - previousSynchronizedTimestamp.cpuTimeinNS) > timestampRefreshIntervalInNanoSec;
-        if (previousSynchronizedTimestamp.cpuTimeinNS == 0 || recalculate) {
-            device->getNEODevice()->getOSTime()->getCpuGpuTime(&previousSynchronizedTimestamp);
-        }
-
         for (auto &event : mappedTsEventList) {
-            event->setReferenceTs(previousSynchronizedTimestamp);
+            event->setReferenceTs(currentCpuTimeStamp);
         }
 
         if (isClearEnabled) {
