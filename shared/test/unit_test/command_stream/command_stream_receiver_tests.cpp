@@ -4140,6 +4140,12 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
+    EXPECT_FALSE(commandStreamReceiver.getSipSentFlag());
+    commandStreamReceiver.setSipSentFlag(true);
+    EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
+    commandStreamReceiver.setSipSentFlag(false);
+    EXPECT_FALSE(commandStreamReceiver.getSipSentFlag());
+
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
     auto sipAllocation = NEO::SipKernel::getSipKernel(*pDevice).getSipAllocation();
@@ -4151,6 +4157,8 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto stateSipCmd = hwParserCsr.getCommand<STATE_SIP>();
     ASSERT_NE(nullptr, stateSipCmd);
 
+    EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
+
     size_t usedSize = commandStreamReceiver.commandStream.getUsed();
     commandStreamReceiver.flushImmediateTask(commandStream,
                                              commandStream.getUsed(),
@@ -4161,6 +4169,8 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
     stateSipCmd = hwParserCsr.getCommand<STATE_SIP>();
     EXPECT_EQ(nullptr, stateSipCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(sipAllocation));
 }

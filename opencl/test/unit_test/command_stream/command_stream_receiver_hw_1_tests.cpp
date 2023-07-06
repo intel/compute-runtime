@@ -131,7 +131,7 @@ HWTEST_F(UltCommandStreamReceiverTest, whenGetCmdSizeForPerDssBackedBufferIsCall
     }
 }
 
-HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetAndSourceLevelDebuggerIsActiveWhenGetRequiredStateSipCmdSizeIsCalledThenStateSipCmdSizeIsIncluded) {
+HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetAndSourceLevelDebuggerIsActiveWhenGetRequiredStateSipCmdSizeIsCalledThenStateSipCmdSizeIsNotIncluded) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
@@ -147,8 +147,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetAndSourceLevelDeb
     commandStreamReceiver.isStateSipSent = true;
     auto sizeWithSourceKernelDebugging = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
 
-    auto sizeForStateSip = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, commandStreamReceiver.isRcs());
-    EXPECT_EQ(sizeForStateSip, sizeWithSourceKernelDebugging - sizeWithoutSourceKernelDebugging - PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true) - debugger->sbaTrackingSize);
+    EXPECT_EQ(0u, sizeWithSourceKernelDebugging - sizeWithoutSourceKernelDebugging - PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true) - debugger->sbaTrackingSize);
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyChangedWhenEstimatingFlushTaskSizeThenResultDependsOnPolicyProgrammingCmdSize) {

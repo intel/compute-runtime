@@ -899,7 +899,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (device.getDebugger()) {
         size += device.getDebugger()->getSbaTrackingCommandsSize(NEO::Debugger::SbaAddresses::trackedAddressCount);
     }
-    if (!this->isStateSipSent || device.getDebugger()) {
+    if (!getSipSentFlag()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
@@ -1004,7 +1004,7 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cmdStream, Device &device) {
     if (!this->isStateSipSent) {
         PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device, logicalStateHelper.get(), this->osContext);
-        this->isStateSipSent = true;
+        setSipSentFlag(true);
     }
 }
 

@@ -83,7 +83,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                            device,
                                            NEO::Debugger::isDebugEnabled(internalUsage),
                                            csr->isProgramActivePartitionConfigRequired(),
-                                           performMigration};
+                                           performMigration,
+                                           csr->getSipSentFlag()};
     ctx.globalInit |= ctx.isDebugEnabled && !this->commandQueueDebugCmdsProgrammed && (neoDevice->getSourceLevelDebugger() || device->getL0Debugger());
 
     this->startingCmdBuffer = &this->commandStream;
@@ -498,12 +499,13 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
     Device *device,
     bool debugEnabled,
     bool programActivePartitionConfig,
-    bool performMigration) : preemptionMode{contextPreemptionMode},
-                             statePreemption{contextPreemptionMode},
-                             isPreemptionModeInitial{contextPreemptionMode == NEO::PreemptionMode::Initial},
-                             isDebugEnabled{debugEnabled},
-                             isProgramActivePartitionConfigRequired{programActivePartitionConfig},
-                             isMigrationRequested{performMigration} {
+    bool performMigration,
+    bool sipSent) : preemptionMode{contextPreemptionMode},
+                    statePreemption{contextPreemptionMode},
+                    isPreemptionModeInitial{contextPreemptionMode == NEO::PreemptionMode::Initial},
+                    isDebugEnabled{debugEnabled},
+                    isProgramActivePartitionConfigRequired{programActivePartitionConfig},
+                    isMigrationRequested{performMigration} {
 
     constexpr size_t residencyContainerSpaceForPreemption = 2;
     constexpr size_t residencyContainerSpaceForTagWrite = 1;
@@ -514,7 +516,7 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
 
     this->isDevicePreemptionModeMidThread = device->getDevicePreemptionMode() == NEO::PreemptionMode::MidThread;
     this->stateSipRequired = (this->isPreemptionModeInitial && this->isDevicePreemptionModeMidThread) ||
-                             this->isNEODebuggerActive(device);
+                             (!sipSent && this->isNEODebuggerActive(device));
 
     if (this->isDevicePreemptionModeMidThread) {
         this->spaceForResidency += residencyContainerSpaceForPreemption;
@@ -916,6 +918,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateSip(bool isStateSipRequired, NEO
     }
     NEO::Device *neoDevice = this->device->getNEODevice();
     NEO::PreemptionHelper::programStateSip<GfxFamily>(cmdStream, *neoDevice, this->csr->getLogicalStateHelper(), &this->csr->getOsContext());
+    this->csr->setSipSentFlag(true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

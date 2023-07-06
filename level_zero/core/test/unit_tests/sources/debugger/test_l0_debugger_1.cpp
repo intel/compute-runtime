@@ -156,6 +156,64 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandL
     commandQueue->destroy();
 }
 
+HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenTwoCommandQueuesExecuteCommandListThenSipIsDispatchedOncePerContext) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+
+    auto &defaultEngine = neoDevice->getDefaultEngine();
+
+    defaultEngine.commandStreamReceiver->setPreemptionMode(NEO::PreemptionMode::ThreadGroup);
+
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, defaultEngine.commandStreamReceiver, &queueDesc, false, false, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandQueue2 = whiteboxCast(CommandQueue::create(productFamily, device, defaultEngine.commandStreamReceiver, &queueDesc, false, false, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue2);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto engineGroupType = device->getGfxCoreHelper().getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), neoDevice->getHardwareInfo());
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)->toHandle()};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->close();
+
+    returnValue = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        commandQueue->commandStream.getCpuBase(),
+        usedSpaceAfter));
+
+    auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(1u, stateSipCmds.size());
+
+    returnValue = commandQueue2->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter2 = commandQueue2->commandStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        commandQueue2->commandStream.getCpuBase(),
+        usedSpaceAfter2));
+
+    stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, stateSipCmds.size());
+
+    commandList->destroy();
+    commandQueue->destroy();
+    commandQueue2->destroy();
+}
+
 using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 
 HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero, Gen12Plus) {

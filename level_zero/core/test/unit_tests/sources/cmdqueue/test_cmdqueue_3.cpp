@@ -844,6 +844,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecuti
                                                                                                          device,
                                                                                                          false,
                                                                                                          csr->isProgramActivePartitionConfigRequired(),
+                                                                                                         false,
                                                                                                          false};
 
     ctx.hasIndirectAccess = true;
@@ -869,6 +870,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecu
                                                                                                          device,
                                                                                                          false,
                                                                                                          csr->isProgramActivePartitionConfigRequired(),
+                                                                                                         false,
                                                                                                          false};
 
     ctx.hasIndirectAccess = false;
@@ -895,6 +897,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCommandQueueWhenHandleIndirectAl
                                                                                                          device,
                                                                                                          false,
                                                                                                          csr->isProgramActivePartitionConfigRequired(),
+                                                                                                         false,
                                                                                                          false};
     std::unique_lock<std::mutex> lock;
 

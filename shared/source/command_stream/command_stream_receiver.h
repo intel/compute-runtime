@@ -383,6 +383,14 @@ class CommandStreamReceiver {
         isPreambleSent = value;
     }
 
+    bool getSipSentFlag() const {
+        return isStateSipSent;
+    }
+
+    void setSipSentFlag(bool value) {
+        isStateSipSent = value;
+    }
+
     PreemptionMode getPreemptionMode() const {
         return lastPreemptionMode;
     }

@@ -68,7 +68,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                     Device *device,
                                     bool debugEnabled,
                                     bool programActivePartitionConfig,
-                                    bool performMigration);
+                                    bool performMigration,
+                                    bool sipSent);
 
         inline bool isNEODebuggerActive(Device *device);
 
