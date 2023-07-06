@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
             abort();
         }
 
-        void *ptr = clEnqueueMapBuffer(queue, buffer, CL_TRUE, CL_MAP_READ, 0, bufferSize, 0, nullptr, nullptr, &err);
+        void *ptr = clEnqueueMapBuffer(queue, buffer, CL_TRUE, CL_MAP_WRITE, 0, bufferSize, 0, nullptr, nullptr, &err);
         if (err || ptr == nullptr) {
             cout << "Error mapping buffer" << endl;
             abort();
@@ -165,12 +165,6 @@ int main(int argc, char **argv) {
         abort();
     }
 
-    err = clFinish(queue);
-    if (err) {
-        cout << "Error Finish" << endl;
-        abort();
-    }
-
     {
         void *ptr = clEnqueueMapBuffer(queue, buffer, CL_TRUE, CL_MAP_READ, 0, bufferSize, 0, nullptr, nullptr, &err);
         if (err || ptr == nullptr) {
@@ -186,6 +180,12 @@ int main(int argc, char **argv) {
         err = clEnqueueUnmapMemObject(queue, buffer, ptr, 0, nullptr, nullptr);
         if (err) {
             cout << "Error unmapping buffer" << endl;
+            abort();
+        }
+
+        err = clFinish(queue);
+        if (err) {
+            cout << "Error Finish" << endl;
             abort();
         }
     }
