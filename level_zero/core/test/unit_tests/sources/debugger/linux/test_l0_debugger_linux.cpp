@@ -267,6 +267,38 @@ TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAlloc
     EXPECT_TRUE(containsElfHandle(bo2));
 }
 
+TEST_F(L0DebuggerLinuxTest, givenModuleAllocationsWhenAttachingZebinModuleThenBosRequireImmediateBind) {
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
+    isaAllocation.bufferObjects[0] = &bo;
+
+    MockDrmAllocation isaAllocation2(rootDeviceIndex, AllocationType::CONSTANT_SURFACE, MemoryPool::System4KBPages);
+    MockBufferObject bo2(rootDeviceIndex, drmMock, 3, 0, 0, 1);
+    isaAllocation2.bufferObjects[0] = &bo2;
+
+    uint32_t handle = 0;
+    const uint32_t elfHandle = 198;
+
+    StackVec<NEO::GraphicsAllocation *, 32> kernelAllocs;
+    kernelAllocs.push_back(&isaAllocation);
+    kernelAllocs.push_back(&isaAllocation2);
+
+    drmMock->registeredDataSize = 0;
+    drmMock->registeredClass = NEO::DrmResourceClass::MaxSize;
+
+    EXPECT_TRUE(device->getL0Debugger()->attachZebinModuleToSegmentAllocations(kernelAllocs, handle, elfHandle));
+
+    const auto containsModuleHandle = [handle](const auto &bufferObject) {
+        const auto &bindExtHandles = bufferObject.getBindExtHandles();
+        return std::find(bindExtHandles.begin(), bindExtHandles.end(), handle) != bindExtHandles.end();
+    };
+
+    EXPECT_TRUE(containsModuleHandle(bo));
+    EXPECT_TRUE(containsModuleHandle(bo2));
+    EXPECT_TRUE(bo.isImmediateBindingRequired());
+    EXPECT_TRUE(bo2.isImmediateBindingRequired());
+}
+
 TEST_F(L0DebuggerLinuxTest, givenModuleHandleWhenRemoveZebinModuleIsCalledThenHandleIsUnregistered) {
     uint32_t handle = 20;
 
