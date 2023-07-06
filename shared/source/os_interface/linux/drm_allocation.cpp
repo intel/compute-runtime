@@ -349,6 +349,7 @@ void DrmAllocation::linkWithRegisteredHandle(uint32_t handle) {
     for (auto bo : bos) {
         if (bo) {
             bo->addBindExtHandle(handle);
+            bo->requireImmediateBinding(true);
         }
     }
 }

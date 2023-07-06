@@ -754,6 +754,7 @@ bool DebugSessionLinux::checkAllEventsCollected() {
             allEventsCollected = true;
         }
     }
+    PRINT_DEBUGGER_INFO_LOG("checkAllEventsCollected() returned %d, clientHandle = %ull\n", static_cast<int>(allEventsCollected), this->clientHandle);
     return allEventsCollected;
 }
 
@@ -893,6 +894,7 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
                     perKernelModules = false;
                     moduleUUIDindex = static_cast<int>(uuidIter);
+                    PRINT_DEBUGGER_INFO_LOG("Zebin module uuid = %ull", (uint64_t)vmBind->uuids[uuidIter]);
                 }
 
                 if (connection->uuidMap[vmBind->uuids[uuidIter]].classHandle == isaUuidHandle) {
@@ -972,6 +974,7 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 memLock.unlock();
 
                 if (perKernelModules) {
+                    PRINT_DEBUGGER_INFO_LOG("New per-kernel module\n", "");
                     debugEvent.flags = apiEventNeedsAck ? ZET_DEBUG_EVENT_FLAG_NEED_ACK : 0;
 
                     if (tileSessionsEnabled) {
@@ -1100,6 +1103,8 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                                 }
                             }
                         } else {
+                            PRINT_DEBUGGER_INFO_LOG("Zebin module = %ull has load addresses = %d", static_cast<uint64_t>(vmBind->uuids[uuidIter]), static_cast<int>(module.loadAddresses[tileIndex].size()));
+
                             if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
                                 auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
                                 loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
@@ -1401,6 +1406,7 @@ void DebugSessionLinux::extractUuidData(uint64_t client, const UuidData &uuidDat
         uint32_t segmentCount = 0;
         memcpy_s(&segmentCount, sizeof(uint32_t), uuidData.data.get(), uuidData.dataSize);
         clientHandleToConnection[client]->uuidToModule[uuidData.handle].segmentCount = segmentCount;
+        PRINT_DEBUGGER_INFO_LOG("Zebin module = %ull, segment count = %ul", uuidData.handle, segmentCount);
     }
 }
 
