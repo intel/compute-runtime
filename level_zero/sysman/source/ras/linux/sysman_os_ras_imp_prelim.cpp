@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/ras/linux/sysman_os_ras_imp_prelim.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
@@ -49,6 +50,7 @@ ze_result_t LinuxRasImp::osRasSetConfig(const zes_ras_config_t *config) {
         memcpy_s(categoryThreshold, maxRasErrorCategoryCount * sizeof(uint64_t), config->detailedThresholds.category, maxRasErrorCategoryCount * sizeof(uint64_t));
         return ZE_RESULT_SUCCESS;
     }
+    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
@@ -63,6 +65,7 @@ ze_result_t LinuxRasImp::osRasGetProperties(zes_ras_properties_t &properties) {
 ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) {
     if (clear == true) {
         if (pFsAccess->isRootUser() == false) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
             return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
         }
     }
