@@ -108,6 +108,9 @@ void RootDeviceEnvironment::prepareForCleanup() const {
 }
 
 bool RootDeviceEnvironment::initAilConfiguration() {
+    if (!DebugManager.flags.EnableAIL.get()) {
+        return true;
+    }
     auto ailConfiguration = AILConfiguration::get(hwInfo->platform.eProductFamily);
 
     if (ailConfiguration == nullptr) {

@@ -464,6 +464,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, CompactL3FlushEventPacket, -1, "Compact COMPUTE_
 DECLARE_DEBUG_VARIABLE(int32_t, UseDynamicEventPacketsCount, -1, "Use dynamic estimation for event packet count based on a given device configuration, -1: default , 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, SignalAllEventPackets, -1, "All packets of event are signaled, reset and waited/synchronized, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBcsSwControlWa, -1, "Enable BCS WA via BCSSWCONTROL MMIO. -1: default, 0: disabled, 1: if src in system mem, 2: if dst in system mem, 3: if src and dst in system mem, 4: always")
+DECLARE_DEBUG_VARIABLE(bool, EnableAIL, true, "Enables AIL")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")
