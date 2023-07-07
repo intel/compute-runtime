@@ -21,6 +21,7 @@
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/implicit_args.h"
@@ -331,7 +332,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     auto remainderSimdLanes = itemsInGroup & (simdSize - 1u);
     threadExecutionMask = static_cast<uint32_t>(maxNBitValue(remainderSimdLanes));
     if (!threadExecutionMask) {
-        threadExecutionMask = static_cast<uint32_t>(maxNBitValue((simdSize == 1) ? 32 : simdSize));
+        threadExecutionMask = static_cast<uint32_t>(maxNBitValue((isSimd1(simdSize)) ? 32 : simdSize));
     }
     evaluateIfRequiresGenerationOfLocalIdsByRuntime(kernelDescriptor);
 

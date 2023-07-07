@@ -9,7 +9,9 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/simd_helper.h"
 
 #include <cstring>
 
@@ -32,9 +34,12 @@ std::unique_lock<std::mutex> LocalIdsCache::lock() {
     return std::unique_lock<std::mutex>(setLocalIdsMutex);
 }
 
-size_t LocalIdsCache::getLocalIdsSizeForGroup(const Vec3<uint16_t> &group) const {
+size_t LocalIdsCache::getLocalIdsSizeForGroup(const Vec3<uint16_t> &group, const GfxCoreHelper &gfxCoreHelper) const {
     const auto numElementsInGroup = static_cast<uint32_t>(Math::computeTotalElementsCount({group[0], group[1], group[2]}));
-    const auto numberOfThreads = getThreadsPerWG(simdSize, numElementsInGroup);
+    if (isSimd1(simdSize)) {
+        return static_cast<size_t>(numElementsInGroup * localIdsSizePerThread);
+    }
+    const auto numberOfThreads = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simdSize, numElementsInGroup, grfSize, false);
     return static_cast<size_t>(numberOfThreads * localIdsSizePerThread);
 }
 
@@ -65,7 +70,7 @@ void LocalIdsCache::setLocalIdsForGroup(const Vec3<uint16_t> &group, void *desti
 }
 
 void LocalIdsCache::commitNewEntry(LocalIdsCacheEntry &entry, const Vec3<uint16_t> &group, const GfxCoreHelper &gfxCoreHelper) {
-    entry.localIdsSize = getLocalIdsSizeForGroup(group);
+    entry.localIdsSize = getLocalIdsSizeForGroup(group, gfxCoreHelper);
     entry.groupSize = group;
     entry.accessCounter = 0U;
     if (entry.localIdsSize > entry.localIdsSizeAllocated) {

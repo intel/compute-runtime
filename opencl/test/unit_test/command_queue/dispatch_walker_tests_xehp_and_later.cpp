@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -770,7 +771,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenExecution
         hwParser.findHardwareCommands<FamilyType>();
 
         auto walker = genCmdCast<COMPUTE_WALKER *>(*hwParser.itorWalker);
-        if (simd == 1) {
+        if (isSimd1(simd)) {
             EXPECT_EQ(maxNBitValue(32), walker->getExecutionMask());
         } else {
             EXPECT_EQ(maxNBitValue(simd), walker->getExecutionMask());

@@ -25,6 +25,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
@@ -85,7 +86,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     program->retainForKernel();
     imageTransformer.reset(new ImageTransformer);
     auto &deviceInfo = getDevice().getDevice().getDeviceInfo();
-    if (kernelInfoArg.kernelDescriptor.kernelAttributes.simdSize == 1u) {
+    if (isSimd1(kernelInfoArg.kernelDescriptor.kernelAttributes.simdSize)) {
         auto &productHelper = getDevice().getProductHelper();
         maxKernelWorkGroupSize = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
     } else {
@@ -2375,7 +2376,7 @@ void Kernel::setLocalIdsForGroup(const Vec3<uint16_t> &groupSize, void *destinat
 
 size_t Kernel::getLocalIdsSizeForGroup(const Vec3<uint16_t> &groupSize) const {
     UNRECOVERABLE_IF(localIdsCache.get() == nullptr);
-    return localIdsCache->getLocalIdsSizeForGroup(groupSize);
+    return localIdsCache->getLocalIdsSizeForGroup(groupSize, getGfxCoreHelper());
 }
 
 size_t Kernel::getLocalIdsSizePerThread() const {

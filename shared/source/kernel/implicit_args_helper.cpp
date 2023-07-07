@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/implicit_args.h"
@@ -35,7 +36,7 @@ std::array<uint8_t, 3> getDimensionOrderForLocalIds(const uint8_t *workgroupDime
 }
 
 uint32_t getGrfSize(uint32_t simd) {
-    if (simd == 1u) {
+    if (isSimd1(simd)) {
         return 3 * sizeof(uint16_t);
     }
     return 32u;

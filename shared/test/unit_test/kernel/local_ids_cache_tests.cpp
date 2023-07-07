@@ -15,15 +15,15 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
+class MockLocalIdsCache : public NEO::LocalIdsCache {
+  public:
+    using Base = NEO::LocalIdsCache;
+    using Base::Base;
+    using Base::cache;
+    MockLocalIdsCache(size_t cacheSize) : MockLocalIdsCache(cacheSize, 32u){};
+    MockLocalIdsCache(size_t cacheSize, uint8_t simd) : Base(cacheSize, {0, 1, 2}, simd, 32, false){};
+};
 struct LocalIdsCacheFixture {
-    class MockLocalIdsCache : public NEO::LocalIdsCache {
-      public:
-        using Base = NEO::LocalIdsCache;
-        using Base::Base;
-        using Base::cache;
-        MockLocalIdsCache(size_t cacheSize) : Base(cacheSize, {0, 1, 2}, 32, 32, false){};
-    };
-
     void setUp() {
         localIdsCache = std::make_unique<MockLocalIdsCache>(1);
     }
@@ -34,8 +34,8 @@ struct LocalIdsCacheFixture {
     std::unique_ptr<MockLocalIdsCache> localIdsCache;
 };
 
-using LocalIdsCacheTest = Test<LocalIdsCacheFixture>;
-TEST_F(LocalIdsCacheTest, GivenCacheMissWhenGetLocalIdsForGroupThenNewEntryIsCommitedIntoLeastUsedEntry) {
+using LocalIdsCacheTests = Test<LocalIdsCacheFixture>;
+TEST_F(LocalIdsCacheTests, GivenCacheMissWhenGetLocalIdsForGroupThenNewEntryIsCommitedIntoLeastUsedEntry) {
     localIdsCache->cache.resize(2);
     localIdsCache->cache[0].accessCounter = 2U;
     auto gfxCoreHelper = NEO::GfxCoreHelper::create(NEO::defaultHwInfo->platform.eRenderCoreFamily);
@@ -48,7 +48,7 @@ TEST_F(LocalIdsCacheTest, GivenCacheMissWhenGetLocalIdsForGroupThenNewEntryIsCom
     EXPECT_EQ(1U, localIdsCache->cache[1].accessCounter);
 }
 
-TEST_F(LocalIdsCacheTest, GivenEntryInCacheWhenGetLocalIdsForGroupThenEntryFromCacheIsUsed) {
+TEST_F(LocalIdsCacheTests, GivenEntryInCacheWhenGetLocalIdsForGroupThenEntryFromCacheIsUsed) {
     localIdsCache->cache[0].groupSize = groupSize;
     localIdsCache->cache[0].localIdsData = static_cast<uint8_t *>(alignedMalloc(512, 32));
     localIdsCache->cache[0].localIdsSize = 512U;
@@ -59,7 +59,7 @@ TEST_F(LocalIdsCacheTest, GivenEntryInCacheWhenGetLocalIdsForGroupThenEntryFromC
     EXPECT_EQ(2U, localIdsCache->cache[0].accessCounter);
 }
 
-TEST_F(LocalIdsCacheTest, GivenEntryWithBiggerBufferAllocatedWhenGetLocalIdsForGroupThenBufferIsReused) {
+TEST_F(LocalIdsCacheTests, GivenEntryWithBiggerBufferAllocatedWhenGetLocalIdsForGroupThenBufferIsReused) {
     localIdsCache->cache[0].groupSize = {4, 1, 1};
     localIdsCache->cache[0].localIdsData = static_cast<uint8_t *>(alignedMalloc(512, 32));
     localIdsCache->cache[0].localIdsSize = 512U;
@@ -76,12 +76,22 @@ TEST_F(LocalIdsCacheTest, GivenEntryWithBiggerBufferAllocatedWhenGetLocalIdsForG
     EXPECT_EQ(localIdsData, localIdsCache->cache[0].localIdsData);
 }
 
-TEST_F(LocalIdsCacheTest, GivenValidLocalIdsCacheWhenGettingLocalIdsSizePerThreadThenCorrectValueIsReturned) {
+TEST_F(LocalIdsCacheTests, GivenValidLocalIdsCacheWhenGettingLocalIdsSizePerThreadThenCorrectValueIsReturned) {
     auto localIdsSizePerThread = localIdsCache->getLocalIdsSizePerThread();
     EXPECT_EQ(192U, localIdsSizePerThread);
 }
 
-TEST_F(LocalIdsCacheTest, GivenValidLocalIdsCacheWhenGettingLocalIdsSizeForGroupThenCorrectValueIsReturned) {
-    auto localIdsSizePerThread = localIdsCache->getLocalIdsSizeForGroup(groupSize);
+TEST_F(LocalIdsCacheTests, GivenValidLocalIdsCacheWhenGettingLocalIdsSizeForGroupThenCorrectValueIsReturned) {
+    auto gfxCoreHelper = NEO::GfxCoreHelper::create(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    auto localIdsSizePerThread = localIdsCache->getLocalIdsSizeForGroup(groupSize, *gfxCoreHelper.get());
     EXPECT_EQ(1536U, localIdsSizePerThread);
+}
+
+TEST(LocalIdsCacheTest, givenSimd1WhenGettingLocalIdsSizeForGroupThenCorrectValueIsReturned) {
+    auto gfxCoreHelper = NEO::GfxCoreHelper::create(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    auto localIdsCache = std::make_unique<MockLocalIdsCache>(1u, 1u);
+    Vec3<uint16_t> groupSize = {128, 2, 1};
+    auto localIdsSizePerThread = localIdsCache->getLocalIdsSizeForGroup(groupSize, *gfxCoreHelper.get());
+    auto expectedLocalIdsSizePerThread = groupSize[0] * groupSize[1] * groupSize[2] * localIdsCache->getLocalIdsSizePerThread();
+    EXPECT_EQ(expectedLocalIdsSizePerThread, localIdsSizePerThread);
 }

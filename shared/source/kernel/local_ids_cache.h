@@ -31,7 +31,7 @@ class LocalIdsCache {
     ~LocalIdsCache();
 
     void setLocalIdsForGroup(const Vec3<uint16_t> &group, void *destination, const GfxCoreHelper &gfxCoreHelper);
-    size_t getLocalIdsSizeForGroup(const Vec3<uint16_t> &group) const;
+    size_t getLocalIdsSizeForGroup(const Vec3<uint16_t> &group, const GfxCoreHelper &gfxCoreHelper) const;
     size_t getLocalIdsSizePerThread() const;
 
   protected:

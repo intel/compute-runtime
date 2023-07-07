@@ -46,7 +46,7 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     auto remainderSimdLanes = localWorkSize & (simd - 1);
     uint64_t executionMask = maxNBitValue(remainderSimdLanes);
     if (!executionMask) {
-        executionMask = maxNBitValue((simd == 1) ? 32 : simd);
+        executionMask = maxNBitValue(isSimd1(simd) ? 32 : simd);
     }
 
     walkerCmd->setExecutionMask(static_cast<uint32_t>(executionMask));

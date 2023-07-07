@@ -492,7 +492,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
         auto remainderSimdLanes = workGroupSize & (simd - 1);
         executionMask = maxNBitValue(remainderSimdLanes);
         if (!executionMask) {
-            executionMask = maxNBitValue((simd == 1) ? 32 : simd);
+            executionMask = maxNBitValue(isSimd1(simd) ? 32 : simd);
         }
     }
 

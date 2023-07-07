@@ -8,6 +8,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/simd_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
@@ -82,7 +83,7 @@ TEST_F(KernelImpTest, givenExecutionMaskWithoutReminderWhenProgrammingItsValueTh
         descriptor.kernelAttributes.simdSize = simd;
         kernel.KernelImp::setGroupSize(simd, 1, 1);
 
-        if (simd == 1) {
+        if (isSimd1(simd)) {
             EXPECT_EQ(maxNBitValue(32), kernel.KernelImp::getThreadExecutionMask());
         } else {
             EXPECT_EQ(maxNBitValue(simd), kernel.KernelImp::getThreadExecutionMask());
