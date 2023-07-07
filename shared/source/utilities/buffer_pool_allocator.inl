@@ -14,8 +14,7 @@
 namespace NEO {
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
-AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCb)
-    : memoryManager{memoryManager}, onChunkFreeCallback{onChunkFreeCb} {
+AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *mm) : memoryManager{mm} {
     static_assert(std::is_base_of_v<BufferParentType, BufferType>);
 }
 
@@ -23,13 +22,12 @@ template <typename PoolT, typename BufferType, typename BufferParentType>
 AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool)
     : memoryManager{bufferPool.memoryManager},
       mainStorage{std::move(bufferPool.mainStorage)},
-      chunkAllocator{std::move(bufferPool.chunkAllocator)},
-      onChunkFreeCallback{bufferPool.onChunkFreeCallback} {}
+      chunkAllocator{std::move(bufferPool.chunkAllocator)} {}
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
 void AbstractBuffersPool<PoolT, BufferType, BufferParentType>::tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size) {
     if (this->isPoolBuffer(possiblePoolBuffer)) {
-        this->chunksToFree.push_back({offset, size});
+        this->chunksToFree.push_back({offset + startingOffset, size});
     }
 }
 
@@ -50,9 +48,6 @@ void AbstractBuffersPool<PoolT, BufferType, BufferParentType>::drain() {
     }
     for (auto &chunk : this->chunksToFree) {
         this->chunkAllocator->free(chunk.first, chunk.second);
-        if (static_cast<PoolT *>(this)->onChunkFreeCallback) {
-            (static_cast<PoolT *>(this)->*onChunkFreeCallback)(chunk.first, chunk.second);
-        }
     }
     this->chunksToFree.clear();
 }
@@ -71,38 +66,23 @@ bool AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::is
 
 template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
 void AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size) {
-    this->tryFreeFromPoolBuffer(possiblePoolBuffer, offset, size, this->bufferPools);
-}
-
-template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
-void AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size, std::vector<BuffersPoolType> &bufferPoolsVec) {
     auto lock = std::unique_lock<std::mutex>(this->mutex);
-    for (auto &bufferPool : bufferPoolsVec) {
+    for (auto &bufferPool : this->bufferPools) {
         bufferPool.tryFreeFromPoolBuffer(possiblePoolBuffer, offset, size); // NOLINT(clang-analyzer-cplusplus.NewDelete)
     }
 }
 
 template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
 void AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::drain() {
-    this->drain(this->bufferPools);
-}
-
-template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
-void AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::drain(std::vector<BuffersPoolType> &bufferPoolsVec) {
-    for (auto &bufferPool : bufferPoolsVec) {
+    for (auto &bufferPool : this->bufferPools) {
         bufferPool.drain();
     }
 }
 
 template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
 void AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::addNewBufferPool(BuffersPoolType &&bufferPool) {
-    this->addNewBufferPool(std::move(bufferPool), this->bufferPools);
-}
-
-template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
-void AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::addNewBufferPool(BuffersPoolType &&bufferPool, std::vector<BuffersPoolType> &bufferPoolsVec) {
     if (bufferPool.mainStorage) {
-        bufferPoolsVec.push_back(std::move(bufferPool));
+        this->bufferPools.push_back(std::move(bufferPool));
     }
 }
 } // namespace NEO

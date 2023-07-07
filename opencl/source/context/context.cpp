@@ -504,7 +504,7 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
            (isSupportedForSingleDeviceContexts && context->isSingleDeviceContext());
 }
 
-Context::BufferPool::BufferPool(Context *context) : BaseType(context->memoryManager, nullptr) {
+Context::BufferPool::BufferPool(Context *context) : BaseType(context->memoryManager) {
     static constexpr cl_mem_flags flags{};
     [[maybe_unused]] cl_int errcodeRet{};
     Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};

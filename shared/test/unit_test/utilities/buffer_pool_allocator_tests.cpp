@@ -34,38 +34,27 @@ struct DummyBuffersPool : public NEO::AbstractBuffersPool<DummyBuffersPool, Dumm
     using BaseType = NEO::AbstractBuffersPool<DummyBuffersPool, DummyBuffer>;
     static constexpr auto dummyPtr = 0xdeadbeef0000;
 
-    DummyBuffersPool(NEO::MemoryManager *memoryManager, uint32_t poolOffset, BaseType::OnChunkFreeCallback onChunkFreeCallback)
-        : BaseType{memoryManager, onChunkFreeCallback} {
+    DummyBuffersPool(NEO::MemoryManager *memoryManager, uint32_t poolOffset) : BaseType(memoryManager) {
         dummyAllocations.resize(2);
         dummyAllocations[0] = reinterpret_cast<NEO::GraphicsAllocation *>(poolOffset + dummyPtr);
         dummyAllocations[1] = nullptr; // makes sure nullptrs don't cause SEGFAULTs
     }
 
-    DummyBuffersPool(NEO::MemoryManager *memoryManager) : DummyBuffersPool(memoryManager, 0x0, &DummyBuffersPool::onChunkFree) {}
+    DummyBuffersPool(NEO::MemoryManager *memoryManager) : DummyBuffersPool(memoryManager, 0x0) {}
 
     BaseType::AllocsVecCRef getAllocationsVector() {
         return dummyAllocations;
     }
-    void onChunkFree(uint64_t offset, size_t size) {
-        this->freedChunks.push_back({offset, size});
-        this->onChunkFreeCalled = true;
-    }
 
     StackVec<NEO::GraphicsAllocation *, 1> dummyAllocations;
-    std::vector<std::pair<uint64_t, size_t>> freedChunks{};
-    bool onChunkFreeCalled = false;
 };
 
 struct DummyBuffersAllocator : public NEO::AbstractBuffersAllocator<DummyBuffersPool, DummyBuffer> {
     using BaseType = NEO::AbstractBuffersAllocator<DummyBuffersPool, DummyBuffer>;
     using BaseType::addNewBufferPool;
     using BaseType::bufferPools;
+    using BaseType::drain;
     using BaseType::isSizeWithinThreshold;
-
-    void drainUnderLock() {
-        auto lock = std::unique_lock<std::mutex>(this->mutex);
-        this->BaseType::drain();
-    }
 };
 
 using NEO::MockExecutionEnvironment;
@@ -169,13 +158,13 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenChunkOfMainStorageTrie
     auto &chunksToFree2 = buffersAllocator.bufferPools[1].chunksToFree;
     EXPECT_EQ(chunksToFree1.size(), 0u);
     EXPECT_EQ(chunksToFree2.size(), 0u);
-    auto chunkSize = DummyBuffersPool::chunkAlignment * 4;
-    auto chunkOffset = DummyBuffersPool::chunkAlignment;
+    auto chunkSize = sizeof(DummyBuffer) / 8;
+    auto chunkOffset = sizeof(DummyBuffer) / 2;
     buffersAllocator.tryFreeFromPoolBuffer(poolStorage2, chunkOffset, chunkSize);
     EXPECT_EQ(chunksToFree1.size(), 0u);
     EXPECT_EQ(chunksToFree2.size(), 1u);
     auto [effectiveChunkOffset, size] = chunksToFree2[0];
-    EXPECT_EQ(effectiveChunkOffset, chunkOffset);
+    EXPECT_EQ(effectiveChunkOffset, chunkOffset + DummyBuffersPool::startingOffset);
     EXPECT_EQ(size, chunkSize);
 
     buffersAllocator.releaseSmallBufferPool();
@@ -204,8 +193,8 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenDrainingPoolsThenOnlyA
     buffersAllocator.addNewBufferPool(std::move(pool1));
     buffersAllocator.addNewBufferPool(std::move(pool2));
 
-    auto chunkSize = DummyBuffersPool::chunkAlignment * 4;
-    auto chunkOffset = DummyBuffersPool::chunkAlignment;
+    auto chunkSize = sizeof(DummyBuffer) / 16;
+    auto chunkOffset = sizeof(DummyBuffer) / 2;
     for (size_t i = 0; i < 3; i++) {
         auto exampleOffset = chunkOffset + i * chunkSize * 2;
         buffersAllocator.tryFreeFromPoolBuffer(buffer1, exampleOffset, chunkSize);
@@ -214,54 +203,11 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenDrainingPoolsThenOnlyA
 
     auto &chunksToFree1 = buffersAllocator.bufferPools[0].chunksToFree;
     auto &chunksToFree2 = buffersAllocator.bufferPools[1].chunksToFree;
-    auto &freedChunks1 = buffersAllocator.bufferPools[0].freedChunks;
-    auto &freedChunks2 = buffersAllocator.bufferPools[1].freedChunks;
     EXPECT_EQ(chunksToFree1.size(), 3u);
     EXPECT_EQ(chunksToFree2.size(), 3u);
-    EXPECT_EQ(freedChunks1.size(), 0u);
-    EXPECT_EQ(freedChunks2.size(), 0u);
 
     otherMemoryManager->deferAllocInUse = true;
-    buffersAllocator.drainUnderLock();
+    buffersAllocator.drain();
     EXPECT_EQ(chunksToFree1.size(), 0u);
     EXPECT_EQ(chunksToFree2.size(), 3u);
-    ASSERT_EQ(freedChunks1.size(), 3u);
-    EXPECT_EQ(freedChunks2.size(), 0u);
-    EXPECT_TRUE(buffersAllocator.bufferPools[0].onChunkFreeCalled);
-    EXPECT_FALSE(buffersAllocator.bufferPools[1].onChunkFreeCalled);
-    for (size_t i = 0; i < 3; i++) {
-        auto expectedOffset = chunkOffset + i * chunkSize * 2;
-        auto [freedOffset, freedSize] = freedChunks1[i];
-        EXPECT_EQ(expectedOffset, freedOffset);
-        EXPECT_EQ(chunkSize, freedSize);
-    }
-}
-
-TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenDrainingPoolsThenOnChunkFreeIgnoredIfNotDefined) {
-    auto pool1 = DummyBuffersPool{this->memoryManager.get(), 0x0, nullptr};
-    pool1.mainStorage.reset(new DummyBuffer(testVal));
-    auto buffer1 = pool1.mainStorage.get();
-    pool1.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::startingOffset,
-                                                      DummyBuffersPool::aggregatedSmallBuffersPoolSize,
-                                                      DummyBuffersPool::chunkAlignment,
-                                                      DummyBuffersPool::smallBufferThreshold});
-    auto buffersAllocator = DummyBuffersAllocator{};
-    buffersAllocator.addNewBufferPool(std::move(pool1));
-
-    auto chunkSize = DummyBuffersPool::chunkAlignment * 4;
-    auto chunkOffset = DummyBuffersPool::chunkAlignment;
-    for (size_t i = 0; i < 3; i++) {
-        auto exampleOffset = chunkOffset + i * chunkSize * 2;
-        buffersAllocator.tryFreeFromPoolBuffer(buffer1, exampleOffset, chunkSize);
-    }
-
-    auto &chunksToFree1 = buffersAllocator.bufferPools[0].chunksToFree;
-    auto &freedChunks1 = buffersAllocator.bufferPools[0].freedChunks;
-    EXPECT_EQ(chunksToFree1.size(), 3u);
-    EXPECT_EQ(freedChunks1.size(), 0u);
-
-    buffersAllocator.drainUnderLock();
-    EXPECT_EQ(chunksToFree1.size(), 0u);
-    EXPECT_EQ(freedChunks1.size(), 0u);
-    EXPECT_FALSE(buffersAllocator.bufferPools[0].onChunkFreeCalled);
 }

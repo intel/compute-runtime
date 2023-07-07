@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <functional>
@@ -32,7 +31,7 @@ struct SmallBuffersParams {
 };
 
 template <typename PoolT, typename BufferType, typename BufferParentType = BufferType>
-struct AbstractBuffersPool : public SmallBuffersParams<PoolT>, public NonCopyableClass {
+struct AbstractBuffersPool : public SmallBuffersParams<PoolT> {
     // The prototype of a function allocating the `mainStorage` is not specified.
     // That would be an unnecessary limitation here - it is completely up to derived class implementation.
     // Perhaps the allocating function needs to leverage `HeapAllocator::allocate()` and also
@@ -44,9 +43,8 @@ struct AbstractBuffersPool : public SmallBuffersParams<PoolT>, public NonCopyabl
     using Params::smallBufferThreshold;
     using Params::startingOffset;
     using AllocsVecCRef = const StackVec<NEO::GraphicsAllocation *, 1> &;
-    using OnChunkFreeCallback = void (PoolT::*)(uint64_t offset, size_t size);
 
-    AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback);
+    AbstractBuffersPool(MemoryManager *memoryManager);
     AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool);
     void tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size);
     bool isPoolBuffer(const BufferParentType *buffer) const;
@@ -62,7 +60,6 @@ struct AbstractBuffersPool : public SmallBuffersParams<PoolT>, public NonCopyabl
     std::unique_ptr<BufferType> mainStorage;
     std::unique_ptr<HeapAllocator> chunkAllocator;
     std::vector<std::pair<uint64_t, size_t>> chunksToFree;
-    OnChunkFreeCallback onChunkFreeCallback = nullptr;
 };
 
 template <typename BuffersPoolType, typename BufferType, typename BufferParentType = BufferType>
@@ -84,11 +81,8 @@ class AbstractBuffersAllocator : public SmallBuffersParams<BuffersPoolType> {
 
   protected:
     inline bool isSizeWithinThreshold(size_t size) const { return smallBufferThreshold >= size; }
-    void tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size, std::vector<BuffersPoolType> &bufferPoolsVec);
     void drain();
-    void drain(std::vector<BuffersPoolType> &bufferPoolsVec);
     void addNewBufferPool(BuffersPoolType &&bufferPool);
-    void addNewBufferPool(BuffersPoolType &&bufferPool, std::vector<BuffersPoolType> &bufferPoolsVec);
 
     std::mutex mutex;
     std::vector<BuffersPoolType> bufferPools;
