@@ -1911,6 +1911,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
     addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent);
 
+    if (this->inOrderExecutionEnabled && launchParams.isKernelSplitOperation) {
+        if (!signalEvent) {
+            NEO::PipeControlArgs args;
+            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+        }
+        appendSignalInOrderDependencyCounter();
+    }
+
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
             *commandContainer.getCommandStream(),
@@ -1968,6 +1976,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         makeResidentDummyAllocation();
 
         appendSignalEventPostWalker(signalEvent);
+
+        if (isInOrderExecutionEnabled()) {
+            appendSignalInOrderDependencyCounter();
+        }
     }
     return ZE_RESULT_SUCCESS;
 }

@@ -749,6 +749,28 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         return cmdList;
     }
 
+    template <typename FamilyType>
+    GenCmdList::iterator findBltFillCmd(GenCmdList::iterator begin, GenCmdList::iterator end) {
+        using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+
+        if constexpr (!std::is_same<XY_COPY_BLT, typename FamilyType::XY_BLOCK_COPY_BLT>::value) {
+            auto fillItor = find<typename FamilyType::MEM_SET *>(begin, end);
+            if (fillItor != end) {
+                return fillItor;
+            }
+        }
+
+        return find<typename FamilyType::XY_COLOR_BLT *>(begin, end);
+    }
+
+    void *allocHostMem(size_t size) {
+        ze_host_mem_alloc_desc_t desc = {};
+        void *ptr = nullptr;
+        context->allocHostMem(&desc, size, 1, &ptr);
+
+        return ptr;
+    }
+
     DebugManagerStateRestore restorer;
     std::unique_ptr<NEO::MockOsContext> mockCopyOsContext;
 
@@ -1302,6 +1324,170 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyThenSi
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingFillThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    immCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
+
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), fillItor);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(fillItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    uint64_t syncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
+    EXPECT_EQ(syncVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(2u, sdiCmd->getDataDword0());
+    EXPECT_EQ(0u, sdiCmd->getDataDword1());
+
+    context->freeMem(data);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndOutEventThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    immCmdList->appendMemoryFill(data, data, 1, (size / 2) + 1, events[0]->toHandle(), 0, nullptr, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<typename FamilyType::COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), pcItor);
+
+    auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+    ASSERT_NE(nullptr, pcCmd);
+
+    while (PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE == pcCmd->getPostSyncOperation()) {
+        pcItor = find<PIPE_CONTROL *>(++pcItor, cmdList.end());
+        ASSERT_NE(cmdList.end(), pcItor);
+
+        pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+        ASSERT_NE(nullptr, pcCmd);
+    }
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(pcItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    ASSERT_NE(nullptr, sdiCmd);
+
+    uint64_t syncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
+    EXPECT_EQ(syncVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(1u, sdiCmd->getDataDword0());
+    EXPECT_EQ(0u, sdiCmd->getDataDword1());
+
+    context->freeMem(data);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndWithoutOutEventThenAddPipeControlSignalInOrderAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    immCmdList->appendMemoryFill(data, data, 1, (size / 2) + 1, nullptr, 0, nullptr, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<typename FamilyType::COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), pcItor);
+
+    auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+    ASSERT_NE(nullptr, pcCmd);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(pcItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    ASSERT_NE(nullptr, sdiCmd);
+
+    uint64_t syncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
+    EXPECT_EQ(syncVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(1u, sdiCmd->getDataDword0());
+    EXPECT_EQ(0u, sdiCmd->getDataDword1());
+
+    context->freeMem(data);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithoutSplitThenSignalByWalker, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    immCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+
+    auto &postSync = walkerCmd->getPostSync();
+
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+    EXPECT_EQ(1u, postSync.getImmediateData());
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), postSync.getDestinationAddress());
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
+    EXPECT_EQ(cmdList.end(), sdiItor);
+
+    context->freeMem(data);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyRegionThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
