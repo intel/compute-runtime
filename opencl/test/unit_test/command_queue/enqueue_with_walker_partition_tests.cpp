@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,4 +74,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests,
         }
     }
     EXPECT_TRUE(lastSemaphoreFound);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests, givenOoqWhenDispatchingWithoutEventsThenDontAllocateTimestampPacket) {
+    rootDevice->setPreemptionMode(PreemptionMode::Disabled);
+
+    MockCommandQueueHw<FamilyType> commandQueue(context.get(), rootDevice.get(), nullptr);
+    commandQueue.setOoqEnabled();
+
+    TimestampPacketContainer *timestampPacketContainer = commandQueue.timestampPacketContainer.get();
+    TimestampPacketContainer *deferredTimestampPackets = commandQueue.deferredTimestampPackets.get();
+
+    EXPECT_EQ(0u, timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+
+    MockKernelWithInternals kernel(*rootDevice, context.get());
+
+    size_t offset[3] = {0, 0, 0};
+    size_t gws[3] = {32, 32, 32};
+
+    cl_event event;
+    commandQueue.enqueueKernel(kernel, 3, offset, gws, nullptr, 0, nullptr, &event);
+
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+
+    commandQueue.enqueueKernel(kernel, 3, offset, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(0u, timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+
+    clReleaseEvent(event);
 }

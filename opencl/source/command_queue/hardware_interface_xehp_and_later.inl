@@ -80,9 +80,13 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
 
-    if (walkerArgs.currentTimestampPacketNodes && (walkerArgs.currentTimestampPacketNodes->peekNodes().size() > 0)) {
-        auto timestampPacket = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
-        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacket, rootDeviceEnvironment);
+    TagNodeBase *timestampPacketNode = nullptr;
+    if (walkerArgs.currentTimestampPacketNodes && (walkerArgs.currentTimestampPacketNodes->peekNodes().size() > walkerArgs.currentDispatchIndex)) {
+        timestampPacketNode = walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex];
+    }
+
+    if (timestampPacketNode) {
+        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
@@ -126,8 +130,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
 
-    if (walkerArgs.currentTimestampPacketNodes && walkerArgs.currentTimestampPacketNodes->peekNodes().size() > 0 &&
-        DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
+    if (timestampPacketNode && DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
         auto gpuVa = walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex]->getGpuAddress();
         printf("\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), gpuVa, commandStream.getCurrentGpuAddressPosition());
     }
@@ -149,8 +152,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         if (queueCsr.isStaticWorkPartitioningEnabled()) {
             queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), partitionCount));
         }
-        auto timestampPacket = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
-        timestampPacket->setPacketsUsed(partitionCount);
+
+        if (timestampPacketNode) {
+            timestampPacketNode->setPacketsUsed(partitionCount);
+        }
     } else {
         auto computeWalkerOnStream = commandStream.getSpaceForCmd<typename GfxFamily::COMPUTE_WALKER>();
         *computeWalkerOnStream = walkerCmd;
