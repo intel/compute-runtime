@@ -2211,6 +2211,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isInOrderEventWaitRequired(const Event &event) const {
+    return (event.getInOrderExecDataAllocation() != this->inOrderDependencyCounterAllocation);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool signalInOrderCompletion) {
     signalInOrderCompletion &= this->inOrderExecutionEnabled;
 
@@ -2252,10 +2257,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         if (event->isInOrderExecEvent()) {
-            bool eventFromPreviousAppend = (event->getInOrderExecDataAllocation() == this->inOrderDependencyCounterAllocation) &&
-                                           (event->getInOrderExecSignalValue() == this->inOrderDependencyCounter);
-
-            if (!eventFromPreviousAppend) {
+            if (isInOrderEventWaitRequired(*event)) {
                 CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), event->getInOrderAllocationOffset(), relaxedOrderingAllowed);
             }
             continue;
