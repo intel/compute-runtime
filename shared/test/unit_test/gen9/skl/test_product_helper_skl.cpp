@@ -21,10 +21,6 @@
 using namespace NEO;
 using SklProductHelper = ProductHelperTest;
 
-SKLTEST_F(SklProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
-    EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
-}
-
 SKLTEST_F(SklProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
     auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();

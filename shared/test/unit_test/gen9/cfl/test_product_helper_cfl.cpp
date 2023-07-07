@@ -23,10 +23,6 @@ using namespace NEO;
 
 using CflProductHelper = ProductHelperTest;
 
-CFLTEST_F(CflProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
-    EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
-}
-
 CFLTEST_F(CflProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
     auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();

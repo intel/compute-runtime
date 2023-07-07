@@ -82,11 +82,14 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
 
 StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
-    const auto platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
-    const auto revisionId = std::to_string(hwInfo.platform.usRevId);
+    auto createDeviceIdFilenameComponent = [](const NEO::HardwareIpVersion &hwIpVersion) {
+        std::ostringstream deviceId;
+        deviceId << hwIpVersion.architecture << "_" << hwIpVersion.release << "_" << hwIpVersion.revision;
+        return deviceId.str();
+    };
+    const auto deviceIp = createDeviceIdFilenameComponent(hwInfo.ipVersion);
     const auto builtinName = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);
     auto getAddressingMode = [type, &productHelper, builtin]() {
@@ -105,22 +108,19 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     };
     const auto addressingMode = getAddressingMode();
 
-    auto createBuiltinResourceName = [](ConstStringRef platformName, ConstStringRef revisionId, ConstStringRef addressingMode, ConstStringRef builtinName, ConstStringRef extension) {
+    auto createBuiltinResourceName = [](ConstStringRef deviceIpPath, ConstStringRef addressingMode, ConstStringRef builtinName, ConstStringRef extension) {
         std::ostringstream outResourceName;
-        if (false == platformName.empty()) {
-            outResourceName << platformName.str() << "_" << revisionId.str() << "_";
+        if (false == deviceIpPath.empty()) {
+            outResourceName << deviceIpPath.str() << "_";
         }
         outResourceName << addressingMode.str() << builtinName.str() << extension.str();
         return outResourceName.str();
     };
     StackVec<std::string, 3> resourcesToLookup = {};
-    resourcesToLookup.push_back(createBuiltinResourceName(platformName, revisionId, addressingMode, builtinName, extension));
+    resourcesToLookup.push_back(createBuiltinResourceName(deviceIp, addressingMode, builtinName, extension));
 
-    const bool requiresSpecificResource = (BuiltinCode::ECodeType::Binary == type && gfxCoreHelper.isRevisionSpecificBinaryBuiltinRequired());
-    if (false == requiresSpecificResource) {
-        const auto defaultRevisionId = std::to_string(productHelper.getDefaultRevisionId());
-        resourcesToLookup.push_back(createBuiltinResourceName(platformName, defaultRevisionId, addressingMode, builtinName, extension));
-        resourcesToLookup.push_back(createBuiltinResourceName("", "", addressingMode, builtinName, extension));
+    if (BuiltinCode::ECodeType::Binary != type) {
+        resourcesToLookup.push_back(createBuiltinResourceName("", addressingMode, builtinName, extension));
     }
     return resourcesToLookup;
 }

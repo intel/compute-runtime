@@ -733,11 +733,6 @@ void ProductHelperHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(P
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getDefaultRevisionId() const {
-    return 0u;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(AllocationType allocationType, uint64_t patIndex) const {
     return patIndex;
 }

@@ -605,10 +605,6 @@ void GfxCoreHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isRevisionSpecificBinaryBuiltinRequired() const {
-    return false;
-}
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
     return requiresCoherency;
 }

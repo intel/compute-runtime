@@ -64,10 +64,6 @@ HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThen
     EXPECT_NE(0u, productHelper->getHostMemCapabilities(&pInHwInfo));
 }
 
-HWTEST_F(ProductHelperTest, whenGettingDefaultRevisionIdThenZeroIsReturned) {
-    EXPECT_EQ(0u, productHelper->getDefaultRevisionId());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabilitiesThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
 

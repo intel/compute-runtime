@@ -5,11 +5,13 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/base_ult_config_listener.h"
@@ -139,6 +141,25 @@ std::string getRunPath(char *argv0) {
     }
 
     return res;
+}
+
+void registerMockSpirvBuiltinsInEmbeddedStorage() {
+    const std::array<ConstStringRef, 11> builtinIntermediateNames{"copy_buffer_to_buffer.builtin_kernel.bc",
+                                                                  "copy_buffer_rect.builtin_kernel.bc",
+                                                                  "fill_buffer.builtin_kernel.bc",
+                                                                  "copy_buffer_to_image3d.builtin_kernel.bc",
+                                                                  "copy_image3d_to_buffer.builtin_kernel.bc",
+                                                                  "copy_image_to_image1d.builtin_kernel.bc",
+                                                                  "copy_image_to_image2d.builtin_kernel.bc",
+                                                                  "copy_image_to_image3d.builtin_kernel.bc",
+                                                                  "fill_image1d.builtin_kernel.bc",
+                                                                  "fill_image2d.builtin_kernel.bc",
+                                                                  "fill_image3d.builtin_kernel.bc"};
+    auto &storageRegistry = EmbeddedStorageRegistry::getInstance();
+    for (auto builtinIntermediateName : builtinIntermediateNames) {
+        std::string resource = "__mock_spirv_resource";
+        storageRegistry.store(builtinIntermediateName.str(), createBuiltinResource(resource.data(), resource.size() + 1));
+    }
 }
 
 int main(int argc, char **argv) {
@@ -305,6 +326,8 @@ int main(int argc, char **argv) {
     executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
     executionDirectory += "/";
     executionDirectory += std::to_string(revId);
+
+    registerMockSpirvBuiltinsInEmbeddedStorage();
 
 #ifdef WIN32
 #include <direct.h>

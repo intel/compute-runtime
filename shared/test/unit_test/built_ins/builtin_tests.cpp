@@ -24,46 +24,36 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinDisabledWhenBinExtensionPass
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(0);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
-    const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "bindful_copy_buffer_to_buffer.builtin_kernel.bin";
-    std::string expectedResourceNameForPlatform = platformName + "_" + defaultRevId + "_" + expectedResourceNameGeneric;
-    std::string expectedResourceNameForPlatformAndStepping = platformName + "_" + revId + "_" + expectedResourceNameGeneric;
+    std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
-    EXPECT_EQ(resourceNames[0], expectedResourceNameForPlatformAndStepping);
-    EXPECT_EQ(resourceNames[1], expectedResourceNameForPlatform);
-    EXPECT_EQ(resourceNames[2], expectedResourceNameGeneric);
+    EXPECT_EQ(1u, resourceNames.size());
+    EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
 }
 
 HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPassedThenNameHasBindlessPrefix, HasStatefulSupport) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
-    const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "bindless_copy_buffer_to_buffer.builtin_kernel.bin";
-    std::string expectedResourceNameForPlatform = platformName + "_" + defaultRevId + "_" + expectedResourceNameGeneric;
-    std::string expectedResourceNameForPlatformAndStepping = platformName + "_" + revId + "_" + expectedResourceNameGeneric;
+    std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
-    EXPECT_EQ(resourceNames[0], expectedResourceNameForPlatformAndStepping);
-    EXPECT_EQ(resourceNames[1], expectedResourceNameForPlatform);
-    EXPECT_EQ(resourceNames[2], expectedResourceNameGeneric);
+    EXPECT_EQ(1u, resourceNames.size());
+    EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
 }
 
-HWTEST2_F(BuiltInSharedTest, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceForNotRegisteredRevisionThenBuiltinFromDefaultRevisionIsTaken, HasStatefulSupport) {
+HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformThenOnlyIntermediateFormatIsAvailable) {
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo.platform.usRevId += 0xdead;
+    hwInfo.ipVersion.value += 0xdead;
     const std::array<uint32_t, 11> builtinTypes{EBuiltInOps::CopyBufferToBuffer,
                                                 EBuiltInOps::CopyBufferRect,
                                                 EBuiltInOps::FillBuffer,
@@ -75,71 +65,61 @@ HWTEST2_F(BuiltInSharedTest, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceFor
                                                 EBuiltInOps::FillImage1d,
                                                 EBuiltInOps::FillImage2d,
                                                 EBuiltInOps::FillImage3d};
-    UltDeviceFactory deviceFactory{1, 0};
-    auto pDeviceWithDefaultRevision = deviceFactory.rootDevices[0];
-    for (auto &builtinType : builtinTypes) {
-        auto builtinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Binary, *pDevice);
-        EXPECT_NE(0U, builtinResource.size());
 
-        auto expectedBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Binary, *pDeviceWithDefaultRevision);
-        EXPECT_EQ(expectedBuiltinResource.size(), builtinResource.size());
+    for (auto &builtinType : builtinTypes) {
+        auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Binary, *pDevice);
+        EXPECT_EQ(0U, binaryBuiltinResource.size());
+
+        auto intermediateBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Intermediate, *pDevice);
+        EXPECT_NE(0U, intermediateBuiltinResource.size());
     }
 }
 
 HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAddressingIsStateless, HasStatefulSupport) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
-    const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
-    std::string expectedResourceNameForPlatform = platformName + "_" + defaultRevId + "_" + expectedResourceNameGeneric;
-    std::string expectedResourceNameForPlatformAndStepping = platformName + "_" + revId + "_" + expectedResourceNameGeneric;
+    std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
-    EXPECT_EQ(resourceNames[0], expectedResourceNameForPlatformAndStepping);
-    EXPECT_EQ(resourceNames[1], expectedResourceNameForPlatform);
-    EXPECT_EQ(resourceNames[2], expectedResourceNameGeneric);
+    EXPECT_EQ(1u, resourceNames.size());
+    EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
 }
 
 HWTEST2_F(BuiltInSharedTest, GivenPlatformWithoutStatefulAddresingSupportWhenGettingResourceNamesThenStatelessResourceNameIsReturned, HasNoStatefulSupport) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
-    const std::string revId = std::to_string(hwInfo.platform.usRevId);
-
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
     {
         auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
-        std::string expectedResourceName = platformName + "_" + revId + "_stateless_copy_buffer_to_buffer.builtin_kernel.bin";
+        std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer.builtin_kernel.bin";
+        EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
     }
 
     {
         auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
-        std::string expectedResourceName = platformName + "_" + revId + "_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
+        std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
+        EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
     }
 }
 
-HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNamesThenCorrectNameIsReturned) {
+HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNamesThenReturnForReleaseAndGenericResourceNames) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(0);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
-    const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
 
     std::string expectedResourceNameGeneric = "copy_buffer_to_buffer.builtin_kernel.bc";
-    std::string expectedResourceNameForPlatform = platformName + "_" + defaultRevId + "_" + expectedResourceNameGeneric;
-    std::string expectedResourceNameForPlatformAndStepping = platformName + "_" + revId + "_" + expectedResourceNameGeneric;
+    std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
-    EXPECT_EQ(resourceNames[0], expectedResourceNameForPlatformAndStepping);
-    EXPECT_EQ(resourceNames[1], expectedResourceNameForPlatform);
-    EXPECT_EQ(resourceNames[2], expectedResourceNameGeneric);
+    EXPECT_EQ(2u, resourceNames.size());
+    EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
+    EXPECT_EQ(resourceNames[1], expectedResourceNameGeneric);
 }
 
 HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
@@ -150,13 +130,6 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltin
 
 HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
-
-    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
-    const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
-
     auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Binary, builtinCode.type);
     EXPECT_NE(0U, builtinCode.resource.size());

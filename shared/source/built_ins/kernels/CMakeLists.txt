@@ -65,30 +65,31 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${builtin} ocloc copy_compiler_files
   )
-  foreach(REVISION_ID ${${platform_it}_${core_type}_REVISIONS})
+  foreach(RELEASE ${${platform_it}_${core_type}_RELEASES})
+    string(REPLACE "." "_" RELEASE_FILENAME ${RELEASE})
     set(OUTPUT_FILE_CPP
-        ${OUTPUTDIR}/${mode}_${BASENAME}_${platform_it_lower}_${REVISION_ID}.cpp
+        ${OUTPUTDIR}/${mode}_${BASENAME}_${RELEASE_FILENAME}.cpp
     )
-    set(BINARY_OUTPUT "${OUTPUTDIR}/${mode}_${BASENAME}_${REVISION_ID}_${platform_it_lower}")
+    set(BINARY_OUTPUT "${OUTPUTDIR}/${mode}_${BASENAME}_${RELEASE_FILENAME}")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(OUTPUT_FILES_BINARIES ${BINARY_OUTPUT}.bin)
       get_filename_component(absolute_filepath_spv ${OUTPUT_FILE_SPV} ABSOLUTE)
       add_custom_command(
                          OUTPUT ${OUTPUT_FILES_BINARIES}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${platform_it_lower} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${RELEASE} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
       )
       add_custom_command(
                          OUTPUT ${OUTPUT_FILE_CPP}
-                         COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.bin --output ${OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --platform ${platform_it_lower} --revision_id ${REVISION_ID}
+                         COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.bin --output ${OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --device ${RELEASE_FILENAME}
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILES_BINARIES} $<TARGET_FILE:cpp_generate_tool>
       )
       list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
     else()
       foreach(_file_name "bin")
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${REVISION_ID}_${platform_it_lower}.${_file_name}")
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${RELEASE_FILENAME}.${_file_name}")
         if(EXISTS ${_file_prebuilt})
           add_custom_command(
                              OUTPUT ${BINARY_OUTPUT}.${_file_name}
@@ -97,7 +98,7 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
           )
         endif()
       endforeach()
-      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${platform_it_lower}_${REVISION_ID}.cpp")
+      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${RELEASE_FILENAME}.cpp")
       if(EXISTS ${_file_prebuilt})
         add_custom_command(
                            OUTPUT ${OUTPUT_FILE_CPP}
@@ -113,12 +114,11 @@ endfunction()
 
 function(generate_cpp_spirv builtin)
   get_filename_component(BASENAME ${builtin} NAME_WE)
-  get_filename_component(DIR ${builtin} DIRECTORY)
 
   set(INPUT_FILENAME ${builtin}.builtin_kernel)
   get_filename_component(absolute_filepath ${INPUT_FILENAME} ABSOLUTE)
 
-  set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/spirv/${DIR}")
+  set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/spirv/")
   string(REPLACE "//" "/" OUTPUTDIR ${OUTPUTDIR})
 
   set(GENERATED_SPV_INPUT ${OUTPUTDIR}/${BASENAME}.spv)
@@ -140,13 +140,13 @@ function(generate_cpp_spirv builtin)
     )
     set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
   else()
-    set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${DIR}/${BASENAME}.spv")
+    set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${BASENAME}.spv")
     add_custom_command(
                        OUTPUT ${GENERATED_SPV_INPUT}
                        COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUTDIR}
                        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
     )
-    set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${DIR}/${BASENAME}.cpp")
+    set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${BASENAME}.cpp")
     add_custom_command(
                        OUTPUT ${OUTPUT_FILE_CPP}
                        COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUTDIR}

@@ -368,11 +368,6 @@ uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDevice
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isRevisionSpecificBinaryBuiltinRequired() const {
-    return true;
-}
-
-template <>
 size_t GfxCoreHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
     return 40 * MB;
 }

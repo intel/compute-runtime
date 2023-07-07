@@ -21,10 +21,6 @@ using namespace NEO;
 
 using KblProductHelper = ProductHelperTest;
 
-KBLTEST_F(KblProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
-    EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
-}
-
 KBLTEST_F(KblProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
     auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();

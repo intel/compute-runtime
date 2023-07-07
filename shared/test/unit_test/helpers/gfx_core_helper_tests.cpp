@@ -1261,11 +1261,6 @@ HWTEST_F(GfxCoreHelperTest, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngi
     }
 }
 
-HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenFalseIsReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.isRevisionSpecificBinaryBuiltinRequired());
-}
-
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = getHelper<ProductHelper>();

@@ -14,9 +14,4 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
     return aub_stream::ProductFamily::Cfl;
 };
 
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getDefaultRevisionId() const {
-    return 9u;
-}
-
 } // namespace NEO
