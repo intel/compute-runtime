@@ -49,6 +49,7 @@ set(TEST_TARGETS
     zello_fence
     zello_fill
     zello_function_pointers_cl
+    zello_global_bindless_kernel
     zello_host_pointer
     zello_image
     zello_image_view
