@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/sysman/source/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/frequency/linux/mock_sysfs_frequency_prelim.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
@@ -84,6 +85,48 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
         return handles;
     }
 };
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenKmdInterfaceWhenGettingFilenamesForFrequencyFilesForI915VersionAndBaseDirectoryExistsThenProperPathsAreReturned) {
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>();
+    bool baseDirectoryExists = true;
+    EXPECT_STREQ("gt/gt1/rps_min_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/rps_max_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/.defaults/rps_min_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinDefaultFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/.defaults/rps_max_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxDefaultFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/rps_boost_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameBoostFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/punit_req_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCurrentFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/rapl_PL1_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameTdpFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/rps_act_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameActualFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/rps_RP1_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameEfficientFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/rps_RP0_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxValueFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/rps_RPn_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinValueFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/throttle_reason_status", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/throttle_reason_pl1", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL1, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/throttle_reason_pl2", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL2, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/throttle_reason_pl4", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("gt/gt1/throttle_reason_thermal", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, 1, baseDirectoryExists).c_str());
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenKmdInterfaceWhenGettingFilenamesForFrequencyFilesForXeVersionAndBaseDirectoryExistsThenProperPathsAreReturned) {
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>();
+    bool baseDirectoryExists = true;
+    EXPECT_STREQ("device/gt1/rps_min_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/rps_max_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/.defaults/rps_min_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinDefaultFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/.defaults/rps_max_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxDefaultFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/rps_boost_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameBoostFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/punit_req_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCurrentFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/rapl_PL1_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameTdpFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/rps_act_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameActualFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/rps_RP1_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameEfficientFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/rps_RP0_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxValueFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/rps_RPn_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinValueFrequency, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/throttle_reason_status", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/throttle_reason_pl1", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL1, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/throttle_reason_pl2", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL2, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/throttle_reason_pl4", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, 1, baseDirectoryExists).c_str());
+    EXPECT_STREQ("device/gt1/throttle_reason_thermal", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, 1, baseDirectoryExists).c_str());
+}
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesThenNonZeroCountIsReturnedAndCallSucceds) {
     uint32_t count = 0U;

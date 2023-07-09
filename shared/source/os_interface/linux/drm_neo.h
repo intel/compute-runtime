@@ -254,6 +254,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();
     std::unique_ptr<HwDeviceIdDrm> &getHwDeviceId() { return hwDeviceId; }
     std::vector<uint8_t> query(uint32_t queryId, uint32_t queryItemFlags);
+    static std::string getDrmVersion(int fileDescriptor);
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -264,7 +265,6 @@ class Drm : public DriverModel {
     void printIoctlStatistics();
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
     void queryAndSetVmBindPatIndexProgrammingSupport();
-    static std::string getDrmVersion(int fileDescriptor);
     bool queryDeviceIdAndRevision();
     bool queryI915DeviceIdAndRevision();
 

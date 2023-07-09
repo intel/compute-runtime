@@ -30,6 +30,7 @@ class FsAccess;
 class ProcfsAccess;
 class SysfsAccess;
 class FirmwareUtil;
+class SysmanKmdInterface;
 
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
@@ -73,8 +74,10 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     bool diagnosticsReset = false;
     bool isMemoryDiagnostics = false;
     std::string gtDevicePath;
+    SysmanKmdInterface *getSysmanKmdInterface() { return pSysmanKmdInterface.get(); }
 
   protected:
+    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;

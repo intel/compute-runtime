@@ -23,6 +23,12 @@
 #include <mutex>
 
 namespace L0 {
+namespace Sysman {
+class SysmanKmdInterface;
+} // namespace Sysman
+} // namespace L0
+
+namespace L0 {
 
 class PmuInterface;
 class FirmwareUtil;
@@ -86,8 +92,10 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     bool isMemoryDiagnostics = false;
     Device *pDevice = nullptr;
     std::string gtDevicePath;
+    L0::Sysman::SysmanKmdInterface *getSysmanKmdInterface() { return pSysmanKmdInterface.get(); }
 
   protected:
+    std::unique_ptr<L0::Sysman::SysmanKmdInterface> pSysmanKmdInterface;
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;

@@ -20,6 +20,7 @@
 #include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/linux/pmu/sysman_pmu.h"
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/pci/linux/sysman_os_pci_imp.h"
 #include "level_zero/sysman/source/pci/sysman_pci_utils.h"
 
@@ -63,6 +64,9 @@ ze_result_t LinuxSysmanImp::init() {
 
     rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");
     pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
+
+    pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm());
+
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     // Close Drm handles
     sysmanHwDeviceId->closeFileDescriptor();

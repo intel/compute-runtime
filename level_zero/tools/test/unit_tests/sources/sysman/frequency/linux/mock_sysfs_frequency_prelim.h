@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/tools/source/sysman/frequency/linux/os_frequency_imp_prelim.h"
 
 namespace L0 {
