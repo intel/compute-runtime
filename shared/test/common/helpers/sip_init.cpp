@@ -126,7 +126,9 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum) {
     } else if (version == 2) {
         begin = reinterpret_cast<char *>(&stateSaveAreaHeader2);
     }
-    return std::vector<char>(begin, begin + sizeof(stateSaveAreaHeader));
+    auto sizeOfHeader = offsetof(SIP::StateSaveAreaHeader, regHeader.dbg) + sizeof(SIP::StateSaveAreaHeader::regHeader.dbg);
+
+    return std::vector<char>(begin, begin + sizeOfHeader);
 }
 } // namespace MockSipData
 

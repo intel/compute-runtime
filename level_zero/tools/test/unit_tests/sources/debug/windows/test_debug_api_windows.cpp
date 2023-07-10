@@ -1859,7 +1859,7 @@ TEST_F(DebugApiWindowsTest, GivenStateSaveAreaVaWhenReadingStateSaveAreaThenGpuM
     ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
     auto stateSaveAreaRead = session->getStateSaveAreaHeader();
     ASSERT_NE(nullptr, stateSaveAreaRead);
-    EXPECT_EQ(0, memcmp(stateSaveAreaRead, stateSaveAreaHeader.data(), sizeof(SIP::StateSaveAreaHeader)));
+    EXPECT_EQ(0, memcmp(stateSaveAreaRead, stateSaveAreaHeader.data(), stateSaveAreaHeader.size()));
 }
 
 TEST_F(DebugApiWindowsTest, GivenStateSaveAreaVaWhenReadingStateSaveAreaReturnsIncorrectDataThenStateSaveAreaIsNotUpdated) {
