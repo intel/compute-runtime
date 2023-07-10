@@ -186,23 +186,23 @@ TEST_F(WddmMemoryManagerDevicePoolAlignmentTests, givenTooMuchMemoryWastedOn2MbA
     {
         const uint32_t alignedSize = 4 * MemoryConstants::megaByte;
         const uint32_t maxAmountOfWastedMemory = static_cast<uint32_t>(alignedSize * threshold);
-        testAlignment(alignedSize, MemoryConstants::pageSize2Mb);
-        testAlignment(alignedSize - maxAmountOfWastedMemory + 1, MemoryConstants::pageSize2Mb);
+        testAlignment(alignedSize, MemoryConstants::pageSize2M);
+        testAlignment(alignedSize - maxAmountOfWastedMemory + 1, MemoryConstants::pageSize2M);
         testAlignment(alignedSize - maxAmountOfWastedMemory - 1, MemoryConstants::pageSize64k);
     }
 
     {
         const uint32_t alignedSize = 8 * MemoryConstants::megaByte;
         const uint32_t maxAmountOfWastedMemory = static_cast<uint32_t>(alignedSize * threshold);
-        testAlignment(alignedSize, MemoryConstants::pageSize2Mb);
-        testAlignment(alignedSize - maxAmountOfWastedMemory + 1, MemoryConstants::pageSize2Mb);
+        testAlignment(alignedSize, MemoryConstants::pageSize2M);
+        testAlignment(alignedSize - maxAmountOfWastedMemory + 1, MemoryConstants::pageSize2M);
         testAlignment(alignedSize - maxAmountOfWastedMemory - 1, MemoryConstants::pageSize64k);
     }
 }
 
 TEST_F(WddmMemoryManagerDevicePoolAlignmentTests, givenBigAllocationWastingMaximumPossibleAmountOfMemorytWhenAllocationInDevicePoolIsCreatedThenStillUse2MbAlignment) {
     const uint32_t size = 200 * MemoryConstants::megaByte + 1; // almost entire 2MB page will be wasted
-    testAlignment(size, MemoryConstants::pageSize2Mb);
+    testAlignment(size, MemoryConstants::pageSize2M);
 }
 
 TEST_F(WddmMemoryManagerDevicePoolAlignmentTests, givenAtLeast2MbAllocationWhenAllocationInDevicePoolIsCreatedThenUse2MbAlignment) {

@@ -73,8 +73,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
 
     auto alignment = allocationData.alignment;
     if (allocationData.type == AllocationType::SVM_CPU) {
-        alignment = MemoryConstants::pageSize2Mb;
-        sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize2Mb);
+        alignment = MemoryConstants::pageSize2M;
+        sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize2M);
     }
 
     if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type)) {
@@ -577,7 +577,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         adjustedAllocationData.alignment = MemoryConstants::pageSize64k;
         allocation = static_cast<MemoryAllocation *>(allocate32BitGraphicsMemoryImpl(adjustedAllocationData, true));
     } else if (allocationData.type == AllocationType::SVM_GPU) {
-        auto storage = allocateSystemMemory(allocationData.size, MemoryConstants::pageSize2Mb);
+        auto storage = allocateSystemMemory(allocationData.size, MemoryConstants::pageSize2M);
         auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(allocationData.hostPtr));
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, storage, storage, canonizedGpuAddress,
                                           allocationData.size, counter, MemoryPool::LocalMemory, false, allocationData.flags.flushL3, maxOsContextCount);

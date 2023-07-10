@@ -986,17 +986,17 @@ TEST_F(ContextTest, whenCallingQueryVirtualMemPageSizeCorrectAlignmentIsReturned
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(pagesize, MemoryConstants::pageSize64k);
 
-    size = MemoryConstants::pageSize2Mb - 1000;
+    size = MemoryConstants::pageSize2M - 1000;
     pagesize = 0u;
     res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(pagesize, MemoryConstants::pageSize2Mb / 2);
+    EXPECT_EQ(pagesize, MemoryConstants::pageSize2M / 2);
 
-    size = MemoryConstants::pageSize2Mb + 1000;
+    size = MemoryConstants::pageSize2M + 1000;
     pagesize = 0u;
     res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(pagesize, MemoryConstants::pageSize2Mb);
+    EXPECT_EQ(pagesize, MemoryConstants::pageSize2M);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

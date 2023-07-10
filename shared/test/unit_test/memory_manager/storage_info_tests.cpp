@@ -567,7 +567,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileWhenCreatingStorageInfoForRing
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForSemaphoreBufferThenFirstBankIsSelectedEvenIfOtherTileIsLessOccupied) {
     constexpr uint32_t firstAvailableTileMask = 2u;
 
-    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2M);
     EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
 
     AffinityMaskHelper affinityMaskHelper{false};
@@ -586,7 +586,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForSemap
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForCommandBufferThenFirstBankIsSelectedEvenIfOtherTileIsLessOccupied) {
     constexpr uint32_t firstAvailableTileMask = 2u;
 
-    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2M);
     EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
 
     AffinityMaskHelper affinityMaskHelper{false};
@@ -605,7 +605,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForComma
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForRingBufferThenFirstBankIsSelectedEvenIfOtherTileIsLessOccupied) {
     constexpr uint32_t firstAvailableTileMask = 2u;
 
-    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2M);
     EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
 
     AffinityMaskHelper affinityMaskHelper{false};
@@ -627,7 +627,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageD
     DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(0);
     constexpr uint32_t firstAvailableTileMask = 2u;
 
-    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2M);
     EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
 
     AffinityMaskHelper affinityMaskHelper{false};
@@ -652,7 +652,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
     DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(1);
     constexpr uint32_t firstAvailableTileMask = 2u;
 
-    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2M);
     EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
 
     AffinityMaskHelper affinityMaskHelper{false};
@@ -682,7 +682,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
     constexpr uint32_t firstAvailableTileMask = 2u;
     constexpr uint32_t leastOccupiedTileMask = 4u;
 
-    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2M);
     EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
 
     AffinityMaskHelper affinityMaskHelper{false};

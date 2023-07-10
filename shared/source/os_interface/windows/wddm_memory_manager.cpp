@@ -62,7 +62,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage);
     if (DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0) {
         constexpr static float maxWastage2Mb = 0.1f;
-        alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2Mb, false, maxWastage2Mb);
+        alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2M, false, maxWastage2Mb);
     }
     const size_t customAlignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
     if (customAlignment > 0) {

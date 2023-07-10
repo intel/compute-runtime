@@ -338,7 +338,7 @@ class Drm : public DriverModel {
     bool setPairAvailable = false;
     bool chunkingAvailable = false;
     uint32_t chunkingMode = 0;
-    uint32_t minimalChunkingSize = MemoryConstants::pageSize2Mb;
+    uint32_t minimalChunkingSize = MemoryConstants::pageSize2M;
     bool contextDebugSupported = false;
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;

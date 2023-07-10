@@ -1247,8 +1247,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     EXPECT_NE(allocation, nullptr);
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
-    EXPECT_EQ(ptr, alignUp(drmAllocation->getMmapPtr(), MemoryConstants::pageSize2Mb));
-    EXPECT_EQ(size, drmAllocation->getMmapSize() - MemoryConstants::pageSize2Mb);
+    EXPECT_EQ(ptr, alignUp(drmAllocation->getMmapPtr(), MemoryConstants::pageSize2M));
+    EXPECT_EQ(size, drmAllocation->getMmapSize() - MemoryConstants::pageSize2M);
 
     auto &bos = drmAllocation->getBOs();
     EXPECT_EQ(2u, bos.size());
@@ -1294,8 +1294,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateKmdMigratedSharedAlloca
     EXPECT_NE(allocation, nullptr);
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
-    EXPECT_EQ(ptr, alignUp(drmAllocation->getMmapPtr(), MemoryConstants::pageSize2Mb));
-    EXPECT_EQ(size, drmAllocation->getMmapSize() - MemoryConstants::pageSize2Mb);
+    EXPECT_EQ(ptr, alignUp(drmAllocation->getMmapPtr(), MemoryConstants::pageSize2M));
+    EXPECT_EQ(size, drmAllocation->getMmapSize() - MemoryConstants::pageSize2M);
 
     auto &bos = drmAllocation->getBOs();
     EXPECT_EQ(1u, bos.size());

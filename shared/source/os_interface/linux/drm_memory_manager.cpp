@@ -61,11 +61,11 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
 
     alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB);
     if (DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0) {
-        alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2Mb, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB);
+        alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB);
     }
     const size_t customAlignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
     if (customAlignment > 0) {
-        const auto heapIndex = customAlignment >= MemoryConstants::pageSize2Mb ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD64KB;
+        const auto heapIndex = customAlignment >= MemoryConstants::pageSize2M ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD64KB;
         alignmentSelector.addCandidateAlignment(customAlignment, true, AlignmentSelector::anyWastage, heapIndex);
     }
 
@@ -359,7 +359,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
 
     auto mmapAlignment = cAlignment;
     if (alignedStorageSize >= 2 * MemoryConstants::megaByte) {
-        mmapAlignment = MemoryConstants::pageSize2Mb;
+        mmapAlignment = MemoryConstants::pageSize2M;
     }
 
     auto drmAllocation = createAllocWithAlignment(allocationData, cSize, mmapAlignment, alignedStorageSize, alignedGpuAddress);
@@ -511,8 +511,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
 
-    alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2Mb);
-    auto gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD, MemoryConstants::pageSize2Mb);
+    alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2M);
+    auto gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD, MemoryConstants::pageSize2M);
     if (!gpuVirtualAddress) {
         return nullptr;
     }

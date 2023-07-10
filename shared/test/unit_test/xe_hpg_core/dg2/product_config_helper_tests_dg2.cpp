@@ -507,7 +507,7 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2WhenIsBlitterForImagesSupportedIsCalledT
 
 DG2TEST_F(ProductHelperTestDg2, WhenGetSvmCpuAlignmentThenProperValueIsReturned) {
 
-    EXPECT_EQ(MemoryConstants::pageSize2Mb, productHelper->getSvmCpuAlignment());
+    EXPECT_EQ(MemoryConstants::pageSize2M, productHelper->getSvmCpuAlignment());
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenB0rCSteppingWhenAskingIfTile64With3DSurfaceOnBCSIsSupportedThenReturnTrue) {

@@ -778,7 +778,7 @@ struct MemoryManagerDirectSubmissionImplicitScalingTest : public ::testing::Test
         constexpr auto enableLocalMemory = true;
         memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, *executionEnvironment);
 
-        memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(1u, MemoryConstants::pageSize2Mb);
+        memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(1u, MemoryConstants::pageSize2M);
         EXPECT_NE(0u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
     }
 

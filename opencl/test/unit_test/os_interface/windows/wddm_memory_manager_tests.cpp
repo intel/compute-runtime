@@ -2693,7 +2693,7 @@ TEST(WddmMemoryManager, givenLocalPointerPassedToIsCpuCopyRequiredThenFalseIsRet
 
 TEST_F(WddmMemoryManagerSimpleTest, whenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
     std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
-        {MemoryConstants::pageSize2Mb, false, 0.1f, HeapIndex::TOTAL_HEAPS},
+        {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::TOTAL_HEAPS},
         {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
     };
 
@@ -2719,7 +2719,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsC
     {
         DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(MemoryConstants::megaByte);
         std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
-            {MemoryConstants::pageSize2Mb, false, 0.1f, HeapIndex::TOTAL_HEAPS},
+            {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::TOTAL_HEAPS},
             {MemoryConstants::megaByte, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
             {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
         };
@@ -2728,10 +2728,10 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsC
     }
 
     {
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2Mb);
+        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2M);
         std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
-            {2 * MemoryConstants::pageSize2Mb, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
-            {MemoryConstants::pageSize2Mb, false, 0.1f, HeapIndex::TOTAL_HEAPS},
+            {2 * MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+            {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::TOTAL_HEAPS},
             {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
         };
         MockWddmMemoryManager memoryManager(true, true, executionEnvironment);

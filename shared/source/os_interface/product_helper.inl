@@ -419,7 +419,7 @@ uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareI
 
 template <PRODUCT_FAMILY gfxProduct>
 size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
-    return MemoryConstants::pageSize2Mb;
+    return MemoryConstants::pageSize2M;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
