@@ -1868,7 +1868,9 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     bool useChunking = false;
     size_t boTotalChunkSize = 0;
 
-    if (AllocationType::BUFFER == allocation->getAllocationType() &&
+    // Dont chunk if debugging is enabled
+    if (!executionEnvironment.isDebuggingEnabled() &&
+        AllocationType::BUFFER == allocation->getAllocationType() &&
         (drm->getChunkingMode() & 0x02)) {
 
         boTotalChunkSize = allocation->getUnderlyingBufferSize();
@@ -2221,8 +2223,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     uint32_t numOfChunks = DebugManager.flags.NumberOfBOChunks.get();
     size_t chunkingSize = size / numOfChunks;
 
-    // Dont chunk for sizes less than chunkThreshold
-    if ((drm.getChunkingMode() & 0x01) &&
+    // Dont chunk for sizes less than chunkThreshold or if debugging is enabled
+    if (!executionEnvironment.isDebuggingEnabled() &&
+        (drm.getChunkingMode() & 0x01) &&
         !(chunkingSize & (MemoryConstants::chunkThreshold - 1)) &&
         size >= drm.getMinimalSizeForChunking()) {
         numHandles = 1;

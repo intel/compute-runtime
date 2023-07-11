@@ -5397,6 +5397,32 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
+       givenMemoryAllocationWithMoreThanChunkingSizeAllowedWithDebuggingEnabledThenChunkingIsNotUsed) {
+    VariableBackup<bool> backupChunkingCallParent{&mock->getChunkingAvailableCall.callParent, false};
+    VariableBackup<bool> backupChunkingReturnValue{&mock->getChunkingAvailableCall.returnValue, true};
+    VariableBackup<bool> backupChunkingModeCallParent{&mock->getChunkingModeCall.callParent, false};
+    VariableBackup<uint32_t> backupChunkingModeReturnValue{&mock->getChunkingModeCall.returnValue, 0x3};
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize2M;
+    allocData.type = AllocationType::BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks = 0b11;
+
+    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    EXPECT_EQ(false, static_cast<MockedMemoryInfo *>(mock->getMemoryInfo())->isChunkedUsed);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
        givenMemoryAllocationWithMoreThanChunkingSizeAllowedAndFailGemCreateExtThenNullptrIsReturned) {
     VariableBackup<bool> backupChunkingCallParent{&mock->getChunkingAvailableCall.callParent, false};
     VariableBackup<bool> backupChunkingReturnValue{&mock->getChunkingAvailableCall.returnValue, true};
