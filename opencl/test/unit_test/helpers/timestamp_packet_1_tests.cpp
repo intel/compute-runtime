@@ -818,7 +818,7 @@ HWTEST_F(TimestampPacketTests, givenOOQAndWithoutEventWhenEnqueueCalledThenMoveC
     cmdQ.reset();
 }
 
-HWTEST_F(TimestampPacketTests, givenEventWithLatestTaskCountWhenWaitCalledThenClearDeferredNodes) {
+HWTEST_F(TimestampPacketTests, givenAllEnginesReadyWhenWaitingForEventThenClearDeferredNodes) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
     DebugManager.flags.EnableTimestampWaitForQueues.set(1);
@@ -838,14 +838,28 @@ HWTEST_F(TimestampPacketTests, givenEventWithLatestTaskCountWhenWaitCalledThenCl
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event2);
     cmdQ->flush();
 
+    EXPECT_EQ(2u, csr.taskCount);
+
+    auto tagAddress = csr.getTagAddress();
+    *tagAddress = 1;
+
+    auto eventObj1 = castToObjectOrAbort<Event>(event1);
+    auto eventObj2 = castToObjectOrAbort<Event>(event2);
+
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
-    castToObjectOrAbort<Event>(event1)->wait(false, false);
+    eventObj1->wait(false, false);
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
-    castToObjectOrAbort<Event>(event2)->wait(false, false);
+    *tagAddress = 2;
+
+    eventObj1->wait(false, false);
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+    eventObj2->wait(false, false);
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 

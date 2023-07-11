@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -480,7 +481,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedBlitEnqueueWhenUnblockingThenMake
     EXPECT_TRUE(bcsCsr->isMadeResident(eventDependency->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), bcsCsr->taskCount));
 }
 
-HWTEST_TEMPLATED_F(BcsBufferTests, givenEventWithLatestTaskCountWhenWaitCalledThenClearDeferredNodes) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenAllEnginesReadyWhenWaitingForEventThenClearDeferredNodes) {
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
 
     auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -495,6 +496,13 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenEventWithLatestTaskCountWhenWaitCalledTh
     mockCmdQ->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, &event2);
 
     mockCmdQ->taskCount++;
+
+    auto &gpgpuCsr = mockCmdQ->getGpgpuCommandStreamReceiver();
+    auto gpgpuTagAddress = gpgpuCsr.getTagAddress();
+
+    EXPECT_EQ(3u, mockCmdQ->taskCount);
+
+    *gpgpuTagAddress = mockCmdQ->taskCount - 1;
 
     auto event1Obj = castToObjectOrAbort<Event>(event1);
     auto event2Obj = castToObjectOrAbort<Event>(event2);
@@ -518,22 +526,89 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenEventWithLatestTaskCountWhenWaitCalledTh
         EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
     }
 
-    event1Obj->updateTaskCount(mockCmdQ->taskCount, event1Obj->peekBcsTaskCountFromCommandQueue() - 1);
-    event2Obj->updateTaskCount(mockCmdQ->taskCount, event1Obj->peekBcsTaskCountFromCommandQueue());
+    *gpgpuTagAddress = mockCmdQ->taskCount;
+
+    auto bcsCsr = mockCmdQ->getBcsCommandStreamReceiver(event1Obj->getBcsEngineType());
+    auto bcsTagAddress = bcsCsr->getTagAddress();
 
     // gpgpu and bcs task count equal
     {
+        *bcsTagAddress = event2Obj->peekBcsTaskCountFromCommandQueue() - 1;
+
         event1Obj->wait(false, false);
         EXPECT_EQ(expectedSize, deferredTimestampPackets->peekNodes().size());
         EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
-        event2Obj->wait(false, false);
+        *bcsTagAddress = event2Obj->peekBcsTaskCountFromCommandQueue();
+
+        event1Obj->wait(false, false);
         EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
         EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
     }
 
     clReleaseEvent(event1);
     clReleaseEvent(event2);
+}
+
+HWTEST_TEMPLATED_F(BcsBufferTests, givenAllBcsEnginesReadyWhenWaitingForEventThenClearDeferredNodes) {
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+
+    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    bufferForBlt->forceDisallowCPUCopy = true;
+
+    TimestampPacketContainer *deferredTimestampPackets = mockCmdQ->deferredTimestampPackets.get();
+    TimestampPacketContainer *timestampPacketContainer = mockCmdQ->timestampPacketContainer.get();
+
+    cl_event event;
+
+    mockCmdQ->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, &event);
+    mockCmdQ->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+    auto eventObj = castToObjectOrAbort<Event>(event);
+
+    size_t expectedSize = 1;
+    if (mockCmdQ->isCacheFlushForBcsRequired()) {
+        expectedSize += 2;
+    }
+
+    EXPECT_EQ(expectedSize, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+    auto bcsCsr = mockCmdQ->getBcsCommandStreamReceiver(eventObj->getBcsEngineType());
+    auto bcsTagAddress = bcsCsr->getTagAddress();
+
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, eventObj->getBcsEngineType());
+
+    MockOsContext osContext(123, {{aub_stream::EngineType::ENGINE_BCS2, EngineUsage::Regular}, device->getDeviceBitfield(), PreemptionMode::Disabled, false, false});
+    UltCommandStreamReceiver<FamilyType> ultCsr2(*device->getExecutionEnvironment(), 0, device->getDeviceBitfield());
+    ultCsr2.initializeTagAllocation();
+    ultCsr2.setupContext(osContext);
+
+    CopyEngineState copyEngineState = {aub_stream::EngineType::ENGINE_BCS2, 2, false};
+    EngineControl engineControl = {&ultCsr2, &osContext};
+    auto bcs2Index = EngineHelpers::getBcsIndex(aub_stream::EngineType::ENGINE_BCS2);
+    mockCmdQ->bcsStates[bcs2Index] = copyEngineState;
+    mockCmdQ->bcsEngines[bcs2Index] = &engineControl;
+
+    auto bcsTagAddress2 = ultCsr2.getTagAddress();
+    *bcsTagAddress2 = 1;
+
+    // assigned BCS engine ready. BCS2 not ready
+    {
+        *bcsTagAddress = mockCmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS);
+
+        eventObj->wait(false, false);
+        EXPECT_EQ(expectedSize, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+        *bcsTagAddress2 = 2;
+
+        eventObj->wait(false, false);
+        EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    }
+
+    clReleaseEvent(event);
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBufferThenStoreMapAllocationInDispatchParameters) {

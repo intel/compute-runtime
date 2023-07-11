@@ -1283,7 +1283,7 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
 
     waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
-    releaseDeferredNodes();
+    tryReleaseDeferredNodes(false);
 
     if (printfHandler) {
         if (!printfHandler->printEnqueueOutput()) {
@@ -1371,7 +1371,13 @@ bool CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpPara
     return migrationHandled;
 }
 
-void CommandQueue::releaseDeferredNodes() {
+void CommandQueue::tryReleaseDeferredNodes(bool checkEventsState) {
+    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
+
+    if (checkEventsState && !allEnginesReady()) {
+        return;
+    }
+
     TimestampPacketContainer nodesToRelease;
     if (deferredTimestampPackets) {
         deferredTimestampPackets->swapNodes(nodesToRelease);
@@ -1380,6 +1386,23 @@ void CommandQueue::releaseDeferredNodes() {
     if (deferredMultiRootSyncNodes.get()) {
         deferredMultiRootSyncNodes->swapNodes(multiRootSyncNodesToRelease);
     }
+}
+
+bool CommandQueue::allEnginesReady() {
+    if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), this->taskCount)) {
+        for (auto &bcsState : bcsStates) {
+            if (bcsState.isValid()) {
+                auto bcsCsr = getBcsCommandStreamReceiver(bcsState.engineType);
+                if (!bcsCsr->testTaskCountReady(bcsCsr->getTagAddress(), peekBcsTaskCount(bcsState.engineType))) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace NEO

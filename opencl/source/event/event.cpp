@@ -451,18 +451,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
 
-    {
-        TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
-
-        bool releaseNodes = (taskCount == cmdQueue->peekTaskCount());
-        if (bcsState.isValid()) {
-            releaseNodes &= (bcsState.taskCount == cmdQueue->peekBcsTaskCount(bcsState.engineType));
-        }
-
-        if (releaseNodes) {
-            cmdQueue->releaseDeferredNodes();
-        }
-    }
+    cmdQueue->tryReleaseDeferredNodes(true);
 
     auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
