@@ -32,8 +32,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void adjustCcsCount();
     void adjustCcsCount(const uint32_t rootDeviceIndex) const;
     void sortNeoDevices();
-    void sortNeoDevicesDRM();
-    void sortNeoDevicesWDDM();
+    void adjustRootDeviceEnvironments();
     void prepareForCleanup() const;
     void setDebuggingMode(DebuggingMode debuggingMode) {
         debuggingEnabledMode = debuggingMode;
