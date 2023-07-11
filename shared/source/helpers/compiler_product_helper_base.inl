@@ -96,6 +96,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
             extensions += "cl_intel_spirv_media_block_io ";
         }
         extensions += "cl_intel_spirv_subgroups ";
+        extensions += "cl_khr_spirv_linkonce_odr ";
         extensions += "cl_khr_spirv_no_integer_wrap_decoration ";
 
         extensions += "cl_intel_unified_shared_memory ";

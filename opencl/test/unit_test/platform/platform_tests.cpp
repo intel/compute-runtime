@@ -321,6 +321,7 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
         }
 
         EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_subgroups")));
+        EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_spirv_linkonce_odr")));
         EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
     }
 

@@ -541,6 +541,7 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
         }
 
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_subgroups")));
+        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_linkonce_odr")));
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
     }
 }
@@ -590,6 +591,7 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion12WhenCapsAreCreatedThenDeviceDoesnt
 
     EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_device_side_avc_motion_estimation")));
     EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_subgroups")));
+    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_linkonce_odr")));
     EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
 }
 
