@@ -253,6 +253,10 @@ void ExecutionEnvironment::parseAffinityMask() {
     rootDeviceEnvironments.swap(filteredEnvironments);
 }
 
+void ExecutionEnvironment::sortNeoDevices() {
+    std::sort(rootDeviceEnvironments.begin(), rootDeviceEnvironments.end(), comparePciIdBusNumber);
+}
+
 void ExecutionEnvironment::adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const {
     auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
     auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();

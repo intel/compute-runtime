@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,11 @@ std::vector<std::string> Directory::getFiles(const std::string &path) {
 
     if (Directory::ReturnEmptyFilesVector) {
         return files;
+    }
+
+    auto it = directoryFilesMap.find(path);
+    if (it != directoryFilesMap.end()) {
+        return directoryFilesMap[path];
     }
 
     if (path == byPathPattern) {
@@ -56,11 +61,6 @@ std::vector<std::string> Directory::getFiles(const std::string &path) {
             "/sys/class/intel_pmt/telem7",
             "/sys/class/intel_pmt/telem9",
         };
-    }
-
-    auto it = directoryFilesMap.find(path);
-    if (it != directoryFilesMap.end()) {
-        return directoryFilesMap[path];
     }
 
     return files;

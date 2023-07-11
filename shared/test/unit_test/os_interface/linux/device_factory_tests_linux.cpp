@@ -11,9 +11,16 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
+#include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+
+namespace NEO {
+extern std::map<std::string, std::vector<std::string>> directoryFilesMap;
+};
 
 TEST_F(DeviceFactoryLinuxTest, WhenPreparingDeviceEnvironmentsThenInitializedCorrectly) {
     const HardwareInfo *refHwinfo = defaultHwInfo.get();
@@ -68,26 +75,38 @@ TEST_F(DeviceFactoryLinuxTest, whenDrmIsNotCretedThenPrepareDeviceEnvironmentsFa
     EXPECT_FALSE(success);
 }
 
-TEST(SortDevicesDrmTest, whenSortingDevicesThenMemoryOperationHandlersHaveProperIndices) {
-    ExecutionEnvironment executionEnvironment{};
+TEST(SortAndFilterDevicesDrmTest, whenSortingAndFilteringDevicesThenMemoryOperationHandlersHaveProperIndices) {
     static const auto numRootDevices = 6;
-    NEO::PhysicalDevicePciBusInfo inputBusInfos[numRootDevices] = {{3, 1, 2, 1}, {0, 0, 2, 0}, {0, 1, 3, 0}, {0, 1, 2, 1}, {0, 0, 2, 1}, {3, 1, 2, 0}};
-    NEO::PhysicalDevicePciBusInfo expectedBusInfos[numRootDevices] = {{0, 0, 2, 0}, {0, 0, 2, 1}, {0, 1, 2, 1}, {0, 1, 3, 0}, {3, 1, 2, 0}, {3, 1, 2, 1}};
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("1,2,3,4,5");
 
-    executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
-    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
-        auto osInterface = std::make_unique<OSInterface>();
-        auto driverModel = std::make_unique<MockDriverModel>(DriverModelType::DRM);
-        driverModel->pciBusInfo = inputBusInfos[rootDeviceIndex];
-        osInterface->setDriverModel(std::move(driverModel));
-        rootDeviceEnvironment.osInterface = std::move(osInterface);
-        rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandlerBind>(rootDeviceEnvironment, rootDeviceIndex);
-    }
+    VariableBackup<std::map<std::string, std::vector<std::string>>> directoryFilesMapBackup(&directoryFilesMap);
+    VariableBackup<const char *> pciDevicesDirectoryBackup(&Os::pciDevicesDirectory);
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return SysCalls::fakeFileDescriptor;
+    });
 
-    executionEnvironment.sortNeoDevices();
+    Os::pciDevicesDirectory = "/";
+    directoryFilesMap.clear();
+    directoryFilesMap[Os::pciDevicesDirectory] = {};
+    directoryFilesMap[Os::pciDevicesDirectory].push_back("/pci-0003:01:02.1-render");
+    directoryFilesMap[Os::pciDevicesDirectory].push_back("/pci-0000:00:02.0-render");
+    directoryFilesMap[Os::pciDevicesDirectory].push_back("/pci-0000:01:03.0-render");
+    directoryFilesMap[Os::pciDevicesDirectory].push_back("/pci-0000:01:02.1-render");
+    directoryFilesMap[Os::pciDevicesDirectory].push_back("/pci-0000:00:02.1-render");
+    directoryFilesMap[Os::pciDevicesDirectory].push_back("/pci-0003:01:02.0-render");
 
-    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+    ExecutionEnvironment executionEnvironment{};
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+    EXPECT_TRUE(success);
+
+    static const auto newNumRootDevices = 5u;
+    EXPECT_EQ(newNumRootDevices, executionEnvironment.rootDeviceEnvironments.size());
+
+    NEO::PhysicalDevicePciBusInfo expectedBusInfos[newNumRootDevices] = {{0, 0, 2, 1}, {0, 1, 2, 1}, {0, 1, 3, 0}, {3, 1, 2, 0}, {3, 1, 2, 1}};
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < newNumRootDevices; rootDeviceIndex++) {
         auto pciBusInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->getPciBusInfo();
         EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciDomain, pciBusInfo.pciDomain);
         EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciBus, pciBusInfo.pciBus);
