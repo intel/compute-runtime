@@ -2838,6 +2838,15 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(co
     }
 }
 
+inline NEO::MemoryPool getMemoryPoolFromAllocDataForSplit(bool allocFound, const NEO::SvmAllocationData *allocData) {
+    if (allocFound) {
+        return allocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool();
+    } else if (NEO::DebugManager.flags.SplitBcsCopyHostptr.get() != 0) {
+        return NEO::MemoryPool::System4KBPages;
+    }
+    return NEO::MemoryPool::MemoryNull;
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size, NEO::TransferDirection &directionOut) {
     if (size < minimalSizeForBcsSplit) {
@@ -2849,8 +2858,14 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
     bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcPtr), size, &srcAllocData);
     bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, size, &dstAllocData);
 
-    auto srcMemoryPool = srcAllocFound ? srcAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool() : NEO::MemoryPool::System4KBPages;
-    auto dstMemoryPool = dstAllocFound ? dstAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool() : NEO::MemoryPool::System4KBPages;
+    auto srcMemoryPool = getMemoryPoolFromAllocDataForSplit(srcAllocFound, srcAllocData);
+    auto dstMemoryPool = getMemoryPoolFromAllocDataForSplit(dstAllocFound, dstAllocData);
+    for (const auto memoryPool : {srcMemoryPool, dstMemoryPool}) {
+        if (memoryPool == NEO::MemoryPool::MemoryNull) {
+            return false;
+        }
+    }
+
     return this->isAppendSplitNeeded(dstMemoryPool, srcMemoryPool, size, directionOut);
 }
 
