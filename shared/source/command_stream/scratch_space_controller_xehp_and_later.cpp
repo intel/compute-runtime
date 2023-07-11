@@ -13,6 +13,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -158,7 +159,10 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
                                                                   bool &stateBaseAddressDirty,
                                                                   bool &scratchSurfaceDirty,
                                                                   bool &vfeStateDirty) {
-    uint32_t requiredPerThreadScratchSizeAlignedUp = alignUp(requiredPerThreadScratchSize, 64);
+    uint32_t requiredPerThreadScratchSizeAlignedUp = requiredPerThreadScratchSize;
+    if (!Math::isPow2(requiredPerThreadScratchSizeAlignedUp)) {
+        requiredPerThreadScratchSizeAlignedUp = Math::nextPowerOfTwo(requiredPerThreadScratchSize);
+    }
     size_t requiredScratchSizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeAlignedUp) * computeUnitsUsedForScratch;
     scratchSurfaceDirty = false;
     auto multiTileCapable = osContext.getNumSupportedDevices() > 1;
@@ -174,7 +178,10 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
         scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
     if (privateScratchSpaceSupported) {
-        uint32_t requiredPerThreadPrivateScratchSizeAlignedUp = alignUp(requiredPerThreadPrivateScratchSize, 64);
+        uint32_t requiredPerThreadPrivateScratchSizeAlignedUp = requiredPerThreadPrivateScratchSize;
+        if (!Math::isPow2(requiredPerThreadPrivateScratchSizeAlignedUp)) {
+            requiredPerThreadPrivateScratchSizeAlignedUp = Math::nextPowerOfTwo(requiredPerThreadPrivateScratchSize);
+        }
         size_t requiredPrivateScratchSizeInBytes = static_cast<size_t>(requiredPerThreadPrivateScratchSizeAlignedUp) * computeUnitsUsedForScratch;
         if (privateScratchSizeBytes < requiredPrivateScratchSizeInBytes) {
             if (privateScratchAllocation) {

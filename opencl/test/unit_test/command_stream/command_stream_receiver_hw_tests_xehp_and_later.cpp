@@ -215,19 +215,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     EXPECT_FALSE(cfeStateDirty);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenRequiredScratchSpaceIsSetThenPerThreadScratchSizeIsAlignedTo64) {
-    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver->getScratchSpaceController());
-
-    uint32_t perThreadScratchSize = 1;
-    uint32_t expectedValue = 1 << 6;
-    bool stateBaseAddressDirty = false;
-    bool cfeStateDirty = false;
-    uint8_t surfaceHeap[1000];
-    scratchController->setRequiredScratchSpace(surfaceHeap, 0u, perThreadScratchSize, 0u, commandStreamReceiver->taskCount, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
-    EXPECT_EQ(expectedValue, scratchController->perThreadScratchSize);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenNewSshProvidedAndScratchAllocationExistsThenSetDirtyBitCopyCurrentState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -582,25 +569,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
     auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());
     EXPECT_EQ(32u, scratchController->stateSlotsCount);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenSizeForPrivateScratchSpaceIsMisalignedThenAlignItTo64) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(1);
-    RENDER_SURFACE_STATE surfaceState[4];
-    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());
-
-    uint32_t misalignedSizeForPrivateScratch = MemoryConstants::pageSize + 1;
-
-    bool cfeStateDirty = false;
-    bool stateBaseAddressDirty = false;
-    scratchController->setRequiredScratchSpace(surfaceState, 0u, 0u, misalignedSizeForPrivateScratch, 0u,
-                                               *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
-    EXPECT_NE(scratchController->privateScratchSizeBytes, misalignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
-    EXPECT_EQ(scratchController->privateScratchSizeBytes, alignUp(misalignedSizeForPrivateScratch, 64) * scratchController->computeUnitsUsedForScratch);
-    EXPECT_EQ(scratchController->privateScratchSizeBytes, scratchController->getPrivateScratchSpaceAllocation()->getUnderlyingBufferSize());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenDisabledPrivateScratchSpaceWhenSizeForPrivateScratchSpaceIsProvidedThenItIsNotCreated) {

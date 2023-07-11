@@ -468,7 +468,7 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
     EXPECT_TRUE(mockCsr->isMadeResident(graphicsAllocation));
 
     // Enqueue With ScratchSize bigger than previous
-    scratchSize = 8196;
+    scratchSize = 8192;
     mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     enqueueKernel<FamilyType, false>(mockKernel);

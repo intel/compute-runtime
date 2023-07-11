@@ -950,7 +950,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeSto
     auto scratchAllocation = commandStreamReceiver->getScratchAllocation();
     ASSERT_NE(scratchAllocation, nullptr);
 
-    commandStreamReceiver->setRequiredScratchSizes(8196, 0); // whatever > first size
+    commandStreamReceiver->setRequiredScratchSizes(8192, 0); // whatever > first size
 
     flushTask(*commandStreamReceiver); // 2nd flush
 
@@ -984,7 +984,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeSto
         auto scratchAllocation = commandStreamReceiver->getScratchAllocation();
         ASSERT_NE(scratchAllocation, nullptr);
 
-        commandStreamReceiver->setRequiredScratchSizes(8196, 0); // whatever > first size
+        commandStreamReceiver->setRequiredScratchSizes(8192, 0); // whatever > first size
 
         flushTask(*commandStreamReceiver); // 2nd flush
 
