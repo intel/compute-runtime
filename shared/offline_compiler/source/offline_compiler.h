@@ -97,6 +97,10 @@ All supported acronyms: %s.
     }
     bool showHelpOnly() const { return showHelp; }
 
+    std::string getOptions() {
+        return options;
+    }
+
   protected:
     OfflineCompiler();
 

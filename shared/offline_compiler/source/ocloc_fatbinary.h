@@ -37,7 +37,7 @@ std::vector<NEO::ConstStringRef> getProductsForRange(unsigned int productFrom, u
 std::vector<ConstStringRef> getTargetProductsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper);
 int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
                             OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig);
-int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, OclocArgHelper *argHelper);
-std::vector<uint8_t> createEncodedElfWithSpirv(const ArrayRef<const uint8_t> &spirv);
+int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, OclocArgHelper *argHelper, std::string options);
+std::vector<uint8_t> createEncodedElfWithSpirv(const ArrayRef<const uint8_t> &spirv, const ArrayRef<const uint8_t> &options);
 
 } // namespace NEO

@@ -1442,6 +1442,69 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBu
     }
 }
 
+TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveContainsOptions) {
+    const auto devices = prepareTwoDevices(&mockArgHelper);
+    if (devices.empty()) {
+        GTEST_SKIP();
+    }
+
+    char data[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    MockCompilerDebugVars igcDebugVars(gEnvironment->igcDebugVars);
+    igcDebugVars.binaryToReturn = data;
+    igcDebugVars.binaryToReturnSize = sizeof(data);
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    std::string dummyOptions = "-dummy-option ";
+    const std::vector<std::string> args = {
+        "ocloc",
+        "-output",
+        outputArchiveName,
+        "-file",
+        spirvFilename,
+        "-output_no_suffix",
+        "-spirv_input",
+        "-options",
+        dummyOptions,
+        "-device",
+        devices};
+
+    mockArgHelper.getPrinterRef().setSuppressMessages(true);
+    const auto buildResult = buildFatBinary(args, &mockArgHelper);
+    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
+
+    const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
+    const auto archiveBytes = ArrayRef<const std::uint8_t>::fromAny(rawArchive.data(), rawArchive.size());
+
+    std::string outErrReason{};
+    std::string outWarning{};
+    const auto decodedArchive = NEO::Ar::decodeAr(archiveBytes, outErrReason, outWarning);
+
+    ASSERT_NE(nullptr, decodedArchive.magic);
+    ASSERT_TRUE(outErrReason.empty());
+    ASSERT_TRUE(outWarning.empty());
+
+    const auto spirvFileIt = searchInArchiveByFilename(decodedArchive, archiveGenericIrName);
+    ASSERT_NE(decodedArchive.files.end(), spirvFileIt);
+
+    const auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(spirvFileIt->fileData, outErrReason, outWarning);
+    ASSERT_NE(nullptr, elf.elfFileHeader);
+    ASSERT_TRUE(outErrReason.empty());
+    ASSERT_TRUE(outWarning.empty());
+
+    const auto isOptionSection = [](const auto &section) {
+        return section.header && section.header->type == Elf::SHT_OPENCL_OPTIONS;
+    };
+
+    const auto optionSectionIt = std::find_if(elf.sectionHeaders.begin(), elf.sectionHeaders.end(), isOptionSection);
+    ASSERT_NE(elf.sectionHeaders.end(), optionSectionIt);
+
+    ASSERT_EQ(dummyOptions.size(), optionSectionIt->header->size);
+    const auto isSpirvDataEqualsInputFileData = std::memcmp(dummyOptions.data(), optionSectionIt->data.begin(), dummyOptions.size()) == 0;
+    EXPECT_TRUE(isSpirvDataEqualsInputFileData);
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+}
+
 TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveContainsGenericIrFileWithSpirvContent) {
     const auto devices = prepareTwoDevices(&mockArgHelper);
     if (devices.empty()) {
@@ -1688,11 +1751,12 @@ TEST_F(OclocFatBinaryTest, givenClInputFileWhenFatBinaryIsRequestedThenArchiveDo
 TEST_F(OclocFatBinaryTest, givenEmptyFileWhenAppendingGenericIrThenInvalidFileIsReturned) {
     Ar::ArEncoder ar;
     std::string emptyFile{"empty_file.spv"};
+    std::string dummyOptions{"-cl-opt-disable "};
     mockArgHelperFilesMap[emptyFile] = "";
     mockArgHelper.shouldLoadDataFromFileReturnZeroSize = true;
 
     ::testing::internal::CaptureStdout();
-    const auto errorCode{appendGenericIr(ar, emptyFile, &mockArgHelper)};
+    const auto errorCode{appendGenericIr(ar, emptyFile, &mockArgHelper, dummyOptions)};
     const auto output{::testing::internal::GetCapturedStdout()};
 
     EXPECT_EQ(OclocErrorCode::INVALID_FILE, errorCode);
@@ -1702,10 +1766,11 @@ TEST_F(OclocFatBinaryTest, givenEmptyFileWhenAppendingGenericIrThenInvalidFileIs
 TEST_F(OclocFatBinaryTest, givenInvalidIrFileWhenAppendingGenericIrThenInvalidFileIsReturned) {
     Ar::ArEncoder ar;
     std::string dummyFile{"dummy_file.spv"};
+    std::string dummyOptions{"-cl-opt-disable "};
     mockArgHelperFilesMap[dummyFile] = "This is not IR!";
 
     ::testing::internal::CaptureStdout();
-    const auto errorCode{appendGenericIr(ar, dummyFile, &mockArgHelper)};
+    const auto errorCode{appendGenericIr(ar, dummyFile, &mockArgHelper, dummyOptions)};
     const auto output{::testing::internal::GetCapturedStdout()};
 
     EXPECT_EQ(OclocErrorCode::INVALID_FILE, errorCode);
