@@ -23,6 +23,12 @@ struct FabricVertex;
 struct FabricEdge;
 struct Image;
 
+enum L0DeviceHierarchyMode {
+    L0_DEVICE_HIERARCHY_COMPOSITE,
+    L0_DEVICE_HIERARCHY_FLAT,
+    L0_DEVICE_HIERARCHY_COMBINED
+};
+
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
     DriverHandleImp();
@@ -139,6 +145,7 @@ struct DriverHandleImp : public DriverHandle {
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
     uint8_t powerHint = 0;
+    L0DeviceHierarchyMode deviceHierarchyMode = L0_DEVICE_HIERARCHY_COMPOSITE;
 
     // Error messages per thread, variable initialized / destoryed per thread,
     // not based on the lifetime of the object of a class.

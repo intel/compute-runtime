@@ -240,6 +240,7 @@ zeGetDeviceProcAddrTable(
     pDdiTable->pfnReserveCacheExt = L0::zeDeviceReserveCacheExt;
     pDdiTable->pfnSetCacheAdviceExt = L0::zeDeviceSetCacheAdviceExt;
     pDdiTable->pfnPciGetPropertiesExt = L0::zeDevicePciGetPropertiesExt;
+    pDdiTable->pfnGetRootDevice = L0::zeDeviceGetRootDevice;
     driverDdiTable.coreDdiTable.Device = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnGet = zeDeviceGetTracing;

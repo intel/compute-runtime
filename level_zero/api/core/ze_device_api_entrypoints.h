@@ -132,6 +132,12 @@ ze_result_t zeDevicePciGetPropertiesExt(
     return L0::Device::fromHandle(hDevice)->getPciProperties(pPciProperties);
 }
 
+ze_result_t zeDeviceGetRootDevice(
+    ze_device_handle_t hDevice,
+    ze_device_handle_t *phRootDevice) {
+    return L0::Device::fromHandle(hDevice)->getRootDevice(phRootDevice);
+}
+
 } // namespace L0
 
 extern "C" {

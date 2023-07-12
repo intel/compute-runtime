@@ -267,6 +267,13 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(envVariables.programDebugging);
     driverHandle->enableSysman = envVariables.sysman;
     driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
+    if (strcmp(envVariables.deviceHierarchyMode.c_str(), "COMPOSITE") == 0) {
+        driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
+    } else if (strcmp(envVariables.deviceHierarchyMode.c_str(), "FLAT") == 0) {
+        driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
+    } else if (strcmp(envVariables.deviceHierarchyMode.c_str(), "COMBINED") == 0) {
+        driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
+    }
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {
         delete driverHandle;
@@ -286,6 +293,11 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
 
     if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
         exposeSubDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
+    }
+
+    // If the user has requested FLAT device hierarchy model, then report all the sub devices as devices.
+    if (this->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+        exposeSubDevices = true;
     }
 
     if (*pCount == 0) {

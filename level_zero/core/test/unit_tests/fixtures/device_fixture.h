@@ -112,6 +112,11 @@ struct MultiDeviceFixture {
     L0::ContextImp *context = nullptr;
 };
 
+struct MultiDeviceFixtureHierarchy : public MultiDeviceFixture {
+    void setUp();
+    bool exposeSubDevices = true;
+};
+
 struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {
     void setUp();
 

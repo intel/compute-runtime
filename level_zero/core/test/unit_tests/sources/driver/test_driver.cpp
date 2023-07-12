@@ -473,6 +473,68 @@ TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironment
     L0::GlobalDriver = nullptr;
 }
 
+TEST(DriverImpTest, givenDefaultFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThenCompositeHierarchyIsEnabled) {
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+    L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(L0::GlobalDriverHandle);
+    EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE);
+    ASSERT_NE(nullptr, L0::GlobalDriver);
+    ASSERT_NE(0u, L0::GlobalDriver->numDevices);
+
+    delete L0::GlobalDriver;
+    L0::GlobalDriverHandle = nullptr;
+    L0::GlobalDriver = nullptr;
+}
+
+TEST(DriverImpTest, givenFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThenFlatHierarchyIsEnabled) {
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+    L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(L0::GlobalDriverHandle);
+    EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT);
+    ASSERT_NE(nullptr, L0::GlobalDriver);
+    ASSERT_NE(0u, L0::GlobalDriver->numDevices);
+
+    delete L0::GlobalDriver;
+    L0::GlobalDriverHandle = nullptr;
+    L0::GlobalDriver = nullptr;
+}
+
+TEST(DriverImpTest, givenCombinedFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThenCombinedHierarchyIsEnabled) {
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMBINED"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+    L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(L0::GlobalDriverHandle);
+    EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED);
+    ASSERT_NE(nullptr, L0::GlobalDriver);
+    ASSERT_NE(0u, L0::GlobalDriver->numDevices);
+
+    delete L0::GlobalDriver;
+    L0::GlobalDriverHandle = nullptr;
+    L0::GlobalDriver = nullptr;
+}
+
 TEST(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();

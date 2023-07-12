@@ -51,6 +51,7 @@ struct DeviceImp : public Device {
                                  ze_device_p2p_properties_t *pP2PProperties) override;
     ze_result_t getKernelProperties(ze_device_module_properties_t *pKernelProperties) override;
     ze_result_t getPciProperties(ze_pci_ext_properties_t *pPciProperties) override;
+    ze_result_t getRootDevice(ze_device_handle_t *phRootDevice) override;
     ze_result_t getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) override;
     ze_result_t getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) override;
     ze_result_t getProperties(ze_device_properties_t *pDeviceProperties) override;
@@ -128,6 +129,7 @@ struct DeviceImp : public Device {
     FabricVertex *fabricVertex = nullptr;
     CommandList *pageFaultCommandList = nullptr;
     ze_pci_speed_ext_t pciMaxSpeed = {-1, -1, -1};
+    Device *rootDevice = nullptr;
 
     BcsSplit bcsSplit;
 

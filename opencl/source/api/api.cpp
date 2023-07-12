@@ -262,6 +262,10 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                 exposeSubDevices = DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
             }
 
+            if (pPlatform->peekExecutionEnvironment()->isExposingSubDevicesAsDevices()) {
+                exposeSubDevices = true;
+            }
+
             ClDevice *device = pPlatform->getClDevice(platformDeviceIndex);
             UNRECOVERABLE_IF(device == nullptr);
 

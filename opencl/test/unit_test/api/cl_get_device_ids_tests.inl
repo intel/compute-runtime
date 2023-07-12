@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
@@ -155,6 +156,41 @@ TEST(clGetDeviceIDsTest, givenReturnSubDevicesAsApiDevicesWhenCallClGetDeviceIDs
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.CreateMultipleSubDevices.set(numRootDevices);
     DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
+    cl_uint maxNumDevices;
+    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(numRootDevices * numRootDevices, maxNumDevices);
+
+    cl_uint numDevices = 0;
+    cl_uint numEntries = maxNumDevices - 1;
+    cl_device_id devices[numRootDevices * numRootDevices];
+
+    const auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
+    for (auto i = 0u; i < maxNumDevices; i++) {
+        devices[i] = dummyDevice;
+    }
+
+    retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_LT(numDevices, maxNumDevices);
+    EXPECT_EQ(numEntries, numDevices);
+    for (auto i = 0u; i < numEntries; i++) {
+        EXPECT_EQ(devices[i], platform()->getClDevice(i / numRootDevices)->getSubDevice(i % numRootDevices));
+    }
+    EXPECT_EQ(devices[numEntries], dummyDevice);
+}
+
+TEST(clGetDeviceIDsTest, givenZeFlatDeviceHierarchyWhenCallClGetDeviceIDsThenSubDevicesAreReturnedAsSeparateClDevices) {
+    platformsImpl->clear();
+    constexpr auto numRootDevices = 3u;
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    DebugManager.flags.CreateMultipleSubDevices.set(numRootDevices);
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     cl_uint maxNumDevices;
     auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
     EXPECT_EQ(retVal, CL_SUCCESS);

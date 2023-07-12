@@ -43,6 +43,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void setMetricsEnabled(bool value) {
         this->metricsEnabled = value;
     }
+    void setExposeSubDevicesAsDevices(bool value) {
+        this->subDevicesAsDevices = value;
+    }
+    bool isExposingSubDevicesAsDevices() const { return this->subDevicesAsDevices; }
     bool areMetricsEnabled() { return this->metricsEnabled; }
     void setFP64EmulationEnabled() {
         fp64EmulationEnabled = true;
@@ -64,6 +68,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void configureNeoEnvironment();
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
+    bool subDevicesAsDevices = false;
 
     DebuggingMode debuggingEnabledMode = DebuggingMode::Disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;

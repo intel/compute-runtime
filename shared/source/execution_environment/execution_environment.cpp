@@ -19,6 +19,7 @@
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -152,6 +153,10 @@ void ExecutionEnvironment::parseAffinityMask() {
     bool exposeSubDevicesAsApiDevices = false;
     if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
         exposeSubDevicesAsApiDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
+    }
+    // If the user has requested FLAT device hierarchy models, then report all the sub devices as devices.
+    if (this->subDevicesAsDevices) {
+        exposeSubDevicesAsApiDevices = true;
     }
 
     uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
@@ -316,6 +321,14 @@ void ExecutionEnvironment::configureNeoEnvironment() {
     if (DebugManager.flags.NEO_CAL_ENABLED.get()) {
         DebugManager.flags.UseKmdMigration.setIfDefault(0);
         DebugManager.flags.SplitBcsSize.setIfDefault(256);
+    }
+    NEO::EnvironmentVariableReader envReader;
+    std::string hierarchyModel = envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string("COMPOSITE"));
+    if (strcmp(hierarchyModel.c_str(), "COMPOSITE") == 0) {
+        setExposeSubDevicesAsDevices(false);
+    }
+    if (strcmp(hierarchyModel.c_str(), "FLAT") == 0) {
+        setExposeSubDevicesAsDevices(true);
     }
 }
 

@@ -27,6 +27,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/test.h"
@@ -437,6 +438,22 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSettingFP64EmulationEnab
     ASSERT_FALSE(executionEnvironment.isFP64EmulationEnabled());
     executionEnvironment.setFP64EmulationEnabled();
     EXPECT_TRUE(executionEnvironment.isFP64EmulationEnabled());
+}
+
+TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithCompositeDeviceHierarchyThenExposeSubDevicesAsDevicesIsFalse) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    ExecutionEnvironment executionEnvironment{};
+    EXPECT_FALSE(executionEnvironment.isExposingSubDevicesAsDevices());
+}
+
+TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithFlatDeviceHierarchyThenExposeSubDevicesAsDevicesIsTrue) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    ExecutionEnvironment executionEnvironment{};
+    EXPECT_TRUE(executionEnvironment.isExposingSubDevicesAsDevices());
 }
 
 void ExecutionEnvironmentSortTests::SetUp() {

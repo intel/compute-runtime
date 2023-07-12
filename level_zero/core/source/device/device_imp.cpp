@@ -535,6 +535,17 @@ ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DeviceImp::getRootDevice(ze_device_handle_t *phRootDevice) {
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
+    // Given FLAT device Hierarchy mode, then nullptr is returned for the root device since no traversal is allowed.
+    if (driverHandleImp->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+        *phRootDevice = nullptr;
+        return ZE_RESULT_SUCCESS;
+    }
+    *phRootDevice = this->rootDevice;
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DeviceImp::getPciProperties(ze_pci_ext_properties_t *pPciProperties) {
     if (!driverInfo) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
@@ -826,8 +837,9 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     }
 
     if (isSubdevice) {
+        DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
         const auto &isReturnSubDevicesAsApiDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
-        if (isReturnSubDevicesAsApiDevices != 1) {
+        if (isReturnSubDevicesAsApiDevices != 1 && driverHandleImp->deviceHierarchyMode != L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
             pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
         }
     }
@@ -910,6 +922,12 @@ ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *de
 }
 
 ze_result_t DeviceImp::getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) {
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
+    // Given FLAT device Hierarchy mode, then a count of 0 is returned since no traversal is allowed.
+    if (driverHandleImp->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+        *pCount = 0;
+        return ZE_RESULT_SUCCESS;
+    }
     if (*pCount == 0) {
         *pCount = this->numSubDevices;
         return ZE_RESULT_SUCCESS;
@@ -1209,6 +1227,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
             return nullptr;
         }
         static_cast<DeviceImp *>(subDevice)->setDebugSurface(debugSurface);
+        static_cast<DeviceImp *>(subDevice)->rootDevice = device;
         device->subDevices.push_back(static_cast<Device *>(subDevice));
     }
     device->numSubDevices = static_cast<uint32_t>(device->subDevices.size());

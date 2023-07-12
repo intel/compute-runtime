@@ -33,6 +33,7 @@ struct L0EnvVariables {
     bool sysman;
     bool pciIdDeviceOrder;
     bool fp64Emulation;
+    std::string deviceHierarchyMode;
 };
 
 } // namespace L0

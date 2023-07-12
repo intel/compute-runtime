@@ -4413,6 +4413,196 @@ TEST_F(P2pBandwidthPropertiesTest, GivenFabricVerticesAreNotAvailableForDevicesW
     static_cast<DeviceImp *>(device1)->fabricVertex = backupFabricVertex;
 }
 
+TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetWithMaskThenFlagsOfDevicePropertiesIsCorrect) {
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+    MultiDeviceFixtureHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    // mask is "0,1.1,2", but with L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT 1.1
+    // is not valid, so expected count is 2.
+    EXPECT_EQ(count, 2u);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+        ze_device_properties_t deviceProperties{};
+        deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getProperties(&deviceProperties), ZE_RESULT_SUCCESS);
+        EXPECT_NE(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, 0u);
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetThenFlagsOfDevicePropertiesIsCorrect) {
+
+    MultiDeviceFixtureHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices * multiDeviceFixture.numSubDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+        ze_device_properties_t deviceProperties{};
+        deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getProperties(&deviceProperties), ZE_RESULT_SUCCESS);
+        EXPECT_NE(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, 0u);
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetWithMaskThenGetRootDeviceReturnsNullptr) {
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+    MultiDeviceFixtureHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    // mask is "0,1.1,2", but with L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT 1.1
+    // is not valid, so expected count is 2.
+    EXPECT_EQ(count, 2u);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+        ze_device_handle_t rootDevice = nullptr;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getRootDevice(&rootDevice), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(rootDevice, nullptr);
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetThenGetRootDeviceReturnsNullptr) {
+
+    MultiDeviceFixtureHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices * multiDeviceFixture.numSubDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+        ze_device_handle_t rootDevice = nullptr;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getRootDevice(&rootDevice), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(rootDevice, nullptr);
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(DeviceReturnCompositeHierarchyTest, GivenCompositeHierarchyIsSetWithMaskThenGetRootDeviceIsNotNullForSubDevices) {
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1,2");
+    MultiDeviceFixture multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(count, 3u);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, multiDeviceFixture.numSubDevices);
+        std::vector<ze_device_handle_t> hSubDevices(multiDeviceFixture.numSubDevices);
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, hSubDevices.data()), ZE_RESULT_SUCCESS);
+
+        for (auto &hSubDevice : hSubDevices) {
+            ze_device_handle_t rootDevice = nullptr;
+            EXPECT_EQ(Device::fromHandle(hSubDevice)->getRootDevice(&rootDevice), ZE_RESULT_SUCCESS);
+            EXPECT_NE(rootDevice, nullptr);
+            ze_device_properties_t deviceProperties{};
+            deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+            EXPECT_EQ(Device::fromHandle(hSubDevice)->getProperties(&deviceProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+        }
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(DeviceReturnCompositeHierarchyTest, GivenCompositeHierarchyIsSetThenGetRootDeviceIsNotNullForSubDevices) {
+
+    MultiDeviceFixture multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, multiDeviceFixture.numSubDevices);
+        std::vector<ze_device_handle_t> hSubDevices(multiDeviceFixture.numSubDevices);
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, hSubDevices.data()), ZE_RESULT_SUCCESS);
+
+        for (auto &hSubDevice : hSubDevices) {
+            ze_device_handle_t rootDevice = nullptr;
+            EXPECT_EQ(Device::fromHandle(hSubDevice)->getRootDevice(&rootDevice), ZE_RESULT_SUCCESS);
+            EXPECT_NE(rootDevice, nullptr);
+            ze_device_properties_t deviceProperties{};
+            deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+            EXPECT_EQ(Device::fromHandle(hSubDevice)->getProperties(&deviceProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+        }
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
 TEST(DeviceReturnSubDevicesAsApiDevicesTest, GivenReturnSubDevicesAsApiDevicesIsSetThenFlagsOfDevicePropertiesIsCorrect) {
 
     DebugManagerStateRestore restorer;
