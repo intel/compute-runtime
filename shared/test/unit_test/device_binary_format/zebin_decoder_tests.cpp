@@ -5582,6 +5582,38 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndV
     EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, generator));
 }
 
+TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTargetDeviceThenUseOnlyItForValidation) {
+    NEO::HardwareIpVersion aotConfig = {0};
+    aotConfig.value = 0x00001234;
+
+    TargetDevice targetDevice;
+    targetDevice.maxPointerSizeInBytes = 8u;
+    ASSERT_EQ(IGFX_UNKNOWN, targetDevice.productFamily);
+    ASSERT_EQ(IGFX_UNKNOWN_CORE, targetDevice.coreFamily);
+    targetDevice.aotConfig.value = aotConfig.value;
+
+    NEO::Elf::ElfNoteSection elfNoteSection;
+    elfNoteSection.descSize = 4u;
+    elfNoteSection.nameSize = 8u;
+    elfNoteSection.type = Zebin::Elf::IntelGTSectionType::ProductConfig;
+
+    uint8_t productConfigData[4];
+    memcpy_s(productConfigData, 4, &aotConfig.value, 4);
+
+    auto sectionDataSize = sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), productConfigData, NEO::Zebin::Elf::IntelGTNoteOwnerName.data(), sectionDataSize);
+    zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+    GeneratorType generator{};
+
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, generator));
+}
+
 TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenValidatingTargetDeviceThenReturnTrue) {
     TargetDevice targetDevice;
     targetDevice.productFamily = productFamily;
