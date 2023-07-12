@@ -7,15 +7,18 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_builtinslib.h"
 #include "shared/test/common/mocks/mock_compiler_interface_spirv.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device_for_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -166,43 +169,14 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceThen
     }
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenIntermediateCodeForBuiltinsIsRequested) {
-    struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
-        struct MockModuleForRebuildBuiltins : public ModuleImp {
-            MockModuleForRebuildBuiltins(Device *device) : ModuleImp(device, nullptr, ModuleType::Builtin) {}
+using BuiltInTestsL0 = Test<NEO::DeviceFixture>;
 
-            ze_result_t createKernel(const ze_kernel_desc_t *desc,
-                                     ze_kernel_handle_t *kernelHandle) override {
-                *kernelHandle = nullptr;
-                return ZE_RESULT_SUCCESS;
-            }
-        };
-
-        MockDeviceForRebuildBuilins(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
-            driverHandle = device->getDriverHandle();
-            builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
-        }
-
-        ze_result_t createModule(const ze_module_desc_t *desc,
-                                 ze_module_handle_t *module,
-                                 ze_module_build_log_handle_t *buildLog, ModuleType type) override {
-            EXPECT_EQ(desc->format, ZE_MODULE_FORMAT_IL_SPIRV);
-            EXPECT_GT(desc->inputSize, 0u);
-            EXPECT_NE(desc->pInputModule, nullptr);
-            createModuleCalled = true;
-
-            *module = new MockModuleForRebuildBuiltins(this);
-
-            return ZE_RESULT_SUCCESS;
-        }
-
-        bool createModuleCalled = false;
-    };
-
+HWTEST_F(BuiltInTestsL0, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenIntermediateCodeForBuiltinsIsRequested) {
+    pDevice->incRefInternal();
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
-    MockDeviceForRebuildBuilins testDevice(device);
-    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(&testDevice, neoDevice->getBuiltIns()));
+    MockDeviceForBuiltinTests testDevice(pDevice);
+    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(&testDevice, pDevice->getBuiltIns()));
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
         testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
     }
@@ -210,32 +184,13 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenRebuildPrecompiledKernelsDebugFlagWhe
     EXPECT_TRUE(testDevice.createModuleCalled);
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenNotToRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenNativeCodeForBuiltinsIsRequested) {
-    struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
-        MockDeviceForRebuildBuilins(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
-            driverHandle = device->getDriverHandle();
-            builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
-        }
-
-        ze_result_t createModule(const ze_module_desc_t *desc,
-                                 ze_module_handle_t *module,
-                                 ze_module_build_log_handle_t *buildLog, ModuleType type) override {
-            EXPECT_EQ(desc->format, ZE_MODULE_FORMAT_NATIVE);
-            EXPECT_GT(desc->inputSize, 0u);
-            EXPECT_NE(desc->pInputModule, nullptr);
-            createModuleCalled = true;
-
-            return DeviceImp::createModule(desc, module, buildLog, type);
-        }
-
-        bool createModuleCalled = false;
-    };
-
+HWTEST_F(BuiltInTestsL0, givenNotToRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenNativeCodeForBuiltinsIsRequested) {
+    pDevice->incRefInternal();
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(false);
-    MockDeviceForRebuildBuilins testDevice(device);
+    MockDeviceForBuiltinTests testDevice(pDevice);
     L0::Device *testDevicePtr = &testDevice;
-    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, neoDevice->getBuiltIns()));
+    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, pDevice->getBuiltIns()));
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
         testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
     }
@@ -243,34 +198,29 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenNotToRebuildPrecompiledKernelsDebugFl
     EXPECT_TRUE(testDevice.createModuleCalled);
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, GivenBuiltinsWhenInitializingFunctionsThenModulesWithProperTypeAreCreated) {
-    struct MockDeviceWithBuilins : public Mock<DeviceImp> {
-        MockDeviceWithBuilins(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
-            driverHandle = device->getDriverHandle();
-            builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
-        }
-
-        ze_result_t createModule(const ze_module_desc_t *desc,
-                                 ze_module_handle_t *module,
-                                 ze_module_build_log_handle_t *buildLog, ModuleType type) override {
-
-            typeCreated = type;
-            EXPECT_EQ(ModuleType::Builtin, type);
-
-            return DeviceImp::createModule(desc, module, buildLog, type);
-        }
-
-        ModuleType typeCreated = ModuleType::User;
-    };
-
-    MockDeviceWithBuilins testDevice(device);
+HWTEST_F(BuiltInTestsL0, givenBuiltinsWhenInitializingFunctionsThenModulesWithProperTypeAreCreated) {
+    pDevice->incRefInternal();
+    MockDeviceForBuiltinTests testDevice(pDevice);
     L0::Device *testDevicePtr = &testDevice;
-    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, neoDevice->getBuiltIns()));
+    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, pDevice->getBuiltIns()));
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
         testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
     }
 
     EXPECT_EQ(ModuleType::Builtin, testDevice.typeCreated);
+}
+
+HWTEST_F(BuiltInTestsL0, givenDeviceWithUnregisteredBinaryBuiltinWhenGettingBuiltinKernelThenOnlyIntermediateFormatIsAvailable) {
+    pDevice->incRefInternal();
+    MockDeviceForBuiltinTests testDevice(pDevice);
+    L0::Device *testDevicePtr = &testDevice;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->ipVersion.value += 0xdead;
+    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, pDevice->getBuiltIns()));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(L0::Builtin::COUNT); builtId++) {
+        testDevice.formatForModule = {};
+        ASSERT_NE(nullptr, testDevice.getBuiltinFunctionsLib()->getFunction(static_cast<L0::Builtin>(builtId)));
+        EXPECT_EQ(ZE_MODULE_FORMAT_IL_SPIRV, testDevice.formatForModule);
+    }
 }
 
 } // namespace ult

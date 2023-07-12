@@ -232,7 +232,7 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
         }
     }
 
-    if (builtinCode.resource.empty() || !NEO::EmbeddedStorageRegistry::exists) {
+    if (builtinCode.resource.empty()) {
         return nullptr;
     }
 
