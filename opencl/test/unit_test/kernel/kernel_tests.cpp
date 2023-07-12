@@ -3407,7 +3407,7 @@ TEST_F(KernelImplicitArgsTest, WhenKernelRequiresImplicitArgsThenImplicitArgsStr
 
         ASSERT_NE(nullptr, pImplicitArgs);
 
-        ImplicitArgs expectedImplicitArgs = {sizeof(ImplicitArgs), 0, 0, 32};
+        ImplicitArgs expectedImplicitArgs = {offsetof(ImplicitArgs, reserved), 0, 0, 32};
         EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, sizeof(ImplicitArgs)));
     }
 }
@@ -3426,7 +3426,7 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenSettingKernelParam
 
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    ImplicitArgs expectedImplicitArgs = {sizeof(ImplicitArgs)};
+    ImplicitArgs expectedImplicitArgs = {offsetof(ImplicitArgs, reserved)};
     expectedImplicitArgs.numWorkDim = 3;
     expectedImplicitArgs.simdWidth = 32;
     expectedImplicitArgs.localSizeX = 4;
@@ -3464,7 +3464,7 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenCloneKernelThenImp
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
-    ImplicitArgs expectedImplicitArgs = {sizeof(ImplicitArgs)};
+    ImplicitArgs expectedImplicitArgs = {offsetof(ImplicitArgs, reserved)};
     expectedImplicitArgs.numWorkDim = 3;
     expectedImplicitArgs.simdWidth = 32;
     expectedImplicitArgs.localSizeX = 4;

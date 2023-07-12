@@ -1004,7 +1004,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
     }
     std::unique_ptr<L0::CommandList> commandList;
     GraphicsAllocation *indirectHeapAllocation = nullptr;
-    ImplicitArgs expectedImplicitArgs = {sizeof(ImplicitArgs)};
+    ImplicitArgs expectedImplicitArgs = {offsetof(ImplicitArgs, reserved)};
     std::array<uint8_t, 3> workgroupDimOrder{0, 1, 2};
     uint32_t implicitArgsProgrammingSize = 0u;
 

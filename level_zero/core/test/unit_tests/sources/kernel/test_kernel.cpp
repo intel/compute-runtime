@@ -2963,7 +2963,7 @@ TEST_F(KernelImplicitArgTests, givenImplicitArgsRequiredWhenCreatingKernelThenIm
     auto pImplicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    EXPECT_EQ(sizeof(ImplicitArgs), pImplicitArgs->structSize);
+    EXPECT_EQ(112u, pImplicitArgs->structSize);
     EXPECT_EQ(0u, pImplicitArgs->structVersion);
 }
 
@@ -2983,7 +2983,8 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     auto pImplicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    ImplicitArgs expectedImplicitArgs{sizeof(ImplicitArgs)};
+    ImplicitArgs expectedImplicitArgs{offsetof(ImplicitArgs, reserved)};
+
     expectedImplicitArgs.numWorkDim = 3;
     expectedImplicitArgs.simdWidth = simd;
     expectedImplicitArgs.localSizeX = 4;

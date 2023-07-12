@@ -62,7 +62,7 @@ TEST(ImplicitArgsHelperTest, givenNoImplicitArgsWhenGettingSizeForImplicitArgsPr
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
-    ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
+    ImplicitArgs implicitArgs{offsetof(ImplicitArgs, reserved)};
 
     KernelDescriptor kernelDescriptor{};
 
@@ -77,11 +77,11 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
     auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
     auto localIdsSize = alignUp(PerThreadDataHelper::getPerThreadDataSizeTotal(implicitArgs.simdWidth, 32u /* grfSize */, 3u /* num channels */, totalWorkgroupSize, false, *gfxCoreHelper.get()), MemoryConstants::cacheLineSize);
-    EXPECT_EQ(localIdsSize + implicitArgs.structSize, ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get()));
+    EXPECT_EQ(localIdsSize + sizeof(NEO::ImplicitArgs), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get()));
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
-    ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
+    ImplicitArgs implicitArgs{offsetof(ImplicitArgs, reserved)};
 
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0x10;
@@ -96,7 +96,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
-    ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
+    ImplicitArgs implicitArgs{offsetof(ImplicitArgs, reserved)};
 
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = 0;
@@ -141,7 +141,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
-    ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
+    ImplicitArgs implicitArgs{offsetof(ImplicitArgs, reserved)};
 
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0x10;

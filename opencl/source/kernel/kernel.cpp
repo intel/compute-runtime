@@ -176,7 +176,7 @@ cl_int Kernel::initialize() {
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
         pImplicitArgs = std::make_unique<ImplicitArgs>();
         *pImplicitArgs = {};
-        pImplicitArgs->structSize = sizeof(ImplicitArgs);
+        pImplicitArgs->structSize = offsetof(ImplicitArgs, reserved);
         pImplicitArgs->structVersion = 0;
         pImplicitArgs->simdWidth = maxSimdSize;
     }

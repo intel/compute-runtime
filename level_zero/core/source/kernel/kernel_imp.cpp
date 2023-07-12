@@ -942,7 +942,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
         pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
         *pImplicitArgs = {};
-        pImplicitArgs->structSize = sizeof(NEO::ImplicitArgs);
+        pImplicitArgs->structSize = offsetof(NEO::ImplicitArgs, reserved);
         pImplicitArgs->structVersion = 0;
         pImplicitArgs->simdWidth = kernelDescriptor.kernelAttributes.simdSize;
     }
