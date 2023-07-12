@@ -72,6 +72,8 @@ void PageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocs
 
 inline void PageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultData &pageFaultData) {
     if (pageFaultData.domain == AllocationDomain::Cpu) {
+        this->setCpuAllocEvictable(false, ptr, pageFaultData.unifiedMemoryManager);
+
         std::chrono::steady_clock::time_point start;
         std::chrono::steady_clock::time_point end;
 
@@ -110,6 +112,7 @@ void PageFaultManager::setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPt
 void PageFaultManager::transferAndUnprotectMemory(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
     pageFaultHandler->migrateStorageToCpuDomain(allocPtr, pageFaultData);
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
+    pageFaultHandler->setCpuAllocEvictable(true, allocPtr, pageFaultData.unifiedMemoryManager);
 }
 
 void PageFaultManager::unprotectAndTransferMemory(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
@@ -145,6 +148,12 @@ void PageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager
     UNRECOVERABLE_IF(ptr == nullptr);
     auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
     gpuAlloc->setAubWritable(writable, GraphicsAllocation::allBanks);
+}
+
+void PageFaultManager::setCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
+    UNRECOVERABLE_IF(ptr == nullptr);
+    auto cpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->cpuAllocation;
+    cpuAlloc->setEvictable(evictable);
 }
 
 } // namespace NEO

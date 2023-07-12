@@ -637,6 +637,68 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledTh
     unifiedMemoryManager->freeSVMAlloc(alloc1);
 }
 
+TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMigratedBetweenCpuAndGpuThenSetCpuAllocEvictableAccordingly) {
+    void *ptr = reinterpret_cast<void *>(0x1);
+
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::transferAndUnprotectMemory;
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
+
+    pageFaultManager->insertAllocation(ptr, 10, unifiedMemoryManager.get(), nullptr, memoryProperties);
+    EXPECT_EQ(pageFaultManager->protectMemoryCalled, 0);
+    EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 0);
+    EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
+    EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
+    EXPECT_EQ(pageFaultManager->setCpuAllocEvictableCalled, 0);
+    EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
+    EXPECT_EQ(pageFaultManager->isCpuAllocEvictable, 1);
+
+    pageFaultManager->moveAllocationToGpuDomain(ptr);
+    EXPECT_EQ(pageFaultManager->moveAllocationToGpuDomainCalled, 1);
+    EXPECT_EQ(pageFaultManager->setCpuAllocEvictableCalled, 1);
+    EXPECT_EQ(pageFaultManager->transferToGpuCalled, 1);
+    EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
+    EXPECT_EQ(pageFaultManager->isCpuAllocEvictable, 0);
+    EXPECT_EQ(pageFaultManager->transferToGpuAddress, ptr);
+    EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, ptr);
+    EXPECT_EQ(pageFaultManager->protectedSize, 10u);
+
+    pageFaultManager->verifyPageFault(ptr);
+    EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
+    EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
+    EXPECT_EQ(pageFaultManager->setCpuAllocEvictableCalled, 2);
+    EXPECT_EQ(pageFaultManager->allowedMemoryAccessAddress, ptr);
+    EXPECT_EQ(pageFaultManager->accessAllowedSize, 10u);
+    EXPECT_EQ(pageFaultManager->isCpuAllocEvictable, 1);
+}
+
+TEST_F(PageFaultManagerTest, givenPageFaultMAnagerWhenSetCpuAllocEvictableIsCalledThenPeekEvictableForCpuAllocReturnCorrectValue) {
+    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+
+    auto pageFaultManager = new MockPageFaultManager;
+    memoryManager->pageFaultManager.reset(pageFaultManager);
+
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, 1, rootDeviceIndices, deviceBitfields);
+    void *cmdQ = reinterpret_cast<void *>(0xFFFF);
+    void *ptr = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
+
+    auto cpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->cpuAllocation;
+    EXPECT_TRUE(cpuAlloc->peekEvictable());
+
+    pageFaultManager->baseCpuAllocEvictable(false, ptr, unifiedMemoryManager.get());
+    EXPECT_FALSE(cpuAlloc->peekEvictable());
+
+    pageFaultManager->baseCpuAllocEvictable(true, ptr, unifiedMemoryManager.get());
+    EXPECT_TRUE(cpuAlloc->peekEvictable());
+
+    unifiedMemoryManager->freeSVMAlloc(ptr);
+}
+
 TEST_F(PageFaultManagerTest, givenCalWhenSelectingHandlerThenAubTbxAndCalGpuDomainHandlerIsSet) {
     EXPECT_EQ(pageFaultManager->getHwHandlerAddress(), reinterpret_cast<void *>(pageFaultManager->gpuDomainHandler));
 

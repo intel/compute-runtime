@@ -57,6 +57,7 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL bool verifyPageFault(void *ptr);
     MOCKABLE_VIRTUAL void transferToGpu(void *ptr, void *cmdQ);
     MOCKABLE_VIRTUAL void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
+    MOCKABLE_VIRTUAL void setCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
 
     static void transferAndUnprotectMemory(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
     static void unprotectAndTransferMemory(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,10 @@ class MockPageFaultManager : public PageFaultManager {
     void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) override {
         isAubWritable = writable;
     }
+    void setCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) override {
+        setCpuAllocEvictableCalled++;
+        isCpuAllocEvictable = evictable;
+    }
     void baseAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
         PageFaultManager::setAubWritable(writable, ptr, unifiedMemoryManager);
     }
@@ -52,6 +56,9 @@ class MockPageFaultManager : public PageFaultManager {
     }
     void baseGpuTransfer(void *ptr, void *cmdQ) {
         PageFaultManager::transferToGpu(ptr, cmdQ);
+    }
+    void baseCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
+        PageFaultManager::setCpuAllocEvictable(evictable, ptr, unifiedMemoryManager);
     }
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override {}
 
@@ -72,6 +79,7 @@ class MockPageFaultManager : public PageFaultManager {
     int transferToCpuCalled = 0;
     int transferToGpuCalled = 0;
     int moveAllocationToGpuDomainCalled = 0;
+    int setCpuAllocEvictableCalled = 0;
     void *transferToCpuAddress = nullptr;
     void *transferToGpuAddress = nullptr;
     void *allowedMemoryAccessAddress = nullptr;
@@ -80,6 +88,7 @@ class MockPageFaultManager : public PageFaultManager {
     size_t accessAllowedSize = 0;
     size_t protectedSize = 0;
     bool isAubWritable = true;
+    bool isCpuAllocEvictable = true;
 };
 
 template <class T>
