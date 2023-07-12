@@ -81,6 +81,7 @@ TEST(SortAndFilterDevicesDrmTest, whenSortingAndFilteringDevicesThenMemoryOperat
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.ZE_AFFINITY_MASK.set("1,2,3,4,5");
 
+    VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
     VariableBackup<std::map<std::string, std::vector<std::string>>> directoryFilesMapBackup(&directoryFilesMap);
     VariableBackup<const char *> pciDevicesDirectoryBackup(&Os::pciDevicesDirectory);
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -114,4 +115,18 @@ TEST(SortAndFilterDevicesDrmTest, whenSortingAndFilteringDevicesThenMemoryOperat
         EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciFunction, pciBusInfo.pciFunction);
         EXPECT_EQ(rootDeviceIndex, static_cast<DrmMemoryOperationsHandlerBind &>(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface).getRootDeviceIndex());
     }
+}
+
+TEST(DeviceFactoryAffinityMaskTest, whenAffinityMaskDoesNotSelectAnyDeviceThenEmptyEnvironmentIsReturned) {
+    static const auto numRootDevices = 6;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("100");
+
+    VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
+    ExecutionEnvironment executionEnvironment{};
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+    EXPECT_TRUE(success);
+
+    EXPECT_EQ(0u, executionEnvironment.rootDeviceEnvironments.size());
 }
