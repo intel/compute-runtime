@@ -936,19 +936,14 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
 
-    auto gfxPartition = memoryManager->getGfxPartition(mockRootDeviceIndex);
-    D3DGPU_VIRTUAL_ADDRESS standard64kbRangeMinimumAddress = gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB);
-    D3DGPU_VIRTUAL_ADDRESS standard64kbRangeMaximumAddress = gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB);
-
     ASSERT_NE(nullptr, allocation);
     EXPECT_TRUE(memoryManager->allocationGraphicsMemory64kbCreated);
     EXPECT_TRUE(allocation->getDefaultGmm()->isCompressionEnabled);
-    if ((is32bit || rootDeviceEnvironment->isFullRangeSvm()) &&
+    if ((is32bit && rootDeviceEnvironment->isFullRangeSvm()) &&
         allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
         auto gmmHelper = memoryManager->getGmmHelper(0);
 
-        EXPECT_GE(gmmHelper->decanonize(allocation->getGpuAddress()), standard64kbRangeMinimumAddress);
-        EXPECT_LE(gmmHelper->decanonize(allocation->getGpuAddress()), standard64kbRangeMaximumAddress);
+        EXPECT_LE(gmmHelper->decanonize(allocation->getGpuAddress()), MemoryConstants::max32BitAddress);
     }
 
     memoryManager->freeGraphicsMemory(allocation);

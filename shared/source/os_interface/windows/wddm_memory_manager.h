@@ -114,6 +114,8 @@ class WddmMemoryManager : public MemoryManager {
     bool mapGpuVaForOneHandleAllocation(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, const void *requiredGpuPtr);
     bool createGpuAllocationsWithRetry(WddmAllocation *graphicsAllocation);
+    template <bool Is32Bit = is32bit>
+    void adjustGpuPtrToHostAddressSpace(const AllocationData &allocationData, WddmAllocation &wddmAllocation, size_t sizeAligned, void *&requiredGpuVa);
     AlignedMallocRestrictions mallocRestrictions;
 
     Wddm &getWddm(uint32_t rootDeviceIndex) const;

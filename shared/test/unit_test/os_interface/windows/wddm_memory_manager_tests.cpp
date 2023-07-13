@@ -149,6 +149,20 @@ TEST_F(WddmMemoryManagerTests, givenWddmMemoryManagerWithLocalMemoryWhenGettingG
     EXPECT_EQ(0.98, memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex));
 }
 
+TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemory64kbWhen32bitThenAddressIsProper) {
+    if constexpr (is64bit) {
+        GTEST_SKIP();
+    }
+    MockWddmMemoryManager memoryManager(false, false, *executionEnvironment);
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_LT(allocation->getGpuAddress(), MemoryConstants::max32BitAddress);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManagerCreate<WddmMemoryManager> {
   public:
     using WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA;
@@ -325,4 +339,19 @@ TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuV
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
     EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(gmmHelper->getClientContext())->freeGpuVirtualAddressCalled, 0u);
+}
+
+TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWhen32bitThenProperAddressSet) {
+    if constexpr (is64bit) {
+        GTEST_SKIP();
+    }
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::BUFFER;
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+
+    EXPECT_NE(nullptr, graphicsAllocation);
+    EXPECT_LT(graphicsAllocation->getGpuAddress(), MemoryConstants::max32BitAddress);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

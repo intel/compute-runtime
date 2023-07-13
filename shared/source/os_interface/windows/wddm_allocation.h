@@ -104,6 +104,7 @@ class WddmAllocation : public GraphicsAllocation {
 
     std::string getAllocationInfoString() const override;
     uint64_t &getGpuAddressToModify() { return gpuAddress; }
+    bool isLocalMemoryPool() { return memoryPool == MemoryPool::LocalMemory; }
 
     // OS assigned fields
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
