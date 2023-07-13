@@ -84,7 +84,9 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
         false,                                                                       // hasStallingCmds
         false,                                                                       // hasRelaxedOrderingDependencies
         false,                                                                       // stateCacheInvalidation
-        commandQueue.isStallingCommandsOnNextFlushRequired());                       // isStallingCommandsOnNextFlushRequired
+        commandQueue.isStallingCommandsOnNextFlushRequired(),                        // isStallingCommandsOnNextFlushRequired
+        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush()                // isDcFlushRequiredOnStallingCommandsOnNextFlush
+    );
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
@@ -179,6 +181,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
                                                            *currentTimestampPacketNodes, csrDeps,
                                                            commandQueue.getGpgpuCommandStreamReceiver(), *bcsCsrForAuxTranslation);
         commandQueue.setStallingCommandsOnNextFlush(true);
+        commandQueue.setDcFlushRequiredOnStallingCommandsOnNextFlush(true);
     }
 
     if (timestampPacketDependencies && commandQueue.isOOQEnabled()) {
@@ -221,8 +224,9 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         false,                                                                            // hasStallingCmds
         false,                                                                            // hasRelaxedOrderingDependencies
         false,                                                                            // stateCacheInvalidation
-        commandQueue.isStallingCommandsOnNextFlushRequired());                            // isStallingCommandsOnNextFlushRequired
-
+        commandQueue.isStallingCommandsOnNextFlushRequired(),                             // isStallingCommandsOnNextFlushRequired
+        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush()                     // isDcFlushRequiredOnStallingCommandsOnNextFlush
+    );
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(dispatchFlags.csrDependencies, commandStreamReceiver);
     }
@@ -269,6 +273,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
     if (isHandlingBarrier) {
         commandQueue.clearLastBcsPackets();
         commandQueue.setStallingCommandsOnNextFlush(false);
+        commandQueue.setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
     }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
@@ -398,7 +403,9 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         false,                                                                 // hasStallingCmds
         false,                                                                 // hasRelaxedOrderingDependencies
         false,                                                                 // stateCacheInvalidation
-        commandQueue.isStallingCommandsOnNextFlushRequired());                 // isStallingCommandsOnNextFlushRequired
+        commandQueue.isStallingCommandsOnNextFlushRequired(),                  // isStallingCommandsOnNextFlushRequired
+        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush()          // isDcFlushRequiredOnStallingCommandsOnNextFlush
+    );
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(dispatchFlags.csrDependencies, commandStreamReceiver);
@@ -427,6 +434,7 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
     if (isHandlingBarrier) {
         commandQueue.clearLastBcsPackets();
         commandQueue.setStallingCommandsOnNextFlush(false);
+        commandQueue.setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
     }
 
     if (kernelOperation->blitEnqueue) {

@@ -348,8 +348,11 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void fillCsrDependenciesWithLastBcsPackets(CsrDependencies &csrDeps);
     void clearLastBcsPackets();
 
-    void setStallingCommandsOnNextFlush(bool isStallingCommandsOnNextFlushRequired) { stallingCommandsOnNextFlushRequired = isStallingCommandsOnNextFlushRequired; }
+    void setStallingCommandsOnNextFlush(const bool isStallingCommandsOnNextFlushRequired) { stallingCommandsOnNextFlushRequired = isStallingCommandsOnNextFlushRequired; }
     bool isStallingCommandsOnNextFlushRequired() const { return stallingCommandsOnNextFlushRequired; }
+
+    void setDcFlushRequiredOnStallingCommandsOnNextFlush(const bool isDcFlushRequiredOnStallingCommandsOnNextFlush) { dcFlushRequiredOnStallingCommandsOnNextFlush = isDcFlushRequiredOnStallingCommandsOnNextFlush; }
+    bool isDcFlushRequiredOnStallingCommandsOnNextFlush() const { return dcFlushRequiredOnStallingCommandsOnNextFlush; }
 
     // taskCount of last task
     TaskCountType taskCount = 0;
@@ -460,6 +463,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     };
     std::array<BcsTimestampPacketContainers, bcsInfoMaskSize> bcsTimestampPacketContainers;
     bool stallingCommandsOnNextFlushRequired = false;
+    bool dcFlushRequiredOnStallingCommandsOnNextFlush = false;
     bool splitBarrierRequired = false;
 };
 

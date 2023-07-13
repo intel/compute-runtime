@@ -36,6 +36,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::checkPlatformSupportsNewResourceImplicitFlush;
     using BaseClass::createKernelArgsBufferAllocation;
     using BaseClass::csrSizeRequestFlags;
+    using BaseClass::dcFlushSupport;
     using BaseClass::directSubmission;
     using BaseClass::dshState;
     using BaseClass::getCmdSizeForPrologue;

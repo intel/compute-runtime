@@ -601,7 +601,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWithoutTagAllocationWhenGetTagAllo
     EXPECT_EQ(nullptr, csr.getTagAllocation());
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmitiingBatchBufferThenTaskCountIsIncrementedAndLatestsValuesSetCorrectly) {
+TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmitingBatchBufferThenTaskCountIsIncrementedAndLatestsValuesSetCorrectly) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -4208,4 +4208,97 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
     EXPECT_NE(scratchController->privateScratchSizeBytes, misalignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
     EXPECT_EQ(scratchController->privateScratchSizeBytes, alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
     EXPECT_EQ(scratchController->privateScratchSizeBytes, scratchController->getPrivateScratchSpaceAllocation()->getUnderlyingBufferSize());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredWhenProgramStallingPostSyncCommandsForBarrierCalledThenDcFlushSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.dcFlushSupport = true;
+    if (ultCsr.isMultiTileOperationEnabled()) {
+        GTEST_SKIP();
+    }
+    char commandBuffer[MemoryConstants::pageSize];
+    LinearStream commandStream(commandBuffer, MemoryConstants::pageSize);
+    TagNodeBase *tagNode = ultCsr.getTimestampPacketAllocator()->getTag();
+    constexpr bool dcFlushRequired = true;
+    ultCsr.programStallingPostSyncCommandsForBarrier(commandStream, *tagNode, dcFlushRequired);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        commandStream.getCpuBase(),
+        commandStream.getUsed()));
+    auto pipeControlIteratorVector = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_GE(pipeControlIteratorVector.size(), 1u);
+    auto pipeControlIterator = pipeControlIteratorVector[0];
+    const bool barrierWaRequired = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment());
+    if (barrierWaRequired) {
+        ASSERT_GE(pipeControlIteratorVector.size(), 2u);
+        pipeControlIterator = pipeControlIteratorVector[1];
+    }
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredButNoDcFlushSupportWhenProgramStallingPostSyncCommandsForBarrierCalledThenDcFlushNotSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.dcFlushSupport = false;
+    if (ultCsr.isMultiTileOperationEnabled()) {
+        GTEST_SKIP();
+    }
+    char commandBuffer[MemoryConstants::pageSize];
+    LinearStream commandStream(commandBuffer, MemoryConstants::pageSize);
+    TagNodeBase *tagNode = ultCsr.getTimestampPacketAllocator()->getTag();
+    constexpr bool dcFlushRequired = true;
+    ultCsr.programStallingPostSyncCommandsForBarrier(commandStream, *tagNode, dcFlushRequired);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        commandStream.getCpuBase(),
+        commandStream.getUsed()));
+    auto pipeControlIteratorVector = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_GE(pipeControlIteratorVector.size(), 1u);
+    auto pipeControlIterator = pipeControlIteratorVector[0];
+    const bool barrierWaRequired = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment());
+    if (barrierWaRequired) {
+        ASSERT_GE(pipeControlIteratorVector.size(), 2u);
+        pipeControlIterator = pipeControlIteratorVector[1];
+    }
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_FALSE(pipeControl->getDcFlushEnable());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredFalseWhenProgramStallingPostSyncCommandsForBarrierCalledThenDcFlushNotSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.dcFlushSupport = true;
+    if (ultCsr.isMultiTileOperationEnabled()) {
+        GTEST_SKIP();
+    }
+    char commandBuffer[MemoryConstants::pageSize];
+    LinearStream commandStream(commandBuffer, MemoryConstants::pageSize);
+    TagNodeBase *tagNode = ultCsr.getTimestampPacketAllocator()->getTag();
+    constexpr bool dcFlushRequired = false;
+    ultCsr.programStallingPostSyncCommandsForBarrier(commandStream, *tagNode, dcFlushRequired);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        commandStream.getCpuBase(),
+        commandStream.getUsed()));
+    auto pipeControlIteratorVector = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_GE(pipeControlIteratorVector.size(), 1u);
+    auto pipeControlIterator = pipeControlIteratorVector[0];
+    const bool barrierWaRequired = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment());
+    if (barrierWaRequired) {
+        ASSERT_GE(pipeControlIteratorVector.size(), 2u);
+        pipeControlIterator = pipeControlIteratorVector[1];
+    }
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_FALSE(pipeControl->getDcFlushEnable());
 }

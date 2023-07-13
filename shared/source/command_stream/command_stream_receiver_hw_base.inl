@@ -743,7 +743,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingCommandsForBarrie
     auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
 
     if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() != 0) {
-        programStallingPostSyncCommandsForBarrier(cmdStream, *barrierTimestampPacketNodes->peekNodes()[0]);
+        programStallingPostSyncCommandsForBarrier(cmdStream, *barrierTimestampPacketNodes->peekNodes()[0], dispatchFlags.isDcFlushRequiredOnStallingCommandsOnNextFlush);
         barrierTimestampPacketNodes->makeResident(*this);
     } else {
         programStallingNoPostSyncCommandsForBarrier(cmdStream);

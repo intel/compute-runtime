@@ -45,7 +45,8 @@ struct DispatchFlagsHelper {
             false,                                   // hasStallingCmds
             false,                                   // hasRelaxedOrderingDependencies
             false,                                   // stateCacheInvalidation
-            false                                    // isStallingCommandsOnNextFlushRequired
+            false,                                   // isStallingCommandsOnNextFlushRequired
+            false                                    // isDcFlushRequiredOnStallingCommandsOnNextFlush
         );
     }
 };

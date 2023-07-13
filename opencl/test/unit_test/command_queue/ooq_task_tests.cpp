@@ -322,3 +322,89 @@ TEST_F(OOQTaskTests, givenOutOfOrderCommandQueueWhenBarrierIsCalledThenTaskLevel
 
     EXPECT_GT(newTaskLevel, currentTaskLevel);
 }
+
+HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBarrierWithWaitListThenDcFlushNotSet) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
+
+    const cl_uint numEventsInWaitList = 0;
+    const cl_event *eventWaitList = nullptr;
+    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
+        numEventsInWaitList,
+        eventWaitList,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
+    EXPECT_FALSE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
+}
+
+HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBarrierWithWaitListWithEventThenDcFlushSet) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
+
+    const cl_uint numEventsInWaitList = 0;
+    const cl_event *eventWaitList = nullptr;
+    cl_event clEvent{};
+    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
+        numEventsInWaitList,
+        eventWaitList,
+        &clEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
+    EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
+    auto outEvent = castToObject<Event>(clEvent);
+    outEvent->release();
+}
+
+HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisableddWhenEnqueingBarrierWithWaitListThenDcFlushSet) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(0);
+
+    const cl_uint numEventsInWaitList = 0;
+    const cl_event *eventWaitList = nullptr;
+    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
+        numEventsInWaitList,
+        eventWaitList,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
+    EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
+}
+
+HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsAndMultiTileContextWhenEnqueuingBarrierWithWaitlistThenDcFlushSet) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.setActivePartitions(2u);
+    commandStreamReceiver.staticWorkPartitioningEnabled = true;
+    EXPECT_TRUE(commandStreamReceiver.isMultiTileOperationEnabled());
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
+
+    const cl_uint numEventsInWaitList = 0;
+    const cl_event *eventWaitList = nullptr;
+    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
+        numEventsInWaitList,
+        eventWaitList,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
+    EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
+}

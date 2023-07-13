@@ -805,7 +805,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     }
 }
 
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnqueuesThenProgramBarrierOnce) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWithEmptyWaitlistWhenReleasingMultipleBlockedEnqueuesThenProgramBarrierOnce) {
     DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

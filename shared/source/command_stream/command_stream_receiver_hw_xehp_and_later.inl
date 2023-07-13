@@ -189,10 +189,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode) {
+inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode, bool dcFlushRequired) {
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
     PipeControlArgs args;
-    args.dcFlushEnable = this->dcFlushSupport;
+    args.dcFlushEnable = this->dcFlushSupport && dcFlushRequired;
     if (isMultiTileOperationEnabled()) {
         args.workloadPartitionOffset = true;
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,

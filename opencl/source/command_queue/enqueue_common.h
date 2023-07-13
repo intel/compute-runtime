@@ -272,6 +272,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType && !isNonStallingIoqBarrier) {
             setStallingCommandsOnNextFlush(true);
+            if (NEO::DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.get() == 1 && !event && !getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled()) {
+                // skip dcFlush
+            } else {
+                setDcFlushRequiredOnStallingCommandsOnNextFlush(true);
+            }
             this->splitBarrierRequired = true;
         }
 
@@ -642,6 +647,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
                                                            *this->timestampPacketContainer, csrDeps,
                                                            getGpgpuCommandStreamReceiver(), bcsCsr);
         setStallingCommandsOnNextFlush(true);
+        setDcFlushRequiredOnStallingCommandsOnNextFlush(true);
     }
 
     eventsRequest.setupBcsCsrForOutputEvent(bcsCsr);
@@ -899,7 +905,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         false,                                                                                                  // hasStallingCmds
         relaxedOrderingEnabled,                                                                                 // hasRelaxedOrderingDependencies
         false,                                                                                                  // stateCacheInvalidation
-        isStallingCommandsOnNextFlushRequired());                                                               // isStallingCommandsOnNextFlushRequired
+        isStallingCommandsOnNextFlushRequired(),                                                                // isStallingCommandsOnNextFlushRequired
+        isDcFlushRequiredOnStallingCommandsOnNextFlush()                                                        // isDcFlushRequiredOnStallingCommandsOnNextFlush
+    );
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
@@ -962,6 +970,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (isHandlingBarrier) {
         clearLastBcsPackets();
         setStallingCommandsOnNextFlush(false);
+        setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
     }
 
     if (gtpinIsGTPinInitialized()) {
@@ -1156,7 +1165,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             !hasRelaxedOrderingDependencies,                                     // hasStallingCmds
             hasRelaxedOrderingDependencies,                                      // hasRelaxedOrderingDependencies
             stateCacheInvalidationNeeded,                                        // stateCacheInvalidation
-            isStallingCommandsOnNextFlushRequired());                            // isStallingCommandsOnNextFlushRequired
+            isStallingCommandsOnNextFlushRequired(),                             // isStallingCommandsOnNextFlushRequired
+            isDcFlushRequiredOnStallingCommandsOnNextFlush()                     // isDcFlushRequiredOnStallingCommandsOnNextFlush
+        );
 
         const bool isHandlingBarrier = isStallingCommandsOnNextFlushRequired();
 
@@ -1180,6 +1191,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         if (isHandlingBarrier) {
             clearLastBcsPackets();
             setStallingCommandsOnNextFlush(false);
+            setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
         }
     }
 
@@ -1280,6 +1292,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
 
     if (isOOQEnabled() && (isStallingCommandsOnNextFlushRequired() || this->splitBarrierRequired)) {
         this->setStallingCommandsOnNextFlush(true);
+        this->setDcFlushRequiredOnStallingCommandsOnNextFlush(true);
         NullSurface s;
         Surface *surfaces[] = {&s};
         BuiltinOpParams params{};

@@ -239,7 +239,9 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         hasStallingCmds,                                             // hasStallingCmds
         hasRelaxedOrderingDependencies,                              // hasRelaxedOrderingDependencies
         false,                                                       // stateCacheInvalidation
-        false);                                                      // isStallingCommandsOnNextFlushRequired
+        false,                                                       // isStallingCommandsOnNextFlushRequired
+        false                                                        // isDcFlushRequiredOnStallingCommandsOnNextFlush
+    );
 
     this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
     this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());

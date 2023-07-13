@@ -338,6 +338,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfReusableAllocations, -1, "-1: default
 DECLARE_DEBUG_VARIABLE(int32_t, UseHighAlignmentForHeapExtended, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver aligns HEAP_EXTENDED allocations to GPU VA that is next power of 2 for a given size, if disables GPU VA is using 2MB/64KB alignment.")
 DECLARE_DEBUG_VARIABLE(int32_t, DispatchCmdlistCmdBufferPrimary, -1, "-1: default, 0: dispatch command buffers as seconadry, 1: dispatch command buffers as primary and chain")
 DECLARE_DEBUG_VARIABLE(int32_t, UseImmediateFlushTask, -1, "-1: default, 0: use regular flush task, 1: use immediate flush task")
+DECLARE_DEBUG_VARIABLE(int32_t, SkipDcFlushOnBarrierWithoutEvents, -1, "-1: default (disabled), 0: disabled, 1: enabled")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")

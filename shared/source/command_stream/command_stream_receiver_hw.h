@@ -189,7 +189,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
     void programStallingCommandsForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags);
     void programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream);
-    void programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode);
+    void programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode, bool dcFlushRequired);
     void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programActivePartitionConfigFlushTask(LinearStream &csr);
