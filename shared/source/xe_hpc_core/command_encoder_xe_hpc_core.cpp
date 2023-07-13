@@ -65,8 +65,12 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
             } else {
                 tgDispatchSizeSelected = 2;
             }
-            if (walkerCmd.getThreadGroupIdYDimension() > 1 || walkerCmd.getThreadGroupIdZDimension() > 1) {
+            if (walkerCmd.getThreadGroupIdXDimension() > 1 && (walkerCmd.getThreadGroupIdYDimension() > 1 || walkerCmd.getThreadGroupIdZDimension() > 1)) {
                 while (walkerCmd.getThreadGroupIdXDimension() % tgDispatchSizeSelected != 0) {
+                    tgDispatchSizeSelected /= 2;
+                }
+            } else if (walkerCmd.getThreadGroupIdYDimension() > 1 && walkerCmd.getThreadGroupIdZDimension() > 1) {
+                while (walkerCmd.getThreadGroupIdYDimension() % tgDispatchSizeSelected != 0) {
                     tgDispatchSizeSelected /= 2;
                 }
             }
