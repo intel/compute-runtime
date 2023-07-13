@@ -224,9 +224,16 @@ class MockCommandQueue : public CommandQueue {
         return false;
     };
 
+    bool isCompleted(TaskCountType gpgpuTaskCount, CopyEngineState bcsState) override {
+        isCompletedCalled++;
+
+        return CommandQueue::isCompleted(gpgpuTaskCount, bcsState);
+    }
+
     bool releaseIndirectHeapCalled = false;
     bool waitForTimestampsCalled = false;
     cl_int writeBufferRetValue = CL_SUCCESS;
+    uint32_t isCompletedCalled = 0;
     uint32_t writeBufferCounter = 0;
     bool writeBufferBlocking = false;
     size_t writeBufferOffset = 0;

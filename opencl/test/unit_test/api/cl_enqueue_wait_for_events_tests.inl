@@ -129,6 +129,57 @@ TEST_F(clEnqueueWaitForEventsTests, GivenInvalidEventWhenClEnqueueWaitForEventsI
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST_F(clEnqueueWaitForEventsTests, givenAlreadyCompletedEventWhenWaitForCompletionThenCheckGpuStateOnce) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto csrTagAddress = ultCsr.getTagAddress();
+
+    TaskCountType eventTaskCount = 5;
+
+    *csrTagAddress = eventTaskCount - 1;
+
+    MockEvent<Event> event1(pCommandQueue, CL_COMMAND_READ_BUFFER, 0, eventTaskCount);
+    MockEvent<Event> event2(pCommandQueue, CL_COMMAND_READ_BUFFER, 0, eventTaskCount);
+    cl_event hEvent1 = &event1;
+    cl_event hEvent2 = &event2;
+
+    EXPECT_EQ(0u, pCommandQueue->isCompletedCalled);
+
+    // Event 1
+    event1.updateExecutionStatus();
+    EXPECT_EQ(1u, pCommandQueue->isCompletedCalled);
+
+    event1.updateExecutionStatus();
+    EXPECT_EQ(2u, pCommandQueue->isCompletedCalled);
+
+    *csrTagAddress = eventTaskCount;
+
+    event1.updateExecutionStatus();
+    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+
+    event1.updateExecutionStatus();
+    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+
+    auto retVal = clEnqueueWaitForEvents(pCommandQueue, 1, &hEvent1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+
+    // Event 2
+    retVal = clEnqueueWaitForEvents(pCommandQueue, 1, &hEvent2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // clEnqueueWaitForEvents signals completion before isCompletedCalled()
+    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+
+    retVal = clEnqueueWaitForEvents(pCommandQueue, 1, &hEvent2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+
+    event2.updateExecutionStatus();
+    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+}
+
 struct GTPinMockCommandQueue : MockCommandQueue {
     GTPinMockCommandQueue(Context *context, MockClDevice *device) : MockCommandQueue(context, device, nullptr, false) {}
     WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {

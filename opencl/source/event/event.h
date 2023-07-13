@@ -393,6 +393,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // number of events this event depends on
     std::unique_ptr<TimestampPacketContainer> multiRootDeviceTimestampPacketContainer;
     std::atomic<int> parentCount;
+    std::atomic<bool> gpuStateWaited = false;
     // event parents
     std::vector<Event *> parentEvents;
 

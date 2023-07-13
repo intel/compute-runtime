@@ -447,6 +447,9 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     if (waitStatus == WaitStatus::GpuHang) {
         return WaitStatus::GpuHang;
     }
+
+    this->gpuStateWaited = true;
+
     updateExecutionStatus();
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
@@ -704,7 +707,15 @@ inline void Event::setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_e
 }
 
 bool Event::isCompleted() {
-    return cmdQueue->isCompleted(getCompletionStamp(), this->bcsState) || this->areTimestampsCompleted();
+    if (gpuStateWaited) {
+        return true;
+    }
+
+    if (cmdQueue->isCompleted(getCompletionStamp(), this->bcsState) || this->areTimestampsCompleted()) {
+        gpuStateWaited = true;
+    }
+
+    return gpuStateWaited;
 }
 
 bool Event::isWaitForTimestampsEnabled() const {
