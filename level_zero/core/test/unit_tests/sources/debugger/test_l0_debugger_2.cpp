@@ -163,6 +163,69 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     Mock<::L0::KernelImp> kernel;
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.UseImmediateFlushTask.set(0);
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+
+    auto commandList = whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+
+    EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
+    EXPECT_EQ(&csr, commandList->csr);
+
+    csr.lastFlushedCommandStream = nullptr;
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(nullptr, csr.lastFlushedCommandStream);
+
+    auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(commandList->csr->getOsContext().getContextId());
+    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+    auto debugSurface = device->getDebugSurface();
+
+    EXPECT_TRUE(csr.isMadeResident(sbaBuffer));
+    EXPECT_TRUE(csr.isMadeResident(sipIsa));
+    EXPECT_TRUE(csr.isMadeResident(debugSurface));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, commandList->csr->getCS().getCpuBase(), commandList->csr->getCS().getUsed()));
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
+
+        auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+
+        auto globalSipFound = 0u;
+        for (size_t i = 0; i < miLoadImm.size(); i++) {
+            MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
+            ASSERT_NE(nullptr, miLoad);
+
+            if (miLoad->getRegisterOffset() == NEO::GlobalSipRegister<FamilyType>::registerOffset) {
+                globalSipFound++;
+            }
+        }
+        EXPECT_NE(0u, globalSipFound);
+    } else {
+        auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), sipItor);
+    }
+    commandList->destroy();
+}
+
+HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelThenSipIsInstalledAndDebuggerAllocationsAreResident, IsAtLeastXeHpCore) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    Mock<::L0::KernelImp> kernel;
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.UseImmediateFlushTask.set(1);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;

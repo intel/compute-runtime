@@ -157,6 +157,37 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
 
     void *sshCpuPointer = ssh->getCpuBase();
 
+    if (this->device->getL0Debugger()) {
+        this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
+        this->csr->makeResident(*this->device->getDebugSurface());
+    }
+
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    if (neoDevice->getDebugger()) {
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+        auto &sshState = csrHw->getSshState();
+        bool sshDirty = sshState.updateAndCheck(ssh);
+
+        if (sshDirty) {
+            auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
+            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
+            NEO::EncodeSurfaceStateArgs args;
+            args.outMemory = &surfaceState;
+            args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
+            args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
+            args.mocs = this->device->getMOCS(false, false);
+            args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+            args.allocation = this->device->getDebugSurface();
+            args.gmmHelper = neoDevice->getGmmHelper();
+            args.useGlobalAtomics = false;
+            args.areMultipleSubDevicesInContext = false;
+            args.isDebuggerActive = true;
+            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+        }
+    }
+
     NEO::ImmediateDispatchFlags dispatchFlags{
         &this->requiredStreamState,     // requiredState
         sshCpuPointer,                  // sshCpuBase

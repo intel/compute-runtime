@@ -656,6 +656,7 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
     NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
+    NEO::DebugManager.flags.UseImmediateFlushTask.set(0);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -664,6 +665,55 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
     EXPECT_TRUE(commandList->immediateCmdListHeapSharing);
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    auto kernelDescriptor = std::make_unique<NEO::KernelDescriptor>();
+    auto kernelImmData = std::make_unique<MockKernelImmutableData>(device);
+
+    kernelImmData->kernelInfo = kernelInfo.get();
+    kernelImmData->kernelDescriptor = kernelDescriptor.get();
+    kernelImmData->isaGraphicsAllocation.reset(new MockGraphicsAllocation());
+
+    Mock<::L0::KernelImp> kernel;
+    kernel.kernelImmData = kernelImmData.get();
+
+    CmdListKernelLaunchParams launchParams = {};
+    ze_group_count_t groupCount{1, 1, 1};
+    returnValue = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto csrHeap = &commandList->csr->getIndirectHeap(NEO::HeapType::SURFACE_STATE, 0);
+    ASSERT_NE(nullptr, csrHeap);
+
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());
+    ASSERT_NE(debugSurfaceState, nullptr);
+    auto debugSurface = static_cast<::L0::DeviceImp *>(device)->getDebugSurface();
+    ASSERT_NE(debugSurface, nullptr);
+    ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
+
+    memset(debugSurfaceState, 0, sizeof(*debugSurfaceState));
+
+    returnValue = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ASSERT_EQ(0u, debugSurfaceState->getSurfaceBaseAddress());
+
+    kernelImmData->isaGraphicsAllocation.reset(nullptr);
+    commandList->destroy();
+}
+
+HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeapThenDebugSurfaceIsProgrammedOnce, IsAtLeastXeHpCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.UseImmediateFlushTask.set(1);
+    NEO::DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandList = whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     auto kernelDescriptor = std::make_unique<NEO::KernelDescriptor>();
