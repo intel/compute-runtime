@@ -167,8 +167,10 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
 
     for (const auto &engine : device->getAllEngines()) {
         auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
-        if (osContexLinux->getDeviceBitfield().test(1u)) {
+        if (osContexLinux->getDeviceBitfield().test(1u) && executionEnvironment->rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired()) {
             EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
+        } else {
+            EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
         }
 
         osContexLinux->lastFlushedTlbFlushCounter.store(osContexLinux->peekTlbFlushCounter());
