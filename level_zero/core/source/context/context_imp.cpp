@@ -911,6 +911,7 @@ ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
     virtualMemoryReservation->flags.readWrite = false;
     virtualMemoryReservation->flags.readOnly = false;
     virtualMemoryReservation->flags.noAccess = true;
+    virtualMemoryReservation->reservationSize = size;
     auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
     this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().insert(std::pair<void *, NEO::VirtualMemoryReservation *>(reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address), virtualMemoryReservation));
     *pptr = reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address);
@@ -928,7 +929,7 @@ ze_result_t ContextImp::freeVirtualMem(const void *ptr,
         }
 
         NEO::VirtualMemoryReservation *virtualMemoryReservation = it->second;
-        if (virtualMemoryReservation->virtualAddressRange.size != size) {
+        if (virtualMemoryReservation->reservationSize != size) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         this->driverHandle->getMemoryManager()->freeGpuAddress(virtualMemoryReservation->virtualAddressRange, virtualMemoryReservation->rootDeviceIndex);

@@ -69,6 +69,7 @@ struct VirtualMemoryReservation {
     MemoryFlags flags;
     std::map<void *, MemoryMappedRange *> mappedAllocations;
     uint32_t rootDeviceIndex;
+    size_t reservationSize;
 };
 
 struct PhysicalMemoryAllocation {
