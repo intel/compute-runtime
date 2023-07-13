@@ -1276,9 +1276,14 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
     }
 
     auto waitStatus = WaitStatus::NotReady;
-    auto waitedOnTimestamps = waitForTimestamps(activeBcsStates, taskCount, waitStatus, this->timestampPacketContainer.get(), this->deferredTimestampPackets.get());
-    if (waitStatus == WaitStatus::GpuHang) {
-        return WaitStatus::GpuHang;
+    bool waitedOnTimestamps = false;
+
+    // TSP for OOQ dispatch is optional. We need to wait for task count.
+    if (!isOOQEnabled()) {
+        waitedOnTimestamps = waitForTimestamps(activeBcsStates, waitStatus, this->timestampPacketContainer.get(), this->deferredTimestampPackets.get());
+        if (waitStatus == WaitStatus::GpuHang) {
+            return WaitStatus::GpuHang;
+        }
     }
 
     waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);

@@ -167,14 +167,9 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
 }
 
 template <typename Family>
-bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, TaskCountType taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) {
+bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) {
     using TSPacketType = typename Family::TimestampPacketType;
     bool waited = false;
-
-    if (isOOQEnabled()) {
-        // TSP for OOQ dispatch is optional. We need to wait for task count.
-        return waited;
-    }
 
     if (isWaitForTimestampsEnabled()) {
         waited = waitForTimestampsWithinContainer<TSPacketType>(mainContainer, getGpgpuCommandStreamReceiver(), status);

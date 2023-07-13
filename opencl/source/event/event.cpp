@@ -442,7 +442,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
     auto waitStatus = WaitStatus::NotReady;
-    auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, taskCount.load(), waitStatus, this->timestampPacketContainer.get(), nullptr);
+    auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, waitStatus, this->timestampPacketContainer.get(), nullptr);
     waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, waitedOnTimestamps);
     if (waitStatus == WaitStatus::GpuHang) {
         return WaitStatus::GpuHang;

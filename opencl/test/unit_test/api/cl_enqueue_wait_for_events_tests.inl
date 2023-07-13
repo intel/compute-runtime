@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
@@ -127,6 +128,30 @@ TEST_F(clEnqueueWaitForEventsTests, GivenInvalidEventWhenClEnqueueWaitForEventsI
 
     retVal = clReleaseEvent(validUserEvent);
     ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(clEnqueueWaitForEventsTests, givenOoqWhenWaitingForEventThenCallWaitForTimestamps) {
+    MockCommandQueueHw<FamilyType> commandQueueHw(pContext, pDevice, nullptr);
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableTimestampWaitForQueues.set(4);
+    commandQueueHw.setOoqEnabled();
+
+    MockEvent<Event> event(&commandQueueHw, CL_COMMAND_READ_BUFFER, 0, 0);
+    event.timestampPacketContainer = std::make_unique<MockTimestampPacketContainer>(*pDevice->getUltCommandStreamReceiver<FamilyType>().getTimestampPacketAllocator(), 1);
+
+    auto node = event.timestampPacketContainer->peekNodes()[0];
+    auto contextEnd = ptrOffset(node->getCpuBase(), node->getContextEndOffset());
+
+    *reinterpret_cast<typename FamilyType::TimestampPacketType *>(contextEnd) = 0;
+
+    cl_event hEvent = &event;
+
+    auto retVal = clEnqueueWaitForEvents(&commandQueueHw, 1, &hEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(commandQueueHw.waitForTimestampsCalled);
+    EXPECT_TRUE(commandQueueHw.latestWaitForTimestampsStatus);
 }
 
 HWTEST_F(clEnqueueWaitForEventsTests, givenAlreadyCompletedEventWhenWaitForCompletionThenCheckGpuStateOnce) {

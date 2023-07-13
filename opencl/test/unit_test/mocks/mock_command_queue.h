@@ -219,7 +219,7 @@ class MockCommandQueue : public CommandQueue {
 
     bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override { return isCacheFlushRequired; }
 
-    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, TaskCountType taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
+    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
         waitForTimestampsCalled = true;
         return false;
     };
@@ -424,6 +424,14 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::isGpgpuSubmissionForBcsRequired(queueBlocked, timestampPacketDependencies);
     }
 
+    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
+        waitForTimestampsCalled = true;
+
+        latestWaitForTimestampsStatus = BaseClass::waitForTimestamps(copyEnginesToWait, status, mainContainer, deferredContainer);
+
+        return latestWaitForTimestampsStatus;
+    };
+
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
     MultiDispatchInfo storedMultiDispatchInfo;
@@ -437,6 +445,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool notifyEnqueueSVMMemcpyCalled = false;
     bool cpuDataTransferHandlerCalled = false;
     bool useBcsCsrOnNotifyEnabled = false;
+    bool waitForTimestampsCalled = false;
+    bool latestWaitForTimestampsStatus = false;
     int setQueueBlocked = -1;
     int forceGpgpuSubmissionForBcsRequired = -1;
     mutable bool isBlitEnqueueImageAllowed = false;

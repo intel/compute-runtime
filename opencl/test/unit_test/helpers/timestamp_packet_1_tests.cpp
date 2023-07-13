@@ -835,7 +835,11 @@ HWTEST_F(TimestampPacketTests, givenAllEnginesReadyWhenWaitingForEventThenClearD
     cl_event event1, event2;
 
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event1);
+    auto node1 = timestampPacketContainer->peekNodes()[0];
+
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event2);
+    auto node2 = timestampPacketContainer->peekNodes()[0];
+
     cmdQ->flush();
 
     EXPECT_EQ(2u, csr.taskCount);
@@ -845,6 +849,12 @@ HWTEST_F(TimestampPacketTests, givenAllEnginesReadyWhenWaitingForEventThenClearD
 
     auto eventObj1 = castToObjectOrAbort<Event>(event1);
     auto eventObj2 = castToObjectOrAbort<Event>(event2);
+
+    auto contextEnd1 = ptrOffset(node1->getCpuBase(), node1->getContextEndOffset());
+    auto contextEnd2 = ptrOffset(node2->getCpuBase(), node2->getContextEndOffset());
+
+    *reinterpret_cast<typename FamilyType::TimestampPacketType *>(contextEnd1) = 0;
+    *reinterpret_cast<typename FamilyType::TimestampPacketType *>(contextEnd2) = 0;
 
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
