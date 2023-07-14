@@ -23,10 +23,6 @@ ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MemoryImp::memoryGetBandwidthEx(uint64_t *pReadCounters, uint64_t *pWriteCounters, uint64_t *pMaxBandwidth, uint64_t timeout) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 void MemoryImp::init() {
     this->initSuccess = pOsMemory->isMemoryModuleSupported();
     if (this->initSuccess == true) {

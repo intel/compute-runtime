@@ -23,6 +23,10 @@ const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/intel_pmt")
 const std::string PlatformMonitoringTech::telem("telem");
 uint32_t PlatformMonitoringTech::rootDeviceTelemNodeIndex = 0;
 
+std::string PlatformMonitoringTech::getGuid() {
+    return guid;
+}
+
 ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint32_t &value) {
     auto offset = keyOffsetMap.find(key);
     if (offset == keyOffsetMap.end()) {

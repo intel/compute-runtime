@@ -19,7 +19,6 @@ class OsMemory {
     virtual ze_result_t getProperties(zes_mem_properties_t *pProperties) = 0;
     virtual ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) = 0;
     virtual ze_result_t getState(zes_mem_state_t *pState) = 0;
-    virtual ze_result_t getBandwidthEx(uint64_t *pReadCounters, uint64_t *pWriteCounters, uint64_t *pMaxBandwidth, uint64_t timeout) = 0;
     virtual bool isMemoryModuleSupported() = 0;
     static std::unique_ptr<OsMemory> create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     virtual ~OsMemory() {}

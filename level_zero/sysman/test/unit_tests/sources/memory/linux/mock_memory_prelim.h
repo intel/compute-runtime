@@ -43,6 +43,14 @@ constexpr uint16_t vF1Hbm2ReadIndex = 344;
 constexpr uint16_t vF1Hbm2WriteIndex = 348;
 constexpr uint16_t vF1Hbm3ReadIndex = 360;
 constexpr uint16_t vF1Hbm3WriteIndex = 364;
+constexpr uint32_t VF0HbmLRead = 16;
+constexpr uint32_t VF0HbmHRead = 2;
+constexpr uint32_t VF0HbmLWrite = 8;
+constexpr uint32_t VF0HbmHWrite = 2;
+constexpr uint32_t VF1HbmLRead = 16;
+constexpr uint32_t VF1HbmHRead = 2;
+constexpr uint32_t VF1HbmLWrite = 8;
+constexpr uint32_t VF1HbmHWrite = 2;
 
 constexpr uint8_t vF0VfidValue = 1;
 constexpr uint8_t vF0Hbm0ReadValue = 92;
@@ -239,6 +247,7 @@ struct MockMemoryNeoDrm : public NEO::Drm {
 
 struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
 
+    using L0::Sysman::PlatformMonitoringTech::guid;
     using L0::Sysman::PlatformMonitoringTech::keyOffsetMap;
     std::vector<ze_result_t> mockReadValueReturnStatus{};
     std::vector<uint32_t> mockReadArgumentValue{};
@@ -249,6 +258,10 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
     bool mockVfid0Status = false;
     bool mockVfid1Status = false;
     bool isRepeated = false;
+
+    void setGuid(std::string guid) {
+        this->guid = guid;
+    }
 
     MockMemoryPmt(L0::Sysman::FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     ze_result_t readValue(const std::string key, uint32_t &val) override {
@@ -303,6 +316,14 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
             val = vF0Hbm3ReadValue;
         } else if (key.compare("VF0_HBM3_WRITE") == 0) {
             val = vF0Hbm3WriteValue;
+        } else if (key.compare("VF0_HBM_READ_L") == 0) {
+            val = VF0HbmLRead;
+        } else if (key.compare("VF0_HBM_READ_H") == 0) {
+            val = VF0HbmHRead;
+        } else if (key.compare("VF0_HBM_WRITE_L") == 0) {
+            val = VF0HbmLWrite;
+        } else if (key.compare("VF0_HBM_WRITE_H") == 0) {
+            val = VF0HbmHWrite;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -334,6 +355,14 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
             val = vF1Hbm3ReadValue;
         } else if (key.compare("VF1_HBM3_WRITE") == 0) {
             val = vF1Hbm3WriteValue;
+        } else if (key.compare("VF1_HBM_READ_L") == 0) {
+            val = VF1HbmLRead;
+        } else if (key.compare("VF1_HBM_READ_H") == 0) {
+            val = VF1HbmHRead;
+        } else if (key.compare("VF1_HBM_WRITE_L") == 0) {
+            val = VF1HbmLWrite;
+        } else if (key.compare("VF1_HBM_WRITE_H") == 0) {
+            val = VF1HbmHWrite;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }

@@ -19,7 +19,6 @@ class MemoryImp : public Memory, NEO::NonCopyableOrMovableClass {
     ze_result_t memoryGetProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t memoryGetState(zes_mem_state_t *pState) override;
-    ze_result_t memoryGetBandwidthEx(uint64_t *pReadCounters, uint64_t *pWriteCounters, uint64_t *pMaxBandwidth, uint64_t timeout) override;
 
     MemoryImp(OsSysman *pOsSysman, ze_device_handle_t handle);
     ~MemoryImp() override;

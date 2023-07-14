@@ -25,7 +25,6 @@ std::unordered_map<std::string, void *> getExtensionFunctionsLookupMap() {
 
     addToMap(lookupMap, zexCommandListAppendWaitOnMemory);
     addToMap(lookupMap, zexCommandListAppendWriteToMemory);
-    addToMap(lookupMap, zexSysmanMemoryGetBandwidth);
 #undef addToMap
 
     return lookupMap;

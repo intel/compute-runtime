@@ -358,7 +358,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     for (auto &handle : handles) {
         zes_mem_bandwidth_t bandwidth{};
         uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
-        uint64_t expectedTimestamp = 0, expectedBandwidth = 0;
+        uint64_t expectedBandwidth = 0;
         zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
         zesMemoryGetProperties(handle, &properties);
 
@@ -367,22 +367,21 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-
+        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockVfid0Status = true;
         pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
 
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
-        expectedReadCounters = vF0Hbm0ReadValue + vF0Hbm1ReadValue + vF0Hbm2ReadValue + vF0Hbm3ReadValue;
+        expectedReadCounters |= VF0HbmHRead;
+        expectedReadCounters = (expectedReadCounters << 32) | VF0HbmLRead;
+        expectedReadCounters = expectedReadCounters * transactionSize;
         EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
-        expectedWriteCounters = vF0Hbm0WriteValue + vF0Hbm1WriteValue + vF0Hbm2WriteValue + vF0Hbm3WriteValue;
+        expectedWriteCounters |= VF0HbmHWrite;
+        expectedWriteCounters = (expectedWriteCounters << 32) | VF0HbmLWrite;
+        expectedWriteCounters = expectedWriteCounters * transactionSize;
         EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
-        expectedTimestamp |= vF0TimestampHValue;
-        expectedTimestamp = (expectedTimestamp << 32) | vF0TimestampLValue;
-        EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
-        EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
         expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
-        expectedBandwidth /= 8;
         EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
     }
 }
@@ -394,7 +393,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     for (auto &handle : handles) {
         zes_mem_bandwidth_t bandwidth{};
         uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
-        uint64_t expectedTimestamp = 0, expectedBandwidth = 0;
+        uint64_t expectedBandwidth = 0;
         zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
         zesMemoryGetProperties(handle, &properties);
 
@@ -403,21 +402,21 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-
+        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockVfid1Status = true;
         pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
 
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
-        expectedReadCounters = vF1Hbm0ReadValue + vF1Hbm1ReadValue + vF1Hbm2ReadValue + vF1Hbm3ReadValue;
+        expectedReadCounters |= VF0HbmHRead;
+        expectedReadCounters = (expectedReadCounters << 32) | VF0HbmLRead;
+        expectedReadCounters = expectedReadCounters * transactionSize;
         EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
-        expectedWriteCounters = vF1Hbm0WriteValue + vF1Hbm1WriteValue + vF1Hbm2WriteValue + vF1Hbm3WriteValue;
+        expectedWriteCounters |= VF0HbmHWrite;
+        expectedWriteCounters = (expectedWriteCounters << 32) | VF0HbmLWrite;
+        expectedWriteCounters = expectedWriteCounters * transactionSize;
         EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
-        expectedTimestamp |= vF1TimestampHValue;
-        expectedTimestamp = (expectedTimestamp << 32) | vF1TimestampLValue;
-        EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
         expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
-        expectedBandwidth /= 8;
         EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
     }
 }
@@ -436,13 +435,13 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidUsRevIdForRevisionBWhenCallingzes
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockVfid1Status = true;
         pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
 
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
         uint64_t expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
-        expectedBandwidth /= 8;
         EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
     }
 }
@@ -622,6 +621,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenBothVfid0AndVfid1Are
         zes_mem_bandwidth_t bandwidth;
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockReadArgumentValue.push_back(1);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
         pPmt->mockReadArgumentValue.push_back(1);
@@ -643,6 +643,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenBothVfid0AndVfid1Are
         zes_mem_bandwidth_t bandwidth;
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
+        pPmt->setGuid(guid64BitMemoryCounters);
         pPmt->mockReadArgumentValue.push_back(0);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
         pPmt->mockReadArgumentValue.push_back(0);

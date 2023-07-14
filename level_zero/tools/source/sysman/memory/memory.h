@@ -22,8 +22,6 @@ class Memory : _zes_mem_handle_t {
     virtual ze_result_t memoryGetProperties(zes_mem_properties_t *pProperties) = 0;
     virtual ze_result_t memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) = 0;
     virtual ze_result_t memoryGetState(zes_mem_state_t *pState) = 0;
-    virtual ze_result_t memoryGetBandwidthEx(uint64_t *pReadCounters, uint64_t *pWriteCounters, uint64_t *pMaxBandwidth, uint64_t timeout) = 0;
-
     static Memory *fromHandle(zes_mem_handle_t handle) {
         return static_cast<Memory *>(handle);
     }

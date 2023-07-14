@@ -22,6 +22,5 @@
 #include "zex_driver.h"
 #include "zex_memory.h"
 #include "zex_module.h"
-#include "zex_sysman_memory.h"
 
 #endif // _ZEX_API_H
