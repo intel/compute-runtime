@@ -230,6 +230,56 @@ TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventForThreadsWhenHandling
     EXPECT_EQ(expectedThreads, sessionMock->newlyStoppedThreads.size());
 }
 
+TEST_F(DebugApiWindowsAttentionTest, GivenAlreadyStoppedThreadsWhenHandlingAttEventThenStateSaveAreaIsNotRead) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+    };
+
+    auto sessionMock = std::make_unique<MockDebugSessionWindows>(config, device);
+    for (auto thread : threads) {
+        sessionMock->stoppedThreads[thread.packed] = 1;
+    }
+    sessionMock->allContexts.insert(0x12345);
+
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+    sessionMock->stateSaveAreaCaptured = true;
+    sessionMock->stateSaveAreaVA.store(reinterpret_cast<uint64_t>(sessionMock->stateSaveAreaHeader.data()));
+    sessionMock->stateSaveAreaSize.store(sessionMock->stateSaveAreaHeader.size());
+
+    mockWddm->srcReadBuffer = sessionMock->stateSaveAreaHeader.data();
+    mockWddm->srcReadBufferBaseAddress = sessionMock->stateSaveAreaVA.load();
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    auto threadsWithAtt = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), bitmaskSize);
+
+    for (const auto &thread : threadsWithAtt) {
+        sessionMock->stoppedThreads[thread.packed] = 1;
+        sessionMock->allThreads[thread]->stopThread(0);
+    }
+
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
+    copyBitmaskToEventParams(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer, bitmask, bitmaskSize);
+    sessionMock->wddm = mockWddm;
+    sessionMock->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    auto result = sessionMock->readAndHandleEvent(100);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentFromMemoryCallCount);
+}
+
 TEST_F(DebugApiWindowsAttentionTest, GivenNoContextWhenHandlingAttentionEventThenErrorIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

@@ -1756,6 +1756,33 @@ TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderI
     EXPECT_TRUE(session->stateSaveAreaHeader.empty());
 }
 
+TEST(DebugSessionTest, givenStoppedThreadWhenGettingNotStoppedThreadsThenOnlyRunningOrUnavailableThreadsAreReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    EuThread::ThreadId thread(0, 0, 0, 0, 0);
+    sessionMock->allThreads[thread]->stopThread(1u);
+    EuThread::ThreadId thread1(0, 0, 0, 0, 1);
+    EXPECT_FALSE(sessionMock->allThreads[thread1]->isStopped());
+
+    std::vector<EuThread::ThreadId> threadsWithAtt;
+    std::vector<EuThread::ThreadId> newStops;
+
+    threadsWithAtt.push_back(thread);
+    threadsWithAtt.push_back(thread1);
+
+    sessionMock->getNotStoppedThreads(threadsWithAtt, newStops);
+
+    ASSERT_EQ(1u, newStops.size());
+    EXPECT_EQ(thread1, newStops[0]);
+}
+
 using MultiTileDebugSessionTest = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(MultiTileDebugSessionTest, givenThreadsFromMultipleTilesWhenResumeCalledThenThreadsResumedInAllTiles) {
@@ -3421,6 +3448,35 @@ TEST_F(MultiTileDebugSessionTest, givenAttachedRootDeviceWhenAttachingToTiletDev
 
     result = zetDebugDetach(debugSessionRoot);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MultiTileDebugSessionTest, givenTileSessionAndStoppedThreadWhenGettingNotStoppedThreadsThenOnlyRunningOrUnavailableThreadsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    L0::Device *device = driverHandle->devices[0];
+    auto neoDevice = device->getNEODevice();
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+
+    auto sessionMock = new MockDebugSession(config, device, false);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    EuThread::ThreadId thread(0, 0, 0, 0, 0);
+    static_cast<MockDebugSession *>(sessionMock->tileSessions[0].first)->allThreads[thread]->stopThread(1u);
+    EuThread::ThreadId thread1(0, 0, 0, 0, 1);
+    EXPECT_FALSE(static_cast<MockDebugSession *>(sessionMock->tileSessions[0].first)->allThreads[thread1]->isStopped());
+
+    std::vector<EuThread::ThreadId> threadsWithAtt;
+    std::vector<EuThread::ThreadId> newStops;
+
+    threadsWithAtt.push_back(thread);
+    threadsWithAtt.push_back(thread1);
+
+    sessionMock->getNotStoppedThreads(threadsWithAtt, newStops);
+    ASSERT_EQ(1u, newStops.size());
+    EXPECT_EQ(thread1, newStops[0]);
 }
 
 struct AffinityMaskForSingleSubDevice : MultipleDevicesWithCustomHwInfo {

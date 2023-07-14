@@ -272,8 +272,12 @@ ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU
         std::unique_lock<std::mutex> lock(threadStateMutex);
 
         if (gpuVa != 0 && stateSaveAreaSize != 0) {
-            stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
-            stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+            std::vector<EuThread::ThreadId> newThreads;
+            getNotStoppedThreads(threadsWithAttention, newThreads);
+            if (newThreads.size() > 0) {
+                stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
+                stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+            }
         } else {
             PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
             DEBUG_BREAK_IF(true);

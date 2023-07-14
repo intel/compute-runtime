@@ -6527,6 +6527,70 @@ TEST_F(DebugApiLinuxAttentionTest, GivenNoStateSaveAreaOrInvalidSizeWhenHandling
     EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentFromMemoryCallCount);
 }
 
+TEST_F(DebugApiLinuxAttentionTest, GivenAlreadyStoppedThreadsWhenHandlingAttEventThenStateSaveAreaIsNotRead) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
+    auto handler = new MockIoctlHandler;
+    sessionMock->ioctlHandler.reset(handler);
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+    handler->setPreadMemory(sessionMock->stateSaveAreaHeader.data(), sessionMock->stateSaveAreaHeader.size(), 0x1000);
+
+    uint64_t ctxHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
+    sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
+    DebugSessionLinux::BindInfo cssaInfo = {0x1000, sessionMock->stateSaveAreaHeader.size()};
+    sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
+
+    uint8_t data[sizeof(prelim_drm_i915_debug_event_eu_attention) + 128];
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0}, {0, 0, 0, 0, 2}};
+
+    // bitmask returned in ATT event - 2 threads
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    auto threadsWithAtt = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), bitmaskSize);
+
+    for (const auto &thread : threadsWithAtt) {
+        sessionMock->stoppedThreads[thread.packed] = 1;
+        sessionMock->allThreads[thread]->stopThread(vmHandle);
+    }
+
+    prelim_drm_i915_debug_event_eu_attention attention = {};
+    attention.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;
+    attention.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE;
+    attention.base.size = sizeof(prelim_drm_i915_debug_event_eu_attention) + std::min(uint32_t(128), static_cast<uint32_t>(bitmaskSize));
+    attention.base.seqno = 2;
+    attention.client_handle = MockDebugSessionLinux::mockClientHandle;
+    attention.lrc_handle = lrcHandle;
+    attention.flags = 0;
+    attention.ci.engine_class = 0;
+    attention.ci.engine_instance = 0;
+    attention.bitmask_size = std::min(uint32_t(128), static_cast<uint32_t>(bitmaskSize));
+
+    memcpy(data, &attention, sizeof(prelim_drm_i915_debug_event_eu_attention));
+    memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_eu_attention, bitmask)), bitmask.get(), std::min(size_t(128), bitmaskSize));
+
+    sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
+
+    EXPECT_EQ(0u, sessionMock->addThreadToNewlyStoppedFromRaisedAttentionCallCount);
+    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+
+    EXPECT_FALSE(handler->preadCalled);
+    EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentFromMemoryCallCount);
+}
+
 using DebugApiLinuxAsyncThreadTest = Test<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenReadingInternalEventsAsyncThenDetachEventIsGenerated) {

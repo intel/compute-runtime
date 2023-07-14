@@ -58,6 +58,7 @@ struct DebugSessionImp : DebugSession {
             tileAttachEnabled = false;
         }
     }
+    void getNotStoppedThreads(const std::vector<EuThread::ThreadId> &threadsWithAtt, std::vector<EuThread::ThreadId> &notStoppedThreads);
 
     virtual void attachTile() = 0;
     virtual void detachTile() = 0;

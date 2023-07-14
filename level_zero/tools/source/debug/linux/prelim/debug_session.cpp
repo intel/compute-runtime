@@ -1325,8 +1325,14 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
         }
 
         if (gpuVa != 0 && stateSaveAreaSize != 0) {
-            stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
-            stateSaveReadResult = readGpuMemory(vmHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+
+            std::vector<EuThread::ThreadId> newThreads;
+            getNotStoppedThreads(threadsWithAttention, newThreads);
+
+            if (newThreads.size() > 0) {
+                stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
+                stateSaveReadResult = readGpuMemory(vmHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+            }
         } else {
             PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
             DEBUG_BREAK_IF(true);

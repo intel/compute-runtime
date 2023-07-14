@@ -208,6 +208,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
                 auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();
                 tileSessions[i] = std::pair<DebugSessionImp *, bool>{new MockDebugSession(config, subDevice), false};
             }
+            tileSessionsEnabled = true;
         }
 
         return ZE_RESULT_SUCCESS;

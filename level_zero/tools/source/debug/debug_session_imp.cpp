@@ -1393,4 +1393,21 @@ ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16
     return ZE_RESULT_SUCCESS;
 }
 
+void DebugSessionImp::getNotStoppedThreads(const std::vector<EuThread::ThreadId> &threadsWithAtt, std::vector<EuThread::ThreadId> &notStoppedThreads) {
+    for (const auto &threadId : threadsWithAtt) {
+
+        bool wasStopped = false;
+
+        if (tileSessionsEnabled) {
+            wasStopped = tileSessions[threadId.tileIndex].first->allThreads[threadId]->isStopped();
+        } else {
+            wasStopped = allThreads[threadId]->isStopped();
+        }
+
+        if (!wasStopped) {
+            notStoppedThreads.push_back(threadId);
+        }
+    }
+}
+
 } // namespace L0
