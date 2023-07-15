@@ -98,11 +98,6 @@ bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
     return false;
 }

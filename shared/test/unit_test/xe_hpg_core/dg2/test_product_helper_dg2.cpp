@@ -29,10 +29,6 @@ DG2TEST_F(Dg2ProductHelper, givenDG2WithBSteppingThenAdditionalStateBaseAddressW
     EXPECT_TRUE(isWARequired);
 }
 
-DG2TEST_F(Dg2ProductHelper, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
-}
-
 DG2TEST_F(Dg2ProductHelper, givenDG2WithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
     pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, pInHwInfo);
     for (const auto &devId : dg2G10DeviceIds) {
