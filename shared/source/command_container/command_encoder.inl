@@ -739,6 +739,7 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &
     size = alignUp(size, INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
 
     if (additionalDshSize > 0) {
+        size = alignUp(size, EncodeStates<Family>::alignInterfaceDescriptorData);
         size += additionalDshSize;
         size = alignUp(size, EncodeDispatchKernel<Family>::getDefaultDshAlignment());
     }

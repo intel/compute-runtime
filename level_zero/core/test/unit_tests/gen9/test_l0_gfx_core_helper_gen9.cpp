@@ -16,9 +16,9 @@ namespace ult {
 
 using L0GfxCoreHelperTestGen9 = Test<DeviceFixture>;
 
-GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnFalse) {
+GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
 }
 
 GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnFalse) {
