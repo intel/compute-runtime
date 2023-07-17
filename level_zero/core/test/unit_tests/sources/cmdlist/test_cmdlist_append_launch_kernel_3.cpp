@@ -782,6 +782,20 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     CmdListKernelLaunchParams launchParams = {};
 };
 
+HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxedOrdering, IsAtLeastXeHpCore) {
+    NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.set(-1);
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+
+    ze_command_list_handle_t cmdList;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+
+    EXPECT_TRUE(static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(cmdList)->isInOrderExecutionEnabled());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEventState, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
