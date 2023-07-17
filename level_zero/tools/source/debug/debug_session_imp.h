@@ -147,6 +147,12 @@ struct DebugSessionImp : DebugSession {
         return timeDifferenceMs;
     }
 
+    void allocateStateSaveAreaMemory(size_t size) {
+        if (stateSaveAreaMemory.size() < size) {
+            stateSaveAreaMemory.resize(size);
+        }
+    }
+
     std::chrono::high_resolution_clock::time_point interruptTime;
     std::atomic<bool> interruptSent = false;
     std::atomic<bool> triggerEvents = false;
@@ -161,6 +167,7 @@ struct DebugSessionImp : DebugSession {
     std::vector<char> stateSaveAreaHeader;
     SIP::version minSlmSipVersion = {2, 1, 0};
     bool sipSupportsSlm = false;
+    std::vector<char> stateSaveAreaMemory;
 
     std::vector<std::pair<DebugSessionImp *, bool>> tileSessions; // DebugSession, attached
     bool tileAttachEnabled = false;

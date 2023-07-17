@@ -141,6 +141,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSession::debugArea;
 
     using L0::DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention;
+    using L0::DebugSessionImp::allocateStateSaveAreaMemory;
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::applyResumeWa;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
@@ -156,6 +157,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::registersAccessHelper;
     using L0::DebugSessionImp::resumeAccidentallyStoppedThreads;
     using L0::DebugSessionImp::sendInterrupts;
+    using L0::DebugSessionImp::stateSaveAreaMemory;
     using L0::DebugSessionImp::typeToRegsetDesc;
     using L0::DebugSessionImp::validateAndSetStateSaveAreaHeader;
 

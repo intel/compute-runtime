@@ -265,8 +265,6 @@ ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU
 
         auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
         auto stateSaveAreaSize = getContextStateSaveAreaSize(memoryHandle);
-
-        std::unique_ptr<char[]> stateSaveArea = nullptr;
         auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
 
         std::unique_lock<std::mutex> lock(threadStateMutex);
@@ -275,8 +273,8 @@ ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU
             std::vector<EuThread::ThreadId> newThreads;
             getNotStoppedThreads(threadsWithAttention, newThreads);
             if (newThreads.size() > 0) {
-                stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
-                stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+                allocateStateSaveAreaMemory(stateSaveAreaSize);
+                stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
             }
         } else {
             PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
@@ -287,7 +285,7 @@ ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU
 
             for (auto &threadId : threadsWithAttention) {
                 PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
-                addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveArea.get());
+                addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveAreaMemory.data());
             }
         }
     }

@@ -1312,8 +1312,6 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
     if (threadsWithAttention.size() > 0) {
         auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
         auto stateSaveAreaSize = getContextStateSaveAreaSize(vmHandle);
-
-        std::unique_ptr<char[]> stateSaveArea = nullptr;
         auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
 
         std::unique_lock<std::mutex> lock;
@@ -1330,8 +1328,8 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
             getNotStoppedThreads(threadsWithAttention, newThreads);
 
             if (newThreads.size() > 0) {
-                stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
-                stateSaveReadResult = readGpuMemory(vmHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+                allocateStateSaveAreaMemory(stateSaveAreaSize);
+                stateSaveReadResult = readGpuMemory(vmHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
             }
         } else {
             PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
@@ -1343,9 +1341,9 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
                 PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
 
                 if (tileSessionsEnabled) {
-                    static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveArea.get());
+                    static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
                 } else {
-                    addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveArea.get());
+                    addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
                 }
             }
         }
@@ -1514,7 +1512,6 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
         std::unique_ptr<uint8_t[]> bitmask;
         size_t bitmaskSize;
         [[maybe_unused]] auto attReadResult = threadControl(threads, deviceIndex, ThreadControlCmd::Stopped, bitmask, bitmaskSize);
-        DEBUG_BREAK_IF(attReadResult != 0);
 
         // error querying STOPPED threads - no threads available ( for example: threads have completed )
         if (attReadResult != 0) {

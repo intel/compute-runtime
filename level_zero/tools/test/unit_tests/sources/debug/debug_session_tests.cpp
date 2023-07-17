@@ -1783,6 +1783,44 @@ TEST(DebugSessionTest, givenStoppedThreadWhenGettingNotStoppedThreadsThenOnlyRun
     EXPECT_EQ(thread1, newStops[0]);
 }
 
+TEST(DebugSessionTest, givenSizeBiggerThanPreviousWhenAllocatingStateSaveAreaMemoryThenNewMemoryIsAllocated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    EXPECT_EQ(0u, sessionMock->stateSaveAreaMemory.size());
+    sessionMock->allocateStateSaveAreaMemory(0x1000);
+    EXPECT_EQ(0x1000u, sessionMock->stateSaveAreaMemory.size());
+
+    sessionMock->allocateStateSaveAreaMemory(0x2000);
+    EXPECT_EQ(0x2000u, sessionMock->stateSaveAreaMemory.size());
+}
+
+TEST(DebugSessionTest, givenTheSameSizeWhenAllocatingStateSaveAreaMemoryThenNewMemoryIsNotAllocated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    EXPECT_EQ(0u, sessionMock->stateSaveAreaMemory.size());
+    sessionMock->allocateStateSaveAreaMemory(0x1000);
+    EXPECT_EQ(0x1000u, sessionMock->stateSaveAreaMemory.size());
+
+    auto oldMem = sessionMock->stateSaveAreaMemory.data();
+
+    sessionMock->allocateStateSaveAreaMemory(0x1000);
+    EXPECT_EQ(oldMem, sessionMock->stateSaveAreaMemory.data());
+}
+
 using MultiTileDebugSessionTest = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(MultiTileDebugSessionTest, givenThreadsFromMultipleTilesWhenResumeCalledThenThreadsResumedInAllTiles) {
