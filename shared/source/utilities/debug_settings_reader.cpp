@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ SettingsReader *SettingsReader::createFileReader() {
     settingsFile.open(settingsFileName);
     if (settingsFile.is_open()) {
         settingsFile.close();
-        return new SettingsFileReader();
+        return new SettingsFileReader(settingsFileName);
     }
     return nullptr;
 }

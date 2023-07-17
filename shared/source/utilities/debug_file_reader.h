@@ -17,7 +17,7 @@ namespace NEO {
 
 class SettingsFileReader : public SettingsReader {
   public:
-    SettingsFileReader(const char *filePath = nullptr);
+    SettingsFileReader(const char *filePath);
     ~SettingsFileReader() override;
     int32_t getSetting(const char *settingName, int32_t defaultValue) override;
     int64_t getSetting(const char *settingName, int64_t defaultValue) override;

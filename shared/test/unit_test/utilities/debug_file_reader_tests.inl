@@ -21,7 +21,9 @@ class TestSettingsFileReader : public SettingsFileReader {
   public:
     using SettingsFileReader::parseStream;
 
-    TestSettingsFileReader(const char *filePath = nullptr) : SettingsFileReader(filePath) {
+    TestSettingsFileReader() : TestSettingsFileReader(SettingsReader::settingsFileName) {
+    }
+    TestSettingsFileReader(const char *filePath) : SettingsFileReader(filePath) {
     }
 
     ~TestSettingsFileReader() override {

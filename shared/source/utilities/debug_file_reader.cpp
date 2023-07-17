@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/utilities/debug_file_reader.h"
+
+#include "shared/source/helpers/debug_helpers.h"
 
 #include <fstream>
 #include <sstream>
@@ -15,10 +17,8 @@ namespace NEO {
 SettingsFileReader::SettingsFileReader(const char *filePath) {
     std::ifstream settingsFile;
 
-    if (filePath == nullptr)
-        settingsFile.open(settingsFileName);
-    else
-        settingsFile.open(filePath);
+    UNRECOVERABLE_IF(!filePath);
+    settingsFile.open(filePath);
 
     if (settingsFile.is_open()) {
         parseStream(settingsFile);
