@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,18 +123,4 @@ HWTEST_F(PhysicalAddressAllocatorHwTest, givenSingleBankWhen4kAnd64kPagesAreAllo
     auto physAddress3 = allocator.reserve64kPage(MemoryBanks::getBankForLocalMemory(0));
     EXPECT_NE(0u, physAddress3);
     EXPECT_EQ(0u, physAddress3 & MemoryConstants::page64kMask);
-}
-
-TEST(MemoryBank, givenDifferentDeviceOrdinalsWhenGettingBankThenCorrectBanksAreReturned) {
-    auto bank = MemoryBanks::getBankForLocalMemory(0);
-    EXPECT_EQ(1u, bank);
-
-    bank = MemoryBanks::getBankForLocalMemory(1);
-    EXPECT_EQ(2u, bank);
-
-    bank = MemoryBanks::getBankForLocalMemory(2);
-    EXPECT_EQ(3u, bank);
-
-    bank = MemoryBanks::getBankForLocalMemory(3);
-    EXPECT_EQ(4u, bank);
 }
