@@ -156,6 +156,51 @@ HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWith
     commandList->destroy();
 }
 
+HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSharedHeapsDisbledForImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, Gen12Plus) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    Mock<::L0::KernelImp> kernel;
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.set(0);
+    NEO::DebugManager.flags.UseImmediateFlushTask.set(0);
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+
+    auto commandList = whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+
+    EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
+    EXPECT_EQ(&csr, commandList->csr);
+
+    csr.lastFlushedCommandStream = nullptr;
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(nullptr, csr.lastFlushedCommandStream);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, commandList->csr->getCS().getCpuBase(), commandList->csr->getCS().getUsed()));
+    bool gpr15Found = false;
+    auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    for (size_t i = 0; i < miLoadImm.size(); i++) {
+        MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
+        ASSERT_NE(nullptr, miLoad);
+
+        if (miLoad->getRegisterOffset() == CS_GPR_R15) {
+            gpr15Found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(gpr15Found);
+    commandList->destroy();
+}
+
 HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenSipIsInstalledAndDebuggerAllocationsAreResident, Gen12Plus) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;

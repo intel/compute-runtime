@@ -11,7 +11,7 @@ namespace L0 {
 
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::platformSupportsCmdListHeapSharing() const {
-    return false;
+    return true;
 }
 
 template <typename Family>
