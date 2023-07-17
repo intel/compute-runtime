@@ -125,6 +125,16 @@ bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PRO
     std::array<uint8_t, boardNumberSize> value;
     ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), boardNumberSize, offset, value.data());
     if (bytesRead == boardNumberSize) {
+        // Board Number from PMT is available as multiple uint32_t integers, We need to swap (i.e convert each uint32_t
+        // to big endian) elements of each uint32_t to get proper board number string.
+        // For instance, Board Number stored in PMT space is as follows (stored as uint32_t - Little endian):
+        // 1. BoardNumber0 - 2PTW
+        // 2. BoardNumber1 - 0503
+        // 3. BoardNumber2 - 0130. BoardNumber is actual combination of all 0, 1 and 2 i.e WTP230500310.
+        for (uint32_t i = 0; i < boardNumberSize; i += 4) {
+            std::swap(value[i], value[i + 3]);
+            std::swap(value[i + 1], value[i + 2]);
+        }
         memcpy_s(boardNumber, ZES_STRING_PROPERTY_SIZE, value.data(), bytesRead);
         return true;
     }

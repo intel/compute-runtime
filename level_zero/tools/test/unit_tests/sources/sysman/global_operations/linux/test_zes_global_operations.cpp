@@ -214,7 +214,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesGlobal
 
     zes_device_properties_t properties;
     const std::string expectedSerialNumber("0x3e8c9dfe1c2e4d5c");
-    const std::string expectedBoardNumber("0821VPTW910091000821VPTW91009100");
+    const std::string expectedBoardNumber("1280WTPV001900191280WTPV00190019");
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
