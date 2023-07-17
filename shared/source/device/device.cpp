@@ -875,6 +875,15 @@ void Device::stopDirectSubmission() {
     }
 }
 
+bool Device::isAnyDirectSubmissionEnabled() {
+    bool enabled = false;
+    for (auto &engine : allEngines) {
+        auto csr = engine.commandStreamReceiver;
+        enabled |= csr->isAnyDirectSubmissionEnabled();
+    }
+    return enabled;
+}
+
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     UNRECOVERABLE_IF(rtDispatchGlobalsInfos.size() < maxBvhLevels + 1);
     UNRECOVERABLE_IF(rtDispatchGlobalsInfos[maxBvhLevels] != nullptr);

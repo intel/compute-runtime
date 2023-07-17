@@ -3215,7 +3215,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
             if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
                 pipeControlArgs.constantCacheInvalidationEnable = this->csr->isDirectSubmissionEnabled();
             } else {
-                pipeControlArgs.constantCacheInvalidationEnable = productHelper.isDirectSubmissionSupported(this->device->getHwInfo());
+                pipeControlArgs.constantCacheInvalidationEnable = this->device->getNEODevice()->isAnyDirectSubmissionEnabled();
             }
         }
 
