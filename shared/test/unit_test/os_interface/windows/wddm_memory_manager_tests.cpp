@@ -165,6 +165,7 @@ TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemory64kbWhen32bitThenAddre
 
 class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManagerCreate<WddmMemoryManager> {
   public:
+    using WddmMemoryManager::adjustGpuPtrToHostAddressSpace;
     using WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA;
     using WddmMemoryManager::mapGpuVirtualAddress;
     MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {}
@@ -354,4 +355,123 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMa
     EXPECT_LT(graphicsAllocation->getGpuAddress(), MemoryConstants::max32BitAddress);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+class MockWddmReserveValidAddressRange : public WddmMock {
+  public:
+    MockWddmReserveValidAddressRange(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment){};
+    bool reserveValidAddressRange(size_t size, void *&reservedMem) override {
+        reserveValidAddressRangeResult.called++;
+        reservedMem = dummyAddress;
+        return true;
+    }
+    void *dummyAddress = reinterpret_cast<void *>(0x43211111);
+};
+
+TEST_F(WddmMemoryManagerAllocPathTests, givenLocalMemoryWhen32bitAndCallAdjustGpuPtrToHostAddressSpaceThenProperAlignmentIsApplied) {
+    if constexpr (is64bit) {
+        GTEST_SKIP();
+    }
+    auto mockWddm = std::make_unique<MockWddmReserveValidAddressRange>(*executionEnvironment->rootDeviceEnvironments[0].get());
+    auto addressWithoutAligment = reinterpret_cast<uint64_t>(mockWddm->dummyAddress);
+    uint32_t rootDeviceIndex = 0u;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(mockWddm));
+    size_t size = 10;
+
+    auto wddmAllocation = std::make_unique<WddmAllocation>(rootDeviceIndex,
+                                                           1u, // numGmms
+                                                           NEO::AllocationType::BUFFER, nullptr, 0,
+                                                           size, nullptr, MemoryPool::LocalMemory,
+                                                           0u, // shareable
+                                                           0u);
+    void *addressPtr;
+    memoryManager->adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), addressPtr);
+
+    EXPECT_NE(nullptr, addressPtr);
+    auto address = reinterpret_cast<uint64_t>(addressPtr);
+    uint64_t alignmentMask = 2 * MemoryConstants::megaByte - 1;
+    EXPECT_FALSE(address & alignmentMask);
+    EXPECT_NE(addressWithoutAligment, address);
+}
+
+TEST_F(WddmMemoryManagerAllocPathTests, givenSystemMemoryWhen32bitAndCallAdjustGpuPtrToHostAddressSpaceThenThereIsNoExtraAlignment) {
+    if constexpr (is64bit) {
+        GTEST_SKIP();
+    }
+    auto mockWddm = std::make_unique<MockWddmReserveValidAddressRange>(*executionEnvironment->rootDeviceEnvironments[0].get());
+    auto expectedAddress = reinterpret_cast<uint64_t>(mockWddm->dummyAddress);
+    uint32_t rootDeviceIndex = 0u;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(mockWddm));
+    size_t size = 10;
+
+    auto wddmAllocation = std::make_unique<WddmAllocation>(rootDeviceIndex,
+                                                           1u, // numGmms
+                                                           NEO::AllocationType::BUFFER, nullptr, 0,
+                                                           size, nullptr, MemoryPool::System64KBPages,
+                                                           0u, // shareable
+                                                           0u);
+    void *addressPtr;
+    memoryManager->adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), addressPtr);
+
+    EXPECT_NE(nullptr, addressPtr);
+    auto address = reinterpret_cast<uint64_t>(addressPtr);
+
+    EXPECT_EQ(expectedAddress, address);
+}
+
+TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenProperValueIsReturned) {
+
+    auto wddmMemoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
+
+    for (auto type : {AllocationType::BUFFER,
+                      AllocationType::SHARED_BUFFER,
+                      AllocationType::SCRATCH_SURFACE,
+                      AllocationType::LINEAR_STREAM,
+                      AllocationType::PRIVATE_SURFACE}) {
+        EXPECT_TRUE(wddmMemoryManager->isStatelessAccessRequired(type));
+    }
+    for (auto type : {AllocationType::BUFFER_HOST_MEMORY,
+                      AllocationType::COMMAND_BUFFER,
+                      AllocationType::CONSTANT_SURFACE,
+                      AllocationType::EXTERNAL_HOST_PTR,
+                      AllocationType::FILL_PATTERN,
+                      AllocationType::GLOBAL_SURFACE,
+                      AllocationType::IMAGE,
+                      AllocationType::INDIRECT_OBJECT_HEAP,
+                      AllocationType::INSTRUCTION_HEAP,
+                      AllocationType::INTERNAL_HEAP,
+                      AllocationType::INTERNAL_HOST_MEMORY,
+                      AllocationType::KERNEL_ARGS_BUFFER,
+                      AllocationType::KERNEL_ISA,
+                      AllocationType::KERNEL_ISA_INTERNAL,
+                      AllocationType::MAP_ALLOCATION,
+                      AllocationType::MCS,
+                      AllocationType::PIPE,
+                      AllocationType::PREEMPTION,
+                      AllocationType::PRINTF_SURFACE,
+                      AllocationType::PROFILING_TAG_BUFFER,
+                      AllocationType::SHARED_CONTEXT_IMAGE,
+                      AllocationType::SHARED_IMAGE,
+                      AllocationType::SHARED_RESOURCE_COPY,
+                      AllocationType::SURFACE_STATE_HEAP,
+                      AllocationType::SVM_CPU,
+                      AllocationType::SVM_GPU,
+                      AllocationType::SVM_ZERO_COPY,
+                      AllocationType::TAG_BUFFER,
+                      AllocationType::GLOBAL_FENCE,
+                      AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
+                      AllocationType::WRITE_COMBINED,
+                      AllocationType::RING_BUFFER,
+                      AllocationType::SEMAPHORE_BUFFER,
+                      AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+                      AllocationType::DEBUG_SBA_TRACKING_BUFFER,
+                      AllocationType::DEBUG_MODULE_AREA,
+                      AllocationType::UNIFIED_SHARED_MEMORY,
+                      AllocationType::WORK_PARTITION_SURFACE,
+                      AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER,
+                      AllocationType::SW_TAG_BUFFER,
+                      AllocationType::DEFERRED_TASKS_LIST,
+                      AllocationType::ASSERT_BUFFER}) {
+        EXPECT_FALSE(wddmMemoryManager->isStatelessAccessRequired(type));
+    }
 }

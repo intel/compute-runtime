@@ -37,6 +37,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::unMapPhysicalToVirtualMemory;
     using MemoryManagerCreate<WddmMemoryManager>::MemoryManagerCreate;
     using BaseClass::getHugeGfxMemoryChunkSize;
+    using BaseClass::isStatelessAccessRequired;
 
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override {
         allocationGraphicsMemory64kbCreated = true;

@@ -210,7 +210,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     if ((!(alignGpuAddressTo64KB) && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) || is32bit) {
         void *requiredGpuVa = cpuPtr;
         if (!cpuPtr) {
-            adjustGpuPtrToHostAddressSpace(allocationData, *wddmAllocation.get(), sizeAligned, requiredGpuVa);
+            adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa);
         }
         status = mapGpuVirtualAddress(wddmAllocation.get(), requiredGpuVa);
     } else {
@@ -1330,7 +1330,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
 
-    adjustGpuPtrToHostAddressSpace(allocationData, *wddmAllocation.get(), sizeAligned, requiredGpuVa);
+    adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa);
 
     if (!createWddmAllocation(wddmAllocation.get(), requiredGpuVa)) {
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
@@ -1399,22 +1399,30 @@ void WddmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
     }
 }
 
+bool WddmMemoryManager::isStatelessAccessRequired(AllocationType type) {
+    if (type == AllocationType::BUFFER ||
+        type == AllocationType::SHARED_BUFFER ||
+        type == AllocationType::SCRATCH_SURFACE ||
+        type == AllocationType::LINEAR_STREAM ||
+        type == AllocationType::PRIVATE_SURFACE) {
+        return true;
+    }
+    return false;
+}
+
 template <bool Is32Bit>
-void WddmMemoryManager::adjustGpuPtrToHostAddressSpace(const AllocationData &allocationData, WddmAllocation &wddmAllocation, size_t sizeAligned, void *&requiredGpuVa) {
+void WddmMemoryManager::adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAllocation, void *&requiredGpuVa) {
     if constexpr (Is32Bit) {
-        if (executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->isFullRangeSvm()) {
-            if (allocationData.type == AllocationType::BUFFER ||
-                allocationData.type == AllocationType::SHARED_BUFFER ||
-                allocationData.type == AllocationType::SCRATCH_SURFACE ||
-                allocationData.type == AllocationType::LINEAR_STREAM ||
-                allocationData.type == AllocationType::PRIVATE_SURFACE) {
-                size_t reserveSizeAligned = sizeAligned;
-                auto isLocalMemory = wddmAllocation.isLocalMemoryPool();
+        auto rootDeviceIndex = wddmAllocation.getRootDeviceIndex();
+        if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm()) {
+            if (isStatelessAccessRequired(wddmAllocation.getAllocationType())) {
+                size_t reserveSizeAligned = wddmAllocation.getUnderlyingBufferSize();
+                auto isLocalMemory = wddmAllocation.getMemoryPool() == MemoryPool::LocalMemory;
                 if (isLocalMemory) {
                     // add 2MB padding to make sure there are no overlaps between system and local memory
                     reserveSizeAligned += 2 * MemoryConstants::megaByte;
                 }
-                auto &wddm = getWddm(allocationData.rootDeviceIndex);
+                auto &wddm = getWddm(rootDeviceIndex);
                 wddm.reserveValidAddressRange(reserveSizeAligned, requiredGpuVa);
                 wddmAllocation.setReservedAddressRange(requiredGpuVa, reserveSizeAligned);
                 requiredGpuVa = isLocalMemory ? alignUp(requiredGpuVa, 2 * MemoryConstants::megaByte) : requiredGpuVa;
