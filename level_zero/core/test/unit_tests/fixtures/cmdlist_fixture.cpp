@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 
+#include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -394,6 +395,52 @@ void ImmediateFlushTaskPrivateHeapCmdListFixture::setUp() {
     DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
 
     ImmediateFlushTaskCmdListFixture::setUp();
+}
+
+void CommandQueueThreadArbitrationPolicyFixture::setUp() {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto executionEnvironment = new NEO::MockExecutionEnvironment();
+    auto mockBuiltIns = new MockBuiltins();
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+
+    std::vector<std::unique_ptr<NEO::Device>> devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+    auto driverHandleUlt = whiteboxCast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
+    driverHandle.reset(driverHandleUlt);
+
+    ASSERT_NE(nullptr, driverHandle);
+
+    ze_device_handle_t hDevice;
+    uint32_t count = 1;
+    ze_result_t result = driverHandle->getDevice(&count, &hDevice);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    device = L0::Device::fromHandle(hDevice);
+    ASSERT_NE(nullptr, device);
+
+    ze_command_queue_desc_t queueDesc = {};
+    commandQueue = whiteboxCast(CommandQueue::create(productFamily, device,
+                                                     neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                     &queueDesc,
+                                                     false,
+                                                     false,
+                                                     false,
+                                                     returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    commandList->close();
+}
+
+void CommandQueueThreadArbitrationPolicyFixture::tearDown() {
+    commandList->destroy();
+    commandQueue->destroy();
+    L0::GlobalDriver = nullptr;
 }
 
 } // namespace ult

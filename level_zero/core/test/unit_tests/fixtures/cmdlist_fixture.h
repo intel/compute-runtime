@@ -321,5 +321,17 @@ struct ImmediateFlushTaskPrivateHeapCmdListFixture : public ImmediateFlushTaskCm
     void setUp();
 };
 
+struct CommandQueueThreadArbitrationPolicyFixture {
+    void setUp();
+    void tearDown();
+
+    DebugManagerStateRestore restorer;
+    WhiteBox<L0::CommandQueue> *commandQueue = nullptr;
+    L0::CommandList *commandList = nullptr;
+    std::unique_ptr<L0::ult::WhiteBox<L0::DriverHandle>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+};
+
 } // namespace ult
 } // namespace L0

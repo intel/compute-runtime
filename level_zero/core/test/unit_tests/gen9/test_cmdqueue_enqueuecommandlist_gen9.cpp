@@ -40,8 +40,10 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
+    commandList->close();
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        commandList->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
 
@@ -68,7 +70,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
         EXPECT_EQ(cmd->getPipelineSelection(), PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
     }
 
-    CommandList::fromHandle(commandLists[0])->destroy();
+    commandList->destroy();
     commandQueue->destroy();
 }
 
@@ -81,8 +83,10 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
+    commandList->close();
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        commandList->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
 
@@ -116,7 +120,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
                   cmd->getInstructionMemoryObjectControlState());
     }
 
-    CommandList::fromHandle(commandLists[0])->destroy();
+    commandList->destroy();
     commandQueue->destroy();
 }
 
@@ -131,6 +135,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenMidThre
 
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandList->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
+    commandList->close();
 
     ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
@@ -178,9 +183,11 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
 
     auto commandListMidThread = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListMidThread->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
+    commandListMidThread->close();
 
     auto commandListThreadGroup = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
+    commandListThreadGroup->close();
 
     ze_command_list_handle_t commandLists[] = {commandListMidThread->toHandle(),
                                                commandListThreadGroup->toHandle(),
