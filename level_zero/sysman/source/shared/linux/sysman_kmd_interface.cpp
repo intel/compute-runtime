@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
 #include "shared/source/os_interface/linux/drm_neo.h"
 
