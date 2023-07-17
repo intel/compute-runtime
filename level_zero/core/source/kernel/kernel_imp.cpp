@@ -98,13 +98,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
                                        kernelDescriptor->payloadMappings.implicitArgs.simdSize, kernelDescriptor->kernelAttributes.simdSize);
     }
 
-    if (kernelInfo->heapInfo.surfaceStateHeapSize != 0) {
-        this->surfaceStateHeapSize = kernelInfo->heapInfo.surfaceStateHeapSize;
-        surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
-
-        memcpy_s(surfaceStateHeapTemplate.get(), surfaceStateHeapSize,
-                 kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
-    } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
+    if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
         auto &gfxCoreHelper = deviceImp->getNEODevice()->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
 
@@ -112,6 +106,12 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful != kernelInfo->kernelDescriptor.getBindlessOffsetToSurfaceState().size());
 
         surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
+    } else if (kernelInfo->heapInfo.surfaceStateHeapSize != 0) {
+        this->surfaceStateHeapSize = kernelInfo->heapInfo.surfaceStateHeapSize;
+        surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
+
+        memcpy_s(surfaceStateHeapTemplate.get(), surfaceStateHeapSize,
+                 kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     }
 
     if (kernelInfo->heapInfo.dynamicStateHeapSize != 0) {

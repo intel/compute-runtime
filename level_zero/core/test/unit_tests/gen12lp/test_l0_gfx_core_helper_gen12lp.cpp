@@ -28,10 +28,10 @@ GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetRegsetTypeForLargeG
     EXPECT_EQ(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, l0GfxCoreHelper.getRegsetTypeForLargeGrfDetection());
 }
 
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnFalse) {
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
-    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
 }
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnFalse) {

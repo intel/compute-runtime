@@ -108,6 +108,9 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
                                              const CmdListKernelLaunchParams &launchParams) override {
 
         usedKernelLaunchParams = launchParams;
+        if (launchParams.isKernelSplitOperation && (launchParams.numKernelsExecutedInSplitLaunch == 0)) {
+            firstKernelInSplitOperation = kernel;
+        }
         appendKernelEventValue = event;
         return BaseClass::appendLaunchKernelWithParams(kernel, threadGroupDimensions,
                                                        event, launchParams);
@@ -140,6 +143,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
 
     CmdListKernelLaunchParams usedKernelLaunchParams;
     ::L0::Event *appendKernelEventValue = nullptr;
+    ::L0::Kernel *firstKernelInSplitOperation = nullptr;
     ze_event_handle_t appendEventMultipleKernelIndirectEventHandleValue = nullptr;
     ze_event_handle_t appendEventKernelIndirectEventHandleValue = nullptr;
 };
