@@ -18,10 +18,12 @@
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
@@ -2395,6 +2397,19 @@ TEST_F(DeviceGetStatusTest, givenCallToDeviceGetStatusThenCorrectErrorCodeIsRetu
 
     deviceImp->releaseResources();
     res = device->getStatus();
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
+}
+
+TEST_F(DeviceGetStatusTest, givenCallToDeviceGetStatusThenCorrectErrorCodeIsReturnedWhenGpuHangs) {
+    ze_result_t res = device->getStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto mockCSR = new MockCommandStreamReceiver(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    mockCSR->isGpuHangDetectedReturnValue = true;
+
+    neoDevice->resetCommandStreamReceiver(mockCSR);
+    res = device->getStatus();
+
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
 }
 

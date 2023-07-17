@@ -78,6 +78,13 @@ ze_result_t DeviceImp::getStatus() {
     if (this->resourcesReleased) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
+    auto engines = neoDevice->getAllEngines();
+    for (auto engine : engines) {
+        auto csr = engine.commandStreamReceiver;
+        if (csr->isGpuHangDetected()) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
