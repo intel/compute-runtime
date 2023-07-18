@@ -5,8 +5,6 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/windows/wddm_memory_manager_tests.h"
-
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -44,6 +42,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/os_interface/windows/wddm_memory_manager_tests.h"
 
 using namespace NEO;
 using namespace ::testing;
