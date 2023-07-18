@@ -34,6 +34,7 @@ class ReleaseHelper {
     virtual bool isPrefetchDisablingRequired() const = 0;
     virtual bool isSplitMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isBFloat16ConversionSupported() const = 0;
+    virtual bool isAuxSurfaceModeOverrideRequired() const = 0;
     virtual int getProductMaxPreferredSlmSize(int preferredEnumValue) const = 0;
     virtual bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
@@ -61,6 +62,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isPrefetchDisablingRequired() const override;
     bool isSplitMatrixMultiplyAccumulateSupported() const override;
     bool isBFloat16ConversionSupported() const override;
+    bool isAuxSurfaceModeOverrideRequired() const override;
     int getProductMaxPreferredSlmSize(int preferredEnumValue) const override;
     bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const override;
     bool isResolvingSubDeviceIDNeeded() const override;

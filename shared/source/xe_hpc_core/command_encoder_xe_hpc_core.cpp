@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/lookup_array.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 

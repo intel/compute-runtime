@@ -28,6 +28,11 @@ bool ReleaseHelperHw<release>::isProgramAllStateComputeCommandFieldsWARequired()
 }
 
 template <>
+inline bool ReleaseHelperHw<release>::isAuxSurfaceModeOverrideRequired() const {
+    return true;
+}
+
+template <>
 int ReleaseHelperHw<release>::getProductMaxPreferredSlmSize(int preferredEnumValue) const {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
     return std::min(preferredEnumValue, static_cast<int>(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K));

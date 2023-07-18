@@ -20,7 +20,7 @@ using Family = NEO::Gen9Family;
 
 namespace NEO {
 template <>
-void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState) {
+void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const ReleaseHelper *releaseHelper) {
 }
 
 template <>

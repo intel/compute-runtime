@@ -100,7 +100,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     surfaceState->setNumberOfMultisamples((typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES)mcsSurfaceInfo.multisampleCount);
 
     if (imageDesc.num_samples > 1) {
-        setAuxParamsForMultisamples(surfaceState);
+        setAuxParamsForMultisamples(surfaceState, rootDeviceIndex);
     } else if (graphicsAllocation->isCompressionEnabled()) {
         EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(surfaceState, gmm);
     } else {
@@ -117,14 +117,16 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState) {
+void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex) {
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
 
     if (getMcsAllocation()) {
         auto mcsGmm = getMcsAllocation()->getDefaultGmm();
 
         if (mcsGmm->unifiedAuxTranslationCapable() && mcsGmm->hasMultisampleControlSurface()) {
-            EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState);
+            auto *releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
+            DEBUG_BREAK_IF(releaseHelper == nullptr);
+            EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQpitch(mcsGmm->getAuxQPitch());
             EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);

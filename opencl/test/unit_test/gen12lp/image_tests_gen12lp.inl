@@ -9,9 +9,11 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
@@ -54,6 +56,37 @@ GEN12LPTEST_F(ImageClearColorFixture, givenImageForGen12LpWhenClearColorParamete
     EXPECT_EQ(true, surfaceState.getClearValueAddressEnable());
     EXPECT_NE(0u, surfaceState.getClearColorAddress());
     EXPECT_NE(0u, surfaceState.getClearColorAddressHigh());
+}
+
+GEN12LPTEST_F(ImageClearColorFixture, givenSurfaceStateForGen12LpAndNullptrAsReleaseHelperWhenAuxParamsForMCSCCSAreSetThenCorrectAuxParamsInSurfaceStateIsSet) {
+    this->setUpImpl<FamilyType>();
+    auto surfaceState = this->getSurfaceState<FamilyType>();
+
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, nullptr);
+
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
+}
+
+GEN12LPTEST_F(ImageClearColorFixture, givenSurfaceStateForGen12LpAndAuxSurfaceModeOverrideRequiredIsFalseWhenAuxParamsForMCSCCSAreSetThenCorrectAuxParamsInSurfaceStateIsSet) {
+    this->setUpImpl<FamilyType>();
+    auto surfaceState = this->getSurfaceState<FamilyType>();
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isAuxSurfaceModeOverrideRequiredResult = false;
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
+
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
+}
+
+GEN12LPTEST_F(ImageClearColorFixture, givenSurfaceStateForGen12LpAndAuxSurfaceModeOverrideRequiredIsTrueWhenAuxParamsForMCSCCSAreSetThenCorrectAuxParamsInSurfaceStateIsSet) {
+    this->setUpImpl<FamilyType>();
+    auto surfaceState = this->getSurfaceState<FamilyType>();
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isAuxSurfaceModeOverrideRequiredResult = true;
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
+
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }
 
 GEN12LPTEST_F(ImageClearColorFixture, givenImageForGen12LpWhenCanonicalAddresForClearColorIsUsedThenItsConvertedToNonCanonicalForm) {
@@ -101,7 +134,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenMcsAllocationWhenSetArgIsCalledWithUn
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
 
-    imageHw->setAuxParamsForMultisamples(&surfaceState);
+    imageHw->setAuxParamsForMultisamples(&surfaceState, context->getDevice(0)->getRootDeviceIndex());
 
     EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);

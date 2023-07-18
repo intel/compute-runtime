@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -166,6 +167,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
+
     MockContext context;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -174,9 +176,11 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
     imgDesc.num_samples = 8;
     std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
 
+    auto pClDevice = context.getDevice(0);
+
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    mcsAlloc->setDefaultGmm(new Gmm(context.getDevice(0)->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    mcsAlloc->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
     imageHw->setMcsSurfaceInfo(msi);
     imageHw->setMcsAllocation(mcsAlloc);
@@ -186,10 +190,15 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
 
-    imageHw->setAuxParamsForMultisamples(&surfaceState);
+    imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
+
+    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    auto expectedMode = AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
+    if (releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired())
+        expectedMode = AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E;
 
     EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
-    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedMode);
 }
 
 HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenClearColorParametersAreSetThenClearColorSurfaceInSurfaceStateIsSet, CompressionParamsSupportedMatcher) {
@@ -210,6 +219,18 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenClearColorParamet
     EXPECT_EQ(true, surfaceState.getClearValueAddressEnable());
     EXPECT_NE(0u, surfaceState.getClearColorAddress());
     EXPECT_NE(0u, surfaceState.getClearColorAddressHigh());
+}
+
+HWTEST2_F(ImageClearColorFixture, givenSurfaceStateWhenAuxParamsForMCSCCSAreSetThenAuxParamsInSurfaceStateIsSet, CompressionParamsSupportedMatcher) {
+    this->setUpImpl<FamilyType>();
+    auto surfaceState = this->getSurfaceState<FamilyType>();
+
+    auto releaseHelper = context.getDevice(0)->getRootDeviceEnvironment().getReleaseHelper();
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper);
+
+    auto expectedAuxMode = releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired() ? EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E : EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
+
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedAuxMode);
 }
 
 struct CompressionClearColorAddressMatcher {

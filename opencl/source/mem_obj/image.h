@@ -335,7 +335,7 @@ class ImageHw : public Image {
     }
 
     void setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex, bool useGlobalAtomics) override;
-    void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState);
+    void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex);
     void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) override;
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlState(void *memory, uint32_t value) override;

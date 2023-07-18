@@ -55,7 +55,7 @@ struct EncodeSurfaceState {
     static void setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState);
     static void setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static bool isAuxModeEnabled(R_SURFACE_STATE *surfaceState, Gmm *gmm);
-    static void setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState);
+    static void setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const ReleaseHelper *releaseHelper);
     static void setClearColorParams(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void disableCompressionFlags(R_SURFACE_STATE *surfaceState);

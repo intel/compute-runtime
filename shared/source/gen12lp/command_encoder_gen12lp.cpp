@@ -11,6 +11,7 @@
 #include "shared/source/gen12lp/reg_configs.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "encode_surface_state_args.h"
 
