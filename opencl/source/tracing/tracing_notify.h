@@ -33,7 +33,7 @@ inline thread_local bool tracingInProgress = false;
     bool isHostSideTracingEnabled_##name = false;                                                                                                  \
     bool currentlyTracedCall = false;                                                                                                              \
     HostSideTracing::name##Tracer tracer_##name;                                                                                                   \
-    if ((false == HostSideTracing::tracingInProgress) && TRACING_GET_ENABLED_BIT(HostSideTracing::tracingState.load(std::memory_order_acquire))) { \
+    if (TRACING_GET_ENABLED_BIT(HostSideTracing::tracingState.load(std::memory_order_acquire)) && (false == HostSideTracing::tracingInProgress)) { \
         HostSideTracing::tracingInProgress = true;                                                                                                 \
         currentlyTracedCall = true;                                                                                                                \
         isHostSideTracingEnabled_##name = HostSideTracing::addTracingClient();                                                                     \
