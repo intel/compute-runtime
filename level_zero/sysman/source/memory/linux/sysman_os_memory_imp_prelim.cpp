@@ -273,10 +273,6 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     case IGFX_DG2:
         result = getBandwidthForDg2(pBandwidth);
         break;
-    case IGFX_XE_HP_SDV:
-        numHbmModules = 2u;
-        result = getHbmBandwidth(numHbmModules, pBandwidth);
-        break;
     case IGFX_PVC:
         numHbmModules = 4u;
         result = getHbmBandwidth(numHbmModules, pBandwidth);

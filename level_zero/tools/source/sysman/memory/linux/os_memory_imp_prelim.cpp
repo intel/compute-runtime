@@ -343,10 +343,6 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     case IGFX_DG2:
         result = getBandwidthForDg2(pBandwidth);
         break;
-    case IGFX_XE_HP_SDV:
-        numHbmModules = 2u;
-        result = getHbmBandwidth(numHbmModules, pBandwidth);
-        break;
     case IGFX_PVC:
         numHbmModules = 4u;
         result = getHbmBandwidthPVC(numHbmModules, pBandwidth);
@@ -432,11 +428,6 @@ ze_result_t LinuxMemoryImp::getBandwidthEx(uint64_t *pReadCounters, uint64_t *pW
     uint32_t numHbmModules = 0u;
     uint32_t counterMaxValue;
     switch (productFamily) {
-    case IGFX_XE_HP_SDV:
-        numHbmModules = 2u;
-        counterMaxValue = UINT32_MAX;
-        result = getHbmBandwidthEx(numHbmModules, counterMaxValue, pReadCounters, pWriteCounters, pMaxBw, timeout);
-        break;
     case IGFX_PVC:
         numHbmModules = 4u;
         counterMaxValue = UINT32_MAX;

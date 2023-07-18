@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,8 +37,6 @@ inline iga_gen_t translateToIgaGenBase(PRODUCT_FAMILY productFamily) {
     case IGFX_ALDERLAKE_N:
     case IGFX_DG1:
         return IGA_XE;
-    case IGFX_XE_HP_SDV:
-        return IGA_XE_HP;
     case IGFX_DG2:
         return IGA_XE_HPG;
     case IGFX_PVC:

@@ -651,32 +651,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenBothVfid0AndVfid1Are
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingBandwidthAndIfPmtReadValueFailsThenErrorIsReturned) {
-    setLocalSupportedAndReinit(true);
-    auto hwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = IGFX_XE_HP_SDV;
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_properties_t properties = {};
-        zesMemoryGetProperties(handle, &properties);
-
-        zes_mem_bandwidth_t bandwidth;
-
-        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-
-        pPmt->mockReadArgumentValue.push_back(0);
-        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN); // Return Failure while reading VF0_VFID
-        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
-
-        pPmt->mockReadArgumentValue.push_back(1);
-        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
-        pPmt->mockReadArgumentValue.push_back(0);
-        pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN); // Return Failure while reading VF1_VFID
-        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
-    }
-}
-
 TEST_F(SysmanDeviceMemoryFixture, GivenCallinggetHbmFrequencyWhenProductFamilyIsPVCAndSteppingIsNotA0ThenHbmFrequencyWillBeZero) {
     PublicLinuxMemoryImp *pLinuxMemoryImp = new PublicLinuxMemoryImp;
     uint64_t hbmFrequency = 0;

@@ -812,7 +812,6 @@ TEST(DecoderHelperTest, GivenProductFamilyWhenTranslatingToIgaGenBaseThenExpecte
         std::pair{IGFX_ALDERLAKE_P, IGA_XE},
         std::pair{IGFX_ALDERLAKE_S, IGA_XE},
         std::pair{IGFX_DG1, IGA_XE},
-        std::pair{IGFX_XE_HP_SDV, IGA_XE_HP},
         std::pair{IGFX_DG2, IGA_XE_HPG},
         std::pair{IGFX_PVC, IGA_XE_HPC},
         std::pair{IGFX_UNKNOWN, IGA_GEN_INVALID}};
