@@ -103,6 +103,11 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     case CL_PLATFORM_ICD_SUFFIX_KHR:
         param = &platformInfo->icdSuffixKhr;
         break;
+    case CL_PLATFORM_EXTERNAL_MEMORY_IMPORT_HANDLE_TYPES_KHR: {
+        paramSize = sizeof(this->clDevices[0]->getDeviceInfo().externalMemorySharing);
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &this->clDevices[0]->getDeviceInfo().externalMemorySharing, paramSize);
+        break;
+    }
     default:
         break;
     }
