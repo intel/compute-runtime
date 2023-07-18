@@ -80,7 +80,7 @@ DECLARE_DEBUG_VARIABLE(bool, ForceTheoreticalMaxWorkGroupCount, false, "Do not a
 DECLARE_DEBUG_VARIABLE(bool, DontDisableZebinIfVmeUsed, false, "When enabled, driver will not add -cl-intel-disable-zebin internal option when vme is used")
 DECLARE_DEBUG_VARIABLE(bool, AppendMemoryPrefetchForKmdMigratedSharedAllocations, true, "Allow prefetching shared memory to the device associated with the specified command list")
 DECLARE_DEBUG_VARIABLE(bool, ForceMemoryPrefetchForKmdMigratedSharedAllocations, false, "Force prefetch of shared memory in command queue execute command lists")
-DECLARE_DEBUG_VARIABLE(bool, ClKhrExternalMemoryExtension, false, "Enable cl_khr_external_memory extension")
+DECLARE_DEBUG_VARIABLE(bool, ClKhrExternalMemoryExtension, true, "Enable cl_khr_external_memory extension")
 DECLARE_DEBUG_VARIABLE(bool, WaitForMemoryRelease, false, "Wait for memory release when out of memory")
 DECLARE_DEBUG_VARIABLE(bool, RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup, 0, "0 - default disabled, 1- remove restrictions on NumberOfThreadsInGpgpuThreadGroup in INTERFACE_DESCRIPTOR_DATA")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")

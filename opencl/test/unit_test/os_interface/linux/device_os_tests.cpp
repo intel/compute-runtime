@@ -49,8 +49,6 @@ TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCo
 
 TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenDeviceInfoReportsSupportOfExternalMemorySharing) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ClKhrExternalMemoryExtension.set(1);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
 
     auto hwInfo = defaultHwInfo.get();

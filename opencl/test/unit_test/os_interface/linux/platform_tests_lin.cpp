@@ -13,17 +13,7 @@
 
 using namespace NEO;
 
-struct GetPlatformInfoLinuxTest : Test<PlatformFixture> {
-    void SetUp() override {
-        DebugManager.flags.ClKhrExternalMemoryExtension.set(1);
-        Test<PlatformFixture>::SetUp();
-    }
-
-    void TearDown() override {
-        Test<PlatformFixture>::TearDown();
-    }
-    DebugManagerStateRestore stateRestore;
-};
+using GetPlatformInfoLinuxTest = Test<PlatformFixture>;
 
 TEST_F(GetPlatformInfoLinuxTest, GivenPlatformWhenGettingInfoForExternalMemoryThenCorrectHandlesAreReturned) {
     size_t retSize = 0;

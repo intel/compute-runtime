@@ -245,18 +245,18 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersion30ThenReportsClKhrE
 
     hwInfo.capabilityTable.clVersionSupport = 30;
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
-
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ClKhrExternalMemoryExtension.set(1);
+    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 
     hwInfo.capabilityTable.clVersionSupport = 21;
     extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ClKhrExternalMemoryExtension.set(0);
+
     hwInfo.capabilityTable.clVersionSupport = 30;
     extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
+    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, GivenAtMostGen11DeviceWhenCheckingIfIntegerDotExtensionIsSupportedThenFalseReturned, IsAtMostGen11) {

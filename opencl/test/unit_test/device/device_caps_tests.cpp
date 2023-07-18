@@ -1750,8 +1750,6 @@ TEST_F(DeviceGetCapsTest, givenRootDeviceWithSubDevicesWhenQueriedForCacheSizeTh
 }
 
 TEST_F(DeviceGetCapsTest, givenClKhrExternalMemoryExtensionEnabledWhenCapsAreCreatedThenDeviceInfoReportsSupportOfExternalMemorySharing) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ClKhrExternalMemoryExtension.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_TRUE(device->deviceInfo.externalMemorySharing);
 }
