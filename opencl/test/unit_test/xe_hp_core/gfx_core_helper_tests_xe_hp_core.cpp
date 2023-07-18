@@ -119,19 +119,7 @@ XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamil
     for (auto stepping : steppings) {
         hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
 
-        if (hardwareInfo.platform.eProductFamily == IGFX_XE_HP_SDV) {
-            if (stepping == REVISION_A0) {
-                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
-                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
-                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo, productHelper));
-            } else if (stepping == REVISION_A1) {
-                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
-            } else if (stepping == REVISION_C || stepping == REVISION_D) { // undefined
-                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
-            }
-        } else {
-            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
-        }
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
     }
 }
 

@@ -160,10 +160,7 @@ ze_result_t LinuxMemoryImp::readMcChannelCounters(uint64_t &readCounters, uint64
 
 void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned short stepping, uint64_t &hbmFrequency) {
     hbmFrequency = 0;
-    if (productFamily == IGFX_XE_HP_SDV) {
-        // For IGFX_XE_HP HBM frequency would be 2.8 GT/s = 2.8 * 1000 * 1000 * 1000 T/s = 2800000000 T/s
-        hbmFrequency = 2.8 * gigaUnitTransferToUnitTransfer;
-    } else if (productFamily == IGFX_PVC) {
+    if (productFamily == IGFX_PVC) {
         if (stepping >= REVISION_B) {
             const std::string hbmRP0FreqFile = pDrm->getIoctlHelper()->getFileForMaxMemoryFrequencyOfSubDevice(subdeviceId);
             uint64_t hbmFreqValue = 0;

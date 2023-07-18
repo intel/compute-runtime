@@ -194,7 +194,7 @@ ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
             pSustained[count].source = ZES_POWER_SOURCE_ANY;
             pSustained[count].level = ZES_POWER_LEVEL_PEAK;
             pSustained[count].interval = 0; // Hardcode to 100 micro seconds i.e 0.1 milli seconds
-            if ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)) {
+            if (productFamily == IGFX_PVC) {
                 pSustained[count].limit = static_cast<int32_t>(val);
                 pSustained[count].limitUnit = ZES_LIMIT_UNIT_CURRENT;
             } else {
@@ -226,7 +226,7 @@ ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
                     return getErrorCode(result);
                 }
             } else if (pSustained[i].level == ZES_POWER_LEVEL_PEAK) {
-                if ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)) {
+                if (productFamily == IGFX_PVC) {
                     val = pSustained[i].limit;
                 } else {
                     val = pSustained[i].limit * milliFactor; // Convert milliwatts to microwatts
@@ -314,7 +314,7 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     productFamily = SysmanDeviceImp::getProductFamily(pLinuxSysmanImp->getDeviceHandle());
-    if ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)) {
+    if (productFamily == IGFX_PVC) {
         criticalPowerLimit = "curr1_crit";
     } else {
         criticalPowerLimit = "power1_crit";

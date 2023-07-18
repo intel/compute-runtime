@@ -98,7 +98,7 @@ ze_result_t LinuxTemperatureImp::getGlobalMaxTemperatureNoSubDevice(double *pTem
 ze_result_t LinuxTemperatureImp::getGlobalMaxTemperature(double *pTemperature) {
     // For XE_HP_SDV and PVC single tile devices, telemetry info is retrieved from
     // tile's telem node rather from root device telem node.
-    if ((!isSubdevice) && (!((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)))) {
+    if ((!isSubdevice) && (!(productFamily == IGFX_PVC))) {
         return getGlobalMaxTemperatureNoSubDevice(pTemperature);
     }
     uint32_t globalMaxTemperature = 0;
@@ -143,7 +143,7 @@ ze_result_t LinuxTemperatureImp::getGpuMaxTemperatureNoSubDevice(double *pTemper
 }
 
 ze_result_t LinuxTemperatureImp::getGpuMaxTemperature(double *pTemperature) {
-    if ((!isSubdevice) && (!((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)))) {
+    if ((!isSubdevice) && (!(productFamily == IGFX_PVC))) {
         return getGpuMaxTemperatureNoSubDevice(pTemperature);
     }
     uint32_t gpuMaxTemperature = 0;
@@ -160,9 +160,7 @@ ze_result_t LinuxTemperatureImp::getGpuMaxTemperature(double *pTemperature) {
 ze_result_t LinuxTemperatureImp::getMemoryMaxTemperature(double *pTemperature) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     uint32_t numHbmModules = 0u;
-    if (productFamily == IGFX_XE_HP_SDV) {
-        numHbmModules = 2u;
-    } else if (productFamily == IGFX_PVC) {
+    if (productFamily == IGFX_PVC) {
         numHbmModules = 4u;
     } else {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
@@ -217,7 +215,7 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
 }
 
 bool LinuxTemperatureImp::isTempModuleSupported() {
-    if ((!isSubdevice) && (!((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)))) {
+    if ((!isSubdevice) && (!(productFamily == IGFX_PVC))) {
         if (type == ZES_TEMP_SENSORS_MEMORY) {
             return false;
         }

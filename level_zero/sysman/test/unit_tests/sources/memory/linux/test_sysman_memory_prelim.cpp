@@ -584,15 +584,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenCallinggetHbmFrequencyWhenProductFamilyIs
     delete pLinuxMemoryImp;
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenCallinggetHbmFrequencyWhenProductFamilyIsXE_HP_SDVThenHbmFrequencyShouldBeNotZero) {
-    PublicLinuxMemoryImp *pLinuxMemoryImp = new PublicLinuxMemoryImp(pOsSysman, true, 1);
-    uint64_t hbmFrequency = 0;
-    pLinuxMemoryImp->getHbmFrequency(IGFX_XE_HP_SDV, REVISION_A0, hbmFrequency);
-    uint64_t expectedHbmFrequency = 2.8 * gigaUnitTransferToUnitTransfer;
-    EXPECT_EQ(hbmFrequency, expectedHbmFrequency);
-    delete pLinuxMemoryImp;
-}
-
 TEST_F(SysmanDeviceMemoryFixture, GivenCallinggetHbmFrequencyWhenProductFamilyIsUnsupportedThenHbmFrequencyShouldBeZero) {
     PublicLinuxMemoryImp *pLinuxMemoryImp = new PublicLinuxMemoryImp(pOsSysman, true, 1);
     uint64_t hbmFrequency = 0;

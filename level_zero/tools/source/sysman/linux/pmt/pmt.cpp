@@ -130,7 +130,7 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
     std::string telemNode = telem + std::to_string(rootDeviceTelemNodeIndex);
     // For XE_HP_SDV and PVC single tile devices, telemetry info is retrieved from
     // tile's telem node rather from root device telem node.
-    if ((isSubdevice) || ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV))) {
+    if ((isSubdevice) || (productFamily == IGFX_PVC)) {
         uint32_t telemNodeIndex = 0;
         // If rootDeviceTelemNode is telem1, then rootDeviceTelemNodeIndex = 1
         // And thus for subdevice0 --> telem node will be telem2,

@@ -176,24 +176,6 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 
     auto compilerProductHelper = CompilerProductHelper::create(localHwInfo.platform.eProductFamily);
 
-    if (localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HP_CORE) {
-#ifdef SUPPORT_XE_HP_SDV
-        if (localHwInfo.platform.eProductFamily == IGFX_XE_HP_SDV) {
-            setupCalled = true;
-            XehpSdvHwConfig::setupHardwareInfo(&localHwInfo, true, *compilerProductHelper);
-
-            // Mock values
-            localHwInfo.gtSystemInfo.SliceCount = 8;
-            localHwInfo.gtSystemInfo.SubSliceCount = 32;
-            localHwInfo.gtSystemInfo.EUCount = 512;
-
-            localHwInfo.gtSystemInfo.CCSInfo.IsValid = true;
-            localHwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-            localHwInfo.gtSystemInfo.CCSInfo.Instances.CCSEnableMask = 0b1111;
-        }
-#endif
-    }
-
     if (localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPG_CORE) {
 #ifdef SUPPORT_DG2
         if (localHwInfo.platform.eProductFamily == IGFX_DG2) {
