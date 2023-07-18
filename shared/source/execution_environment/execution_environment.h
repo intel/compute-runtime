@@ -9,6 +9,7 @@
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -66,5 +67,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     DebuggingMode debuggingEnabledMode = DebuggingMode::Disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
+    std::mutex initializeDirectSubmissionControllerMutex;
 };
 } // namespace NEO

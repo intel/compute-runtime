@@ -100,6 +100,7 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 }
 
 DirectSubmissionController *ExecutionEnvironment::initializeDirectSubmissionController() {
+    std::lock_guard<std::mutex> lockForInit(initializeDirectSubmissionControllerMutex);
     auto initializeDirectSubmissionController = DirectSubmissionController::isSupported();
 
     if (DebugManager.flags.SetCommandStreamReceiver.get() > 0) {

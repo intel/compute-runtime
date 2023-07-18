@@ -258,7 +258,8 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInf
                                                   sizeof(std::unordered_map<uint32_t, uint32_t>) +
                                                   2 * sizeof(bool) +
                                                   sizeof(NEO::DebuggingMode) +
-                                                  (is64bit ? 18 : 14),
+                                                  (is64bit ? 18 : 14) +
+                                                  sizeof(std::mutex),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
