@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -473,5 +474,15 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
                       AllocationType::DEFERRED_TASKS_LIST,
                       AllocationType::ASSERT_BUFFER}) {
         EXPECT_FALSE(wddmMemoryManager->isStatelessAccessRequired(type));
+    }
+}
+
+TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGettingPreferredAllocationMethodThenValueFlagIsReturned) {
+    DebugManagerStateRestore restorer;
+    EXPECT_EQ(preferredAllocationMethod, MockWddmMemoryManager::getPreferredAllocationMethod());
+
+    for (const auto &allocationMethod : {GfxMemoryAllocationMethod::UseUmdSystemPtr, GfxMemoryAllocationMethod::AllocateByKmd}) {
+        DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(allocationMethod));
+        EXPECT_EQ(allocationMethod, MockWddmMemoryManager::getPreferredAllocationMethod());
     }
 }
