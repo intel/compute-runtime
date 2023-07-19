@@ -14,7 +14,6 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/platform_tests_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_allocate_in_device_pool_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_handler_tests.cpp
 )
 
