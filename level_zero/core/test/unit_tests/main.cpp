@@ -163,7 +163,9 @@ bool checkAubTestsExecutionPathValidity() {
 
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
+    bool enableAbrt = true;
     bool enableAlarm = true;
+    bool enableSegv = true;
     bool showTestStats = false;
     bool dumpTestStats = false;
     std::string dumpTestStatsFileName = "";
@@ -385,6 +387,16 @@ int main(int argc, char **argv) {
     int sigOut = setAlarm(enableAlarm);
     if (sigOut != 0)
         return sigOut;
+
+    sigOut = setSegv(enableSegv);
+    if (sigOut != 0) {
+        return sigOut;
+    }
+
+    sigOut = setAbrt(enableAbrt);
+    if (sigOut != 0) {
+        return sigOut;
+    }
 
     auto retVal = RUN_ALL_TESTS();
 
