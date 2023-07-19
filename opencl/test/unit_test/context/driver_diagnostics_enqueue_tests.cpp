@@ -8,6 +8,7 @@
 #include "shared/source/helpers/local_work_size.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -451,6 +452,7 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingReadImageSharesStorageWi
 }
 
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapBufferIsCallingThenContextProvidesProperHint) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
 
     Buffer *buffer;
     void *address;
@@ -475,6 +477,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapBufferIsCal
     delete buffer;
 }
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnqueueMapBufferIsCallingThenContextProvidesProperHint) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
 
     void *address;
     bool zeroCopyBuffer = GetParam();
@@ -505,6 +508,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnque
 }
 
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
 
     Image *image;
     bool isZeroCopyImage;
@@ -543,6 +547,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapImageIsCall
 }
 
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
 
     auto image = std::unique_ptr<Image>(ImageHelper<ImageReadOnly<Image1dDefaults>>::create(context));
     bool isZeroCopyImage = GetParam();
@@ -581,6 +586,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnque
 }
 
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithBufferThenContextProvidesProperHint) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
 
     Buffer *buffer;
     void *address;
@@ -607,6 +613,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCalling
 }
 
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyAndBlockedEventFlagWhenEnqueueUnmapIsCallingWithBufferThenContextProvidesProperHint) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
 
     void *address;
     bool zeroCopyBuffer = GetParam();
@@ -638,6 +645,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyAndBlockedEventFlagWhenEnqueu
 }
 
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithImageThenContextProvidesProperHint) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
 
     Image *image;
     bool isZeroCopyImage;

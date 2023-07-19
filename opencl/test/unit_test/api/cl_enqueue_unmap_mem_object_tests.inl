@@ -53,6 +53,8 @@ TEST_F(ClEnqueueUnmapMemObjTests, GivenQueueIncapableWhenUnmappingBufferThenInva
 }
 
 TEST_F(ClEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenReturnError) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pContext->getDevice(0)->getRootDeviceEnvironment());
+
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
     cl_int retVal = CL_SUCCESS;

@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -430,6 +431,8 @@ HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingWhenMappingBufferThenWi
         bool finishWasCalled;
     };
 
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
+
     MockCmdQ cmdQ(context, pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
     auto b1 = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);
@@ -475,6 +478,8 @@ HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingWhenMappingBufferThenW
         uint32_t updateCount = 0;
         uint32_t updateCountBeforeCompleted;
     };
+
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
 
     MockEvent *me = new MockEvent(context, 1024);
     auto b1 = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);

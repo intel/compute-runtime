@@ -265,6 +265,8 @@ TEST_F(EnqueueMapBufferTest, GivenValidArgsWhenMappingBufferThenSuccessIsReturne
 }
 
 HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBufferWhenItIsCalledThenSynchronizationIsNotMadeUntilWaitForEvents) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     cl_event mapEventReturned = nullptr;
@@ -463,6 +465,8 @@ TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEvent
 }
 
 TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThenEventIsSignaledAsCompleted) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
     cl_event eventReturned = nullptr;
     uint32_t tagHW = 0;
     *pTagMemory = tagHW;
@@ -530,6 +534,8 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
 }
 
 HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsCalledThenFinishIsCalledAndDataTransferred) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
     const auto bufferSize = 100;
     auto localSize = bufferSize;
     char misaligned[bufferSize] = {1};
@@ -611,6 +617,8 @@ TEST_F(EnqueueMapBufferTest, GivenWrongMemObjectWhenMapIsCalledThenInvalidMemObj
 }
 
 HWTEST_F(EnqueueMapBufferTest, GivenPtrToReturnEventWhenMappingBufferThenEventIsNotNull) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
     cl_event eventReturned = NULL;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -658,6 +666,8 @@ HWTEST_F(EnqueueMapBufferTest, GivenPtrToReturnEventWhenMappingBufferThenEventIs
 }
 
 TEST_F(EnqueueMapBufferTest, GivenZeroCopyBufferWhenMapBufferWithoutEventsThenCommandStreamReceiverUpdatesRequiredDCFlushCount) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
 
     auto buffer = clCreateBuffer(
@@ -691,6 +701,8 @@ TEST_F(EnqueueMapBufferTest, GivenZeroCopyBufferWhenMapBufferWithoutEventsThenCo
 }
 
 TEST_F(EnqueueMapBufferTest, givenBufferWithoutUseHostPtrFlagWhenMappedOnCpuThenSetAllMapParams) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 10, nullptr, retVal));
     EXPECT_NE(nullptr, buffer);
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
@@ -720,6 +732,8 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithoutUseHostPtrFlagWhenMappedOnCpuThen
 }
 
 TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedOnCpuThenSetAllMapParams) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
     uint8_t hostPtr[10] = {};
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
     EXPECT_NE(nullptr, buffer);
@@ -750,6 +764,8 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedOnCpuThenSet
 }
 
 HWTEST_F(EnqueueMapBufferTest, givenMapBufferOnGpuWhenMappingBufferThenStoreGraphicsAllocationInMapInfo) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
     uint8_t hostPtr[10] = {};
     std::unique_ptr<Buffer> bufferForCpuMap(Buffer::create(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
     ASSERT_NE(nullptr, bufferForCpuMap);

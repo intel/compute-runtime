@@ -22,6 +22,7 @@
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
@@ -227,6 +228,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonDcFlushWithInitialTaskCoun
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskCountIncremented) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     MockCommandQueueHw<FamilyType> mockCmdQueue(&ctx, pClDevice, nullptr);

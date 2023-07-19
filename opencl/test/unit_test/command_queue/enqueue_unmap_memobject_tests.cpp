@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,6 +119,7 @@ TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenReturnedEventHasGrea
 }
 
 HWTEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenEventIsUpdated) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     cl_event eventReturned = NULL;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -142,6 +143,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenEventIsUpdated) {
 }
 
 TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenWaitEventIsUpdated) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     cl_event waitEvent = nullptr;
     cl_event retEvent = nullptr;
 
@@ -196,6 +198,7 @@ TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenWaitEventIsUpdated) 
 }
 
 HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBufferObjectMappedToHostPtrForWritingThenItShouldBeResetToAubAndTbxWritable) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     ASSERT_NE(nullptr, buffer);
     auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -218,6 +221,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBuf
 }
 
 HWTEST_F(EnqueueUnmapMemObjTest, givenWriteBufferIsServicedOnCPUWhenBufferIsNonAubTbxWriteableThenFlagsChange) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     DebugManagerStateRestore restorer;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));

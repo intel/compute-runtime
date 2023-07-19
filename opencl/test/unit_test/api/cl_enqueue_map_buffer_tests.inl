@@ -54,6 +54,8 @@ TEST_F(ClEnqueueMapBufferTests, GivenNullCommandQueueWhenMappingBufferThenInvali
 }
 
 TEST_F(ClEnqueueMapBufferTests, GivenValidParametersWhenMappingBufferThenSuccessIsReturned) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pContext->getDevice(0)->getRootDeviceEnvironment());
+
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -111,6 +113,8 @@ TEST_F(ClEnqueueMapBufferTests, GivenQueueIncapableWhenMappingBufferThenInvalidO
 }
 
 TEST_F(ClEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPointerThenInvalidHostPtrErrorIsReturned) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pContext->getDevice(0)->getRootDeviceEnvironment());
+
     unsigned int bufferSize = 16;
 
     cl_mem buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);

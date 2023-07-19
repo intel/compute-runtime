@@ -8,6 +8,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
@@ -265,6 +266,7 @@ HWTEST_F(MultipleMapImageTest, givenErrorFromWriteImageWhenUnmappedOnGpuThenDont
 }
 
 HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto image = createMockImage<Image1dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     image->isZeroCopy = false;
@@ -287,6 +289,7 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedPt
 }
 
 HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenReadOnlyUnmappedOnCpuThenDontMakeCpuCopy) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto image = createMockImage<Image1dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     image->isZeroCopy = false;
@@ -308,6 +311,7 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenReadOnlyUnmappedOnCpuThenD
 }
 
 HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenWriteInvalidateMappedOnCpuThenDontMakeCpuCopy) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto image = createMockImage<Image1dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     image->isZeroCopy = false;
@@ -329,6 +333,7 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenWriteInvalidateMappedOnCpu
 }
 
 HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto image = createMockImage<Image1dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     image->isZeroCopy = false;
@@ -358,6 +363,7 @@ HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrA
 }
 
 HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedReadOnlyOnCpuThenDontMakeCpuCopy) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto image = createMockImage<Image1dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     image->isZeroCopy = false;
@@ -385,6 +391,7 @@ HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedReadOnlyOnCpuThenDontM
 }
 
 HWTEST_F(MultipleMapImageTest, givenInvalidPtrWhenUnmappedOnCpuThenReturnError) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto image = createMockImage<Image1dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(image->mappingOnCpuAllowed());
@@ -453,6 +460,7 @@ HWTEST_F(MultipleMapImageTest, givenOverlapingPtrWhenMappingForWriteThenReturnEr
 }
 
 HWTEST_F(MultipleMapImageTest, givenOverlapingPtrWhenMappingOnCpuForWriteThenReturnError) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto image = createMockImage<Image1dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(image->mappingOnCpuAllowed());

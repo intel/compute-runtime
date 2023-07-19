@@ -26,6 +26,7 @@
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -77,6 +78,7 @@ TEST(Buffer, whenBufferAllocatedInLocalMemoryThenCpuCopyIsDisallowed) {
     MockBuffer buffer(allocation);
     UltDeviceFactory factory{1, 0};
     auto &device = *factory.rootDevices[0];
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(factory.rootDevices[0]->getRootDeviceEnvironment());
 
     allocation.memoryPool = MemoryPool::LocalMemory;
     EXPECT_FALSE(buffer.isReadWriteOnCpuAllowed(device));

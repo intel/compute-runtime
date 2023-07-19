@@ -52,7 +52,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         return BaseClass::allocateGraphicsMemoryInDevicePool(allocationData, status);
     }
 
-    size_t hugeGfxMemoryChunkSize = BaseClass::getHugeGfxMemoryChunkSize(preferredAllocationMethod);
+    size_t hugeGfxMemoryChunkSize = BaseClass::getHugeGfxMemoryChunkSize(MockWddmMemoryManager::getPreferredAllocationMethod());
     size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const override { return hugeGfxMemoryChunkSize; }
 
     MockWddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {

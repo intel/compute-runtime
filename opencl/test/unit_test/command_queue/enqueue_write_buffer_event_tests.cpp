@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,6 +102,7 @@ TEST_F(EnqueueWriteBufferTypeTest, WhenWritingBufferThenReturnedEventShouldBeMax
 }
 
 TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
@@ -217,6 +218,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
 }
 
 TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));

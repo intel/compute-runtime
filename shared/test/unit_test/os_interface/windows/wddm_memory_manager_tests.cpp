@@ -76,7 +76,7 @@ class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<W
     size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const override {
         return hugeGfxMemoryChunkSize;
     }
-    size_t hugeGfxMemoryChunkSize = WddmMemoryManager::getHugeGfxMemoryChunkSize(preferredAllocationMethod);
+    size_t hugeGfxMemoryChunkSize = WddmMemoryManager::getHugeGfxMemoryChunkSize(MockWddmMemoryManager::getPreferredAllocationMethod());
 };
 
 class WddmMemoryManagerTests : public ::testing::Test {
@@ -109,7 +109,7 @@ TEST_F(WddmMemoryManagerTests, GivenAllocDataWithSVMCPUSetWhenAllocateGraphicsMe
     allocData.makeGPUVaDifferentThanCPUPtr = true;
     memoryManager->allocateGraphicsMemoryWithAlignment(allocData);
 
-    if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+    if (MockWddmMemoryManager::getPreferredAllocationMethod() == GfxMemoryAllocationMethod::AllocateByKmd) {
         EXPECT_TRUE(memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVACalled);
     } else {
         EXPECT_TRUE(memoryManager->allocateSystemMemoryAndCreateGraphicsAllocationFromItCalled);
@@ -230,6 +230,9 @@ class WddmMemoryManagerAllocPathTests : public ::testing::Test {
 };
 
 TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWhenPreferedAllocationMethodThenProperArgumentsAreSet) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForcePreferredAllocationMethod.set(-1);
+
     {
         NEO::AllocationData allocData = {};
         allocData.type = NEO::AllocationType::SVM_CPU;
@@ -237,7 +240,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMa
         allocData.makeGPUVaDifferentThanCPUPtr = true;
         auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
-        if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+        if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && !is32bit) {
             EXPECT_FALSE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
         } else {
             EXPECT_TRUE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
@@ -494,7 +497,7 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
 
 TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGettingPreferredAllocationMethodThenValueFlagIsReturned) {
     DebugManagerStateRestore restorer;
-    EXPECT_EQ(preferredAllocationMethod, MockWddmMemoryManager::getPreferredAllocationMethod());
+    EXPECT_EQ(preferredAllocationMethod, GfxMemoryAllocationMethod::AllocateByKmd);
 
     for (const auto &allocationMethod : {GfxMemoryAllocationMethod::UseUmdSystemPtr, GfxMemoryAllocationMethod::AllocateByKmd}) {
         DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(allocationMethod));
@@ -569,6 +572,7 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
         } else {
 
             DebugManagerStateRestore dbgRestore;
+            DebugManager.flags.ForcePreferredAllocationMethod.set(-1);
             wddm->init();
             wddm->mapGpuVaStatus = true;
             VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
@@ -1421,6 +1425,9 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAlignmentRequirementExceedsPageSizeThenA
             int allocateGraphicsMemoryUsingKmdAndMapItToCpuVA = 0;
         } callCount;
     };
+
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForcePreferredAllocationMethod.set(-1);
 
     MockWddmMemoryManagerAllocateWithAlignment memoryManager(true, true, executionEnvironment);
 
@@ -3165,6 +3172,9 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenCorrectHugeGfxMemoryChunkIsSet) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForcePreferredAllocationMethod.set(-1);
+
     MockWddmMemoryManager memoryManager(executionEnvironment);
     EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
     EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::UseUmdSystemPtr), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);

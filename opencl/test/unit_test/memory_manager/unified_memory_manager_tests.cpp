@@ -1130,6 +1130,7 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTra
     DebugManager.flags.EnableLocalMemory.set(false);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
     MockContext mockContext;
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(mockContext.getDevice(0)->getRootDeviceEnvironment());
     cl_context clContext = &mockContext;
 
     if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {

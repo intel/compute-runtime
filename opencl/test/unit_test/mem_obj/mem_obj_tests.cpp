@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/properties_helper.h"
@@ -301,15 +302,23 @@ TEST(MemObj, givenTiledObjectWhenAskedForCpuMappingThenReturnFalse) {
         bool isTiledAllocation() const override { return true; }
     };
     MockContext context;
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context.getDevice(0)->getRootDeviceEnvironment());
+    MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
+
+    context.memoryManager = &memoryManager;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->setDefaultGmm(new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, MemoryConstants::pageSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
-    MyMemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                    MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
+    MyMemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
+                    MemoryConstants::pageSize, allocation->getUnderlyingBuffer(), nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
 
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
 
 TEST(MemObj, givenCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
     MockContext context;
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context.getDevice(0)->getRootDeviceEnvironment());
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
     context.memoryManager = &memoryManager;
@@ -328,6 +337,7 @@ TEST(MemObj, givenCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
 
 TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
     MockContext context;
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context.getDevice(0)->getRootDeviceEnvironment());
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
     context.memoryManager = &memoryManager;
@@ -344,6 +354,7 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
 
 TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
     MockContext context;
+    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context.getDevice(0)->getRootDeviceEnvironment());
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
     context.memoryManager = &memoryManager;

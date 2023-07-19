@@ -748,6 +748,9 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIs
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenMemTraceCommentWithDriverVersionIsPutIntoAubStream) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForcePreferredAllocationMethod.set(-1);
+
     auto mockAubManager = std::make_unique<MockAubManager>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -986,6 +989,7 @@ HWTEST_F(AubFileStreamTests, givenGenerateAubFilePerProcessIdDebugFlagAndAubComm
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenCommentWithNonDefaultFlagsAreAdded) {
     DebugManagerStateRestore stateRestore;
 
+    DebugManager.flags.ForcePreferredAllocationMethod.set(-1);
     DebugManager.flags.MakeAllBuffersResident.set(1);
     DebugManager.flags.ZE_AFFINITY_MASK.set("non-default");
 
