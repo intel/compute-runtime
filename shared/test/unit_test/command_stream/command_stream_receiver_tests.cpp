@@ -2306,7 +2306,7 @@ TEST_F(CommandStreamReceiverTest, givenPreemptionSentIsInitialWhenSettingPreempt
 }
 
 using CommandStreamReceiverSystolicTests = Test<CommandStreamReceiverSystolicFixture>;
-using SystolicSupport = IsAnyProducts<IGFX_ALDERLAKE_P, IGFX_XE_HP_SDV, IGFX_DG2, IGFX_PVC>;
+using SystolicSupport = IsAnyProducts<IGFX_ALDERLAKE_P, IGFX_DG2, IGFX_PVC>;
 
 HWTEST2_F(CommandStreamReceiverSystolicTests, givenSystolicModeChangedWhenFlushTaskCalledThenSystolicStateIsUpdated, SystolicSupport) {
     testBody<FamilyType>();

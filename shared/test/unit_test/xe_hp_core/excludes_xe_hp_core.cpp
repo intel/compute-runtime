@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,4 +16,3 @@ HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfBlitterFo
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned, IGFX_XE_HP_CORE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenIsSystolicModeConfigurabledThenFalseIsReturned, IGFX_XE_HP_CORE);
 HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, whenGettingDefaultRevisionIdThenCorrectValueIsReturned, IGFX_XE_HP_CORE);
-HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturned, IGFX_XE_HP_SDV);

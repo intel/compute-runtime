@@ -382,8 +382,6 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     PLATFORM platform = clDevice->getHardwareInfo().platform;
     const auto &productHelper = *ProductHelper::get(platform.eProductFamily);
-    const bool isXeHPRev0 = (platform.eProductFamily == IGFX_XE_HP_SDV) &&
-                            (productHelper.getSteppingFromHwRevId(clDevice->getHardwareInfo()) < REVISION_B);
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
     MockContext context(clDevice.get());
@@ -407,11 +405,7 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
         auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
         EXPECT_NE(nullptr, bltCmd);
 
-        if (isXeHPRev0) {
-            EXPECT_EQ(bltCmd->getSourceTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
-        } else {
-            EXPECT_EQ(bltCmd->getSourceTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
-        }
+        EXPECT_EQ(bltCmd->getSourceTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
         EXPECT_EQ(bltCmd->getDestinationTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
     }
 
@@ -429,11 +423,7 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
         auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
         EXPECT_NE(nullptr, bltCmd);
 
-        if (isXeHPRev0) {
-            EXPECT_EQ(bltCmd->getDestinationTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
-        } else {
-            EXPECT_EQ(bltCmd->getDestinationTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
-        }
+        EXPECT_EQ(bltCmd->getDestinationTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
         EXPECT_EQ(bltCmd->getSourceTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
     }
 }

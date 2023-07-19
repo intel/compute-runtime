@@ -731,7 +731,7 @@ HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseModeSetToBeforeAndAf
 
 using CmdListPipelineSelectStateTest = Test<CmdListPipelineSelectStateFixture>;
 
-using SystolicSupport = IsAnyProducts<IGFX_ALDERLAKE_P, IGFX_XE_HP_SDV, IGFX_DG2, IGFX_PVC>;
+using SystolicSupport = IsAnyProducts<IGFX_ALDERLAKE_P, IGFX_DG2, IGFX_PVC>;
 
 HWTEST2_F(CmdListPipelineSelectStateTest,
           givenAppendSystolicKernelToCommandListWhenExecutingCommandListThenPipelineSelectStateIsTrackedCorrectly, SystolicSupport) {
@@ -763,7 +763,7 @@ HWTEST2_F(CmdListThreadArbitrationTest,
 
 using CmdListLargeGrfTest = Test<CmdListLargeGrfFixture>;
 
-using LargeGrfSupport = IsAnyProducts<IGFX_XE_HP_SDV, IGFX_DG2, IGFX_PVC>;
+using LargeGrfSupport = IsAnyProducts<IGFX_DG2, IGFX_PVC>;
 HWTEST2_F(CmdListLargeGrfTest,
           givenAppendLargeGrfKernelToCommandListWhenExecutingCommandListThenStateComputeModeStateIsTrackedCorrectly, LargeGrfSupport) {
     testBody<FamilyType>();
