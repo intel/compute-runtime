@@ -3215,44 +3215,46 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     event->destroy();
 }
 
-struct MockEventCompletion : public L0::EventImp<uint32_t> {
-    using EventImp<uint32_t>::gpuStartTimestamp;
-    using EventImp<uint32_t>::gpuEndTimestamp;
-    using EventImp<uint32_t>::hostAddress;
+template <typename TagSizeT>
+struct MockEventCompletion : public L0::EventImp<TagSizeT> {
+    using BaseClass = L0::EventImp<TagSizeT>;
+    using BaseClass::gpuEndTimestamp;
+    using BaseClass::gpuStartTimestamp;
+    using BaseClass::hostAddress;
 
-    MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device, false) {
+    MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : BaseClass::EventImp(eventPool, index, device, false) {
         auto neoDevice = device->getNEODevice();
         auto &hwInfo = neoDevice->getHardwareInfo();
-        signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
+        this->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
 
         auto alloc = eventPool->getAllocation().getGraphicsAllocation(neoDevice->getRootDeviceIndex());
 
         uint64_t baseHostAddr = reinterpret_cast<uint64_t>(alloc->getUnderlyingBuffer());
-        totalEventSize = eventPool->getEventSize();
-        eventPoolOffset = index * totalEventSize;
-        hostAddress = reinterpret_cast<void *>(baseHostAddr + eventPoolOffset);
-        csrs[0] = neoDevice->getDefaultEngine().commandStreamReceiver;
+        this->totalEventSize = eventPool->getEventSize();
+        this->eventPoolOffset = index * this->totalEventSize;
+        hostAddress = reinterpret_cast<void *>(baseHostAddr + this->eventPoolOffset);
+        this->csrs[0] = neoDevice->getDefaultEngine().commandStreamReceiver;
 
-        maxKernelCount = eventPool->getMaxKernelCount();
-        maxPacketCount = eventPool->getEventMaxPackets();
+        this->maxKernelCount = eventPool->getMaxKernelCount();
+        this->maxPacketCount = eventPool->getEventMaxPackets();
 
-        kernelEventCompletionData = std::make_unique<KernelEventCompletionData<uint32_t>[]>(maxKernelCount);
+        this->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<TagSizeT>[]>(this->maxKernelCount);
     }
 
     void assignKernelEventCompletionData(void *address) override {
         assignKernelEventCompletionDataCounter++;
     }
 
-    ze_result_t hostEventSetValue(uint32_t eventValue) override {
+    ze_result_t hostEventSetValue(TagSizeT eventValue) override {
         if (shouldHostEventSetValueFail) {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
-        return EventImp<uint32_t>::hostEventSetValue(eventValue);
+        return BaseClass::hostEventSetValue(eventValue);
     }
 
     ze_result_t hostSynchronize(uint64_t timeout) override {
         hostSynchronizeCalled++;
-        return L0::EventImp<uint32_t>::hostSynchronize(timeout);
+        return BaseClass::hostSynchronize(timeout);
     }
 
     ze_result_t queryStatus() override {
@@ -3261,7 +3263,7 @@ struct MockEventCompletion : public L0::EventImp<uint32_t> {
             return ZE_RESULT_NOT_READY;
         }
 
-        return L0::EventImp<uint32_t>::queryStatus();
+        return BaseClass::queryStatus();
     }
 
     bool shouldHostEventSetValueFail = false;
@@ -3271,7 +3273,7 @@ struct MockEventCompletion : public L0::EventImp<uint32_t> {
 };
 
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndReturnSuccess) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     auto result = event->hostSignal();
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
@@ -3281,7 +3283,7 @@ TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndRetur
 TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenSynchronizeBeforeReset) {
     DebugManager.flags.SynchronizeEventBeforeReset.set(1);
 
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     event->failOnNextQueryStatus = true;
 
     *reinterpret_cast<uint32_t *>(event->hostAddress) = Event::STATE_SIGNALED;
@@ -3302,7 +3304,7 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenSynchronizeBeforeReset) 
 TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBeforeReset) {
     DebugManager.flags.SynchronizeEventBeforeReset.set(2);
 
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     *reinterpret_cast<uint32_t *>(event->hostAddress) = Event::STATE_SIGNALED;
 
     {
@@ -3360,22 +3362,62 @@ TEST_F(EventTests, whenAppendAdditionalCsrThenStoreUniqueCsr) {
 }
 
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThatFailedThenAccessMemoryAndReturnSuccess) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     event->shouldHostEventSetValueFail = true;
     event->hostSignal();
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
 }
 
+HWTEST_F(EventTests, givenQwordPacketSizeWhenSignalingThenCopyQword) {
+    using TimestampPacketType = typename FamilyType::TimestampPacketType;
+
+    auto event = std::make_unique<MockEventCompletion<TimestampPacketType>>(eventPool.get(), 1u, device);
+
+    auto completionAddress = static_cast<uint64_t *>(event->getCompletionFieldHostAddress());
+
+    {
+        event->setSinglePacketSize(sizeof(uint64_t));
+        *completionAddress = std::numeric_limits<uint64_t>::max();
+
+        event->hostSignal();
+
+        EXPECT_EQ(static_cast<uint64_t>(Event::STATE_SIGNALED), *completionAddress);
+
+        EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    }
+
+    {
+        event->setSinglePacketSize(NEO::TimestampPackets<TimestampPacketType>::getSinglePacketSize());
+
+        *completionAddress = std::numeric_limits<uint64_t>::max();
+
+        event->hostSignal();
+
+        if (sizeof(TimestampPacketType) == sizeof(uint32_t)) {
+            uint64_t expectedValue = (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) << 32);
+
+            EXPECT_EQ(expectedValue, *completionAddress);
+            EXPECT_EQ(static_cast<uint32_t>(Event::STATE_SIGNALED), *static_cast<uint32_t *>(event->getCompletionFieldHostAddress()));
+        } else if (sizeof(TimestampPacketType) == sizeof(uint64_t)) {
+            EXPECT_EQ(static_cast<uint64_t>(Event::STATE_SIGNALED), *completionAddress);
+        } else {
+            ASSERT_TRUE(false);
+        }
+
+        EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    }
+}
+
 TEST_F(EventTests, WhenQueryingStatusThenAccessMemoryOnce) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
 }
 
 TEST_F(EventTests, WhenQueryingStatusAfterResetThenAccessMemory) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->reset(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
@@ -3383,7 +3425,7 @@ TEST_F(EventTests, WhenQueryingStatusAfterResetThenAccessMemory) {
 }
 
 TEST_F(EventTests, WhenResetEventThenZeroCpuTimestamps) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     EXPECT_EQ(event->reset(), ZE_RESULT_SUCCESS);
@@ -3392,7 +3434,7 @@ TEST_F(EventTests, WhenResetEventThenZeroCpuTimestamps) {
 }
 
 TEST_F(EventTests, WhenEventResetIsCalledThenKernelCountAndPacketsUsedHaveNotBeenReset) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     event->zeroKernelCount();
@@ -3406,7 +3448,7 @@ TEST_F(EventTests, WhenEventResetIsCalledThenKernelCountAndPacketsUsedHaveNotBee
 }
 
 TEST_F(EventTests, GivenResetAllPacketsWhenResetPacketsThenOneKernelCountAndOnePacketUsed) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     event->zeroKernelCount();
@@ -3420,7 +3462,7 @@ TEST_F(EventTests, GivenResetAllPacketsWhenResetPacketsThenOneKernelCountAndOneP
 }
 
 TEST_F(EventTests, GivenResetAllPacketsFalseWhenResetPacketsThenKernelCountAndPacketsUsedHaveNotBeenReset) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     event->zeroKernelCount();
@@ -3434,7 +3476,7 @@ TEST_F(EventTests, GivenResetAllPacketsFalseWhenResetPacketsThenKernelCountAndPa
 }
 
 TEST_F(EventTests, givenCallToEventQueryStatusWithKernelPointerReturnsCounter) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
@@ -3449,7 +3491,7 @@ TEST_F(EventTests, givenCallToEventQueryStatusWithKernelPointerReturnsCounter) {
 }
 
 TEST_F(EventTests, givenCallToEventQueryStatusWithNullKernelPointerReturnsCounter) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;

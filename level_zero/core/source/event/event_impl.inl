@@ -293,6 +293,16 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
 
     auto packetHostAddr = getCompletionFieldHostAddress();
 
+    UNRECOVERABLE_IF(sizeof(TagSizeT) > sizeof(uint64_t));
+
+    size_t copySize = sizeof(TagSizeT);
+    const uint64_t copyData = eventVal;
+
+    if (this->singlePacketSize == sizeof(uint64_t)) {
+        // Non-TS Events with dynamic layout size using qword chunks
+        copySize = sizeof(uint64_t);
+    }
+
     uint32_t packets = 0;
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
@@ -300,7 +310,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
             if (castToUint64(packetHostAddr) >= castToUint64(ptrOffset(this->hostAddress, totalEventSize))) {
                 break;
             }
-            memcpy_s(packetHostAddr, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
+            memcpy_s(packetHostAddr, copySize, &copyData, copySize);
             packetHostAddr = ptrOffset(packetHostAddr, this->singlePacketSize);
         }
     }
