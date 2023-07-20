@@ -8,7 +8,6 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
@@ -230,7 +229,6 @@ HWTEST_F(MultipleMapBufferTest, givenErrorFromWriteBufferWhenUnmappedOnGpuThenDo
 }
 
 HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto buffer = createMockBuffer<FamilyType>(false);
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
@@ -252,7 +250,6 @@ HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedP
 }
 
 HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDontMakeCpuCopy) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto buffer = createMockBuffer<FamilyType>(false);
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
@@ -270,7 +267,6 @@ HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDo
 }
 
 HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenWriteInvalidateMappedOnCpuThenDontMakeCpuCopy) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto buffer = createMockBuffer<FamilyType>(false);
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
@@ -288,7 +284,6 @@ HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenWriteInvalidateMappedOnCp
 }
 
 HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto buffer = createMockBuffer<FamilyType>(false);
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
@@ -316,7 +311,6 @@ HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtr
 }
 
 HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedReadOnlyOnCpuThenDontMakeCpuCopy) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto buffer = createMockBuffer<FamilyType>(false);
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
@@ -340,7 +334,6 @@ HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedReadOnlyOnCpuThenDont
 }
 
 HWTEST_F(MultipleMapBufferTest, givenInvalidPtrWhenUnmappedOnCpuThenReturnError) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto buffer = createMockBuffer<FamilyType>(false);
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
@@ -408,7 +401,6 @@ HWTEST_F(MultipleMapBufferTest, givenOverlapingPtrWhenMappingOnGpuForWriteThenRe
 }
 
 HWTEST_F(MultipleMapBufferTest, givenOverlapingPtrWhenMappingOnCpuForWriteThenReturnError) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     auto buffer = createMockBuffer<FamilyType>(false);
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
@@ -425,10 +417,4 @@ HWTEST_F(MultipleMapBufferTest, givenOverlapingPtrWhenMappingOnCpuForWriteThenRe
     EXPECT_EQ(nullptr, mappedPtr2);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
     EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
-}
-
-HWTEST_F(MultipleMapBufferTest, givenCachingOnCpuUnavailableWhenMappingOnCpuAllowedIsCalledThenReturnFalse) {
-    auto buffer = createMockBuffer<FamilyType>(false);
-    auto &productHelper = pClDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), buffer->mappingOnCpuAllowed());
 }

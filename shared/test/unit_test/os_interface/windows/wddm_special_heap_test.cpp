@@ -56,7 +56,7 @@ TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhen
     auto gmmHelper = memManager->getGmmHelper(allocData.rootDeviceIndex);
     EXPECT_EQ(allocation->getGpuBaseAddress(), gmmHelper->canonize(allocation->getGpuAddress()));
 
-    if (MockWddmMemoryManager::getPreferredAllocationMethod() == GfxMemoryAllocationMethod::AllocateByKmd) {
+    if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
         EXPECT_TRUE(allocation->isAllocationLockable());
     } else {
         EXPECT_FALSE(allocation->isAllocationLockable());

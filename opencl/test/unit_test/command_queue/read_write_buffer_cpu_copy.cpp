@@ -11,7 +11,6 @@
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_read_buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -21,7 +20,6 @@ using namespace NEO;
 typedef EnqueueReadBufferTypeTest ReadWriteBufferCpuCopyTest;
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperationThenDisallow) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
     cl_int retVal;
@@ -46,7 +44,6 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperation
 }
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenMemoryIsReadCorrectly) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
     cl_int retVal;
@@ -88,7 +85,6 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenM
 }
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMemoryIsWrittenCorrectly) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
     cl_int retVal;
@@ -230,7 +226,6 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
 }
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, givenDebugVariableToDisableCpuCopiesWhenBufferCpuCopyAllowedIsCalledThenItReturnsFalse) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(context->getDevice(0)->getRootDeviceEnvironment());
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(false);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
@@ -257,13 +252,6 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenDebugVariableToDisableCpuCopiesWhenBuf
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_WRITE_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, givenCachingOnCpuUnavailableWhenIsReadWriteOnCpuAllowedThenReturnFalse) {
-    cl_int retVal;
-    std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_ALLOC_HOST_PTR, MemoryConstants::pageSize, nullptr, retVal));
-    auto &productHelper = context->getDevice(0)->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), buffer->isReadWriteOnCpuAllowed(context->getDevice(0)->getDevice()));
-}
-
 TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInNonSystemMemoryPoolThenIsReadWriteOnCpuAllowedReturnsFalse) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
@@ -271,7 +259,6 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
     MockMemoryManager *memoryManager = new MockMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(device->getRootDeviceEnvironment());
 
     MockContext ctx(device.get());
 
@@ -296,7 +283,6 @@ TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyWhenCpuCopyIsEvaluated
     MockMemoryManager *memoryManager = new MockMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(device->getRootDeviceEnvironment());
 
     MockContext context(device.get());
 

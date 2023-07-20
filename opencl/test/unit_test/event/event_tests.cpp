@@ -1488,7 +1488,6 @@ TEST_F(EventTest, givenCmdQueueWithoutProfilingWhenIsCpuProfilingIsCalledThenFal
 }
 
 TEST_F(EventTest, givenOutEventWhenBlockingEnqueueHandledOnCpuThenUpdateTaskCountAndFlushStampFromCmdQ) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(mockContext.getDevice(0)->getRootDeviceEnvironment());
     std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&mockContext));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 

@@ -18,7 +18,6 @@ struct RootDeviceEnvironment;
 namespace TestChecks {
 bool supportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool fullySupportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
-bool supportsCpuMemAccess(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool supportsImages(const HardwareInfo &hardwareInfo);
 bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 bool supportsSvm(const HardwareInfo *pHardwareInfo);
@@ -56,9 +55,4 @@ bool supportsSvm(const Device *pDevice);
 #define REQUIRE_IMAGES_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsImages(param) == false) { \
         GTEST_SKIP();                                      \
-    }
-
-#define REQUIRE_CPU_MEM_ACCESS_OR_SKIP(rootDeviceEnvironment)                    \
-    if (NEO::TestChecks::supportsCpuMemAccess(rootDeviceEnvironment) == false) { \
-        GTEST_SKIP();                                                            \
     }

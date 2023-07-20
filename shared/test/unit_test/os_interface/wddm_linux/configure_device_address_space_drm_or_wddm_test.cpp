@@ -18,7 +18,6 @@
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -628,9 +627,6 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
 }
 
 TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhenAllocatingThroughKmdIsPreferredThenAllocateThroughKmdAndLockAllocation) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::AllocateByKmd));
-
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
     osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
     osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;

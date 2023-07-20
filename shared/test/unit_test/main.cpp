@@ -304,8 +304,6 @@ int main(int argc, char **argv) {
         revId = platform.usRevId;
     }
 
-    NEO::DebugManager.flags.ForcePreferredAllocationMethod.set(0); // Force allocation in system for ULTs
-
     adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);
 
     binaryNameSuffix.append(hardwarePrefix[hwInfoForTests.platform.eProductFamily]);

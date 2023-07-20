@@ -102,7 +102,6 @@ TEST_F(EnqueueReadBuffer, WhenReadingBufferThenEventReturnedShouldBeMaxOfInputEv
     delete pEvent;
 }
 TEST_F(EnqueueReadBuffer, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
@@ -180,7 +179,6 @@ TEST_F(EnqueueReadBuffer, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtr
 }
 
 TEST_F(EnqueueReadBuffer, givenOutOfOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pClDevice->getRootDeviceEnvironment());
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));

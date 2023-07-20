@@ -7,15 +7,12 @@
 
 #include "opencl/source/mem_obj/mem_obj.h"
 
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -432,10 +429,8 @@ bool MemObj::isTiledAllocation() const {
 
 bool MemObj::mappingOnCpuAllowed() const {
     auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
-    auto &productHelper = this->executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->getProductHelper();
     return !isTiledAllocation() && !peekSharingHandler() && !isMipMapped(this) && !DebugManager.flags.DisableZeroCopyForBuffers.get() &&
-           !graphicsAllocation->isCompressionEnabled() && MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()) &&
-           productHelper.isCachingOnCpuAvailable();
+           !graphicsAllocation->isCompressionEnabled() && MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
 }
 
 void MemObj::storeProperties(const cl_mem_properties *properties) {

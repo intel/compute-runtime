@@ -1298,7 +1298,6 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLinearImages.set(true);
     MockContext ctx;
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(ctx.getDevice(0)->getRootDeviceEnvironment());
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
@@ -1314,7 +1313,6 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
 
 TEST(ImageTest, given1DArrayImageWhenAskedForPtrOffsetForMappingThenReturnCorrectValue) {
     MockContext ctx;
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(ctx.getDevice(0)->getRootDeviceEnvironment());
     std::unique_ptr<Image> image(ImageHelper<Image1dArrayDefaults>::create(&ctx));
 
     MemObjOffsetArray origin = {{4, 5, 0}};
@@ -1347,7 +1345,6 @@ TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectVal
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLinearImages.set(true);
     MockContext ctx;
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(ctx.getDevice(0)->getRootDeviceEnvironment());
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 

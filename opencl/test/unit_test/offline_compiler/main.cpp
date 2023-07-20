@@ -149,8 +149,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    NEO::DebugManager.flags.ForcePreferredAllocationMethod.set(0); // Force allocation in system for ULTs
-
     auto productConfigHelper = new ProductConfigHelper();
     auto allEnabledDeviceConfigs = productConfigHelper->getDeviceAotInfo();
 

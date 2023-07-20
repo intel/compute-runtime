@@ -193,9 +193,6 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
         {"UseKmdMigration", 0},
         {"SplitBcsSize", 256}};
 
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(-1);
-
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());
@@ -206,6 +203,7 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
 
 #undef DECLARE_DEBUG_VARIABLE
 
+    DebugManagerStateRestore restorer;
     DebugManager.flags.NEO_CAL_ENABLED.set(1);
     ExecutionEnvironment exeEnv;
 

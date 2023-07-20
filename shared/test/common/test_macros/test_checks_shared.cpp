@@ -56,8 +56,3 @@ bool TestChecks::supportsSvm(const std::unique_ptr<HardwareInfo> &pHardwareInfo)
 bool TestChecks::supportsSvm(const Device *pDevice) {
     return supportsSvm(&pDevice->getHardwareInfo());
 }
-
-bool TestChecks::supportsCpuMemAccess(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    return productHelper.isCachingOnCpuAvailable();
-}

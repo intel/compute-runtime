@@ -496,7 +496,6 @@ HWTEST_F(EnqueueMapImageTest, GivenPtrToReturnEventWhenMappingImageThenEventIsNo
 }
 
 HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThenEventHasCorrectProperties) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     cl_event eventReturned = nullptr;
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
@@ -648,7 +647,6 @@ HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenReadOnlyMapAndUnmapOnNonTil
 }
 
 HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThenSetAllMapProperties) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
     ASSERT_NE(nullptr, image);
     EXPECT_TRUE(image->mappingOnCpuAllowed());
@@ -677,7 +675,6 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThen
 }
 
 HWTEST_F(EnqueueMapImageTest, givenImageWithUseHostPtrFlagWhenMappedOnCpuThenSetAllMapProperties) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
     ASSERT_NE(nullptr, image);
     EXPECT_TRUE(image->mappingOnCpuAllowed());
@@ -789,7 +786,6 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith1DImageIs
 }
 
 TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingCpuMapIsCalledThenReturnRowPitchAndSlicePitch) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
     size_t retImageRowPitch = 0;
@@ -827,7 +823,6 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingCpuMapIsCalledTh
 }
 
 TEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenMappedOnCpuThenReturnImageRowAndSlicePitch) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
     size_t retImageRowPitch = 0;
@@ -847,7 +842,6 @@ TEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenMappedOnCpuThenReturnImageRowA
 }
 
 TEST_F(EnqueueMapImageTest, givenNonZeroCopyImageWhenMappedOnCpuThenReturnHostRowAndSlicePitch) {
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
     size_t retImageRowPitch = 0;
@@ -953,8 +947,6 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
         void transformImage2dArrayTo3d(void *memory) override {}
         void transformImage3dTo2dArray(void *memory) override {}
     };
-
-    REQUIRE_CPU_MEM_ACCESS_OR_SKIP(pDevice->getRootDeviceEnvironment());
 
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
