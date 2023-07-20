@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,6 +84,8 @@ void PageFaultManagerLinux::evictMemoryAfterImplCopy(GraphicsAllocation *allocat
     if (evictMemoryAfterCopy) {
         device->getRootDeviceEnvironment().memoryOperationsInterface->evict(device, *allocation);
     }
-};
+}
+
+void PageFaultManagerLinux::allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver *csr, OSInterface *osInterface) {}
 
 } // namespace NEO

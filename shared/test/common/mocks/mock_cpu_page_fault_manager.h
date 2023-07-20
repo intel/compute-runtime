@@ -48,6 +48,9 @@ class MockPageFaultManager : public PageFaultManager {
         setCpuAllocEvictableCalled++;
         isCpuAllocEvictable = evictable;
     }
+    void allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) override {
+        allowCPUMemoryEvictionCalled++;
+    }
     void baseAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
         PageFaultManager::setAubWritable(writable, ptr, unifiedMemoryManager);
     }
@@ -61,6 +64,8 @@ class MockPageFaultManager : public PageFaultManager {
         PageFaultManager::setCpuAllocEvictable(evictable, ptr, unifiedMemoryManager);
     }
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override {}
+
+    void allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver *csr, OSInterface *osInterface) override {}
 
     void *getHwHandlerAddress() {
         return reinterpret_cast<void *>(PageFaultManager::transferAndUnprotectMemory);
@@ -80,6 +85,7 @@ class MockPageFaultManager : public PageFaultManager {
     int transferToGpuCalled = 0;
     int moveAllocationToGpuDomainCalled = 0;
     int setCpuAllocEvictableCalled = 0;
+    int allowCPUMemoryEvictionCalled = 0;
     void *transferToCpuAddress = nullptr;
     void *transferToGpuAddress = nullptr;
     void *allowedMemoryAccessAddress = nullptr;
