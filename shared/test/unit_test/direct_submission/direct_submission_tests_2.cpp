@@ -1009,7 +1009,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWor
 
         EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
 
-        uint32_t expectedCount = (debugFlag == -1) ? (pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice ? 0 : 2) : static_cast<uint32_t>(debugFlag);
+        uint32_t expectedCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
 
         EXPECT_EQ(initialCounterValue + expectedCount, CpuIntrinsicsTests::sfenceCounter);
     }
@@ -1032,7 +1032,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
 
         EXPECT_TRUE(directSubmission.stopRingBuffer(false));
 
-        uint32_t expectedCount = (debugFlag == -1) ? (pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice ? 0 : 2) : static_cast<uint32_t>(debugFlag);
+        uint32_t expectedCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
 
         EXPECT_EQ(initialCounterValue + expectedCount, CpuIntrinsicsTests::sfenceCounter);
     }

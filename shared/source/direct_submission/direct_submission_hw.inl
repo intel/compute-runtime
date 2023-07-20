@@ -64,7 +64,6 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     if (hwInfo->capabilityTable.isIntegratedDevice) {
         miMemFenceRequired = false;
-        sfenceMode = DirectSubmissionSfenceMode::Disabled;
     } else {
         miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
     }
