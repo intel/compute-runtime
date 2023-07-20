@@ -536,6 +536,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
         isHostIpcAllocation ? InternalMemoryType::HOST_UNIFIED_MEMORY : InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocDataTmp->device = neoDevice;
     allocDataTmp->isImportedAllocation = true;
+    allocDataTmp->setAllocId(this->getSvmAllocsManager()->allocationsCounter++);
     if (flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
@@ -588,6 +589,8 @@ void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_fla
     allocDataTmp->size = alloc->getUnderlyingBufferSize();
     allocDataTmp->memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocDataTmp->device = neoDevice;
+    allocDataTmp->setAllocId(this->getSvmAllocsManager()->allocationsCounter++);
+
     if (flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
@@ -757,6 +760,7 @@ void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, 
     allocData.memoryType =
         isHostIpcAllocation ? InternalMemoryType::HOST_UNIFIED_MEMORY : InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData.device = neoDevice;
+    allocData.setAllocId(this->getSvmAllocsManager()->allocationsCounter++);
 
     this->getSvmAllocsManager()->insertSVMAlloc(allocData);
 

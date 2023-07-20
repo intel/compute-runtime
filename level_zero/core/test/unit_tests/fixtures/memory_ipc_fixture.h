@@ -617,10 +617,8 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
   public:
     MemoryManagerIpcImplicitScalingMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MemoryManager(executionEnvironment) {}
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
-    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override { return nullptr; };
     AllocationStatus populateOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
     void cleanOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
     void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override{};
@@ -701,6 +699,44 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
         return alloc;
     }
 
+    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
+        if (failOnCreateGraphicsAllocationFromNTHandle) {
+            return nullptr;
+        }
+
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
+                                                                  NEO::AllocationType::BUFFER,
+                                                                  ptr,
+                                                                  0x1000,
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
+        alloc->setGpuBaseAddress(0xabcd);
+        return alloc;
+    }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
+        if (failOnCreateGraphicsAllocationFromSharedHandle) {
+            return nullptr;
+        }
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
+                                                                  NEO::AllocationType::BUFFER,
+                                                                  ptr,
+                                                                  0x1000,
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
+        alloc->setGpuBaseAddress(0xabcd);
+        return alloc;
+    }
+
     void freeGraphicsMemory(NEO::GraphicsAllocation *alloc, bool isImportedAllocation) override {
         delete alloc;
     }
@@ -708,6 +744,7 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
     uint64_t sharedHandleAddress = 0x1234;
 
     bool failOnCreateGraphicsAllocationFromSharedHandle = false;
+    bool failOnCreateGraphicsAllocationFromNTHandle = true;
 };
 
 struct MemoryExportImportImplicitScalingTest : public ::testing::Test {
