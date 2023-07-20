@@ -838,7 +838,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWithEmptyWaitlistWhenReleasingMul
 
                 stallingPipeControlFound = true;
                 EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-                EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, rootDeviceEnvironment), pipeControlCmd->getDcFlushEnable());
+                EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
                 break;
             }
         }

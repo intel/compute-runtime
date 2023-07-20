@@ -272,9 +272,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType && !isNonStallingIoqBarrier) {
             setStallingCommandsOnNextFlush(true);
-            if (NEO::DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.get() == 1 && !event && !getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled()) {
-                // skip dcFlush
-            } else {
+            if (NEO::DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.get() == 0 || event || getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled()) {
                 setDcFlushRequiredOnStallingCommandsOnNextFlush(true);
             }
             this->splitBarrierRequired = true;
