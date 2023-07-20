@@ -28,12 +28,6 @@ int ReleaseHelperHw<release>::getProductMaxPreferredSlmSize(int preferredEnumVal
     return std::min(preferredEnumValue, static_cast<int>(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K));
 }
 
-template <>
-bool ReleaseHelperHw<release>::getMediaFrequencyTileIndex(uint32_t &tileIndex) const {
-    tileIndex = 1;
-    return true;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe_lpg.inl"

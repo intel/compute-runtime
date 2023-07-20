@@ -32,9 +32,6 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     const NEO::RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
     }
-    NEO::RootDeviceEnvironment &getRootDeviceEnvironmentRef() const {
-        return *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
-    }
     const NEO::HardwareInfo &getHardwareInfo() const override { return *getRootDeviceEnvironment().getHardwareInfo(); }
     PRODUCT_FAMILY getProductFamily() const { return getHardwareInfo().platform.eProductFamily; }
     NEO::ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }

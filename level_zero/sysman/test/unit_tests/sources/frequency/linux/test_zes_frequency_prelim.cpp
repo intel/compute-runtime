@@ -31,8 +31,6 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
     L0::Sysman::SysmanDevice *device = nullptr;
     std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
     L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
-    std::unique_ptr<ProductHelper> pProductHelper;
-    std::unique_ptr<ProductHelper> pProductHelperOld;
     uint32_t numClocks = 0;
     double step = 0;
     PRODUCT_FAMILY productFamily{};
@@ -42,9 +40,6 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
         device = pSysmanDevice;
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();
-        pProductHelper = std::make_unique<MockProductHelperFreq>();
-        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         productFamily = pLinuxSysmanImp->getProductFamily();
         if (productFamily >= IGFX_XE_HP_SDV) {
@@ -67,12 +62,11 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
             delete handle;
         }
         pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
+        getFreqHandles(0);
     }
 
     void TearDown() override {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
-        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         SysmanDeviceFixture::TearDown();
     }
 
@@ -159,51 +153,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroAndValidPtrWhenEnume
     EXPECT_EQ(handle, static_cast<zes_freq_handle_t>(0UL));
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesAndMediaFreqDomainIsPresentThenNonZeroCountIsReturnedAndCallSucceds) {
-    auto mockProductHelper = std::make_unique<MockProductHelperFreq>();
-    mockProductHelper->isMediaFreqDomainPresent = true;
-    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
-    auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-    std::swap(rootDeviceEnvironment.productHelper, productHelper);
-    uint32_t count = 0U;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(count, 2U);
-
-    uint32_t testCount = count + 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &testCount, nullptr));
-    EXPECT_EQ(count, testCount);
-
-    auto handles = getFreqHandles(count);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-    }
-    std::swap(rootDeviceEnvironment.productHelper, productHelper);
-}
-
-TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesAndMediaDomainIsAbsentThenNonZeroCountIsReturnedAndCallSucceds) {
-    pSysfsAccess->directoryExistsResult = false;
-    auto mockProductHelper = std::make_unique<MockProductHelperFreq>();
-    mockProductHelper->isMediaFreqDomainPresent = true;
-    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
-    auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-    std::swap(rootDeviceEnvironment.productHelper, productHelper);
-    uint32_t count = 0U;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(count, 1U);
-
-    uint32_t testCount = count + 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &testCount, nullptr));
-    EXPECT_EQ(count, testCount);
-
-    auto handles = getFreqHandles(count);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-    }
-    std::swap(rootDeviceEnvironment.productHelper, productHelper);
-}
-
 TEST_F(SysmanDeviceFrequencyFixture, GivenActualComponentCountTwoWhenTryingToGetOneComponentOnlyThenOneComponentIsReturnedAndCountUpdated) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
@@ -225,8 +174,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         zes_freq_properties_t properties;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handle, &properties));
         EXPECT_EQ(nullptr, properties.pNext);
-        EXPECT_GE(properties.type, ZES_FREQ_DOMAIN_GPU);
-        EXPECT_LE(properties.type, ZES_FREQ_DOMAIN_MEDIA);
+        EXPECT_EQ(ZES_FREQ_DOMAIN_GPU, properties.type);
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_DOUBLE_EQ(maxFreq, properties.max);
         EXPECT_DOUBLE_EQ(minFreq, properties.min);
@@ -909,7 +857,6 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
     L0::Sysman::SysmanDevice *device = nullptr;
     std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
     L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
-    std::unique_ptr<ProductHelper> pProductHelper;
 
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
@@ -917,9 +864,6 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
-        pProductHelper = std::make_unique<MockProductHelperFreq>();
-        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         // delete handles created in initial SysmanDeviceHandleContext::init() call
         for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
             delete handle;
@@ -930,8 +874,6 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
 
     void TearDown() override {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
-        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         SysmanMultiDeviceFixture::TearDown();
     }
 

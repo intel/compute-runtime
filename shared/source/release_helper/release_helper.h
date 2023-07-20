@@ -29,7 +29,6 @@ class ReleaseHelper {
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const = 0;
     virtual bool isPrefetchDisablingRequired() const = 0;
     virtual int getProductMaxPreferredSlmSize(int preferredEnumValue) const = 0;
-    virtual bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -48,7 +47,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const override;
     bool isPrefetchDisablingRequired() const override;
     int getProductMaxPreferredSlmSize(int preferredEnumValue) const override;
-    bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const override;
 
   private:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

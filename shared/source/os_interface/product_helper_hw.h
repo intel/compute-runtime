@@ -160,7 +160,6 @@ class ProductHelperHw : public ProductHelper {
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isCachingOnCpuAvailable() const override;
     bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const override;
-    bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const override;
 
     ~ProductHelperHw() override = default;
 

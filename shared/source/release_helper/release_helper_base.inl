@@ -33,9 +33,4 @@ int ReleaseHelperHw<releaseType>::getProductMaxPreferredSlmSize(int preferredEnu
     return preferredEnumValue;
 }
 
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::getMediaFrequencyTileIndex(uint32_t &tileIndex) const {
-    return false;
-}
-
 } // namespace NEO

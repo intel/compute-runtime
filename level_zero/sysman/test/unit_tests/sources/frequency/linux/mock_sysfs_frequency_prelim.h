@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "shared/source/os_interface/product_helper_hw.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/frequency/linux/sysman_os_frequency_imp_prelim.h"
@@ -346,15 +344,6 @@ struct MockFrequencySysfsAccess : public L0::Sysman::SysfsAccess {
 
     MockFrequencySysfsAccess() = default;
     ~MockFrequencySysfsAccess() override = default;
-};
-
-struct MockProductHelperFreq : NEO::ProductHelperHw<IGFX_UNKNOWN> {
-    MockProductHelperFreq() = default;
-    bool isMediaFreqDomainPresent = false;
-    bool getMediaFrequencyTileIndex(const NEO::ReleaseHelper *releaseHelper, uint32_t &tileIndex) const override {
-        tileIndex = 1;
-        return isMediaFreqDomainPresent;
-    }
 };
 
 class PublicLinuxFrequencyImp : public L0::Sysman::LinuxFrequencyImp {
