@@ -68,11 +68,6 @@ bool ProductHelperHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
     if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_C, hwInfo, *this)) {
         return true;

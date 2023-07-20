@@ -74,11 +74,6 @@ bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Mtl;
 };

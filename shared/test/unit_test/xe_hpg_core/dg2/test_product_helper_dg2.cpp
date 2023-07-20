@@ -53,10 +53,6 @@ DG2TEST_F(Dg2ProductHelper, givenSteppingWhenAskingForLocalMemoryAccessModeThenD
     EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
-DG2TEST_F(Dg2ProductHelper, givenDG2ProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(pInHwInfo));
-}
-
 DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
 
     EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
