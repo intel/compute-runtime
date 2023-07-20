@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,13 +15,22 @@
 #include <string>
 
 namespace NEO {
+
+enum class DebugVarPrefix : uint8_t;
+
 class RegistryReader : public SettingsReader {
   public:
     RegistryReader() = delete;
     RegistryReader(bool userScope, const std::string &regKey);
+    bool getSettingIntCommon(const char *settingName, int64_t &value);
+    bool getSettingStringCommon(const char *settingName, std::string &keyValue);
+    int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) override;
     int32_t getSetting(const char *settingName, int32_t defaultValue) override;
+    int64_t getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) override;
     int64_t getSetting(const char *settingName, int64_t defaultValue) override;
+    bool getSetting(const char *settingName, bool defaultValue, DebugVarPrefix &type) override;
     bool getSetting(const char *settingName, bool defaultValue) override;
+    std::string getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) override;
     std::string getSetting(const char *settingName, const std::string &value) override;
     const char *appSpecificLocation(const std::string &name) override;
 
