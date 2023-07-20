@@ -113,6 +113,7 @@ class DrmMockCustom : public Drm {
         uint16_t flags = 0;
 
         uint32_t called = 0u;
+        uint32_t failSpecificCall = 0;
     };
 
     struct IsVmBindAvailableCall {

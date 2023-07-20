@@ -227,6 +227,27 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(-1, mock->context.receivedGemWaitUserFence.timeout);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenFailingIoctlWhenWaitingThenDoEarlyReturn) {
+    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+        GTEST_SKIP();
+    }
+
+    auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testDrmCsr->useUserFenceWait = true;
+    testDrmCsr->useContextForUserFenceWait = false;
+    testDrmCsr->activePartitions = 3u;
+
+    mock->waitUserFenceCall.failSpecificCall = 2;
+
+    FlushStamp handleToWait = 123;
+
+    EXPECT_EQ(0u, mock->waitUserFenceCall.called);
+
+    testDrmCsr->waitForFlushStamp(handleToWait);
+
+    EXPECT_EQ(2u, mock->waitUserFenceCall.called);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBufferObjectsAndTileInstancedSetWhenMakeResidentIsCalledThenTheBufferObjectForDeviceCsrIsMadeResident) {
     if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
         GTEST_SKIP();

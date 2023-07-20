@@ -241,6 +241,10 @@ int DrmMockCustom::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t valu
     waitUserFenceCall.value = value;
     waitUserFenceCall.timeout = timeout;
     waitUserFenceCall.flags = flags;
+
+    if (waitUserFenceCall.called == waitUserFenceCall.failSpecificCall) {
+        return 123;
+    }
     return Drm::waitUserFence(ctxId, address, value, dataWidth, timeout, flags);
 }
 
