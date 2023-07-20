@@ -240,6 +240,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         event->setKernelForPrintf(kernel);
     }
 
+    if (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation) {
+        NEO::PipeControlArgs args;
+        uint64_t counterAddress = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
+
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(),
+                                                                        NEO::PostSyncMode::ImmediateData,
+                                                                        counterAddress,
+                                                                        this->inOrderDependencyCounter + 1,
+                                                                        args);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

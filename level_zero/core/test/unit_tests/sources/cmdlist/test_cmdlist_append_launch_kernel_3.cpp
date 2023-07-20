@@ -1213,6 +1213,90 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
 }
 
+using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramPipeControlWithSignalAllocation, NonPostSyncWalkerMatcher) {
+    using WALKER = typename FamilyType::WALKER_TYPE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderAllocationOffset = 64;
+    immCmdList->inOrderDependencyCounter = 123;
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), pcItor);
+
+    auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+    ASSERT_NE(nullptr, pcCmd);
+
+    uint64_t expectedAddress = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + immCmdList->inOrderAllocationOffset;
+
+    EXPECT_EQ(static_cast<uint32_t>(expectedAddress & 0x0000FFFFFFFFULL), pcCmd->getAddress());
+    EXPECT_EQ(static_cast<uint32_t>(expectedAddress >> 32), pcCmd->getAddressHigh());
+    EXPECT_EQ(static_cast<uint64_t>(immCmdList->inOrderDependencyCounter), pcCmd->getImmediateData());
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pcCmd->getPostSyncOperation());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenProgramPcAndSignalAlloc, NonPostSyncWalkerMatcher) {
+    using WALKER = typename FamilyType::WALKER_TYPE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderAllocationOffset = 64;
+    immCmdList->inOrderDependencyCounter = 123;
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    const size_t ptrBaseSize = 256;
+    const size_t offset = 1;
+
+    void *hostAlloc = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, ptrBaseSize, MemoryConstants::cacheLineSize, &hostAlloc);
+
+    ASSERT_NE(nullptr, hostAlloc);
+
+    auto unalignedPtr = ptrOffset(hostAlloc, offset);
+
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, false, false);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto lastWalkerItor = reverseFind<WALKER *>(cmdList.rbegin(), cmdList.rend());
+    ASSERT_NE(cmdList.rend(), lastWalkerItor);
+
+    auto pcItor = reverseFind<PIPE_CONTROL *>(cmdList.rbegin(), lastWalkerItor);
+    ASSERT_NE(lastWalkerItor, pcItor);
+
+    auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+    ASSERT_NE(nullptr, pcCmd);
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pcCmd->getPostSyncOperation());
+
+    auto sdiItor = reverseFind<MI_STORE_DATA_IMM *>(cmdList.rbegin(), pcItor);
+    ASSERT_NE(pcItor, sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    uint64_t expectedAddress = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + immCmdList->inOrderAllocationOffset;
+
+    EXPECT_EQ(expectedAddress, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->inOrderDependencyCounter, sdiCmd->getDataDword0());
+
+    context->freeMem(hostAlloc);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendSignalEventThenSignalSyncAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
