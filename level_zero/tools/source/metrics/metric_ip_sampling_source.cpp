@@ -88,7 +88,7 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
     // Preparing properties for IP seperately because of unique values
     strcpy_s(metricProperties.name, ZET_MAX_METRIC_NAME, "IP");
     strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, "IP address");
-    metricProperties.metricType = ZET_METRIC_TYPE_IP_EXP;
+    metricProperties.metricType = ZET_METRIC_TYPE_IP;
     strcpy_s(metricProperties.resultUnits, ZET_MAX_METRIC_RESULT_UNITS, "Address");
     metrics.push_back(IpSamplingMetricImp(metricProperties));
 

@@ -128,7 +128,7 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGrou
     };
 
     std::vector<struct MetricProperties> expectedProperties = {
-        {"IP", "IP address", "XVE", 4, ZET_METRIC_TYPE_IP_EXP, ZET_VALUE_TYPE_UINT64, "Address"},
+        {"IP", "IP address", "XVE", 4, ZET_METRIC_TYPE_IP, ZET_VALUE_TYPE_UINT64, "Address"},
         {"Active", "Active cycles", "XVE", 4, ZET_METRIC_TYPE_EVENT, ZET_VALUE_TYPE_UINT64, "Events"},
         {"ControlStall", "Stall on control", "XVE", 4, ZET_METRIC_TYPE_EVENT, ZET_VALUE_TYPE_UINT64, "Events"},
         {"PipeStall", "Stall on pipe", "XVE", 4, ZET_METRIC_TYPE_EVENT, ZET_VALUE_TYPE_UINT64, "Events"},
@@ -218,7 +218,7 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingM
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
 
-        zet_metric_global_timestamps_resolution_exp_t metricTimestampProperties = {ZET_STRUCTURE_TYPE_GLOBAL_METRICS_TIMESTAMPS_EXP_PROPERTIES, nullptr};
+        zet_metric_global_timestamps_resolution_exp_t metricTimestampProperties = {ZET_STRUCTURE_TYPE_METRIC_GLOBAL_TIMESTAMPS_RESOLUTION_EXP, nullptr};
 
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricTimestampProperties};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);

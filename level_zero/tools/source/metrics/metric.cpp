@@ -261,7 +261,7 @@ ze_result_t MetricGroup::getMetricGroupExtendedProperties(MetricSource &metricSo
     while (pNext) {
         zet_base_desc_t *extendedProperties = reinterpret_cast<zet_base_desc_t *>(pNext);
 
-        if (extendedProperties->stype == ZET_STRUCTURE_TYPE_GLOBAL_METRICS_TIMESTAMPS_EXP_PROPERTIES) {
+        if (extendedProperties->stype == ZET_STRUCTURE_TYPE_METRIC_GLOBAL_TIMESTAMPS_RESOLUTION_EXP) {
 
             zet_metric_global_timestamps_resolution_exp_t *metricsTimestampProperties =
                 reinterpret_cast<zet_metric_global_timestamps_resolution_exp_t *>(extendedProperties);
