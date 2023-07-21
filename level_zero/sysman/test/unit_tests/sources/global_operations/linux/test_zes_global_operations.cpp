@@ -729,6 +729,11 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGemCreateIoctlFailsWithEINVALWhenCall
     EXPECT_EQ(0u, deviceState.reset);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceResetExtThenUnsupportedFeatureErrorIsReturned) {
+    ze_result_t result = zesDeviceResetExt(device, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.VfBarResourceAllocationWa.set(false);

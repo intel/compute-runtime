@@ -41,7 +41,7 @@ class SysmanDeviceEngineFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
 
-    std::vector<zes_engine_handle_t> get_engine_handles(uint32_t count) {
+    std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {
         std::vector<zes_engine_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -98,7 +98,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenUnsupportedEngineHandleWhenGettingEngineA
 }
 
 TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetPropertiesThenCorrectEngineGroupIsReturned) {
-    auto handles = get_engine_handles(engineHandleComponentCount);
+    auto handles = getEngineHandles(engineHandleComponentCount);
     uint32_t engineGroupIndex = 0;
     for (auto handle : handles) {
         zes_engine_properties_t properties = {};
@@ -113,7 +113,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetPropertiesThenCorrectEngine
 }
 
 TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetAvtivityThenCorrectValuesAreReturned) {
-    auto handles = get_engine_handles(engineHandleComponentCount);
+    auto handles = getEngineHandles(engineHandleComponentCount);
     uint32_t engineGroupIndex = 0;
     for (auto handle : handles) {
         zes_engine_stats_t stats;
@@ -127,8 +127,16 @@ TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetAvtivityThenCorrectValuesAr
     }
 }
 
+TEST_F(SysmanDeviceEngineFixture, GivenValidHandleWhenCallingZesEngineGetActivityExtThenUnsupportedFeatureErrorIsReturned) {
+    auto handles = getEngineHandles(engineHandleComponentCount);
+    for (auto handle : handles) {
+        zes_engine_stats_t stats;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, nullptr, &stats));
+    }
+}
+
 TEST_F(SysmanDeviceEngineFixture, GivenValidHandleWhenGettingEngineActivityAndRequestSingleFailsThenFailureIsReturned) {
-    auto handles = get_engine_handles(engineHandleComponentCount);
+    auto handles = getEngineHandles(engineHandleComponentCount);
     for (auto handle : handles) {
         pKmdSysManager->mockRequestSingle = true;
         pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

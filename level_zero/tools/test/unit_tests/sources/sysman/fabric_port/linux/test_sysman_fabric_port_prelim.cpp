@@ -196,6 +196,30 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortG
     }
 }
 
+TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersThenUnsupportedFeatureErrorIsReturned) {
+    uint32_t count = pMockIafNlApi->numPorts;
+    ASSERT_LE(count, maxNumPorts);
+    zes_fabric_port_handle_t hPorts[maxNumPorts];
+    ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, pMockIafNlApi->numPorts);
+
+    for (auto i = 0U; i < count; i++) {
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFabricPortGetFabricErrorCounters(hPorts[i], nullptr));
+    }
+}
+
+TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetMultiPortThroughputThenUnsupportedFeatureErrorIsReturned) {
+    uint32_t count = pMockIafNlApi->numPorts;
+    ASSERT_LE(count, maxNumPorts);
+    zes_fabric_port_handle_t hPorts[maxNumPorts];
+    ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFabricPortGetMultiPortThroughput(device, count, hPorts, nullptr));
+}
+
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortGetConfigThenZesFabricPortGetConfigCallSucceeds) {
     uint32_t count = pMockIafNlApi->numPorts;
     ASSERT_LE(count, maxNumPorts);

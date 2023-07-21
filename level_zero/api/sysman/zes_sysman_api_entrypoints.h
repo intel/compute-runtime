@@ -1416,6 +1416,57 @@ ze_result_t zesDeviceEnumOverclockDomains(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t zesDeviceResetExt(
+    zes_device_handle_t hDevice,
+    zes_reset_properties_t *pProperties) {
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceResetExt(hDevice, pProperties);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::deviceResetExt(hDevice, pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesEngineGetActivityExt(
+    zes_engine_handle_t hEngine,
+    uint32_t *pCount,
+    zes_engine_stats_t *pStats) {
+    if (L0::sysmanInitFromCore) {
+        return L0::Engine::fromHandle(hEngine)->engineGetActivityExt(pCount, pStats);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Engine::fromHandle(hEngine)->engineGetActivityExt(pCount, pStats);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesFabricPortGetFabricErrorCounters(
+    zes_fabric_port_handle_t hPort,
+    zes_fabric_port_error_counters_t *pErrors) {
+    if (L0::sysmanInitFromCore) {
+        return L0::FabricPort::fromHandle(hPort)->fabricPortGetErrorCounters(pErrors);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetErrorCounters(pErrors);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesFabricPortGetMultiPortThroughput(
+    zes_device_handle_t hDevice,
+    uint32_t numPorts,
+    zes_fabric_port_handle_t *phPort,
+    zes_fabric_port_throughput_t **pThroughput) {
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::fabricPortGetMultiportThroughput(hDevice, numPorts, phPort, pThroughput);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::fabricPortGetMultiportThroughput(hDevice, numPorts, phPort, pThroughput);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 } // namespace L0
 
 extern "C" {
@@ -2531,5 +2582,43 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumOverclockDomains(
         hDevice,
         pCount,
         phDomainHandle);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceResetExt(
+    zes_device_handle_t hDevice,
+    zes_reset_properties_t *pProperties) {
+    return L0::zesDeviceResetExt(
+        hDevice,
+        pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesEngineGetActivityExt(
+    zes_engine_handle_t hEngine,
+    uint32_t *pCount,
+    zes_engine_stats_t *pStats) {
+    return L0::zesEngineGetActivityExt(
+        hEngine,
+        pCount,
+        pStats);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesFabricPortGetFabricErrorCounters(
+    zes_fabric_port_handle_t hPort,
+    zes_fabric_port_error_counters_t *pErrors) {
+    return L0::zesFabricPortGetFabricErrorCounters(
+        hPort,
+        pErrors);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesFabricPortGetMultiPortThroughput(
+    zes_device_handle_t hDevice,
+    uint32_t numPorts,
+    zes_fabric_port_handle_t *phPort,
+    zes_fabric_port_throughput_t **pThroughput) {
+    return L0::zesFabricPortGetMultiPortThroughput(
+        hDevice,
+        numPorts,
+        phPort,
+        pThroughput);
 }
 }

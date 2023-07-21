@@ -12,6 +12,8 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+constexpr auto maxNumPorts = 32u;
+
 class SysmanFabricPortFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<L0::Sysman::FabricDeviceImp> pFabricDevice;
@@ -55,6 +57,17 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingFabricPortG
 TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingFabricPortGetLinkTupeThenFailureIsReturned) {
     zes_fabric_link_type_t pLinkType = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFabricPortImp->fabricPortGetLinkType(&pLinkType));
+}
+
+TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingFabricPortErrorCountersThenUnsupportedFeatureErrorIsReturned) {
+    zes_fabric_port_error_counters_t pErrorType = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFabricPortImp->fabricPortGetErrorCounters(&pErrorType));
+}
+
+TEST_F(SysmanFabricPortFixture, GivenDeviceHandleWhenCallingzesFabricPortGetMultiPortThroughputThenUnsupportedFeatureErrorIsReturned) {
+    uint32_t count = 0;
+    zes_fabric_port_handle_t hPorts[maxNumPorts];
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFabricPortGetMultiPortThroughput(pSysmanDevice->toHandle(), count, hPorts, nullptr));
 }
 
 } // namespace ult

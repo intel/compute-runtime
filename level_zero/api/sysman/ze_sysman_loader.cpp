@@ -65,6 +65,7 @@ zesGetDeviceProcAddrTable(
     pDdiTable->pfnResetOverclockSettings = L0::zesDeviceResetOverclockSettings;
     pDdiTable->pfnReadOverclockState = L0::zesDeviceReadOverclockState;
     pDdiTable->pfnEnumOverclockDomains = L0::zesDeviceEnumOverclockDomains;
+    pDdiTable->pfnResetExt = L0::zesDeviceResetExt;
 
     return result;
 }
@@ -135,6 +136,7 @@ zesGetEngineProcAddrTable(
 
     pDdiTable->pfnGetProperties = L0::zesEngineGetProperties;
     pDdiTable->pfnGetActivity = L0::zesEngineGetActivity;
+    pDdiTable->pfnGetActivityExt = L0::zesEngineGetActivityExt;
 
     return result;
 }
@@ -156,6 +158,8 @@ zesGetFabricPortProcAddrTable(
     pDdiTable->pfnSetConfig = L0::zesFabricPortSetConfig;
     pDdiTable->pfnGetState = L0::zesFabricPortGetState;
     pDdiTable->pfnGetThroughput = L0::zesFabricPortGetThroughput;
+    pDdiTable->pfnGetFabricErrorCounters = L0::zesFabricPortGetFabricErrorCounters;
+    pDdiTable->pfnGetMultiPortThroughput = L0::zesFabricPortGetMultiPortThroughput;
 
     return result;
 }

@@ -19,6 +19,7 @@ class EngineImp : public Engine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t engineGetProperties(zes_engine_properties_t *pProperties) override;
     ze_result_t engineGetActivity(zes_engine_stats_t *pStats) override;
+    ze_result_t engineGetActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;
 
     EngineImp() = default;
     EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
