@@ -18,6 +18,8 @@
 namespace L0 {
 namespace Sysman {
 
+class SysmanKmdInterface;
+
 class SysfsAccess;
 class PlatformMonitoringTech;
 class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
@@ -33,7 +35,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) override;
 
     bool isPowerModuleSupported() override;
-    bool isHwmonDir(std::string name);
+    bool isIntelGraphicsHwmonDir(const std::string &name);
     ze_result_t getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy);
     LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxPowerImp() = default;
@@ -42,16 +44,13 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
 
   private:
-    std::string i915HwmonDir;
-    std::string criticalPowerLimit;
-    static const std::string hwmonDir;
-    static const std::string i915;
-    static const std::string sustainedPowerLimit;
-    static const std::string sustainedPowerLimitInterval;
-    static const std::string energyCounterNode;
-    static const std::string defaultPowerLimit;
+    std::string intelGraphicsHwmonDir = {};
+    std::string criticalPowerLimit = {};
+    std::string sustainedPowerLimit = {};
+    std::string sustainedPowerLimitInterval = {};
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;

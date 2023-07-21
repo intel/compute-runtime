@@ -7,6 +7,8 @@
 
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
@@ -19,11 +21,14 @@ using NEO::PrelimI915::I915_SAMPLE_BUSY;
 std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(const NEO::Drm &drm) {
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
     auto drmVersion = drm.getDrmVersion(drm.getFileDescriptor());
+    auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
+    const auto productFamily = pHwInfo->platform.eProductFamily;
     if ("xe" == drmVersion) {
-        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>();
+        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(productFamily);
     } else {
-        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>();
+        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(productFamily);
     }
+
     return pSysmanKmdInterface;
 }
 
@@ -35,7 +40,7 @@ std::string SysmanKmdInterfaceXe::getBasePath(int subDeviceId) const {
     return "device/gt" + std::to_string(subDeviceId) + "/";
 }
 
-void SysmanKmdInterfaceI915::initSysfsNameToFileMap() {
+void SysmanKmdInterfaceI915::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
     sysfsNameToFileMap[SysfsName::sysfsNameMinFrequency] = std::make_pair("rps_min_freq_mhz", "gt_min_freq_mhz");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxFrequency] = std::make_pair("rps_max_freq_mhz", "gt_max_freq_mhz");
     sysfsNameToFileMap[SysfsName::sysfsNameMinDefaultFrequency] = std::make_pair(".defaults/rps_min_freq_mhz", "");
@@ -52,9 +57,14 @@ void SysmanKmdInterfaceI915::initSysfsNameToFileMap() {
     sysfsNameToFileMap[SysfsName::sysfsNameThrottleReasonPL2] = std::make_pair("throttle_reason_pl2", "gt_throttle_reason_status_pl2");
     sysfsNameToFileMap[SysfsName::sysfsNameThrottleReasonPL4] = std::make_pair("throttle_reason_pl4", "gt_throttle_reason_status_pl4");
     sysfsNameToFileMap[SysfsName::sysfsNameThrottleReasonThermal] = std::make_pair("throttle_reason_thermal", "gt_throttle_reason_status_thermal");
+    sysfsNameToFileMap[SysfsName::sysfsNameSustainedPowerLimit] = std::make_pair("", "power1_max");
+    sysfsNameToFileMap[SysfsName::sysfsNameSustainedPowerLimitInterval] = std::make_pair("", "power1_max_interval");
+    sysfsNameToFileMap[SysfsName::sysfsNameEnergyCounterNode] = std::make_pair("", "energy1_input");
+    sysfsNameToFileMap[SysfsName::sysfsNameDefaultPowerLimit] = std::make_pair("", "power1_rated_max");
+    sysfsNameToFileMap[SysfsName::sysfsNameCriticalPowerLimit] = std::make_pair("", (productFamily == IGFX_PVC) ? "curr1_crit" : "power1_crit");
 }
 
-void SysmanKmdInterfaceXe::initSysfsNameToFileMap() {
+void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
     sysfsNameToFileMap[SysfsName::sysfsNameMinFrequency] = std::make_pair("rps_min_freq_mhz", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxFrequency] = std::make_pair("rps_max_freq_mhz", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMinDefaultFrequency] = std::make_pair(".defaults/rps_min_freq_mhz", "");
@@ -71,6 +81,11 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap() {
     sysfsNameToFileMap[SysfsName::sysfsNameThrottleReasonPL2] = std::make_pair("throttle_reason_pl2", "");
     sysfsNameToFileMap[SysfsName::sysfsNameThrottleReasonPL4] = std::make_pair("throttle_reason_pl4", "");
     sysfsNameToFileMap[SysfsName::sysfsNameThrottleReasonThermal] = std::make_pair("throttle_reason_thermal", "");
+    sysfsNameToFileMap[SysfsName::sysfsNameSustainedPowerLimit] = std::make_pair("", "power1_max");
+    sysfsNameToFileMap[SysfsName::sysfsNameSustainedPowerLimitInterval] = std::make_pair("", "power1_max_interval");
+    sysfsNameToFileMap[SysfsName::sysfsNameEnergyCounterNode] = std::make_pair("", "energy1_input");
+    sysfsNameToFileMap[SysfsName::sysfsNameDefaultPowerLimit] = std::make_pair("", "power1_rated_max");
+    sysfsNameToFileMap[SysfsName::sysfsNameCriticalPowerLimit] = std::make_pair("", (productFamily == IGFX_PVC) ? "curr1_crit" : "power1_crit");
 }
 
 std::string SysmanKmdInterfaceI915::getSysfsFilePath(SysfsName sysfsName, int subDeviceId, bool baseDirectoryExists) {
@@ -109,6 +124,16 @@ int64_t SysmanKmdInterfaceI915::getEngineActivityFd(zes_engine_group_t engineGro
 
 int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
     return -1;
+}
+
+std::string SysmanKmdInterfaceI915::getHwmonName(int subDeviceId, bool isSubdevice) const {
+    std::string filePath = isSubdevice ? "i915_gt" + std::to_string(subDeviceId) : "i915";
+    return filePath;
+}
+
+std::string SysmanKmdInterfaceXe::getHwmonName(int subDeviceId, bool isSubdevice) const {
+    std::string filePath = isSubdevice ? "xe_tile" + std::to_string(subDeviceId) : "xe";
+    return filePath;
 }
 
 } // namespace Sysman

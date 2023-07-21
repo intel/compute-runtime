@@ -9,6 +9,8 @@
 
 #include <level_zero/zes_api.h>
 
+#include "igfxfmid.h"
+
 #include <map>
 #include <memory>
 
@@ -64,6 +66,11 @@ enum class SysfsName {
     sysfsNameThrottleReasonPL2,
     sysfsNameThrottleReasonPL4,
     sysfsNameThrottleReasonThermal,
+    sysfsNameSustainedPowerLimit,
+    sysfsNameSustainedPowerLimitInterval,
+    sysfsNameEnergyCounterNode,
+    sysfsNameDefaultPowerLimit,
+    sysfsNameCriticalPowerLimit,
 };
 
 class SysmanKmdInterface {
@@ -74,34 +81,37 @@ class SysmanKmdInterface {
     virtual std::string getBasePath(int subDeviceId) const = 0;
     virtual std::string getSysfsFilePath(SysfsName sysfsName, int subDeviceId, bool baseDirectoryExists) = 0;
     virtual int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) = 0;
+    virtual std::string getHwmonName(int subDeviceId, bool isSubdevice) const = 0;
 };
 
 class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
   public:
-    SysmanKmdInterfaceI915() { initSysfsNameToFileMap(); }
+    SysmanKmdInterfaceI915(const PRODUCT_FAMILY productFamily) { initSysfsNameToFileMap(productFamily); }
     ~SysmanKmdInterfaceI915() override = default;
 
     std::string getBasePath(int subDeviceId) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, int subDeviceId, bool baseDirectoryExists) override;
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
+    std::string getHwmonName(int subDeviceId, bool isSubdevice) const override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
-    void initSysfsNameToFileMap();
+    void initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily);
 };
 
 class SysmanKmdInterfaceXe : public SysmanKmdInterface {
   public:
-    SysmanKmdInterfaceXe() { initSysfsNameToFileMap(); }
+    SysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) { initSysfsNameToFileMap(productFamily); }
     ~SysmanKmdInterfaceXe() override = default;
 
     std::string getBasePath(int subDeviceId) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, int subDeviceId, bool baseDirectoryExists) override;
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
+    std::string getHwmonName(int subDeviceId, bool isSubdevice) const override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
-    void initSysfsNameToFileMap();
+    void initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily);
 };
 
 } // namespace Sysman

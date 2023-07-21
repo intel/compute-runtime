@@ -111,7 +111,7 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenKmdInterfaceWhenGettingFilenamesForFrequencyFilesForI915VersionAndBaseDirectoryExistsThenProperPathsAreReturned) {
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>();
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(device->getNEODevice()->getHardwareInfo().platform.eProductFamily);
     bool baseDirectoryExists = true;
     EXPECT_STREQ("gt/gt1/rps_min_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, 1, baseDirectoryExists).c_str());
     EXPECT_STREQ("gt/gt1/rps_max_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, 1, baseDirectoryExists).c_str());
@@ -132,7 +132,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenKmdInterfaceWhenGettingFilenamesForFre
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenKmdInterfaceWhenGettingFilenamesForFrequencyFilesForXeVersionAndBaseDirectoryExistsThenProperPathsAreReturned) {
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>();
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(device->getNEODevice()->getHardwareInfo().platform.eProductFamily);
     bool baseDirectoryExists = true;
     EXPECT_STREQ("device/gt1/rps_min_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, 1, baseDirectoryExists).c_str());
     EXPECT_STREQ("device/gt1/rps_max_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, 1, baseDirectoryExists).c_str());
