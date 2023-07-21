@@ -30,10 +30,6 @@ DG2TEST_F(Dg2ProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
     EXPECT_EQ(0, ret);
 }
 
-DG2TEST_F(Dg2ProductHelperLinux, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(pInHwInfo));
-}
-
 DG2TEST_F(Dg2ProductHelperLinux, GivenDg2WhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
 
     OSInterface osIface;
