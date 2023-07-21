@@ -643,8 +643,8 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
 
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOnNotSignaledEventThenWait, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     ze_event_handle_t eventHandle = event->toHandle();
 
@@ -655,8 +655,8 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitO
 
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOnAlreadySignaledEventThenDontWait, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.dcFlushSupport = false;
     event->hostSignal();
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus());

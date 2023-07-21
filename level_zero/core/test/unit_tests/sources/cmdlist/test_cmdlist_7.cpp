@@ -2238,8 +2238,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebug
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenLockPtr, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     NEO::SvmAllocationData *allocData;
     device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
@@ -2254,8 +2254,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyD2HThenLockPtr, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     NEO::SvmAllocationData *allocData;
     device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
@@ -2273,8 +2273,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllo
 
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = false;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     void *devicePtr2 = nullptr;
@@ -2302,8 +2302,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmT
 
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = false;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     void *hostPtr = nullptr;
@@ -2328,8 +2328,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmT
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DAndDstPtrLockedThenDontLockAgain, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     NEO::SvmAllocationData *allocData;
     device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
@@ -2345,8 +2345,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenUseMemcpyAndReturnSuccess, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     memset(nonUsmHostPtr, 1, 1024);
 
@@ -2364,8 +2364,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndNonUsmHostPtrWhenCopyH2DThenSignalEvent, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -2388,8 +2388,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndCpuMemcpyWhenGpuHangThenDontSynchronizeEvent, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->callBaseWaitForCompletionWithTimeout = false;
     reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
 
@@ -2415,8 +2415,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithoutBarrierThenDontWaitForTagUpdate, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
@@ -2428,8 +2428,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithBarrierThenWaitForTagUpdate, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     cmdList.appendBarrier(nullptr, 0, nullptr);
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
@@ -2442,8 +2442,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierThenSetDependenciesPresent, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
 
@@ -2460,8 +2460,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrier
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEventsThenSetDependenciesPresent, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2518,8 +2518,8 @@ class MockAppendMemoryLockedCopyTestImmediateCmdList : public MockCommandListImm
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrWhenCopyH2DThenUseCpuMemcpy, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *usmSrcPtr;
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 1024, 1u, &usmSrcPtr);
@@ -2531,8 +2531,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrW
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmDstHostPtrWhenCopyThenUseGpuMemcpy, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *usmHostDstPtr;
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 1024, 1u, &usmHostDstPtr);
@@ -2544,8 +2544,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmDstHostPtrW
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrWhenCopyThenUseGpuMemcpy, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *usmHostSrcPtr;
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 1024, 1u, &usmHostSrcPtr);
@@ -2557,24 +2557,24 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrW
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmSrcHostPtrWhenSizeTooLargeThenUseGpuMemcpy, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 5 * MemoryConstants::megaByte, nullptr, 0, nullptr, false, false);
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmDstHostPtrWhenSizeTooLargeThenUseGpuMemcpy, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, false, false);
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPtrThenUseGpuMemcpy, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1 * MemoryConstants::megaByte, nullptr, 0, nullptr, false, false);
     ASSERT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
@@ -2595,8 +2595,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPt
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
     DebugManager.flags.ExperimentalD2HCpuCopyThreshold.set(2048);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
@@ -2605,16 +2605,16 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSiz
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
     DebugManager.flags.ExperimentalH2DCpuCopyThreshold.set(3 * MemoryConstants::megaByte);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 3 * MemoryConstants::megaByte, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyThenAppendBarrierCalled, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     constexpr uint32_t numEvents = 5;
 
@@ -2644,8 +2644,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
     DebugManagerStateRestore restore;
 
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     constexpr uint32_t numEvents = 4;
 
@@ -2680,16 +2680,16 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithoutDependencyThenAppendBarrierNotCalled, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(cmdList.appendBarrierCalled, 0u);
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagSetWhenCpuMemcpyThenSetCorrectGpuTimestamps, IsAtLeastSkl) {
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     neoDevice->setOSTime(new NEO::MockOSTimeWithConstTimestamp());
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2722,8 +2722,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagN
         using EventImp<uint32_t>::gpuEndTimestamp;
     };
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     neoDevice->setOSTime(new NEO::MockOSTimeWithConstTimestamp());
 
     ze_event_pool_desc_t eventPoolDesc = {};
