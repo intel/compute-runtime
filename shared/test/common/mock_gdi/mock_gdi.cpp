@@ -7,8 +7,12 @@
 
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+
+#include <map>
 
 ADAPTER_INFO_KMD gAdapterInfo{};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg{};
@@ -139,6 +143,17 @@ NTSTATUS __stdcall mockD3DKMTCreateAllocation(IN OUT D3DKMT_CREATEALLOCATION *al
     return STATUS_INVALID_PARAMETER;
 }
 
+std::map<D3DKMT_HANDLE, void *> staticStorageMap;
+std::map<D3DKMT_HANDLE, void *> userPtrMap;
+
+constexpr uint32_t numStaticStorages = 128;
+constexpr uint32_t singleStorageSize = 8 * 64 * 1024;
+uint8_t staticStorages[(numStaticStorages + 1) * singleStorageSize]{};
+inline void *getStaticStorage(uint32_t slot) {
+    auto baseAddress = alignUp(staticStorages, 64 * 1024);
+    return ptrOffset(baseAddress, slot * singleStorageSize);
+}
+
 NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
     D3DDDI_ALLOCATIONINFO2 *allocationInfo;
     int numOfAllocations;
@@ -164,7 +179,30 @@ NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *a
 
     for (int i = 0; i < numOfAllocations; ++i) {
         if (allocationInfo != NULL) {
-            allocationInfo->hAllocation = ALLOCATION_HANDLE;
+            if (createResource || globalShare) {
+                allocationInfo->hAllocation = ALLOCATION_HANDLE;
+            } else {
+                static uint32_t handleIdForStaticStorage = 1u;
+                static uint32_t handleIdForUserPtr = ALLOCATION_HANDLE + 1u;
+                if (allocationInfo->pSystemMem) {
+                    userPtrMap.insert({handleIdForUserPtr, const_cast<void *>(allocationInfo->pSystemMem)});
+                    allocationInfo->hAllocation = handleIdForUserPtr;
+                    handleIdForUserPtr++;
+                    if (handleIdForUserPtr == 2 * ALLOCATION_HANDLE) {
+                        handleIdForUserPtr = ALLOCATION_HANDLE + 1;
+                    }
+                } else {
+                    if (staticStorageMap.size() >= numStaticStorages) {
+                        return STATUS_NO_MEMORY;
+                    }
+                    staticStorageMap.insert({handleIdForStaticStorage, getStaticStorage(handleIdForStaticStorage % numStaticStorages)});
+                    allocationInfo->hAllocation = handleIdForStaticStorage;
+                    handleIdForStaticStorage++;
+                    if (handleIdForStaticStorage == ALLOCATION_HANDLE) {
+                        handleIdForStaticStorage = 1;
+                    }
+                }
+            }
         }
         allocationInfo++;
     }
@@ -194,8 +232,12 @@ NTSTATUS __stdcall mockD3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATIO
     allocationList = destroyAllocation->phAllocationList;
 
     for (int i = 0; i < numOfAllocations; ++i) {
-        if (allocationList != NULL) {
-            if (*allocationList != ALLOCATION_HANDLE) {
+        if (allocationList != NULL && *allocationList != ALLOCATION_HANDLE) {
+            if (userPtrMap.find(*allocationList) != userPtrMap.end()) {
+                userPtrMap.erase(*allocationList);
+            } else if (staticStorageMap.find(*allocationList) != staticStorageMap.end()) {
+                staticStorageMap.erase(*allocationList);
+            } else {
                 return STATUS_UNSUCCESSFUL;
             }
         }
@@ -223,7 +265,7 @@ NTSTATUS __stdcall mockD3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADD
     if (mapGpuVA->hPagingQueue != PAGINGQUEUE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
-    if (mapGpuVA->hAllocation != ALLOCATION_HANDLE && mapGpuVA->hAllocation != NT_ALLOCATION_HANDLE) {
+    if (userPtrMap.find(mapGpuVA->hAllocation) == userPtrMap.end() && staticStorageMap.find(mapGpuVA->hAllocation) == staticStorageMap.end() && mapGpuVA->hAllocation != ALLOCATION_HANDLE && mapGpuVA->hAllocation != NT_ALLOCATION_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
     if (mapGpuVA->MinimumAddress != 0) {
@@ -426,11 +468,18 @@ NTSTATUS __stdcall mockD3DKMTQueryResourceInfoFromNtHandle(IN OUT D3DKMT_QUERYRE
 }
 
 NTSTATUS __stdcall mockD3DKMTLock2(IN OUT D3DKMT_LOCK2 *lock2) {
-    if (lock2->hAllocation == 0 || lock2->hDevice == 0) {
+    auto handle = lock2->hAllocation;
+    if (lock2->hDevice == 0) {
         return STATUS_INVALID_PARAMETER;
     }
-    lock2->pData = (void *)65536;
-    return STATUS_SUCCESS;
+    if (userPtrMap.find(handle) != userPtrMap.end()) {
+        lock2->pData = userPtrMap[handle];
+        return STATUS_SUCCESS;
+    } else if (staticStorageMap.find(handle) != staticStorageMap.end()) {
+        lock2->pData = staticStorageMap[handle];
+        return STATUS_SUCCESS;
+    }
+    return STATUS_INVALID_PARAMETER;
 }
 
 NTSTATUS __stdcall mockD3DKMTUnlock2(IN CONST D3DKMT_UNLOCK2 *unlock2) {

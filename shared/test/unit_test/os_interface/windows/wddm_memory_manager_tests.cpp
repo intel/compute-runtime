@@ -630,6 +630,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryWithPropertiesCal
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -775,6 +777,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocate32BitGraphicsM
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMThen4KBGraphicsAllocationIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -1213,6 +1217,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaI
     EXPECT_EQ(lastRequiredAddress, wddm->mapGpuVirtualAddressResult.uint64ParamPassed);
     EXPECT_GT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_SVM));
     EXPECT_LT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_SVM));
+
+    wddm->destroyAllocation(&allocation, nullptr);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysicalAllocationIsCalledThenAllocationSuccess) {
@@ -1230,6 +1236,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysical
     memoryManager->createPhysicalAllocation(&allocation);
     EXPECT_EQ(0ull, allocation.getGpuAddress());
     EXPECT_EQ(0u, wddm->mapGpuVirtualAddressResult.called);
+    wddm->destroyAllocation(&allocation, nullptr);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysicalAllocationIsCalledThenFailureReturned) {
@@ -2803,6 +2810,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
     allocation.setDefaultGmm(gmm.get());
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
+    wddm->destroyAllocation(&allocation, nullptr);
 }
 
 TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAndMapGpuVaFailSecondAfterDrainFailThenFailToCreateAllocation) {

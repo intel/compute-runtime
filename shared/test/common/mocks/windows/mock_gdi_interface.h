@@ -63,7 +63,7 @@ class MockGdi : public Gdi {
 
     static NTSTATUS __stdcall destroyAllocation2Mock(IN CONST D3DKMT_DESTROYALLOCATION2 *arg) {
         getDestroyArg() = *arg;
-        return 0;
+        return mockD3DKMTDestroyAllocation2(arg);
     }
 
     static NTSTATUS __stdcall waitFromCpuMock(IN CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *arg) {

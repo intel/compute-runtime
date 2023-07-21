@@ -504,6 +504,8 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafDisabledWhenFlushIsCalledWithAll
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
 
     EXPECT_FALSE(wddm->isKmDafEnabled());
+    wddm->kmDafLockResult.called = 0;
+    wddm->kmDafLockResult.lockedAllocations.clear();
     csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
@@ -520,6 +522,8 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithoutA
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     wddm->setKmDafEnabled(true);
+    wddm->kmDafLockResult.called = 0;
+    wddm->kmDafLockResult.lockedAllocations.clear();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
@@ -542,6 +546,8 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResi
     EXPECT_EQ(linearStreamAllocation, csr->getResidencyAllocations()[0]);
 
     wddm->setKmDafEnabled(true);
+    wddm->kmDafLockResult.called = 0;
+    wddm->kmDafLockResult.lockedAllocations.clear();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
@@ -563,6 +569,8 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
 
     wddm->setKmDafEnabled(true);
+    wddm->kmDafLockResult.called = 0;
+    wddm->kmDafLockResult.lockedAllocations.clear();
     csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
@@ -584,6 +592,8 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     ResidencyContainer allocationsForResidency = {fillPatternAllocation};
 
     wddm->setKmDafEnabled(true);
+    wddm->kmDafLockResult.called = 0;
+    wddm->kmDafLockResult.lockedAllocations.clear();
     csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
@@ -605,6 +615,8 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     ResidencyContainer allocationsForResidency = {commandBufferAllocation};
 
     wddm->setKmDafEnabled(true);
+    wddm->kmDafLockResult.called = 0;
+    wddm->kmDafLockResult.lockedAllocations.clear();
     csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
@@ -626,6 +638,8 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     ResidencyContainer allocationsForResidency = {nonLinearStreamAllocation};
 
     wddm->setKmDafEnabled(true);
+    wddm->kmDafLockResult.called = 0;
+    wddm->kmDafLockResult.lockedAllocations.clear();
     csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
@@ -938,6 +952,12 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
     expectedHandles.push_back(static_cast<WddmAllocation *>(iohAlloc)->getDefaultHandle());
     expectedHandles.push_back(static_cast<WddmAllocation *>(sshAlloc)->getDefaultHandle());
     expectedHandles.push_back(static_cast<WddmAllocation *>(csrCommandStream)->getDefaultHandle());
+    if (csr->getGlobalFenceAllocation()) {
+        expectedHandles.push_back(static_cast<WddmAllocation *>(csr->getGlobalFenceAllocation())->getDefaultHandle());
+    }
+    if (csr->getKernelArgsBufferAllocation()) {
+        expectedHandles.push_back(static_cast<WddmAllocation *>(csr->getKernelArgsBufferAllocation())->getDefaultHandle());
+    }
 
     for (auto i = 0u; i < wddm->makeResidentResult.handleCount; i++) {
         auto handle = wddm->makeResidentResult.handlePack[i];

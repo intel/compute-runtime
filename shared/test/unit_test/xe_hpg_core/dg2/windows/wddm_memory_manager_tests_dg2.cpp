@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
@@ -20,6 +21,8 @@ using namespace NEO;
 using Dg2WddmTest = ::testing::Test;
 
 DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initGmm();

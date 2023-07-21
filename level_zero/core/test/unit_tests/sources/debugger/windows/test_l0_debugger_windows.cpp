@@ -33,6 +33,7 @@ namespace ult {
 
 struct L0DebuggerWindowsFixture {
     void setUp() {
+        DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
         executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
@@ -65,6 +66,7 @@ struct L0DebuggerWindowsFixture {
     void tearDown() {
     }
 
+    DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;

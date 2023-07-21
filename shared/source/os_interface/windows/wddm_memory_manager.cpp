@@ -1259,9 +1259,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     auto handles = wddmAllocation->getHandles();
 
     if (!wddm.setAllocationPriority(handles.data(), static_cast<UINT>(handles.size()), getPriorityForAllocation(allocationData.type))) {
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
-            delete wddmAllocation->getGmm(handleId);
-        }
+        freeGraphicsMemory(wddmAllocation.release());
         status = AllocationStatus::Error;
         return nullptr;
     }
@@ -1351,9 +1349,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     auto handles = wddmAllocation->getHandles();
 
     if (!wddm.setAllocationPriority(handles.data(), static_cast<UINT>(handles.size()), getPriorityForAllocation(allocationData.type))) {
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
-            delete wddmAllocation->getGmm(handleId);
-        }
+        freeGraphicsMemory(wddmAllocation.release());
         status = AllocationStatus::Error;
         return nullptr;
     }

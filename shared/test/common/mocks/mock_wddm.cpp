@@ -153,7 +153,7 @@ bool WddmMock::destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext)
         resourceHandle = alloc->resourceHandle;
     } else {
         allocationHandles = &alloc->getHandles()[0];
-        allocationCount = 1;
+        allocationCount = static_cast<uint32_t>(alloc->getHandles().size());
     }
     auto success = destroyAllocations(allocationHandles, allocationCount, resourceHandle);
     ::alignedFree(alloc->getDriverAllocatedCpuPtr());

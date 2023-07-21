@@ -325,6 +325,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmS
 
     uint64_t expectedSizeInPages = static_cast<uint64_t>(mockResourceInfo->getSizeAllocation() / MemoryConstants::pageSize);
     EXPECT_EQ(expectedSizeInPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
+    wddm->destroyAllocation(&allocation, nullptr);
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenInvalidCpuAddressWhenCheckingForGpuHangThenFalseIsReturned) {
@@ -406,8 +407,6 @@ TEST_F(Wddm20Tests, WhenMappingAndFreeingGpuVaThenReturnIsCorrect) {
 }
 
 TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
-    OsAgnosticMemoryManager mm(*executionEnvironment);
-
     WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper()));
 
@@ -422,8 +421,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     EXPECT_EQ(allocation.getGpuAddress(), gmmHelper->canonize(allocation.getGpuAddress()));
-
-    mm.freeSystemMemory(allocation.getUnderlyingBuffer());
+    wddm->destroyAllocation(&allocation, nullptr);
 }
 
 TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenCreateResourceFlagIsEnabled) {
@@ -436,6 +434,7 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenCreateResou
     auto passedCreateAllocation = getMockAllocationFcn();
     EXPECT_EQ(TRUE, passedCreateAllocation->Flags.CreateShared);
     EXPECT_EQ(TRUE, passedCreateAllocation->Flags.CreateResource);
+    wddm->destroyAllocation(&allocation, nullptr);
 }
 
 TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandleAndResourceHandleAreSet) {
@@ -861,7 +860,7 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
     wddm->destroyAllocation(&allocation, osContext.get());
 
     EXPECT_EQ(wddm->getDeviceHandle(), gdi->getDestroyArg().hDevice);
-    EXPECT_EQ(1u, gdi->getDestroyArg().AllocationCount);
+    EXPECT_EQ(static_cast<uint32_t>(allocation.getHandles().size()), gdi->getDestroyArg().AllocationCount);
     EXPECT_NE(nullptr, gdi->getDestroyArg().phAllocationList);
 }
 
