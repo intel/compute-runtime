@@ -430,7 +430,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTimestampWaitSupport
     EXPECT_FALSE(productHelper->isTimestampWaitSupportedForEvents());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned, IsNotPVC) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned, IsNotXeHpgOrXeHpcCore) {
     EXPECT_TRUE(productHelper->isTlbFlushRequired());
 }
 
