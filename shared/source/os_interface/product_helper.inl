@@ -69,7 +69,7 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const {
+bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled) const {
     constexpr bool enabled = false;
     return enabled;
 }

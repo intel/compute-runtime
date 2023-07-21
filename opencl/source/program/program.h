@@ -259,6 +259,9 @@ class Program : public BaseObject<_cl_program> {
         std::unique_lock<std::mutex> lock{lockMutex};
         return 0 != exposedKernels;
     }
+    bool getCreatedFromBinary() const {
+        return isCreatedFromBinary;
+    }
 
     const ExecutionEnvironment &getExecutionEnvironment() const { return executionEnvironment; }
 

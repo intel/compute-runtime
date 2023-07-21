@@ -1029,8 +1029,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     residencyContainer.insert(residencyContainer.end(), kernelImmData->getResidencyContainer().begin(),
                               kernelImmData->getResidencyContainer().end());
-
-    bool detectIndirectAccessInKernel = productHelper.isDetectIndirectAccessInKernelSupported(kernelDescriptor);
+    ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
+    bool detectIndirectAccessInKernel = productHelper.isDetectIndirectAccessInKernelSupported(kernelDescriptor, moduleImp->isPrecompiled());
     if (NEO::DebugManager.flags.DetectIndirectAccessInKernel.get() != -1) {
         detectIndirectAccessInKernel = NEO::DebugManager.flags.DetectIndirectAccessInKernel.get() == 1;
     }

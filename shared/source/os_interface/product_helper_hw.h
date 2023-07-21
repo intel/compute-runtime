@@ -118,7 +118,7 @@ class ProductHelperHw : public ProductHelper {
     bool isBufferPoolAllocatorSupported() const override;
     bool isTlbFlushRequired() const override;
     bool isDummyBlitWaRequired() const override;
-    bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const override;
+    bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled) const override;
     bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const override;
     bool isTranslationExceptionSupported() const override;
     uint32_t getMaxNumSamplers() const override;

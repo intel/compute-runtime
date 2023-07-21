@@ -86,7 +86,7 @@ struct ModuleTranslationUnit {
 
     NEO::specConstValuesMap specConstantsValues;
     bool isBuiltIn{false};
-    bool isGeneratedByIgc = true;
+    bool isGeneratedByIgc{true};
 };
 
 struct ModuleImp : public Module {
@@ -143,6 +143,8 @@ struct ModuleImp : public Module {
 
     bool isSPIRv() { return builtFromSPIRv; }
 
+    bool isPrecompiled() { return precompiled; }
+
     bool shouldAllocatePrivateMemoryPerDispatch() const override {
         return allocatePrivateMemoryPerDispatch;
     }
@@ -194,6 +196,7 @@ struct ModuleImp : public Module {
     bool isZebinBinary = false;
     bool isFunctionSymbolExportEnabled = false;
     bool isGlobalSymbolExportEnabled = false;
+    bool precompiled = false;
     ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
