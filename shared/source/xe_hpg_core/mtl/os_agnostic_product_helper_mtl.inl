@@ -103,6 +103,11 @@ bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
     const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
     if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
