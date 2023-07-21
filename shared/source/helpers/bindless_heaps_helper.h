@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/heap_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 #include <memory>
 #include <mutex>
@@ -17,13 +18,6 @@
 namespace NEO {
 
 class IndirectHeap;
-class GraphicsAllocation;
-
-struct SurfaceStateInHeapInfo {
-    GraphicsAllocation *heapAllocation;
-    uint64_t surfaceStateOffset;
-    void *ssPtr;
-};
 
 class BindlessHeapsHelper {
   public:
@@ -54,15 +48,14 @@ class BindlessHeapsHelper {
     }
 
   protected:
-    void growHeap(BindlesHeapType heapType);
+    bool growHeap(BindlesHeapType heapType);
     MemoryManager *memManager = nullptr;
     bool isMultiOsContextCapable = false;
     const uint32_t rootDeviceIndex;
     std::unique_ptr<IndirectHeap> surfaceStateHeaps[BindlesHeapType::NUM_HEAP_TYPES];
     GraphicsAllocation *borderColorStates;
     std::vector<GraphicsAllocation *> ssHeapsAllocations;
-    std::vector<std::unique_ptr<SurfaceStateInHeapInfo>> surfaceStateInHeapVectorReuse;
-    std::unordered_map<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> surfaceStateInHeapAllocationMap;
+    std::vector<SurfaceStateInHeapInfo> surfaceStateInHeapVectorReuse;
     std::mutex mtx;
     DeviceBitfield deviceBitfield;
     bool globalBindlessDsh = false;

@@ -1009,6 +1009,22 @@ OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, Devi
     return defaultContext;
 }
 
+bool MemoryManager::allocateBindlessSlot(GraphicsAllocation *allocation) {
+    auto bindlessHelper = peekExecutionEnvironment().rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getBindlessHeapsHelper();
+
+    if (bindlessHelper && allocation->getBindlessOffset() == std::numeric_limits<uint64_t>::max()) {
+        auto &gfxCoreHelper = peekExecutionEnvironment().rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getHelper<GfxCoreHelper>();
+        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+        auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+        if (surfaceStateInfo.heapAllocation == nullptr) {
+            return false;
+        }
+        allocation->setBindlessInfo(surfaceStateInfo);
+    }
+    return true;
+}
+
 bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize) {
     if (useBlitter) {
         if (BlitHelperFunctions::blitMemoryToAllocation(device, dstAllocation, dstOffset, srcMemory, {srcSize, 1, 1}) == BlitOperationResult::Success) {

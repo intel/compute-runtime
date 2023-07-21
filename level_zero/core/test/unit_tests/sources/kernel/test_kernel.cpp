@@ -13,6 +13,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
@@ -24,6 +25,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -2018,6 +2020,8 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
     auto expectedSsInHeap = device->getNEODevice()->getBindlessHeapsHelper()->allocateSSInHeap(size, &alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+    alloc.setBindlessInfo(expectedSsInHeap);
+
     auto patchLocation = ptrOffset(kernel.getCrossThreadData(), bindless);
     auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(expectedSsInHeap.surfaceStateOffset));
 
@@ -2054,6 +2058,7 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessT
 
     NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
     auto expectedSsInHeap = device->getNEODevice()->getBindlessHeapsHelper()->allocateSSInHeap(size, &mockAllocation, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+    mockAllocation.setBindlessInfo(expectedSsInHeap);
 
     memset(expectedSsInHeap.ssPtr, 0, size);
     auto surfaceStateBefore = *reinterpret_cast<RENDER_SURFACE_STATE *>(expectedSsInHeap.ssPtr);
@@ -2089,6 +2094,7 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulTh
 
     NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
     auto expectedSsInHeap = device->getNEODevice()->getBindlessHeapsHelper()->allocateSSInHeap(size, &mockAllocation, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+    mockAllocation.setBindlessInfo(expectedSsInHeap);
 
     memset(expectedSsInHeap.ssPtr, 0, size);
     auto surfaceStateBefore = *reinterpret_cast<RENDER_SURFACE_STATE *>(expectedSsInHeap.ssPtr);
@@ -2125,6 +2131,7 @@ HWTEST2_F(KernelImpL3CachingTests, GivenKernelImpWhenSetSurfaceStateWithUnaligne
 
     NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
     auto expectedSsInHeap = device->getNEODevice()->getBindlessHeapsHelper()->allocateSSInHeap(size, &mockAllocation, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+    mockAllocation.setBindlessInfo(expectedSsInHeap);
 
     memset(expectedSsInHeap.ssPtr, 0, size);
     mockKernel.setBufferSurfaceState(0, buffer, &mockAllocation);
@@ -2444,20 +2451,85 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfac
     imageArg.bindful = undefined<SurfaceStateHeapOffset>;
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
     auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();
     auto ret = imageHW->initialize(device, &desc);
     auto handle = imageHW->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto expectedSsInHeap = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->allocateSSInHeap(surfaceStateSize, imageHW->getAllocation(), BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
-
+    auto expectedSsInHeap = imageHW->getAllocation()->getBindlessInfo();
     EXPECT_EQ(imageHW->passedSurfaceStateHeap, expectedSsInHeap.ssPtr);
     EXPECT_EQ(imageHW->passedSurfaceStateOffset, 0u);
+}
+
+HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgImageCalledThenOutOfMemoryErrorReturned, ImageSupport) {
+    createKernel();
+
+    auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    auto bindlessHelper = new MockBindlesHeapsHelper(mockMemManager,
+                                                     neoDevice->getNumGenericSubDevices() > 1,
+                                                     neoDevice->getRootDeviceIndex(),
+                                                     neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    auto handle = imageHW->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    mockMemManager->failInDevicePool = true;
+    mockMemManager->failAllocateSystemMemory = true;
+    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
+
+    ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
+
+    auto bindlessInfo = imageHW->getAllocation()->getBindlessInfo();
+    EXPECT_EQ(nullptr, bindlessInfo.ssPtr);
+    EXPECT_EQ(nullptr, bindlessInfo.heapAllocation);
+}
+
+HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgBufferCalledThenOutOfMemoryErrorReturned, MatchAny) {
+
+    auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    auto bindlessHelper = new MockBindlesHeapsHelper(mockMemManager,
+                                                     neoDevice->getNumGenericSubDevices() > 1,
+                                                     neoDevice->getRootDeviceIndex(),
+                                                     neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
+    mockKernel.module = module.get();
+    mockKernel.initialize(&desc);
+    auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
+    arg.bindless = 0x40;
+    arg.bindful = undefined<SurfaceStateHeapOffset>;
+
+    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    auto allocationProperties = NEO::SVMAllocsManager::SvmAllocationProperties{};
+    auto svmAllocation = svmAllocsManager->createSVMAlloc(4096, allocationProperties, context->rootDeviceIndices, context->deviceBitfields);
+
+    mockMemManager->failInDevicePool = true;
+    mockMemManager->failAllocateSystemMemory = true;
+    auto ret = mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
+
+    svmAllocsManager->freeSVMAlloc(svmAllocation);
 }
 
 HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {

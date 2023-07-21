@@ -561,6 +561,13 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
 
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, val);
     if (NEO::isValidOffset(arg.bindful) || NEO::isValidOffset(arg.bindless)) {
+
+        if (NEO::isValidOffset(arg.bindless)) {
+            if (!this->module->getDevice()->getNEODevice()->getMemoryManager()->allocateBindlessSlot(allocation)) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+        }
+
         setBufferSurfaceState(argIndex, reinterpret_cast<void *>(val), allocation);
     }
     NEO::SvmAllocationData *allocData = nullptr;
@@ -710,7 +717,22 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     const auto image = Image::fromHandle(*static_cast<const ze_image_handle_t *>(argVal));
 
     if (kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode == NEO::KernelDescriptor::Bindless) {
-        image->copySurfaceStateToSSH(patchBindlessSurfaceState(image->getAllocation(), arg.bindless), 0u, isMediaBlockImage);
+
+        NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
+        if (bindlessHeapsHelper) {
+
+            if (!this->module->getDevice()->getNEODevice()->getMemoryManager()->allocateBindlessSlot(image->getAllocation())) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+
+            auto ssPtr = patchBindlessSurfaceState(image->getAllocation(), arg.bindless);
+            image->copySurfaceStateToSSH(ssPtr, 0u, isMediaBlockImage);
+        } else {
+            auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
+            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+            auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
+            image->copySurfaceStateToSSH(ssPtr, 0u, isMediaBlockImage);
+        }
     } else {
         image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful, isMediaBlockImage);
     }
@@ -1069,19 +1091,18 @@ void KernelImp::setDebugSurface() {
                                  *device->getNEODevice(), getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, device->isImplicitScalingCapable());
     }
 }
+
 void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
-    NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
-    UNRECOVERABLE_IF(bindlessHeapsHelper == nullptr);
+    auto ssInHeap = alloc->getBindlessInfo();
 
-    auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
     this->residencyContainer.push_back(ssInHeap.heapAllocation);
     auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
     auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
     patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
     return ssInHeap.ssPtr;
 }
+
 void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint32_t z) {
     const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
     auto dst = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);

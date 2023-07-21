@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,39 +54,35 @@ GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size
 
 SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) {
     auto heap = surfaceStateHeaps[heapType].get();
+
+    std::lock_guard<std::mutex> autolock(this->mtx);
     if (heapType == BindlesHeapType::GLOBAL_SSH) {
-        auto ssAllocatedInfo = surfaceStateInHeapAllocationMap.find(surfaceAllocation);
-        if (ssAllocatedInfo != surfaceStateInHeapAllocationMap.end()) {
-            return *ssAllocatedInfo->second.get();
-        } else {
-            std::lock_guard<std::mutex> autolock(this->mtx);
-            if (surfaceStateInHeapVectorReuse.size()) {
-                SurfaceStateInHeapInfo surfaceStateFromVector = *(surfaceStateInHeapVectorReuse.back());
-                surfaceStateInHeapVectorReuse.pop_back();
-                std::pair<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> pair(surfaceAllocation, std::make_unique<SurfaceStateInHeapInfo>(surfaceStateFromVector));
-                surfaceStateInHeapAllocationMap.insert(std::move(pair));
-                return surfaceStateFromVector;
-            }
+
+        if (surfaceStateInHeapVectorReuse.size()) {
+            SurfaceStateInHeapInfo surfaceStateFromVector = surfaceStateInHeapVectorReuse.back();
+            surfaceStateInHeapVectorReuse.pop_back();
+            return surfaceStateFromVector;
         }
     }
     void *ptrInHeap = getSpaceInHeap(ssSize, heapType);
-    memset(ptrInHeap, 0, ssSize);
-    auto bindlessOffset = heap->getGraphicsAllocation()->getGpuAddress() - heap->getGraphicsAllocation()->getGpuBaseAddress() + heap->getUsed() - ssSize;
-    SurfaceStateInHeapInfo bindlesInfo;
-    if (heapType == BindlesHeapType::GLOBAL_SSH) {
-        std::pair<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> pair(surfaceAllocation, std::make_unique<SurfaceStateInHeapInfo>(SurfaceStateInHeapInfo{heap->getGraphicsAllocation(), bindlessOffset, ptrInHeap}));
-        bindlesInfo = *pair.second;
-        surfaceStateInHeapAllocationMap.insert(std::move(pair));
-    } else {
+    SurfaceStateInHeapInfo bindlesInfo = {nullptr, 0, nullptr};
+
+    if (ptrInHeap) {
+        memset(ptrInHeap, 0, ssSize);
+        auto bindlessOffset = heap->getGraphicsAllocation()->getGpuAddress() - heap->getGraphicsAllocation()->getGpuBaseAddress() + heap->getUsed() - ssSize;
+
         bindlesInfo = SurfaceStateInHeapInfo{heap->getGraphicsAllocation(), bindlessOffset, ptrInHeap};
     }
+
     return bindlesInfo;
 }
 
 void *BindlessHeapsHelper::getSpaceInHeap(size_t ssSize, BindlesHeapType heapType) {
     auto heap = surfaceStateHeaps[heapType].get();
     if (heap->getAvailableSpace() < ssSize) {
-        growHeap(heapType);
+        if (!growHeap(heapType)) {
+            return nullptr;
+        }
     }
     return heap->getSpace(ssSize);
 }
@@ -106,23 +102,26 @@ IndirectHeap *BindlessHeapsHelper::getHeap(BindlesHeapType heapType) {
     return surfaceStateHeaps[heapType].get();
 }
 
-void BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
+bool BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
     auto heap = surfaceStateHeaps[heapType].get();
     auto allocInFrontWindow = heapType != BindlesHeapType::GLOBAL_DSH;
     auto newAlloc = getHeapAllocation(globalSshAllocationSize, MemoryConstants::pageSize64k, allocInFrontWindow);
-    UNRECOVERABLE_IF(newAlloc == nullptr);
+    DEBUG_BREAK_IF(newAlloc == nullptr);
+    if (newAlloc == nullptr) {
+        return false;
+    }
     ssHeapsAllocations.push_back(newAlloc);
     heap->replaceGraphicsAllocation(newAlloc);
     heap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
                         newAlloc->getUnderlyingBufferSize());
+    return true;
 }
 
 void BindlessHeapsHelper::placeSSAllocationInReuseVectorOnFreeMemory(GraphicsAllocation *gfxAllocation) {
-    auto ssAllocatedInfo = surfaceStateInHeapAllocationMap.find(gfxAllocation);
-    if (ssAllocatedInfo != surfaceStateInHeapAllocationMap.end()) {
+    auto ssAllocatedInfo = gfxAllocation->getBindlessInfo();
+    if (ssAllocatedInfo.heapAllocation != nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
-        surfaceStateInHeapVectorReuse.push_back(std::move(ssAllocatedInfo->second));
-        surfaceStateInHeapAllocationMap.erase(ssAllocatedInfo);
+        surfaceStateInHeapVectorReuse.push_back(std::move(ssAllocatedInfo));
     }
     return;
 }

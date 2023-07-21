@@ -123,6 +123,7 @@ void GraphicsAllocation::prepareHostPtrForResidency(CommandStreamReceiver *csr) 
 uint32_t GraphicsAllocation::getNumHandlesForKmdSharedAllocation(uint32_t numBanks) {
     return (numBanks > 1) && (DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() != 0) ? numBanks : 1u;
 }
+
 constexpr TaskCountType GraphicsAllocation::objectNotUsed;
 constexpr TaskCountType GraphicsAllocation::objectNotResident;
 constexpr TaskCountType GraphicsAllocation::objectAlwaysResident;

@@ -35,6 +35,7 @@ constexpr auto nonSharedResource = 0u;
 class Gmm;
 class MemoryManager;
 class CommandStreamReceiver;
+class GraphicsAllocation;
 
 struct AubInfo {
     uint32_t aubWritable = std::numeric_limits<uint32_t>::max();
@@ -43,6 +44,12 @@ struct AubInfo {
     bool bcsDumpOnly = false;
     bool memObjectsAllocationWithWritableFlags = false;
     bool writeMemoryOnly = false;
+};
+
+struct SurfaceStateInHeapInfo {
+    GraphicsAllocation *heapAllocation;
+    uint64_t surfaceStateOffset;
+    void *ssPtr;
 };
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
@@ -286,6 +293,21 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return residency;
     }
 
+    uint64_t getBindlessOffset() {
+        if (bindlessInfo.heapAllocation == nullptr) {
+            return std::numeric_limits<uint64_t>::max();
+        }
+        return bindlessInfo.surfaceStateOffset;
+    }
+
+    void setBindlessInfo(const SurfaceStateInHeapInfo &info) {
+        bindlessInfo = info;
+    }
+
+    SurfaceStateInHeapInfo getBindlessInfo() {
+        return bindlessInfo;
+    }
+
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
 
@@ -341,6 +363,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     AubInfo aubInfo;
     SharingInfo sharingInfo;
     ReservedAddressRange reservedAddressRangeInfo;
+    SurfaceStateInHeapInfo bindlessInfo = {nullptr, 0, nullptr};
 
     uint64_t allocationOffset = 0u;
     uint64_t gpuBaseAddress = 0;

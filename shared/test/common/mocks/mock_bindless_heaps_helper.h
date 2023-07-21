@@ -29,7 +29,6 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     using BaseClass::rootDeviceIndex;
     using BaseClass::ssHeapsAllocations;
     using BaseClass::surfaceStateHeaps;
-    using BaseClass::surfaceStateInHeapAllocationMap;
     using BaseClass::surfaceStateInHeapVectorReuse;
 
     IndirectHeap *specialSsh;
