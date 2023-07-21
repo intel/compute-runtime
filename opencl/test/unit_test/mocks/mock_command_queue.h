@@ -254,6 +254,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::bcsEngines;
     using BaseClass::bcsQueueEngineType;
     using BaseClass::bcsStates;
+    using BaseClass::bcsTimestampPacketContainers;
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;

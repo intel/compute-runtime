@@ -289,6 +289,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         if (isMarkerWithPostSyncWrite) {
+            setStallingCommandsOnNextFlush(true);
             flushDependenciesForNonKernelCommand = true;
         }
 

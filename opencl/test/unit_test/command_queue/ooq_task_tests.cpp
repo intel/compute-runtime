@@ -8,9 +8,11 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 using namespace NEO;
 
@@ -407,4 +409,24 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsAndMultiTileContext
 
     EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
     EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
+}
+
+HWTEST_F(OOQTaskTests, givenEnqueueMarkerWithWaitListWhenIsMarkerWithPostSyncWriteThenBcsTimestapLastBarrierToWaitForIsNotEmpty) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        GTEST_SKIP();
+    }
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pClDevice, nullptr));
+
+    cmdQ->setProfilingEnabled();
+    cmdQ->setOoqEnabled();
+    cl_event event;
+    auto retVal = cmdQ->enqueueMarkerWithWaitList(
+        0,
+        nullptr,
+        &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(cmdQ->bcsTimestampPacketContainers[0].lastBarrierToWaitFor.peekNodes().empty());
+    clReleaseEvent(event);
 }
