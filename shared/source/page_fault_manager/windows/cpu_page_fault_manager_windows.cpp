@@ -7,12 +7,7 @@
 
 #include "shared/source/page_fault_manager/windows/cpu_page_fault_manager_windows.h"
 
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/os_context_win.h"
 
 namespace NEO {
 std::unique_ptr<PageFaultManager> PageFaultManager::create() {
@@ -60,17 +55,5 @@ void PageFaultManagerWindows::protectCPUMemoryAccess(void *ptr, size_t size) {
 }
 
 void PageFaultManagerWindows::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {}
-
-void PageFaultManagerWindows::allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver *csr, OSInterface *osInterface) {
-    NEO::SvmAllocationData *allocData = memoryData[ptr].unifiedMemoryManager->getSVMAlloc(ptr);
-    UNRECOVERABLE_IF(allocData == nullptr);
-
-    if (osInterface) {
-        auto &residencyController = static_cast<OsContextWin *>(&csr->getOsContext())->getResidencyController();
-
-        auto lock = residencyController.acquireLock();
-        residencyController.addToTrimCandidateList(allocData->cpuAllocation);
-    }
-}
 
 } // namespace NEO
