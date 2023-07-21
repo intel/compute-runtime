@@ -3510,7 +3510,7 @@ TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
     const auto mockCsr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
 
     EXPECT_EQ(event->csrs[0], defaultCsr);
-    event->setCsr(mockCsr.get());
+    event->setCsr(mockCsr.get(), false);
     EXPECT_EQ(event->csrs[0], mockCsr.get());
 
     event->reset();

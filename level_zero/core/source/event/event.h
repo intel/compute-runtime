@@ -141,7 +141,11 @@ struct Event : _ze_event_handle_t {
     bool isUsingContextEndOffset() const {
         return isTimestampEvent || usingContextEndOffset;
     }
-    void setCsr(NEO::CommandStreamReceiver *csr) {
+    void setCsr(NEO::CommandStreamReceiver *csr, bool clearPreviousCsrs) {
+        if (clearPreviousCsrs) {
+            this->csrs.clear();
+            this->csrs.resize(1);
+        }
         this->csrs[0] = csr;
     }
     void appendAdditionalCsr(NEO::CommandStreamReceiver *additonalCsr) {

@@ -677,6 +677,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         using EventImp<uint32_t>::inOrderExecDataAllocation;
         using EventImp<uint32_t>::inOrderExecSignalValue;
         using EventImp<uint32_t>::inOrderAllocationOffset;
+        using EventImp<uint32_t>::csrs;
     };
 
     void SetUp() override {
@@ -1041,6 +1042,22 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentC
     EXPECT_NE(immCmdList1->inOrderDependencyCounterAllocation->getGpuAddress(), immCmdList2->inOrderDependencyCounterAllocation->getGpuAddress());
     EXPECT_EQ(immCmdList1->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenClearEventCsrList, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    UltCommandStreamReceiver<FamilyType> tempCsr(*device->getNEODevice()->getExecutionEnvironment(), 0, 1);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    events[0]->csrs.clear();
+    events[0]->csrs.push_back(&tempCsr);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(1u, events[0]->csrs.size());
+    EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, events[0]->csrs[0]);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleDependencyCounter, IsAtLeastXeHpCore) {

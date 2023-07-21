@@ -882,7 +882,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     }
 
     if (signalEvent) {
-        signalEvent->setCsr(this->csr);
+        signalEvent->setCsr(this->csr, isInOrderExecutionEnabled());
 
         if (isInOrderExecutionEnabled()) {
             signalEvent->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
