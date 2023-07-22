@@ -84,6 +84,8 @@ void PageFaultManagerLinux::evictMemoryAfterImplCopy(GraphicsAllocation *allocat
     if (evictMemoryAfterCopy) {
         device->getRootDeviceEnvironment().memoryOperationsInterface->evict(device, *allocation);
     }
-};
+}
+
+void PageFaultManagerLinux::allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) {}
 
 } // namespace NEO

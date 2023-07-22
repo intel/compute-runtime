@@ -783,6 +783,43 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidPtrAndPageFaultHandlerAndGpuDo
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(CommandListMemAdvisePageFault, givenUnifiedMemoryAllocWhenAllowCPUMemoryEvictionIsCalledThenSelectCorrectCsrWithOsContextForEviction) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto res = context->allocSharedMem(device->toHandle(),
+                                       &deviceDesc,
+                                       &hostDesc,
+                                       size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>((L0::Device::fromHandle(device)));
+
+    NEO::PageFaultManager::PageFaultData pageData;
+    pageData.cmdQ = deviceImp;
+
+    mockPageFaultManager->baseAllowCPUMemoryEviction(ptr, pageData);
+    EXPECT_EQ(mockPageFaultManager->allowCPUMemoryEvictionImplCalled, 1);
+
+    CommandStreamReceiver *csr = nullptr;
+    if (deviceImp->getActiveDevice()->getInternalCopyEngine()) {
+        csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
+    } else {
+        csr = deviceImp->getActiveDevice()->getInternalEngine().commandStreamReceiver;
+    }
+    ASSERT_NE(csr, nullptr);
+
+    EXPECT_EQ(mockPageFaultManager->engineType, csr->getOsContext().getEngineType());
+    EXPECT_EQ(mockPageFaultManager->engineUsage, csr->getOsContext().getEngineUsage());
+
+    res = context->freeMem(ptr);
+    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+}
+
 TEST_F(CommandListCreate, givenValidPtrThenAppendMemoryPrefetchReturnsSuccess) {
     size_t size = 10;
     size_t alignment = 1u;
