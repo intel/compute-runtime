@@ -69,9 +69,9 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForCmd
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList());
 }
 
-XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForPlatformSupportsImmediateFlushTaskThenReturnFalse) {
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForPlatformSupportsImmediateFlushTaskThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
 }
 
 } // namespace ult
