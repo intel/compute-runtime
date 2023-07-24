@@ -237,7 +237,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMa
         allocData.makeGPUVaDifferentThanCPUPtr = true;
         auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
-        if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+        if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && is64bit) {
             EXPECT_FALSE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
         } else {
             EXPECT_TRUE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
@@ -494,7 +494,7 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
 
 TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGettingPreferredAllocationMethodThenValueFlagIsReturned) {
     DebugManagerStateRestore restorer;
-    EXPECT_EQ(preferredAllocationMethod, MockWddmMemoryManager::getPreferredAllocationMethod());
+    EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, MockWddmMemoryManager::getPreferredAllocationMethod());
 
     for (const auto &allocationMethod : {GfxMemoryAllocationMethod::UseUmdSystemPtr, GfxMemoryAllocationMethod::AllocateByKmd}) {
         DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(allocationMethod));

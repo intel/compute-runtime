@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-const GfxMemoryAllocationMethod preferredAllocationMethod = GfxMemoryAllocationMethod::UseUmdSystemPtr;
+const GfxMemoryAllocationMethod preferredAllocationMethod = GfxMemoryAllocationMethod::AllocateByKmd;
 
 size_t WddmMemoryManager::getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const {
     return 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k;
