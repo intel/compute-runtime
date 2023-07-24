@@ -113,7 +113,6 @@ void PageFaultManager::transferAndUnprotectMemory(PageFaultManager *pageFaultHan
     pageFaultHandler->migrateStorageToCpuDomain(allocPtr, pageFaultData);
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
     pageFaultHandler->setCpuAllocEvictable(true, allocPtr, pageFaultData.unifiedMemoryManager);
-    pageFaultHandler->allowCPUMemoryEviction(allocPtr, pageFaultData);
 }
 
 void PageFaultManager::unprotectAndTransferMemory(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {

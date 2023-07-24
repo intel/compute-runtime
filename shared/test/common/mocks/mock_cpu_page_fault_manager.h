@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/os_interface/os_context.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 using namespace NEO;
@@ -51,9 +48,6 @@ class MockPageFaultManager : public PageFaultManager {
         setCpuAllocEvictableCalled++;
         isCpuAllocEvictable = evictable;
     }
-    void allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) override {
-        allowCPUMemoryEvictionCalled++;
-    }
     void baseAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
         PageFaultManager::setAubWritable(writable, ptr, unifiedMemoryManager);
     }
@@ -66,16 +60,7 @@ class MockPageFaultManager : public PageFaultManager {
     void baseCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
         PageFaultManager::setCpuAllocEvictable(evictable, ptr, unifiedMemoryManager);
     }
-    void baseAllowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) {
-        PageFaultManager::allowCPUMemoryEviction(ptr, pageFaultData);
-    }
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override {}
-
-    void allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override {
-        allowCPUMemoryEvictionImplCalled++;
-        engineType = csr.getOsContext().getEngineType();
-        engineUsage = csr.getOsContext().getEngineUsage();
-    }
 
     void *getHwHandlerAddress() {
         return reinterpret_cast<void *>(PageFaultManager::transferAndUnprotectMemory);
@@ -95,8 +80,6 @@ class MockPageFaultManager : public PageFaultManager {
     int transferToGpuCalled = 0;
     int moveAllocationToGpuDomainCalled = 0;
     int setCpuAllocEvictableCalled = 0;
-    int allowCPUMemoryEvictionCalled = 0;
-    int allowCPUMemoryEvictionImplCalled = 0;
     void *transferToCpuAddress = nullptr;
     void *transferToGpuAddress = nullptr;
     void *allowedMemoryAccessAddress = nullptr;
@@ -106,8 +89,6 @@ class MockPageFaultManager : public PageFaultManager {
     size_t protectedSize = 0;
     bool isAubWritable = true;
     bool isCpuAllocEvictable = true;
-    aub_stream::EngineType engineType = aub_stream::EngineType::NUM_ENGINES;
-    EngineUsage engineUsage = EngineUsage::EngineUsageCount;
 };
 
 template <class T>

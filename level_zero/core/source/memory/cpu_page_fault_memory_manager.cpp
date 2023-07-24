@@ -6,8 +6,6 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -41,20 +39,6 @@ void PageFaultManager::transferToGpu(void *ptr, void *device) {
     UNRECOVERABLE_IF(ret);
 
     this->evictMemoryAfterImplCopy(allocData->cpuAllocation, deviceImp->getNEODevice());
-}
-void PageFaultManager::allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) {
-    L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);
-
-    CommandStreamReceiver *csr = nullptr;
-    if (deviceImp->getActiveDevice()->getInternalCopyEngine()) {
-        csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
-    } else {
-        csr = deviceImp->getActiveDevice()->getInternalEngine().commandStreamReceiver;
-    }
-    UNRECOVERABLE_IF(csr == nullptr);
-    auto osInterface = deviceImp->getNEODevice()->getRootDeviceEnvironment().osInterface.get();
-
-    allowCPUMemoryEvictionImpl(ptr, *csr, osInterface);
 }
 } // namespace NEO
 
