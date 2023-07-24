@@ -23,7 +23,9 @@
 #include "shared/test/common/libult/create_command_stream.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
@@ -1185,4 +1187,93 @@ TEST_F(WddmResidencyControllerWithMockWddmMakeResidentTest, givenMakeResidentFai
 
     EXPECT_TRUE(result);
     EXPECT_EQ(3u, wddm->makeResidentResult.called);
+}
+
+TEST_F(WddmResidencyControllerTest, GivenResidencyLoggingEnabledWhenTrimResidencyCalledThenExpectLogData) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+    wddm->callBaseCreatePagingLogger = false;
+    wddm->callBaseMakeResident = true;
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
+    ASSERT_NE(nullptr, logger);
+
+    D3DKMT_TRIMNOTIFICATION trimNotification = {0};
+    trimNotification.Flags.PeriodicTrim = 1;
+    trimNotification.NumBytesToTrim = 0;
+
+    std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+    residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+
+    int64_t timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(logger->callbackStartSave - now).count();
+    EXPECT_LE(0, timeDiff);
+    EXPECT_EQ(trimNotification.Flags.Value, logger->callbackFlagSave);
+    EXPECT_EQ(residencyController, logger->controllerObjectSave);
+
+    // 2 - one for open log, second for trim callback
+    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
+}
+
+TEST_F(WddmResidencyControllerWithGdiTest, GivenResidencyLoggingEnabledWhenTrimmingToBudgetThenExpectLogData) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+    wddm->callBaseCreatePagingLogger = false;
+    wddm->callBaseMakeResident = true;
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
+    ASSERT_NE(nullptr, logger);
+
+    gdi->setNonZeroNumBytesToTrimInEvict();
+
+    MockWddmAllocation allocation1(rootDeviceEnvironment->getGmmHelper());
+    MockWddmAllocation allocation2(rootDeviceEnvironment->getGmmHelper());
+    MockWddmAllocation allocation3(rootDeviceEnvironment->getGmmHelper());
+
+    allocation1.getResidencyData().resident[osContextId] = true;
+    allocation1.getResidencyData().updateCompletionData(0, osContextId);
+
+    allocation2.getResidencyData().updateCompletionData(1, osContextId);
+    allocation2.getResidencyData().resident[osContextId] = true;
+
+    allocation3.getResidencyData().updateCompletionData(2, osContextId);
+    allocation3.getResidencyData().resident[osContextId] = true;
+
+    *residencyController->getMonitoredFence().cpuAddress = 1;
+    residencyController->getMonitoredFence().lastSubmittedFence = 1;
+    residencyController->getMonitoredFence().currentFenceValue = 1;
+
+    wddm->evictResult.called = 0;
+    wddm->callBaseEvict = true;
+
+    residencyController->addToTrimCandidateList(&allocation1);
+    residencyController->addToTrimCandidateList(&allocation2);
+    residencyController->addToTrimCandidateList(&allocation3);
+
+    constexpr uint64_t trimBudgetSize = 3 * 4096;
+    residencyController->trimResidencyToBudget(trimBudgetSize);
+    residencyController->compactTrimCandidateList();
+
+    EXPECT_EQ(trimBudgetSize, logger->numBytesToTrimSave);
+    EXPECT_EQ(residencyController, logger->controllerObjectSave);
+
+    // 2 - one for open log, second for trim to budget
+    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,6 +91,20 @@ class WddmResidencyLogger {
         IoFunctions::vfprintfPtr(pagingLog, formatStr, arg);
     }
 
+    MOCKABLE_VIRTUAL void trimCallbackBegin(std::chrono::high_resolution_clock::time_point &callbackStart) {
+        callbackStart = std::chrono::high_resolution_clock::now();
+    }
+
+    MOCKABLE_VIRTUAL void trimCallbackEnd(UINT callbackFlag, void *controllerObject, std::chrono::high_resolution_clock::time_point &callbackStart) {
+        auto callbackEnd = std::chrono::high_resolution_clock::now();
+        int64_t timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(callbackEnd - callbackStart).count();
+        IoFunctions::fprintf(pagingLog, "trim callback object %p, flags: %u, duration %lld\n", callbackFlag, controllerObject, timeDiff);
+    }
+
+    MOCKABLE_VIRTUAL void trimToBudget(UINT64 numBytesToTrim, void *controllerObject) {
+        IoFunctions::fprintf(pagingLog, "trimming required: bytes to trim: %llu on object: %p\n", numBytesToTrim, controllerObject);
+    }
+
   protected:
     std::chrono::high_resolution_clock::time_point pendingTime;
     std::chrono::high_resolution_clock::time_point waitStartTime;
@@ -107,7 +121,7 @@ class WddmResidencyLogger {
 };
 
 inline void perfLogResidencyMakeResident(WddmResidencyLogger *log, bool pendingMakeResident, UINT64 makeResidentPagingFence) {
-    if (wddmResidencyLoggingAvailable) {
+    if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {
             log->makeResidentLog(pendingMakeResident, makeResidentPagingFence);
         }
@@ -115,7 +129,7 @@ inline void perfLogResidencyMakeResident(WddmResidencyLogger *log, bool pendingM
 }
 
 inline void perfLogResidencyReportAllocations(WddmResidencyLogger *log, uint32_t count, size_t size) {
-    if (wddmResidencyLoggingAvailable) {
+    if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {
             log->reportAllocations(count, size);
         }
@@ -123,7 +137,7 @@ inline void perfLogResidencyReportAllocations(WddmResidencyLogger *log, uint32_t
 }
 
 inline void perfLogStartWaitTime(WddmResidencyLogger *log, UINT64 startWaitPagingFence) {
-    if (wddmResidencyLoggingAvailable) {
+    if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {
             log->startWaitTime(startWaitPagingFence);
         }
@@ -131,7 +145,7 @@ inline void perfLogStartWaitTime(WddmResidencyLogger *log, UINT64 startWaitPagin
 }
 
 inline void perfLogResidencyEnteredWait(WddmResidencyLogger *log) {
-    if (wddmResidencyLoggingAvailable) {
+    if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {
             log->enteredWait();
         }
@@ -139,7 +153,7 @@ inline void perfLogResidencyEnteredWait(WddmResidencyLogger *log) {
 }
 
 inline void perfLogResidencyWaitPagingeFenceLog(WddmResidencyLogger *log, UINT64 stopWaitPagingFence) {
-    if (wddmResidencyLoggingAvailable) {
+    if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {
             log->waitPagingeFenceLog(stopWaitPagingFence);
         }
@@ -147,15 +161,39 @@ inline void perfLogResidencyWaitPagingeFenceLog(WddmResidencyLogger *log, UINT64
 }
 
 inline void perfLogResidencyTrimRequired(WddmResidencyLogger *log, UINT64 numBytesToTrim) {
-    if (wddmResidencyLoggingAvailable) {
+    if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {
             log->trimRequired(numBytesToTrim);
         }
     }
 }
 
+inline void perfLogResidencyTrimCallbackBegin(WddmResidencyLogger *log, std::chrono::high_resolution_clock::time_point &callbackStart) {
+    if constexpr (wddmResidencyLoggingAvailable) {
+        if (log) {
+            log->trimCallbackBegin(callbackStart);
+        }
+    }
+}
+
+inline void perfLogResidencyTrimCallbackEnd(WddmResidencyLogger *log, UINT callbackFlag, void *controllerObject, std::chrono::high_resolution_clock::time_point &callbackStart) {
+    if constexpr (wddmResidencyLoggingAvailable) {
+        if (log) {
+            log->trimCallbackEnd(callbackFlag, controllerObject, callbackStart);
+        }
+    }
+}
+
+inline void perfLogResidencyTrimToBudget(WddmResidencyLogger *log, UINT64 numBytesToTrim, void *controllerObject) {
+    if constexpr (wddmResidencyLoggingAvailable) {
+        if (log) {
+            log->trimToBudget(numBytesToTrim, controllerObject);
+        }
+    }
+}
+
 inline void perfLogResidencyVariadicLog(WddmResidencyLogger *log, char const *const format, ...) {
-    if (wddmResidencyLoggingAvailable) {
+    if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {
             va_list args;
             va_start(args, format);

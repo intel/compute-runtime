@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 
@@ -51,6 +52,9 @@ void APIENTRY WddmResidencyController::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICAT
 }
 
 void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes) {
+    std::chrono::high_resolution_clock::time_point callbackStart;
+    perfLogResidencyTrimCallbackBegin(wddm.getResidencyLogger(), callbackStart);
+
     if (flags.PeriodicTrim) {
         D3DKMT_HANDLE fragmentEvictHandles[3] = {0};
         uint64_t sizeToTrim = 0;
@@ -105,12 +109,16 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
         this->updateLastTrimFenceValue();
         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", lastTrimFenceValue);
     }
+
+    perfLogResidencyTrimCallbackEnd(wddm.getResidencyLogger(), flags.Value, this, callbackStart);
 }
 
 bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     D3DKMT_HANDLE fragmentEvictHandles[maxFragmentsCount] = {0};
     uint64_t numberOfBytesToTrim = bytes;
     WddmAllocation *wddmAllocation = nullptr;
+
+    perfLogResidencyTrimToBudget(wddm.getResidencyLogger(), bytes, this);
 
     while (numberOfBytesToTrim > 0 && (wddmAllocation = this->getTrimCandidateHead()) != nullptr) {
         uint64_t lastFence = wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId);
