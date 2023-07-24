@@ -110,7 +110,3 @@ DG2TEST_F(Dg2ProductHelper, whenConfiguringHardwareInfoThenWa15010089951IsSet) {
     productHelper->configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.workaroundTable.flags.wa_15010089951);
 }
-
-DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(pInHwInfo));
-}

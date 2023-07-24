@@ -255,9 +255,4 @@ bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &hwI
     return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
 } // namespace NEO
