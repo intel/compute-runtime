@@ -36,6 +36,7 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
     std::vector<ze_device_handle_t> deviceHandles;
     std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
+    std::unique_ptr<ProductHelper> pProductHelper;
     uint32_t numClocks = 0;
     double step = 0;
 
@@ -54,6 +55,9 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        pProductHelper = std::make_unique<MockProductHelperFreq>();
+        auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
 
         pSysfsAccess->setVal(minFreqFile, minFreq);
         pSysfsAccess->setVal(maxFreqFile, maxFreq);
@@ -78,7 +82,6 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        getFreqHandles(0);
     }
 
     void TearDown() override {
@@ -86,6 +89,8 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         SysmanDeviceFixture::TearDown();
     }
 
@@ -161,6 +166,51 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequ
     for (auto handle : handles) {
         EXPECT_NE(handle, nullptr);
     }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesAndMediaFreqDomainIsPresentThenNonZeroCountIsReturnedAndCallSucceds) {
+    auto mockProductHelper = std::make_unique<MockProductHelperFreq>();
+    mockProductHelper->isMediaFreqDomainPresent = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+    uint32_t count = 0U;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(count, 2U);
+
+    uint32_t testCount = count + 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &testCount, nullptr));
+    EXPECT_EQ(count, testCount);
+
+    auto handles = getFreqHandles(count);
+    for (auto handle : handles) {
+        EXPECT_NE(handle, nullptr);
+    }
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesAndMediaDomainIsAbsentThenNonZeroCountIsReturnedAndCallSucceds) {
+    pSysfsAccess->directoryExistsResult = false;
+    auto mockProductHelper = std::make_unique<MockProductHelperFreq>();
+    mockProductHelper->isMediaFreqDomainPresent = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+    uint32_t count = 0U;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(count, 1U);
+
+    uint32_t testCount = count + 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &testCount, nullptr));
+    EXPECT_EQ(count, testCount);
+
+    auto handles = getFreqHandles(count);
+    for (auto handle : handles) {
+        EXPECT_NE(handle, nullptr);
+    }
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroAndValidPtrWhenEnumeratingFrequencyHandlesThenNonZeroCountAndNoHandlesAreReturnedAndCallSucceds) {
@@ -855,6 +905,7 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
+    std::unique_ptr<ProductHelper> pProductHelper;
 
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -865,6 +916,9 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        pProductHelper = std::make_unique<MockProductHelperFreq>();
+        auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         // delete handles created in initial SysmanDeviceHandleContext::init() call
         for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
             delete handle;
@@ -887,6 +941,8 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
             GTEST_SKIP();
         }
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         SysmanMultiDeviceFixture::TearDown();
     }
 

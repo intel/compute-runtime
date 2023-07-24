@@ -422,7 +422,19 @@ OsFrequency *OsFrequency::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uin
 }
 
 std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSysman *pOsSysman) {
-    std::vector<zes_freq_domain_t> freqDomains = {ZES_FREQ_DOMAIN_GPU};
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    auto &productHelper = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    auto releaseHelper = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getReleaseHelper();
+    std::vector<zes_freq_domain_t> freqDomains = {};
+    uint32_t mediaFreqTileIndex;
+    if (productHelper.getMediaFrequencyTileIndex(releaseHelper, mediaFreqTileIndex) == true) {
+        auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+        const std::string baseDir = "gt/gt" + std::to_string(mediaFreqTileIndex) + "/";
+        if (pSysfsAccess->directoryExists(baseDir)) {
+            freqDomains.push_back(ZES_FREQ_DOMAIN_MEDIA);
+        }
+    }
+    freqDomains.push_back(ZES_FREQ_DOMAIN_GPU);
     return freqDomains;
 }
 
