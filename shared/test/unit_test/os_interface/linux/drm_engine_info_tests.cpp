@@ -72,6 +72,22 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithRcsThenCorrectHwInfoSet) {
     EXPECT_EQ(1u, hwInfo.featureTable.ftrBcsInfo.to_ulong());
 }
 
+TEST(EngineInfoTest, whenCallingGetEngineTileInfoCorrectValuesAreReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    std::vector<EngineCapabilities> engines(1);
+    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
+    engines[0].capabilities = 0;
+    auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engines);
+
+    auto engineTileMap = engineInfo->getEngineTileInfo();
+    auto it = engineTileMap.begin();
+    EXPECT_EQ(it->second.engineClass, engines[0].engine.engineClass);
+    EXPECT_EQ(it->second.engineInstance, engines[0].engine.engineInstance);
+}
+
 TEST(EngineInfoTest, whenCreateEngineInfoWithCcsThenCorrectHwInfoSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);

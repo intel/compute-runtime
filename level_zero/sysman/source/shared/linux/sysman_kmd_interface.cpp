@@ -8,9 +8,13 @@
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
+
+#include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
 
 namespace L0 {
 namespace Sysman {
+using NEO::PrelimI915::I915_SAMPLE_BUSY;
 
 std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(const NEO::Drm &drm) {
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
@@ -77,6 +81,34 @@ std::string SysmanKmdInterfaceI915::getSysfsFilePath(SysfsName sysfsName, int su
 std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, int subDeviceId, bool baseDirectoryExists) {
     std::string filePath = baseDirectoryExists ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
     return filePath;
+}
+
+int64_t SysmanKmdInterfaceI915::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
+    uint64_t config = UINT64_MAX;
+    switch (engineGroup) {
+    case ZES_ENGINE_GROUP_ALL:
+        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_COMPUTE_ALL:
+    case ZES_ENGINE_GROUP_RENDER_ALL:
+        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_COPY_ALL:
+        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_MEDIA_ALL:
+        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY(subDeviceId);
+        break;
+    default:
+        auto engineClass = engineGroupToEngineClass.find(engineGroup);
+        config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
+        break;
+    }
+    return pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+}
+
+int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
+    return -1;
 }
 
 } // namespace Sysman

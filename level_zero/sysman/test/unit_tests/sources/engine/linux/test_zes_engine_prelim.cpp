@@ -7,6 +7,7 @@
 
 #include "shared/test/common/libult/linux/drm_mock.h"
 
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_prelim.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
@@ -27,6 +28,7 @@ class ZesEngineFixture : public SysmanDeviceFixture {
     L0::Sysman::SysfsAccess *pSysfsAccessOriginal = nullptr;
     std::unique_ptr<MockEngineFsAccess> pFsAccess;
     L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
 
     L0::Sysman::SysmanDevice *device = nullptr;
 
@@ -49,6 +51,8 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>();
+        std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
         pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
@@ -60,6 +64,7 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
 
         SysmanDeviceFixture::TearDown();
     }
@@ -278,6 +283,7 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<MockEngineFsAccess> pFsAccess;
     L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
+    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
 
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
@@ -297,6 +303,8 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>();
+        std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
 
         pDrm->mockReadSysmanQueryEngineInfoMultiDevice = true;
         pSysfsAccess->mockReadSymLinkSuccess = true;
@@ -312,6 +320,7 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {

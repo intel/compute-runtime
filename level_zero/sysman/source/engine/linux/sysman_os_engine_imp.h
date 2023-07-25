@@ -17,6 +17,7 @@
 namespace L0 {
 namespace Sysman {
 
+class SysmanKmdInterface;
 class PmuInterface;
 struct Device;
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
@@ -35,6 +36,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
     }
 
   protected:
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     zes_engine_group_t engineGroup = ZES_ENGINE_GROUP_ALL;
     uint32_t engineInstance = 0;
     PmuInterface *pPmuInterface = nullptr;

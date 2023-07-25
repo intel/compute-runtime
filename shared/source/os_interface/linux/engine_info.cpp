@@ -188,6 +188,10 @@ void EngineInfo::getListOfEnginesOnATile(uint32_t tile, std::vector<EngineClassI
     }
 }
 
+std::multimap<uint32_t, EngineClassInstance> EngineInfo::getEngineTileInfo() {
+    return tileToEngineMap;
+}
+
 void EngineInfo::assignCopyEngine(aub_stream::EngineType baseEngineType, uint32_t tileId, const EngineClassInstance &engine,
                                   BcsInfoMask &bcsInfoMask, uint32_t &numHostLinkCopyEngines, uint32_t &numScaleUpLinkCopyEngines) {
     // Link copy engines:

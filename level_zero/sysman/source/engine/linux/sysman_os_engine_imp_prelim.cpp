@@ -13,28 +13,10 @@
 #include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/linux/sysman_hw_device_id_linux.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
-#include "level_zero/sysman/source/sysman_const.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
 namespace L0 {
 namespace Sysman {
-
-using NEO::PrelimI915::I915_SAMPLE_BUSY;
-
-static const std::multimap<__u16, zes_engine_group_t> i915ToEngineMap = {
-    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ZES_ENGINE_GROUP_RENDER_SINGLE},
-    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE},
-    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE},
-    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), ZES_ENGINE_GROUP_COPY_SINGLE},
-    {static_cast<__u16>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE), ZES_ENGINE_GROUP_COMPUTE_SINGLE},
-    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE), ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE}};
-
-static const std::multimap<zes_engine_group_t, __u16> engineToI915Map = {
-    {ZES_ENGINE_GROUP_RENDER_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER)},
-    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO)},
-    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO)},
-    {ZES_ENGINE_GROUP_COPY_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY)},
-    {ZES_ENGINE_GROUP_COMPUTE_SINGLE, static_cast<__u16>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE)},
-    {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE)}};
 
 zes_engine_group_t LinuxEngineImp::getGroupFromEngineType(zes_engine_group_t type) {
     if (type == ZES_ENGINE_GROUP_RENDER_SINGLE) {
@@ -66,12 +48,13 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     auto engineInfo = pDrm->getEngineInfo();
-    for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
-        uint32_t subDeviceId = engineInfo->getEngineTileIndex(itr->engine);
-        auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->engine.engineClass));
-        for (auto l0EngineEntryInMap = i915ToEngineMapRange.first; l0EngineEntryInMap != i915ToEngineMapRange.second; l0EngineEntryInMap++) {
+    auto engineTileMap = engineInfo->getEngineTileInfo();
+    for (auto itr = engineTileMap.begin(); itr != engineTileMap.end(); ++itr) {
+        uint32_t subDeviceId = itr->first;
+        auto engineGroupRange = engineClassToEngineGroup.equal_range(static_cast<__u16>(itr->second.engineClass));
+        for (auto l0EngineEntryInMap = engineGroupRange.first; l0EngineEntryInMap != engineGroupRange.second; l0EngineEntryInMap++) {
             auto l0EngineType = l0EngineEntryInMap->second;
-            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->engine.engineInstance), subDeviceId}});
+            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->second.engineInstance), subDeviceId}});
             engineGroupInstance.insert({LinuxEngineImp::getGroupFromEngineType(l0EngineType), {0u, subDeviceId}});
             engineGroupInstance.insert({ZES_ENGINE_GROUP_ALL, {0u, subDeviceId}});
         }
@@ -104,27 +87,7 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 }
 
 void LinuxEngineImp::init() {
-    uint64_t config = UINT64_MAX;
-    switch (engineGroup) {
-    case ZES_ENGINE_GROUP_ALL:
-        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_COMPUTE_ALL:
-    case ZES_ENGINE_GROUP_RENDER_ALL:
-        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_COPY_ALL:
-        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_MEDIA_ALL:
-        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY(subDeviceId);
-        break;
-    default:
-        auto i915EngineClass = engineToI915Map.find(engineGroup);
-        config = I915_PMU_ENGINE_BUSY(i915EngineClass->second, engineInstance);
-        break;
-    }
-    fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+    fd = pSysmanKmdInterface->getEngineActivityFd(engineGroup, engineInstance, subDeviceId, pPmuInterface);
 }
 
 bool LinuxEngineImp::isEngineModuleSupported() {
@@ -140,6 +103,7 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     pDrm = pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getSysmanDeviceImp();
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();
+    pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     init();
 }
 
