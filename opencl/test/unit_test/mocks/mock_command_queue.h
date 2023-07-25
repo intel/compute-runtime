@@ -224,10 +224,10 @@ class MockCommandQueue : public CommandQueue {
         return false;
     };
 
-    bool isCompleted(TaskCountType gpgpuTaskCount, CopyEngineState bcsState) override {
+    bool isCompleted(TaskCountType gpgpuTaskCount, const Range<CopyEngineState> &bcsStates) override {
         isCompletedCalled++;
 
-        return CommandQueue::isCompleted(gpgpuTaskCount, bcsState);
+        return CommandQueue::isCompleted(gpgpuTaskCount, bcsStates);
     }
 
     bool releaseIndirectHeapCalled = false;

@@ -214,7 +214,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     volatile TagAddressType *getHwTagAddress() const;
 
-    MOCKABLE_VIRTUAL bool isCompleted(TaskCountType gpgpuTaskCount, CopyEngineState bcsState);
+    MOCKABLE_VIRTUAL bool isCompleted(TaskCountType gpgpuTaskCount, const Range<CopyEngineState> &bcsStates);
 
     bool isWaitForTimestampsEnabled() const;
     virtual bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) = 0;
@@ -378,8 +378,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     const std::array<CopyEngineState, bcsInfoMaskSize> &peekActiveBcsStates() const { return bcsStates; }
 
     void tryReleaseDeferredNodes(bool checkEventsState);
-
-    bool allEnginesReady();
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);

@@ -187,22 +187,25 @@ HWTEST_F(clEnqueueWaitForEventsTests, givenAlreadyCompletedEventWhenWaitForCompl
     auto retVal = clEnqueueWaitForEvents(pCommandQueue, 1, &hEvent1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+    EXPECT_EQ(4u, pCommandQueue->isCompletedCalled);
 
     // Event 2
     retVal = clEnqueueWaitForEvents(pCommandQueue, 1, &hEvent2);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // clEnqueueWaitForEvents signals completion before isCompletedCalled()
-    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+    EXPECT_EQ(5u, pCommandQueue->isCompletedCalled);
 
     retVal = clEnqueueWaitForEvents(pCommandQueue, 1, &hEvent2);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+    EXPECT_EQ(6u, pCommandQueue->isCompletedCalled);
 
     event2.updateExecutionStatus();
-    EXPECT_EQ(3u, pCommandQueue->isCompletedCalled);
+    EXPECT_EQ(6u, pCommandQueue->isCompletedCalled);
+
+    event2.isCompleted();
+    EXPECT_EQ(6u, pCommandQueue->isCompletedCalled);
 }
 
 struct GTPinMockCommandQueue : MockCommandQueue {

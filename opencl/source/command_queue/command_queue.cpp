@@ -419,13 +419,17 @@ volatile TagAddressType *CommandQueue::getHwTagAddress() const {
     return getGpgpuCommandStreamReceiver().getTagAddress();
 }
 
-bool CommandQueue::isCompleted(TaskCountType gpgpuTaskCount, CopyEngineState bcsState) {
+bool CommandQueue::isCompleted(TaskCountType gpgpuTaskCount, const Range<CopyEngineState> &bcsStates) {
     DEBUG_BREAK_IF(getHwTag() == CompletionStamp::notReady);
 
     if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), gpgpuTaskCount)) {
-        if (bcsState.isValid()) {
-            auto bcsCsr = getBcsCommandStreamReceiver(bcsState.engineType);
-            return bcsCsr->testTaskCountReady(bcsCsr->getTagAddress(), peekBcsTaskCount(bcsState.engineType));
+        for (auto &bcsState : bcsStates) {
+            if (bcsState.isValid()) {
+                auto bcsCsr = getBcsCommandStreamReceiver(bcsState.engineType);
+                if (!bcsCsr->testTaskCountReady(bcsCsr->getTagAddress(), peekBcsTaskCount(bcsState.engineType))) {
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -1380,7 +1384,7 @@ bool CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpPara
 void CommandQueue::tryReleaseDeferredNodes(bool checkEventsState) {
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
 
-    if (checkEventsState && !allEnginesReady()) {
+    if (checkEventsState && !isCompleted(this->taskCount, this->bcsStates)) {
         return;
     }
 
@@ -1392,23 +1396,6 @@ void CommandQueue::tryReleaseDeferredNodes(bool checkEventsState) {
     if (deferredMultiRootSyncNodes.get()) {
         deferredMultiRootSyncNodes->swapNodes(multiRootSyncNodesToRelease);
     }
-}
-
-bool CommandQueue::allEnginesReady() {
-    if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), this->taskCount)) {
-        for (auto &bcsState : bcsStates) {
-            if (bcsState.isValid()) {
-                auto bcsCsr = getBcsCommandStreamReceiver(bcsState.engineType);
-                if (!bcsCsr->testTaskCountReady(bcsCsr->getTagAddress(), peekBcsTaskCount(bcsState.engineType))) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    return false;
 }
 
 } // namespace NEO

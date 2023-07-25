@@ -711,7 +711,9 @@ bool Event::isCompleted() {
         return true;
     }
 
-    if (cmdQueue->isCompleted(getCompletionStamp(), this->bcsState) || this->areTimestampsCompleted()) {
+    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+
+    if (cmdQueue->isCompleted(getCompletionStamp(), states) || this->areTimestampsCompleted()) {
         gpuStateWaited = true;
     }
 

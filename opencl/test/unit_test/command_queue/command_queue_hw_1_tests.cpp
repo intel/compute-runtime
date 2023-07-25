@@ -78,9 +78,11 @@ HWTEST_F(CommandQueueHwTest, whenCallingIsCompletedThenTestTaskCountValue) {
     cmdQ.bcsEngines[0] = &control;
     cmdQ.bcsStates[0] = state;
 
+    Range<CopyEngineState> states{&state};
+
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
     EXPECT_EQ(0u, bcsCsr->downloadAllocationsCalledCount);
-    cmdQ.isCompleted(1, state);
+    cmdQ.isCompleted(1, states);
     EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
     EXPECT_EQ(1u, bcsCsr->downloadAllocationsCalledCount);
 }
