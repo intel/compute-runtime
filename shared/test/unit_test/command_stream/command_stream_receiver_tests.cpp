@@ -101,6 +101,10 @@ TEST_F(CommandStreamReceiverTest, givenCsrWhenGettingCompletionAddressThenUnderl
     EXPECT_EQ(0u, *completionFence);
 }
 
+TEST_F(CommandStreamReceiverTest, givenBaseCsrWhenCallingWaitUserFenceThenReturnFalse) {
+    EXPECT_FALSE(commandStreamReceiver->waitUserFence(1, commandStreamReceiver->getCompletionAddress(), -1));
+}
+
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.peekTaskLevel());

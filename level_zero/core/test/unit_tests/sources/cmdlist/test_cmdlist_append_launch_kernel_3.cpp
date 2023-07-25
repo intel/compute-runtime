@@ -783,6 +783,50 @@ HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence, IsAtLeastXeHpCore) {
+    NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(2, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    events[0]->inOrderAllocationOffset = 123;
+
+    auto hostAddress = castToUint64(ptrOffset(events[0]->inOrderExecDataAllocation->getUnderlyingBuffer(), events[0]->inOrderAllocationOffset));
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr->waitUserFenecParams.forceRetStatusEnabled = true;
+    ultCsr->waitUserFenecParams.forceRetStatusValue = false;
+    EXPECT_EQ(0u, ultCsr->waitUserFenecParams.callCount);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(2));
+
+    EXPECT_EQ(1u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(hostAddress, ultCsr->waitUserFenecParams.latestWaitedAddress);
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, ultCsr->waitUserFenecParams.latestWaitedValue);
+    EXPECT_EQ(2, ultCsr->waitUserFenecParams.latestWaitedTimeout);
+
+    ultCsr->waitUserFenecParams.forceRetStatusValue = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(3));
+
+    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(hostAddress, ultCsr->waitUserFenecParams.latestWaitedAddress);
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, ultCsr->waitUserFenecParams.latestWaitedValue);
+    EXPECT_EQ(3, ultCsr->waitUserFenecParams.latestWaitedTimeout);
+
+    // already completed
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(3));
+    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
+
+    // non in-order event
+    events[1]->hostSynchronize(2);
+    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEventState, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 

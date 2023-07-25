@@ -227,7 +227,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryStatus() {
+bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     if (metricStreamer != nullptr) {
         hostEventSetValue(metricStreamer->getNotificationState());
     }
@@ -241,8 +241,19 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
     }
 
     if (!this->isFromIpcPool && isAlreadyCompleted()) {
+        return true;
+    }
+
+    return false;
+}
+
+template <typename TagSizeT>
+ze_result_t EventImp<TagSizeT>::queryStatus() {
+    if (handlePreQueryStatusOperationsAndCheckCompletion()) {
         return ZE_RESULT_SUCCESS;
-    } else if (this->inOrderExecEvent) {
+    }
+
+    if (this->inOrderExecEvent) {
         return queryInOrderEventStatus();
     } else {
         return queryStatusEventPackets();
@@ -354,6 +365,23 @@ ze_result_t EventImp<TagSizeT>::hostSignal() {
 }
 
 template <typename TagSizeT>
+ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
+    if (handlePreQueryStatusOperationsAndCheckCompletion()) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint64_t waitAddress = castToUint64(ptrOffset(this->inOrderExecDataAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
+
+    if (!csrs[0]->waitUserFence(this->inOrderExecSignalValue, waitAddress, timeout)) {
+        return ZE_RESULT_NOT_READY;
+    }
+
+    handleSuccessfulHostSynchronization();
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
@@ -372,7 +400,11 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
     do {
-        ret = queryStatus();
+        if (NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1 && this->inOrderExecEvent) {
+            ret = waitForUserFence(timeout);
+        } else {
+            ret = queryStatus();
+        }
         if (ret == ZE_RESULT_SUCCESS) {
             if (this->getKernelForPrintf() != nullptr) {
                 static_cast<Kernel *>(this->getKernelForPrintf())->printPrintfOutput(true);

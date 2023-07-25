@@ -432,6 +432,8 @@ class CommandStreamReceiver {
 
     bool isRecyclingTagForHeapStorageRequired() const { return heapStorageRequiresRecyclingTag; }
 
+    virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout) { return false; }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

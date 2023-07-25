@@ -24,6 +24,15 @@
 namespace NEO {
 class GmmPageTableMngr;
 
+struct WaitUserFenceParams {
+    uint64_t latestWaitedAddress = 0;
+    uint64_t latestWaitedValue = 0;
+    int64_t latestWaitedTimeout = 0;
+    uint32_t callCount = 0;
+    bool forceRetStatusEnabled = false;
+    bool forceRetStatusValue = true;
+};
+
 template <typename GfxFamily>
 class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, public NonCopyableOrMovableClass {
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
@@ -417,6 +426,19 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         BaseClass::stopDirectSubmission(blocking);
     }
 
+    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout) override {
+        waitUserFenecParams.callCount++;
+        waitUserFenecParams.latestWaitedAddress = hostAddress;
+        waitUserFenecParams.latestWaitedValue = waitValue;
+        waitUserFenecParams.latestWaitedTimeout = timeout;
+
+        if (waitUserFenecParams.forceRetStatusEnabled) {
+            return waitUserFenecParams.forceRetStatusValue;
+        }
+
+        return BaseClass::waitUserFence(waitValue, hostAddress, timeout);
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -424,6 +446,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic<TaskCountType> latestWaitForCompletionWithTimeoutTaskCount{0};
     TaskCountType latestSentTaskCountValueDuringFlush = 0;
     WaitParams latestWaitForCompletionWithTimeoutWaitParams{0};
+    WaitUserFenceParams waitUserFenecParams;
     TaskCountType flushBcsTaskReturnValue{};
 
     LinearStream *lastFlushedCommandStream = nullptr;

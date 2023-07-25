@@ -67,6 +67,10 @@ struct EventImp : public Event {
     const bool downloadAllocationRequired = false;
 
   protected:
+    ze_result_t waitForUserFence(uint64_t timeout);
+
+    bool handlePreQueryStatusOperationsAndCheckCompletion();
+
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusEventPackets();
     ze_result_t queryInOrderEventStatus();
