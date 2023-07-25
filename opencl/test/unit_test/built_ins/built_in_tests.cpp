@@ -1916,9 +1916,9 @@ TEST_F(VmeBuiltInTests, WhenValidatingImagesThenCorrectResponses) {
 
     { // validate image tiling
         std::unique_ptr<Image> imageValid(ImageHelper<ImageVmeValidFormat>::create(pContext));
-        pContext->isSharedContext = true;
+        DebugManagerStateRestore restorer;
+        DebugManager.flags.ForceLinearImages.set(true);
         std::unique_ptr<Image> imageLinear(ImageHelper<ImageVmeValidFormat>::create(pContext));
-        pContext->isSharedContext = false;
         Image *images[] = {imageValid.get(), imageLinear.get()};
         for (Image *srcImg : images) {
             for (Image *dstImg : images) {

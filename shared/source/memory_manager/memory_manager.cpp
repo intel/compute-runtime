@@ -425,7 +425,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::MAP_ALLOCATION:
     case AllocationType::MCS:
     case AllocationType::PROFILING_TAG_BUFFER:
-    case AllocationType::SHARED_CONTEXT_IMAGE:
     case AllocationType::SVM_CPU:
     case AllocationType::SVM_ZERO_COPY:
     case AllocationType::TAG_BUFFER:
@@ -458,7 +457,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::PREEMPTION:
     case AllocationType::SCRATCH_SURFACE:
     case AllocationType::WORK_PARTITION_SURFACE:
-    case AllocationType::SHARED_CONTEXT_IMAGE:
     case AllocationType::SHARED_IMAGE:
     case AllocationType::SHARED_RESOURCE_COPY:
     case AllocationType::SURFACE_STATE_HEAP:
@@ -686,7 +684,6 @@ bool MemoryManager::isExternalAllocation(AllocationType allocationType) {
         allocationType == AllocationType::MAP_ALLOCATION ||
         allocationType == AllocationType::PIPE ||
         allocationType == AllocationType::SHARED_BUFFER ||
-        allocationType == AllocationType::SHARED_CONTEXT_IMAGE ||
         allocationType == AllocationType::SHARED_IMAGE ||
         allocationType == AllocationType::SHARED_RESOURCE_COPY ||
         allocationType == AllocationType::SVM_CPU ||

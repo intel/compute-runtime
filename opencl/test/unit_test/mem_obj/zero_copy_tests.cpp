@@ -103,38 +103,6 @@ INSTANTIATE_TEST_CASE_P(
     ZeroCopyBufferTest,
     testing::ValuesIn(Inputs));
 
-TEST(ZeroCopyBufferTestWithSharedContext, GivenContextThatIsSharedWhenAskedForBufferCreationThenAlwaysResultsInZeroCopy) {
-
-    MockContext context;
-    auto hostPtr = reinterpret_cast<void *>(0x1001);
-    auto size = 64;
-    auto retVal = CL_SUCCESS;
-
-    context.isSharedContext = true;
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
-
-    if (buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation() == false) {
-        EXPECT_EQ(hostPtr, buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer());
-    }
-}
-
-TEST(ZeroCopyBufferTestWithSharedContext, GivenContextThatIsSharedAndDisableZeroCopyFlagWhenAskedForBufferCreationThenAlwaysResultsInZeroCopy) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
-
-    MockContext context;
-    auto hostPtr = reinterpret_cast<void *>(0x1001);
-    auto size = 64;
-    auto retVal = CL_SUCCESS;
-
-    context.isSharedContext = true;
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
-}
-
 TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndUseHostptrDisableZeroCopyFlagWhenBufferIsCreatedThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.DisableZeroCopyForUseHostPtr.set(true);

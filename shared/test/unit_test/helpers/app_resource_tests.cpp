@@ -81,7 +81,6 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::SCRATCH_SURFACE, "SCRHSRFC"},
     {AllocationType::WORK_PARTITION_SURFACE, "WRPRTSRF"},
     {AllocationType::SHARED_BUFFER, "SHRDBUFF"},
-    {AllocationType::SHARED_CONTEXT_IMAGE, "SRDCXIMG"},
     {AllocationType::SHARED_IMAGE, "SHERDIMG"},
     {AllocationType::SHARED_RESOURCE_COPY, "SRDRSCCP"},
     {AllocationType::SURFACE_STATE_HEAP, "SRFCSTHP"},

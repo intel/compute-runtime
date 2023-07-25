@@ -54,7 +54,7 @@ bool ProductHelperHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequire
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
+bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const {
     return true;
 }
 

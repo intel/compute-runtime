@@ -201,8 +201,6 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "SCRATCH_SURFACE";
     case AllocationType::SHARED_BUFFER:
         return "SHARED_BUFFER";
-    case AllocationType::SHARED_CONTEXT_IMAGE:
-        return "SHARED_CONTEXT_IMAGE";
     case AllocationType::SHARED_IMAGE:
         return "SHARED_IMAGE";
     case AllocationType::SHARED_RESOURCE_COPY:

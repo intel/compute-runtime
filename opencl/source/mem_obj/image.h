@@ -272,9 +272,6 @@ class Image : public MemObj {
     static void setAllocationInfoFromParentBuffer(CreateMemObj::AllocationInfo &allocationInfo, const void *&hostPtr, void *&hostPtrToSet,
                                                   Buffer *parentBuffer, ImageInfo &imageInfo, uint32_t rootDeviceIndex);
 
-    static void setAllocationInfoFromHostPtrWithSharedContext(CreateMemObj::AllocationInfo &allocationInfo, uint32_t rootDeviceIndex, ImageInfo &imageInfo,
-                                                              Context *context, bool preferCompression, MemoryManager *memoryManager, const void *hostPtr);
-
     static void setAllocationInfoFromHostPtr(CreateMemObj::AllocationInfo &allocationInfo, uint32_t rootDeviceIndex, const HardwareInfo &hwInfo,
                                              const MemoryProperties &memoryProperties, ImageInfo &imageInfo, Context *context, bool preferCompression,
                                              MemoryManager *memoryManager, const void *hostPtr, size_t hostPtrMinSize);

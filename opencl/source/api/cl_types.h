@@ -21,7 +21,6 @@ struct _cl_command_queue : public ClDispatch {
 };
 
 struct _cl_context : public ClDispatch {
-    bool isSharedContext = false;
 };
 
 struct _cl_device_id : public ClDispatch {

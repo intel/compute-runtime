@@ -173,7 +173,7 @@ Image *Image::create(Context *context,
     const auto hostPtrSlicePitch = getHostPtrSlicePitch(*imageDesc, hostPtrRowPitch, imageHeight);
 
     auto &defaultProductHelper = defaultDevice->getProductHelper();
-    imgInfo.linearStorage = defaultProductHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
+    imgInfo.linearStorage = defaultProductHelper.isLinearStoragePreferred(Image::isImage1d(*imageDesc),
                                                                           memoryProperties.flags.forceLinearStorage);
 
     // if device doesn't support images, it can create only linear images
@@ -223,10 +223,6 @@ Image *Image::create(Context *context,
             // Image from parent image - reuse allocation from parent image
             allocationInfo.memory = parentImage->getGraphicsAllocation(rootDeviceIndex);
             allocationInfo.memory->getDefaultGmm()->queryImageParams(imgInfo);
-        } else if (memoryProperties.flags.useHostPtr && context->isSharedContext) {
-            // create graphics allocation from shared context
-            setAllocationInfoFromHostPtrWithSharedContext(allocationInfo, rootDeviceIndex, imgInfo, context,
-                                                          preferCompression, memoryManager, hostPtr);
         } else if (memoryProperties.flags.useHostPtr) {
             // create graphics allocation from shared context
             setAllocationInfoFromHostPtr(allocationInfo, rootDeviceIndex, hwInfo, memoryProperties, imgInfo, context,
@@ -1174,24 +1170,6 @@ void Image::setAllocationInfoFromParentBuffer(CreateMemObj::AllocationInfo &allo
 
     UNRECOVERABLE_IF(imageInfo.offset != 0);
     imageInfo.offset = parentBuffer->getOffset();
-}
-
-void Image::setAllocationInfoFromHostPtrWithSharedContext(CreateMemObj::AllocationInfo &allocationInfo, uint32_t rootDeviceIndex, ImageInfo &imageInfo,
-                                                          Context *context, bool preferCompression, MemoryManager *memoryManager, const void *hostPtr) {
-
-    auto &rootDeviceEnvironment = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex];
-    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
-    auto gmm = new Gmm(gmmHelper, imageInfo, StorageInfo{}, preferCompression);
-
-    AllocationProperties properties{rootDeviceIndex,
-                                    false, // allocateMemory
-                                    imageInfo.size, AllocationType::SHARED_CONTEXT_IMAGE,
-                                    false, // isMultiStorageAllocation
-                                    context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
-
-    allocationInfo.memory = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
-    allocationInfo.memory->setDefaultGmm(gmm);
-    allocationInfo.zeroCopyAllowed = true;
 }
 
 void Image::setAllocationInfoFromHostPtr(CreateMemObj::AllocationInfo &allocationInfo, uint32_t rootDeviceIndex, const HardwareInfo &hwInfo,

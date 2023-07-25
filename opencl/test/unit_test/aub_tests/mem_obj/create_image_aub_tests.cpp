@@ -87,7 +87,7 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
-    imgInfo.linearStorage = productHelper.isLinearStoragePreferred(false, Image::isImage1d(imageDesc), false);
+    imgInfo.linearStorage = productHelper.isLinearStoragePreferred(Image::isImage1d(imageDesc), false);
     auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmHelper(), imgInfo, false);
 
     // allocate host_ptr
@@ -166,7 +166,7 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
-    imgInfo.linearStorage = productHelper.isLinearStoragePreferred(false, Image::isImage1d(imageDesc), false);
+    imgInfo.linearStorage = productHelper.isLinearStoragePreferred(Image::isImage1d(imageDesc), false);
     auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmHelper(), imgInfo, false);
 
     // allocate host_ptr

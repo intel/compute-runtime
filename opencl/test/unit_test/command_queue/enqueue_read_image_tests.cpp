@@ -833,35 +833,6 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DArrayAndImageShareTheSameStorageWithH
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }
 
-HWTEST_F(EnqueueReadImageTest, GivenSharedContextZeroCopy2DImageWhenEnqueueReadImageWithMappedPointerIsCalledThenImageIsNotRead) {
-    cl_int retVal = CL_SUCCESS;
-    context->isSharedContext = true;
-
-    std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
-    EXPECT_TRUE(dstImage->isMemObjZeroCopy());
-
-    auto &imageDesc = dstImage->getImageDesc();
-    size_t origin[] = {0, 0, 0};
-    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 1};
-    void *ptr = dstImage->getCpuAddressForMemoryTransfer();
-
-    size_t rowPitch = dstImage->getHostPtrRowPitch();
-    size_t slicePitch = dstImage->getHostPtrSlicePitch();
-    retVal = pCmdQ->enqueueReadImage(dstImage.get(),
-                                     CL_FALSE,
-                                     origin,
-                                     region,
-                                     rowPitch,
-                                     slicePitch,
-                                     ptr,
-                                     nullptr,
-                                     0,
-                                     nullptr,
-                                     nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
-}
-
 HWTEST_F(EnqueueReadImageTest, GivenImage1DThatIsZeroCopyWhenReadImageWithTheSamePointerAndOutputEventIsPassedThenEventHasCorrectCommandTypeSet) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage(Image1dHelper<>::create(context));

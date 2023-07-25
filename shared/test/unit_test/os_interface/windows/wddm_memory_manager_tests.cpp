@@ -466,7 +466,6 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
                       AllocationType::PREEMPTION,
                       AllocationType::PRINTF_SURFACE,
                       AllocationType::PROFILING_TAG_BUFFER,
-                      AllocationType::SHARED_CONTEXT_IMAGE,
                       AllocationType::SHARED_IMAGE,
                       AllocationType::SHARED_RESOURCE_COPY,
                       AllocationType::SURFACE_STATE_HEAP,

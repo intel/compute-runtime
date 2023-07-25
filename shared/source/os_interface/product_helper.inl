@@ -766,8 +766,8 @@ bool ProductHelperHw<gfxProduct>::is48bResourceNeededForRayTracing() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
-    if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isSharedContext || isImage1d) {
+bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const {
+    if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isImage1d) {
         return true;
     }
     return false;

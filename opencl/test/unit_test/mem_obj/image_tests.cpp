@@ -505,59 +505,6 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchGr
     alignedFree(hostPtr);
 }
 
-TEST(TestCreateImage, GivenSharedContextWhenImageIsCreatedThenRowAndSliceAreCorrect) {
-    cl_image_format imageFormat;
-    cl_image_desc imageDesc;
-    cl_int retVal;
-    MockContext context;
-
-    context.isSharedContext = true;
-
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
-
-    imageFormat.image_channel_data_type = channelType;
-    imageFormat.image_channel_order = channelOrder;
-
-    imageDesc.num_mip_levels = 0;
-    imageDesc.num_samples = 0;
-    imageDesc.mem_object = NULL;
-
-    // 2D image with non-zero row_pitch and 0 slice_pitch
-    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imageDesc.image_width = width;
-    imageDesc.image_height = height;
-    imageDesc.image_depth = 0;
-    imageDesc.image_array_size = 0;
-    imageDesc.image_row_pitch = (width + 1) * elementSize;
-    imageDesc.image_slice_pitch = 0;
-
-    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-
-    auto image = Image::create(
-        &context,
-        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
-        flags,
-        0,
-        surfaceFormat,
-        &imageDesc,
-        hostPtr,
-        retVal);
-    ASSERT_NE(nullptr, image);
-
-    EXPECT_EQ((width + 1) * elementSize, image->getHostPtrRowPitch());
-    EXPECT_EQ(0u, image->getHostPtrSlicePitch());
-    EXPECT_TRUE(image->isMemObjZeroCopy());
-
-    delete image;
-
-    alignedFree(hostPtr);
-}
-
 TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemoryALignmentThenCorrectValueIsReturned) {
     KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS_WITH_IMAGES);
 

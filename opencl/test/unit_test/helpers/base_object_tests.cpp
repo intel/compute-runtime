@@ -226,18 +226,6 @@ TYPED_TEST(BaseObjectTests, WhenCastingToDispatchTableThenEntriesAreCorrect) {
     EXPECT_EQ(nullptr, genericObject->dispatch.crtDispatch->placeholder21);
 }
 
-TEST(BaseObjectTests, WhenSettingSharedContextFlagThenItIsSetCorrectly) {
-    MockContext newContext;
-
-    // cast to cl_context
-    cl_context clContext = &newContext;
-    EXPECT_FALSE(newContext.isSharedContext);
-
-    clContext->isSharedContext = true;
-
-    EXPECT_TRUE(newContext.isSharedContext);
-}
-
 TYPED_TEST(BaseObjectTests, WhenTakingAndReleasingOwnershipThenOwnershipCountIsUpdated) {
     TypeParam obj;
     EXPECT_FALSE(obj.hasOwnership());

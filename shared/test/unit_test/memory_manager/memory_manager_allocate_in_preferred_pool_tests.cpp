@@ -539,14 +539,6 @@ TEST(MemoryManagerTest, givenDeferredTasksListTypeWhenGetAllocationDataIsCalledT
     EXPECT_TRUE(allocData.flags.resource48Bit);
 }
 
-TEST(MemoryManagerTest, givenSharedContextImageTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
-    AllocationData allocData;
-    MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::SHARED_CONTEXT_IMAGE, mockDeviceBitfield};
-    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
-}
-
 TEST(MemoryManagerTest, givenMCSTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
@@ -1070,7 +1062,6 @@ static const AllocationType allocationHaveToBeForcedTo48Bit[] = {
     AllocationType::MCS,
     AllocationType::SCRATCH_SURFACE,
     AllocationType::WORK_PARTITION_SURFACE,
-    AllocationType::SHARED_CONTEXT_IMAGE,
     AllocationType::SHARED_IMAGE,
     AllocationType::SHARED_RESOURCE_COPY,
     AllocationType::SURFACE_STATE_HEAP,

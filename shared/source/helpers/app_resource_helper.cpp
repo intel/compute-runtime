@@ -74,8 +74,6 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "SCRHSRFC";
     case AllocationType::SHARED_BUFFER:
         return "SHRDBUFF";
-    case AllocationType::SHARED_CONTEXT_IMAGE:
-        return "SRDCXIMG";
     case AllocationType::SHARED_IMAGE:
         return "SHERDIMG";
     case AllocationType::SHARED_RESOURCE_COPY:

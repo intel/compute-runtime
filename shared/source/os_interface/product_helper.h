@@ -167,7 +167,7 @@ class ProductHelper {
     virtual bool isTlbFlushRequired() const = 0;
     virtual bool isDummyBlitWaRequired() const = 0;
     virtual bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const = 0;
-    virtual bool isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const = 0;
+    virtual bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const = 0;
     virtual bool isTranslationExceptionSupported() const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;
 

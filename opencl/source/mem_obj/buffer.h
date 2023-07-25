@@ -208,7 +208,7 @@ class Buffer : public MemObj {
                             MemoryManager *memMngr,
                             uint32_t rootDeviceIndex,
                             bool forceCopyHostPtr);
-    static AllocationType getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties, Context &context,
+    static AllocationType getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties,
                                                                             bool &compressionEnabled, bool localMemoryEnabled);
     static bool isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties);
 

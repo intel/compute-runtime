@@ -344,7 +344,7 @@ TEST(ClMemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValue
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
-    imgInfo.linearStorage = productHelper.isLinearStoragePreferred(false, Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
+    imgInfo.linearStorage = productHelper.isLinearStoragePreferred(Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
 
     auto hostPtr = alignedMalloc(imgInfo.size, MemoryConstants::cacheLineSize);
 

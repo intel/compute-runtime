@@ -340,7 +340,7 @@ Buffer *Buffer::create(Context *context,
         bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
                                                                          gfxCoreHelper.isBufferSizeSuitableForCompression(size));
 
-        allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, *context, compressionEnabled,
+        allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled,
                                                                                           memoryManager->isLocalMemorySupported(rootDeviceIndex));
 
         if (allocationCpuPtr) {
@@ -389,12 +389,6 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo.mapAllocation = svmData->cpuAllocation;
                 }
             }
-        }
-
-        if (context->isSharedContext) {
-            allocationInfo.zeroCopyAllowed = true;
-            allocationInfo.copyMemoryFromHostPtr = false;
-            allocationInfo.allocateMemory = false;
         }
 
         if (!bufferCreateArgs.doNotProvidePerformanceHints && hostPtr && context->isProvidingPerformanceHints()) {
@@ -630,9 +624,9 @@ void Buffer::checkMemory(const MemoryProperties &memoryProperties,
     }
 }
 
-AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties, Context &context,
+AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties,
                                                                          bool &compressionEnabled, bool isLocalMemoryEnabled) {
-    if (context.isSharedContext || properties.flags.forceHostMemory) {
+    if (properties.flags.forceHostMemory) {
         compressionEnabled = false;
         return AllocationType::BUFFER_HOST_MEMORY;
     }

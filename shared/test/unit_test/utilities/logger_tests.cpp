@@ -432,7 +432,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    std::array<std::pair<NEO::AllocationType, const char *>, 41> allocationTypeValues = {
+    std::array<std::pair<NEO::AllocationType, const char *>, 40> allocationTypeValues = {
         {{AllocationType::BUFFER, "BUFFER"},
          {AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
          {AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
@@ -458,7 +458,6 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
          {AllocationType::SCRATCH_SURFACE, "SCRATCH_SURFACE"},
          {AllocationType::WORK_PARTITION_SURFACE, "WORK_PARTITION_SURFACE"},
          {AllocationType::SHARED_BUFFER, "SHARED_BUFFER"},
-         {AllocationType::SHARED_CONTEXT_IMAGE, "SHARED_CONTEXT_IMAGE"},
          {AllocationType::SHARED_IMAGE, "SHARED_IMAGE"},
          {AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
          {AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},

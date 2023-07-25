@@ -90,22 +90,20 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenRe
         bool allowedType = imgTypes[i] == (CL_MEM_OBJECT_IMAGE2D) || (imgTypes[i] == CL_MEM_OBJECT_IMAGE3D) ||
                            (imgTypes[i] == CL_MEM_OBJECT_IMAGE2D_ARRAY);
 
-        // non shared context, dont force linear storage
-        EXPECT_EQ((tilingSupported & allowedType), !productHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+        // dont force linear storage
+        EXPECT_EQ((tilingSupported & allowedType), !productHelper.isLinearStoragePreferred(Image::isImage1d(imgDesc), false));
         {
             DebugManagerStateRestore restore;
             DebugManager.flags.ForceLinearImages.set(true);
-            // non shared context, dont force linear storage + debug flag
-            EXPECT_TRUE(productHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+            // dont force linear storage + debug flag
+            EXPECT_TRUE(productHelper.isLinearStoragePreferred(Image::isImage1d(imgDesc), false));
         }
-        // shared context, dont force linear storage
-        EXPECT_TRUE(productHelper.isLinearStoragePreferred(true, Image::isImage1d(imgDesc), false));
-        // non shared context,  force linear storage
-        EXPECT_TRUE(productHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), true));
+        // force linear storage
+        EXPECT_TRUE(productHelper.isLinearStoragePreferred(Image::isImage1d(imgDesc), true));
 
-        // non shared context, dont force linear storage + create from buffer
+        // dont force linear storage + create from buffer
         imgDesc.buffer = buffer.get();
-        EXPECT_TRUE(productHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+        EXPECT_TRUE(productHelper.isLinearStoragePreferred(Image::isImage1d(imgDesc), false));
     }
 }
 
