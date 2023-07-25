@@ -959,6 +959,9 @@ bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddr
 
         pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
     }
+
+    downloadAllocations();
+
     return true;
 }
 

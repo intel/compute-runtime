@@ -147,7 +147,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     void downloadAllocations() override {
-        downloadAllocationsCalled = true;
+        downloadAllocationsCalledCount++;
     }
 
     void programHardwareContext(LinearStream &cmdStream) override {
@@ -203,10 +203,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t waitForCompletionWithTimeoutCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
     uint32_t makeResidentCalledTimes = 0;
+    uint32_t downloadAllocationsCalledCount = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
-    bool downloadAllocationsCalled = false;
     bool programHardwareContextCalled = false;
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;

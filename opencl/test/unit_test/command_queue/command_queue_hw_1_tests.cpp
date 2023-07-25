@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
@@ -57,6 +58,31 @@ HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoW
     cmdQ.waitForTimestamps({}, status, cmdQ.timestampPacketContainer.get(), cmdQ.deferredTimestampPackets.get());
 
     EXPECT_EQ(device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount(), taskCount);
+}
+
+HWTEST_F(CommandQueueHwTest, whenCallingIsCompletedThenTestTaskCountValue) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::Disabled, pDevice->getDeviceBitfield())));
+
+    auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    bcsCsr->setupContext(*osContext);
+    bcsCsr->initializeTagAllocation();
+    EngineControl control(bcsCsr.get(), osContext.get());
+    CopyEngineState state{aub_stream::EngineType::ENGINE_BCS, 1, false};
+
+    MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
+
+    cmdQ.bcsEngines[0] = &control;
+    cmdQ.bcsStates[0] = state;
+
+    EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
+    EXPECT_EQ(0u, bcsCsr->downloadAllocationsCalledCount);
+    cmdQ.isCompleted(1, state);
+    EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
+    EXPECT_EQ(1u, bcsCsr->downloadAllocationsCalledCount);
 }
 
 HWTEST_F(CommandQueueHwTest, givenEnableTimestampWaitForQueuesWhenGpuHangDetectedWhileWaitingForAllEnginesThenReturnCorrectStatus) {

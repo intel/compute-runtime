@@ -449,24 +449,30 @@ HWTEST_F(CommandStreamReceiverTest, whenDownloadTagAllocationThenDonwloadOnlyIfT
     csr.activePartitions = 1;
     *csr.tagAddress = 1u;
 
+    EXPECT_EQ(0u, csr.downloadAllocationsCalledCount);
+
     auto ret = csr.testTaskCountReady(csr.tagAddress, 0u);
     EXPECT_TRUE(ret);
-    EXPECT_FALSE(csr.downloadAllocationCalled);
+    EXPECT_EQ(1u, csr.downloadAllocationsCalledCount);
 
     constexpr auto taskCountToWait = 1;
     ret = csr.testTaskCountReady(csr.tagAddress, taskCountToWait);
     EXPECT_TRUE(ret);
-    EXPECT_FALSE(csr.downloadAllocationCalled);
+    EXPECT_EQ(2u, csr.downloadAllocationsCalledCount);
 
     csr.getTagAllocation()->updateTaskCount(taskCountToWait, csr.osContext->getContextId());
     ret = csr.testTaskCountReady(csr.tagAddress, taskCountToWait);
     EXPECT_TRUE(ret);
-    EXPECT_FALSE(csr.downloadAllocationCalled);
+    EXPECT_EQ(3u, csr.downloadAllocationsCalledCount);
 
     csr.setLatestFlushedTaskCount(taskCountToWait);
     ret = csr.testTaskCountReady(csr.tagAddress, taskCountToWait);
     EXPECT_TRUE(ret);
-    EXPECT_TRUE(csr.downloadAllocationCalled);
+    EXPECT_EQ(4u, csr.downloadAllocationsCalledCount);
+
+    ret = csr.testTaskCountReady(csr.tagAddress, taskCountToWait + 1);
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(4u, csr.downloadAllocationsCalledCount);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCallingWaitForTaskCountAndCleanAllocationListThenWaitIsCalledAndGpuHangIsReturned) {

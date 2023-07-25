@@ -424,7 +424,8 @@ bool CommandQueue::isCompleted(TaskCountType gpgpuTaskCount, CopyEngineState bcs
 
     if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), gpgpuTaskCount)) {
         if (bcsState.isValid()) {
-            return *getBcsCommandStreamReceiver(bcsState.engineType)->getTagAddress() >= peekBcsTaskCount(bcsState.engineType);
+            auto bcsCsr = getBcsCommandStreamReceiver(bcsState.engineType);
+            return bcsCsr->testTaskCountReady(bcsCsr->getTagAddress(), peekBcsTaskCount(bcsState.engineType));
         }
 
         return true;

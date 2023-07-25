@@ -205,8 +205,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 
     void downloadAllocations() override {
-        downloadAllocationCalled = true;
-        downloadAllocationsCalled = true;
         downloadAllocationsCalledCount++;
     }
 
@@ -448,7 +446,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
-    uint32_t downloadAllocationsCalledCount = 0;
+    std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
 
     bool cpuCopyForHostPtrSurfaceAllowed = false;
     bool createPageTableManagerCalled = false;

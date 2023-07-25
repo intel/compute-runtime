@@ -688,14 +688,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
     EXPECT_TRUE(event1.isCompleted());
     EXPECT_TRUE(event2.isCompleted());
     EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 0u);
-    EXPECT_TRUE(csr.downloadAllocationCalled);
-    EXPECT_TRUE(csr.downloadAllocationsCalled);
+    EXPECT_EQ(1u, csr.downloadAllocationsCalledCount);
 
     for (CopyEngineState &state : cmdQ->bcsStates) {
         if (state.isValid()) {
             auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->getBcsCommandStreamReceiver(state.engineType));
             EXPECT_EQ(bcsCsr->waitForCompletionWithTimeoutTaskCountCalled, 0u);
-            EXPECT_TRUE(csr.downloadAllocationsCalled);
+            EXPECT_EQ(1u, csr.downloadAllocationsCalledCount);
         }
     }
 

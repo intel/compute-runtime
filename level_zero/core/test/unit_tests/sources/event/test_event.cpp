@@ -3208,7 +3208,7 @@ HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocat
 
     auto status = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
-    EXPECT_FALSE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0])->downloadAllocationsCalled);
+    EXPECT_EQ(0u, static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0])->downloadAllocationsCalledCount);
     event->destroy();
 }
 
@@ -3225,7 +3225,6 @@ HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequire
 
         auto status = event->queryStatus();
         EXPECT_EQ(ZE_RESULT_NOT_READY, status);
-        EXPECT_FALSE(ultCsr.downloadAllocationsCalled);
         EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 
         size_t offset = event->getCompletionFieldOffset();
@@ -3239,17 +3238,14 @@ HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequire
 
         status = event->queryStatus();
         EXPECT_EQ(ZE_RESULT_SUCCESS, status);
-        EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
         EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 
         status = event->queryStatus();
         EXPECT_EQ(ZE_RESULT_SUCCESS, status);
-        EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
         EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 
         event->destroy();
         ultCsr.downloadAllocationsCalledCount = 0;
-        ultCsr.downloadAllocationsCalled = false;
     }
 }
 HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocationIsResidentOnce) {
@@ -3305,7 +3301,6 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
 
     status = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
-    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
     EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 
     event->destroy();

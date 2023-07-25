@@ -47,11 +47,11 @@ TEST_F(FenceTest, whenQueryingStatusThenCsrAllocationsAreDownloaded) {
 
     EXPECT_NE(nullptr, fence);
 
-    EXPECT_FALSE(csr->downloadAllocationsCalled);
+    EXPECT_EQ(0u, csr->downloadAllocationsCalledCount);
 
     auto status = fence->queryStatus();
     EXPECT_EQ(ZE_RESULT_NOT_READY, status);
-    EXPECT_TRUE(csr->downloadAllocationsCalled);
+    EXPECT_EQ(1u, csr->downloadAllocationsCalledCount);
 
     status = fence->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
@@ -70,7 +70,7 @@ TEST_F(FenceTest, givenFenceSignalFlagUsedWhenQueryingFenceAfterCreationThenRetu
     auto fence = Fence::create(&cmdQueue, &fenceDesc);
     EXPECT_NE(nullptr, fence);
 
-    EXPECT_FALSE(csr->downloadAllocationsCalled);
+    EXPECT_EQ(0u, csr->downloadAllocationsCalledCount);
 
     auto status = fence->queryStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
