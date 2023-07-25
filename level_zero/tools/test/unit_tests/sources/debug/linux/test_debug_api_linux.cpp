@@ -2445,7 +2445,7 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingStateSaveAreaThenGp
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
     uint64_t vmHandle = 6;
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = {0x1000, stateSaveAreaHeader.size()};
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = {0x1000, sizeof(SIP::StateSaveAreaHeader)};
 
     session->readStateSaveAreaHeader();
 
