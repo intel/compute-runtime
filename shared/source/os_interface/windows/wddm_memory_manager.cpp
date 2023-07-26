@@ -138,7 +138,9 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
                                                        MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
-    if (!createWddmAllocation(allocation.get(), nullptr)) {
+    void *requiredGpuVa = nullptr;
+    adjustGpuPtrToHostAddressSpace(*allocation.get(), requiredGpuVa);
+    if (!createWddmAllocation(allocation.get(), requiredGpuVa)) {
         return nullptr;
     }
 
@@ -1408,7 +1410,8 @@ bool WddmMemoryManager::isStatelessAccessRequired(AllocationType type) {
         type == AllocationType::SHARED_BUFFER ||
         type == AllocationType::SCRATCH_SURFACE ||
         type == AllocationType::LINEAR_STREAM ||
-        type == AllocationType::PRIVATE_SURFACE) {
+        type == AllocationType::PRIVATE_SURFACE ||
+        type == AllocationType::CONSTANT_SURFACE) {
         return true;
     }
     return false;

@@ -183,6 +183,7 @@ class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManag
   public:
     using WddmMemoryManager::adjustGpuPtrToHostAddressSpace;
     using WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA;
+    using WddmMemoryManager::allocateMemoryByKMD;
     using WddmMemoryManager::mapGpuVirtualAddress;
     MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {}
 
@@ -373,6 +374,21 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMa
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateMemoryByKMDWhen32bitAndIsStatelessAccessRequiredThenProperAddressSet) {
+    if constexpr (is64bit) {
+        GTEST_SKIP();
+    }
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::CONSTANT_SURFACE;
+
+    auto graphicsAllocation = memoryManager->allocateMemoryByKMD(allocData);
+
+    EXPECT_NE(nullptr, graphicsAllocation);
+    EXPECT_LT(graphicsAllocation->getGpuAddress(), MemoryConstants::max32BitAddress);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 class MockWddmReserveValidAddressRange : public WddmMock {
   public:
     MockWddmReserveValidAddressRange(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment){};
@@ -443,12 +459,12 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
                       AllocationType::SHARED_BUFFER,
                       AllocationType::SCRATCH_SURFACE,
                       AllocationType::LINEAR_STREAM,
-                      AllocationType::PRIVATE_SURFACE}) {
+                      AllocationType::PRIVATE_SURFACE,
+                      AllocationType::CONSTANT_SURFACE}) {
         EXPECT_TRUE(wddmMemoryManager->isStatelessAccessRequired(type));
     }
     for (auto type : {AllocationType::BUFFER_HOST_MEMORY,
                       AllocationType::COMMAND_BUFFER,
-                      AllocationType::CONSTANT_SURFACE,
                       AllocationType::EXTERNAL_HOST_PTR,
                       AllocationType::FILL_PATTERN,
                       AllocationType::GLOBAL_SURFACE,
