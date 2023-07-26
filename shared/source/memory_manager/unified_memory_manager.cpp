@@ -28,6 +28,7 @@ uint32_t SVMAllocsManager::UnifiedMemoryProperties::getRootDeviceIndex() const {
     if (device) {
         return device->getRootDeviceIndex();
     }
+    UNRECOVERABLE_IF(rootDeviceIndices.begin() == nullptr);
     return *rootDeviceIndices.begin();
 }
 
