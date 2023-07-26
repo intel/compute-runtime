@@ -1661,3 +1661,12 @@ TEST_F(WddmTestWithMockGdiDll, givenQueryAdapterInfoCallReturnsInvalidAdapterBDF
     EXPECT_EQ(pciBusInfo.pciDevice, PhysicalDevicePciBusInfo::invalidValue);
     EXPECT_EQ(pciBusInfo.pciFunction, PhysicalDevicePciBusInfo::invalidValue);
 }
+
+TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenQueryAdapterInfoThenProperDeviceID) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.ForceDeviceId.set("0x1234");
+
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    uint16_t expectedDeviceId = 0x1234u;
+    EXPECT_EQ(expectedDeviceId, wddm->gfxPlatform->usDeviceID);
+}

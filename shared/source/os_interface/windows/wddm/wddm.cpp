@@ -263,6 +263,9 @@ bool Wddm::queryAdapterInfo() {
     if (status == STATUS_SUCCESS) {
         memcpy_s(gtSystemInfo.get(), sizeof(GT_SYSTEM_INFO), &adapterInfo.SystemInfo, sizeof(GT_SYSTEM_INFO));
         memcpy_s(gfxPlatform.get(), sizeof(PLATFORM_KMD), &adapterInfo.GfxPlatform, sizeof(PLATFORM_KMD));
+        if (DebugManager.flags.ForceDeviceId.get() != "unk") {
+            gfxPlatform->usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
+        }
 
         SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), &adapterInfo);
         SkuInfoReceiver::receiveWaTableFromAdapterInfo(workaroundTable.get(), &adapterInfo);
