@@ -430,7 +430,17 @@ bool MemObj::isTiledAllocation() const {
 bool MemObj::mappingOnCpuAllowed() const {
     auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     return !isTiledAllocation() && !peekSharingHandler() && !isMipMapped(this) && !DebugManager.flags.DisableZeroCopyForBuffers.get() &&
-           !graphicsAllocation->isCompressionEnabled() && MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
+           !graphicsAllocation->isCompressionEnabled() && MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()) &&
+           allowCpuAccess();
+}
+
+bool MemObj::allowCpuAccess() const {
+    auto graphicsAllocation = this->multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    if (graphicsAllocation->getDefaultGmm() == nullptr) {
+        return true;
+    }
+
+    return !graphicsAllocation->getDefaultGmm()->getPreferNoCpuAccess();
 }
 
 void MemObj::storeProperties(const cl_mem_properties *properties) {

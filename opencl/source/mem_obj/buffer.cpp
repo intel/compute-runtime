@@ -744,6 +744,10 @@ size_t Buffer::calculateHostPtrSize(const size_t *origin, const size_t *region, 
 }
 
 bool Buffer::isReadWriteOnCpuAllowed(const Device &device) {
+    if (!allowCpuAccess()) {
+        return false;
+    }
+
     if (forceDisallowCPUCopy) {
         return false;
     }

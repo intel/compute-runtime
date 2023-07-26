@@ -47,6 +47,7 @@ class Gmm {
 
     uint32_t getUnifiedAuxPitchTiles();
     uint32_t getAuxQPitch();
+    bool getPreferNoCpuAccess() const { return preferNoCpuAccess; }
 
     GMM_RESCREATE_PARAMS resourceParams = {};
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
@@ -60,5 +61,7 @@ class Gmm {
     void applyExtraMemoryFlags(const StorageInfo &storageInfo);
     void applyDebugOverrides();
     GmmHelper *gmmHelper = nullptr;
+
+    bool preferNoCpuAccess = false;
 };
 } // namespace NEO

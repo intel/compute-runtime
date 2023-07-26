@@ -885,6 +885,14 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 expectedUsage = (forceUncached || productHelper.isDcFlushAllowed()) ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED
                                                                                     : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
+            case AllocationType::BUFFER_HOST_MEMORY:
+            case AllocationType::INTERNAL_HOST_MEMORY:
+            case AllocationType::MAP_ALLOCATION:
+            case AllocationType::FILL_PATTERN:
+            case AllocationType::SVM_CPU:
+            case AllocationType::SVM_ZERO_COPY:
+                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                break;
             default:
                 expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;

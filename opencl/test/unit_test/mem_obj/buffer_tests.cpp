@@ -85,6 +85,19 @@ TEST(Buffer, whenBufferAllocatedInLocalMemoryThenCpuCopyIsDisallowed) {
     EXPECT_TRUE(buffer.isReadWriteOnCpuAllowed(device));
 }
 
+TEST(Buffer, givenNoCpuAccessWhenIsReadWriteOnCpuAllowedIsCalledThenReturnFalse) {
+    MockGraphicsAllocation allocation{};
+    MockBuffer buffer(allocation);
+    UltDeviceFactory factory{1, 0};
+    auto &device = *factory.rootDevices[0];
+
+    allocation.memoryPool = MemoryPool::System4KBPages;
+    EXPECT_TRUE(buffer.isReadWriteOnCpuAllowed(device));
+
+    buffer.allowCpuAccessReturnValue = false;
+    EXPECT_FALSE(buffer.isReadWriteOnCpuAllowed(device));
+}
+
 TEST(Buffer, givenReadOnlySetOfInputFlagsWhenPassedToisReadOnlyMemoryPermittedByFlagsThenTrueIsReturned) {
     class MockBuffer : public Buffer {
       public:

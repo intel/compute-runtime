@@ -10,6 +10,8 @@
 
 #include "opencl/source/mem_obj/buffer.h"
 
+#include <optional>
+
 namespace NEO {
 class MockDevice;
 }
@@ -62,6 +64,13 @@ class MockBuffer : public MockBufferStorage, public Buffer {
         }
     }
 
+    bool allowCpuAccess() const override {
+        if (allowCpuAccessReturnValue.has_value()) {
+            return *allowCpuAccessReturnValue;
+        }
+        return Buffer::allowCpuAccess();
+    }
+
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) override;
 
     void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override {
@@ -87,6 +96,8 @@ class MockBuffer : public MockBufferStorage, public Buffer {
 
     int transferDataToHostPtrCalledCount{0};
     int transferDataFromHostPtrCalledCount{0};
+
+    std::optional<bool> allowCpuAccessReturnValue{};
 };
 
 class AlignedBuffer : public MockBufferStorage, public Buffer {
