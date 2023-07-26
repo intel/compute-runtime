@@ -997,6 +997,23 @@ TEST_F(DriverHandleTest, givenValidDriverHandleWhenGetErrorDescriptionIsCalledTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(DriverHandleTest, givenValidDriverHandleWhenClearErrorDescriptionIsCalledThenEmptyStringIsReturned) {
+    std::string errorString = "error string";
+    std::string emptyString = "";
+    const char *pStr = nullptr;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    driverHandle->setErrorDescription(errorString.c_str());
+    result = zeDriverGetLastErrorDescription(driverHandle->toHandle(), &pStr);
+    EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = driverHandle->clearErrorDescription();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = zeDriverGetLastErrorDescription(driverHandle->toHandle(), &pStr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0, strcmp(emptyString.c_str(), pStr));
+}
+
 TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetPropertiesIsCalled) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     Mock<DriverHandle> driverHandle;

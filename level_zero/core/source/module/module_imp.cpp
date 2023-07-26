@@ -40,6 +40,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
@@ -181,7 +182,9 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
 
 ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
+    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (!compilerInterface) {
+        driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -200,6 +203,7 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput inputA
     this->updateBuildLog(compilerOuput.backendCompilerLog);
 
     if (NEO::TranslationOutput::ErrorCode::Success != compilerErr) {
+        driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
@@ -216,7 +220,9 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput inputA
 ze_result_t ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
                                                    std::vector<const ze_module_constants_t *> specConstants) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
+    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (!compilerInterface) {
+        driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -225,6 +231,7 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inp
     for (uint32_t i = 0; i < static_cast<uint32_t>(specConstants.size()); i++) {
         auto specConstantResult = this->processSpecConstantInfo(compilerInterface, specConstants[i], inputSpirVs[i], inputModuleSizes[i]);
         if (!specConstantResult) {
+            driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         }
     }
@@ -243,12 +250,15 @@ ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t in
                                                   const ze_module_constants_t *pConstants) {
     const auto &neoDevice = device->getNEODevice();
     auto compilerInterface = neoDevice->getCompilerInterface();
+    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (!compilerInterface) {
+        driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     auto specConstantResult = this->processSpecConstantInfo(compilerInterface, pConstants, input, inputSize);
     if (!specConstantResult) {
+        driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
@@ -258,6 +268,7 @@ ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t in
     if (isZebinAllowed == false) {
         const auto &rootDevice = neoDevice->getRootDevice();
         if (!rootDevice->getCompilerInterface()->addOptionDisableZebin(this->options, internalOptions)) {
+            driverHandle->setErrorDescription("Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-enable-zebin\" build flag\n");
             updateBuildLog("Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-enable-zebin\" build flag");
             return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         }
@@ -281,10 +292,12 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(input), inputSize);
     auto singleDeviceBinary = unpackSingleDeviceBinary(archive, NEO::ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
                                                        decodeErrors, decodeWarnings);
+    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (decodeWarnings.empty() == false) {
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
     if (singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty()) {
+        driverHandle->setErrorDescription("%s\n", decodeErrors.c_str());
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     } else {
@@ -305,6 +318,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         bool rebuild = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
         rebuild |= NEO::isRebuiltToPatchtokensRequired(device->getNEODevice(), archive, this->options, this->isBuiltIn, false);
         if (rebuild && irBinarySize == 0) {
+            driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
         }
         if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == rebuild)) {
@@ -330,6 +344,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         return buildFromSpirV(this->irBinary.get(), static_cast<uint32_t>(this->irBinarySize), this->options.c_str(), "", nullptr);
     } else {
         if (processUnpackedBinary() != ZE_RESULT_SUCCESS) {
+            driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         }
         return ZE_RESULT_SUCCESS;
@@ -337,7 +352,9 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
 }
 
 ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
+    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (0 == unpackedDeviceBinarySize) {
+        driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
     auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
@@ -356,6 +373,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     if (NEO::DecodeError::Success != decodeError) {
+        driverHandle->setErrorDescription("%s\n", decodeErrors.c_str());
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
@@ -377,6 +395,8 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     if (slmNeeded > slmAvailable) {
+        driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n",
+                                          static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
                            static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
@@ -414,6 +434,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     std::string packErrors;
     auto packedDeviceBinary = NEO::packDeviceBinary(singleDeviceBinary, packErrors, packWarnings);
     if (packedDeviceBinary.empty()) {
+        driverHandle->clearErrorDescription();
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
@@ -772,20 +793,24 @@ void ModuleImp::updateBuildLog(NEO::Device *neoDevice) {
 ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
                                     ze_kernel_handle_t *kernelHandle) {
     ze_result_t res;
+    const auto driverHandle = static_cast<DriverHandleImp *>((this->getDevice())->getDriverHandle());
     if (!isFullyLinked) {
+        driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED;
     }
     auto kernel = Kernel::create(productFamily, this, desc, &res);
 
     if (res == ZE_RESULT_SUCCESS) {
         *kernelHandle = kernel->toHandle();
+    } else {
+        driverHandle->clearErrorDescription();
     }
 
     auto localMemSize = static_cast<uint32_t>(this->getDevice()->getNEODevice()->getDeviceInfo().localMemSize);
-
     for (const auto &kernelImmutableData : this->getKernelImmutableDataVector()) {
         auto slmInlineSize = kernelImmutableData->getDescriptor().kernelAttributes.slmInlineSize;
         if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
+            driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
             PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
             res = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
             break;
@@ -949,6 +974,7 @@ bool ModuleImp::linkBinary() {
 }
 
 ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnFunction) {
+    const auto driverHandle = static_cast<DriverHandleImp *>((this->getDevice())->getDriverHandle());
     // Check if the function is in the exported symbol table
     auto symbolIt = symbols.find(pFunctionName);
     if ((symbolIt != symbols.end()) && (symbolIt->second.symbol.segment == NEO::SegmentType::Instructions)) {
@@ -972,6 +998,7 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
 
     if (*pfnFunction == nullptr) {
         if (!this->isFunctionSymbolExportEnabled) {
+            driverHandle->setErrorDescription("Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
@@ -983,6 +1010,7 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
 ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) {
     uint64_t address;
     size_t size;
+    const auto driverHandle = static_cast<DriverHandleImp *>((this->getDevice())->getDriverHandle());
 
     auto hostSymbolIt = hostGlobalSymbolsMap.find(pGlobalName);
     if (hostSymbolIt != hostGlobalSymbolsMap.end()) {
@@ -992,13 +1020,16 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
         auto deviceSymbolIt = symbols.find(pGlobalName);
         if (deviceSymbolIt != symbols.end()) {
             if (deviceSymbolIt->second.symbol.segment == NEO::SegmentType::Instructions) {
+                driverHandle->clearErrorDescription();
                 return ZE_RESULT_ERROR_INVALID_GLOBAL_NAME;
             }
         } else {
             if (!this->isGlobalSymbolExportEnabled) {
+                driverHandle->setErrorDescription("Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
                 PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
+            driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_INVALID_GLOBAL_NAME;
         }
         address = deviceSymbolIt->second.gpuAddress;
@@ -1168,6 +1199,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_build_log_handle_t *phLinkLog) {
     std::map<void *, std::map<void *, void *>> dependencies;
     ModuleBuildLog *moduleLinkLog = nullptr;
+    const auto driverHandle = static_cast<DriverHandleImp *>((this->getDevice())->getDriverHandle());
     if (phLinkLog) {
         moduleLinkLog = ModuleBuildLog::create();
         *phLinkLog = moduleLinkLog->toHandle();
@@ -1246,9 +1278,11 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         }
         if (numPatchedSymbols != moduleId->unresolvedExternalsInfo.size()) {
             if (functionSymbolExportEnabledCounter == 0) {
+                driverHandle->setErrorDescription("Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
                 PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
+            driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }
         moduleId->copyPatchedSegments(isaSegmentsForPatching);
@@ -1284,6 +1318,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         }
         auto error = NEO::resolveExternalDependencies(externalFunctionInfos, kernelDependencies, extFuncDependencies, nameToKernelDescriptor);
         if (error != NEO::RESOLVE_SUCCESS) {
+            driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }
     }

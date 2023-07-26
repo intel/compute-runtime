@@ -75,6 +75,7 @@ struct DriverHandle : BaseDriver {
 
     virtual int setErrorDescription(const char *fmt, ...) = 0;
     virtual ze_result_t getErrorDescription(const char **ppString) = 0;
+    virtual ze_result_t clearErrorDescription() = 0;
 
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }

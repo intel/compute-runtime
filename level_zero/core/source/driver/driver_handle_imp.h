@@ -153,6 +153,7 @@ struct DriverHandleImp : public DriverHandle {
     std::mutex errorDescsMutex;
     int setErrorDescription(const char *fmt, ...) override;
     ze_result_t getErrorDescription(const char **ppString) override;
+    ze_result_t clearErrorDescription() override;
 };
 
 extern struct DriverHandleImp *GlobalDriver;

@@ -1967,6 +1967,10 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
 
     std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
+    const char *pStr = nullptr;
+    std::string emptyString = "";
+    zeDriverGetLastErrorDescription(device->getDriverHandle(), &pStr);
+    EXPECT_NE(0, strcmp(pStr, emptyString.c_str()));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
     size_t buildLogSize;
     zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
@@ -2114,6 +2118,10 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolButNoExportFlags
 
     void *functionPointer = nullptr;
     ze_result_t res = module0->getFunctionPointer("Invalid", &functionPointer);
+    const char *pStr = nullptr;
+    std::string emptyString = "";
+    zeDriverGetLastErrorDescription(device->getDriverHandle(), &pStr);
+    EXPECT_NE(0, strcmp(pStr, emptyString.c_str()));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
 }
 
@@ -2610,11 +2618,17 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     L0::ModuleTranslationUnit moduleTuValid(this->device);
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
+    const char *pStr = nullptr;
+    std::string emptyString = "";
+    zeDriverGetLastErrorDescription(this->device->getDriverHandle(), &pStr);
+    EXPECT_EQ(0, strcmp(pStr, emptyString.c_str()));
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     ++emptyProgram.elfHeader->machine;
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
     result = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
+    zeDriverGetLastErrorDescription(this->device->getDriverHandle(), &pStr);
+    EXPECT_NE(0, strcmp(pStr, emptyString.c_str()));
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, result);
 }
 

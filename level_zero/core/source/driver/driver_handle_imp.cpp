@@ -954,4 +954,12 @@ ze_result_t DriverHandleImp::getErrorDescription(const char **ppString) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DriverHandleImp::clearErrorDescription() {
+    auto threadId = std::this_thread::get_id();
+    if (errorDescs.find(threadId) != errorDescs.end()) {
+        errorDescs[threadId].clear();
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0
