@@ -23,10 +23,10 @@ HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForHalf
 
 using L0GfxCoreHelperTestGen12Lp = Test<DeviceFixture>;
 
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnFalse) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
-    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
+    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
 }
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnFalse) {
