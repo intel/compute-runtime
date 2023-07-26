@@ -1523,6 +1523,73 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenEx
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->startWaitPagingFenceSave);
 }
 
+TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingOnGpuThenExpectFlagsOff) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+    wddm->callBaseCreatePagingLogger = false;
+    wddm->callBaseMakeResident = true;
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
+
+    D3DKMT_HANDLE handle = ALLOCATION_HANDLE;
+    uint64_t bytesToTrim = 0;
+    wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
+
+    // 2 - one for open log, second for allocation size
+    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_TRUE(logger->makeResidentCall);
+    EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
+
+    logger->enterWait = true;
+    wddm->waitOnGPU(osContext->getWddmContextHandle());
+    EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_FALSE(logger->makeResidentCall);
+    EXPECT_FALSE(logger->enterWait);
+    EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->startWaitPagingFenceSave);
+}
+
+TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentRequiresTrimToBudgetAndWaitPagingOnGpuThenExpectProperLoggingCount) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+    wddm->callBaseCreatePagingLogger = false;
+    wddm->callBaseMakeResident = true;
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
+
+    D3DKMT_HANDLE handle = INVALID_HANDLE;
+    uint64_t bytesToTrim = 0;
+    wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
+
+    // 3 - one for open log, second for allocation size, third reporting on trim to budget
+    EXPECT_EQ(3u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_FALSE(logger->makeResidentCall);
+
+    logger->enterWait = true;
+    wddm->waitOnGPU(osContext->getWddmContextHandle());
+    // additional 4 wait logs - 3 default and 1 extra for trim to budget delta time
+    EXPECT_EQ(7u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_FALSE(logger->makeResidentCall);
+    EXPECT_FALSE(logger->enterWait);
+}
+
 TEST(VerifyAdapterType, whenAdapterDoesntSupportRenderThenDontCreateHwDeviceId) {
     auto gdi = std::make_unique<MockGdi>();
     auto osEnv = std::make_unique<OsEnvironmentWin>();

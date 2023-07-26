@@ -520,10 +520,11 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenSubmitToGpuThenS
 
     uint64_t gpuAddress = 0xF000;
     size_t size = 0xFF000;
+
     bool ret = wddmDirectSubmission.submit(gpuAddress, size);
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
-    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 }

@@ -1272,7 +1272,7 @@ TEST_F(WddmCommandStreamTest, givenResidencyLoggingAvailableWhenFlushingCommandB
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
-    EXPECT_EQ(3u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(6u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 
     memoryManager->freeGraphicsMemory(commandBuffer);

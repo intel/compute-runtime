@@ -59,7 +59,7 @@ class WddmResidencyLogger {
         enterWait = true;
     }
 
-    void waitPagingeFenceLog(UINT64 stopWaitPagingFence) {
+    void waitPagingeFenceLog(UINT64 stopWaitPagingFence, bool gpuWait) {
         endTime = std::chrono::high_resolution_clock::now();
 
         int64_t timeDiff = 0;
@@ -75,16 +75,23 @@ class WddmResidencyLogger {
                              timeDiff);
 
         timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(endTime - waitStartTime).count();
-        IoFunctions::fprintf(pagingLog, "waiting: %x delta time wait loop: %lld\n", enterWait, timeDiff);
+        IoFunctions::fprintf(pagingLog, "waiting: %x delta time wait loop: %lld wait on GPU: %d\n", enterWait, timeDiff, gpuWait);
+
+        if (trimBudgetTime != std::chrono::high_resolution_clock::time_point::max()) {
+            timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(endTime - trimBudgetTime).count();
+            IoFunctions::fprintf(pagingLog, "waiting delta time trim to budget: %lld\n", timeDiff);
+        }
 
         makeResidentCall = false;
         enterWait = false;
         makeResidentPagingFence = 0;
         startWaitPagingFence = 0;
+        trimBudgetTime = std::chrono::high_resolution_clock::time_point::max();
     }
 
     void trimRequired(UINT64 numBytesToTrim) {
         IoFunctions::fprintf(pagingLog, "trimming required: bytes to trim: %llu\n", numBytesToTrim);
+        trimBudgetTime = std::chrono::high_resolution_clock::now();
     }
 
     void variadicLog(char const *const formatStr, va_list arg) {
@@ -109,6 +116,7 @@ class WddmResidencyLogger {
     std::chrono::high_resolution_clock::time_point pendingTime;
     std::chrono::high_resolution_clock::time_point waitStartTime;
     std::chrono::high_resolution_clock::time_point endTime;
+    std::chrono::high_resolution_clock::time_point trimBudgetTime = std::chrono::high_resolution_clock::time_point::max();
 
     UINT64 makeResidentPagingFence = 0ull;
     UINT64 startWaitPagingFence = 0ull;
@@ -152,10 +160,10 @@ inline void perfLogResidencyEnteredWait(WddmResidencyLogger *log) {
     }
 }
 
-inline void perfLogResidencyWaitPagingeFenceLog(WddmResidencyLogger *log, UINT64 stopWaitPagingFence) {
+inline void perfLogResidencyWaitPagingeFenceLog(WddmResidencyLogger *log, UINT64 stopWaitPagingFence, bool gpuWait) {
     if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {
-            log->waitPagingeFenceLog(stopWaitPagingFence);
+            log->waitPagingeFenceLog(stopWaitPagingFence, gpuWait);
         }
     }
 }

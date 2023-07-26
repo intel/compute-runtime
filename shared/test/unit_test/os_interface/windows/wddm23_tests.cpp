@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/mock_wddm_interface23.h"
@@ -183,6 +184,7 @@ TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
     submitArgs.hwQueueHandle = osContext->getHwQueue().handle;
     submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
 
+    VariableBackup<uint64_t> pagingFenceBackup(wddm->pagingFenceAddress);
     *wddm->pagingFenceAddress = 1;
     wddm->currentPagingFenceValue = 1;
 

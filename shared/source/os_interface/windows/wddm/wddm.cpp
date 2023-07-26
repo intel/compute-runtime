@@ -1052,6 +1052,8 @@ unsigned int Wddm::getEnablePreemptionRegValue() {
 }
 
 bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
+    perfLogStartWaitTime(residencyLogger.get(), currentPagingFenceValue);
+
     D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU waitOnGpu = {};
 
     waitOnGpu.hContext = context;
@@ -1062,6 +1064,7 @@ bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
     waitOnGpu.MonitoredFenceValueArray = &localPagingFenceValue;
     NTSTATUS status = getGdi()->waitForSynchronizationObjectFromGpu(&waitOnGpu);
 
+    perfLogResidencyWaitPagingeFenceLog(residencyLogger.get(), *getPagingFenceAddress(), true);
     return status == STATUS_SUCCESS;
 }
 
@@ -1203,7 +1206,7 @@ void Wddm::waitOnPagingFenceFromCpu() {
     while (currentPagingFenceValue > *getPagingFenceAddress())
         perfLogResidencyEnteredWait(residencyLogger.get());
 
-    perfLogResidencyWaitPagingeFenceLog(residencyLogger.get(), *getPagingFenceAddress());
+    perfLogResidencyWaitPagingeFenceLog(residencyLogger.get(), *getPagingFenceAddress(), false);
 }
 
 void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {
