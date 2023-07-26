@@ -35,7 +35,6 @@ class DrmPrelimMock : public DrmMock {
     void getPrelimVersion(std::string &prelimVersion) override {
         prelimVersion = "2.0";
     }
-
     int handleRemainingRequests(DrmIoctl request, void *arg) override {
         if (request == DrmIoctl::Query && arg != nullptr) {
             auto queryArg = static_cast<Query *>(arg);
@@ -157,7 +156,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGet
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     ioctlHelper->createGemExt(memClassInstance, allocSize, handle, 0, {}, -1, true, getNumOfChunks);
     std::string output = testing::internal::GetCapturedStdout();
-    std::string expectedOutput("GEM_CREATE_EXT with BOChunkingSize 65536, chunkingParamRegion.param.data 65536, numOfChunks 2\n");
+    std::string expectedOutput("GEM_CREATE_EXT BO-1 with BOChunkingSize 65536, chunkingParamRegion.param.data 65536, numOfChunks 2\n");
     EXPECT_EQ(expectedOutput, output);
     EXPECT_EQ(2u, getNumOfChunks);
 }
@@ -456,6 +455,65 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchFailsThenRe
     allocation.bufferObjects[0] = &bo;
     allocation.setNumHandles(1);
 
+    drm->ioctlRetVal = EINVAL;
+    EXPECT_FALSE(allocation.setMemPrefetch(drm.get(), subDeviceIds));
+}
+
+TEST_F(IoctlHelperPrelimFixture,
+       givenDrmAllocationWithChunkingAndsetMemPrefetchCalledSuccessIsReturned) {
+    SubDeviceIdsVec subDeviceIds{0, 1};
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    DebugManager.flags.PrintBOPrefetchingResult.set(1);
+
+    std::vector<MemoryRegion> memRegions{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, MemoryConstants::chunkThreshold * 4, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+
+    drm->ioctlCallsCount = 0;
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    bo.isChunked = 1;
+    bo.setSize(1024);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x5;
+    allocation.setNumHandles(1);
+    allocation.storageInfo.isChunked = 1;
+    allocation.storageInfo.numOfChunks = 4;
+    allocation.storageInfo.subDeviceBitfield = 0b0001;
+    EXPECT_TRUE(allocation.setMemPrefetch(drm.get(), subDeviceIds));
+}
+
+TEST_F(IoctlHelperPrelimFixture,
+       givenDrmAllocationWithChunkingAndsetMemPrefetchWithIoctlFailureThenFailureReturned) {
+    SubDeviceIdsVec subDeviceIds{0, 1};
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    DebugManager.flags.PrintBOPrefetchingResult.set(1);
+
+    std::vector<MemoryRegion> memRegions{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, MemoryConstants::chunkThreshold * 4, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+
+    drm->ioctlCallsCount = 0;
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    bo.isChunked = 1;
+    bo.setSize(1024);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x5;
+    allocation.setNumHandles(1);
+    allocation.storageInfo.isChunked = 1;
+    allocation.storageInfo.numOfChunks = 4;
+    allocation.storageInfo.subDeviceBitfield = 0b0001;
     drm->ioctlRetVal = EINVAL;
     EXPECT_FALSE(allocation.setMemPrefetch(drm.get(), subDeviceIds));
 }

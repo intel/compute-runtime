@@ -67,7 +67,6 @@ bool IoctlHelperPrelim20::isChunkingAvailable() {
     if (retVal) {
         return false;
     }
-
     return chunkSupported;
 }
 
@@ -177,17 +176,13 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
         pairSetparamRegion.param.data = pairHandle;
     }
 
+    size_t chunkingSize = 0u;
     if (isChunked) {
-        size_t chunkingSize = allocSize / numOfChunks;
+        chunkingSize = allocSize / numOfChunks;
         chunkingParamRegion.base.name = PRELIM_I915_GEM_CREATE_EXT_SETPARAM;
         chunkingParamRegion.param.param = PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_SET_CHUNK_SIZE;
         UNRECOVERABLE_IF(chunkingSize & (MemoryConstants::pageSize64k - 1));
         chunkingParamRegion.param.data = chunkingSize;
-        printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,
-                         "GEM_CREATE_EXT with BOChunkingSize %d, chunkingParamRegion.param.data %d, numOfChunks %d\n",
-                         chunkingSize,
-                         chunkingParamRegion.param.data,
-                         numOfChunks);
         setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&chunkingParamRegion);
     } else {
         if (vmId != std::nullopt) {
@@ -215,6 +210,15 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
     }
 
     auto ret = IoctlHelper::ioctl(DrmIoctl::GemCreateExt, &createExt);
+
+    if (isChunked) {
+        printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,
+                         "GEM_CREATE_EXT BO-%d with BOChunkingSize %d, chunkingParamRegion.param.data %d, numOfChunks %d\n",
+                         createExt.handle,
+                         chunkingSize,
+                         chunkingParamRegion.param.data,
+                         numOfChunks);
+    }
 
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
     handle = createExt.handle;

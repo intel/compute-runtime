@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,6 +90,7 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
         }
     } else if (request == DrmIoctl::GemVmPrefetch) {
         auto vmPrefetchParams = static_cast<prelim_drm_i915_gem_vm_prefetch *>(arg);
+        // Valid vm_id must be nonzero
         EXPECT_NE(0u, vmPrefetchParams->vm_id);
     }
     return ioctlRetVal;

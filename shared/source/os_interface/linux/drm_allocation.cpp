@@ -182,6 +182,48 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
     return true;
 }
 
+int DrmAllocation::prefetchBOWithChunking(Drm *drm) {
+    auto getSubDeviceIds = [](const DeviceBitfield &subDeviceBitfield) {
+        SubDeviceIdsVec subDeviceIds;
+        for (auto subDeviceId = 0u; subDeviceId < subDeviceBitfield.size(); subDeviceId++) {
+            if (subDeviceBitfield.test(subDeviceId)) {
+                subDeviceIds.push_back(subDeviceId);
+            }
+        }
+        return subDeviceIds;
+    };
+
+    auto bo = this->getBO();
+
+    auto ioctlHelper = drm->getIoctlHelper();
+    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+    auto subDeviceIds = getSubDeviceIds(storageInfo.subDeviceBitfield);
+
+    uint32_t chunksPerSubDevice = this->storageInfo.numOfChunks / subDeviceIds.size();
+    uint64_t chunkLength = (bo->peekSize() / this->storageInfo.numOfChunks);
+    bool success = true;
+    for (uint32_t i = 0; i < this->storageInfo.numOfChunks; i++) {
+        uint64_t chunkStart = bo->peekAddress() + i * chunkLength;
+        auto subDeviceId = subDeviceIds[i / chunksPerSubDevice];
+        for (auto vmHandleId : subDeviceIds) {
+            auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
+            auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
+
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                               "prefetching BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x\n",
+                               bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region);
+
+            success &= ioctlHelper->setVmPrefetch(chunkStart, chunkLength, region, vmId);
+
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                               "prefetched BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
+                               bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region, success);
+        }
+    }
+
+    return success;
+}
+
 int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     if (this->fragmentsStorage.fragmentCount) {
         for (unsigned int f = 0; f < this->fragmentsStorage.fragmentCount; f++) {
@@ -434,7 +476,12 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
         }
     } else {
         auto bo = this->getBO();
-        success = prefetchBO(bo, subDeviceIds[0], subDeviceIds[0]);
+        if (bo->isChunked) {
+            auto drm = bo->peekDrm();
+            success = prefetchBOWithChunking(const_cast<Drm *>(drm));
+        } else {
+            success = prefetchBO(bo, subDeviceIds[0], subDeviceIds[0]);
+        }
     }
 
     return success;

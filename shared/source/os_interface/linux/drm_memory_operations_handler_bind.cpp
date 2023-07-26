@@ -65,6 +65,12 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
                 }
             }
 
+            if (bo->isChunked) {
+                auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
+                auto drm = &memoryManager->getDrm(drmAllocation->getRootDeviceIndex());
+                drmAllocation->prefetchBOWithChunking(drm);
+            }
+
             if (!evictable) {
                 drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
             }

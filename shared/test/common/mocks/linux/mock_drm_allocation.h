@@ -36,6 +36,10 @@ class MockBufferObject : public BufferObject {
         TaskCountType completionValue = 0;
     };
 
+    void setSize(size_t mockSize) {
+        size = mockSize;
+    }
+
     std::optional<int> execReturnValue;
     std::vector<ExecParams> passedExecParams{};
     MockBufferObject(uint32_t rootDeviceIndex, Drm *drm) : BufferObject(rootDeviceIndex, drm, CommonConstants::unsupportedPatIndex, 0, 0, 1) {

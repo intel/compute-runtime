@@ -1249,7 +1249,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bool bindImmediate = bo->isImmediateBindingRequired();
         bool bindMakeResident = false;
         if (drm->useVMBindImmediate()) {
-            bindMakeResident = bo->isExplicitResidencyRequired() && !bo->isChunked;
+            bindMakeResident = bo->isExplicitResidencyRequired();
             bindImmediate = true;
         }
         flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);

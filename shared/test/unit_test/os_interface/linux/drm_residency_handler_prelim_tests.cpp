@@ -23,6 +23,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -552,6 +553,36 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeBOsResidentFailsThenMakeResi
     auto graphicsAllocation = static_cast<GraphicsAllocation *>(allocation);
 
     EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false), MemoryOperationsStatus::OUT_OF_MEMORY);
+    delete allocation;
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest,
+       givenDrmAllocationWithChunkingAndmakeResidentWithinOsContextCalledThenprefetchBOWithChunkingCalled) {
+    struct MockDrmAllocationBOsResident : public DrmAllocation {
+        MockDrmAllocationBOsResident(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool pool)
+            : DrmAllocation(rootDeviceIndex, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
+        }
+    };
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableBOChunking.set(3);
+    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    DebugManager.flags.PrintBOPrefetchingResult.set(1);
+
+    auto size = 4096u;
+    BufferObjects bos;
+    MockBufferObject mockBo(device->getRootDeviceIndex(), mock, 3, 0, 0, 1);
+    mockBo.isChunked = 1;
+    mockBo.setSize(1024);
+    bos.push_back(&mockBo);
+
+    auto allocation = new MockDrmAllocationBOsResident(0, AllocationType::UNKNOWN, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    allocation->setNumHandles(1);
+    allocation->storageInfo.isChunked = 1;
+    allocation->storageInfo.numOfChunks = 4;
+    allocation->storageInfo.subDeviceBitfield = 0b0011;
+    auto graphicsAllocation = static_cast<GraphicsAllocation *>(allocation);
+
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false), MemoryOperationsStatus::SUCCESS);
     delete allocation;
 }
 

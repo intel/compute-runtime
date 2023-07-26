@@ -62,7 +62,7 @@ TEST(DrmVmBindTest, givenBoRequiringExplicitResidencyWhenBindingThenMakeResident
 }
 
 TEST(DrmVmBindTest,
-     givenBoWithChunkingRequiringExplicitResidencyWhenBindingThenMakeResidentFlagIsNotPassedAndUserFenceIsSetup) {
+     givenBoWithChunkingRequiringExplicitResidencyWhenBindingThenMakeResidentFlagIsPassedAndUserFenceIsSetup) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
@@ -80,7 +80,7 @@ TEST(DrmVmBindTest,
         bo.bind(&osContext, vmHandleId);
 
         if (requireResidency) {
-            EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
+            EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag() | DrmPrelimHelper::getMakeResidentVmBindFlag(), drm.context.receivedVmBind->flags);
             ASSERT_TRUE(drm.context.receivedVmBindUserFence);
             EXPECT_EQ(castToUint64(drm.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
             EXPECT_EQ(drm.fenceVal[vmHandleId], drm.context.receivedVmBindUserFence->val);
