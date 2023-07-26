@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
-    bool getParametersForWriteMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
+    bool getParametersForMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
     void freeEngineInfo(AddressMapper &gttRemap);
     MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;
 

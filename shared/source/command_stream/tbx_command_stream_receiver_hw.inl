@@ -437,7 +437,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     uint64_t gpuAddress;
     void *cpuAddress;
     size_t size;
-    if (!this->getParametersForWriteMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
+    if (!this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
         return false;
     }
 
@@ -536,22 +536,24 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const R
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAllocation &gfxAllocation) {
+    uint64_t gpuAddress = 0;
+    void *cpuAddress = nullptr;
+    size_t size = 0;
+
+    this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size);
+
     if (hardwareContextController) {
-        hardwareContextController->readMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize(),
+        hardwareContextController->readMemory(gpuAddress, cpuAddress, size,
                                               this->getMemoryBank(&gfxAllocation), MemoryConstants::pageSize64k);
         return;
     }
 
-    auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
-    auto gpuAddress = gfxAllocation.getGpuAddress();
-    auto length = gfxAllocation.getUnderlyingBufferSize();
-
-    if (length) {
+    if (size) {
         PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-            DEBUG_BREAK_IF(offset > length);
+            DEBUG_BREAK_IF(offset > size);
             tbxStream.readMemory(physAddress, ptrOffset(cpuAddress, offset), size);
         };
-        ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), length, 0, 0, walker, this->getMemoryBank(&gfxAllocation));
+        ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, 0, walker, this->getMemoryBank(&gfxAllocation));
     }
 }
 

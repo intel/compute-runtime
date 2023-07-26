@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
@@ -549,6 +550,22 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenDownloadAllocat
     tbxCsr.downloadAllocation(allocation);
 
     EXPECT_TRUE(mockHardwareContext->readMemoryCalled);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenDownloadAllocationIsCalledThenDecanonizeGpuVa) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+    tbxCsr.setupContext(osContext);
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
+
+    uint64_t gpuVa = pDevice->getHardwareInfo().capabilityTable.gpuAddressSpace;
+    uint64_t canonizedGpuVa = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper()->canonize(gpuVa);
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1230000), canonizedGpuVa, 0x10000);
+    tbxCsr.downloadAllocation(allocation);
+
+    EXPECT_TRUE(mockHardwareContext->readMemoryCalled);
+    EXPECT_EQ(gpuVa, mockHardwareContext->latestGpuVaForMemoryRead);
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxStreamInCsrIsNotInitialized) {

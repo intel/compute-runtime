@@ -673,7 +673,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     uint64_t gpuAddress;
     void *cpuAddress;
     size_t size;
-    if (!this->getParametersForWriteMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
+    if (!this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
         return false;
     }
 

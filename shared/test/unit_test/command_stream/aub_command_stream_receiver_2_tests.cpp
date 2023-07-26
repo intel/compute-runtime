@@ -292,7 +292,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     void *cpuAddress{};
     size_t size{};
 
-    aubCsr->getParametersForWriteMemory(allocation, gpuAddress, cpuAddress, size);
+    aubCsr->getParametersForMemory(allocation, gpuAddress, cpuAddress, size);
 
     EXPECT_EQ(nullptr, cpuAddress);
     EXPECT_EQ(initGpuAddress, gpuAddress);
@@ -327,7 +327,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     void *cpuAddress{};
     size_t size{};
 
-    aubCsr->getParametersForWriteMemory(allocation, gpuAddress, cpuAddress, size);
+    aubCsr->getParametersForMemory(allocation, gpuAddress, cpuAddress, size);
 
     EXPECT_EQ(nullptr, cpuAddress);
     EXPECT_EQ(initGpuAddress, gpuAddress);

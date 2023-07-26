@@ -53,7 +53,7 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
 }
 
 template <typename GfxFamily>
-bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForWriteMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const {
+bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const {
     cpuAddress = graphicsAllocation.getUnderlyingBuffer();
     gpuAddress = peekExecutionEnvironment().rootDeviceEnvironments[graphicsAllocation.getRootDeviceIndex()].get()->gmmHelper.get()->decanonize(graphicsAllocation.getGpuAddress());
     size = graphicsAllocation.getUnderlyingBufferSize();

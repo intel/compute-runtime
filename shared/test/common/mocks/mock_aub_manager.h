@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,12 +39,16 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     void writeMMIO(uint32_t offset, uint32_t value) override { writeMMIOCalled = true; }
     void freeMemory(uint64_t gfxAddress, size_t size) override { freeMemoryCalled = true; }
     void expectMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t compareOperation) override { expectMemoryCalled = true; }
-    void readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBank, size_t pageSize) override { readMemoryCalled = true; }
+    void readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBank, size_t pageSize) override {
+        readMemoryCalled = true;
+        latestGpuVaForMemoryRead = gfxAddress;
+    }
     void dumpBufferBIN(uint64_t gfxAddress, size_t size) override { dumpBufferBINCalled = true; }
     void dumpSurface(const SurfaceInfo &surfaceInfo) override { dumpSurfaceCalled = true; }
     void pollForFenceCompletion() override {}
 
     std::vector<aub_stream::AllocationParams> storedAllocationParams;
+    uint64_t latestGpuVaForMemoryRead = 0;
     bool storeAllocationParams = false;
     bool initializeCalled = false;
     bool pollForCompletionCalled = false;
