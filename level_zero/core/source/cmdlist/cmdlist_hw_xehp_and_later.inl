@@ -24,6 +24,7 @@
 #include "shared/source/xe_hp_core/hw_info.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
@@ -85,6 +86,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
     NEO::Device *neoDevice = device->getNEODevice();
+    const auto deviceHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
 
     UNRECOVERABLE_IF(kernel == nullptr);
     const auto kernelImmutableData = kernel->getImmutableData();
@@ -249,6 +251,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
     auto slmTotalSize = kernelImp->getSlmTotalSize();
     if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
+        deviceHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }

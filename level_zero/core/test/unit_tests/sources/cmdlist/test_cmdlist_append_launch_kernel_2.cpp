@@ -1362,6 +1362,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMem
     ::testing::internal::CaptureStderr();
 
     result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
+    const char *pStr = nullptr;
+    std::string emptyString = "";
+    zeDriverGetLastErrorDescription(device->getDriverHandle(), &pStr);
+    EXPECT_NE(0, strcmp(pStr, emptyString.c_str()));
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
 
     output = testing::internal::GetCapturedStderr();
