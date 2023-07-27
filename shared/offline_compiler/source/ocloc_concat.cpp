@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
+#include "shared/source/helpers/product_config_helper.h"
 
 namespace NEO {
 OclocConcat::ErrorCode OclocConcat::initialize(const std::vector<std::string> &args) {

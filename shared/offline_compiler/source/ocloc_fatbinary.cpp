@@ -7,17 +7,19 @@
 
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
+#include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/tokenized_string.h"
+#include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include "igfxfmid.h"
 #include "platforms.h"

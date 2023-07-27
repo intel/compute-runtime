@@ -8,6 +8,7 @@
 #include "shared/offline_compiler/source/decoder/translate_platform_base.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"

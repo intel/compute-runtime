@@ -21,14 +21,6 @@ set(IGDRCL_SRCS_offline_compiler_mock
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_zebin_decoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_zebin_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_iga_wrapper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_argument_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_multi_command.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_ocloc_concat.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_ocloc_fcl_facade.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_ocloc_igc_facade.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_linker.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_sip_ocloc_tests.cpp
 )
 
 set(CLOC_LIB_SRCS_UTILITIES
@@ -64,8 +56,6 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_api_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_concat_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.cpp

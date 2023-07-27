@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/arrayref.h"
 
@@ -24,6 +23,7 @@ class OclocArgHelper;
 namespace NEO {
 
 class OsLibrary;
+class OclocIgcFacade;
 
 class OfflineLinker {
   protected:
@@ -76,7 +76,7 @@ class OfflineLinker {
     std::string options{};
     std::string internalOptions{};
 
-    std::unique_ptr<OclocIgcFacade> igcFacade{};
+    std::unique_ptr<OclocIgcFacade> igcFacade;
     HardwareInfo hwInfo{};
     std::string buildLog{};
 };

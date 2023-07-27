@@ -13,7 +13,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
-#include "shared/source/os_interface/os_library.h"
+#include "shared/source/helpers/product_config_helper.h"
 
 #include "CL/cl.h"
 #include "helper.h"

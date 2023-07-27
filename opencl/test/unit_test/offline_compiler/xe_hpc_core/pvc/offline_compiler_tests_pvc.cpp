@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/helpers/constants.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

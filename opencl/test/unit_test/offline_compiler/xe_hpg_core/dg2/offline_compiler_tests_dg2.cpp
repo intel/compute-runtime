@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/helpers/constants.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/xe_hpg_core/dg2/product_configs_dg2.h"

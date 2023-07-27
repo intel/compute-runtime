@@ -9,7 +9,6 @@
 
 #include "shared/offline_compiler/source/ocloc_dll_options.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include "helper.h"
 #include "igfxfmid.h"

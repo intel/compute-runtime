@@ -12,11 +12,13 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/ar/ar.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
+#include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 
 #include "environment.h"

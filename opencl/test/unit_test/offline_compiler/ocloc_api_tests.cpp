@@ -17,6 +17,7 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "environment.h"

@@ -26,6 +26,9 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_fcl_facade.h"
+#include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_igc_facade.h"
+
 #include "environment.h"
 #include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"

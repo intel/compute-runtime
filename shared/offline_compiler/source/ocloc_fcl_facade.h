@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,9 +53,9 @@ class OclocFclFacade {
     MOCKABLE_VIRTUAL void populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo);
 
     OclocArgHelper *argHelper{};
-    std::unique_ptr<OsLibrary> fclLib{};
-    CIF::RAII::UPtr_t<CIF::CIFMain> fclMain{};
-    CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> fclDeviceCtx{};
+    std::unique_ptr<OsLibrary> fclLib;
+    CIF::RAII::UPtr_t<CIF::CIFMain> fclMain;
+    CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> fclDeviceCtx;
     bool initialized{false};
 };
 

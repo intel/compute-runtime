@@ -7,15 +7,20 @@
 
 #pragma once
 
-#include "shared/offline_compiler/source/offline_compiler.h"
-#include "shared/source/device_binary_format/ar/ar_encoder.h"
+#include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
+class OclocArgHelper;
+
 namespace NEO {
+namespace Ar {
+struct ArEncoder;
+}
+class OfflineCompiler;
 
 bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper);
 inline bool requestedFatBinary(int argc, const char *argv[], OclocArgHelper *helper) {

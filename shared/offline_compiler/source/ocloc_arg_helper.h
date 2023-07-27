@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/offline_compiler/source/decoder/helper.h"
-#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include <algorithm>
@@ -20,9 +19,11 @@
 
 constexpr auto *oclocStdoutLogName = "stdout.log";
 
+struct ProductConfigHelper;
 namespace NEO {
 class CompilerProductHelper;
 class ReleaseHelper;
+struct HardwareInfo;
 } // namespace NEO
 
 struct Source {

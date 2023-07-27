@@ -13,8 +13,8 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/directory.h"
 
 #include <cstring>

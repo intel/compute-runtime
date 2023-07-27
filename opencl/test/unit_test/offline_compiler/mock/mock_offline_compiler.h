@@ -8,16 +8,15 @@
 #pragma once
 
 #include "shared/offline_compiler/source/offline_compiler.h"
-#include "shared/source/compiler_interface/default_cache_config.h"
 
-#include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
-#include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_fcl_facade.h"
-#include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_igc_facade.h"
-
+#include <map>
 #include <optional>
 #include <string>
 
+class MockOclocArgHelper;
 namespace NEO {
+class MockOclocFclFacade;
+class MockOclocIgcFacade;
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
@@ -76,77 +75,27 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::useLlvmText;
     using OfflineCompiler::useOptionsSuffix;
 
-    MockOfflineCompiler() : OfflineCompiler() {
-        uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
-        uniqueHelper->setAllCallBase(true);
-        argHelper = uniqueHelper.get();
+    MockOfflineCompiler();
 
-        auto uniqueFclFacadeMock = std::make_unique<MockOclocFclFacade>(argHelper);
-        mockFclFacade = uniqueFclFacadeMock.get();
-        fclFacade = std::move(uniqueFclFacadeMock);
+    ~MockOfflineCompiler() override;
 
-        auto uniqueIgcFacadeMock = std::make_unique<MockOclocIgcFacade>(argHelper);
-        mockIgcFacade = uniqueIgcFacadeMock.get();
-        igcFacade = std::move(uniqueIgcFacadeMock);
-    }
+    int initialize(size_t numArgs, const std::vector<std::string> &argv);
 
-    ~MockOfflineCompiler() override = default;
+    void storeGenBinary(const void *pSrc, const size_t srcSize);
 
-    int initialize(size_t numArgs, const std::vector<std::string> &argv) {
-        return OfflineCompiler::initialize(numArgs, argv, true);
-    }
+    int build() override;
 
-    void storeGenBinary(const void *pSrc, const size_t srcSize) {
-        OfflineCompiler::storeBinary(genBinary, genBinarySize, pSrc, srcSize);
-    }
+    int buildIrBinary() override;
 
-    int build() override {
-        ++buildCalledCount;
+    int buildSourceCode() override;
 
-        if (buildReturnValue.has_value()) {
-            return *buildReturnValue;
-        }
+    bool generateElfBinary() override;
 
-        return OfflineCompiler::build();
-    }
+    void writeOutAllFiles() override;
 
-    int buildIrBinary() override {
-        if (overrideBuildIrBinaryStatus) {
-            return buildIrBinaryStatus;
-        }
-        return OfflineCompiler::buildIrBinary();
-    }
+    void clearLog();
 
-    int buildSourceCode() override {
-        if (overrideBuildSourceCodeStatus) {
-            return buildSourceCodeStatus;
-        }
-        return OfflineCompiler::buildSourceCode();
-    }
-
-    bool generateElfBinary() override {
-        generateElfBinaryCalled++;
-        return OfflineCompiler::generateElfBinary();
-    }
-
-    void writeOutAllFiles() override {
-        writeOutAllFilesCalled++;
-        OfflineCompiler::writeOutAllFiles();
-    }
-
-    void clearLog() {
-        uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
-        uniqueHelper->setAllCallBase(true);
-        argHelper = uniqueHelper.get();
-    }
-
-    void createDir(const std::string &path) override {
-        if (interceptCreatedDirs) {
-            createdDirs.push_back(path);
-        } else {
-            OfflineCompiler::createDir(path);
-        }
-    }
+    void createDir(const std::string &path) override;
 
     std::map<std::string, std::string> filesMap{};
     int buildIrBinaryStatus = 0;

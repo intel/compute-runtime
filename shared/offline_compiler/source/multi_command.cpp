@@ -7,8 +7,12 @@
 
 #include "shared/offline_compiler/source/multi_command.h"
 
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
+#include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/offline_compiler/source/utilities/get_current_dir.h"
+#include "shared/offline_compiler/source/utilities/safety_caller.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include <memory>

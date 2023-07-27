@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,88 +29,28 @@ class MockOclocIgcFacade : public OclocIgcFacade {
     std::optional<std::string> getIncompatibleInterfaceReturnValue{};
     std::optional<bool> isPatchtokenInterfaceSupportedReturnValue{};
 
-    MockOclocIgcFacade(OclocArgHelper *argHelper) : OclocIgcFacade{argHelper} {}
-    ~MockOclocIgcFacade() override = default;
+    MockOclocIgcFacade(OclocArgHelper *argHelper);
+    ~MockOclocIgcFacade() override;
 
-    std::unique_ptr<OsLibrary> loadIgcLibrary() const override {
-        if (shouldFailLoadingOfIgcLib) {
-            return nullptr;
-        } else {
-            return OclocIgcFacade::loadIgcLibrary();
-        }
-    }
+    std::unique_ptr<OsLibrary> loadIgcLibrary() const override;
 
-    CIF::CreateCIFMainFunc_t loadCreateIgcMainFunction() const override {
-        if (shouldFailLoadingOfIgcCreateMainFunction) {
-            return nullptr;
-        } else {
-            return OclocIgcFacade::loadCreateIgcMainFunction();
-        }
-    }
+    CIF::CreateCIFMainFunc_t loadCreateIgcMainFunction() const override;
 
-    CIF::RAII::UPtr_t<CIF::CIFMain> createIgcMain(CIF::CreateCIFMainFunc_t createMainFunction) const override {
-        if (shouldFailCreationOfIgcMain) {
-            return nullptr;
-        } else {
-            return OclocIgcFacade::createIgcMain(createMainFunction);
-        }
-    }
+    CIF::RAII::UPtr_t<CIF::CIFMain> createIgcMain(CIF::CreateCIFMainFunc_t createMainFunction) const override;
 
-    bool isIgcInterfaceCompatible(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const override {
-        if (isIgcInterfaceCompatibleReturnValue.has_value()) {
-            return *isIgcInterfaceCompatibleReturnValue;
-        } else {
-            return OclocIgcFacade::isIgcInterfaceCompatible(interfacesToIgnore);
-        }
-    }
+    bool isIgcInterfaceCompatible(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const override;
 
-    std::string getIncompatibleInterface(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const override {
-        if (getIncompatibleInterfaceReturnValue.has_value()) {
-            return *getIncompatibleInterfaceReturnValue;
-        } else {
-            return OclocIgcFacade::getIncompatibleInterface(interfacesToIgnore);
-        }
-    }
+    std::string getIncompatibleInterface(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const override;
 
-    bool isPatchtokenInterfaceSupported() const override {
-        if (isPatchtokenInterfaceSupportedReturnValue.has_value()) {
-            return *isPatchtokenInterfaceSupportedReturnValue;
-        } else {
-            return OclocIgcFacade::isPatchtokenInterfaceSupported();
-        }
-    }
+    bool isPatchtokenInterfaceSupported() const override;
 
-    CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> createIgcDeviceContext() const override {
-        if (shouldFailCreationOfIgcDeviceContext) {
-            return nullptr;
-        } else {
-            return OclocIgcFacade::createIgcDeviceContext();
-        }
-    }
+    CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> createIgcDeviceContext() const override;
 
-    CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getIgcPlatformHandle() const override {
-        if (shouldReturnInvalidIgcPlatformHandle) {
-            return nullptr;
-        } else {
-            return OclocIgcFacade::getIgcPlatformHandle();
-        }
-    }
+    CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getIgcPlatformHandle() const override;
 
-    CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> getGTSystemInfoHandle() const override {
-        if (shouldReturnInvalidGTSystemInfoHandle) {
-            return nullptr;
-        } else {
-            return OclocIgcFacade::getGTSystemInfoHandle();
-        }
-    }
+    CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> getGTSystemInfoHandle() const override;
 
-    CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkaroundsHandle() const override {
-        if (shouldReturnInvalidIgcFeaturesAndWorkaroundsHandle) {
-            return nullptr;
-        } else {
-            return OclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle();
-        }
-    }
+    CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkaroundsHandle() const override;
 };
 
 } // namespace NEO

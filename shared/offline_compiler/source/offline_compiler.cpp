@@ -7,7 +7,10 @@
 
 #include "offline_compiler.h"
 
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
+#include "shared/offline_compiler/source/ocloc_fcl_facade.h"
+#include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/compiler_interface/compiler_options.h"
@@ -23,7 +26,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/release_helper/release_helper.h"
 
 #include "platforms.h"

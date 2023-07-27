@@ -7,11 +7,7 @@
 
 #pragma once
 
-#include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_fcl_facade.h"
-#include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
@@ -22,11 +18,14 @@
 #include <string>
 #include <unordered_map>
 
+class OclocArgHelper;
+
 namespace NEO {
 
-struct HardwareInfo;
-class OsLibrary;
 class CompilerCache;
+class ReleaseHelper;
+class OclocFclFacade;
+class OclocIgcFacade;
 
 std::string convertToPascalCase(const std::string &inString);
 
@@ -135,7 +134,7 @@ All supported acronyms: %s.
     MOCKABLE_VIRTUAL void createDir(const std::string &path);
     void unifyExcludeIrFlags();
     void enforceFormat(std::string &format);
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo{};
 
     uint32_t deviceConfig = {};
     std::string deviceName;
@@ -185,8 +184,8 @@ All supported acronyms: %s.
     int revisionId = -1;
     uint64_t hwInfoConfig = 0u;
 
-    std::unique_ptr<OclocIgcFacade> igcFacade{nullptr};
-    std::unique_ptr<OclocFclFacade> fclFacade{nullptr};
+    std::unique_ptr<OclocIgcFacade> igcFacade;
+    std::unique_ptr<OclocFclFacade> fclFacade;
     std::unique_ptr<CompilerCache> cache;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
     std::unique_ptr<ReleaseHelper> releaseHelper;

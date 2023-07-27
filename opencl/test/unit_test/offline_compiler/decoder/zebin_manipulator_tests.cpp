@@ -10,6 +10,7 @@
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"

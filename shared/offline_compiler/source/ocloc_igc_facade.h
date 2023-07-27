@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,9 +53,9 @@ class OclocIgcFacade {
     void populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const;
 
     OclocArgHelper *argHelper{};
-    std::unique_ptr<OsLibrary> igcLib{};
-    CIF::RAII::UPtr_t<CIF::CIFMain> igcMain{};
-    CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> igcDeviceCtx{};
+    std::unique_ptr<OsLibrary> igcLib;
+    CIF::RAII::UPtr_t<CIF::CIFMain> igcMain;
+    CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> igcDeviceCtx;
     bool initialized{false};
 };
 

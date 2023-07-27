@@ -10,8 +10,8 @@
 #include "shared/offline_compiler/source/decoder/iga_wrapper.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include "igfxfmid.h"
 

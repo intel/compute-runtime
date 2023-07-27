@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/product_config_helper.h"
+
 #include "opencl/test/unit_test/offline_compiler/mock/mock_offline_compiler.h"
 
 #include "gtest/gtest.h"
