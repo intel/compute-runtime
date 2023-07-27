@@ -69,17 +69,17 @@ class WddmResidencyLogger {
                              stopWaitPagingFence);
 
         timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(endTime - pendingTime).count();
-        IoFunctions::fprintf(pagingLog, "makeResidentCall: %x pending return: %x delta time makeResident: %lld\n",
+        IoFunctions::fprintf(pagingLog, "makeResidentCall: %x pending return: %x delta time makeResident: %lld [us]\n",
                              makeResidentCall,
                              pendingMakeResident,
                              timeDiff);
 
         timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(endTime - waitStartTime).count();
-        IoFunctions::fprintf(pagingLog, "waiting: %x delta time wait loop: %lld wait on GPU: %d\n", enterWait, timeDiff, gpuWait);
+        IoFunctions::fprintf(pagingLog, "waiting: %x delta time wait loop: %lld [us] wait on GPU: %d\n", enterWait, timeDiff, gpuWait);
 
         if (trimBudgetTime != std::chrono::high_resolution_clock::time_point::max()) {
             timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(endTime - trimBudgetTime).count();
-            IoFunctions::fprintf(pagingLog, "waiting delta time trim to budget: %lld\n", timeDiff);
+            IoFunctions::fprintf(pagingLog, "waiting delta time trim to budget: %lld [us]\n", timeDiff);
         }
 
         makeResidentCall = false;
@@ -105,7 +105,7 @@ class WddmResidencyLogger {
     MOCKABLE_VIRTUAL void trimCallbackEnd(UINT callbackFlag, void *controllerObject, std::chrono::high_resolution_clock::time_point &callbackStart) {
         auto callbackEnd = std::chrono::high_resolution_clock::now();
         int64_t timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(callbackEnd - callbackStart).count();
-        IoFunctions::fprintf(pagingLog, "trim callback object %p, flags: %u, duration %lld\n", callbackFlag, controllerObject, timeDiff);
+        IoFunctions::fprintf(pagingLog, "trim callback object %p, flags: %u, duration %lld [us]\n", callbackFlag, controllerObject, timeDiff);
     }
 
     MOCKABLE_VIRTUAL void trimToBudget(UINT64 numBytesToTrim, void *controllerObject) {
