@@ -566,4 +566,9 @@ struct EncodeKernelArgsBuffer {
     static void encodeKernelArgsBufferCmds(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper);
 };
 
+template <typename GfxFamily>
+struct EnodeUserInterrupt {
+    static void encode(LinearStream &commandStream);
+};
+
 } // namespace NEO

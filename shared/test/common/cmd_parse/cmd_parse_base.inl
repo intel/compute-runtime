@@ -26,6 +26,7 @@ using MI_LOAD_REGISTER_REG            = GenStruct::MI_LOAD_REGISTER_REG;
 using MI_SEMAPHORE_WAIT               = GenStruct::MI_SEMAPHORE_WAIT;
 using MI_STORE_DATA_IMM               = GenStruct::MI_STORE_DATA_IMM;
 using MI_FLUSH_DW                     = GenStruct::MI_FLUSH_DW;
+using MI_USER_INTERRUPT               = GenGfxFamily::MI_USER_INTERRUPT;
 using XY_COPY_BLT                     = GenGfxFamily::XY_COPY_BLT;
 using XY_BLOCK_COPY_BLT               = GenGfxFamily::XY_BLOCK_COPY_BLT;
 using XY_COLOR_BLT                    = GenGfxFamily::XY_COLOR_BLT;
@@ -217,6 +218,16 @@ XY_COLOR_BLT *genCmdCast<XY_COLOR_BLT *>(void *buffer) {
                : nullptr;
 }
 
+template <>
+MI_USER_INTERRUPT *genCmdCast<MI_USER_INTERRUPT *>(void *buffer) {
+    auto pCmd = reinterpret_cast<MI_USER_INTERRUPT *>(buffer);
+
+    return 0 == pCmd->TheStructure.Common.CommandType &&
+                   MI_USER_INTERRUPT::MI_COMMAND_OPCODE_MI_USER_INTERRUPT == pCmd->TheStructure.Common.MICommandOpcode
+               ? pCmd
+               : nullptr;
+}
+
 template <class T>
 size_t CmdParse<T>::getCommandLength(void *cmd) {
     {
@@ -314,6 +325,11 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
         if (pCmd)
             return pCmd->TheStructure.Common.DwordLength + 2;
     }
+    {
+        auto pCmd = genCmdCast<MI_USER_INTERRUPT *>(cmd);
+        if (pCmd)
+            return sizeof(MI_USER_INTERRUPT) / sizeof(uint32_t);
+    }
 
     auto commandLengthHwSpecific = getCommandLengthHwSpecific(cmd);
 
@@ -348,6 +364,7 @@ const char *CmdParse<T>::getCommandName(void *cmd) {
     RETURN_NAME_IF(MI_FLUSH_DW);
     RETURN_NAME_IF(XY_COPY_BLT);
     RETURN_NAME_IF(XY_COLOR_BLT);
+    RETURN_NAME_IF(MI_USER_INTERRUPT);
 
 #undef RETURN_NAME_IF
 

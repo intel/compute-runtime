@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_container/encode_interrupt_helper.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
@@ -2130,6 +2131,10 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 
     if (hasInOrderDependencies) {
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
+
+        if (NEO::EncodeUserInterruptHelper::isOperationAllowed(NEO::EncodeUserInterruptHelper::afterSemaphoreMask)) {
+            NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+        }
     }
 
     if (numWaitEvents > 0) {
@@ -2297,6 +2302,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
 
     NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(*commandContainer.getCommandStream(), gpuVa,
                                                            signalValue, 0, false, (this->partitionCount > 1));
+
+    if (NEO::EncodeUserInterruptHelper::isOperationAllowed(NEO::EncodeUserInterruptHelper::onSignalingFenceMask)) {
+        NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -345,4 +345,5 @@ template struct EncodeNoop<Family>;
 template struct EncodeStoreMemory<Family>;
 template struct EncodeMemoryFence<Family>;
 template struct EncodeKernelArgsBuffer<Family>;
+template struct EnodeUserInterrupt<Family>;
 } // namespace NEO

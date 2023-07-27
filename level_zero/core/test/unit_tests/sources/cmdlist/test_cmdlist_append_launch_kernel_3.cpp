@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_interrupt_helper.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/api_specific_config.h"
@@ -882,6 +883,133 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + counterOffset, semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingSemaphoreThenProgramUserInterrupt, IsAtLeastSkl) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(NEO::EncodeUserInterruptHelper::afterSemaphoreMask);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), offset),
+        cmdStream->getUsed() - offset));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto userInterruptCmd = genCmdCast<MI_USER_INTERRUPT *>(*(++itor));
+    ASSERT_NE(nullptr, userInterruptCmd);
+
+    auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(1u, allCmds.size());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenProgramUserInterrupt, IsAtLeastSkl) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(NEO::EncodeUserInterruptHelper::onSignalingFenceMask);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), offset),
+        cmdStream->getUsed() - offset));
+
+    auto itor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
+    ASSERT_NE(nullptr, sdiCmd);
+
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
+
+    auto userInterruptCmd = genCmdCast<MI_USER_INTERRUPT *>(*(++itor));
+    ASSERT_NE(nullptr, userInterruptCmd);
+
+    auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(1u, allCmds.size());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAsMaskWhenDispatchingStoreDataImmAndSemaphoreThenProgramUserInterrupt, IsAtLeastSkl) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    constexpr int32_t invalidMask = 0b100;
+
+    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(invalidMask);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+            cmdList,
+            ptrOffset(cmdStream->getCpuBase(), offset),
+            cmdStream->getUsed() - offset));
+
+        auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(0u, allCmds.size());
+    }
+
+    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(NEO::EncodeUserInterruptHelper::onSignalingFenceMask | NEO::EncodeUserInterruptHelper::afterSemaphoreMask);
+
+    offset = cmdStream->getUsed();
+
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+            cmdList,
+            ptrOffset(cmdStream->getCpuBase(), offset),
+            cmdStream->getUsed() - offset));
+
+        auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(2u, allCmds.size());
+    }
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAppendThenSkip, IsAtLeastXeHpCore) {
