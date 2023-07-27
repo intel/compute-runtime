@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -15,13 +16,23 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
+
 namespace NEO {
 bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
     if (osInterface != nullptr) {
         auto drm = osInterface->getDriverModel()->as<NEO::Drm>();
-        if (drm->isVmBindAvailable() && drm->isPerContextVMRequired()) {
+
+        const bool vmBindAvailable = drm->isVmBindAvailable();
+        const bool perContextVms = drm->isPerContextVMRequired();
+        const bool allowDebug = (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) ||
+                                (perContextVms && drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::Online);
+
+        if (vmBindAvailable && allowDebug) {
             drm->registerResourceClasses();
             return true;
+        } else {
+            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,
+                             "Debugging not enabled. VmBind: %d, per-context VMs: %d\n", vmBindAvailable ? 1 : 0, perContextVms ? 1 : 0);
         }
     }
     return false;

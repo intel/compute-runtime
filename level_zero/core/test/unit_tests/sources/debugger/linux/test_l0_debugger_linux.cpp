@@ -138,6 +138,25 @@ TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebu
     EXPECT_TRUE(drmMock->registerClassesCalled);
 }
 
+TEST(L0DebuggerLinux, givenVmBindAndOfflineDebuggingModeWhenInitializingDebuggingInOsThenRegisterResourceClassesIsCalled) {
+    auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
+
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Offline);
+    executionEnvironment->initializeMemoryManager();
+    auto osInterface = new OSInterface();
+    auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->callBaseIsVmBindAvailable = true;
+    drmMock->bindAvailable = true;
+    EXPECT_FALSE(drmMock->isPerContextVMRequired());
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
+
+    auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(drmMock->registerClassesCalled);
+}
+
 TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
     auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
@@ -155,6 +174,40 @@ TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsT
     auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
     EXPECT_FALSE(result);
     EXPECT_FALSE(drmMock->registerClassesCalled);
+}
+
+TEST(L0DebuggerLinux, givenPrintDebugSettingsAndIncorrectSetupWhenInitializingDebuggingInOsThenMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
+
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->initializeMemoryManager();
+    auto osInterface = new OSInterface();
+    auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->callBaseIsVmBindAvailable = true;
+    drmMock->bindAvailable = false;
+    drmMock->setPerContextVMRequired(true);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
+
+    ::testing::internal::CaptureStderr();
+
+    auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string("Debugging not enabled. VmBind: 0, per-context VMs: 1\n"), output);
+    EXPECT_FALSE(result);
+
+    drmMock->bindAvailable = true;
+    drmMock->setPerContextVMRequired(false);
+    ::testing::internal::CaptureStderr();
+
+    result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string("Debugging not enabled. VmBind: 1, per-context VMs: 0\n"), output);
+    EXPECT_FALSE(result);
 }
 
 TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
