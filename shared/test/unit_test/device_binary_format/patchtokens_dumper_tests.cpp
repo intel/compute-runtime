@@ -88,6 +88,9 @@ TEST(KernelArgDumper, givenEmptyKernelArgThenProperlyCreatesDump) {
 }
 
 TEST(ProgramDumper, givenProgramWithPatchtokensThenProperlyCreatesDump) {
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    compilerProductHelper->adjustHwInfoForIgc(hwInfo);
     using namespace iOpenCL;
     PatchTokensTestData::ValidProgramWithConstantSurfaceAndPointer progWithConst = {};
     PatchTokensTestData::ValidProgramWithGlobalSurfaceAndPointer progWithGlobal = {};
@@ -136,7 +139,7 @@ struct SProgramBinaryHeader {
              << CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << NEO::defaultHwInfo->platform.eRenderCoreFamily << R"===(
+             << hwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << progWithConst.header->GPUPointerSizeInBytes << R"===(
 
@@ -264,6 +267,9 @@ Kernels section size : 0
 }
 
 TEST(ProgramDumper, givenProgramWithKernelThenProperlyCreatesDump) {
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    compilerProductHelper->adjustHwInfoForIgc(hwInfo);
     PatchTokensTestData::ValidProgramWithKernelUsingSlm program;
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
@@ -275,7 +281,7 @@ struct SProgramBinaryHeader {
              << iOpenCL::CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << NEO::defaultHwInfo->platform.eRenderCoreFamily << R"===(
+             << hwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << program.header->GPUPointerSizeInBytes << R"===(
 
@@ -341,6 +347,9 @@ Kernel-scope tokens section size : )==="
 }
 
 TEST(ProgramDumper, givenProgramWithMultipleKerneslThenProperlyCreatesDump) {
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    compilerProductHelper->adjustHwInfoForIgc(hwInfo);
     PatchTokensTestData::ValidProgramWithKernelUsingSlm program;
     program.kernels.push_back(program.kernels[0]);
     program.kernels[1].tokens.allocateLocalSurface = nullptr;
@@ -358,7 +367,7 @@ struct SProgramBinaryHeader {
              << iOpenCL::CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << NEO::defaultHwInfo->platform.eRenderCoreFamily << R"===(
+             << hwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << program.header->GPUPointerSizeInBytes << R"===(
 

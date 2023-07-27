@@ -96,12 +96,17 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         argHelper->printf("Error! IGC device context has not been properly created!\n");
         return OclocErrorCode::OUT_OF_HOST_MEMORY;
     }
-
-    populateIgcPlatform(*igcPlatform, hwInfo);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
-
     auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper.get());
+
+    auto copyHwInfo = hwInfo;
+    if (compilerProductHelper) {
+        compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+    }
+
+    populateIgcPlatform(*igcPlatform, copyHwInfo);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), copyHwInfo.gtSystemInfo);
+
+    populateWithFeatures(igcFtrWa.get(), copyHwInfo, compilerProductHelper.get());
 
     initialized = true;
     return OclocErrorCode::SUCCESS;

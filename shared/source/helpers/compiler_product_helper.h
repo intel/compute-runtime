@@ -55,6 +55,7 @@ class CompilerProductHelper {
     virtual uint32_t getNumThreadsPerEu() const = 0;
     virtual uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const = 0;
     virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const = 0;
+    virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
 
     virtual ~CompilerProductHelper() = default;
     uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const;
@@ -93,6 +94,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     uint32_t getNumThreadsPerEu() const override;
     uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const override;
     std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const override;
+    void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
 
     ~CompilerProductHelperHw() override = default;
 

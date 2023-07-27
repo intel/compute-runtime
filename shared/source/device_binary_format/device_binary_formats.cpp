@@ -22,10 +22,12 @@ std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary binary, std::stri
 }
 
 TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto initialHwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     TargetDevice targetDevice = {};
+    auto hwInfo = initialHwInfo;
+    compilerProductHelper.adjustHwInfoForIgc(hwInfo);
 
     targetDevice.coreFamily = hwInfo.platform.eRenderCoreFamily;
     targetDevice.productFamily = hwInfo.platform.eProductFamily;

@@ -27,7 +27,10 @@ enum class enabledIrFormat {
 template <enabledIrFormat irFormat = enabledIrFormat::NONE>
 struct MockElfBinaryPatchtokens {
     MockElfBinaryPatchtokens(const HardwareInfo &hwInfo) : MockElfBinaryPatchtokens(std::string{}, hwInfo){};
-    MockElfBinaryPatchtokens(const std::string &buildOptions, const HardwareInfo &hwInfo) {
+    MockElfBinaryPatchtokens(const std::string &buildOptions, const HardwareInfo &inputHwInfo) {
+        auto hwInfo = inputHwInfo;
+        auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+        compilerProductHelper->adjustHwInfoForIgc(hwInfo);
         mockDevBinaryHeader.Device = hwInfo.platform.eRenderCoreFamily;
         mockDevBinaryHeader.GPUPointerSizeInBytes = sizeof(void *);
         mockDevBinaryHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;

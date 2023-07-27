@@ -110,7 +110,10 @@ class PatchtokensProgramWithDebugData : public MockProgram {
 
     PatchtokensProgramWithDebugData(ClDevice &device) : MockProgram(toClDeviceVector(device)) {
         auto rootDeviceIdx = device.getRootDeviceIndex();
-        const auto &hwInfo = device.getHardwareInfo();
+        auto hwInfo = device.getHardwareInfo();
+
+        auto &compilerProductHelper = device.getCompilerProductHelper();
+        compilerProductHelper.adjustHwInfoForIgc(hwInfo);
 
         this->buildInfos.resize(rootDeviceIdx + 1);
         auto &buildInfo = this->buildInfos[rootDeviceIdx];

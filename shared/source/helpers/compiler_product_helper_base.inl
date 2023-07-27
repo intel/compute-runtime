@@ -227,4 +227,8 @@ bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const Re
     }
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+void CompilerProductHelperHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {
+}
 } // namespace NEO
