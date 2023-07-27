@@ -44,6 +44,7 @@ extern bool ReturnEmptyFilesVector;
 class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<WddmMemoryManager> {
   public:
     using WddmMemoryManager::allocateGraphicsMemoryWithAlignment;
+    using WddmMemoryManager::getPreferredAllocationMethod;
 
     MockAllocateGraphicsMemoryWithAlignmentWddm(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {}
     bool allocateSystemMemoryAndCreateGraphicsAllocationFromItCalled = false;
@@ -509,11 +510,11 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
 
 TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGettingPreferredAllocationMethodThenValueFlagIsReturned) {
     DebugManagerStateRestore restorer;
-    EXPECT_EQ(preferredAllocationMethod, MockWddmMemoryManager::getPreferredAllocationMethod());
+    EXPECT_EQ(preferredAllocationMethod, memoryManager->getPreferredAllocationMethod(0));
 
     for (const auto &allocationMethod : {GfxMemoryAllocationMethod::UseUmdSystemPtr, GfxMemoryAllocationMethod::AllocateByKmd}) {
         DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(allocationMethod));
-        EXPECT_EQ(allocationMethod, MockWddmMemoryManager::getPreferredAllocationMethod());
+        EXPECT_EQ(allocationMethod, memoryManager->getPreferredAllocationMethod(0));
     }
 }
 

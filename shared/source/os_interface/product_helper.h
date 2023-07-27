@@ -44,6 +44,8 @@ enum class AllocationType;
 using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
 extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
 
+enum class GfxMemoryAllocationMethod : uint32_t;
+
 enum class UsmAccessCapabilities {
     Host = 0,
     Device,
@@ -209,6 +211,7 @@ class ProductHelper {
     virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
     virtual bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const = 0;
+    virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod() const = 0;
 
     virtual ~ProductHelper() = default;
 

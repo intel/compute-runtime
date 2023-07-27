@@ -798,4 +798,9 @@ bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const Ke
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod() const {
+    return {};
+}
+
 } // namespace NEO

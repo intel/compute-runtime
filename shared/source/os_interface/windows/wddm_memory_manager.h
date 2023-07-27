@@ -19,11 +19,6 @@ class Gmm;
 class OsContextWin;
 class Wddm;
 
-enum class GfxMemoryAllocationMethod : uint32_t {
-    UseUmdSystemPtr,
-    AllocateByKmd
-};
-
 extern const GfxMemoryAllocationMethod preferredAllocationMethod;
 
 class WddmMemoryManager : public MemoryManager {
@@ -80,7 +75,7 @@ class WddmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL NTSTATUS createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex);
 
   protected:
-    static GfxMemoryAllocationMethod getPreferredAllocationMethod();
+    GfxMemoryAllocationMethod getPreferredAllocationMethod(uint32_t rootDeviceIndex);
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
