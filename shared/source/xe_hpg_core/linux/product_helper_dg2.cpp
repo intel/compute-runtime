@@ -70,5 +70,10 @@ bool ProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, const u
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
+    return false;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO
