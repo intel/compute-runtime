@@ -13,7 +13,7 @@
 
 #include <string>
 
-using OpenClCFeaturesContainer = StackVec<cl_name_version, 27>;
+using OpenClCFeaturesContainer = StackVec<cl_name_version, 28>;
 
 namespace NEO {
 struct HardwareInfo;
