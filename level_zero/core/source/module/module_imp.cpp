@@ -370,6 +370,10 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
+    if (singleDeviceBinaryFormat == NEO::DeviceBinaryFormat::Zebin && NEO::DebugManager.flags.DumpZEBin.get() == 1) {
+        dumpFileIncrement(reinterpret_cast<const char *>(blob.begin()), blob.size(), "dumped_zebin_module", ".elf");
+    }
+
     processDebugData();
 
     size_t slmNeeded = NEO::getMaxInlineSlmNeeded(programInfo);

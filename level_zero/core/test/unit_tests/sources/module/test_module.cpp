@@ -16,6 +16,7 @@
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -2979,6 +2980,53 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptions
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=7 -cl-load-cache-default=4"), std::string::npos);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebinElfDumped) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DumpZEBin.set(1);
+
+    auto mockCompilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
+
+    char binary[10];
+    auto zebin = ZebinTestData::ValidEmptyProgram<>();
+
+    mockCompilerInterface->output.intermediateRepresentation.size = zebin.storage.size();
+    mockCompilerInterface->output.intermediateRepresentation.mem.reset(new char[zebin.storage.size()]);
+
+    memcpy_s(mockCompilerInterface->output.intermediateRepresentation.mem.get(), mockCompilerInterface->output.intermediateRepresentation.size,
+             zebin.storage.data(), zebin.storage.size());
+
+    MockModuleTranslationUnit moduleTu(this->device);
+    moduleTu.processUnpackedBinaryCallBase = true;
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+
+    std::string fileName = "dumped_zebin_module.elf";
+    EXPECT_FALSE(fileExists(fileName));
+
+    result = moduleTu.buildFromSpirV(binary, sizeof(binary), nullptr, "", nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_TRUE(fileExistsHasSize(fileName));
+    std::remove(fileName.c_str());
+
+    PatchTokensTestData::ValidEmptyProgram programTokens;
+    mockCompilerInterface->output.intermediateRepresentation.size = programTokens.storage.size();
+    mockCompilerInterface->output.intermediateRepresentation.mem.reset(new char[programTokens.storage.size()]);
+
+    memcpy_s(mockCompilerInterface->output.intermediateRepresentation.mem.get(), mockCompilerInterface->output.intermediateRepresentation.size,
+             programTokens.storage.data(), programTokens.storage.size());
+
+    MockModuleTranslationUnit moduleTu2(this->device);
+    moduleTu2.processUnpackedBinaryCallBase = true;
+
+    result = moduleTu2.buildFromSpirV(binary, sizeof(binary), nullptr, "", nullptr);
+
+    EXPECT_FALSE(fileExists(fileName));
+    EXPECT_FALSE(fileExistsHasSize(fileName));
+    std::remove(fileName.c_str());
 }
 
 HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
