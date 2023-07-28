@@ -210,8 +210,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
 
     MemorySynchronizationCommands<GfxFamily>::setBarrierWa(commandsBuffer, gpuAddress, rootDeviceEnvironment);
 
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    setPostSyncExtraProperties(args, hwInfo);
+    setPostSyncExtraProperties(args);
     MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(commandsBuffer, postSyncMode, gpuAddress, immediateData, args);
     commandsBuffer = ptrOffset(commandsBuffer, getSizeForSingleBarrier(args.tlbInvalidation));
 

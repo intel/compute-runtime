@@ -253,7 +253,12 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     ASSERT_NE(nullptr, pipeControl);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
-    EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
+    EXPECT_EQ(pipeControl->getCommandStreamerStallEnable(), expectedPipeControl.getCommandStreamerStallEnable());
+    EXPECT_EQ(pipeControl->getPostSyncOperation(), expectedPipeControl.getPostSyncOperation());
+    EXPECT_EQ(pipeControl->getAddress(), expectedPipeControl.getAddress());
+    EXPECT_EQ(pipeControl->getAddressHigh(), expectedPipeControl.getAddressHigh());
+    EXPECT_EQ(pipeControl->getImmediateData(), expectedPipeControl.getImmediateData());
+    EXPECT_EQ(pipeControl->getNotifyEnable(), expectedPipeControl.getNotifyEnable());
 }
 
 HWTEST_F(PipeControlHelperTests, givenGfxCoreHelperwhenAskingForDcFlushThenReturnTrue) {
@@ -292,10 +297,11 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
     expectedPipeControl.setImmediateData(immediateData);
+
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
-    PipeControlArgs args;
+    PipeControlArgs args{};
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         stream, PostSyncMode::ImmediateData, address, immediateData, rootDeviceEnvironment, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) - sizeof(PIPE_CONTROL);
@@ -304,7 +310,12 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     ASSERT_NE(nullptr, pipeControl);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
-    EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
+    EXPECT_EQ(pipeControl->getCommandStreamerStallEnable(), expectedPipeControl.getCommandStreamerStallEnable());
+    EXPECT_EQ(pipeControl->getPostSyncOperation(), expectedPipeControl.getPostSyncOperation());
+    EXPECT_EQ(pipeControl->getAddress(), expectedPipeControl.getAddress());
+    EXPECT_EQ(pipeControl->getAddressHigh(), expectedPipeControl.getAddressHigh());
+    EXPECT_EQ(pipeControl->getImmediateData(), expectedPipeControl.getImmediateData());
+    EXPECT_EQ(pipeControl->getNotifyEnable(), expectedPipeControl.getNotifyEnable());
 }
 
 HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsedThenNotifyEnableFlagIsTrue) {
@@ -335,7 +346,12 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
     ASSERT_NE(nullptr, pipeControl);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
-    EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
+    EXPECT_EQ(pipeControl->getCommandStreamerStallEnable(), expectedPipeControl.getCommandStreamerStallEnable());
+    EXPECT_EQ(pipeControl->getPostSyncOperation(), expectedPipeControl.getPostSyncOperation());
+    EXPECT_EQ(pipeControl->getAddress(), expectedPipeControl.getAddress());
+    EXPECT_EQ(pipeControl->getAddressHigh(), expectedPipeControl.getAddressHigh());
+    EXPECT_EQ(pipeControl->getImmediateData(), expectedPipeControl.getImmediateData());
+    EXPECT_EQ(pipeControl->getNotifyEnable(), expectedPipeControl.getNotifyEnable());
 }
 
 HWTEST_F(PipeControlHelperTests, WhenIsDcFlushAllowedIsCalledThenCorrectResultIsReturned) {

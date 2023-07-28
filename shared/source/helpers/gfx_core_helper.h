@@ -418,7 +418,7 @@ struct MemorySynchronizationCommands {
     static void addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args);
     static void setBarrierWithPostSyncOperation(void *&commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args);
 
-    static void setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo);
+    static void setPostSyncExtraProperties(PipeControlArgs &args);
 
     static void addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment);

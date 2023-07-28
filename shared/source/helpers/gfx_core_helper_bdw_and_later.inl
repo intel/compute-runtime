@@ -112,7 +112,7 @@ aub_stream::MMIOList GfxCoreHelperHw<GfxFamily>::getExtraMmioList(const Hardware
 }
 
 template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo) {
+inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(PipeControlArgs &args) {
 }
 
 template <typename GfxFamily>

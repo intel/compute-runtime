@@ -2374,12 +2374,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
         } else {
             dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false);
 
-            const auto &hwInfo = this->device->getHwInfo();
             const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
             NEO::PipeControlArgs args;
             args.dcFlushEnable = getDcFlushRequired(event->isSignalScope());
-            NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args,
-                                                                                      hwInfo);
+            NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
 
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
 

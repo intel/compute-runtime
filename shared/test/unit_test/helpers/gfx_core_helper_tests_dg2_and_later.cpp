@@ -139,26 +139,15 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
 
 HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenSettingExtraPipeControlPropertiesThenCorrectValuesAreSet, IsAtLeastXeHpgCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    PipeControlArgs args{};
+    MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args);
 
-    for (auto ftrLocalMemory : ::testing::Bool()) {
-        HardwareInfo hardwareInfo = *defaultHwInfo;
-        hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
-
-        PipeControlArgs args;
-        MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args, hardwareInfo);
-
-        if (ftrLocalMemory) {
-            EXPECT_TRUE(args.hdcPipelineFlush);
-            EXPECT_TRUE(args.unTypedDataPortCacheFlush);
-        } else {
-            EXPECT_FALSE(args.hdcPipelineFlush);
-            EXPECT_FALSE(args.unTypedDataPortCacheFlush);
-        }
-    }
+    EXPECT_TRUE(args.hdcPipelineFlush);
+    EXPECT_TRUE(args.unTypedDataPortCacheFlush);
 }
 
 HWTEST2_F(PipeControlHelperTestsDg2AndLater, whenSettingCacheFlushExtraFieldsThenExpectHdcAndUnTypedDataPortFlushSet, IsAtLeastXeHpgCore) {
-    PipeControlArgs args;
+    PipeControlArgs args{};
 
     MemorySynchronizationCommands<FamilyType>::setCacheFlushExtraProperties(args);
     EXPECT_TRUE(args.hdcPipelineFlush);
