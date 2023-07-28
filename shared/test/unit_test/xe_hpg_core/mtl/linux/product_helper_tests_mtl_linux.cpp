@@ -53,3 +53,7 @@ MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
 MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationsSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
+
+MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(pInHwInfo));
+}

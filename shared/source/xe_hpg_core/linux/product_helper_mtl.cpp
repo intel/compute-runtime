@@ -43,6 +43,11 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isVmBindPatIndexProgrammingSupported() const {
     return true;
 }
