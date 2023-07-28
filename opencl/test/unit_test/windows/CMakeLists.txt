@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -34,7 +34,6 @@ if(WIN32)
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/setup_external_dependencies_drm_or_wddm.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
   )
 

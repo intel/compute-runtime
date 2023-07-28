@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -36,7 +36,7 @@ add_library(igdrcl_libult OBJECT EXCLUDE_FROM_ALL
 set(IGDRCL_SRCS_LIB_ULT_ENV
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_ult.cpp
     ${NEO_SOURCE_DIR}/shared/test/common/helpers/custom_event_listener.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/main.cpp
+    ${NEO_SOURCE_DIR}/shared/test/common/common_main.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/command_queue/command_queue_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/command_queue/command_queue_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/built_in_fixture.cpp
@@ -53,6 +53,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.h
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_specific_config_ocl.cpp
 )
 
 add_library(igdrcl_libult_env OBJECT EXCLUDE_FROM_ALL

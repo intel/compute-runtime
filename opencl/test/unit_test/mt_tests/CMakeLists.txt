@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,7 +12,6 @@ add_custom_target(run_mt_unit_tests)
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
-               ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
                $<TARGET_OBJECTS:igdrcl_libult>
                $<TARGET_OBJECTS:neo_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>

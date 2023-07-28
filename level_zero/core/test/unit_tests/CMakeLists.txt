@@ -25,11 +25,12 @@ add_executable(${TARGET_NAME}
 
 target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock.h
                ${CMAKE_CURRENT_SOURCE_DIR}/white_box.h
+               ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/test_modules/gen_kernel.cmake
+               ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_specific_config_l0.cpp
 )
 
 target_sources(${TARGET_NAME} PRIVATE

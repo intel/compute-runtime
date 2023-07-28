@@ -15,11 +15,10 @@ link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
 add_executable(neo_shared_tests
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/ult_specific_config.cpp
                ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
-               ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:neo_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>

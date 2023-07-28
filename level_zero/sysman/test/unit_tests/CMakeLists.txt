@@ -24,11 +24,12 @@ add_executable(${TARGET_NAME}
 
 target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
+               ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_specific_config_l0.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/create_builtin_functions_lib.cpp
                ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
 )
 

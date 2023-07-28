@@ -1,24 +1,17 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/os_interface/product_helper.h"
-#include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
-#include "shared/test/common/base_ult_config_listener.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
-#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
-#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -31,15 +24,20 @@
 #include "shared/test/common/test_stats.h"
 #include "shared/test/common/tests_configuration.h"
 
+#include "gtest/gtest.h"
 #include "hw_cmds_default.h"
-#include "test_files_setup.h"
 
-#include <algorithm>
 #include <fstream>
-#include <limits.h>
+#include <iostream>
 #include <mutex>
-#include <sstream>
 #include <thread>
+
+namespace NEO {
+namespace PagaFaultManagerTestConfig {
+bool disabled = false;
+}
+extern const char *executionDirectorySuffix;
+extern bool useMockGmm;
 
 #ifdef WIN32
 const char *fSeparator = "\\";
@@ -47,45 +45,63 @@ const char *fSeparator = "\\";
 const char *fSeparator = "/";
 #endif
 
-TEST(Should, pass) { EXPECT_TRUE(true); }
-
-TEST(Helper, MemoryZeroed) {
-
-    uint8_t nonZero[] = {1, 0, 0};
-    uint8_t nonZero2[] = {0, 0, 0, 0, 1};
-    uint8_t zero[] = {0, 0, 0, 0, 0, 0};
-
-    EXPECT_FALSE(memoryZeroed(nonZero, sizeof(nonZero)));
-    EXPECT_FALSE(memoryZeroed(nonZero2, sizeof(nonZero2)));
-    EXPECT_TRUE(memoryZeroed(zero, sizeof(zero)));
+bool checkAubTestsExecutionPathValidity() {
+    bool valid = true;
+    if ((testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx)) {
+        std::ofstream testFile;
+        std::string aubPath = folderAUB;
+        aubPath += fSeparator;
+        aubPath += "testAubFolder";
+        testFile.open(aubPath, std::ofstream::app);
+        if (testFile.is_open()) {
+            testFile.close();
+        } else {
+            valid = false;
+            std::cout << "ERROR: Aub tests must be run in directory containing \" " << folderAUB << "\" folder!\n";
+        }
+    }
+    return valid;
 }
 
-namespace NEO {
-extern const char *hardwarePrefix[];
-extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
-
-extern bool useMockGmm;
-extern TestMode testMode;
-extern const char *executionDirectorySuffix;
-
-std::thread::id tempThreadID;
-
-namespace MockSipData {
-extern std::unique_ptr<MockSipKernel> mockSipKernel;
-}
-
-namespace PagaFaultManagerTestConfig {
-bool disabled = false;
-}
 } // namespace NEO
 
 using namespace NEO;
 
 extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
+
+void applyWorkarounds();
+void initGTest(int &argc, char **argv);
+bool isPlatformSupported(const HardwareInfo &hwInfoForTests);
+void setupTestFiles(std::string testBinaryFiles, int32_t revId);
+std::string getBaseExecutionDir();
+void addUltListener(::testing::TestEventListeners &listener);
+void cleanTestHelpers();
+
 bool generateRandomInput = false;
 
-void applyWorkarounds() {
+std::string getRunPath(char *argv0) {
+    std::string res(argv0);
+
+    auto pos = res.rfind(fSeparator);
+    if (pos != std::string::npos)
+        res = res.substr(0, pos);
+
+    if (res == "." || pos == std::string::npos) {
+        char *cwd;
+#if defined(__linux__)
+        cwd = getcwd(nullptr, 0);
+#else
+        cwd = _getcwd(nullptr, 0);
+#endif
+        res = cwd;
+        free(cwd);
+    }
+
+    return res;
+}
+std::thread::id tempThreadID;
+void applyCommonWorkarounds() {
     {
         std::ofstream f;
         const std::string fileName("_tmp_");
@@ -117,51 +133,6 @@ void applyWorkarounds() {
     }
 }
 
-std::string getHardwarePrefix() {
-    std::string s = hardwarePrefix[defaultHwInfo->platform.eProductFamily];
-    return s;
-}
-
-std::string getRunPath(char *argv0) {
-    std::string res(argv0);
-
-    auto pos = res.rfind(fSeparator);
-    if (pos != std::string::npos)
-        res = res.substr(0, pos);
-
-    if (res == "." || pos == std::string::npos) {
-        char *cwd;
-#if defined(__linux__)
-        cwd = getcwd(nullptr, 0);
-#else
-        cwd = _getcwd(nullptr, 0);
-#endif
-        res = cwd;
-        free(cwd);
-    }
-
-    return res;
-}
-
-void registerMockSpirvBuiltinsInEmbeddedStorage() {
-    const std::array<ConstStringRef, 11> builtinIntermediateNames{"copy_buffer_to_buffer.builtin_kernel.bc",
-                                                                  "copy_buffer_rect.builtin_kernel.bc",
-                                                                  "fill_buffer.builtin_kernel.bc",
-                                                                  "copy_buffer_to_image3d.builtin_kernel.bc",
-                                                                  "copy_image3d_to_buffer.builtin_kernel.bc",
-                                                                  "copy_image_to_image1d.builtin_kernel.bc",
-                                                                  "copy_image_to_image2d.builtin_kernel.bc",
-                                                                  "copy_image_to_image3d.builtin_kernel.bc",
-                                                                  "fill_image1d.builtin_kernel.bc",
-                                                                  "fill_image2d.builtin_kernel.bc",
-                                                                  "fill_image3d.builtin_kernel.bc"};
-    auto &storageRegistry = EmbeddedStorageRegistry::getInstance();
-    for (auto builtinIntermediateName : builtinIntermediateNames) {
-        std::string resource = "__mock_spirv_resource";
-        storageRegistry.store(builtinIntermediateName.str(), createBuiltinResource(resource.data(), resource.size() + 1));
-    }
-}
-
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
@@ -172,6 +143,7 @@ int main(int argc, char **argv) {
     bool dumpTestStats = false;
     std::string dumpTestStatsFileName = "";
     applyWorkarounds();
+    applyCommonWorkarounds();
 
 #if defined(__linux__)
     if (getenv("IGDRCL_TEST_SELF_EXEC") == nullptr) {
@@ -192,7 +164,7 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    ::testing::InitGoogleTest(&argc, argv);
+    initGTest(argc, argv);
     HardwareInfo hwInfoForTests = DEFAULT_TEST_PLATFORM::hwInfo;
 
     uint32_t euPerSubSlice = 0;
@@ -305,29 +277,22 @@ int main(int argc, char **argv) {
     }
 
     adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);
+    // Platforms with uninitialized factory are not supported
+    if (!isPlatformSupported(hwInfoForTests)) {
+        std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
+        std::cout << "skipping tests" << std::endl;
+        return 0;
+    }
 
     binaryNameSuffix.append(hardwarePrefix[hwInfoForTests.platform.eProductFamily]);
 
-    std::string testBinaryFiles = getRunPath(argv[0]);
-    testBinaryFiles.append("/");
-    testBinaryFiles.append(binaryNameSuffix);
-    testBinaryFiles.append("/");
-    testBinaryFiles.append(std::to_string(revId));
-    testBinaryFiles.append("/");
-    testBinaryFiles.append(testFiles);
-    testFiles = testBinaryFiles;
+    setupTestFiles(getRunPath(argv[0]), revId);
 
-    std::string nClFiles = NEO_SHARED_TEST_FILES_DIR;
-    nClFiles.append("/");
-    clFiles = nClFiles;
-
-    std::string executionDirectory("shared/");
+    auto executionDirectory = getBaseExecutionDir();
     executionDirectory += hardwarePrefix[productFamily];
     executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
     executionDirectory += "/";
     executionDirectory += std::to_string(revId);
-
-    registerMockSpirvBuiltinsInEmbeddedStorage();
 
 #ifdef WIN32
 #include <direct.h>
@@ -340,6 +305,10 @@ int main(int argc, char **argv) {
         std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #endif
+
+    if (!checkAubTestsExecutionPathValidity()) {
+        return -1;
+    }
 
     defaultHwInfo = std::make_unique<HardwareInfo>();
     *defaultHwInfo = hwInfoForTests;
@@ -355,7 +324,7 @@ int main(int argc, char **argv) {
     }
 
     listeners.Append(new MemoryLeakListener);
-    listeners.Append(new BaseUltConfigListener);
+    addUltListener(listeners);
 
     gEnvironment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));
 
@@ -395,7 +364,10 @@ int main(int argc, char **argv) {
         GmmInterface::initialize(nullptr, nullptr);
     }
 
-    NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
+    MockSipData::mockSipKernel.reset(new MockSipKernel());
+    if (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx) {
+        MockSipData::useMockSip = false;
+    }
 
     retVal = RUN_ALL_TESTS();
 
@@ -409,6 +381,7 @@ int main(int argc, char **argv) {
         dumpTestStatsFile << getTestStatsJson();
         dumpTestStatsFile.close();
     }
+    cleanTestHelpers();
 
     return retVal;
 }

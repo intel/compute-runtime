@@ -128,6 +128,8 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/utilities/cpuintrinsics.cpp
 )
 

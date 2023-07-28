@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,6 @@ if(DEFINED AUB_STREAM_PROJECT_NAME)
 
   list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
        ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
-       ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
        $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
        $<TARGET_OBJECTS:igdrcl_libult>
        $<TARGET_OBJECTS:neo_libult_common>
