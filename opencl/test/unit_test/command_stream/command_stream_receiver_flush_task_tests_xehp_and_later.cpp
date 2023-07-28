@@ -167,7 +167,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
     auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);
 
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
 
     EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipCmd->getSystemInstructionPointer());
 }
@@ -210,7 +210,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeContr
     auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
     auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);
 
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
 
     EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipCmd->getSystemInstructionPointer());
 }
@@ -259,7 +259,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedP
 
     auto cmdLRI = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
     auto sipAddress = cmdLRI->getDataDword() & 0xfffffff8;
-    auto sipAllocation = SipKernel::getSipKernel(*mockDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation();
 
     EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
 }

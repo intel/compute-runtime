@@ -123,7 +123,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenP
     PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, nullptr);
     EXPECT_EQ(sizeof(STATE_SIP), cmdStream.getUsed());
 
-    auto sipAllocation = SipKernel::getSipKernel(*device).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*device, nullptr).getSipAllocation();
     auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());
     auto sipAddress = sipCommand->getSystemInstructionPointer();
 

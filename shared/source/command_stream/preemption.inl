@@ -44,14 +44,7 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
     if (isMidThreadPreemption || debuggingEnabled) {
-        GraphicsAllocation *sipAllocation{nullptr};
-
-        if (device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::Offline) {
-            sipAllocation = SipKernel::getBindlessDebugSipKernel(device, context).getSipAllocation();
-        } else {
-            sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
-        }
-
+        GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, context).getSipAllocation();
         programStateSipCmd<GfxFamily>(preambleCmdStream, sipAllocation, logicalStateHelper);
     }
 }

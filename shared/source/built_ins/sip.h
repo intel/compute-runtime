@@ -42,7 +42,7 @@ class SipKernel {
     static bool initSipKernel(SipKernelType type, Device &device);
     static void freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager);
 
-    static const SipKernel &getSipKernel(Device &device);
+    static const SipKernel &getSipKernel(Device &device, OsContext *context);
     static const SipKernel &getBindlessDebugSipKernel(Device &device);
     static const SipKernel &getBindlessDebugSipKernel(Device &device, OsContext *context);
     static SipKernelType getSipKernelType(Device &device);

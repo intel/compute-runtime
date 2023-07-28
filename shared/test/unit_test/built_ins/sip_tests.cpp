@@ -101,11 +101,11 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromF
     ASSERT_NE(nullptr, sipKernel);
     auto storedAllocation = sipKernel->getSipAllocation();
 
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     EXPECT_NE(nullptr, storedAllocation);
     EXPECT_EQ(storedAllocation, sipAllocation);
 
-    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_NE(0u, header.size());
 }
 
@@ -128,11 +128,11 @@ TEST_F(RawBinarySipTest, givenFileHeaderMissingWhenInitSipKernelThenSipIsLoadedF
     ASSERT_NE(nullptr, sipKernel);
     auto storedAllocation = sipKernel->getSipAllocation();
 
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     EXPECT_NE(nullptr, storedAllocation);
     EXPECT_EQ(storedAllocation, sipAllocation);
 
-    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_EQ(0u, header.size());
 }
 
@@ -156,7 +156,7 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelAndDebuggerActiveThe
     ASSERT_NE(nullptr, sipKernel);
     auto storedAllocation = sipKernel->getSipAllocation();
 
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     EXPECT_NE(nullptr, storedAllocation);
     EXPECT_EQ(storedAllocation, sipAllocation);
 }
@@ -252,7 +252,7 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoaded
     ASSERT_NE(nullptr, sipKernel);
     auto storedAllocation = sipKernel->getSipAllocation();
 
-    auto &refSipKernel = SipKernel::getSipKernel(*pDevice);
+    auto &refSipKernel = SipKernel::getSipKernel(*pDevice, nullptr);
     EXPECT_EQ(sipKernel, &refSipKernel);
 
     auto sipAllocation = refSipKernel.getSipAllocation();
@@ -288,7 +288,7 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingBindlessDebugSipThenSipIsL
     EXPECT_NE(nullptr, storedAllocation);
     EXPECT_EQ(storedAllocation, sipAllocation);
 
-    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_NE(0u, header.size());
 }
 
@@ -310,7 +310,7 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingBindlessDebugSipWithContex
     EXPECT_NE(nullptr, storedAllocation);
     EXPECT_EQ(storedAllocation, sipAllocation);
 
-    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_NE(0u, header.size());
 }
 
@@ -370,7 +370,7 @@ TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSi
     MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
     auto hwInfo = *NEO::defaultHwInfo.get();
     auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
-    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
+    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
@@ -378,7 +378,7 @@ TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAr
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
     auto hwInfo = *NEO::defaultHwInfo.get();
     auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
-    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
+    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {
@@ -386,10 +386,10 @@ TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveArea
     auto hwInfo = pDevice->getHardwareInfo();
     auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
-    EXPECT_EQ(0x1800u * numSlices * 6 * 16 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
+    EXPECT_EQ(0x1800u * numSlices * 6 * 16 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-    EXPECT_EQ(0x1800u * numSlices * 8 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
+    EXPECT_EQ(0x1800u * numSlices * 8 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 TEST(DebugBindlessSip, givenActiveDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
     DebugManagerStateRestore restorer;
@@ -476,6 +476,35 @@ TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSip
     EXPECT_NE(nullptr, mockDevice);
 
     auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
+    EXPECT_NE(nullptr, &sipKernel);
+
+    auto contextSip = builtIns->perContextSipKernels[contextId].first.get();
+
+    EXPECT_NE(nullptr, contextSip);
+    EXPECT_EQ(SipKernelType::DbgBindless, contextSip->getType());
+    EXPECT_NE(nullptr, contextSip->getSipAllocation());
+    EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
+}
+
+TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenGettingSipForContextThenCorrectSipKernelIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto executionEnvironment = mockDevice->getExecutionEnvironment();
+    auto builtIns = new NEO::MockBuiltins();
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+
+    const uint32_t contextId = 0u;
+    std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                           mockDevice->getRootDeviceIndex(), contextId,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
+    osContext->setDefaultContext(true);
+
+    auto csr = mockDevice->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &sipKernel = NEO::SipKernel::getSipKernel(*mockDevice, &csr->getOsContext());
     EXPECT_NE(nullptr, &sipKernel);
 
     auto contextSip = builtIns->perContextSipKernels[contextId].first.get();

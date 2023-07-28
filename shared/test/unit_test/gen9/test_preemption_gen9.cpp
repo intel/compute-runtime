@@ -70,7 +70,7 @@ GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSipIs
 
     auto stateSipCmd = hwParsePreamble.getCommand<STATE_SIP>();
     ASSERT_NE(nullptr, stateSipCmd);
-    EXPECT_EQ(SipKernel::getSipKernel(*device).getSipAllocation()->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
+    EXPECT_EQ(SipKernel::getSipKernel(*device, nullptr).getSipAllocation()->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
 }
 
 GEN9TEST_F(Gen9PreemptionTests, givenMidBatchPreemptionWhenProgrammingWaCmdsBeginThenExpectNoCmds) {
@@ -159,5 +159,5 @@ GEN9TEST_F(Gen9PreemptionTests, givenMidThreadPreemptionModeWhenStateSipIsProgra
     auto cmd = hwParserOnlyPreemption.getCommand<STATE_SIP>();
     EXPECT_NE(nullptr, cmd);
 
-    EXPECT_EQ(SipKernel::getSipKernel(*mockDevice).getSipAllocation()->getGpuAddressToPatch(), cmd->getSystemInstructionPointer());
+    EXPECT_EQ(SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation()->getGpuAddressToPatch(), cmd->getSystemInstructionPointer());
 }

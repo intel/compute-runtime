@@ -202,11 +202,11 @@ void CommandQueue::initializeGpgpuInternals() const {
     auto &productHelper = device->getProductHelper();
 
     if (device->getDevice().getDebugger() && !this->gpgpuEngine->commandStreamReceiver->getDebugSurfaceAllocation()) {
-        auto maxDbgSurfaceSize = NEO::SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaSize(&device->getDevice());
+        auto maxDbgSurfaceSize = NEO::SipKernel::getSipKernel(device->getDevice(), nullptr).getStateSaveAreaSize(&device->getDevice());
         auto debugSurface = this->gpgpuEngine->commandStreamReceiver->allocateDebugSurface(maxDbgSurfaceSize);
         memset(debugSurface->getUnderlyingBuffer(), 0, debugSurface->getUnderlyingBufferSize());
 
-        auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
+        auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice(), nullptr).getStateSaveAreaHeader();
         if (stateSaveAreaHeader.size() > 0) {
             NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *debugSurface),
                                                                   device->getDevice(), debugSurface, 0, stateSaveAreaHeader.data(),

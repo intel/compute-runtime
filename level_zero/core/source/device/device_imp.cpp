@@ -1195,8 +1195,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
             bool ret = NEO::SipKernel::initSipKernel(NEO::SipKernel::getSipKernelType(*neoDevice), *neoDevice);
             UNRECOVERABLE_IF(!ret);
 
-            stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
-            debugSurfaceSize = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaSize(neoDevice);
+            stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaHeader();
+            debugSurfaceSize = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaSize(neoDevice);
         } else {
             *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }

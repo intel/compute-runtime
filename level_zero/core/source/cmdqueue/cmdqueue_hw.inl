@@ -965,8 +965,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::makeSipIsaResidentIfSipKernelUsed(CommandListExecutionContext &ctx) {
     NEO::Device *neoDevice = this->device->getNEODevice();
     if (ctx.isDevicePreemptionModeMidThread || ctx.isNEODebuggerActive(this->device)) {
-        auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
-        this->csr->makeResident(*sipIsa);
+
+        NEO::GraphicsAllocation *sipAllocation = NEO::SipKernel::getSipKernel(*neoDevice, &this->csr->getOsContext()).getSipAllocation();
+        this->csr->makeResident(*sipAllocation);
     }
 }
 

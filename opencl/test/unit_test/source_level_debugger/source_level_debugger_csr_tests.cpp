@@ -46,7 +46,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
                        dispatchFlags,
                        baseDevice);
 
-    auto sipAllocation = SipKernel::getSipKernel(baseDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(baseDevice, nullptr).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
         if (allocation == sipAllocation) {
@@ -87,7 +87,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            dispatchFlags,
                            baseDevice);
 
-        auto sipAllocation = SipKernel::getSipKernel(baseDevice).getSipAllocation();
+        auto sipAllocation = SipKernel::getSipKernel(baseDevice, nullptr).getSipAllocation();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(preambleStream);
@@ -150,7 +150,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            dispatchFlags,
                            baseDevice);
 
-        auto sipAllocation = SipKernel::getSipKernel(baseDevice).getSipAllocation();
+        auto sipAllocation = SipKernel::getSipKernel(baseDevice, nullptr).getSipAllocation();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(preambleStream);

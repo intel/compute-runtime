@@ -45,7 +45,7 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingL0DebuggerThenValidDebuggerInst
 }
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIsReturned) {
-    auto systemRoutine = SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+    auto systemRoutine = SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     ASSERT_NE(nullptr, systemRoutine);
 
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
@@ -65,7 +65,7 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipTypeThenDebugBindlessIsRetur
 }
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
-    auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaHeader();
 
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
     auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
@@ -143,7 +143,7 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandL
 
         STATE_SIP *stateSip = genCmdCast<STATE_SIP *>(*stateSipCmds[0]);
 
-        auto systemRoutine = SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+        auto systemRoutine = SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
         ASSERT_NE(nullptr, systemRoutine);
         EXPECT_EQ(systemRoutine->getGpuAddressToPatch(), stateSip->getSystemInstructionPointer());
     }

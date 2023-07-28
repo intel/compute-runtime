@@ -220,7 +220,7 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
         EXPECT_EQ(0u, stateSip.size());
     }
 
-    auto sipIsa = NEO::SipKernel::getSipKernel(*device).getSipAllocation();
+    auto sipIsa = NEO::SipKernel::getSipKernel(*device, nullptr).getSipAllocation();
     auto debugSurface = deviceL0->getDebugSurface();
     bool sipFound = false;
     bool debugSurfaceFound = false;
@@ -281,7 +281,7 @@ TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreC
 
     EXPECT_NE(nullptr, debugSurface);
 
-    auto &stateSaveAreaHeader = SipKernel::getSipKernel(*deviceL0->getNEODevice()).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = SipKernel::getSipKernel(*deviceL0->getNEODevice(), nullptr).getStateSaveAreaHeader();
     for (auto i = 0u; i < debugSurface->storageInfo.getNumBanks(); ++i) {
         EXPECT_EQ(0, memcmp(static_cast<uint8_t *>(debugSurface->getUnderlyingBuffer()) + i * debugSurface->getUnderlyingBufferSize(),
                             stateSaveAreaHeader.data(), stateSaveAreaHeader.size()));

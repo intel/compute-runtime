@@ -124,7 +124,7 @@ HWTEST_F(CommandQueueHwTest, WhenDebugSurfaceIsAllocatedThenBufferIsZeroed) {
     auto mem = dbgSurface->getUnderlyingBuffer();
     ASSERT_NE(nullptr, mem);
 
-    auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice(), nullptr).getStateSaveAreaHeader();
     mem = ptrOffset(mem, stateSaveAreaHeader.size());
     auto size = dbgSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
     EXPECT_TRUE(memoryZeroed(mem, size));
@@ -155,7 +155,7 @@ HWTEST_F(CommandQueueHwTest, WhenConstructingCommandQueueDebugOnButIgcDoesNotRet
     auto dbgSurface = mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
     EXPECT_NE(dbgSurface, nullptr);
 
-    auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice(), nullptr).getStateSaveAreaHeader();
     EXPECT_EQ(static_cast<size_t>(0), stateSaveAreaHeader.size());
 }
 

@@ -185,7 +185,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     EXPECT_NE(nullptr, csr.lastFlushedCommandStream);
 
     auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(commandList->csr->getOsContext().getContextId());
-    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
 
     EXPECT_TRUE(csr.isMadeResident(sbaBuffer));
@@ -247,7 +247,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     EXPECT_NE(nullptr, csr.lastFlushedCommandStream);
 
     auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(commandList->csr->getOsContext().getContextId());
-    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
 
     EXPECT_TRUE(csr.isMadeResident(sbaBuffer));
@@ -304,7 +304,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenEx
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(commandList->csr->getOsContext().getContextId());
-    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
 
     EXPECT_FALSE(csr.isMadeResident(sbaBuffer));
@@ -513,7 +513,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsed
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().getContextId());
-    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
     bool sbaFound = false;
     bool sipFound = false;

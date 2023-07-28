@@ -20,12 +20,7 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
     if (debuggingEnabled) {
         auto &gfxCoreHelper = device.getGfxCoreHelper();
 
-        GraphicsAllocation *sipAllocation{nullptr};
-        if (device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::Offline) {
-            sipAllocation = SipKernel::getBindlessDebugSipKernel(device, context).getSipAllocation();
-        } else {
-            sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
-        }
+        GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, context).getSipAllocation();
 
         if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
             auto mmio = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(preambleCmdStream.getSpace(sizeof(MI_LOAD_REGISTER_IMM)));

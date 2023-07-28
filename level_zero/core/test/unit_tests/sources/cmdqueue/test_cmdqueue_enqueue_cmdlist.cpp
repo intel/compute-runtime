@@ -467,7 +467,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
         if (preemptionMode == NEO::PreemptionMode::MidThread) {
             EXPECT_NE(cmdList.end(), itorSip);
 
-            auto sipAllocation = SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+            auto sipAllocation = SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
             STATE_SIP *stateSipCmd = reinterpret_cast<STATE_SIP *>(*itorSip);
             EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
         } else {
@@ -525,7 +525,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
         if (preemptionMode == NEO::PreemptionMode::MidThread) {
             EXPECT_NE(cmdList.end(), itorSip);
 
-            auto sipAllocation = SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+            auto sipAllocation = SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
             STATE_SIP *stateSipCmd = reinterpret_cast<STATE_SIP *>(*itorSip);
             EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
         } else {

@@ -4160,7 +4160,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
-    auto sipAllocation = NEO::SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    auto sipAllocation = NEO::SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(sipAllocation));
 
@@ -4184,6 +4184,46 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
 
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(sipAllocation));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenOfflineDebuggingModeWhenFlushTaskImmediateCalledThenCorrectContextSipIsResident,
+          IsAtLeastXeHpCore) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+    pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::Offline);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    EXPECT_FALSE(commandStreamReceiver.getSipSentFlag());
+    commandStreamReceiver.setSipSentFlag(true);
+    EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
+    commandStreamReceiver.setSipSentFlag(false);
+    EXPECT_FALSE(commandStreamReceiver.getSipSentFlag());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    auto sipAllocation = NEO::SipKernel::getSipKernel(*pDevice, &commandStreamReceiver.getOsContext()).getSipAllocation();
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(sipAllocation));
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateSipCmd = hwParserCsr.getCommand<STATE_SIP>();
+    ASSERT_NE(nullptr, stateSipCmd);
+    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
+
+    EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
+
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(sipAllocation));
 }
 

@@ -200,7 +200,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
                       *pDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     bool found = false;
     for (auto allocation : cmdBuffer->surfaces) {
         if (allocation == sipAllocation) {
@@ -232,7 +232,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
                        dispatchFlags,
                        *pDevice);
 
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
         if (allocation == sipAllocation) {

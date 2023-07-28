@@ -64,7 +64,7 @@ GEN11TEST_F(Gen11PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSip
 
     auto stateSipCmd = hwParsePreamble.getCommand<STATE_SIP>();
     ASSERT_NE(nullptr, stateSipCmd);
-    EXPECT_EQ(SipKernel::getSipKernel(*device).getSipAllocation()->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
+    EXPECT_EQ(SipKernel::getSipKernel(*device, nullptr).getSipAllocation()->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
 }
 
 GEN11TEST_F(Gen11PreemptionTests, WhenGettingPreemptionWaCsSizeThenZeroIsReturned) {

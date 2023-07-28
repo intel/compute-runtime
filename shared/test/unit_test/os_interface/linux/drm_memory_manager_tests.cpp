@@ -4465,7 +4465,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAllocateGraphicsMemory
     auto sipType = SipKernel::getSipKernelType(*device);
     SipKernel::initSipKernel(sipType, *device);
 
-    auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*device).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*device, nullptr).getStateSaveAreaHeader();
     mem = ptrOffset(mem, stateSaveAreaHeader.size());
     auto size = debugSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
 
@@ -4503,7 +4503,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAffinityMaskDeviceWith
     auto sipType = SipKernel::getSipKernelType(*device);
     SipKernel::initSipKernel(sipType, *device);
 
-    auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*device).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*device, nullptr).getStateSaveAreaHeader();
     mem = ptrOffset(mem, stateSaveAreaHeader.size());
     auto size = debugSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
 
