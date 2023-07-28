@@ -1417,7 +1417,9 @@ bool WddmMemoryManager::isStatelessAccessRequired(AllocationType type) {
         type == AllocationType::SCRATCH_SURFACE ||
         type == AllocationType::LINEAR_STREAM ||
         type == AllocationType::PRIVATE_SURFACE ||
-        type == AllocationType::CONSTANT_SURFACE) {
+        type == AllocationType::CONSTANT_SURFACE ||
+        type == AllocationType::GLOBAL_SURFACE ||
+        type == AllocationType::PRINTF_SURFACE) {
         return true;
     }
     return false;

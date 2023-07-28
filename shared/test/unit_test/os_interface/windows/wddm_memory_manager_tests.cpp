@@ -461,14 +461,15 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
                       AllocationType::SCRATCH_SURFACE,
                       AllocationType::LINEAR_STREAM,
                       AllocationType::PRIVATE_SURFACE,
-                      AllocationType::CONSTANT_SURFACE}) {
+                      AllocationType::CONSTANT_SURFACE,
+                      AllocationType::GLOBAL_SURFACE,
+                      AllocationType::PRINTF_SURFACE}) {
         EXPECT_TRUE(wddmMemoryManager->isStatelessAccessRequired(type));
     }
     for (auto type : {AllocationType::BUFFER_HOST_MEMORY,
                       AllocationType::COMMAND_BUFFER,
                       AllocationType::EXTERNAL_HOST_PTR,
                       AllocationType::FILL_PATTERN,
-                      AllocationType::GLOBAL_SURFACE,
                       AllocationType::IMAGE,
                       AllocationType::INDIRECT_OBJECT_HEAP,
                       AllocationType::INSTRUCTION_HEAP,
@@ -481,7 +482,6 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
                       AllocationType::MCS,
                       AllocationType::PIPE,
                       AllocationType::PREEMPTION,
-                      AllocationType::PRINTF_SURFACE,
                       AllocationType::PROFILING_TAG_BUFFER,
                       AllocationType::SHARED_IMAGE,
                       AllocationType::SHARED_RESOURCE_COPY,
