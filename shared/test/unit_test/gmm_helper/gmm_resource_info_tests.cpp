@@ -208,7 +208,7 @@ TEST(GmmResourceInfo, GivenEmptyHandleWhenUsingBaseHandleAllocatorThenOpenHandle
     defaultAllocator.destroyHandle(handle);
 }
 
-TEST(GmmHelperTests, WhenInitializingGmmHelperThenCorrectAddressWidthIsSet) {
+TEST(GmmResourceInfoTests, WhenInitializingGmmHelperThenCorrectAddressWidthIsSet) {
     auto hwInfo = *defaultHwInfo;
     {
         hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
