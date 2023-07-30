@@ -309,6 +309,9 @@ TEST(MemObj, givenTiledObjectWhenAskedForCpuMappingThenReturnFalse) {
 }
 
 TEST(MemObj, givenCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableCpuCacheForResources.set(true);
+
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
@@ -327,6 +330,9 @@ TEST(MemObj, givenCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
 }
 
 TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableCpuCacheForResources.set(true);
+
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
@@ -347,6 +353,9 @@ struct MyMockGmm : Gmm {
     using Gmm::preferNoCpuAccess;
 };
 TEST(MemObj, givenCpuAccessNotAllowedWhenAskedForCpuMappingThenReturnFalse) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCpuCacheForResources.set(true);
+
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
@@ -364,6 +373,9 @@ TEST(MemObj, givenCpuAccessNotAllowedWhenAskedForCpuMappingThenReturnFalse) {
 }
 
 TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableCpuCacheForResources.set(true);
+
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
