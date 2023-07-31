@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@ namespace NEO {
 struct PipeControlArgs {
     PipeControlArgs() = default;
 
+    bool blockSettingPostSyncProperties = false;
     bool csStallOnly = false;
     bool dcFlushEnable = false;
     bool renderTargetCacheFlushEnable = false;

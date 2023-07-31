@@ -11,6 +11,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -228,4 +229,45 @@ HWTEST2_F(ProductHelperTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapI
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.heapInLocalMem(*defaultHwInfo));
+}
+
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenPlatformSupportsHdcUntypedCacheFlushWhenPropertyBlocksCacheFlushThenExpectNoCacheFlushSet, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    constexpr size_t bufferSize = 512u;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    PipeControlArgs args;
+    args.blockSettingPostSyncProperties = true;
+
+    constexpr uint64_t gpuAddress = 0xABC000;
+    constexpr uint64_t immediateValue = 0;
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(cmdStream,
+                                                                               PostSyncMode::Timestamp,
+                                                                               gpuAddress,
+                                                                               immediateValue,
+                                                                               rootDeviceEnvironment,
+                                                                               args);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+    ASSERT_NE(0u, hwParser.pipeControlList.size());
+    bool timestampPostSyncFound = false;
+
+    for (const auto it : hwParser.pipeControlList) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+            EXPECT_FALSE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*cmd));
+            EXPECT_FALSE(cmd->getUnTypedDataPortCacheFlush());
+            timestampPostSyncFound = true;
+        }
+    }
+    EXPECT_TRUE(timestampPostSyncFound);
 }

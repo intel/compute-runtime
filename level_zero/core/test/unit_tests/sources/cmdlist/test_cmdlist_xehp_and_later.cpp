@@ -2288,5 +2288,41 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
     EXPECT_EQ(0u, sbaCmds.size());
 }
 
+using CommandListCreate = Test<DeviceFixture>;
+HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppendWriteGlobalTimestampThenExpectNoCacheFlushInPostSyncCommand, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    auto &commandContainer = commandList->getCmdContainer();
+
+    uint64_t timestampAddress = 0x123456785000;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+
+    const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
+    returnValue = commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
+
+    auto pcList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pcList.size());
+
+    bool timestampPostSyncFound = false;
+    for (const auto it : pcList) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*cmd));
+            EXPECT_FALSE(cmd->getUnTypedDataPortCacheFlush());
+            timestampPostSyncFound = true;
+        }
+    }
+    EXPECT_TRUE(timestampPostSyncFound);
+}
+
 } // namespace ult
 } // namespace L0

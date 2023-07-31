@@ -2421,6 +2421,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         makeResidentDummyAllocation();
     } else {
         NEO::PipeControlArgs args;
+        args.blockSettingPostSyncProperties = true;
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
