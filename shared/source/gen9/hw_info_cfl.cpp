@@ -13,7 +13,6 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
-#include "platforms.h"
 
 namespace NEO {
 
@@ -136,8 +135,7 @@ const HardwareInfo CflHw1x2x6::hwInfo = {
     &CFL::featureTable,
     &CFL::workaroundTable,
     &CflHw1x2x6::gtSystemInfo,
-    CFL::capabilityTable,
-    AOT::CFL};
+    CFL::capabilityTable};
 GT_SYSTEM_INFO CflHw1x2x6::gtSystemInfo = {0};
 void CflHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
@@ -154,8 +152,7 @@ const HardwareInfo CflHw1x3x6::hwInfo = {
     &CFL::featureTable,
     &CFL::workaroundTable,
     &CflHw1x3x6::gtSystemInfo,
-    CFL::capabilityTable,
-    AOT::CFL};
+    CFL::capabilityTable};
 
 GT_SYSTEM_INFO CflHw1x3x6::gtSystemInfo = {0};
 void CflHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
@@ -173,8 +170,7 @@ const HardwareInfo CflHw1x3x8::hwInfo = {
     &CFL::featureTable,
     &CFL::workaroundTable,
     &CflHw1x3x8::gtSystemInfo,
-    CFL::capabilityTable,
-    AOT::CFL};
+    CFL::capabilityTable};
 
 GT_SYSTEM_INFO CflHw1x3x8::gtSystemInfo = {0};
 void CflHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
@@ -192,8 +188,7 @@ const HardwareInfo CflHw2x3x8::hwInfo = {
     &CFL::featureTable,
     &CFL::workaroundTable,
     &CflHw2x3x8::gtSystemInfo,
-    CFL::capabilityTable,
-    AOT::CFL};
+    CFL::capabilityTable};
 GT_SYSTEM_INFO CflHw2x3x8::gtSystemInfo = {0};
 void CflHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
@@ -210,8 +205,7 @@ const HardwareInfo CflHw3x3x8::hwInfo = {
     &CFL::featureTable,
     &CFL::workaroundTable,
     &CflHw3x3x8::gtSystemInfo,
-    CFL::capabilityTable,
-    AOT::CFL};
+    CFL::capabilityTable};
 GT_SYSTEM_INFO CflHw3x3x8::gtSystemInfo = {0};
 void CflHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);

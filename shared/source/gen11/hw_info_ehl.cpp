@@ -12,7 +12,6 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
-#include "platforms.h"
 
 namespace NEO {
 
@@ -138,8 +137,7 @@ const HardwareInfo EhlHwConfig::hwInfo = {
     &EHL::featureTable,
     &EHL::workaroundTable,
     &EhlHwConfig::gtSystemInfo,
-    EHL::capabilityTable,
-    AOT::EHL};
+    EHL::capabilityTable};
 
 GT_SYSTEM_INFO EhlHwConfig::gtSystemInfo = {0};
 void EhlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
