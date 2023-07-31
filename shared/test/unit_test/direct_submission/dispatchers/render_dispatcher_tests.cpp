@@ -142,6 +142,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
             EXPECT_EQ(gpuVa, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
             EXPECT_EQ(value, pipeControl->getImmediateData());
             EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
+            EXPECT_TRUE(pipeControl->getTlbInvalidate());
             break;
         }
     }
@@ -175,6 +176,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
             EXPECT_EQ(value, pipeControl->getImmediateData());
             EXPECT_TRUE(pipeControl->getNotifyEnable());
+            EXPECT_TRUE(pipeControl->getTlbInvalidate());
             break;
         }
     }
@@ -203,6 +205,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWithDcFlushFlagTrueWhenAddingMonitorFe
                 (pipeControl->getImmediateData() == value);
             if (foundMonitorFence) {
                 EXPECT_TRUE(pipeControl->getDcFlushEnable());
+                EXPECT_TRUE(pipeControl->getTlbInvalidate());
                 break;
             }
         }
