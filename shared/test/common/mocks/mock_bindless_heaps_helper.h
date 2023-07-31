@@ -20,6 +20,14 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
         scratchSsh = surfaceStateHeaps[BindlesHeapType::SPECIAL_SSH].get();
         globalDsh = surfaceStateHeaps[BindlesHeapType::SPECIAL_SSH].get();
     }
+
+    SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) override {
+        if (failAllocateSS) {
+            return SurfaceStateInHeapInfo{};
+        }
+        return BaseClass::allocateSSInHeap(ssSize, surfaceAllocation, heapType);
+    }
+
     using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
     using BaseClass::borderColorStates;
     using BaseClass::globalBindlessDsh;
@@ -35,4 +43,5 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     IndirectHeap *globalSsh;
     IndirectHeap *scratchSsh;
     IndirectHeap *globalDsh;
+    bool failAllocateSS = false;
 };

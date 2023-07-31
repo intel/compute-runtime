@@ -17,9 +17,32 @@
 #include <sstream>
 
 const char *source = R"===(
+typedef ulong16 TYPE;
+__attribute__((reqd_work_group_size(32, 1, 1)))  // force LWS to 32
+__attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
 __kernel void kernel_copy(__global char *dst, __global char *src){
     uint gid = get_global_id(0);
     dst[gid] = src[gid];
+
+    __local TYPE locMem[32];
+    {
+        size_t lid = get_local_id(0);
+        size_t gid = get_global_id(0);
+
+        TYPE res1 = (TYPE)(src[gid * 3]);
+        TYPE res2 = (TYPE)(src[gid * 3 + 1]);
+        TYPE res3 = (TYPE)(src[gid * 3 + 2]);
+
+        locMem[lid] = res1;
+        barrier(CLK_LOCAL_MEM_FENCE);
+        barrier(CLK_GLOBAL_MEM_FENCE);
+    
+        TYPE res = (locMem[src[gid]] * res3) * res2 + res1;
+        src[0] += (char)res[lid];
+        
+    }
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    src[0] = dst[0];
 }
 )===";
 

@@ -25,18 +25,17 @@ class BindlessHeapsHelper {
         SPECIAL_SSH = 0,
         GLOBAL_SSH,
         GLOBAL_DSH,
-        SCRATCH_SSH,
         NUM_HEAP_TYPES
     };
     BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
-    ~BindlessHeapsHelper();
+    MOCKABLE_VIRTUAL ~BindlessHeapsHelper();
 
     BindlessHeapsHelper(const BindlessHeapsHelper &) = delete;
     BindlessHeapsHelper &operator=(const BindlessHeapsHelper &) = delete;
 
     GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow);
 
-    SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType);
+    MOCKABLE_VIRTUAL SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType);
     uint64_t getGlobalHeapsBase();
     void *getSpaceInHeap(size_t ssSize, BindlesHeapType heapType);
     uint32_t getDefaultBorderColorOffset();

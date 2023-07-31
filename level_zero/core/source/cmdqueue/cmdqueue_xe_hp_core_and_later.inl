@@ -148,10 +148,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
             scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                             csr->getOsContext(), gsbaState, frontEndState);
         }
-        if (NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
-            scratchController->programBindlessSurfaceStateForScratch(device->getNEODevice()->getBindlessHeapsHelper(), perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
-                                                                     csr->getOsContext(), gsbaState, frontEndState, csr);
-        }
+
         auto scratchAllocation = scratchController->getScratchSpaceAllocation();
         if (scratchAllocation != nullptr) {
             csr->makeResident(*scratchAllocation);

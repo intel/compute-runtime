@@ -10,6 +10,7 @@
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -49,25 +50,9 @@ class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHP
     bool scratchDirty = false;
 };
 
-using ScratchComtrolerTests = Test<DeviceFixture>;
+using ScratchControllerTests = Test<DeviceFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenBindlessModeOnWhenGetPatchedOffsetCalledThenBindlessOffsetReturned) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    MockCsrHw2<FamilyType> csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
-    csr.initializeTagAllocation();
-    csr.setupContext(*pDevice->getDefaultEngine().osContext);
-
-    ExecutionEnvironment *execEnv = static_cast<ExecutionEnvironment *>(pDevice->getExecutionEnvironment());
-    std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
-                                                                                                                                         *execEnv,
-                                                                                                                                         *csr.getInternalAllocationStorage());
-    uint64_t bindlessOffset = 0x4000;
-    scratchController->bindlessSS.surfaceStateOffset = bindlessOffset;
-    EXPECT_EQ(scratchController->getScratchPatchAddress(), bindlessOffset);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenDirtyScratchAllocationOnWhenWhenProgramBindlessHeapThenProgramSurfaceStateAtPtrCalled) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenDirtyScratchAllocationWhenProgramBindlessHeapThenProgramSurfaceStateAtPtrCalled) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
@@ -87,7 +72,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenDirtyScratchAllocationO
     EXPECT_TRUE(scratchController->wasProgramSurfaceStateAtPtrCalled);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenNotDirtyScratchAllocationOnWhenWhenProgramBindlessHeapThenProgramSurfaceStateAtPtrWasNotCalled) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenNotDirtyScratchAllocationWhenProgramBindlessHeapThenProgramSurfaceStateAtPtrIsNotCalled) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
@@ -103,12 +88,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenNotDirtyScratchAllocati
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = false;
 
-    scratchController->bindlessSS = bindlessHeapHelper->allocateSSInHeap(0x1000, nullptr, BindlessHeapsHelper::SCRATCH_SSH);
+    scratchController->bindlessSS = bindlessHeapHelper->allocateSSInHeap(0x1000, nullptr, BindlessHeapsHelper::SPECIAL_SSH);
     scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
     EXPECT_GT(csr.makeResidentCalledTimes, 0u);
     EXPECT_FALSE(scratchController->wasProgramSurfaceStateAtPtrCalled);
 }
-HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenPrivateScratchEnabledWhenWhenProgramBindlessHeapSurfaceThenSSHasDoubleSize) {
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenNoBindlessSSWhenProgramBindlessHeapThenMakeResidentIsNotCalled) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*pDevice->getDefaultEngine().osContext);
+
+    ExecutionEnvironment *execEnv = static_cast<ExecutionEnvironment *>(pDevice->getExecutionEnvironment());
+    std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
+                                                                                                                                         *execEnv,
+                                                                                                                                         *csr.getInternalAllocationStorage());
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    bool gsbaStateDirty = false;
+    bool frontEndStateDirty = false;
+    scratchController->scratchDirty = false;
+    bindlessHeapHelper->failAllocateSS = true;
+
+    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
+    EXPECT_EQ(csr.makeResidentCalledTimes, 0u);
+    EXPECT_FALSE(scratchController->wasProgramSurfaceStateAtPtrCalled);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenPrivateScratchEnabledWhenProgramBindlessHeapSurfaceThenSSHasDoubleSize) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     DebugManager.flags.EnablePrivateScratchSlot1.set(1);
@@ -124,13 +132,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenPrivateScratchEnabledWh
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = true;
-    auto usedBefore = bindlessHeapHelper->getHeap(BindlessHeapsHelper::SCRATCH_SSH)->getUsed();
+    auto usedBefore = bindlessHeapHelper->getHeap(BindlessHeapsHelper::SPECIAL_SSH)->getUsed();
     scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
-    auto usedAfter = bindlessHeapHelper->getHeap(BindlessHeapsHelper::SCRATCH_SSH)->getUsed();
+    auto usedAfter = bindlessHeapHelper->getHeap(BindlessHeapsHelper::SPECIAL_SSH)->getUsed();
     EXPECT_EQ(usedAfter - usedBefore, 2 * scratchController->singleSurfaceStateSize);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenPrivateScratchDisabledWhenWhenProgramBindlessHeapSurfaceThenSSHasSingleSize) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenPrivateScratchDisabledWhenProgramBindlessHeapSurfaceThenSSHasSingleSize) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     DebugManager.flags.EnablePrivateScratchSlot1.set(0);
@@ -146,8 +154,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenPrivateScratchDisabledW
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = true;
-    auto usedBefore = bindlessHeapHelper->getHeap(BindlessHeapsHelper::SCRATCH_SSH)->getUsed();
+    auto usedBefore = bindlessHeapHelper->getHeap(BindlessHeapsHelper::SPECIAL_SSH)->getUsed();
     scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
-    auto usedAfter = bindlessHeapHelper->getHeap(BindlessHeapsHelper::SCRATCH_SSH)->getUsed();
+    auto usedAfter = bindlessHeapHelper->getHeap(BindlessHeapsHelper::SPECIAL_SSH)->getUsed();
     EXPECT_EQ(usedAfter - usedBefore, scratchController->singleSurfaceStateSize);
 }

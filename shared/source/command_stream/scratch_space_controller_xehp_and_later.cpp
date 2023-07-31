@@ -111,11 +111,7 @@ uint64_t ScratchSpaceControllerXeHPAndLater::calculateNewGSH() {
 uint64_t ScratchSpaceControllerXeHPAndLater::getScratchPatchAddress() {
     uint64_t scratchAddress = 0u;
     if (scratchAllocation || privateScratchAllocation) {
-        if (ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
-            scratchAddress = bindlessSS.surfaceStateOffset;
-        } else {
-            scratchAddress = static_cast<uint64_t>(getOffsetToSurfaceState(slotId + sshOffset));
-        }
+        scratchAddress = static_cast<uint64_t>(getOffsetToSurfaceState(slotId + sshOffset));
     }
     return scratchAddress;
 }
@@ -145,11 +141,13 @@ void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(B
     bool scratchSurfaceDirty = false;
     prepareScratchAllocation(requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
-        bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (privateScratchSpaceSupported ? 2 : 1), scratchAllocation, BindlessHeapsHelper::SCRATCH_SSH);
+        bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (privateScratchSpaceSupported ? 2 : 1), scratchAllocation, BindlessHeapsHelper::SPECIAL_SSH);
         programSurfaceStateAtPtr(bindlessSS.ssPtr);
         vfeStateDirty = true;
     }
-    csr->makeResident(*bindlessSS.heapAllocation);
+    if (bindlessSS.heapAllocation) {
+        csr->makeResident(*bindlessSS.heapAllocation);
+    }
 }
 
 void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,

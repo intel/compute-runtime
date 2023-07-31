@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -49,7 +50,7 @@ class MockScratchSpaceControllerBase : public ScratchSpaceControllerBase {
 
 using ScratchComtrolerTests = Test<DeviceFixture>;
 
-HWTEST_F(ScratchComtrolerTests, givenCommandQueueWhenProgramHeapsCalledThenThenProgramHeapsCalled) {
+HWTEST_F(ScratchComtrolerTests, givenCommandQueueWhenProgramHeapsCalledThenProgramHeapsCalled) {
     MockCsrHw2<FamilyType> csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
@@ -67,8 +68,8 @@ HWTEST_F(ScratchComtrolerTests, givenCommandQueueWhenProgramHeapsCalledThenThenP
     EXPECT_TRUE(static_cast<MockScratchSpaceControllerBase *>(scratchController.get())->programHeapsCalled);
 }
 
-HWTEST_F(ScratchComtrolerTests, givenCommandQueueWhenProgramHeapBindlessCalledThenThenProgramBindlessSurfaceStateForScratchCalled) {
-    MockCsrHw2<FamilyType> csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
+HWTEST_F(ScratchComtrolerTests, givenNullptrBindlessHeapHelperWhenProgramBindlessSurfaceStateForScratchCalledThenMakeResidentIsNotCalled) {
+    MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -83,4 +84,5 @@ HWTEST_F(ScratchComtrolerTests, givenCommandQueueWhenProgramHeapBindlessCalledTh
     scratchController->programBindlessSurfaceStateForScratch(nullptr, 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
 
     EXPECT_TRUE(static_cast<MockScratchSpaceControllerBase *>(scratchController.get())->programBindlessSurfaceStateForScratchCalled);
+    EXPECT_EQ(0u, csr.makeResidentCalledTimes);
 }

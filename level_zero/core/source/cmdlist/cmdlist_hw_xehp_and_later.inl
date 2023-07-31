@@ -110,6 +110,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::IndirectHeap *ssh = nullptr;
     NEO::IndirectHeap *dsh = nullptr;
 
+    commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
+    commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+
+    if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps) && (commandListPerThreadScratchSize != 0 || commandListPerThreadPrivateScratchSize != 0)) {
+        commandContainer.prepareBindfulSsh();
+    }
+
     if ((this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) &&
         (this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps)) {
         auto kernelInfo = kernelImmutableData->getKernelInfo();
@@ -139,8 +146,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         ssh = sshReserveArgs.indirectHeapReservation;
         dsh = dshReserveArgs.indirectHeapReservation;
     }
-    commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
-    commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
 
     auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
 
