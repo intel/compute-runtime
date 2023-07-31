@@ -63,7 +63,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t expectedAllocationsCnt = 3;
+    size_t expectedAllocationsCnt = 4;
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
@@ -100,7 +100,7 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t expectedAllocationsCnt = 3;
+    size_t expectedAllocationsCnt = 4;
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
@@ -143,7 +143,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_TRUE(ret);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t expectedAllocationsCnt = 3;
+    size_t expectedAllocationsCnt = 4;
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
@@ -187,7 +187,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_FALSE(ret);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t expectedAllocationsCnt = 3;
+    size_t expectedAllocationsCnt = 4;
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
@@ -527,4 +527,15 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenSubmitToGpuThenS
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
     EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenMiMemFenceRequiredThenGpuVaForAdditionalSynchronizationWAIsSet) {
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    ASSERT_NE(nullptr, wddmDirectSubmission.completionFenceAllocation);
+    if (wddmDirectSubmission.miMemFenceRequired) {
+        EXPECT_EQ(wddmDirectSubmission.completionFenceAllocation->getGpuAddress() + 8u, wddmDirectSubmission.gpuVaForAdditionalSynchronizationWA);
+    } else {
+        EXPECT_EQ(0u, wddmDirectSubmission.gpuVaForAdditionalSynchronizationWA);
+    }
 }

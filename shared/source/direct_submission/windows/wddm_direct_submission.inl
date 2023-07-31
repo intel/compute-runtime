@@ -35,6 +35,12 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(const DirectSu
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Starting Wddm ULLS. Placement ring buffer: %d semaphore %d\n",
                                 DebugManager.flags.DirectSubmissionBufferPlacement.get(),
                                 DebugManager.flags.DirectSubmissionSemaphorePlacement.get());
+
+    this->completionFenceAllocation = inputParams.completionFenceAllocation;
+    UNRECOVERABLE_IF(!this->completionFenceAllocation);
+    if (this->miMemFenceRequired) {
+        this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
