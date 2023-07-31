@@ -12,7 +12,6 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
-#include "platforms.h"
 
 namespace NEO {
 
@@ -138,8 +137,7 @@ const HardwareInfo IcllpHw1x8x8::hwInfo = {
     &ICLLP::featureTable,
     &ICLLP::workaroundTable,
     &IcllpHw1x8x8::gtSystemInfo,
-    ICLLP::capabilityTable,
-    AOT::ICL};
+    ICLLP::capabilityTable};
 
 GT_SYSTEM_INFO IcllpHw1x8x8::gtSystemInfo = {0};
 void IcllpHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
@@ -160,8 +158,7 @@ const HardwareInfo IcllpHw1x4x8::hwInfo = {
     &ICLLP::featureTable,
     &ICLLP::workaroundTable,
     &IcllpHw1x4x8::gtSystemInfo,
-    ICLLP::capabilityTable,
-    AOT::ICL};
+    ICLLP::capabilityTable};
 
 GT_SYSTEM_INFO IcllpHw1x4x8::gtSystemInfo = {0};
 void IcllpHw1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
@@ -179,8 +176,7 @@ const HardwareInfo IcllpHw1x6x8::hwInfo = {
     &ICLLP::featureTable,
     &ICLLP::workaroundTable,
     &IcllpHw1x6x8::gtSystemInfo,
-    ICLLP::capabilityTable,
-    AOT::ICL};
+    ICLLP::capabilityTable};
 
 GT_SYSTEM_INFO IcllpHw1x6x8::gtSystemInfo = {0};
 void IcllpHw1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {

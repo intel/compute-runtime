@@ -14,7 +14,6 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
-#include "platforms.h"
 
 namespace NEO {
 
@@ -137,8 +136,7 @@ const HardwareInfo AdlsHwConfig::hwInfo = {
     &ADLS::featureTable,
     &ADLS::workaroundTable,
     &AdlsHwConfig::gtSystemInfo,
-    ADLS::capabilityTable,
-    AOT::ADL_S};
+    ADLS::capabilityTable};
 
 GT_SYSTEM_INFO AdlsHwConfig::gtSystemInfo = {0};
 void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {

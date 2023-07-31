@@ -12,7 +12,6 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
-#include "platforms.h"
 
 namespace NEO {
 
@@ -137,8 +136,7 @@ const HardwareInfo GlkHw1x3x6::hwInfo = {
     &GLK::featureTable,
     &GLK::workaroundTable,
     &GlkHw1x3x6::gtSystemInfo,
-    GLK::capabilityTable,
-    AOT::GLK};
+    GLK::capabilityTable};
 
 GT_SYSTEM_INFO GlkHw1x3x6::gtSystemInfo = {0};
 void GlkHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
@@ -156,8 +154,7 @@ const HardwareInfo GlkHw1x2x6::hwInfo = {
     &GLK::featureTable,
     &GLK::workaroundTable,
     &GlkHw1x2x6::gtSystemInfo,
-    GLK::capabilityTable,
-    AOT::GLK};
+    GLK::capabilityTable};
 
 GT_SYSTEM_INFO GlkHw1x2x6::gtSystemInfo = {0};
 void GlkHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {

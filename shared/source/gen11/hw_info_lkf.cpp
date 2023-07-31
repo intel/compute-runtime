@@ -12,7 +12,6 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
-#include "platforms.h"
 
 namespace NEO {
 
@@ -138,8 +137,8 @@ const HardwareInfo LkfHw1x8x8::hwInfo = {
     &LKF::featureTable,
     &LKF::workaroundTable,
     &LkfHw1x8x8::gtSystemInfo,
-    LKF::capabilityTable,
-    AOT::LKF};
+    LKF::capabilityTable};
+
 GT_SYSTEM_INFO LkfHw1x8x8::gtSystemInfo = {0};
 void LkfHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     LKF::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);

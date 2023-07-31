@@ -13,7 +13,6 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
-#include "platforms.h"
 
 namespace NEO {
 
@@ -142,8 +141,8 @@ const HardwareInfo KblHw1x2x6::hwInfo = {
     &KBL::featureTable,
     &KBL::workaroundTable,
     &KblHw1x2x6::gtSystemInfo,
-    KBL::capabilityTable,
-    AOT::KBL};
+    KBL::capabilityTable};
+
 GT_SYSTEM_INFO KblHw1x2x6::gtSystemInfo = {0};
 void KblHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
@@ -160,8 +159,7 @@ const HardwareInfo KblHw1x3x6::hwInfo = {
     &KBL::featureTable,
     &KBL::workaroundTable,
     &KblHw1x3x6::gtSystemInfo,
-    KBL::capabilityTable,
-    AOT::KBL};
+    KBL::capabilityTable};
 
 GT_SYSTEM_INFO KblHw1x3x6::gtSystemInfo = {0};
 void KblHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
@@ -179,8 +177,8 @@ const HardwareInfo KblHw1x3x8::hwInfo = {
     &KBL::featureTable,
     &KBL::workaroundTable,
     &KblHw1x3x8::gtSystemInfo,
-    KBL::capabilityTable,
-    AOT::KBL};
+    KBL::capabilityTable};
+
 GT_SYSTEM_INFO KblHw1x3x8::gtSystemInfo = {0};
 void KblHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
@@ -197,8 +195,8 @@ const HardwareInfo KblHw2x3x8::hwInfo = {
     &KBL::featureTable,
     &KBL::workaroundTable,
     &KblHw2x3x8::gtSystemInfo,
-    KBL::capabilityTable,
-    AOT::KBL};
+    KBL::capabilityTable};
+
 GT_SYSTEM_INFO KblHw2x3x8::gtSystemInfo = {0};
 void KblHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
@@ -215,8 +213,8 @@ const HardwareInfo KblHw3x3x8::hwInfo = {
     &KBL::featureTable,
     &KBL::workaroundTable,
     &KblHw3x3x8::gtSystemInfo,
-    KBL::capabilityTable,
-    AOT::KBL};
+    KBL::capabilityTable};
+
 GT_SYSTEM_INFO KblHw3x3x8::gtSystemInfo = {0};
 void KblHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);

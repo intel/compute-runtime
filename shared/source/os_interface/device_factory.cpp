@@ -94,9 +94,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             }
         }
 
-        if (DebugManager.flags.OverrideHwIpVersion.get() != -1) {
-            hardwareInfo->ipVersion = DebugManager.flags.OverrideHwIpVersion.get();
-        }
+        hardwareInfo->ipVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
 
         rootDeviceEnvironment.initReleaseHelper();
 
