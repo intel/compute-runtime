@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <cstdint>
 
 namespace NEO {
 enum class AllocationType {
@@ -57,5 +58,10 @@ enum class AllocationType {
     DEFERRED_TASKS_LIST,
     ASSERT_BUFFER,
     COUNT
+};
+
+enum class GfxMemoryAllocationMethod : uint32_t {
+    UseUmdSystemPtr,
+    AllocateByKmd
 };
 } // namespace NEO

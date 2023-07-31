@@ -110,7 +110,7 @@ TEST_F(WddmMemoryManagerTests, GivenAllocDataWithSVMCPUSetWhenAllocateGraphicsMe
     allocData.makeGPUVaDifferentThanCPUPtr = true;
     memoryManager->allocateGraphicsMemoryWithAlignment(allocData);
 
-    if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+    if (memoryManager->getPreferredAllocationMethod(allocData.rootDeviceIndex) == GfxMemoryAllocationMethod::AllocateByKmd) {
         EXPECT_TRUE(memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVACalled);
     } else {
         EXPECT_TRUE(memoryManager->allocateSystemMemoryAndCreateGraphicsAllocationFromItCalled);
@@ -185,6 +185,7 @@ class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManag
     using WddmMemoryManager::adjustGpuPtrToHostAddressSpace;
     using WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA;
     using WddmMemoryManager::allocateMemoryByKMD;
+    using WddmMemoryManager::getPreferredAllocationMethod;
     using WddmMemoryManager::mapGpuVirtualAddress;
     MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {}
 
@@ -239,7 +240,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMa
         allocData.makeGPUVaDifferentThanCPUPtr = true;
         auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
-        if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+        if (memoryManager->getPreferredAllocationMethod(allocData.rootDeviceIndex) == GfxMemoryAllocationMethod::AllocateByKmd && is64bit) {
             EXPECT_FALSE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
         } else {
             EXPECT_TRUE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
@@ -510,7 +511,12 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
 
 TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGettingPreferredAllocationMethodThenValueFlagIsReturned) {
     DebugManagerStateRestore restorer;
-    EXPECT_EQ(preferredAllocationMethod, memoryManager->getPreferredAllocationMethod(0));
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    if (productHelper.getPreferredAllocationMethod()) {
+        EXPECT_EQ(*productHelper.getPreferredAllocationMethod(), memoryManager->getPreferredAllocationMethod(0));
+    } else {
+        EXPECT_EQ(preferredAllocationMethod, memoryManager->getPreferredAllocationMethod(0));
+    }
 
     for (const auto &allocationMethod : {GfxMemoryAllocationMethod::UseUmdSystemPtr, GfxMemoryAllocationMethod::AllocateByKmd}) {
         DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(allocationMethod));
@@ -1460,7 +1466,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAlignmentRequirementExceedsPageSizeThenA
     allocData.size = 1024;
     allocData.alignment = MemoryConstants::pageSize;
     memoryManager.allocateGraphicsMemoryWithAlignment(allocData);
-    if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+    if (memoryManager.getPreferredAllocationMethod(allocData.rootDeviceIndex) == GfxMemoryAllocationMethod::AllocateByKmd) {
         EXPECT_EQ(0, memoryManager.callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt);
         EXPECT_EQ(1, memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA);
     } else {

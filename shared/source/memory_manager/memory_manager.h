@@ -43,10 +43,6 @@ class HostPtrManager;
 class OsContext;
 class PrefetchManager;
 
-enum class GfxMemoryAllocationMethod : uint32_t {
-    UseUmdSystemPtr,
-    AllocateByKmd
-};
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
     REUSABLE_ALLOCATION,

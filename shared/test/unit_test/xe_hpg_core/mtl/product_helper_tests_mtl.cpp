@@ -364,3 +364,10 @@ MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCheckIsCachingOnCpuAvailableThenAlwa
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(productHelper.isCachingOnCpuAvailable());
 }
+
+MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCheckPreferredAllocationMethodThenAllocateByKmdIsReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    auto preferredAllocationMethod = productHelper.getPreferredAllocationMethod();
+    EXPECT_TRUE(preferredAllocationMethod.has_value());
+    EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
+}
