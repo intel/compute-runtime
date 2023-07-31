@@ -78,6 +78,10 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
     set(OUTPUT_FILE_CPP
         ${OUTPUTDIR}/${mode}_${BASENAME}_${RELEASE_FILENAME}.cpp
     )
+    get_property(RELEASE_HANDLED SOURCE ${OUTPUT_FILE_CPP} PROPERTY GENERATED)
+    if(RELEASE_HANDLED)
+      continue()
+    endif()
     set(BINARY_OUTPUT "${OUTPUTDIR}/${mode}_${BASENAME}_${RELEASE_FILENAME}")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(OUTPUT_FILES_BINARIES ${BINARY_OUTPUT}.bin)
