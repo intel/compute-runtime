@@ -155,5 +155,13 @@ std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubd
     return filePath;
 }
 
+bool SysmanKmdInterfaceI915::clientInfoAvailableInFdInfo() {
+    return false;
+}
+
+bool SysmanKmdInterfaceXe::clientInfoAvailableInFdInfo() {
+    return true;
+}
+
 } // namespace Sysman
 } // namespace L0

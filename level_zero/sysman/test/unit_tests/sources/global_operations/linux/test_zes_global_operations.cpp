@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
@@ -575,6 +576,27 @@ TEST_F(SysmanGlobalOperationsFixture,
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndXeDriverUsedWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturned) {
+    pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
+    pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
+    // Assume two File descriptors of gpu are obtained by process
+    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+    pProcfsAccess->ourDeviceFd1 = pProcfsAccess->extraFd1;
+    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+    constexpr int64_t expectedEngines = ZES_ENGINE_TYPE_FLAG_RENDER | ZES_ENGINE_TYPE_FLAG_MEDIA;
+    EXPECT_EQ(processes[0].engines, expectedEngines);
+    uint64_t expectedMemSize = (120 * MemoryConstants::megaByte) + (50 * MemoryConstants::kiloByte) + 534 + ((50 * MemoryConstants::megaByte));
+    uint64_t expectedSharedSize = (120 * MemoryConstants::megaByte) + (80 * MemoryConstants::megaByte) + (120 * MemoryConstants::kiloByte) + 689;
+    EXPECT_EQ(processes[0].memSize, expectedMemSize);
+    EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturned) {

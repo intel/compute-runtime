@@ -222,7 +222,7 @@ struct MockDiagLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
     int ourDeviceFd = 0;
     ze_result_t mockError = ZE_RESULT_SUCCESS;
     ze_result_t mockReInitSysmanDeviceError = ZE_RESULT_SUCCESS;
-    void getPidFdsForOpenDevice(L0::Sysman::ProcfsAccess *pProcfsAccess, L0::Sysman::SysfsAccess *pSysfsAccess, const ::pid_t pid, std::vector<int> &deviceFds) override {
+    void getPidFdsForOpenDevice(const ::pid_t pid, std::vector<int> &deviceFds) override {
         if (ourDevicePid) {
             deviceFds.push_back(ourDeviceFd);
         }

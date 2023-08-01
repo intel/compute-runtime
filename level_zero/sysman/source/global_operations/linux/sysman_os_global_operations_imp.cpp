@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -19,6 +20,7 @@
 #include "level_zero/sysman/source/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <chrono>
@@ -294,7 +296,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     }
     for (auto &&pid : processes) {
         std::vector<int> fds;
-        pLinuxSysmanImp->getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
+        pLinuxSysmanImp->getPidFdsForOpenDevice(pid, fds);
         if (pid == myPid) {
             // L0 is expected to have this file open.
             // Keep list of fds. Close before unbind.
@@ -342,7 +344,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     deviceUsingPids.clear();
     for (auto &&pid : processes) {
         std::vector<int> fds;
-        pLinuxSysmanImp->getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
+        pLinuxSysmanImp->getPidFdsForOpenDevice(pid, fds);
         if (!fds.empty()) {
             // Kill all processes that have the device open.
             pProcfsAccess->kill(pid);
@@ -394,6 +396,176 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     return pLinuxSysmanImp->reInitSysmanDeviceResources();
 }
 
+ze_result_t LinuxGlobalOperationsImp::getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize) {
+    const std::string memSizeString("drm-total-vram");
+    const std::string sharedSizeString("drm-shared-vram");
+
+    auto convertToBytes = [](std::string unitOfSize) -> std::uint64_t {
+        if (unitOfSize.empty()) {
+            return 1;
+        } else if (unitOfSize == "KiB") {
+            return MemoryConstants::kiloByte;
+        } else if (unitOfSize == "MiB") {
+            return MemoryConstants::megaByte;
+        }
+        DEBUG_BREAK_IF(1); // Some unknowm unit is exposed by KMD, need a debug
+        return 0;
+    };
+
+    for (const auto &fileContents : fdFileContents) {
+        std::istringstream iss(fileContents);
+        std::string label;
+        uint64_t value = 0;
+        std::string unitOfSize;
+        iss >> label >> value >> unitOfSize;
+
+        // Example: consider "fileContents = "drm-total-vram0: 120 MiB""
+        // Then if we are here, then label would be "drm-total-vram0:". So remove `:` from label
+        label = label.substr(0, label.length() - 1);
+        if (label.substr(0, memSizeString.length()) == memSizeString) {
+            // Convert Memory obtained to bytes
+            value = value * convertToBytes(unitOfSize);
+            memSize += value;
+        } else if (label.substr(0, sharedSizeString.length()) == sharedSizeString) {
+            // Convert Memory obtained to bytes
+            value = value * convertToBytes(unitOfSize);
+            sharedSize += value;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxGlobalOperationsImp::getListOfEnginesUsedByProcess(std::vector<std::string> &fdFileContents, uint32_t &activeEngines) {
+    // Map engine entries present in /proc/<pid>>/fdinfo/<fd>,
+    // with engine enum defined in leve-zero spec
+    // Note that entries with int "video" and "video_enhance"(represented as CLASS_VIDEO and CLASS_VIDEO_ENHANCE)
+    // are both mapped to MEDIA, as CLASS_VIDEO represents any media fixed-function hardware.
+    const std::map<std::string, zes_engine_type_flags_t> engineMap = {
+        {"drm-engine-render", ZES_ENGINE_TYPE_FLAG_RENDER},
+        {"drm-engine-copy", ZES_ENGINE_TYPE_FLAG_DMA},
+        {"drm-engine-video", ZES_ENGINE_TYPE_FLAG_MEDIA},
+        {"drm-engine-video-enhance", ZES_ENGINE_TYPE_FLAG_MEDIA},
+        {"drm-engine-compute", ZES_ENGINE_TYPE_FLAG_COMPUTE}};
+
+    const std::string engineStringPrefix("drm-engine-");
+    for (const auto &fileContents : fdFileContents) {
+        std::istringstream iss(fileContents);
+        std::string label;
+        uint64_t value;
+        iss >> label >> value;
+        // Example: consider "fileContents = "drm-engine-render:      25662044495 ns""
+        // Then if we are here, then label would be "drm-engine-render:". So remove `:` from label
+        label = label.substr(0, label.length() - 1);
+
+        if ((label.substr(0, engineStringPrefix.length()) == engineStringPrefix) && (value != 0)) {
+            auto it = engineMap.find(label);
+            if (it == engineMap.end()) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                      "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", __FUNCTION__, label.c_str(),
+                                      ZE_RESULT_ERROR_UNKNOWN);
+                DEBUG_BREAK_IF(1);
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+            activeEngines = activeEngines | it->second;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+// Example fdinfo format:
+//
+// # cat /proc/1383/fdinfo/8
+// pos:    0
+// flags:  02100002
+// mnt_id: 21
+// ino:    397
+// drm-driver:     i915
+// drm-client-id:  18
+// drm-pdev:       0000:00:02.0
+// drm-total-vram0:        512
+// drm-total-vram1:        512 KiB
+// drm-shared-vram0:       512 KiB
+// drm-shared-vram1:       128 MiB
+// drm-total-system:       125 MiB
+// drm-shared-system:      16 MiB
+// drm-active-system:      110 MiB
+// drm-resident-system:    125 MiB
+// drm-purgeable-system:   2 MiB
+// drm-total-stolen-system:        0
+// drm-shared-stolen-system:       0
+// drm-active-stolen-system:       0
+// drm-resident-stolen-system:     0
+// drm-purgeable-stolen-system:    0
+// drm-engine-render:      25662044495 ns
+// drm-engine-copy:        0 ns
+// drm-engine-video:       0 ns
+// drm-engine-video-enhance:       0 ns
+ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t, EngineMemoryPairType> &pidClientMap) {
+    std::map<::pid_t, std::vector<int>> gpuClientProcessMap; // This map contains processes and their opened gpu File descriptors
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    {
+        std::vector<::pid_t> processes;
+        result = pProcfsAccess->listProcesses(processes);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to list processes and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
+        }
+
+        for (auto &&pid : processes) {
+            std::vector<int> fds;
+            pLinuxSysmanImp->getPidFdsForOpenDevice(pid, fds);
+            if (!fds.empty()) {
+                gpuClientProcessMap.insert({pid, fds});
+            }
+        }
+    }
+
+    // iterate for each process
+    for (const auto &gpuClientProcess : gpuClientProcessMap) {
+        // iterate over all the opened GPU device file descriptors
+        uint64_t pid = static_cast<uint64_t>(gpuClientProcess.first);
+        uint32_t activeEngines = 0u; // This contains bit fields of engines used by processes
+        uint64_t memSize = 0u;
+        uint64_t sharedSize = 0u;
+        for (const auto &fd : gpuClientProcess.second) {
+            std::string fdInfoPath = "/proc/" + std::to_string(static_cast<int>(pid)) + "/fdinfo/" + std::to_string(fd);
+            std::vector<std::string> fdFileContents;
+            result = pFsAccess->read(fdInfoPath, fdFileContents);
+            if (ZE_RESULT_SUCCESS != result) {
+                if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                    // update the result as Success as ZE_RESULT_ERROR_NOT_AVAILABLE is expected if process exited by the time we are readig it.
+                    result = ZE_RESULT_SUCCESS;
+                    continue;
+                } else {
+                    return result;
+                }
+            }
+
+            result = getListOfEnginesUsedByProcess(fdFileContents, activeEngines);
+            if (result != ZE_RESULT_SUCCESS) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                      "Error@ %s(): List of engines used by process(%d) with fd(%d) could not be retrieved.\n", __FUNCTION__,
+                                      pid, fd);
+                return result;
+            }
+
+            result = getMemoryStatsUsedByProcess(fdFileContents, memSize, sharedSize);
+            if (result != ZE_RESULT_SUCCESS) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                      "Error@ %s(): Memory used by process(%d) with fd(%d) could not be retrieved.\n", __FUNCTION__,
+                                      pid, fd);
+                return result;
+            }
+        }
+        DeviceMemStruct totalDeviceMem = {memSize, sharedSize};
+        EngineMemoryPairType engineMemoryPair = {static_cast<int64_t>(activeEngines), totalDeviceMem};
+        pidClientMap.insert(std::make_pair(pid, engineMemoryPair));
+    }
+    return result;
+}
+
 // Processes in the form of clients are present in sysfs like this:
 // # /sys/class/drm/card0/clients$ ls
 // 4  5
@@ -411,25 +583,14 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
 // accumulated nanoseconds each client spent on engines.
 // Thus we traverse each file in busy dir for non-zero time and if we find that file say 0,then we could say that
 // this engine 0 is used by process.
-ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
+ze_result_t LinuxGlobalOperationsImp::readClientInfoFromSysfs(std::map<uint64_t, EngineMemoryPairType> &pidClientMap) {
     std::vector<std::string> clientIds;
-    struct DeviceMemStruct {
-        uint64_t deviceMemorySize;
-        uint64_t deviceSharedMemorySize;
-    };
-    struct EngineMemoryPairType {
-        int64_t engineTypeField;
-        DeviceMemStruct deviceMemStructField;
-    };
-
     ze_result_t result = pSysfsAccess->scanDirEntries(clientsDir, clientIds);
     if (ZE_RESULT_SUCCESS != result) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries from %s and returning error:0x%x \n", __FUNCTION__, clientsDir.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    // Create a map with unique pid as key and engineType as value
-    std::map<uint64_t, EngineMemoryPairType> pidClientMap;
     for (const auto &clientId : clientIds) {
         // realClientPidPath will be something like: clients/<clientId>/pid
         std::string realClientPidPath = clientsDir + "/" + clientId + "/" + "pid";
@@ -537,6 +698,16 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         }
         result = ZE_RESULT_SUCCESS;
     }
+
+    return result;
+}
+
+ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    // Create a map with unique pid as key and EngineMemoryPairType as value
+    std::map<uint64_t, EngineMemoryPairType> pidClientMap;
+
+    result = pLinuxSysmanImp->getSysmanKmdInterface()->clientInfoAvailableInFdInfo() ? readClientInfoFromFdInfo(pidClientMap) : readClientInfoFromSysfs(pidClientMap);
 
     // iterate through all elements of pidClientMap
     for (auto itr = pidClientMap.begin(); itr != pidClientMap.end(); ++itr) {

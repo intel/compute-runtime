@@ -361,10 +361,12 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcfsAccess {
 
     const ::pid_t extraPid = 4;
     const int extraFd = 5;
+    const int extraFd1 = 6;
     std::vector<::pid_t> pidList = {1, 2, 3};
     std::vector<int> fdList = {0, 1, 2};
     ::pid_t ourDevicePid = 0;
     int ourDeviceFd = 0;
+    int ourDeviceFd1 = 0;
 
     std::vector<mockEnumListProcessCall> mockListProcessCall{};
     std::vector<bool> isRepeated{};
@@ -417,6 +419,9 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcfsAccess {
         list = fdList;
         if (ourDevicePid == pid) {
             list.push_back(ourDeviceFd);
+            if (ourDeviceFd1) {
+                list.push_back(ourDeviceFd1);
+            }
         }
         return getFileDescriptorsResult;
     }
@@ -428,7 +433,7 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcfsAccess {
             return mockGetFileNameError;
         }
 
-        if (pid == ourDevicePid && fd == ourDeviceFd) {
+        if (pid == ourDevicePid && ((fd == ourDeviceFd) || (fd == ourDeviceFd1))) {
             val = mockDeviceName;
         } else {
             // return fake filenames for other file descriptors
@@ -482,6 +487,50 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccess {
         return readResult;
     }
 
+    ze_result_t read(std::string file, std::vector<std::string> &val) override {
+        if (mockReadError != ZE_RESULT_SUCCESS) {
+            return mockReadError;
+        }
+
+        if (file == "/proc/4/fdinfo/5") {
+            val.push_back("pos: 0");
+            val.push_back("flags: 02100002");
+            val.push_back("drm-total-vram0: 120 MiB");
+            val.push_back("drm-total-vram1: 50 KiB");
+            val.push_back("drm-total-system: 125 MiB");
+            val.push_back("drm-shared-vram0: 120 MiB");
+            val.push_back("drm-shared-vram1: 80 MiB");
+            val.push_back("drm-shared-system: 16 MiB");
+            val.push_back("drm-active-system: 110 MiB");
+            val.push_back("drm-resident-system: 125 MiB");
+            val.push_back("drm-total-stolen-system: 0");
+            val.push_back("drm-shared-stolen-system: 0");
+            val.push_back("drm-engine-render: 25662044495 ns");
+            val.push_back("drm-engine-copy: 0 ns");
+            val.push_back("drm-engine-video: 0 ns");
+            val.push_back("drm-engine-video-enhance: 0 ns");
+        }
+        if (file == "/proc/4/fdinfo/6") {
+            val.push_back("pos: 0");
+            val.push_back("flags: 02100002");
+            val.push_back("drm-total-vram0: 534 ");
+            val.push_back("drm-total-vram1: 50 MiB");
+            val.push_back("drm-total-system: 125 MiB");
+            val.push_back("drm-shared-vram0: 120 KiB");
+            val.push_back("drm-shared-vram1: 689");
+            val.push_back("drm-shared-system: 16 MiB");
+            val.push_back("drm-active-system: 110 MiB");
+            val.push_back("drm-resident-system: 125 MiB");
+            val.push_back("drm-total-stolen-system: 0");
+            val.push_back("drm-shared-stolen-system: 0");
+            val.push_back("drm-engine-render: 25662044495 ns");
+            val.push_back("drm-engine-copy: 0 ns");
+            val.push_back("drm-engine-video: 5645843250 ns");
+            val.push_back("drm-engine-video-enhance: 0 ns");
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     ze_result_t mockWriteError = ZE_RESULT_SUCCESS;
     ze_result_t writeResult = ZE_RESULT_SUCCESS;
     ze_result_t write(const std::string file, const std::string val) override {
@@ -533,7 +582,7 @@ struct MockGlobalOpsLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
     int ourDeviceFd = 0;
     ze_result_t mockError = ZE_RESULT_SUCCESS;
     ze_result_t mockInitDeviceError = ZE_RESULT_SUCCESS;
-    void getPidFdsForOpenDevice(L0::Sysman::ProcfsAccess *pProcfsAccess, L0::Sysman::SysfsAccess *pSysfsAccess, const ::pid_t pid, std::vector<int> &deviceFds) override {
+    void getPidFdsForOpenDevice(const ::pid_t pid, std::vector<int> &deviceFds) override {
         if (ourDevicePid) {
             deviceFds.push_back(ourDeviceFd);
         }

@@ -88,6 +88,7 @@ class SysmanKmdInterface {
     virtual int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) = 0;
     virtual std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const = 0;
     virtual bool isStandbyModeControlAvailable() const = 0;
+    virtual bool clientInfoAvailableInFdInfo() = 0;
 };
 
 class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
@@ -101,6 +102,7 @@ class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
+    bool clientInfoAvailableInFdInfo() override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -118,6 +120,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return false; }
+    bool clientInfoAvailableInFdInfo() override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

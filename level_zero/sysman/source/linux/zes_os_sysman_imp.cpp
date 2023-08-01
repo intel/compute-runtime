@@ -236,7 +236,7 @@ LinuxSysmanImp::~LinuxSysmanImp() {
     releasePmtObject();
 }
 
-void LinuxSysmanImp::getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSysfsAccess, const ::pid_t pid, std::vector<int> &deviceFds) {
+void LinuxSysmanImp::getPidFdsForOpenDevice(const ::pid_t pid, std::vector<int> &deviceFds) {
     // Return a list of all the file descriptors of this process that point to this device
     std::vector<int> fds;
     deviceFds.clear();
@@ -269,7 +269,7 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup() {
 
     for (auto &&pid : processes) {
         std::vector<int> fds;
-        getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
+        getPidFdsForOpenDevice(pid, fds);
         if (pid == myPid) {
             // L0 is expected to have this file open.
             // Keep list of fds. Close before unbind.

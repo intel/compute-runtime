@@ -18,6 +18,7 @@
 namespace L0 {
 namespace Sysman {
 class SysfsAccess;
+class SysmanKmdInterface;
 
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMovableClass {
   public:
@@ -44,6 +45,15 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     } uuid;
 
   protected:
+    struct DeviceMemStruct {
+        uint64_t deviceMemorySize;
+        uint64_t deviceSharedMemorySize;
+    };
+    struct EngineMemoryPairType {
+        int64_t engineTypeField;
+        DeviceMemStruct deviceMemStructField;
+    };
+
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
@@ -53,6 +63,8 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     void releaseDeviceResources();
     ze_result_t initDevice();
     void reInitSysmanDeviceResources();
+    ze_result_t readClientInfoFromSysfs(std::map<uint64_t, EngineMemoryPairType> &pidClientMap);
+    ze_result_t readClientInfoFromFdInfo(std::map<uint64_t, EngineMemoryPairType> &pidClientMap);
 
   private:
     static const std::string deviceDir;
@@ -68,6 +80,8 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex = 0u;
+    ze_result_t getListOfEnginesUsedByProcess(std::vector<std::string> &fdFileContents, uint32_t &activeEngines);
+    ze_result_t getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize);
 };
 
 } // namespace Sysman
