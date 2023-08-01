@@ -21,5 +21,6 @@ bool ReleaseHelperHw<release>::isPrefetchDisablingRequired() const {
 }
 
 } // namespace NEO
+#include "shared/source/release_helper/release_helper_common_xe_hpg.inl"
 
 template class NEO::ReleaseHelperHw<NEO::release>;

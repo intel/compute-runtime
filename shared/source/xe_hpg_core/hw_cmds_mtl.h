@@ -26,11 +26,6 @@ struct MTL : public XeHpgCoreFamily {
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper);
     static void setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo);
-
-    static bool isLpg(const HardwareInfo &hwInfo) {
-        return ((hwInfo.ipVersion.architecture == 12) &&
-                (hwInfo.ipVersion.release <= 71));
-    }
 };
 
 class MtlHwConfig : public MTL {

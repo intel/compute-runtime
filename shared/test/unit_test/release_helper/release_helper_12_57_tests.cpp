@@ -24,6 +24,8 @@ TEST(ReleaseHelperTest, givenReleaseHelper1257ThenCorrectPropertiesAreReturned) 
         EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
         EXPECT_FALSE(releaseHelper->isPrefetchDisablingRequired());
+        EXPECT_TRUE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
+        EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
     }
 }
 

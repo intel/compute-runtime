@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -111,41 +112,60 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpcThenSubgroupExtendedBlockRe
     EXPECT_FALSE(compilerProductHelper.isSubgroupExtendedBlockReadSupported());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenBFloat16ConversionIsSupported, IsAtLeastXeHpCore) {
+HWTEST2_F(CompilerProductHelperFixture, GivenCompilerProductHelperThenBFloat16ConversionIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
 
-    EXPECT_TRUE(compilerProductHelper.isBFloat16ConversionSupported(pDevice->getHardwareInfo()));
+    if (releaseHelper) {
+
+        EXPECT_EQ(releaseHelper->isBFloat16ConversionSupported(), compilerProductHelper.isBFloat16ConversionSupported(releaseHelper));
+    } else {
+        EXPECT_FALSE(compilerProductHelper.isBFloat16ConversionSupported(releaseHelper));
+    }
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenMatrixMultiplyAccumulateIsSupported, IsAtLeastXeHpCore) {
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenBFloat16ConversionIsSupported, IsXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+    EXPECT_TRUE(compilerProductHelper.isBFloat16ConversionSupported(releaseHelper));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenMatrixMultiplyAccumulateIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+
+    if (releaseHelper) {
+
+        EXPECT_EQ(releaseHelper->isMatrixMultiplyAccumulateSupported(), compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
+    } else {
+        EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
+    }
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenMatrixMultiplyAccumulateIsSupported, IsXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();
 
     EXPECT_TRUE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenXeFamilyThenSplitMatrixMultiplyAccumulateIsSupported, IsWithinXeGfxFamily) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_TRUE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenNotXeFamilyThenSplitMatrixMultiplyAccumulateIsNotSupported, IsNotWithinXeGfxFamily) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_FALSE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenBFloat16ConversionIsNotSupported, IsAtMostGen12lp) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_FALSE(compilerProductHelper.isBFloat16ConversionSupported(pDevice->getHardwareInfo()));
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenMatrixMultiplyAccumulateIsNotSupported, IsAtMostGen12lp) {
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultiplyAccumulateIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();
-    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
+
+    if (releaseHelper) {
+
+        EXPECT_EQ(releaseHelper->isSplitMatrixMultiplyAccumulateSupported(), compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
+    } else {
+        EXPECT_FALSE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
+    }
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultiplyAccumulateIsSupported, IsXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {

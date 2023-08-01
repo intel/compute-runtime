@@ -29,6 +29,16 @@ bool ReleaseHelperHw<releaseType>::isPrefetchDisablingRequired() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isSplitMatrixMultiplyAccumulateSupported() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isBFloat16ConversionSupported() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 int ReleaseHelperHw<releaseType>::getProductMaxPreferredSlmSize(int preferredEnumValue) const {
     return preferredEnumValue;
 }
@@ -37,5 +47,4 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::getMediaFrequencyTileIndex(uint32_t &tileIndex) const {
     return false;
 }
-
 } // namespace NEO

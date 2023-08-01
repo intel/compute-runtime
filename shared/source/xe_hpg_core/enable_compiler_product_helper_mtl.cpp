@@ -26,16 +26,6 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
     return AOT::MTL_M_A0;
 }
 
-template <>
-bool CompilerProductHelperHw<gfxProduct>::isSplitMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
-    return (MTL::isLpg(hwInfo) == false);
-}
-
-template <>
-bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
-    return (MTL::isLpg(hwInfo) == false);
-}
-
 static EnableCompilerProductHelper<gfxProduct> enableCompilerProductHelperMTL;
 
 } // namespace NEO

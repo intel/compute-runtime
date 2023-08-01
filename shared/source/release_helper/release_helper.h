@@ -28,6 +28,8 @@ class ReleaseHelper {
     virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const = 0;
     virtual bool isPrefetchDisablingRequired() const = 0;
+    virtual bool isSplitMatrixMultiplyAccumulateSupported() const = 0;
+    virtual bool isBFloat16ConversionSupported() const = 0;
     virtual int getProductMaxPreferredSlmSize(int preferredEnumValue) const = 0;
     virtual bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const = 0;
 
@@ -47,6 +49,8 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isMatrixMultiplyAccumulateSupported() const override;
     bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const override;
     bool isPrefetchDisablingRequired() const override;
+    bool isSplitMatrixMultiplyAccumulateSupported() const override;
+    bool isBFloat16ConversionSupported() const override;
     int getProductMaxPreferredSlmSize(int preferredEnumValue) const override;
     bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const override;
 

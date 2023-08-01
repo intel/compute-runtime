@@ -12,6 +12,8 @@
 
 namespace NEO {
 constexpr auto release = ReleaseType::release1257;
+
 } // namespace NEO
+#include "shared/source/release_helper/release_helper_common_xe_hpg.inl"
 
 template class NEO::ReleaseHelperHw<NEO::release>;

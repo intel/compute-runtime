@@ -9,7 +9,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/compiler_product_helper_base.inl"
 #include "shared/source/helpers/compiler_product_helper_bdw_and_later.inl"
-#include "shared/source/helpers/compiler_product_helper_enable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
 #include "shared/source/helpers/compiler_product_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
@@ -67,6 +66,16 @@ bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithStatefulAccessPrefer
 
 template <>
 bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
+    return true;
+}
+
+template <>
+bool CompilerProductHelperHw<IGFX_PVC>::isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
+    return true;
+}
+
+template <>
+bool CompilerProductHelperHw<IGFX_PVC>::isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const {
     return true;
 }
 

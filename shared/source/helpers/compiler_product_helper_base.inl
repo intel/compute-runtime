@@ -156,7 +156,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_media_block_io ";
     }
 
-    if (isBFloat16ConversionSupported(hwInfo)) {
+    if (isBFloat16ConversionSupported(releaseHelper)) {
         extensions += "cl_intel_bfloat16_conversions ";
     }
 
@@ -176,7 +176,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
     }
 
-    if (isSplitMatrixMultiplyAccumulateSupported(hwInfo)) {
+    if (isSplitMatrixMultiplyAccumulateSupported(releaseHelper)) {
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
     }
 
@@ -204,6 +204,22 @@ bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(co
         return releaseHelper->isMatrixMultiplyAccumulateSupported();
     }
 
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isSplitMatrixMultiplyAccumulateSupported();
+    }
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isBFloat16ConversionSupported();
+    }
     return false;
 }
 } // namespace NEO

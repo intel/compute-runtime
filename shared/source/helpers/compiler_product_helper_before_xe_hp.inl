@@ -14,11 +14,6 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getNumThreadsPerEu() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isDotAccumulateSupported() const {
     return false;
 }

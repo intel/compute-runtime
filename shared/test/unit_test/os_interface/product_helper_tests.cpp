@@ -639,13 +639,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenIsAdjustWalkOrderAvailableCall
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGetMediaFrequencyTileIndexCallThenFalseReturn) {
     uint32_t tileIndex = 0;
-    EXPECT_FALSE(productHelper->getMediaFrequencyTileIndex(releaseHelper, tileIndex));
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperAndReleaseHelperNullptrWhenCallingGetMediaFrequencyTileIndexThenReturnFalse) {
-    uint32_t tileIndex = 0;
-    ReleaseHelper *releaseHelper = nullptr;
-    EXPECT_FALSE(productHelper->getMediaFrequencyTileIndex(releaseHelper, tileIndex));
+    if (releaseHelper) {
+        EXPECT_EQ(releaseHelper->getMediaFrequencyTileIndex(tileIndex), productHelper->getMediaFrequencyTileIndex(releaseHelper, tileIndex));
+    } else {
+        EXPECT_FALSE(productHelper->getMediaFrequencyTileIndex(releaseHelper, tileIndex));
+    }
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsPrefetcherDisablingInDirectSubmissionRequiredThenTrueIsReturned) {
