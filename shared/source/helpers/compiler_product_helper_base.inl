@@ -11,6 +11,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -195,5 +196,14 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t CompilerProductHelperHw<gfxProduct>::matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const {
     return ipVersion.value;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isMatrixMultiplyAccumulateSupported();
+    }
+
+    return false;
 }
 } // namespace NEO

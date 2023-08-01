@@ -65,6 +65,11 @@ bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithStatefulAccessPrefer
     return false;
 }
 
+template <>
+bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
+    return true;
+}
+
 static EnableCompilerProductHelper<IGFX_PVC> enableCompilerProductHelperPVC;
 
 } // namespace NEO
