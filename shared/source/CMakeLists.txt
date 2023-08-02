@@ -143,6 +143,7 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_DEVICE_BINARY_FORMAT
                                NEO_UNIFIED_MEMORY
                                NEO_CORE_RELEASE_HELPER
+                               NEO_GTPIN
 )
 
 if(WIN32)
@@ -205,4 +206,13 @@ get_property(NEO_SRCS_ENABLE_CORE GLOBAL PROPERTY NEO_SRCS_ENABLE_CORE)
 target_sources(ocloc_lib PRIVATE ${NEO_SRCS_ENABLE_CORE})
 if(UNIX)
   set_property(GLOBAL APPEND PROPERTY NEO_CORE_SRCS_LINK ${CORE_SRCS_LINK_LINUX})
+  target_include_directories(${NEO_SHARED_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pin/linux)
+  if(NOT NEO_SKIP_UNIT_TESTS)
+    target_include_directories(${NEO_SHARED_MOCKABLE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pin/linux)
+  endif()
+else()
+  target_include_directories(${NEO_SHARED_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pin/windows)
+  if(NOT NEO_SKIP_UNIT_TESTS)
+    target_include_directories(${NEO_SHARED_MOCKABLE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pin/windows)
+  endif()
 endif()

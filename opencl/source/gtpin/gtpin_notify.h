@@ -28,4 +28,6 @@ inline bool gtpinIsGTPinInitialized() { return isGTPinInitialized; }
 void *gtpinGetIgcInit();
 void gtpinSetIgcInit(void *pIgcInitPtr);
 void gtpinRemoveCommandQueue(void *pCmdQueue);
+
+void gtPinTryNotifyInit();
 } // namespace NEO

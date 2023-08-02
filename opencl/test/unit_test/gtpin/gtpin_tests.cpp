@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/pin/pin.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -22,8 +23,10 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
@@ -2501,6 +2504,63 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenGtpinRemoveCommandQueueIsCa
 
     gtpinRemoveCommandQueue(cmdQ2);
     EXPECT_EQ(0u, kernelExecQueue.size());
+}
+
+uint32_t gtpinInitTimesCalled = 0u;
+
+TEST(GTPinInitNotifyTests, givenAvailablePlatformsAndNoEnvironmentVariableSetWhenTryingToNotifyGtpinInitializationThenGtpinDoesNotGetNotified) {
+    platformsImpl->clear();
+    constructPlatform();
+    ASSERT_FALSE(platformsImpl->empty());
+
+    VariableBackup<uint32_t> gtpinCounterBackup(&gtpinInitTimesCalled, 0u);
+    uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
+    MockOsLibrary mockLibraryObject(reinterpret_cast<void *>(openPinHandler), false);
+    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+
+    gtPinTryNotifyInit();
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    platformsImpl->clear();
+}
+
+TEST(GTPinInitNotifyTests, givenNoPlatformsAvailableAndEnvironmentVariableSetWhenTryingToNotifyGtpinInitializationThenGtpinDoesNotGetNotified) {
+    platformsImpl->clear();
+    ASSERT_TRUE(platformsImpl->empty());
+
+    VariableBackup<uint32_t> gtpinCounterBackup(&gtpinInitTimesCalled, 0u);
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
+    MockOsLibrary mockLibraryObject(reinterpret_cast<void *>(openPinHandler), false);
+    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+
+    gtPinTryNotifyInit();
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    platformsImpl->clear();
+}
+
+TEST(GTPinInitNotifyTests, givenAvailablePlatformsAndEnvironmentVariableSetWhenTryingToNotifyGtpinInitializationThenGtpinGetsNotified) {
+    platformsImpl->clear();
+    constructPlatform();
+    ASSERT_FALSE(platformsImpl->empty());
+
+    VariableBackup<uint32_t> gtpinCounterBackup(&gtpinInitTimesCalled, 0u);
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
+    MockOsLibrary mockLibraryObject(reinterpret_cast<void *>(openPinHandler), false);
+    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+
+    gtPinTryNotifyInit();
+    EXPECT_EQ(1u, gtpinInitTimesCalled);
+    platformsImpl->clear();
 }
 
 } // namespace ULT

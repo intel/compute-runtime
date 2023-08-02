@@ -400,6 +400,7 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
                                                                      size_t, void *),
                                        void *userData,
                                        cl_int *errcodeRet) {
+    gtPinTryNotifyInit();
     TRACING_ENTER(ClCreateContext, &properties, &numDevices, &devices, &funcNotify, &userData, &errcodeRet);
 
     cl_int retVal = CL_SUCCESS;
@@ -457,6 +458,7 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
                                                                              size_t, void *),
                                                void *userData,
                                                cl_int *errcodeRet) {
+    gtPinTryNotifyInit();
     TRACING_ENTER(ClCreateContextFromType, &properties, &deviceType, &funcNotify, &userData, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
