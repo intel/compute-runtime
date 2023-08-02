@@ -21,6 +21,7 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 
 #include "CL/cl.h"
@@ -279,6 +280,14 @@ void gtpinRemoveCommandQueue(void *pCmdQueue) {
             }
         }
     }
+}
+
+void gtPinTryNotifyInit() {
+    if (platformsImpl->empty()) {
+        return;
+    }
+    auto &pPlatform = *(*platformsImpl)[0];
+    pPlatform.tryNotifyGtpinInit();
 }
 
 } // namespace NEO
