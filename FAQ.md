@@ -86,7 +86,7 @@ Actual available memory should be read from the driver capabilities using the de
 (discrete vs. integrated) and operating system as follows:
 * discrete on Linux - 95% of device memory
 * integrated on Linux - 80% of system memory
-* discrete on Windows - 80% of device memory
+* discrete on Windows - 98% of device memory
 * integrated on Windows - 80% of system memory
 
 Ignoring these instructions may lead to undefined behavior, including abort.
