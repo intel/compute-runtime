@@ -1,43 +1,45 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/pin/pin.h"
 #include "shared/test/common/mocks/mock_os_library.h"
-
-#include "level_zero/tools/source/pin/pin.h"
 
 #include "gtest/gtest.h"
 
-namespace ult {
+namespace ULT {
 
 TEST(PinInitializationTest, GivenValidLibraryPinContextInitSucceeds) {
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { return 0; };
     auto newPtr = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
     MockOsLibrary::loadLibraryNewObject = newPtr;
-    L0::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
-    EXPECT_EQ(L0::PinContext::init(), ZE_RESULT_SUCCESS);
-    L0::PinContext::osLibraryLoadFunction = NEO::OsLibrary::load;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+    std::string mockGTPinFunctionName{"aaa"};
+    EXPECT_TRUE(NEO::PinContext::init(mockGTPinFunctionName));
+
     MockOsLibrary::loadLibraryNewObject = nullptr;
     delete newPtr;
 }
 
 TEST(PinInitializationTest, GivenBadLibraryNamePinContextInitFAILS) {
     MockOsLibrary::loadLibraryNewObject = nullptr;
-    L0::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
-    EXPECT_EQ(L0::PinContext::init(), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-    L0::PinContext::osLibraryLoadFunction = NEO::OsLibrary::load;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+    std::string mockGTPinFunctionName{"aaa"};
+    EXPECT_FALSE(NEO::PinContext::init(mockGTPinFunctionName));
+
     MockOsLibrary::loadLibraryNewObject = nullptr;
 }
 
 TEST(PinInitializationTest, GivenBadProcAddressPinContextInitFAILS) {
     auto newPtr = new MockOsLibrary(nullptr, false);
     MockOsLibrary::loadLibraryNewObject = newPtr;
-    L0::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
-    EXPECT_EQ(L0::PinContext::init(), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-    L0::PinContext::osLibraryLoadFunction = NEO::OsLibrary::load;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+    std::string mockGTPinFunctionName{"aaa"};
+    EXPECT_FALSE(NEO::PinContext::init(mockGTPinFunctionName));
+
     MockOsLibrary::loadLibraryNewObject = nullptr;
     delete newPtr;
 }
@@ -46,11 +48,12 @@ TEST(PinInitializationTest, GivenBadPinHandlerPinContextInitFAILS) {
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { return 1; };
     auto newPtr = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
     MockOsLibrary::loadLibraryNewObject = newPtr;
-    L0::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
-    EXPECT_EQ(L0::PinContext::init(), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-    L0::PinContext::osLibraryLoadFunction = NEO::OsLibrary::load;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+    std::string mockGTPinFunctionName{"aaa"};
+    EXPECT_FALSE(NEO::PinContext::init(mockGTPinFunctionName));
+
     MockOsLibrary::loadLibraryNewObject = nullptr;
     delete newPtr;
 }
 
-} // namespace ult
+} // namespace ULT

@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/pin/pin.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -247,4 +250,43 @@ TEST_F(ClCreateContextTests, GivenDevicesFromDifferentPlatformsWhenCreatingConte
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
     EXPECT_EQ(nullptr, clContext);
 }
+
+TEST_F(ClCreateContextTests, givenProgramInstrumentationEnabledAndSuccesfulGtpinNotifyingWhenCreatingContextThenReturnSuccess) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { return 0; };
+    auto newPtr = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
+    MockOsLibrary::loadLibraryNewObject = newPtr;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+
+    auto context = clCreateContext(nullptr, 1u, &testedClDevice, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, context);
+
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    MockOsLibrary::loadLibraryNewObject = nullptr;
+    delete newPtr;
+}
+
+TEST_F(ClCreateContextTests, givenProgramInstrumentationEnabledAndFailedGtpinNotifyingWhenCreatingContextThenReturnError) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { return -1; }; // bad gtpin handler
+    auto newPtr = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
+    MockOsLibrary::loadLibraryNewObject = newPtr;
+    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+
+    auto context = clCreateContext(nullptr, 1u, &testedClDevice, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, context);
+
+    MockOsLibrary::loadLibraryNewObject = nullptr;
+    delete newPtr;
+}
+
 } // namespace ULT

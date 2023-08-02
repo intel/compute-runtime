@@ -11,12 +11,12 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/pin/pin.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
-#include "level_zero/tools/source/pin/pin.h"
 
 #include <memory>
 #include <thread>
@@ -81,8 +81,9 @@ void DriverImp::initialize(ze_result_t *result) {
             }
 
             if ((*result == ZE_RESULT_SUCCESS) && envVariables.pin) {
-                *result = PinContext::init();
-                if (*result != ZE_RESULT_SUCCESS) {
+                std::string gtpinFuncName{"OpenGTPin"};
+                if (false == NEO::PinContext::init(gtpinFuncName)) {
+                    *result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
                     delete GlobalDriver;
                     GlobalDriverHandle = nullptr;
                     GlobalDriver = nullptr;

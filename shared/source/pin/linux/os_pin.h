@@ -1,18 +1,15 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#pragma once
+#include "shared/source/pin/pin.h"
 
-#include "level_zero/tools/source/pin/pin.h"
-
-namespace L0 {
+namespace NEO {
 
 typedef uint32_t (*OpenGTPin_fn)(void *gtPinInit);
-
 const std::string PinContext::gtPinLibraryFilename = "libgtpin.so";
 
-} // namespace L0
+} // namespace NEO
