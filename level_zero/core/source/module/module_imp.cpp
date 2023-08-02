@@ -39,6 +39,7 @@
 #include "shared/source/program/program_initialization.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -499,6 +500,12 @@ ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType 
 }
 
 ModuleImp::~ModuleImp() {
+    for (auto &kernel : printfKernelContainer) {
+        if (kernel.get() != nullptr) {
+            destroyPrintfKernel(kernel->toHandle());
+        }
+    }
+    printfKernelContainer.clear();
     kernelImmDatas.clear();
 }
 
@@ -813,6 +820,9 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
 
     if (res == ZE_RESULT_SUCCESS) {
         *kernelHandle = kernel->toHandle();
+        if (kernel->getPrintfBufferAllocation() != nullptr) {
+            this->printfKernelContainer.push_back(std::shared_ptr<Kernel>(kernel));
+        }
     } else {
         driverHandle->clearErrorDescription();
     }
@@ -829,6 +839,29 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
     }
 
     return res;
+}
+
+std::weak_ptr<Kernel> ModuleImp::getPrintfKernelWeakPtr(ze_kernel_handle_t kernelHandle) const {
+    std::lock_guard<std::mutex> lock(static_cast<DeviceImp *>(device)->printfKernelMutex);
+    Kernel *kernel = Kernel::fromHandle(kernelHandle);
+    auto it = std::find_if(this->printfKernelContainer.begin(), this->printfKernelContainer.end(), [&kernel](const auto &kernelSharedPtr) { return kernelSharedPtr.get() == kernel; });
+    if (it == this->printfKernelContainer.end()) {
+        return std::weak_ptr<Kernel>{};
+    } else {
+        return std::weak_ptr<Kernel>{*it};
+    }
+}
+
+ze_result_t ModuleImp::destroyPrintfKernel(ze_kernel_handle_t kernelHandle) {
+    std::lock_guard<std::mutex> lock(static_cast<DeviceImp *>(device)->printfKernelMutex);
+    Kernel *kernel = Kernel::fromHandle(kernelHandle);
+    auto it = std::find_if(this->printfKernelContainer.begin(), this->printfKernelContainer.end(),
+                           [&kernel](const auto &kernelPtr) { return kernelPtr.get() == kernel; });
+    if (it == this->printfKernelContainer.end()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    it->reset();
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ModuleImp::getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) {

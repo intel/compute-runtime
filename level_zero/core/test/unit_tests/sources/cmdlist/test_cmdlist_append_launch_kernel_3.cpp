@@ -266,7 +266,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhenAppendingLaunchKernelIndirectThenKernelIsStoredOnEvent, IsAtLeastSkl) {
     Mock<Module> module(this->device, nullptr);
-    Mock<::L0::KernelImp> kernel;
+    std::shared_ptr<Mock<::L0::KernelImp>> kernel{new Mock<::L0::KernelImp>()};
+    static_cast<ModuleImp *>(&module)->getPrintfKernelContainer().push_back(kernel);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -274,9 +275,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhe
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel.module = &module;
-    kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel.createPrintfBuffer();
+    kernel->module = &module;
+    kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
+    kernel->createPrintfBuffer();
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -286,15 +287,15 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhe
     auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
-    auto result = commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, false);
+    auto result = commandList->appendLaunchKernelIndirect(kernel->toHandle(), &groupCount, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(nullptr, event->getKernelForPrintf());
+    ASSERT_FALSE(event->getKernelForPrintf().expired());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelIndirectThenKernelIsNotStoredOnEvent, IsAtLeastSkl) {
     Mock<Module> module(this->device, nullptr);
-    Mock<::L0::KernelImp> kernel;
+    std::shared_ptr<Mock<::L0::KernelImp>> kernel{new Mock<::L0::KernelImp>()};
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -302,8 +303,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAp
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel.module = &module;
-    kernel.descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->module = &module;
+    kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -313,24 +314,25 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAp
     auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
-    auto result = commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, false);
+    auto result = commandList->appendLaunchKernelIndirect(kernel->toHandle(), &groupCount, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_EQ(nullptr, event->getKernelForPrintf());
+    ASSERT_TRUE(event->getKernelForPrintf().expired());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhenAppendingLaunchKernelWithParamThenKernelIsStoredOnEvent, IsAtLeastSkl) {
     Mock<Module> module(this->device, nullptr);
-    Mock<::L0::KernelImp> kernel;
+    std::shared_ptr<Mock<::L0::KernelImp>> kernel{new Mock<::L0::KernelImp>()};
+    static_cast<ModuleImp *>(&module)->getPrintfKernelContainer().push_back(kernel);
 
     ze_result_t returnValue;
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel.module = &module;
-    kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel.createPrintfBuffer();
+    kernel->module = &module;
+    kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
+    kernel->createPrintfBuffer();
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -346,23 +348,23 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhe
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
 
-    auto result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
+    auto result = pCommandList->appendLaunchKernelWithParams(kernel.get(), &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(nullptr, event->getKernelForPrintf());
+    ASSERT_FALSE(event->getKernelForPrintf().expired());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelWithParamThenKernelIsNotStoredOnEvent, IsAtLeastSkl) {
     Mock<Module> module(this->device, nullptr);
-    Mock<::L0::KernelImp> kernel;
+    std::shared_ptr<Mock<::L0::KernelImp>> kernel{new Mock<::L0::KernelImp>()};
 
     ze_result_t returnValue;
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel.module = &module;
-    kernel.descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->module = &module;
+    kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -378,10 +380,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAp
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
 
-    auto result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
+    auto result = pCommandList->appendLaunchKernelWithParams(kernel.get(), &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_EQ(nullptr, event->getKernelForPrintf());
+    ASSERT_TRUE(event->getKernelForPrintf().expired());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelIndirectThenKernelIsExecutedOnImmediateCmdQ, IsAtLeastSkl) {

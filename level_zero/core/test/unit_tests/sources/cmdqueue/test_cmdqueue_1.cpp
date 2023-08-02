@@ -81,16 +81,17 @@ TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutput
                                                           false,
                                                           returnValue));
 
-    Mock<KernelImp> kernel1, kernel2;
+    std::shared_ptr<Mock<KernelImp>> kernel1{new Mock<KernelImp>()};
+    std::shared_ptr<Mock<KernelImp>> kernel2{new Mock<KernelImp>()};
 
-    commandQueue->printfKernelContainer.push_back(&kernel1);
-    commandQueue->printfKernelContainer.push_back(&kernel2);
+    commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel1});
+    commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel2});
 
     commandQueue->synchronizeByPollingForTaskCount(0u);
 
     EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
-    EXPECT_EQ(1u, kernel1.printPrintfOutputCalledTimes);
-    EXPECT_EQ(1u, kernel2.printPrintfOutputCalledTimes);
+    EXPECT_EQ(1u, kernel1->printPrintfOutputCalledTimes);
+    EXPECT_EQ(1u, kernel2->printPrintfOutputCalledTimes);
 
     commandQueue->destroy();
 }
@@ -107,20 +108,20 @@ HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingBy
                                                           false,
                                                           returnValue));
 
-    Mock<KernelImp> kernel1;
+    std::shared_ptr<Mock<KernelImp>> kernel1{new Mock<KernelImp>()};
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.callBaseWaitForCompletionWithTimeout = false;
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
 
-    commandQueue->printfKernelContainer.push_back(&kernel1);
+    commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel1});
 
     commandQueue->synchronizeByPollingForTaskCount(0u);
 
     EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
-    EXPECT_EQ(1u, kernel1.printPrintfOutputCalledTimes);
-    EXPECT_TRUE(kernel1.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(1u, kernel1->printPrintfOutputCalledTimes);
+    EXPECT_TRUE(kernel1->hangDetectedPassedToPrintfOutput);
 
     commandQueue->destroy();
 }
@@ -140,18 +141,18 @@ HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingTh
                                                           false,
                                                           returnValue));
 
-    Mock<KernelImp> kernel1;
+    std::shared_ptr<Mock<KernelImp>> kernel1{new Mock<KernelImp>()};
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
 
-    commandQueue->printfKernelContainer.push_back(&kernel1);
+    commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel1});
     commandQueue->synchronize(std::numeric_limits<uint64_t>::max());
 
     EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
-    EXPECT_EQ(1u, kernel1.printPrintfOutputCalledTimes);
-    EXPECT_TRUE(kernel1.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(1u, kernel1->printPrintfOutputCalledTimes);
+    EXPECT_TRUE(kernel1->hangDetectedPassedToPrintfOutput);
 
     commandQueue->destroy();
 }
@@ -325,7 +326,7 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
                                                           returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
-    Mock<KernelImp> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.immutableData.device = device;
 
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -378,7 +379,7 @@ HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperWhenExecutingThenMergeState
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->logicalStateHelper.reset(mockCsrLogicalStateHelper);
 
-    Mock<KernelImp> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.immutableData.device = device;
 
     auto commandList = std::unique_ptr<L0::ult::CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -417,7 +418,7 @@ HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperAndImmediateCmdListWhenExec
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->logicalStateHelper.reset(mockCsrLogicalStateHelper);
 
-    Mock<KernelImp> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.immutableData.device = device;
 
     auto commandList = std::unique_ptr<L0::ult::CommandList>(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
@@ -442,7 +443,7 @@ HWTEST2_F(CommandQueueCreate, givenOutOfHostMemoryErrorFromSubmitBatchBufferWhen
     commandQueue->initialize(false, false, false);
     commandQueue->submitBatchBufferReturnValue = NEO::SubmissionStatus::OUT_OF_HOST_MEMORY;
 
-    Mock<KernelImp> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.immutableData.device = device;
 
     ze_result_t returnValue;
@@ -466,7 +467,7 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
     MockCommandQueueHw<gfxCoreFamily> commandQueue(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
     commandQueue.reserveLinearStreamSizeReturnValue = NEO::WaitStatus::GpuHang;
 
-    Mock<KernelImp> kernel;
+    Mock<::L0::KernelImp> kernel;
     kernel.immutableData.device = device;
 
     ze_result_t returnValue;
