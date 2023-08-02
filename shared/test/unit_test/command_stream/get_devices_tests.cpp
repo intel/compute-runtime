@@ -243,7 +243,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
         }
 
         DebugManager.flags.ProductFamilyOverride.set(product);
-        MockExecutionEnvironment exeEnv;
+        ExecutionEnvironment exeEnv{};
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
 
         const auto ret = prepareDeviceEnvironments(exeEnv);

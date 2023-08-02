@@ -39,7 +39,7 @@ struct DeviceFactoryTests : ::testing::Test {
 };
 
 TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCorrectValueIsSet) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    ExecutionEnvironment executionEnvironment{};
     auto config = defaultHwInfo.get()->ipVersion.value;
     DebugManager.flags.OverrideHwIpVersion.set(config);
 
@@ -50,7 +50,7 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
 }
 
 TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenReleaseHelperContainsCorrectIpVersion) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    ExecutionEnvironment executionEnvironment{};
     auto config = defaultHwInfo.get()->ipVersion.value;
     DebugManager.flags.OverrideHwIpVersion.set(config);
 
@@ -71,7 +71,7 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
 }
 
 TEST_F(DeviceFactoryTests, givenHwIpVersionAndDeviceIdOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCorrectValueIsSet) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    ExecutionEnvironment executionEnvironment{};
     auto config = defaultHwInfo.get()->ipVersion.value;
     DebugManager.flags.OverrideHwIpVersion.set(config);
     DebugManager.flags.ForceDeviceId.set("0x1234");
