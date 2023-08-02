@@ -4371,3 +4371,36 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredFalseWhenProgramStalli
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_FALSE(pipeControl->getDcFlushEnable());
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, givenFlagProgramBarrierInCommandStreamTaskWhenFlushTaskThenPipeControlProgrammedInTaskCommandStream) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ProgramBarrierInCommandStreamTask.set(1);
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    GraphicsAllocation *allocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({ultCsr.getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    LinearStream commandStream{allocation};
+    ASSERT_NE(nullptr, commandStream.getGraphicsAllocation());
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.isStallingCommandsOnNextFlushRequired = true;
+    ultCsr.flushTask(commandStream,
+                     MemoryConstants::pageSize,
+                     &dsh,
+                     &ioh,
+                     &ssh,
+                     0,
+                     dispatchFlags,
+                     *pDevice);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        commandStream.getCpuBase(),
+        commandStream.getUsed()));
+    auto pipeControlIteratorVector = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(pipeControlIteratorVector.size(), 1u);
+    auto pipeControlIterator = pipeControlIteratorVector[0];
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+    ASSERT_NE(nullptr, pipeControl);
+    pDevice->getMemoryManager()->freeGraphicsMemory(allocation);
+}

@@ -507,7 +507,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(kernelArgsBufferAllocation, logicalStateHelper.get());
 
     if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
-        programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
+        if (DebugManager.flags.ProgramBarrierInCommandStreamTask.get() == 1) {
+            programStallingCommandsForBarrier(commandStreamTask, dispatchFlags);
+        } else {
+            programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
+        }
     }
 
     programStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, stateBaseAddressDirty);
