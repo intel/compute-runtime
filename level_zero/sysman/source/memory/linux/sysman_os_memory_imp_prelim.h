@@ -23,6 +23,8 @@ class SysfsAccess;
 struct Device;
 class PlatformMonitoringTech;
 class LinuxSysmanImp;
+class SysmanKmdInterface;
+
 class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;
@@ -39,6 +41,7 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     NEO::Drm *pDrm = nullptr;
     SysmanDeviceImp *pDevice = nullptr;
     PlatformMonitoringTech *pPmt = nullptr;
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     void getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned short stepping, uint64_t &hbmFrequency);
 
   private:

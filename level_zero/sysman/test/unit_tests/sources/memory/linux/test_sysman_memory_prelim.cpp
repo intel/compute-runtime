@@ -11,6 +11,7 @@
 
 #include "level_zero/sysman/source/linux/pmt/sysman_pmt_xml_offsets.h"
 #include "level_zero/sysman/source/memory/linux/sysman_os_memory_imp_prelim.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory_prelim.h"
@@ -96,6 +97,20 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         return handles;
     }
 };
+
+TEST_F(SysmanDeviceMemoryFixture, GivenKmdInterfaceWhenGettingSysfsFileNamesForI915VersionThenProperPathsAreReturned) {
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(productFamily);
+    EXPECT_STREQ("gt/gt0/addr_range", pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(0).c_str());
+    EXPECT_STREQ("gt/gt0/mem_RP0_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxMemoryFrequency, 0, true).c_str());
+    EXPECT_STREQ("gt/gt0/mem_RPn_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinMemoryFrequency, 0, true).c_str());
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenKmdInterfaceWhenGettingSysfsFileNamesForXeVersionThenProperPathsAreReturned) {
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(productFamily);
+    EXPECT_STREQ("device/tile0/physical_vram_size_bytes", pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(0).c_str());
+    EXPECT_STREQ("device/tile0/gt0/freq_vram_rp0", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxMemoryFrequency, 0, true).c_str());
+    EXPECT_STREQ("device/tile0/gt0/freq_vram_rpn", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinMemoryFrequency, 0, true).c_str());
+}
 
 TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturned) {
     setLocalSupportedAndReinit(true);

@@ -17,6 +17,7 @@
 
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include "drm/intel_hwconfig_types.h"
@@ -33,6 +34,7 @@ LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint3
     pDevice = pLinuxSysmanImp->getSysmanDeviceImp();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
+    pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
 }
 
 bool LinuxMemoryImp::isMemoryModuleSupported() {
@@ -78,7 +80,7 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     pProperties->physicalSize = 0;
     if (isSubdevice) {
         std::string memval;
-        physicalSizeFile = pDrm->getIoctlHelper()->getFileForMemoryAddrRange(subdeviceId);
+        physicalSizeFile = pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(subdeviceId);
         ze_result_t result = pSysfsAccess->read(physicalSizeFile, memval);
         uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
         if (ZE_RESULT_SUCCESS != result) {
@@ -157,7 +159,7 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
     hbmFrequency = 0;
     if (productFamily == IGFX_PVC) {
         if (stepping >= REVISION_B) {
-            const std::string hbmRP0FreqFile = pDrm->getIoctlHelper()->getFileForMaxMemoryFrequencyOfSubDevice(subdeviceId);
+            const std::string hbmRP0FreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxMemoryFrequency, subdeviceId, true);
             uint64_t hbmFreqValue = 0;
             ze_result_t result = pSysfsAccess->read(hbmRP0FreqFile, hbmFreqValue);
             if (ZE_RESULT_SUCCESS == result) {

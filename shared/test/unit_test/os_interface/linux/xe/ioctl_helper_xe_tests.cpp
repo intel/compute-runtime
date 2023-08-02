@@ -413,13 +413,6 @@ TEST(IoctlHelperXeTest, whenGettingFileNamesForFrequencyThenProperStringIsReturn
     EXPECT_STREQ("/device/gt1/freq_rp0", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
 }
 
-TEST(IoctlHelperXeTest, whenGettingFileNameForMemoryAddrRangeThenProperStringIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto ioctlHelper = std::make_unique<IoctlHelperXe>(drm);
-    EXPECT_STREQ("device/tile0/addr_range", ioctlHelper->getFileForMemoryAddrRange(0).c_str());
-}
-
 inline constexpr int testValueVmId = 0x5764;
 inline constexpr int testValueMapOff = 0x7788;
 inline constexpr int testValuePrime = 0x4321;

@@ -34,12 +34,20 @@ void memoryGetTimeStamp(uint64_t &timestamp) {
     timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
 }
 
+void LinuxMemoryImp::init() {
+    if (isSubdevice) {
+        const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
+        physicalSizeFile = baseDir + "addr_range";
+    }
+}
+
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
+    init();
 }
 
 bool LinuxMemoryImp::isMemoryModuleSupported() {
@@ -79,7 +87,6 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     pProperties->physicalSize = 0;
     if (isSubdevice) {
         std::string memval;
-        physicalSizeFile = pDrm->getIoctlHelper()->getFileForMemoryAddrRange(subdeviceId);
         ze_result_t result = pSysfsAccess->read(physicalSizeFile, memval);
         uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
         if (ZE_RESULT_SUCCESS != result) {
@@ -158,7 +165,9 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
     hbmFrequency = 0;
     if (productFamily == IGFX_PVC) {
         if (stepping >= REVISION_B) {
-            const std::string hbmRP0FreqFile = pDrm->getIoctlHelper()->getFileForMaxMemoryFrequencyOfSubDevice(subdeviceId);
+            const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
+            // Calculating bandwidth based on HBM max frequency
+            const std::string hbmRP0FreqFile = baseDir + "mem_RP0_freq_mhz";
             uint64_t hbmFreqValue = 0;
             ze_result_t result = pSysfsAccess->read(hbmRP0FreqFile, hbmFreqValue);
             if (ZE_RESULT_SUCCESS == result) {

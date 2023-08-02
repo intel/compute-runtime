@@ -138,6 +138,12 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     MemoryManager *pMemoryManagerOld;
 };
 
+TEST_F(SysmanDeviceMemoryFixture, GivenWhenGettingMemoryPropertiesThenSuccessIsReturned) {
+    zes_mem_properties_t properties = {};
+    auto pLinuxMemoryImp = std::make_unique<LinuxMemoryImp>(pOsSysman, true, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxMemoryImp->getProperties(&properties));
+}
+
 TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturned) {
     setLocalSupportedAndReinit(true);
 

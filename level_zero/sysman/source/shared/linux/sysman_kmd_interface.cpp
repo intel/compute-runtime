@@ -63,6 +63,9 @@ void SysmanKmdInterfaceI915::initSysfsNameToFileMap(const PRODUCT_FAMILY product
     sysfsNameToFileMap[SysfsName::sysfsNameDefaultPowerLimit] = std::make_pair("", "power1_rated_max");
     sysfsNameToFileMap[SysfsName::sysfsNameCriticalPowerLimit] = std::make_pair("", (productFamily == IGFX_PVC) ? "curr1_crit" : "power1_crit");
     sysfsNameToFileMap[SysfsName::sysfsNameStandbyModeControl] = std::make_pair("rc6_enable", "power/rc6_enable");
+    sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("addr_range", "");
+    sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("mem_RP0_freq_mhz", "");
+    sysfsNameToFileMap[SysfsName::sysfsNameMinMemoryFrequency] = std::make_pair("mem_RPn_freq_mhz", "");
 }
 
 void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
@@ -87,6 +90,9 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFa
     sysfsNameToFileMap[SysfsName::sysfsNameEnergyCounterNode] = std::make_pair("", "energy1_input");
     sysfsNameToFileMap[SysfsName::sysfsNameDefaultPowerLimit] = std::make_pair("", "power1_rated_max");
     sysfsNameToFileMap[SysfsName::sysfsNameCriticalPowerLimit] = std::make_pair("", (productFamily == IGFX_PVC) ? "curr1_crit" : "power1_crit");
+    sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("physical_vram_size_bytes", "");
+    sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("freq_vram_rp0", "");
+    sysfsNameToFileMap[SysfsName::sysfsNameMinMemoryFrequency] = std::make_pair("freq_vram_rpn", "");
 }
 
 std::string SysmanKmdInterfaceI915::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) {
@@ -97,6 +103,18 @@ std::string SysmanKmdInterfaceI915::getSysfsFilePath(SysfsName sysfsName, uint32
 std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) {
     std::string filePath = baseDirectoryExists ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
     return filePath;
+}
+
+std::string SysmanKmdInterfaceI915::getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) {
+    std::string filePathPhysicalMemorySize = getBasePath(subDeviceId) +
+                                             sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange].first;
+    return filePathPhysicalMemorySize;
+}
+
+std::string SysmanKmdInterfaceXe::getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) {
+    std::string filePathPhysicalMemorySize = "device/tile" + std::to_string(subDeviceId) + "/" +
+                                             sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange].first;
+    return filePathPhysicalMemorySize;
 }
 
 int64_t SysmanKmdInterfaceI915::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
