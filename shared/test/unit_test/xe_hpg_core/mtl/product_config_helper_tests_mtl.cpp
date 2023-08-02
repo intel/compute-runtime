@@ -47,3 +47,7 @@ MTLTEST_F(ProductConfigHelperMtlTests, givenMtlConfigsWhenSearchForDeviceAcronym
 MTLTEST_F(ProductHelperMtlTests, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
+
+MTLTEST_F(ProductHelperMtlTests, givenMtlWhenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isTimestampWaitSupportedForEvents());
+}
