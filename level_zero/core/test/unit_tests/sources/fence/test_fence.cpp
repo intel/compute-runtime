@@ -96,6 +96,7 @@ TEST_F(FenceTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturne
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = true;
     csr->testTaskCountReadyReturnValue = false;
+    csr->gpuHangCheckPeriod = {};
 
     Mock<CommandQueue> cmdqueue(device, csr.get());
     ze_fence_desc_t desc = {};

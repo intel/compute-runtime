@@ -99,6 +99,7 @@ HWTEST_F(CommandQueueHwTest, givenEnableTimestampWaitForQueuesWhenGpuHangDetecte
     auto mockCSR = new MockCommandStreamReceiver(*executionEnvironment, 0, device->getDeviceBitfield());
     mockCSR->isGpuHangDetectedReturnValue = true;
     device->resetCommandStreamReceiver(mockCSR);
+    mockCSR->gpuHangCheckPeriod = {};
 
     auto mockTagAllocator = new MockTagAllocator<>(0, device->getMemoryManager());
     mockCSR->timestampPacketAllocator.reset(mockTagAllocator);

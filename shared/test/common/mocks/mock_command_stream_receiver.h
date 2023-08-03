@@ -37,6 +37,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using CommandStreamReceiver::CommandStreamReceiver;
     using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::gpuHangCheckPeriod;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;
