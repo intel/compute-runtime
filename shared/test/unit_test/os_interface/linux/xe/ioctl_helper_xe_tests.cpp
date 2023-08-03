@@ -29,7 +29,6 @@ using NEO::PrelimI915::drm_syncobj_wait;
 struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
     using IoctlHelperXe::IoctlHelperXe;
-    using IoctlHelperXe::xeDecanonize;
     using IoctlHelperXe::xeGetBindOpName;
     using IoctlHelperXe::xeGetClassName;
     using IoctlHelperXe::xeGetengineClassName;
@@ -380,9 +379,6 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     verifyXeEngineClassName("DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE", DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE);
     verifyXeEngineClassName("DRM_XE_ENGINE_CLASS_COMPUTE", DRM_XE_ENGINE_CLASS_COMPUTE);
     verifyXeEngineClassName("?", 0xffffffff);
-
-    // Default is 48b
-    EXPECT_EQ(0xffffffa10000ul, mockXeIoctlHelper->xeDecanonize(0xffffffffffa10000));
 
     Query query{};
     QueryItem queryItem{};
@@ -740,13 +736,17 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(-1, ret);
     }
     {
+        auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
+
         GemContextParam test = {};
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextGetparam, &test);
         EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::ContextParamGttSize);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextGetparam, &test);
         EXPECT_EQ(0, ret);
-        EXPECT_EQ(0x1ull << 48, test.value);
+
+        auto expectedAddressWidth = hwInfo->capabilityTable.gpuAddressSpace + 1u;
+        EXPECT_EQ(expectedAddressWidth, test.value);
         test.param = static_cast<int>(DrmParam::ContextParamSseu);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextGetparam, &test);
         EXPECT_EQ(0, ret);

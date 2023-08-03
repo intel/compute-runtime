@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/common_types.h"
@@ -181,7 +182,6 @@ bool IoctlHelperXe::initialize() {
     chipsetId = config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
     revId = static_cast<int>(config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16);
     hasVram = config->info[XE_QUERY_CONFIG_FLAGS] & XE_QUERY_CONFIG_FLAGS_HAS_VRAM ? 1 : 0;
-    addressWidth = static_cast<uint32_t>(config->info[XE_QUERY_CONFIG_VA_BITS]);
 
     memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
@@ -909,10 +909,6 @@ void IoctlHelperXe::xeSyncObjDestroy(uint32_t handle) {
     UNRECOVERABLE_IF(ret);
 }
 
-uint64_t IoctlHelperXe::xeDecanonize(uint64_t address) {
-    return (address & maxNBitValue(addressWidth));
-}
-
 int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     int ret = -1;
     xeLog(" => IoctlHelperXe::%s 0x%x\n", __FUNCTION__, request);
@@ -988,10 +984,11 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::GemContextGetparam: {
         GemContextParam *d = static_cast<GemContextParam *>(arg);
 
+        auto addressSpace = drm.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.gpuAddressSpace;
         ret = 0;
         switch (d->param) {
         case static_cast<int>(DrmParam::ContextParamGttSize):
-            d->value = 0x1ull << addressWidth;
+            d->value = addressSpace + 1u;
             break;
         case static_cast<int>(DrmParam::ContextParamSseu):
             d->value = 0x55fdd94d4e40;
@@ -1244,7 +1241,8 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
             }
         }
     } else {
-        uint64_t ad = xeDecanonize(vmBindParams.start);
+        auto gmmHelper = drm.getRootDeviceEnvironment().getGmmHelper();
+        uint64_t ad = gmmHelper->decanonize(vmBindParams.start);
         for (unsigned int i = 0; i < bindInfo.size(); i++) {
             if (ad == bindInfo[i].addr) {
                 found = i;
@@ -1269,7 +1267,10 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
         bind.bind.obj = vmBindParams.handle;
         bind.bind.obj_offset = vmBindParams.offset;
         bind.bind.range = vmBindParams.length;
-        bind.bind.addr = xeDecanonize(vmBindParams.start);
+
+        auto gmmHelper = drm.getRootDeviceEnvironment().getGmmHelper();
+
+        bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
         bind.bind.op = XE_VM_BIND_OP_MAP;
         bind.num_syncs = 1;
         bind.syncs = reinterpret_cast<uintptr_t>(&sync);
