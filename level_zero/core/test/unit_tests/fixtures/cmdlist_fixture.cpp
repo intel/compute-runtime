@@ -386,8 +386,21 @@ void ImmediateFlushTaskGlobalStatelessCmdListFixture::setUp() {
 void ImmediateFlushTaskCsrSharedHeapCmdListFixture::setUp() {
     DebugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
     DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    DebugManager.flags.ForceDefaultHeapSize.set(64);
 
     ImmediateFlushTaskCmdListFixture::setUp();
+
+    mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
+    mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
+    mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
+    kernel->dynamicStateHeapData.reset(new uint8_t[512]);
+    kernel->dynamicStateHeapDataSize = 512;
+
+    mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
+    mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
+    mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
+    kernel->surfaceStateHeapDataSize = 128;
+    kernel->surfaceStateHeapData.reset(new uint8_t[256]);
 }
 
 void ImmediateFlushTaskPrivateHeapCmdListFixture::setUp() {
