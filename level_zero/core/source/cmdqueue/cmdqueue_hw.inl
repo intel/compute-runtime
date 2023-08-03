@@ -1470,19 +1470,26 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandLis
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastCommandList) {
     auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(csr);
+    auto &streamProperties = this->csr->getStreamProperties();
+
     auto &commandContainer = lastCommandList->getCmdContainer();
 
     if (lastCommandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::GlobalStateless) {
-        csrHw->getSshState().updateAndCheck(csr->getGlobalStatelessHeap());
+        auto globalStateless = csr->getGlobalStatelessHeap();
+        csrHw->getSshState().updateAndCheck(globalStateless);
+        streamProperties.stateBaseAddress.setPropertiesSurfaceState(globalStateless->getHeapGpuBase(), globalStateless->getHeapSizeInPages());
     } else {
         auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
         if (dsh != nullptr) {
             csrHw->getDshState().updateAndCheck(dsh);
+            streamProperties.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
         }
 
         auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
         if (ssh != nullptr) {
             csrHw->getSshState().updateAndCheck(ssh);
+            streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
+                                                                                    ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
         }
     }
 

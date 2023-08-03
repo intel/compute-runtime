@@ -24,6 +24,11 @@ bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
     return true;
 }
 
+template <>
+bool L0GfxCoreHelperHw<Family>::platformSupportsImmediateComputeFlushTask() const {
+    return false;
+}
+
 template class L0GfxCoreHelperHw<Family>;
 
 } // namespace L0
