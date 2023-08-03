@@ -128,7 +128,7 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
             registeredEvents = deviceEventsMap[pSysmanDevice];
         }
         registeredEvents |= (events & supportedEventMask);
-        deviceEventsMap.emplace(pSysmanDevice, registeredEvents);
+        deviceEventsMap[pSysmanDevice] = registeredEvents;
     }
 
     // Write to Pipe only if eventregister() is called during listen and previously registered events are modified.
@@ -148,6 +148,7 @@ void LinuxEventsUtil::init() {
 
 ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
     memset(pEvents, 0, count * sizeof(zes_event_type_flags_t));
+    *pNumDeviceEvents = 0;
     std::vector<zes_event_type_flags_t> registeredEvents(count);
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));

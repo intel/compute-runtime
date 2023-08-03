@@ -618,7 +618,7 @@ TEST_F(SysmanEventsFixture,
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
+    uint32_t numDeviceEvents = std::numeric_limits<uint32_t>::max();
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
@@ -714,6 +714,7 @@ TEST_F(SysmanEventsFixture, GivenEventsAreRegisteredWhenEventRegisterWithNoEvent
 
     pLinuxEventsImp->deviceEventsMap = deviceEventsMap;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), 0));
+    EXPECT_EQ(0u, pLinuxEventsImp->deviceEventsMap[pLinuxSysmanImp->getSysmanDeviceImp()]);
 
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
     L0::osSysmanDriverDestructor();
