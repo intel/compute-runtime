@@ -22,5 +22,10 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
     return false;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
+    return true;
+}
+
 template class NEO::ProductHelperHw<gfxProduct>;
 } // namespace NEO

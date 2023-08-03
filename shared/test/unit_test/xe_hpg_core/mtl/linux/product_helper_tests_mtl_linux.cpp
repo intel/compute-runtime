@@ -53,3 +53,7 @@ MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
 MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationsSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
+
+MTLTEST_F(MtlProductHelperLinux, whenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
+    EXPECT_FALSE(productHelper->isTimestampWaitSupportedForEvents());
+}
