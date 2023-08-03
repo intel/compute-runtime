@@ -153,16 +153,22 @@ void AdlpHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
         gtSysInfo->MaxSlicesSupported = ADLP::maxSlicesSupported;
         gtSysInfo->MaxSubSlicesSupported = ADLP::maxSubslicesSupported;
 
-        gtSysInfo->L3CacheSizeInKb = 1;
         gtSysInfo->L3BankCount = 1;
 
         gtSysInfo->CCSInfo.IsValid = true;
         gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
     }
+    gtSysInfo->L3CacheSizeInKb = 1;
 
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
-#include "hw_info_setup_adlp.inl"
+const HardwareInfo ADLP::hwInfo = AdlpHwConfig::hwInfo;
+
+void setupADLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+    AdlpHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+}
+
+void (*ADLP::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupADLPHardwareInfoImpl;
 } // namespace NEO

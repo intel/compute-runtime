@@ -61,6 +61,4 @@ class Dg2HwConfig : public DG2 {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-#include "hw_cmds_dg2.inl"
-
 } // namespace NEO

@@ -34,5 +34,4 @@ class AdlnHwConfig : public ADLN {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-#include "hw_cmds_adln.inl"
 } // namespace NEO

@@ -39,5 +39,4 @@ class AdlpHwConfig : public ADLP {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
-#include "hw_cmds_adlp.inl"
 } // namespace NEO

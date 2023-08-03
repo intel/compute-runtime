@@ -151,5 +151,11 @@ void AdlnHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-#include "hw_info_setup_adln.inl"
+const HardwareInfo ADLN::hwInfo = AdlnHwConfig::hwInfo;
+
+void setupADLNHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+    AdlnHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+}
+
+void (*ADLN::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupADLNHardwareInfoImpl;
 } // namespace NEO
