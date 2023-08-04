@@ -30,34 +30,6 @@ L0::Event *L0GfxCoreHelperHw<Family>::createEvent(L0::EventPool *eventPool, cons
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
-    return false;
-}
-
-template <typename Family>
-bool L0GfxCoreHelperHw<Family>::imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
-    if (NEO::DebugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
-        return !!NEO::DebugManager.flags.RenderCompressedImagesEnabled.get();
-    }
-
-    return false;
-}
-
-template <typename Family>
-bool L0GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
-    if (NEO::DebugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
-        return !!NEO::DebugManager.flags.RenderCompressedBuffersEnabled.get();
-    }
-
-    return false;
-}
-
-template <typename Family>
-bool L0GfxCoreHelperHw<Family>::forceDefaultUsmCompressionSupport() const {
-    return false;
-}
-
-template <typename Family>
 bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
     return false;
 }

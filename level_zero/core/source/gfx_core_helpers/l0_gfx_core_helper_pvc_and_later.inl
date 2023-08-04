@@ -97,4 +97,9 @@ void L0GfxCoreHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_grou
     }
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
+    return false;
+}
+
 } // namespace L0

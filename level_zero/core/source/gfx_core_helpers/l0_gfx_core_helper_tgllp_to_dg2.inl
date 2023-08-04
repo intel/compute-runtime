@@ -106,4 +106,9 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
     return threads;
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
+    return true;
+}
+
 } // namespace L0
