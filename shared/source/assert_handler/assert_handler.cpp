@@ -35,7 +35,7 @@ bool AssertHandler::checkAssert() const {
 
 void AssertHandler::printMessage() const {
 
-    auto messageBuffer = ptrOffset(static_cast<uint8_t *>(assertBuffer->getUnderlyingBuffer()), offsetof(AssertBufferHeader, begin));
+    auto messageBuffer = static_cast<uint8_t *>(assertBuffer->getUnderlyingBuffer());
     auto messageBufferSize = static_cast<uint32_t>(assertBuffer->getUnderlyingBufferSize());
 
     NEO::PrintFormatter printfFormatter{
@@ -43,6 +43,8 @@ void AssertHandler::printMessage() const {
         messageBufferSize,
         false,
         nullptr};
+    printfFormatter.setInitialOffset(offsetof(AssertBufferHeader, begin));
+
     printfFormatter.printKernelOutput([](char *str) { printToStderr(str); });
 }
 

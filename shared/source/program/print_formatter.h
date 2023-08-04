@@ -48,7 +48,9 @@ class PrintFormatter {
     PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
                    bool using32BitPointers, const StringMap *stringLiteralMap = nullptr);
     void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToStdout(str); });
-
+    void setInitialOffset(uint32_t offset) {
+        initialOffset = offset;
+    }
     constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
 
   protected:
@@ -132,5 +134,6 @@ class PrintFormatter {
     const StringMap *stringLiteralMap;
 
     uint32_t currentOffset = 0; // current position in currently parsed buffer
+    uint32_t initialOffset = 0; // initial offset - reserved memory for header in buffer
 };
 }; // namespace NEO

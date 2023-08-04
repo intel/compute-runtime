@@ -73,7 +73,11 @@ TEST(AssertHandlerTests, GivenFlagSetWhenPrintAssertAndAbortCalledThenMessageIsP
     auto stringAddress = ptrOffset(reinterpret_cast<uint64_t *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer()), offsetof(AssertBufferHeader, begin) + sizeof(AssertBufferHeader::begin));
     auto formatStringAddress = reinterpret_cast<uint64_t>(message);
     memcpy(stringAddress, &formatStringAddress, 8);
-    reinterpret_cast<AssertBufferHeader *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer())->size = 2 * sizeof(uint64_t);
+
+    auto garbageData = ptrOffset(reinterpret_cast<uint64_t *>(stringAddress), sizeof(stringAddress));
+    memset(garbageData, 1, sizeof(uint64_t));
+
+    reinterpret_cast<AssertBufferHeader *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer())->begin += sizeof(uint64_t);
 
     ::testing::internal::CaptureStderr();
     EXPECT_THROW(assertHandler.printAssertAndAbort(), std::exception);

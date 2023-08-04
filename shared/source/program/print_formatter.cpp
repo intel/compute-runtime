@@ -25,7 +25,7 @@ PrintFormatter::PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t print
 }
 
 void PrintFormatter::printKernelOutput(const std::function<void(char *)> &print) {
-    currentOffset = 0;
+    currentOffset = initialOffset;
 
     // first 4 bytes of the buffer store the actual size of data that was written by printf from within EUs
     uint32_t printfOutputBufferSizeRead = 0;
