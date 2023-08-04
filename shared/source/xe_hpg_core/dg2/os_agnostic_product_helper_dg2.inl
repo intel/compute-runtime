@@ -255,4 +255,9 @@ bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &hwI
     return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
+template <>
+void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+}
+
 } // namespace NEO

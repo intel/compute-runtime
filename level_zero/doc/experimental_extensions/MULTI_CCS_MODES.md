@@ -72,5 +72,5 @@ Alternatively, a process may select different modes for each tile. For instance,
 
 # Availability
 
-- `ZEX_NUMBER_OF_CCS` is only supported and meant to be used on PVC.
+- `ZEX_NUMBER_OF_CCS` is only supported and meant to be used on PVC and DG2.
 - `ZEX_NUMBER_OF_CCS` can be used also by applications using Intel OpenCL GPU driver.
