@@ -724,6 +724,7 @@ bool Event::isWaitForTimestampsEnabled() const {
     const auto &productHelper = cmdQueue->getDevice().getRootDeviceEnvironment().getHelper<ProductHelper>();
     auto enabled = cmdQueue->isTimestampWaitEnabled();
     enabled &= productHelper.isTimestampWaitSupportedForEvents();
+    enabled &= !cmdQueue->getDevice().getRootDeviceEnvironment().isWddmOnLinux();
 
     switch (DebugManager.flags.EnableTimestampWaitForEvents.get()) {
     case 0:

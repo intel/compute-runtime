@@ -1855,11 +1855,15 @@ TEST(EventTimestampTest, givenTimestampPacketWritesDisabledAndQueueHasTimestampP
 }
 
 TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenReturnProperValue) {
+    struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
+        using RootDeviceEnvironment::isWddmOnLinuxEnable;
+    };
     DebugManagerStateRestore restorer;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useWaitForTimestamps = true;
     MockContext context{};
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    static_cast<MockRootDeviceEnvironment *>(&mockDevice->device.getRootDeviceEnvironmentRef())->isWddmOnLinuxEnable = false;
     MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
 
     MockEvent<Event> event{&cmdQ, CL_COMMAND_MARKER, 0, 0};
@@ -1868,6 +1872,12 @@ TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabled
         DebugManager.flags.EnableTimestampWaitForEvents.set(-1);
         const auto &productHelper = mockDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
         EXPECT_EQ(event.isWaitForTimestampsEnabled(), productHelper.isTimestampWaitSupportedForEvents());
+    }
+
+    {
+        static_cast<MockRootDeviceEnvironment *>(&mockDevice->device.getRootDeviceEnvironmentRef())->isWddmOnLinuxEnable = true;
+        EXPECT_FALSE(event.isWaitForTimestampsEnabled());
+        static_cast<MockRootDeviceEnvironment *>(&mockDevice->device.getRootDeviceEnvironmentRef())->isWddmOnLinuxEnable = false;
     }
 
     {
@@ -1895,6 +1905,7 @@ TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabled
         EXPECT_TRUE(event.isWaitForTimestampsEnabled());
     }
 }
+
 TEST(MultiRootEvent, givenContextWithMultiRootTagAllocatorWhenEventGetsTagThenNewAllocatorIsNotCreated) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context{};
