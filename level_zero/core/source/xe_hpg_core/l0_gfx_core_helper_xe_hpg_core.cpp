@@ -26,7 +26,7 @@ bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
 
 template <>
 bool L0GfxCoreHelperHw<Family>::platformSupportsImmediateComputeFlushTask() const {
-    return false;
+    return true;
 }
 
 template class L0GfxCoreHelperHw<Family>;
