@@ -22,7 +22,6 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -266,35 +265,32 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInf
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     uint32_t destructorId = 0u;
 
-    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 8> {
+    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 7> {
         MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {
             callBaseAllocateGraphicsMemoryForNonSvmHostPtr = false;
             callBasePopulateOsHandles = false;
         }
     };
-    struct DirectSubmissionControllerMock : public DestructorCounted<DirectSubmissionController, 7> {
+    struct DirectSubmissionControllerMock : public DestructorCounted<DirectSubmissionController, 6> {
         DirectSubmissionControllerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct GmmHelperMock : public DestructorCounted<GmmHelper, 6> {
+    struct GmmHelperMock : public DestructorCounted<GmmHelper, 5> {
         GmmHelperMock(uint32_t &destructorId, const RootDeviceEnvironment &rootDeviceEnvironment) : DestructorCounted(destructorId, rootDeviceEnvironment) {}
     };
-    struct OsInterfaceMock : public DestructorCounted<OSInterface, 5> {
+    struct OsInterfaceMock : public DestructorCounted<OSInterface, 4> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct MemoryOperationsHandlerMock : public DestructorCounted<MockMemoryOperationsHandler, 4> {
+    struct MemoryOperationsHandlerMock : public DestructorCounted<MockMemoryOperationsHandler, 3> {
         MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct AubCenterMock : public DestructorCounted<AubCenter, 3> {
+    struct AubCenterMock : public DestructorCounted<AubCenter, 2> {
         AubCenterMock(uint32_t &destructorId, const RootDeviceEnvironment &rootDeviceEnvironment) : DestructorCounted(destructorId, rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_AUB) {}
     };
-    struct CompilerInterfaceMock : public DestructorCounted<CompilerInterface, 2> {
+    struct CompilerInterfaceMock : public DestructorCounted<CompilerInterface, 1> {
         CompilerInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct BuiltinsMock : public DestructorCounted<BuiltIns, 1> {
+    struct BuiltinsMock : public DestructorCounted<BuiltIns, 0> {
         BuiltinsMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
-    };
-    struct SourceLevelDebuggerMock : public DestructorCounted<SourceLevelDebugger, 0> {
-        SourceLevelDebuggerMock(uint32_t &destructorId) : DestructorCounted(destructorId, nullptr) {}
     };
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -305,11 +301,10 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId, *executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->rootDeviceEnvironments[0]->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
-    executionEnvironment->rootDeviceEnvironments[0]->debugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
     executionEnvironment->directSubmissionController = std::make_unique<DirectSubmissionControllerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(9u, destructorId);
+    EXPECT_EQ(8u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMemoryManager) {

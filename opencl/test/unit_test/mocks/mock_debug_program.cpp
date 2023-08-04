@@ -23,7 +23,6 @@
 MockDebugProgram::MockDebugProgram(const NEO::ClDeviceVector &deviceVector) : NEO::Program(nullptr, false, deviceVector) {
     createdFrom = CreatedFrom::SOURCE;
     sourceCode = "__kernel void kernel(){}";
-    kernelDebugEnabled = true;
     prepareMockCompilerInterface(deviceVector[0]->getDevice());
 }
 

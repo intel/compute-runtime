@@ -63,7 +63,6 @@ struct RootDeviceEnvironment {
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex);
     void initOsTime();
     void initGmm();
-    void initDebugger();
     void initDebuggerL0(Device *neoDevice);
     MOCKABLE_VIRTUAL void initDummyAllocation();
     void setDummyBlitProperties(uint32_t rootDeviceIndex);

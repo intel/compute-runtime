@@ -62,7 +62,6 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     false,                                                     // ftrRenderCompressedImages
     true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
-    false,                                                     // sourceLevelDebuggerSupported
     false,                                                     // supportsVme
     true,                                                      // supportCacheFlushAfterWalker
     true,                                                      // supportsImages

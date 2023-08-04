@@ -61,7 +61,6 @@ class MockDevice : public RootDevice {
     using Device::generateUuidFromPciBusInfo;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
-    using Device::isDebuggerActive;
     using Device::regularContextPerBcsEngineAssignmentHelper;
     using Device::regularContextPerCcsEngineAssignmentHelper;
     using Device::regularEngineGroups;
@@ -116,10 +115,6 @@ class MockDevice : public RootDevice {
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex);
 
-    void setDebuggerActive(bool active) {
-        this->deviceInfo.debuggerActive = active;
-    }
-
     template <typename T>
     static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) {
         pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
@@ -148,13 +143,6 @@ class MockDevice : public RootDevice {
         return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
     }
 
-    bool isDebuggerActive() const override {
-        if (isDebuggerActiveParentCall) {
-            return Device::isDebuggerActive();
-        }
-        return isDebuggerActiveReturn;
-    }
-
     bool verifyAdapterLuid() override;
 
     void finalizeRayTracing();
@@ -170,8 +158,6 @@ class MockDevice : public RootDevice {
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
-    bool isDebuggerActiveParentCall = true;
-    bool isDebuggerActiveReturn = false;
     bool callBaseGetMaxParameterSizeFromIGC = false;
     bool callBaseVerifyAdapterLuid = true;
     bool verifyAdapterLuidReturnValue = true;

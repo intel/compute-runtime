@@ -86,7 +86,6 @@ TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
 
     EXPECT_EQ(nullptr, device->getDebugger());
     EXPECT_EQ(nullptr, device->getL0Debugger());
-    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
 }
 
 TEST(Device, givenDeviceWithBrandingStringNameWhenGettingDeviceNameThenBrandingStringIsReturned) {

@@ -91,15 +91,6 @@ struct MockUnrestrictiveContext : MockContext {
     ClDevice *pSubDevice1 = nullptr;
 };
 
-struct MockUnrestrictiveDebuggingSupportedContext : MockContext {
-    MockUnrestrictiveDebuggingSupportedContext();
-
-    std::unique_ptr<UltClDeviceFactory> ultClDeviceFactory;
-    MockClDevice *pRootDevice;
-    ClDevice *pSubDevice0 = nullptr;
-    ClDevice *pSubDevice1 = nullptr;
-};
-
 struct MockUnrestrictiveContextMultiGPU : MockContext {
     MockUnrestrictiveContextMultiGPU();
 

@@ -78,7 +78,7 @@ std::vector<int32_t> PreambleHelper<Family>::getSupportedThreadArbitrationPolici
 template <>
 size_t PreambleHelper<Family>::getAdditionalCommandsSize(const Device &device) {
     size_t totalSize = PreemptionHelper::getRequiredPreambleSize<Family>(device);
-    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
     totalSize += getKernelDebuggingCommandsSize(debuggingEnabled);
     return totalSize;
 }

@@ -299,7 +299,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     ze_result_t returnValue;
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
-    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread) {
         csr->createPreemptionAllocation();
     }
     EXPECT_NE(0u, csr->getImmWritePostSyncWriteOffset());
@@ -342,7 +342,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
     ze_result_t returnValue;
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
-    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread) {
         csr->createPreemptionAllocation();
     }
     EXPECT_NE(0u, csr->getImmWritePostSyncWriteOffset());

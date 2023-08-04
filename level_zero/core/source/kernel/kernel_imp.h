@@ -186,7 +186,6 @@ struct KernelImp : Kernel {
     NEO::GraphicsAllocation *privateMemoryGraphicsAllocation = nullptr;
 
     void createPrintfBuffer();
-    void setDebugSurface();
     void setAssertBuffer();
     virtual void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) = 0;
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);

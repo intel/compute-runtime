@@ -3730,10 +3730,6 @@ struct MultipleDevicesSameFamilyAndLocalMemorySupportTest : public MultipleDevic
     L0::Device *device1 = nullptr;
 };
 
-TEST_F(DeviceTest, givenNoActiveSourceLevelDebuggerWhenGetIsCalledThenNullptrIsReturned) {
-    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
-}
-
 TEST_F(DeviceTest, givenNoL0DebuggerWhenGettingL0DebuggerThenNullptrReturned) {
     EXPECT_EQ(nullptr, device->getL0Debugger());
 }

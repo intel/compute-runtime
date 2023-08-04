@@ -1179,7 +1179,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     ASSERT_NE(nullptr, commandQueue);
 
     auto &commandStreamReceiver = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    if (neoDevice->getPreemptionMode() == PreemptionMode::MidThread || neoDevice->isDebuggerActive()) {
+    if (neoDevice->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver->createPreemptionAllocation();
     }
 

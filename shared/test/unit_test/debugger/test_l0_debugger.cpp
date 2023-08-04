@@ -22,7 +22,6 @@
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
-#include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -44,24 +43,6 @@ TEST(Debugger, givenL0DebuggerWhenGettingL0DebuggerThenCorrectObjectIsReturned) 
     auto debugger = neoDevice->getL0Debugger();
     ASSERT_NE(nullptr, debugger);
     EXPECT_EQ(mockDebugger, debugger);
-}
-
-TEST(Debugger, givenSourceLevelDebuggerWhenGettingL0DebuggerThenNullptrIsReturned) {
-    auto executionEnvironment = new NEO::ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
-
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    executionEnvironment->initializeMemoryManager();
-
-    std::unique_ptr<NEO::MockDevice> neoDevice(NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u));
-
-    auto mockDebugger = new MockSourceLevelDebugger();
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(mockDebugger);
-    auto debugger = neoDevice->getL0Debugger();
-    EXPECT_EQ(nullptr, debugger);
 }
 
 TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
@@ -174,35 +155,6 @@ TEST(Debugger, WhenInitializingDebuggerL0ThenCapabilitiesAreAdjustedAndDebuggerI
     EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages);
 
     EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->debugger);
-    executionEnvironment->decRefInternal();
-}
-
-TEST(Debugger, GivenLegacyDebuggerWhenInitializingDebuggerL0ThenAbortIsCalledAfterPrintingError) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
-
-    ::testing::internal::CaptureStderr();
-    auto executionEnvironment = new NEO::ExecutionEnvironment();
-    executionEnvironment->incRefInternal();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    auto mockDebugger = new MockSourceLevelDebugger();
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(mockDebugger);
-
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    executionEnvironment->initializeMemoryManager();
-
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
-
-    auto neoDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
-
-    EXPECT_THROW(executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(neoDevice.get()), std::exception);
-    std::string output = testing::internal::GetCapturedStderr();
-
-    EXPECT_EQ(std::string("Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n"), output);
-
     executionEnvironment->decRefInternal();
 }
 
@@ -324,32 +276,6 @@ HWTEST_F(L0DebuggerTest, givenProgramDebuggingWhenGettingDebuggingModeThenCorrec
 
     mode = NEO::getDebuggingMode(3);
     EXPECT_TRUE(DebuggingMode::Disabled == mode);
-}
-
-TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverableIsCalled) {
-    class MockDebugger : public NEO::Debugger {
-      public:
-        MockDebugger() {
-            isLegacyMode = false;
-        }
-
-        void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override{};
-        size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
-            return 0;
-        }
-    };
-    auto executionEnvironment = new NEO::ExecutionEnvironment();
-    auto mockBuiltIns = new NEO::MockBuiltins();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    auto debugger = new MockDebugger;
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debugger);
-    executionEnvironment->initializeMemoryManager();
-
-    EXPECT_THROW(NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u), std::exception);
 }
 
 using PerContextAddressSpaceL0DebuggerTest = L0DebuggerTest;

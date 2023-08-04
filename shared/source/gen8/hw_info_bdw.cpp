@@ -61,7 +61,6 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     false,                                             // ftrRenderCompressedImages
     false,                                             // ftr64KBpages
     true,                                              // instrumentationEnabled
-    false,                                             // sourceLevelDebuggerSupported
     false,                                             // supportsVme
     false,                                             // supportCacheFlushAfterWalker
     true,                                              // supportsImages

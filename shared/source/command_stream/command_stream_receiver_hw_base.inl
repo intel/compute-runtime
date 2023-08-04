@@ -1737,10 +1737,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
     bool isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
     handleStateBaseAddressStateTransition(dispatchFlags, isStateBaseAddressDirty);
 
-    bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr;
-
     // reprogram state base address command if required
-    if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
+    if (isStateBaseAddressDirty) {
         reprogramStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, force32BitAllocations, sshDirty, bindingTablePoolCommandNeeded);
     }
 
@@ -1830,36 +1828,36 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
 
     STATE_BASE_ADDRESS stateBaseAddressCmd;
     StateBaseAddressHelperArgs<GfxFamily> args = {
-        generalStateBaseAddress,                       // generalStateBaseAddress
-        indirectObjectStateBaseAddress,                // indirectObjectHeapBaseAddress
-        instructionHeapBaseAddress,                    // instructionHeapBaseAddress
-        0,                                             // globalHeapsBaseAddress
-        0,                                             // surfaceStateBaseAddress
-        bindlessSurfStateBase,                         // bindlessSurfaceStateBaseAddress
-        &stateBaseAddressCmd,                          // stateBaseAddressCmd
-        sbaProperties,                                 // sbaProperties
-        dsh,                                           // dsh
-        ioh,                                           // ioh
-        ssh,                                           // ssh
-        device.getGmmHelper(),                         // gmmHelper
-        this->latestSentStatelessMocsConfig,           // statelessMocsIndex
-        l1CachePolicyData.getL1CacheValue(false),      // l1CachePolicy
-        l1CachePolicyData.getL1CacheValue(true),       // l1CachePolicyDebuggerActive
-        this->lastMemoryCompressionState,              // memoryCompressionState
-        true,                                          // setInstructionStateBaseAddress
-        setGeneralStateBaseAddress,                    // setGeneralStateBaseAddress
-        false,                                         // useGlobalHeapsBaseAddress
-        isMultiOsContextCapable(),                     // isMultiOsContextCapable
-        this->lastSentUseGlobalAtomics,                // useGlobalAtomics
-        areMultipleSubDevicesInContext,                // areMultipleSubDevicesInContext
-        false,                                         // overrideSurfaceStateBaseAddress
-        debuggingEnabled || device.isDebuggerActive(), // isDebuggerActive
-        this->doubleSbaWa                              // doubleSbaWa
+        generalStateBaseAddress,                  // generalStateBaseAddress
+        indirectObjectStateBaseAddress,           // indirectObjectHeapBaseAddress
+        instructionHeapBaseAddress,               // instructionHeapBaseAddress
+        0,                                        // globalHeapsBaseAddress
+        0,                                        // surfaceStateBaseAddress
+        bindlessSurfStateBase,                    // bindlessSurfaceStateBaseAddress
+        &stateBaseAddressCmd,                     // stateBaseAddressCmd
+        sbaProperties,                            // sbaProperties
+        dsh,                                      // dsh
+        ioh,                                      // ioh
+        ssh,                                      // ssh
+        device.getGmmHelper(),                    // gmmHelper
+        this->latestSentStatelessMocsConfig,      // statelessMocsIndex
+        l1CachePolicyData.getL1CacheValue(false), // l1CachePolicy
+        l1CachePolicyData.getL1CacheValue(true),  // l1CachePolicyDebuggerActive
+        this->lastMemoryCompressionState,         // memoryCompressionState
+        true,                                     // setInstructionStateBaseAddress
+        setGeneralStateBaseAddress,               // setGeneralStateBaseAddress
+        false,                                    // useGlobalHeapsBaseAddress
+        isMultiOsContextCapable(),                // isMultiOsContextCapable
+        this->lastSentUseGlobalAtomics,           // useGlobalAtomics
+        areMultipleSubDevicesInContext,           // areMultipleSubDevicesInContext
+        false,                                    // overrideSurfaceStateBaseAddress
+        debuggingEnabled,                         // isDebuggerActive
+        this->doubleSbaWa                         // doubleSbaWa
     };
 
     StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, csrCommandStream);
 
-    bool sbaTrackingEnabled = (debuggingEnabled && !device.getDebugger()->isLegacy());
+    bool sbaTrackingEnabled = debuggingEnabled;
     if (sbaTrackingEnabled) {
         device.getL0Debugger()->programSbaAddressLoad(csrCommandStream,
                                                       device.getL0Debugger()->getSbaTrackingBuffer(this->getOsContext().getContextId())->getGpuAddress());

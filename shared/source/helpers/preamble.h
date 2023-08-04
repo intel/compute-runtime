@@ -50,7 +50,6 @@ struct PreambleHelper {
     static uint64_t getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                 GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
-    static void programKernelDebugging(LinearStream *pCommandStream);
     static void programSemaphoreDelay(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static bool isSystolicModeConfigurable(const RootDeviceEnvironment &rootDeviceEnvironment);

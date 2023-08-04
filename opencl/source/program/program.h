@@ -211,14 +211,6 @@ class Program : public BaseObject<_cl_program> {
         return programOptionVersion;
     }
 
-    void enableKernelDebug() {
-        kernelDebugEnabled = true;
-    }
-
-    bool isKernelDebugEnabled() {
-        return kernelDebugEnabled;
-    }
-
     char *getDebugData(uint32_t rootDeviceIndex) {
         return buildInfos[rootDeviceIndex].debugData.get();
     }
@@ -275,7 +267,6 @@ class Program : public BaseObject<_cl_program> {
     }
 
     MOCKABLE_VIRTUAL void debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached);
-    void notifyDebuggerWithDebugData(ClDevice *clDevice);
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
     Zebin::Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
@@ -298,7 +289,6 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL bool isOptionValueValid(ConstStringRef option, ConstStringRef value);
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions(ClDevice &clDevice, std::string &internalOptions);
-    void notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &filename);
     void prependFilePathToOptions(const std::string &filename);
 
     void setBuildStatus(cl_build_status status);
@@ -378,7 +368,6 @@ class Program : public BaseObject<_cl_program> {
     ClDeviceVector clDevicesInProgram;
 
     bool isBuiltIn = false;
-    bool kernelDebugEnabled = false;
     bool isGeneratedByIgc = true;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();

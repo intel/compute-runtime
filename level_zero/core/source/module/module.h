@@ -56,7 +56,6 @@ struct Module : _ze_module_handle_t {
     virtual const KernelImmutableData *getKernelImmutableData(const char *kernelName) const = 0;
     virtual const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const = 0;
     virtual uint32_t getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const = 0;
-    virtual bool isDebugEnabled() const = 0;
     virtual bool shouldAllocatePrivateMemoryPerDispatch() const = 0;
     virtual uint32_t getProfileFlags() const = 0;
     virtual void checkIfPrivateMemoryPerDispatchIsNeeded() = 0;

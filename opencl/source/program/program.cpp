@@ -57,8 +57,8 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
 
     buildInfos.resize(maxRootDeviceIndex + 1);
     debuggerInfos.resize(maxRootDeviceIndex + 1);
-    kernelDebugEnabled = clDevices[0]->isDebuggerActive();
 }
+
 std::string Program::getInternalOptions() const {
     auto pClDevice = clDevices[0];
     auto force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
@@ -104,7 +104,7 @@ std::string Program::getInternalOptions() const {
     }
 
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
-    auto isDebuggerActive = pClDevice->getDevice().isDebuggerActive() || pClDevice->getDevice().getDebugger() != nullptr;
+    auto isDebuggerActive = pClDevice->getDevice().getDebugger() != nullptr;
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     return internalOptions;
 }

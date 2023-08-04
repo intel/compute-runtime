@@ -140,8 +140,6 @@ struct ModuleImp : public Module {
 
     ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice);
 
-    bool isDebugEnabled() const override;
-
     bool isSPIRv() { return builtFromSPIRv; }
 
     bool shouldAllocatePrivateMemoryPerDispatch() const override {
@@ -159,7 +157,6 @@ struct ModuleImp : public Module {
     void verifyDebugCapabilities();
     void checkIfPrivateMemoryPerDispatchIsNeeded() override;
     NEO::Zebin::Debug::Segments getZebinSegments();
-    void passDebugData();
     void createDebugZebin();
     void registerElfInDebuggerL0();
     void notifyModuleCreate();
@@ -183,7 +180,6 @@ struct ModuleImp : public Module {
     std::unordered_map<std::string, HostGlobalSymbol> hostGlobalSymbolsMap;
 
     bool builtFromSPIRv = false;
-    bool debugEnabled = false;
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
     bool isZebinBinary = false;

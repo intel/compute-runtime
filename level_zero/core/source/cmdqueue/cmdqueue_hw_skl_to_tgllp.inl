@@ -34,7 +34,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
 
     bool useGlobalSshAndDsh = false;
-    bool isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
+    bool isDebuggerActive = neoDevice->getDebugger() != nullptr;
 
     uint64_t globalHeapsBase = 0;
     uint64_t indirectObjectHeapBaseAddress = 0;

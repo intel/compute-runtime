@@ -31,14 +31,4 @@ GEN9TEST_F(gen9SipTests, givenDebugCsrSipKernelWithLocalMemoryWhenAskedForDebugS
     EXPECT_NE(nullptr, &sipKernel);
     EXPECT_EQ(SipKernelType::DbgCsrLocal, sipKernel.getType());
 }
-
-GEN9TEST_F(gen9SipTests, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrLocalIsReturned) {
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    EXPECT_NE(nullptr, mockDevice);
-    mockDevice->isDebuggerActiveParentCall = false;
-    mockDevice->isDebuggerActiveReturn = true;
-
-    auto sipType = SipKernel::getSipKernelType(*mockDevice);
-    EXPECT_EQ(SipKernelType::DbgCsrLocal, sipType);
-}
 } // namespace SipKernelTests

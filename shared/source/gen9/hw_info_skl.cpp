@@ -61,7 +61,6 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     true,                                          // ftr64KBpages
     true,                                          // instrumentationEnabled
-    false,                                         // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages

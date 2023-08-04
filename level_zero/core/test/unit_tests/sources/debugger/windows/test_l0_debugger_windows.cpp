@@ -80,8 +80,6 @@ using L0DebuggerWindowsTest = Test<L0DebuggerWindowsFixture>;
 
 TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledWhenDriverHandleIsCreatedThenItAllocatesL0Debugger) {
     EXPECT_NE(nullptr, neoDevice->getDebugger());
-    EXPECT_FALSE(neoDevice->getDebugger()->isLegacy());
-    EXPECT_EQ(nullptr, neoDevice->getSourceLevelDebugger());
 }
 
 TEST_F(L0DebuggerWindowsTest, givenWindowsOSWhenL0DebuggerIsCreatedAddressModeIsSingleSpace) {

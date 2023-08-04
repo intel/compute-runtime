@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,36 +19,14 @@ using namespace NEO;
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenCorrectValueIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
     MockProgram program(toClDeviceVector(*device));
-    program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
 
     EXPECT_EQ(MockDebugKernel::perThreadSystemThreadSurfaceSize, kernel->getPerThreadSystemThreadSurfaceSize());
 }
 
-TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenQueryingIsKernelDebugEnabledThenTrueIsReturned) {
-    auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(toClDeviceVector(*device));
-    program.enableKernelDebug();
-    std::unique_ptr<MockKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
-    kernel->initialize();
-
-    EXPECT_TRUE(kernel->isKernelDebugEnabled());
-}
-
-TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenQueryingIsKernelDebugEnabledThenFalseIsReturned) {
-    auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(toClDeviceVector(*device));
-    program.enableKernelDebug();
-    std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
-    kernel->initialize();
-
-    EXPECT_FALSE(kernel->isKernelDebugEnabled());
-}
-
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenZeroIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
     MockProgram program(toClDeviceVector(*device));
-    program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
 
     EXPECT_EQ(0u, kernel->getPerThreadSystemThreadSurfaceSize());

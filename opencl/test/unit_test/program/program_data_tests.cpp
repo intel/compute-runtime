@@ -753,39 +753,6 @@ TEST_F(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRe
     program.getKernelInfoArray(rootDeviceIndex).clear();
 }
 
-HWTEST2_F(ProgramImplicitArgsTest, givenImplicitRelocationAndEnabledDebuggerThenKernelRequiresImplicitArgs, HasSourceLevelDebuggerSupport) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
-
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    hwInfo.capabilityTable.debuggerSupported = true;
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0u));
-
-    EXPECT_NE(nullptr, device->getDebugger());
-    auto rootDeviceIndex = device->getRootDeviceIndex();
-    MockProgram program{nullptr, false, toClDeviceVector(*device)};
-    KernelInfo kernelInfo = {};
-    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
-    kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
-    uint8_t kernelHeapData[64] = {};
-    kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
-    kernelInfo.heapInfo.kernelHeapSize = 64;
-    MockGraphicsAllocation kernelIsa(kernelHeapData, 64);
-    kernelInfo.kernelAllocation = &kernelIsa;
-    program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
-
-    auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
-    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
-    program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
-    auto ret = program.linkBinary(&device->getDevice(), nullptr, 0, nullptr, 0, {}, program.externalFunctions);
-    EXPECT_EQ(CL_SUCCESS, ret);
-
-    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
-    program.getKernelInfoArray(rootDeviceIndex).clear();
-}
-
 TEST_F(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisabledDebuggerThenKernelDoesntRequireImplicitArgs) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_EQ(nullptr, device->getDebugger());

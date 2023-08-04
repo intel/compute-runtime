@@ -15,7 +15,6 @@
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/logger.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -88,20 +87,6 @@ cl_int Program::build(
             if (inputArgs.src.size() == 0) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
-            }
-
-            if (isKernelDebugEnabled()) {
-                std::string filename;
-                for (const auto &clDevice : deviceVector) {
-                    if (BuildPhase::SourceCodeNotification == phaseReached[clDevice->getRootDeviceIndex()]) {
-                        continue;
-                    }
-                    appendKernelDebugOptions(*clDevice, internalOptions);
-                    notifyDebuggerWithSourceCode(*clDevice, filename);
-                    prependFilePathToOptions(filename);
-
-                    phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::SourceCodeNotification;
-                }
             }
 
             std::string extensions = requiresOpenClCFeatures(options) ? defaultClDevice->peekCompilerExtensionsWithFeatures()
@@ -179,7 +164,7 @@ cl_int Program::build(
             break;
         }
 
-        if (isKernelDebugEnabled() || gtpinIsGTPinInitialized()) {
+        if (gtpinIsGTPinInitialized()) {
             debugNotify(deviceVector, phaseReached);
         }
         notifyModuleCreate();
@@ -200,18 +185,7 @@ cl_int Program::build(
 bool Program::appendKernelDebugOptions(ClDevice &clDevice, std::string &internalOptions) {
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::debugKernelEnable);
     CompilerOptions::concatenateAppend(options, CompilerOptions::generateDebugInfo);
-
-    auto debugger = clDevice.getSourceLevelDebugger();
-    if (debugger && (NEO::SourceLevelDebugger::shouldAppendOptDisable(*debugger))) {
-        CompilerOptions::concatenateAppend(options, CompilerOptions::optDisable);
-    }
     return true;
-}
-
-void Program::notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &filename) {
-    if (clDevice.getSourceLevelDebugger()) {
-        clDevice.getSourceLevelDebugger()->notifySourceCode(sourceCode.c_str(), sourceCode.size(), filename);
-    }
 }
 
 cl_int Program::build(const ClDeviceVector &deviceVector, const char *buildOptions,
@@ -255,7 +229,13 @@ void Program::debugNotify(const ClDeviceVector &deviceVector, std::unordered_map
         if (BuildPhase::DebugDataNotification == phasesReached[rootDeviceIndex]) {
             continue;
         }
-        notifyDebuggerWithDebugData(clDevice);
+
+        auto &buildInfo = this->buildInfos[rootDeviceIndex];
+        auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
+        if (!NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+            processDebugData(rootDeviceIndex);
+        }
+
         phasesReached[rootDeviceIndex] = BuildPhase::DebugDataNotification;
     }
 }

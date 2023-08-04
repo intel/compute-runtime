@@ -81,12 +81,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreemptionWatermarkXeHPAndLater, givenPreambleThenP
     ASSERT_EQ(nullptr, cmd);
 
     MockDevice mockDevice;
-    mockDevice.setDebuggerActive(false);
     size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(mockDevice);
     EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 
-    mockDevice.setDebuggerActive(true);
-    expectedSize += PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(mockDevice.isDebuggerActive());
+    mockDevice.executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(&mockDevice);
+    expectedSize += PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(mockDevice.getDebugger() != nullptr);
     EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 }
 

@@ -43,7 +43,7 @@ HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerWhenSetStateBaseAddre
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, cmd->getL1CachePolicyL1CacheControl());
 }
 
-HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerAndDebuggerActiveWhenSetStateBaseAddressCalledThenCachePolicyIsWBP, IsDG2) {
+HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerAndDebuggerWhenSetStateBaseAddressCalledThenCachePolicyIsWBP, IsDG2) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     cmdContainer->dirtyHeaps = 0;
     auto debugger = new MockDebugger();
@@ -54,7 +54,6 @@ HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerAndDebuggerActiveWhen
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
 
     EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, statelessMocsIndex);
-    const_cast<DeviceInfo &>(pDevice->getDeviceInfo()).debuggerActive = true;
     EncodeStateBaseAddress<FamilyType>::encode(args);
 
     GenCmdList commands;

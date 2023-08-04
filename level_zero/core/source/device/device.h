@@ -24,7 +24,6 @@ class DebuggerL0;
 class Device;
 class GfxCoreHelper;
 class MemoryManager;
-class SourceLevelDebugger;
 struct DeviceInfo;
 class CompilerProductHelper;
 } // namespace NEO
@@ -128,7 +127,6 @@ struct Device : _ze_device_handle_t {
 
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;
-    NEO::SourceLevelDebugger *getSourceLevelDebugger();
     NEO::DebuggerL0 *getL0Debugger();
 
     virtual NEO::GraphicsAllocation *getDebugSurface() const = 0;

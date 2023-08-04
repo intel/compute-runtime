@@ -14,7 +14,6 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_os_library.h"
-#include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -27,22 +26,6 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
-
-HWTEST_F(CommandQueueHwTest, WhenConstructingTwoCommandQueuesThenOnlyOneDebugSurfaceIsAllocated) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
-    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
-    auto sipType = SipKernel::getSipKernelType(device->getDevice());
-    SipKernel::initSipKernel(sipType, device->getDevice());
-
-    MockCommandQueueHw<FamilyType> mockCmdQueueHw1(context, device.get(), nullptr);
-
-    auto dbgSurface = mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
-    EXPECT_NE(dbgSurface, nullptr);
-
-    MockCommandQueueHw<FamilyType> mockCmdQueueHw2(context, device.get(), nullptr);
-    EXPECT_EQ(dbgSurface, mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation());
-}
 
 HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoWaitAndTagIsNotUpdated) {
     DebugManagerStateRestore restorer;
@@ -109,55 +92,6 @@ HWTEST_F(CommandQueueHwTest, givenEnableTimestampWaitForQueuesWhenGpuHangDetecte
     status = cmdQ.waitForAllEngines(false, nullptr, false);
 
     EXPECT_EQ(WaitStatus::GpuHang, status);
-}
-
-HWTEST_F(CommandQueueHwTest, WhenDebugSurfaceIsAllocatedThenBufferIsZeroed) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
-    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
-    auto sipType = SipKernel::getSipKernelType(device->getDevice());
-    SipKernel::initSipKernel(sipType, device->getDevice());
-
-    MockCommandQueueHw<FamilyType> mockCmdQueueHw1(context, device.get(), nullptr);
-
-    auto dbgSurface = mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
-    EXPECT_NE(dbgSurface, nullptr);
-    auto mem = dbgSurface->getUnderlyingBuffer();
-    ASSERT_NE(nullptr, mem);
-
-    auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice(), nullptr).getStateSaveAreaHeader();
-    mem = ptrOffset(mem, stateSaveAreaHeader.size());
-    auto size = dbgSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
-    EXPECT_TRUE(memoryZeroed(mem, size));
-}
-
-HWTEST_F(CommandQueueHwTest, WhenConstructingCommandQueueDebugOnButIgcDoesNotReturnSSAHDoNotCopyIt) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
-
-    MockGraphicsAllocation sipAlloc1;
-    auto mockSip1 = std::make_unique<MockSipKernel>(SipKernelType::DbgCsrLocal, &sipAlloc1);
-    mockSip1->mockStateSaveAreaHeader.clear();
-
-    MockGraphicsAllocation sipAlloc2;
-    auto mockSip2 = std::make_unique<MockSipKernel>(SipKernelType::DbgCsr, &sipAlloc2);
-    mockSip2->mockStateSaveAreaHeader.clear();
-
-    auto mockBuiltIns = new MockBuiltins();
-    mockBuiltIns->overrideSipKernel(std::move(mockSip1));
-    mockBuiltIns->overrideSipKernel(std::move(mockSip2));
-
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
-
-    MockCommandQueueHw<FamilyType> mockCmdQueueHw1(context, device.get(), nullptr);
-
-    auto dbgSurface = mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
-    EXPECT_NE(dbgSurface, nullptr);
-
-    auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice(), nullptr).getStateSaveAreaHeader();
-    EXPECT_EQ(static_cast<size_t>(0), stateSaveAreaHeader.size());
 }
 
 HWTEST_F(CommandQueueHwTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenCheckMemObjectsCountAndDebugFlag) {

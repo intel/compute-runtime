@@ -34,7 +34,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -1209,7 +1208,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         }
     }
 
-    const bool allocateDebugSurface = (device->getL0Debugger() || neoDevice->getDeviceInfo().debuggerActive) && !isSubDevice;
+    const bool allocateDebugSurface = device->getL0Debugger() && !isSubDevice;
     NEO::GraphicsAllocation *debugSurface = nullptr;
     if (allocateDebugSurface) {
         debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
@@ -1277,11 +1276,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device->pciMaxSpeed.width = pciSpeedInfo.width;
     }
 
-    if (device->getSourceLevelDebugger()) {
-        auto osInterface = rootDeviceEnvironment.osInterface.get();
-        device->getSourceLevelDebugger()
-            ->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
-    }
     if (device->getNEODevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::CSR_HW) {
         device->createSysmanHandle(isSubDevice);
     }
@@ -1302,8 +1296,7 @@ void DeviceImp::releaseResources() {
 
     this->bcsSplit.releaseResources();
 
-    if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get() &&
-        !neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger->isLegacy()) {
+    if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get()) {
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
     }
     if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->assertHandler.get()) {
@@ -1333,10 +1326,6 @@ void DeviceImp::releaseResources() {
     if (allocationsForReuse.get()) {
         allocationsForReuse->freeAllGraphicsAllocations(neoDevice);
         allocationsForReuse.reset();
-    }
-
-    if (getSourceLevelDebugger()) {
-        getSourceLevelDebugger()->notifyDeviceDestruction();
     }
 
     if (!isSubdevice) {

@@ -10,13 +10,13 @@
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/compiler_options_parser.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/cl_validators.h"
@@ -40,7 +40,7 @@ cl_int Program::compile(
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();
     auto internalOptions = getInternalOptions();
-    std::unordered_map<uint32_t, bool> sourceLevelDebuggerNotified;
+
     do {
         if (numInputHeaders == 0) {
             if ((headerIncludeNames != nullptr) || (inputHeaders != nullptr)) {
@@ -64,7 +64,6 @@ cl_int Program::compile(
             break;
         }
         for (const auto &device : deviceVector) {
-            sourceLevelDebuggerNotified[device->getRootDeviceIndex()] = false;
             deviceBuildInfos[device].buildStatus = CL_BUILD_IN_PROGRESS;
         }
 
@@ -124,21 +123,7 @@ cl_int Program::compile(
         appendAdditionalExtensions(extensions, options, internalOptions);
         CompilerOptions::concatenateAppend(internalOptions, extensions);
 
-        if (isKernelDebugEnabled()) {
-            for (const auto &device : deviceVector) {
-                if (sourceLevelDebuggerNotified[device->getRootDeviceIndex()]) {
-                    continue;
-                }
-                std::string filename;
-                appendKernelDebugOptions(*device, internalOptions);
-                notifyDebuggerWithSourceCode(*device, filename);
-                prependFilePathToOptions(filename);
-
-                sourceLevelDebuggerNotified[device->getRootDeviceIndex()] = true;
-            }
-        }
-
-        if (!this->getIsBuiltIn() && DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
+        if (!this->getIsBuiltIn() && NEO::DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
             NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
         }
 

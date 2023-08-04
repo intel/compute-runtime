@@ -30,7 +30,6 @@ class SyncBufferHandler;
 enum class EngineGroupType : uint32_t;
 class DebuggerL0;
 class OSTime;
-class SourceLevelDebugger;
 class SubDevice;
 struct PhysicalDevicePciBusInfo;
 class GfxCoreHelper;
@@ -101,9 +100,7 @@ class Device : public ReferenceTrackedObject<Device> {
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
-    MOCKABLE_VIRTUAL bool isDebuggerActive() const;
     Debugger *getDebugger() const;
-    NEO::SourceLevelDebugger *getSourceLevelDebugger();
     DebuggerL0 *getL0Debugger();
     const EnginesT &getAllEngines() const;
     const std::string getDeviceName() const;

@@ -40,7 +40,7 @@ void PreemptionHelper::programCsrBaseAddressCmd(LinearStream &preambleCmdStream,
 template <typename GfxFamily>
 void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper, OsContext *context) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
-    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
     if (isMidThreadPreemption || debuggingEnabled) {
@@ -101,7 +101,7 @@ template <typename GfxFamily>
 size_t PreemptionHelper::getRequiredStateSipCmdSize(Device &device, bool isRcs) {
     size_t size = 0;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
-    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
 
     if (isMidThreadPreemption || debuggingEnabled) {
         size += sizeof(typename GfxFamily::STATE_SIP);

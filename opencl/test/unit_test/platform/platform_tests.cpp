@@ -21,7 +21,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/common/mocks/mock_source_level_debugger.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/sharings/sharing_factory.h"
@@ -163,43 +162,6 @@ TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitiali
     pPlatform->initializeWithNewDevices();
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
-}
-
-TEST_F(PlatformTest, givenDisabledPreemptionInactiveSourceLevelDebuggerWhenInitializingPlatformThenDoNotCallGetSipKernel) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
-
-    auto builtIns = new MockBuiltins();
-    auto executionEnvironment = pPlatform->peekExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
-    auto sourceLevelDebugger = new MockSourceLevelDebugger();
-    sourceLevelDebugger->setActive(false);
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(sourceLevelDebugger);
-
-    EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
-    EXPECT_FALSE(MockSipData::called);
-    pPlatform->initializeWithNewDevices();
-    EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
-    EXPECT_FALSE(MockSipData::called);
-}
-
-TEST_F(PlatformTest, givenDisabledPreemptionActiveSourceLevelDebuggerWhenInitializingPlatformThenCallGetSipKernel) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
-
-    auto builtIns = new MockBuiltins();
-    auto executionEnvironment = pPlatform->peekExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger());
-
-    EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
-    EXPECT_FALSE(MockSipData::called);
-    pPlatform->initializeWithNewDevices();
-    EXPECT_TRUE(MockSipData::called);
-    EXPECT_LE(SipKernelType::DbgCsr, MockSipData::calledType);
-    EXPECT_GE(SipKernelType::DbgCsrLocal, MockSipData::calledType);
 }
 
 TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCenterIsNotCalled) {

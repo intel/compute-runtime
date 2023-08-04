@@ -416,23 +416,12 @@ HWTEST_F(KernelImpTest, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledT
         EXPECT_FALSE(savedSurfaceStateArgs.isDebuggerActive);
     }
     {
-        neoDevice->setDebuggerActive(true);
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(neoDevice);
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  ptrToPatchInCrossThreadData,
                                  globalBuffer, ptr,
                                  *neoDevice, false, false);
         ASSERT_EQ(encodeBufferSurfaceStateCalled, 2u);
-        EXPECT_TRUE(savedSurfaceStateArgs.isDebuggerActive);
-    }
-    {
-        neoDevice->setDebuggerActive(false);
-        auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
-        neoDevice->getRootDeviceEnvironmentRef().debugger.reset(debugger);
-        patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
-                                 ptrToPatchInCrossThreadData,
-                                 globalBuffer, ptr,
-                                 *neoDevice, false, false);
-        ASSERT_EQ(encodeBufferSurfaceStateCalled, 3u);
         EXPECT_TRUE(savedSurfaceStateArgs.isDebuggerActive);
     }
 }

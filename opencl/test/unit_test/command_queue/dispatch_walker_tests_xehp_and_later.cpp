@@ -1515,7 +1515,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
@@ -1551,7 +1551,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
@@ -1577,7 +1577,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     size_t gws[] = {129, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
@@ -1929,7 +1929,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, give
     size_t gws[] = {2, 1, 1};
     size_t lws[] = {1, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     KernelWithSingleSubdevicePreferences subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
@@ -1953,7 +1953,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, give
     size_t gws[] = {2, 1, 1};
     size_t lws[] = {1, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     KernelWithSingleSubdevicePreferences subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);

@@ -47,12 +47,12 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagWhenStatelessMocsIsProgra
     EXPECT_EQ(stateBaseAddress->getL1CachePolicyL1CacheControl(), STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB);
 }
 
-DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagAndDebuggerActiveWhenStatelessMocsIsProgrammedThenItHasCorrectL1CachingOn) {
+DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagAndDebuggerInitializedWhenStatelessMocsIsProgrammedThenItHasCorrectL1CachingOn) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceL1Caching.set(1u);
-    pDevice->setDebuggerActive(true);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
@@ -127,9 +127,11 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferThenChoseO
     alignedFree(ptr);
 }
 
-DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferAndDebuggerActiveWhenBufferCreateThenChoseOclBufferConstPolicy) {
+DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferAndDebuggerInitializedWhenBufferCreateThenChoseOclBufferConstPolicy) {
     MockContext context;
-    const_cast<DeviceInfo &>(context.getDevice(0)->getDevice().getDeviceInfo()).debuggerActive = true;
+    auto clDevice = context.getDevice(0);
+    clDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(&clDevice->getDevice());
+
     const auto size = MemoryConstants::pageSize;
     const auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
     const auto flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
@@ -144,9 +146,9 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferAndDebugge
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, clDevice->getDevice(), false, false);
 
-    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto expectedMocs = clDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 

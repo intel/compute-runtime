@@ -7,7 +7,6 @@
 
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
-#include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
@@ -117,42 +116,4 @@ TEST_F(ProgramWithZebinFixture, givenEmptyDebugDataAndZebinBinaryFormatThenCreat
     retVal = clGetProgramInfo(program.get(), CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(numDevices * sizeof(debugData), retData);
-}
-
-TEST_F(ProgramWithZebinFixture, givenZebinFormatAndDebuggerNotAvailableWhenNotifyingDebuggerThenCreateDebugZebinIsCalled) {
-    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
-
-    addEmptyZebin(program.get());
-    populateProgramWithSegments(program.get());
-    auto &buildInfo = program->buildInfos[rootDeviceIndex];
-    buildInfo.debugDataSize = 0u;
-    buildInfo.debugData.reset(nullptr);
-    for (auto &device : program->getDevices()) {
-        program->notifyDebuggerWithDebugData(device);
-    }
-    EXPECT_TRUE(program->wasCreateDebugZebinCalled);
-    EXPECT_FALSE(program->wasProcessDebugDataCalled);
-    EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].debugData);
-    EXPECT_GT(program->buildInfos[rootDeviceIndex].debugDataSize, 0u);
-}
-
-TEST_F(ProgramWithZebinFixture, givenZebinFormatAndDebuggerAvailableWhenNotifyingDebuggerThenCreateDebugZebinIsCalledAndDebuggerNotified) {
-    MockSourceLevelDebugger *sourceLevelDebugger = new MockSourceLevelDebugger;
-    sourceLevelDebugger->setActive(true);
-    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
-
-    addEmptyZebin(program.get());
-    populateProgramWithSegments(program.get());
-    auto &buildInfo = program->buildInfos[rootDeviceIndex];
-    buildInfo.debugDataSize = 0u;
-    buildInfo.debugData.reset(nullptr);
-    for (auto &device : program->getDevices()) {
-        program->notifyDebuggerWithDebugData(device);
-    }
-    EXPECT_TRUE(program->wasCreateDebugZebinCalled);
-    EXPECT_FALSE(program->wasProcessDebugDataCalled);
-    EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].debugData);
-    EXPECT_GT(program->buildInfos[rootDeviceIndex].debugDataSize, 0u);
-
-    EXPECT_EQ(1u, sourceLevelDebugger->notifyKernelDebugDataCalled);
 }

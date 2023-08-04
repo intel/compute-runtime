@@ -182,7 +182,6 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         using ModuleImp::getZebinSegments;
         using ModuleImp::isZebinBinary;
         using ModuleImp::kernelImmDatas;
-        using ModuleImp::passDebugData;
         using ModuleImp::translationUnit;
         MockModuleWithZebin(L0::Device *device);
 

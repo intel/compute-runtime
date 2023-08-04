@@ -17,9 +17,7 @@ struct WhiteBox;
 
 class MockDebuggerL0 : public NEO::DebuggerL0 {
   public:
-    MockDebuggerL0(NEO::Device *device) : DebuggerL0(device) {
-        isLegacyMode = false;
-    }
+    MockDebuggerL0(NEO::Device *device) : DebuggerL0(device) {}
 
     void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override{};
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {

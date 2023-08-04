@@ -88,11 +88,9 @@ struct Mock<Module> : public Module {
                      (uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog));
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_module_properties_t * pModuleProperties));
     ADDMETHOD_NOBASE(getGlobalPointer, ze_result_t, ZE_RESULT_SUCCESS, (const char *pGlobalName, size_t *pSize, void **pPtr));
-    ADDMETHOD_CONST_NOBASE(isDebugEnabled, bool, false, ());
 };
 
 struct MockModule : public L0::ModuleImp {
-    using ModuleImp::debugEnabled;
     using ModuleImp::debugModuleHandle;
     using ModuleImp::getModuleAllocations;
     using ModuleImp::isFunctionSymbolExportEnabled;

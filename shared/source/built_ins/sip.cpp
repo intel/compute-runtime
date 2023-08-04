@@ -106,10 +106,10 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 }
 
 SipKernelType SipKernel::getSipKernelType(Device &device) {
-    if (device.getDebugger() != nullptr && !device.getDebugger()->isLegacy()) {
+    if (device.getDebugger() != nullptr) {
         return SipKernelType::DbgBindless;
     }
-    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
     return getSipKernelType(device, debuggingEnabled);
 }
 

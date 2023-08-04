@@ -18,10 +18,6 @@ PVCTEST_F(PvcDeviceCapsTests, givenPvcProductWhenCheckBlitterOperationsSupportTh
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);
 }
 
-PVCTEST_F(PvcDeviceCapsTests, givenPvcProductWhenCheckingSldSupportThenReturnFalse) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
-}
-
 PVCTEST_F(PvcDeviceCapsTests, givenPvcWhenAskingForCacheFlushAfterWalkerThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }

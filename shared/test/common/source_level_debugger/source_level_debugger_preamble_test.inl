@@ -12,7 +12,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    mockDevice->setDebuggerActive(true);
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
     auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
 
@@ -37,7 +37,6 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    mockDevice->setDebuggerActive(false);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
     auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
 
@@ -62,7 +61,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    mockDevice->setDebuggerActive(true);
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
     auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
 
@@ -85,7 +84,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
 template <typename GfxFamily>
 void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebuggingActiveWhenPreambleSizeIsQueriedThenCorrecrSizeIsReturnedTest() {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    mockDevice->setDebuggerActive(true);
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
     size_t requiredPreambleSize = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
     auto sizeExpected = sizeof(typename GfxFamily::STATE_SIP);
@@ -95,7 +94,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
 template <typename GfxFamily>
 void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebuggingActiveWhenPreambleSizeIsQueriedThenCorrecrSizeIsReturnedTest() {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    mockDevice->setDebuggerActive(true);
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
     size_t requiredPreambleSize = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
     auto sizeExpected = sizeof(typename GfxFamily::STATE_SIP);
@@ -105,7 +104,6 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
 template <typename GfxFamily>
 void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisabledDebuggingWhenPreambleSizeIsQueriedThenCorrecrSizeIsReturnedTest() {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    mockDevice->setDebuggerActive(false);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
     size_t requiredPreambleSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
     auto sizeExpected = sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS);
@@ -115,7 +113,6 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
 template <typename GfxFamily>
 void SourceLevelDebuggerPreambleTest<GfxFamily>::givenDisabledPreemptionAndDisabledDebuggingWhenPreambleSizeIsQueriedThenCorrecrSizeIsReturnedTest() {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    mockDevice->setDebuggerActive(false);
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
     size_t requiredPreambleSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
     size_t sizeExpected = 0u;
@@ -128,9 +125,9 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenKernelDebuggingActiveAndDi
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    mockDevice->setDebuggerActive(false);
     size_t withoutDebugging = PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*mockDevice);
-    mockDevice->setDebuggerActive(true);
+
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
     size_t withDebugging = PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*mockDevice);
     EXPECT_LT(withoutDebugging, withDebugging);
 

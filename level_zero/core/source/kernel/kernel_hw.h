@@ -89,7 +89,7 @@ struct KernelHw : public KernelImp {
         if (l3Enabled == false) {
             this->kernelRequiresQueueUncachedMocsCount++;
         }
-        auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
+        auto isDebuggerActive = neoDevice->getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;
         args.outMemory = &surfaceState;
         args.graphicsAddress = bufferAddressForSsh;

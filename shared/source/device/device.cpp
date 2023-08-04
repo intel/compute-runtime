@@ -27,7 +27,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -217,10 +216,6 @@ bool Device::createDeviceImpl() {
 
     auto &hwInfo = getHardwareInfo();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
-
-    if (!getDebugger()) {
-        this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
-    }
 
     auto &productHelper = getProductHelper();
     if (getDebugger() && productHelper.disableL3CacheForDebug(hwInfo)) {
@@ -470,10 +465,6 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
     return this->getHardwareInfo().platform.eRenderCoreFamily;
 }
 
-bool Device::isDebuggerActive() const {
-    return deviceInfo.debuggerActive;
-}
-
 Debugger *Device::getDebugger() const {
     return getRootDeviceEnvironment().debugger.get();
 }
@@ -601,20 +592,9 @@ double Device::getPercentOfGlobalMemoryAvailable() const {
     return getMemoryManager()->getPercentOfGlobalMemoryAvailable(this->getRootDeviceIndex());
 }
 
-NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {
-    auto debugger = getDebugger();
-    if (debugger) {
-        return debugger->isLegacy() ? static_cast<NEO::SourceLevelDebugger *>(debugger) : nullptr;
-    }
-    return nullptr;
-}
-
 NEO::DebuggerL0 *Device::getL0Debugger() {
     auto debugger = getDebugger();
-    if (debugger) {
-        return !debugger->isLegacy() ? static_cast<NEO::DebuggerL0 *>(debugger) : nullptr;
-    }
-    return nullptr;
+    return debugger ? static_cast<NEO::DebuggerL0 *>(debugger) : nullptr;
 }
 
 const std::vector<EngineControl> &Device::getAllEngines() const {

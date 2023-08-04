@@ -85,21 +85,3 @@ using IsNotPvcOrDg2 = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
 using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 using HasNoStatefulSupport = IsAnyGfxCores<IGFX_XE_HPC_CORE>;
-
-using HasSourceLevelDebuggerSupport = IsAnyProducts<IGFX_ELKHARTLAKE,
-                                                    IGFX_ICELAKE_LP,
-                                                    IGFX_LAKEFIELD,
-                                                    IGFX_ALDERLAKE_N,
-                                                    IGFX_ALDERLAKE_P,
-                                                    IGFX_ALDERLAKE_S,
-                                                    IGFX_DG1,
-                                                    IGFX_ROCKETLAKE,
-                                                    IGFX_TIGERLAKE_LP,
-                                                    IGFX_BROXTON,
-                                                    IGFX_COFFEELAKE,
-                                                    IGFX_GEMINILAKE,
-                                                    IGFX_KABYLAKE,
-                                                    IGFX_SKYLAKE,
-                                                    IGFX_XE_HP_SDV,
-                                                    IGFX_DG2,
-                                                    IGFX_METEORLAKE>;

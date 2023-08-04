@@ -73,7 +73,7 @@ size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device
 template <>
 size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, bool isRcs) {
     size_t size = 0;
-    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
     auto &hwInfo = device.getHardwareInfo();
 
     if (debuggingEnabled) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, whenPreambleIsProgrammedThenStateSipCmd
     commandStreamReceiver.isPreambleSent = false;
 
     pDevice->setPreemptionMode(PreemptionMode::Disabled);
-    pDevice->setDebuggerActive(true);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
     uint32_t newL3Config;
 
     auto cmdSizePreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
@@ -53,7 +53,6 @@ GEN9TEST_F(UltCommandStreamReceiverTest, whenPreambleIsProgrammedThenStateSipCmd
     this->parseCommands<FamilyType>(preambleStream);
     auto itorStateSip = find<STATE_SIP *>(this->cmdList.begin(), this->cmdList.end());
     EXPECT_EQ(this->cmdList.end(), itorStateSip);
-    pDevice->setDebuggerActive(false);
 }
 
 GEN9TEST_F(CommandStreamReceiverHwTestGen9, GivenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3Config) {

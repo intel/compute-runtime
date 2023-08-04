@@ -32,14 +32,6 @@ namespace ult {
 using L0DebuggerTest = Test<L0DebuggerHwFixture>;
 using L0DebuggerParameterizedTests = L0DebuggerHwParameterizedFixture;
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsLegacyThenFalseIsReturned) {
-    EXPECT_FALSE(neoDevice->getDebugger()->isLegacy());
-}
-
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSourceLevelDebuggerThenNullptrReturned) {
-    EXPECT_EQ(nullptr, neoDevice->getSourceLevelDebugger());
-}
-
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingL0DebuggerThenValidDebuggerInstanceIsReturned) {
     EXPECT_NE(nullptr, device->getL0Debugger());
 }

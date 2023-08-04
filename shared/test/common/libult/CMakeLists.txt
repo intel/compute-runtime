@@ -119,9 +119,6 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/options_unit_tests.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/sleep.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_aub_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_page_table_mngr.cpp
@@ -256,7 +253,6 @@ foreach(target_name "neo_libult_common" "neo_libult")
   target_include_directories(${target_name} PRIVATE
                              $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
                              $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
-                             ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
   )
   target_compile_definitions(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
   # please do not add new sources below this function

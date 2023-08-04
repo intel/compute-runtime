@@ -18,7 +18,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
@@ -57,22 +56,12 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
 
         subDevices.push_back(std::move(pClSubDevice));
     }
-
-    if (getSharedDeviceInfo().debuggerActive && getSourceLevelDebugger()) {
-        auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
-        getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
-    }
 }
 
 ClDevice::ClDevice(Device &device, Platform *platformId) : ClDevice(device, *this, platformId) {
 }
 
 ClDevice::~ClDevice() {
-
-    if (getSharedDeviceInfo().debuggerActive && getSourceLevelDebugger()) {
-        getSourceLevelDebugger()->notifyDeviceDestruction();
-    }
-
     for (auto &subDevice : subDevices) {
         subDevice.reset();
     }
@@ -155,9 +144,7 @@ double ClDevice::getPlatformHostTimerResolution() const { return device.getPlatf
 GFXCORE_FAMILY ClDevice::getRenderCoreFamily() const { return device.getRenderCoreFamily(); }
 PerformanceCounters *ClDevice::getPerformanceCounters() { return device.getPerformanceCounters(); }
 PreemptionMode ClDevice::getPreemptionMode() const { return device.getPreemptionMode(); }
-bool ClDevice::isDebuggerActive() const { return device.isDebuggerActive(); }
 Debugger *ClDevice::getDebugger() { return device.getDebugger(); }
-SourceLevelDebugger *ClDevice::getSourceLevelDebugger() { return device.getSourceLevelDebugger(); }
 ExecutionEnvironment *ClDevice::getExecutionEnvironment() const { return device.getExecutionEnvironment(); }
 const RootDeviceEnvironment &ClDevice::getRootDeviceEnvironment() const { return device.getRootDeviceEnvironment(); }
 bool ClDevice::isFullRangeSvm() const { return device.isFullRangeSvm(); }

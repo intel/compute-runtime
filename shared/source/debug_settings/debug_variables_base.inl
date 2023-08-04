@@ -124,7 +124,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission, 
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmCompression, -1, "enable compression support for L0 USM Device and Shared Device side: -1 default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostUsmSupport, -1, "-1: default, 0: disable, 1: enable, Enables USM host memory")
 DECLARE_DEBUG_VARIABLE(int32_t, MediaVfeStateMaxSubSlices, -1, ">=0: Programs Media Vfe State Maximum Number of Dual-Subslices to given value ")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableMockSourceLevelDebugger, 0, "Switches driver to mode with active debugger. Active modes: 1: opt-disabled, 2: opt-enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceBtpPrefetchMode, -1, "-1: default, 0: disable, 1: enable, Enables Btp prefetching")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPointerImport, -1, "-1: default - enabled, 0: disabled, 1: enabled, L0 extension implementation to import host pointers")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideProfilingTimerResolution, -1, "-1: default - disabled, 0<=: Override deviceInfo.profilingTimerResolution")
@@ -133,7 +132,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteRegisterOffset, 0, "register o
 DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteRegisterData, 0, "register data for GPU scratch register write after walker")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSlmAllocationSize, -1, "-1: default, >=0: program value for shared local memory size")
 DECLARE_DEBUG_VARIABLE(int32_t, DebuggerLogBitmask, 0, "0: logs disabled, 1 - INFO, 2 - ERROR, 1<<10 - Dump elf, see DebugVariables::DEBUGGER_LOG_BITMASK")
-DECLARE_DEBUG_VARIABLE(int32_t, DebuggerOptDisable, -1, "-1: default from debugger query, 0: do not add opt-disable, 1: add opt-disable")
 DECLARE_DEBUG_VARIABLE(int32_t, DebuggerForceSbaTrackingMode, -1, "-1: default, 0: per context address spaces, 1: single address space")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugApiUsed, 0, "0: default L0 Debug API not used, 1: L0 Debug API used")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCsrAllocationSize, -1, "-1: default, >0: use value for size of CSR allocation")
@@ -493,7 +491,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalCopyThroughLock, -1, "Experimentally
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalForceCopyThroughLock, -1, "Force copy through lock pointer on zeAppendMemoryCopy for all cases -1: default 0: disable 1: enable ")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSmallBufferPoolAllocator, -1, "Experimentally enable pool allocator for clCreateBuffer under 4KB.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalCopyThroughLockWaitlistSizeThreshold, -1, "If less than given value, driver will wait for Waitlist on host, instead of sending appendBarrier. If 0, always use barrier.")
-DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableSourceLevelDebugger, false, "Experimentally enable source level debugger.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableL0DebuggerForOpenCL, false, "Experimentally enable debugging OCL with L0 Debug API. When enabled - Level Zero debugging is disabled.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableTileAttach, true, "Experimentally enable attaching to tiles (subdevices).")
 

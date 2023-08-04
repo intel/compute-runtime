@@ -110,76 +110,13 @@ HWTEST_F(PreambleTest, givenInactiveKernelDebuggingWhenPreambleKernelDebuggingCo
     EXPECT_EQ(0u, size);
 }
 
-HWTEST_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectCommandsArePlacedIntoStream) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-
-    auto bufferSize = PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true);
-    auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
-
-    LinearStream stream(buffer.get(), bufferSize);
-    PreambleHelper<FamilyType>::programKernelDebugging(&stream);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(stream);
-    auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
-
-    auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
-    ASSERT_EQ(expectedProgrammedCmdsCount, cmdList.size());
-
-    auto it = cmdList.begin();
-
-    MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::getDebugModeRegisterOffset(), pCmd->getRegisterOffset());
-    EXPECT_EQ(UnitTestHelper<FamilyType>::getDebugModeRegisterValue(), pCmd->getDataDword());
-    it++;
-
-    pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::getTdCtlRegisterOffset(), pCmd->getRegisterOffset());
-    EXPECT_EQ(UnitTestHelper<FamilyType>::getTdCtlRegisterValue(), pCmd->getDataDword());
-}
-
-HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenProgramKernelDebuggingIsCalled) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    mockDevice->setDebuggerActive(false);
-
-    StackVec<char, 8192> preambleBuffer(8192);
-    LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
-
-    PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U, nullptr, nullptr);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(preambleStream);
-    auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
-
-    auto miLoadRegImmCountWithoutDebugging = cmdList.size();
-
-    mockDevice->setDebuggerActive(true);
-    auto preemptionAllocation = mockDevice->getGpgpuCommandStreamReceiver().getPreemptionAllocation();
-
-    StackVec<char, 8192> preambleBuffer2(8192);
-    preambleStream.replaceBuffer(&*preambleBuffer2.begin(), preambleBuffer2.size());
-    PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U, preemptionAllocation, nullptr);
-    HardwareParse hwParser2;
-    hwParser2.parseCommands<FamilyType>(preambleStream);
-    cmdList = hwParser2.getCommandsList<MI_LOAD_REGISTER_IMM>();
-
-    auto miLoadRegImmCountWithDebugging = cmdList.size();
-    auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
-    ASSERT_LT(miLoadRegImmCountWithoutDebugging, miLoadRegImmCountWithDebugging);
-    EXPECT_EQ(expectedProgrammedCmdsCount, miLoadRegImmCountWithDebugging - miLoadRegImmCountWithoutDebugging);
-}
-
-HWTEST_F(PreambleTest, givenKernelDebuggingActiveAndMidThreadPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreAdded) {
+HWTEST_F(PreambleTest, givenDebuggerInitializedAndMidThreadPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreAdded) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
 
-    mockDevice->setDebuggerActive(false);
     size_t withoutDebugging = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
-    mockDevice->setDebuggerActive(true);
+
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
     size_t withDebugging = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
     EXPECT_LT(withoutDebugging, withDebugging);
 

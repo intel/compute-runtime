@@ -49,7 +49,6 @@ struct RuntimeCapabilityTable {
     bool ftrRenderCompressedImages;
     bool ftr64KBpages;
     bool instrumentationEnabled;
-    bool debuggerSupported;
     bool supportsVme;
     bool supportCacheFlushAfterWalker;
     bool supportsImages;
@@ -117,7 +116,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.ftr64KBpages == rhs.ftr64KBpages);
     result &= (lhs.instrumentationEnabled == rhs.instrumentationEnabled);
     result &= (lhs.deviceName == rhs.deviceName);
-    result &= (lhs.debuggerSupported == rhs.debuggerSupported);
     result &= (lhs.supportsVme == rhs.supportsVme);
     result &= (lhs.supportCacheFlushAfterWalker == rhs.supportCacheFlushAfterWalker);
     result &= (lhs.supportsImages == rhs.supportsImages);

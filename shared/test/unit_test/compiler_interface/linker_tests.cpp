@@ -1990,7 +1990,7 @@ TEST(LinkerTests, givenImplicitArgRelocationAndStackCallsThenPatchRelocationWith
 
 using LinkerDebuggingSupportedTests = ::testing::Test;
 
-HWTEST2_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDebuggerThenPatchRelocationWithSizeOfImplicitArgStructAndUpdateKernelDescriptor, HasSourceLevelDebuggerSupport) {
+TEST_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDebuggerThenPatchRelocationWithSizeOfImplicitArgStructAndUpdateKernelDescriptor) {
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
@@ -2020,13 +2020,11 @@ HWTEST2_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDeb
     kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
     kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
 
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    hwInfo.capabilityTable.debuggerSupported = true;
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
     UltDeviceFactory deviceFactory{1, 0, *executionEnvironment};
     auto device = deviceFactory.rootDevices[0];
+    executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(device);
     EXPECT_NE(nullptr, device->getDebugger());
 
     std::vector<char> instructionSegment;
@@ -2050,6 +2048,54 @@ HWTEST2_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDeb
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+}
+
+TEST_F(LinkerDebuggingSupportedTests, givenNoImplicitArgRelocationAndEnabledDebuggerThenImplicitArgsAreNotRequired) {
+    NEO::LinkerInput linkerInput;
+
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
+    globalVarSegment.gpuAddress = 8;
+    globalVarSegment.segmentSize = 64;
+    globalConstSegment.gpuAddress = 128;
+    globalConstSegment.segmentSize = 256;
+    exportedFuncSegment.gpuAddress = 4096;
+    exportedFuncSegment.segmentSize = 1024;
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptors.push_back(&kernelDescriptor);
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    UltDeviceFactory deviceFactory{1, 0, *executionEnvironment};
+    auto device = deviceFactory.rootDevices[0];
+    executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(device);
+    EXPECT_NE(nullptr, device->getDebugger());
+
+    std::vector<char> instructionSegment;
+    char initData = 0x77;
+    instructionSegment.resize(32, initData);
+    NEO::Linker::PatchableSegment seg0;
+    seg0.hostPointer = instructionSegment.data();
+    seg0.segmentSize = instructionSegment.size();
+    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
+
+    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+                                  nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+                                  device, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    auto relocatedSymbols = linker.extractRelocatedSymbols();
+    EXPECT_EQ(0U, unresolvedExternals.size());
+    EXPECT_EQ(0U, relocatedSymbols.size());
+
+    for (auto &data : instructionSegment) {
+        EXPECT_EQ(initData, data);
+    }
+    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
 TEST(LinkerTests, givenImplicitArgRelocationWithoutStackCallsAndDisabledDebuggerThenDontPatchRelocationAndUpdateKernelDescriptor) {
@@ -2141,56 +2187,6 @@ TEST(LinkerTests, givenNoImplicitArgRelocationAndStackCallsThenImplicitArgsAreNo
     auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                                   nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
                                   deviceFactory.rootDevices[0], nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
-    auto relocatedSymbols = linker.extractRelocatedSymbols();
-    EXPECT_EQ(0U, unresolvedExternals.size());
-    EXPECT_EQ(0U, relocatedSymbols.size());
-
-    for (auto &data : instructionSegment) {
-        EXPECT_EQ(initData, data);
-    }
-    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
-}
-
-HWTEST2_F(LinkerDebuggingSupportedTests, givenNoImplicitArgRelocationAndEnabledDebuggerThenImplicitArgsAreNotRequired, HasSourceLevelDebuggerSupport) {
-    NEO::LinkerInput linkerInput;
-
-    NEO::Linker linker(linkerInput);
-    NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
-    globalVarSegment.gpuAddress = 8;
-    globalVarSegment.segmentSize = 64;
-    globalConstSegment.gpuAddress = 128;
-    globalConstSegment.segmentSize = 256;
-    exportedFuncSegment.gpuAddress = 4096;
-    exportedFuncSegment.segmentSize = 1024;
-    NEO::Linker::UnresolvedExternals unresolvedExternals;
-    NEO::Linker::ExternalFunctionsT externalFunctions;
-    NEO::Linker::KernelDescriptorsT kernelDescriptors;
-    KernelDescriptor kernelDescriptor;
-    kernelDescriptors.push_back(&kernelDescriptor);
-    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
-    kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
-
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    hwInfo.capabilityTable.debuggerSupported = true;
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
-    UltDeviceFactory deviceFactory{1, 0, *executionEnvironment};
-    auto device = deviceFactory.rootDevices[0];
-    EXPECT_NE(nullptr, device->getDebugger());
-
-    std::vector<char> instructionSegment;
-    char initData = 0x77;
-    instructionSegment.resize(32, initData);
-    NEO::Linker::PatchableSegment seg0;
-    seg0.hostPointer = instructionSegment.data();
-    seg0.segmentSize = instructionSegment.size();
-    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
-
-    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
-                                  nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
-                                  device, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());

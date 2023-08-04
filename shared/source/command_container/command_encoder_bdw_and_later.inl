@@ -432,7 +432,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto dsh = args.container->isHeapDirty(HeapType::DYNAMIC_STATE) ? args.container->getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr;
     auto ioh = args.container->isHeapDirty(HeapType::INDIRECT_OBJECT) ? args.container->getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
     auto ssh = args.container->isHeapDirty(HeapType::SURFACE_STATE) ? args.container->getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
-    auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
+    auto isDebuggerActive = device.getDebugger() != nullptr;
     uint64_t globalHeapsBase = 0;
     uint64_t bindlessSurfStateBase = 0;
     bool useGlobalSshAndDsh = false;

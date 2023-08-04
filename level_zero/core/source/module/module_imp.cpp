@@ -37,7 +37,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_initialization.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -134,15 +133,6 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     }
     std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, BuildOptions::hasBufferOffsetArg);
     auto &neoDevice = *device->getNEODevice();
-    auto isDebuggerActive = neoDevice.getDeviceInfo().debuggerActive;
-    if (isDebuggerActive) {
-        if (NEO::SourceLevelDebugger::shouldAppendOptDisable(*device->getSourceLevelDebugger())) {
-            NEO::CompilerOptions::concatenateAppend(options, BuildOptions::optDisable);
-        }
-
-        options = NEO::CompilerOptions::concatenate(options, NEO::CompilerOptions::generateDebugInfo);
-        internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
-    }
 
     if (neoDevice.getExecutionEnvironment()->isFP64EmulationEnabled()) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::enableFP64GenEmu);
@@ -155,7 +145,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     if (forceToStatelessRequired || statelessToStatefulOptimizationDisabled) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }
-    isDebuggerActive |= neoDevice.getDebugger() != nullptr;
+    bool isDebuggerActive = neoDevice.getDebugger() != nullptr;
     NEO::CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     return internalOptions;
 }
@@ -651,10 +641,6 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     linkageSuccessful &= populateHostGlobalSymbolsMap(this->translationUnit->programInfo.globalsDeviceToHostNameMap);
     this->updateBuildLog(neoDevice);
 
-    if (debugEnabled) {
-        passDebugData();
-    }
-
     const auto &productHelper = neoDevice->getProductHelper();
 
     if (this->isFullyLinked && this->type == ModuleType::User) {
@@ -691,38 +677,6 @@ void ModuleImp::createDebugZebin() {
     translationUnit->debugData.reset(new char[translationUnit->debugDataSize]);
     memcpy_s(translationUnit->debugData.get(), translationUnit->debugDataSize,
              debugZebin.data(), debugZebin.size());
-}
-
-void ModuleImp::passDebugData() {
-    if (isZebinBinary) {
-        createDebugZebin();
-        if (device->getSourceLevelDebugger()) {
-            NEO::DebugData debugData; // pass debug zebin in vIsa field
-            debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
-            debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
-            device->getSourceLevelDebugger()->notifyKernelDebugData(&debugData, "debug_zebin", nullptr, 0);
-        }
-    } else {
-        if (device->getSourceLevelDebugger()) {
-            for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
-                NEO::DebugData *notifyDebugData = kernelInfo->kernelDescriptor.external.debugData.get();
-                NEO::DebugData relocatedDebugData;
-
-                if (kernelInfo->kernelDescriptor.external.relocatedDebugData.get()) {
-                    relocatedDebugData.genIsa = kernelInfo->kernelDescriptor.external.debugData->genIsa;
-                    relocatedDebugData.genIsaSize = kernelInfo->kernelDescriptor.external.debugData->genIsaSize;
-                    relocatedDebugData.vIsa = reinterpret_cast<char *>(kernelInfo->kernelDescriptor.external.relocatedDebugData.get());
-                    relocatedDebugData.vIsaSize = kernelInfo->kernelDescriptor.external.debugData->vIsaSize;
-                    notifyDebugData = &relocatedDebugData;
-                }
-
-                device->getSourceLevelDebugger()->notifyKernelDebugData(notifyDebugData,
-                                                                        kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
-                                                                        kernelInfo->heapInfo.pKernelHeap,
-                                                                        kernelInfo->heapInfo.kernelHeapSize);
-            }
-        }
-    }
 }
 
 const KernelImmutableData *ModuleImp::getKernelImmutableData(const char *kernelName) const {
@@ -1095,10 +1049,6 @@ ze_result_t ModuleImp::getKernelNames(uint32_t *pCount, const char **pNames) {
     return ZE_RESULT_SUCCESS;
 }
 
-bool ModuleImp::isDebugEnabled() const {
-    return debugEnabled;
-}
-
 void ModuleImp::verifyDebugCapabilities() {
     bool debugCapabilities = device->getNEODevice()->getDebugger() != nullptr;
 
@@ -1111,7 +1061,6 @@ void ModuleImp::verifyDebugCapabilities() {
             debugCapabilities &= systemThreadSurfaceAvailable;
         }
     }
-    debugEnabled = debugCapabilities;
 }
 
 void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {

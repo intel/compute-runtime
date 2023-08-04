@@ -84,7 +84,6 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_product_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_source_level_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_svm_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
@@ -147,7 +146,6 @@ set_property(TARGET neo_shared_mocks APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN
 target_include_directories(neo_shared_mocks PRIVATE
                            $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
-                           ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
 )
 target_compile_definitions(neo_shared_mocks PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 create_project_source_tree(neo_shared_mocks)

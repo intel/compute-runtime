@@ -28,7 +28,6 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
-#include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -2884,35 +2883,6 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingStaticLinkSpirVThen
     Os::frontEndDllName = oldFclDllName;
 }
 
-class ModuleTranslationUnitDebuggerSupportedTest : public ModuleTranslationUnitTest {
-  public:
-    void SetUp() override {
-        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-        hwInfo.capabilityTable.debuggerSupported = true;
-        DeviceFixture::setUpImpl(&hwInfo);
-    }
-
-    void TearDown() override {
-        DeviceFixture::tearDown();
-    }
-
-    DebugManagerStateRestore restorer;
-};
-
-HWTEST2_F(ModuleTranslationUnitDebuggerSupportedTest, WhenCreatingFromZeBinaryWithoutSpirvDataIncludedAndLegacyDebuggerAttachedThenReturnError, HasSourceLevelDebuggerSupport) {
-    ZebinTestData::ValidEmptyProgram<> zebin;
-    const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
-    zebin.elfHeader->machine = hwInfo.platform.eProductFamily;
-
-    neoDevice->executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->debugger.reset(new MockActiveSourceLevelDebugger);
-    EXPECT_NE(nullptr, neoDevice->getSourceLevelDebugger());
-
-    MockModuleTU moduleTu{device};
-    ASSERT_EQ(0u, moduleTu.irBinarySize);
-    auto result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, result);
-}
-
 HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions) {
 
     auto *pMockCompilerInterface = new MockCompilerInterface;
@@ -3078,38 +3048,6 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     }
 }
 
-HWTEST2_F(ModuleTranslationUnitDebuggerSupportedTest, givenSourceLevelDebuggerAndEnableZebinBuildOptionWhenBuildWithSpirvThenModuleBuildFails, IsAtMostGen12lp) {
-    auto mockCompilerInterface = new MockCompilerInterface;
-    neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
-    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
-    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
-
-    MockModuleTranslationUnit moduleTu(device);
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto buildOption = NEO::CompilerOptions::enableZebin.str();
-
-    result = moduleTu.buildFromSpirV("", 0U, buildOption.c_str(), "", nullptr);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_MODULE_BUILD_FAILURE);
-}
-
-HWTEST2_F(ModuleTranslationUnitDebuggerSupportedTest, givenSourceLevelDebuggerAndEnableZebinBuildOptionWhenBuildWithSpirvThenModuleBuildsWithSuccess, IsAtLeastXeHpCore) {
-    auto mockCompilerInterface = new MockCompilerInterface;
-    neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
-    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
-    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
-
-    MockModuleTranslationUnit moduleTu(device);
-    moduleTu.processUnpackedBinaryCallBase = false;
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto buildOption = NEO::CompilerOptions::enableZebin.str();
-
-    result = moduleTu.buildFromSpirV("", 0U, buildOption.c_str(), "", nullptr);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
-    EXPECT_NE(mockCompilerInterface->receivedApiOptions.find(NEO::CompilerOptions::enableZebin.str()), std::string::npos);
-    EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find(NEO::CompilerOptions::disableZebin.str()), std::string::npos);
-}
-
 HWTEST_F(ModuleTranslationUnitTest, givenEnableZebinBuildOptionWhenBuildWithSpirvThenOptionsContainsAllowZebin) {
     auto mockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
@@ -3125,21 +3063,6 @@ HWTEST_F(ModuleTranslationUnitTest, givenEnableZebinBuildOptionWhenBuildWithSpir
     EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
     EXPECT_NE(mockCompilerInterface->receivedApiOptions.find(NEO::CompilerOptions::enableZebin.str()), std::string::npos);
     EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find(NEO::CompilerOptions::disableZebin.str()), std::string::npos);
-}
-
-HWTEST2_F(ModuleTranslationUnitDebuggerSupportedTest, givenSourceLevelDebuggerWhenBuildWithSpirvThenModuleBuildsWithSuccess, HasSourceLevelDebuggerSupport) {
-    auto mockCompilerInterface = new MockCompilerInterface;
-    neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
-    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
-    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
-
-    MockModuleTranslationUnit moduleTu(device);
-    moduleTu.processUnpackedBinaryCallBase = false;
-    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-
-    result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
 }
 
 TEST(ModuleBuildLog, WhenGreaterBufferIsPassedToGetStringThenOutputSizeIsOverridden) {
@@ -3952,42 +3875,6 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThe
     kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
 
     kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = true;
-    auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
-    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
-    pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
-    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
-    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
-    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
-    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
-
-    EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
-    auto status = pModule->linkBinary();
-    EXPECT_TRUE(status);
-
-    EXPECT_EQ(sizeof(ImplicitArgs), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
-
-    EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
-}
-
-using ModuleTestsDebuggingSupported = ModuleTranslationUnitDebuggerSupportedTest;
-
-HWTEST2_F(ModuleTestsDebuggingSupported, givenImplicitArgsRelocationAndDebuggerEnabledWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired, HasSourceLevelDebuggerSupport) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
-    auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
-    device->getNEODevice()->getRootDeviceEnvironmentRef().initDebugger();
-
-    EXPECT_NE(nullptr, neoDevice->getDebugger());
-
-    char data[64]{};
-    auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.kernelHeapSize = 64;
-    kernelInfo->heapInfo.pKernelHeap = data;
-
-    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
-    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
-
-    kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = false;
     auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
     pModule->kernelImmDatas.push_back(std::move(kernelImmData));
     pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);

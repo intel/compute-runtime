@@ -20,7 +20,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include <iomanip>
 
@@ -172,17 +171,6 @@ void Device::initializeCaps() {
     deviceInfo.maxSubGroups = gfxCoreHelper.getDeviceSubGroupSizes();
 
     deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
-
-    NEO::Debugger *debugger = getRootDeviceEnvironment().debugger.get();
-    deviceInfo.debuggerActive = false;
-    if (debugger) {
-        UNRECOVERABLE_IF(!debugger->isLegacy());
-        deviceInfo.debuggerActive = static_cast<NEO::SourceLevelDebugger *>(debugger)->isDebuggerActive();
-    }
-
-    if (deviceInfo.debuggerActive) {
-        this->preemptionMode = PreemptionMode::Disabled;
-    }
 
     deviceInfo.name = this->getDeviceName();
 

@@ -282,9 +282,6 @@ cl_int Kernel::initialize() {
         program->getContextPtr()->setResolvesRequiredInKernels(true);
     }
 
-    if (program->isKernelDebugEnabled() && isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful)) {
-        debugEnabled = true;
-    }
     auto numArgs = explicitArgs.size();
     slmSizes.resize(numArgs);
 

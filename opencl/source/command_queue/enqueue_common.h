@@ -519,12 +519,6 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         device->getDevice().syncBufferHandler->prepareForEnqueue(workGroupsCount, *multiDispatchInfo.peekMainKernel());
     }
 
-    if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
-        if (multiDispatchInfo.peekMainKernel()->isKernelDebugEnabled()) {
-            setupDebugSurface(multiDispatchInfo.peekMainKernel());
-        }
-    }
-
     if (event && this->isProfilingEnabled()) {
         // Get allocation for timestamps
         hwTimeStamps = event->getHwTimeStampNode();

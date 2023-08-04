@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -20,7 +20,6 @@ set(IGDRCL_SRCS_tests_program
     ${CMAKE_CURRENT_SOURCE_DIR}/program_spec_constants_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_tests.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/program_with_kernel_debug_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_source.h
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_zebin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_zebin.cpp

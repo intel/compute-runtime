@@ -12,28 +12,8 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
-std::unique_ptr<Debugger> Debugger::create(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
-    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    if (hwInfo.capabilityTable.debuggerSupported || DebugManager.flags.ExperimentalEnableSourceLevelDebugger.get()) {
-        sourceLevelDebugger.reset(SourceLevelDebugger::create());
-    }
-    if (sourceLevelDebugger) {
-        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-
-        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == gfxCoreHelper.getSipKernelType(true));
-        sourceLevelDebugger->initialize(localMemorySipAvailable);
-
-        if (sourceLevelDebugger->isDebuggerActive()) {
-            hwInfo.capabilityTable.fusedEuEnabled = false;
-        }
-    }
-    return sourceLevelDebugger;
-}
-
 void *Debugger::getDebugSurfaceReservedSurfaceState(IndirectHeap &ssh) {
     return ssh.getCpuBase();
 }

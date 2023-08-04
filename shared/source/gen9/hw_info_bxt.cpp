@@ -61,7 +61,6 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     false,                                         // ftr64KBpages
     true,                                          // instrumentationEnabled
-    false,                                         // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages

@@ -63,7 +63,6 @@ class MockProgram : public Program {
     using Program::isBuiltIn;
     using Program::isCreatedFromBinary;
     using Program::isSpirV;
-    using Program::kernelDebugEnabled;
     using Program::linkBinary;
     using Program::notifyModuleCreate;
     using Program::notifyModuleDestroy;

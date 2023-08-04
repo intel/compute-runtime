@@ -352,7 +352,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     uint64_t getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const;
 
-    bool isKernelDebugEnabled() const { return debugEnabled; }
     void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
     uint32_t getAdditionalKernelExecInfo() const;
     MOCKABLE_VIRTUAL bool requiresWaDisableRccRhwoOptimization() const;
@@ -538,7 +537,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool systolicPipelineSelectMode = false;
     bool svmAllocationsRequireCacheFlush = false;
     bool isUnifiedMemorySyncRequired = true;
-    bool debugEnabled = false;
     bool singleSubdevicePreferredInCurrentEnqueue = false;
     bool kernelHasIndirectAccess = true;
     bool anyKernelArgumentUsingSystemMemory = false;

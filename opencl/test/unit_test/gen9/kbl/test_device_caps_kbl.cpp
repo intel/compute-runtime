@@ -14,10 +14,6 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> KblDeviceCaps;
 
-KBLTEST_F(KblDeviceCaps, GivenKBLThenDebuggerIsNotSupported) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
-}
-
 KBLTEST_F(KblDeviceCaps, GivenKBLWhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }

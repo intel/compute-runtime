@@ -55,10 +55,6 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
     }
 }
 
-void RootDeviceEnvironment::initDebugger() {
-    debugger = Debugger::create(*this);
-}
-
 void RootDeviceEnvironment::initDebuggerL0(Device *neoDevice) {
     if (this->debugger.get() != nullptr) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,

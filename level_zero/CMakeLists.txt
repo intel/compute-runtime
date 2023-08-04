@@ -225,7 +225,6 @@ if(BUILD_WITH_L0)
               ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
               ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
               ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
-              ${NEO_SHARED_DIRECTORY}/dll/source_level_debugger_dll.cpp
   )
   if(DEFINED AUB_STREAM_PROJECT_NAME)
     target_sources(${TARGET_NAME_L0}

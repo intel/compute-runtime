@@ -22,7 +22,6 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_initialization.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/time_measure_wrapper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -347,31 +346,6 @@ void Program::createDebugZebin(uint32_t rootDeviceIndex) {
     debugDataRef.reset(new char[debugDataSizeRef]);
     memcpy_s(debugDataRef.get(), debugDataSizeRef,
              debugZebin.data(), debugZebin.size());
-}
-
-void Program::notifyDebuggerWithDebugData(ClDevice *clDevice) {
-    auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-    auto &buildInfo = this->buildInfos[rootDeviceIndex];
-    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
-        createDebugZebin(rootDeviceIndex);
-        if (clDevice->getSourceLevelDebugger()) {
-            NEO::DebugData debugData;
-            debugData.vIsa = reinterpret_cast<const char *>(buildInfo.debugData.get());
-            debugData.vIsaSize = static_cast<uint32_t>(buildInfo.debugDataSize);
-            clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&debugData, "debug_zebin", nullptr, 0);
-        }
-    } else {
-        processDebugData(rootDeviceIndex);
-        if (clDevice->getSourceLevelDebugger()) {
-            for (auto &kernelInfo : buildInfo.kernelInfoArray) {
-                clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
-                                                                          kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
-                                                                          kernelInfo->heapInfo.pKernelHeap,
-                                                                          kernelInfo->heapInfo.kernelHeapSize);
-            }
-        }
-    }
 }
 
 void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {

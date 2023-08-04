@@ -129,92 +129,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledAndStateSipWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
-
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    using STATE_SIP = typename FamilyType::STATE_SIP;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    pDevice->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
-
-    auto sipType = SipKernel::getSipKernelType(*pDevice);
-    SipKernel::initSipKernel(sipType, *pDevice);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    configureCSRtoNonDirtyState<FamilyType>(false);
-    commandStreamReceiver.isStateSipSent = false;
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-
-    auto requiredCmdSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, false);
-    auto cmdSize = sizeof(STATE_SIP) + sizeof(PIPE_CONTROL);
-    EXPECT_EQ(cmdSize, requiredCmdSize);
-
-    auto pipeControlIterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
-
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
-    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
-    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
-    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
-
-    auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
-    auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);
-
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
-
-    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipCmd->getSystemInstructionPointer());
-}
-
-HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandAndStateSipWhenItIsRequiredThenThereIsPipeControlPriorToIt, IsXeHpgCore) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    using STATE_SIP = typename FamilyType::STATE_SIP;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    pDevice->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
-
-    auto sipType = SipKernel::getSipKernelType(*pDevice);
-    SipKernel::initSipKernel(sipType, *pDevice);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    configureCSRtoNonDirtyState<FamilyType>(false);
-    commandStreamReceiver.isStateSipSent = false;
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-
-    auto requiredCmdSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, false);
-    auto cmdSize = sizeof(STATE_SIP) + sizeof(PIPE_CONTROL);
-    EXPECT_EQ(cmdSize, requiredCmdSize);
-
-    // first PC prior SBA
-    auto pipeControlIterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    pipeControlIterator = find<PIPE_CONTROL *>(++pipeControlIterator, cmdList.end());
-    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
-
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
-    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
-
-    EXPECT_FALSE(pipeControlCmd->getAmfsFlushEnable());
-    EXPECT_FALSE(pipeControlCmd->getInstructionCacheInvalidateEnable());
-    EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
-    EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
-
-    auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
-    auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);
-
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
-
-    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipCmd->getSystemInstructionPointer());
-}
-
 HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledAndStateSipWhenA0SteppingIsActivatedThenOnlyGlobalSipIsProgrammed, IsXEHP) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
@@ -912,7 +826,7 @@ struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public Command
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleStaticActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
@@ -935,7 +849,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
@@ -953,7 +867,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenSingleStaticActivePartitionWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     commandStreamReceiver.activePartitions = 1;
@@ -976,7 +890,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
@@ -1007,7 +921,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleDynamicActivePartitionsWhenFlushingTaskTwiceThenExpectTagUpdatePipeControlWithoutPartitionFlagAndPartitionRegisters) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
 
@@ -1030,7 +944,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     DebugManager.flags.UpdateTaskCountFromWait.set(1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
     commandStreamReceiver.activePartitions = 2;
@@ -1045,7 +959,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleStaticActivePartitionsAndDirectSubmissionActiveWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
         commandStreamReceiver.createPreemptionAllocation();
     }
 

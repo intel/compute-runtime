@@ -139,8 +139,8 @@ TEST_F(RawBinarySipTest, givenFileHeaderMissingWhenInitSipKernelThenSipIsLoadedF
     EXPECT_EQ(0u, header.size());
 }
 
-TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelAndDebuggerActiveThenDbgSipIsLoadedFromFile) {
-    pDevice->setDebuggerActive(true);
+TEST_F(RawBinarySipTest, givenDebuggerAndRawBinaryFileWhenInitSipKernelThenDbgSipIsLoadedFromFile) {
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
     auto currentSipKernelType = SipKernel::getSipKernelType(*pDevice);
     bool ret = SipKernel::initSipKernel(currentSipKernelType, *pDevice);
     EXPECT_TRUE(ret);
@@ -394,18 +394,20 @@ TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveArea
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     EXPECT_EQ(0x1800u * numSlices * 8 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
-TEST(DebugBindlessSip, givenActiveDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
+
+TEST(DebugBindlessSip, givenDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseBindlessDebugSip.set(1);
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
-    mockDevice->setDebuggerActive(true);
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
 
     auto sipType = NEO::SipKernel::getSipKernelType(*mockDevice);
 
     EXPECT_EQ(SipKernelType::DbgBindless, sipType);
 }
+
 TEST(Sip, WhenGettingTypeThenCorrectTypeIsReturned) {
     std::vector<char> ssaHeader;
     SipKernel csr{SipKernelType::Csr, nullptr, ssaHeader};
@@ -431,8 +433,9 @@ TEST(Sip, givenDebuggingInactiveWhenSipTypeIsQueriedThenCsrSipTypeIsReturned) {
 
 TEST(DebugSip, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrSipTypeIsReturned) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    EXPECT_NE(nullptr, mockDevice);
-    mockDevice->setDebuggerActive(true);
+    EXPECT_NE(nullptr, mockDevice.get());
+
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
 
     auto sipType = SipKernel::getSipKernelType(*mockDevice);
     EXPECT_LE(SipKernelType::DbgCsr, sipType);

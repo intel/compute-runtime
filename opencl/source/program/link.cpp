@@ -34,10 +34,9 @@ cl_int Program::link(
     auto defaultClDevice = deviceVector[0];
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();
-    std::unordered_map<uint32_t, bool> kernelDebugDataNotified;
-    std::unordered_map<uint32_t, bool> debugOptionsAppended;
     auto internalOptions = getInternalOptions();
     cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+
     do {
         if ((numInputPrograms == 0) || (inputPrograms == nullptr)) {
             retVal = CL_INVALID_VALUE;
@@ -50,8 +49,6 @@ cl_int Program::link(
         }
 
         for (const auto &device : deviceVector) {
-            kernelDebugDataNotified[device->getRootDeviceIndex()] = false;
-            debugOptionsAppended[device->getRootDeviceIndex()] = false;
             deviceBuildInfos[device].buildStatus = CL_BUILD_IN_PROGRESS;
         }
 
@@ -62,17 +59,6 @@ cl_int Program::link(
             if (pos != std::string::npos) {
                 options.erase(pos, optionString.length());
                 CompilerOptions::concatenateAppend(internalOptions, optionString);
-            }
-        }
-
-        if (isKernelDebugEnabled()) {
-            for (auto &device : deviceVector) {
-                if (debugOptionsAppended[device->getRootDeviceIndex()]) {
-                    continue;
-                }
-                appendKernelDebugOptions(*device, internalOptions);
-
-                debugOptionsAppended[device->getRootDeviceIndex()] = true;
             }
         }
 
@@ -161,14 +147,6 @@ cl_int Program::link(
                     break;
                 }
                 binaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-
-                if (isKernelDebugEnabled()) {
-                    if (kernelDebugDataNotified[rootDeviceIndex]) {
-                        continue;
-                    }
-                    notifyDebuggerWithDebugData(device);
-                    kernelDebugDataNotified[device->getRootDeviceIndex()] = true;
-                }
             }
 
         } else {

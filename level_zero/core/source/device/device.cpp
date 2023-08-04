@@ -15,10 +15,6 @@ uint32_t Device::getRootDeviceIndex() const {
     return neoDevice->getRootDeviceIndex();
 }
 
-NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {
-    return getNEODevice()->getSourceLevelDebugger();
-}
-
 NEO::DebuggerL0 *Device::getL0Debugger() {
     return getNEODevice()->getL0Debugger();
 }

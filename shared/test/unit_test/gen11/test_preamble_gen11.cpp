@@ -104,12 +104,11 @@ GEN11TEST_F(PreemptionWatermarkGen11, WhenPreambleIsCreatedThenWorkAroundsIsNotP
     ASSERT_EQ(nullptr, cmd);
 
     MockDevice mockDevice;
-    mockDevice.setDebuggerActive(false);
     size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(mockDevice);
     EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 
-    mockDevice.setDebuggerActive(true);
-    expectedSize += PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(mockDevice.isDebuggerActive());
+    mockDevice.executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(&mockDevice);
+    expectedSize += PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(mockDevice.getDebugger() != nullptr);
     EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 }
 
@@ -180,32 +179,4 @@ GEN11TEST_F(ThreadArbitrationGen11, whenGetSupportThreadArbitrationPoliciesIsCal
     EXPECT_NE(supportedPolicies.end(), std::find(supportedPolicies.begin(),
                                                  supportedPolicies.end(),
                                                  ThreadArbitrationPolicy::RoundRobinAfterDependency));
-}
-using PreambleFixtureGen11 = PreambleFixture;
-GEN11TEST_F(PreambleFixtureGen11, whenKernelDebuggingCommandsAreProgrammedThenCorrectRegisterAddressesAndValuesAreSet) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-
-    auto bufferSize = PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true);
-    auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
-
-    LinearStream stream(buffer.get(), bufferSize);
-    PreambleHelper<FamilyType>::programKernelDebugging(&stream);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(stream);
-    auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
-
-    auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
-    ASSERT_EQ(expectedProgrammedCmdsCount, cmdList.size());
-
-    auto it = cmdList.begin();
-
-    MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(0x20d8u, pCmd->getRegisterOffset());
-    EXPECT_EQ((1u << 5) | (1u << 21), pCmd->getDataDword());
-    it++;
-
-    pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(0xe400u, pCmd->getRegisterOffset());
-    EXPECT_EQ((1u << 7) | (1u << 4), pCmd->getDataDword());
 }

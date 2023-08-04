@@ -39,7 +39,6 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
                              ${IGC_OCL_ADAPTOR_DIR}
                              ${NEO__IGC_INCLUDE_DIR}
                              ${KHRONOS_HEADERS_DIR}
-                             ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
                              ${VISA_INCLUDE_DIR}
                              ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/create_command_stream_receiver_${DRIVER_MODEL}
                              ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission/create_direct_submission_${DRIVER_MODEL}
@@ -137,7 +136,6 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_SRCS_BUILT_INS
                                NEO_CORE_SRCS_BUILT_INS_OPS
                                NEO_CORE_SRCS_BUILT_IN_KERNELS
-                               NEO_CORE_SRCS_SOURCE_LEVEL_DEBUGGER
                                NEO_CORE_TBX
                                NEO_CORE_UTILITIES
                                NEO_DEVICE_BINARY_FORMAT

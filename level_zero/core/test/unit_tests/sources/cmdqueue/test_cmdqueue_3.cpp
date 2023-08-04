@@ -435,7 +435,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     csr.initializeTagAllocation();
     csr.createKernelArgsBufferAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
-    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread) {
         csr.createPreemptionAllocation();
     }
 
@@ -500,7 +500,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     csr.initializeTagAllocation();
     csr.createKernelArgsBufferAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
-    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread) {
         csr.createPreemptionAllocation();
     }
 

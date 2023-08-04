@@ -327,11 +327,6 @@ if(NOT KMDAF_HEADERS_DIR)
   endif()
 endif()
 
-if(NOT DEFINED SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
-  get_filename_component(SOURCE_LEVEL_DEBUGGER_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/source_level_debugger/" ABSOLUTE)
-  message(STATUS "Source Level Debugger headers dir: ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}")
-endif()
-
 get_filename_component(AUB_STREAM_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}aub_stream" ABSOLUTE)
 if(IS_DIRECTORY ${AUB_STREAM_HEADERS_DIR})
   message(STATUS "Aub Stream Headers dir: ${AUB_STREAM_HEADERS_DIR}")
@@ -451,11 +446,6 @@ if(NOT DISABLE_LIBVA)
       endif()
     endif()
   endif()
-endif()
-
-set(SLD_LIBRARY_NAME "igfxdbgxchg")
-if(NEO_BITS STREQUAL "64")
-  set(SLD_LIBRARY_NAME "${SLD_LIBRARY_NAME}${NEO_BITS}")
 endif()
 
 add_subdirectory_unique(third_party/gtest)
@@ -893,7 +883,6 @@ set(NEO_OPENCL_TEST_FILES_DIR "${NEO_SOURCE_DIR}/opencl/test/unit_test/test_file
 
 configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
-configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
 configure_file(test_files_setup.h.in ${NEO_BUILD_DIR}/test_files_setup.h)
 configure_file(hw_cmds_default.h.in ${NEO_BUILD_DIR}/hw_cmds_default.h)
 

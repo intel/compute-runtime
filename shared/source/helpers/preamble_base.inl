@@ -48,7 +48,7 @@ size_t PreambleHelper<GfxFamily>::getSemaphoreDelayCommandSize() {
 template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
     size_t totalSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
-    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
     totalSize += getKernelDebuggingCommandsSize(debuggingEnabled);
     return totalSize;
 }
@@ -69,9 +69,6 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
                                                 GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
     programL3(pCommandStream, l3Config);
     programPreemption(pCommandStream, device, preemptionCsr, logicalStateHelper);
-    if (device.isDebuggerActive()) {
-        programKernelDebugging(pCommandStream);
-    }
     programGenSpecificPreambleWorkArounds(pCommandStream, device.getHardwareInfo());
     programSemaphoreDelay(pCommandStream);
 }
@@ -79,19 +76,6 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
     PreemptionHelper::programCsrBaseAddress<GfxFamily>(*pCommandStream, device, preemptionCsr, logicalStateHelper);
-}
-
-template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programKernelDebugging(LinearStream *pCommandStream) {
-    LriHelper<GfxFamily>::program(pCommandStream,
-                                  DebugModeRegisterOffset<GfxFamily>::registerOffset,
-                                  DebugModeRegisterOffset<GfxFamily>::debugEnabledValue,
-                                  true);
-
-    LriHelper<GfxFamily>::program(pCommandStream,
-                                  TdDebugControlRegisterOffset<GfxFamily>::registerOffset,
-                                  TdDebugControlRegisterOffset<GfxFamily>::debugEnabledValue,
-                                  false);
 }
 
 template <typename GfxFamily>

@@ -995,8 +995,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     this->createPrintfBuffer();
 
-    this->setDebugSurface();
-
     this->setInlineSamplers();
 
     this->setAssertBuffer();
@@ -1077,19 +1075,6 @@ void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t b
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,
                       static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
-}
-
-void KernelImp::setDebugSurface() {
-    auto device = module->getDevice();
-    if (module->isDebugEnabled() && device->getNEODevice()->getDebugger()) {
-
-        auto surfaceStateHeapRef = ArrayRef<uint8_t>(surfaceStateHeapData.get(), surfaceStateHeapDataSize);
-
-        patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
-                                 0,
-                                 *device->getDebugSurface(), this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.systemThreadSurfaceAddress,
-                                 *device->getNEODevice(), getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, device->isImplicitScalingCapable());
-    }
 }
 
 void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {

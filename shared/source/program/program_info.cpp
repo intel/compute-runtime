@@ -50,9 +50,8 @@ bool isRebuiltToPatchtokensRequired(Device *neoDevice, ArrayRef<const uint8_t> a
     if (isBuiltin) {
         return false;
     }
-    auto isSourceLevelDebuggerActive = (nullptr != neoDevice->getSourceLevelDebugger());
     auto isZebinFormat = NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(archive);
-    if ((isSourceLevelDebuggerActive || isVmeUsed) && isZebinFormat) {
+    if (isVmeUsed && isZebinFormat) {
         return neoDevice->getCompilerInterface()->disableZebin(optionsString, optionsString);
     }
     return false;

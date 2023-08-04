@@ -53,7 +53,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
 template <>
 size_t PreambleHelper<Family>::getAdditionalCommandsSize(const Device &device) {
-    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    bool debuggingEnabled = device.getDebugger() != nullptr;
     return getKernelDebuggingCommandsSize(debuggingEnabled);
 }
 

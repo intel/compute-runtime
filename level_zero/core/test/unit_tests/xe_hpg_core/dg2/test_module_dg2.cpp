@@ -21,7 +21,7 @@ namespace L0 {
 namespace ult {
 using KernelDebugSurfaceDG2Test = Test<ModuleFixture>;
 
-HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenKernelInitializeCalledThenCachePolicyIsWBP, IsDG2) {
+HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCalledThenCachePolicyIsWBP, IsDG2) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
@@ -49,8 +49,6 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenKernelInitializeCalledThen
     std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
                                                                       moduleBuildLog,
                                                                       ModuleType::User);
-
-    module->debugEnabled = true;
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -70,16 +68,21 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenKernelInitializeCalledThen
 
     kernel.initialize(&desc);
 
+    auto surfaceStateHeapRef = ArrayRef<uint8_t>(kernel.surfaceStateHeapData.get(), kernel.immutableData.surfaceStateHeapSize);
+    patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
+                             0,
+                             *device->getDebugSurface(), kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
+                             *device->getNEODevice(), kernel.immutableData.kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, device->isImplicitScalingCapable());
+
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
 
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP, debugSurfaceState->getL1CachePolicyL1CacheControl());
 }
 
-HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerButDebuggerActiveSetWhenPatchWithImplicitSurfaceCalledThenCachePolicyIsWBP, IsDG2) {
+HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurfaceCalledThenCachePolicyIsWB, IsDG2) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    const_cast<DeviceInfo &>(neoDevice->getDeviceInfo()).debuggerActive = true;
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
@@ -105,8 +108,6 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerButDebuggerActiveSetWhenPatc
     std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
                                                                       moduleBuildLog,
                                                                       ModuleType::User);
-
-    module->debugEnabled = true;
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -136,7 +137,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerButDebuggerActiveSetWhenPatc
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
 
-    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP, debugSurfaceState->getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, debugSurfaceState->getL1CachePolicyL1CacheControl());
 }
 
 } // namespace ult

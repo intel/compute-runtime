@@ -50,15 +50,8 @@ HWTEST2_F(KernelTestDG2, givenKernelImpWhenSetBufferSurfaceStateCalledThenProgra
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceStateAddress->getL1CachePolicyL1CacheControl());
 
-    const_cast<NEO::DeviceInfo &>(device->getDeviceInfo()).debuggerActive = true;
-    kernelImp->setBufferSurfaceState(argIndex, devicePtr, gpuAlloc);
-    surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
-    surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP, surfaceStateAddress->getL1CachePolicyL1CacheControl());
-
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
-    const_cast<NEO::DeviceInfo &>(device->getDeviceInfo()).debuggerActive = false;
     kernelImp->setBufferSurfaceState(argIndex, devicePtr, gpuAlloc);
     surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
     surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));

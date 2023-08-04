@@ -30,10 +30,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XE_HP_COREDeviceCaps, givenKernelThatDoesStatelessW
     EXPECT_EQ(statelessWritesEmitted, mockKernel.mockKernel->areStatelessWritesUsed());
 }
 
-XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenXE_HP_COREThenDebuggerIsNotSupported) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
-}
-
 XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenXE_HP_COREWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }

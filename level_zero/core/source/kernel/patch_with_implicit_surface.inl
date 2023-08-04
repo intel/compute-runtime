@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
 
         auto &gfxCoreHelper = device.getGfxCoreHelper();
-        auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
+        auto isDebuggerActive = device.getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;
         args.outMemory = surfaceState;
         args.size = sizeToPatch;

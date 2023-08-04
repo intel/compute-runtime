@@ -17,10 +17,6 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> BxtDeviceCaps;
 
-BXTTEST_F(BxtDeviceCaps, GivenBxtThenDebuggerIsNotSupported) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
-}
-
 BXTTEST_F(BxtDeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(52u, caps.outProfilingTimerResolution);

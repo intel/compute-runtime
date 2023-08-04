@@ -28,9 +28,7 @@ class Debugger {
         uint64_t bindlessSamplerStateBaseAddress = 0;
     };
 
-    static std::unique_ptr<Debugger> create(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     virtual ~Debugger() = default;
-    bool isLegacy() const { return isLegacyMode; }
     virtual void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) = 0;
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
 
@@ -39,9 +37,6 @@ class Debugger {
     inline static bool isDebugEnabled(bool internalUsage) {
         return !internalUsage;
     }
-
-  protected:
-    bool isLegacyMode = true;
 };
 
 enum class DebuggingMode : uint32_t {

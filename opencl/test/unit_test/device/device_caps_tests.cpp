@@ -1451,14 +1451,6 @@ TEST_F(DeviceGetCapsTest, givenUnifiedMemorySharedSystemFlagWhenDeviceIsCreatedT
     EXPECT_TRUE(device->areSharedSystemAllocationsAllowed());
 }
 
-TEST_F(DeviceGetCapsTest, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreInitializedThenSourceLevelDebuggerActiveIsSetToFalse) {
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_EQ(nullptr, device->getDebugger());
-    EXPECT_FALSE(caps.debuggerActive);
-}
-
 TEST_F(DeviceGetCapsTest, givenOcl21DeviceWhenCheckingPipesSupportThenPipesAreSupported) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
@@ -1585,19 +1577,6 @@ TEST(Device_UseCaps, givenOverrideSlmSizeWhenWhenInitializeDeviceThenSlmSizeInDe
     auto &deviceInfoWithForceSlmFlag = device->getSharedDeviceInfo();
 
     EXPECT_EQ(newSlmSize, static_cast<uint32_t>(deviceInfoWithForceSlmFlag.localMemSize / KB));
-}
-
-typedef GfxCoreHelperTest DeviceCapsWithModifiedHwInfoTest;
-
-TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
-
-    hardwareInfo.capabilityTable.debuggerSupported = false;
-
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
-
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_EQ(nullptr, device->getDebugger());
-    EXPECT_FALSE(caps.debuggerActive);
 }
 
 TEST_F(DeviceGetCapsTest, givenClDeviceWhenInitializingCapsThenUseGetQueueFamilyCapabilitiesMethod) {

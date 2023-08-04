@@ -85,7 +85,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                            csr->isProgramActivePartitionConfigRequired(),
                                            performMigration,
                                            csr->getSipSentFlag()};
-    ctx.globalInit |= ctx.isDebugEnabled && !this->commandQueueDebugCmdsProgrammed && (neoDevice->getSourceLevelDebugger() || device->getL0Debugger());
+    ctx.globalInit |= ctx.isDebugEnabled && !this->commandQueueDebugCmdsProgrammed && device->getL0Debugger();
 
     this->startingCmdBuffer = &this->commandStream;
     this->device->activateMetricGroups();
@@ -543,9 +543,7 @@ size_t CommandQueueHw<gfxCoreFamily>::computeDebuggerCmdsSize(const CommandListE
     size_t debuggerCmdsSize = 0;
 
     if (ctx.isDebugEnabled && !this->commandQueueDebugCmdsProgrammed) {
-        if (this->device->getNEODevice()->getSourceLevelDebugger()) {
-            debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(true);
-        } else if (this->device->getL0Debugger()) {
+        if (this->device->getL0Debugger()) {
             debuggerCmdsSize += device->getL0Debugger()->getSbaAddressLoadCommandsSize();
         }
     }
@@ -870,11 +868,7 @@ void CommandQueueHw<gfxCoreFamily>::makeSbaTrackingBufferResidentIfL0DebuggerEna
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(bool isDebugEnabled, NEO::LinearStream &cmdStream) {
     if (isDebugEnabled && !this->commandQueueDebugCmdsProgrammed) {
-        NEO::Device *neoDevice = device->getNEODevice();
-        if (neoDevice->getSourceLevelDebugger()) {
-            NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&cmdStream);
-            this->commandQueueDebugCmdsProgrammed = true;
-        } else if (this->device->getL0Debugger()) {
+        if (this->device->getL0Debugger()) {
             this->device->getL0Debugger()->programSbaAddressLoad(cmdStream,
                                                                  device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId())->getGpuAddress());
             this->commandQueueDebugCmdsProgrammed = true;

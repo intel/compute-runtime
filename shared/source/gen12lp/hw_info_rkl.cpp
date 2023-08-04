@@ -64,7 +64,6 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     false,                                           // ftrRenderCompressedImages
     true,                                            // ftr64KBpages
     true,                                            // instrumentationEnabled
-    false,                                           // sourceLevelDebuggerSupported
     false,                                           // supportsVme
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages

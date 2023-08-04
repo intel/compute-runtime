@@ -34,7 +34,6 @@ class GmmClientContext;
 class MemoryManager;
 class PerformanceCounters;
 class Platform;
-class SourceLevelDebugger;
 struct DeviceInfo;
 struct EngineControl;
 struct HardwareInfo;
@@ -83,9 +82,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters();
     PreemptionMode getPreemptionMode() const;
-    bool isDebuggerActive() const;
     Debugger *getDebugger();
-    SourceLevelDebugger *getSourceLevelDebugger();
     ExecutionEnvironment *getExecutionEnvironment() const;
     const RootDeviceEnvironment &getRootDeviceEnvironment() const;
     bool isFullRangeSvm() const;

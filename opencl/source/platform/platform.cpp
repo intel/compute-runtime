@@ -19,7 +19,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/pin/pin.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
@@ -151,7 +150,7 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
             rootDeviceEnvironment->initDebuggerL0(&pClDevice->getDevice());
         }
 
-        if (pClDevice->getPreemptionMode() == PreemptionMode::MidThread || pClDevice->isDebuggerActive()) {
+        if (pClDevice->getPreemptionMode() == PreemptionMode::MidThread) {
             bool ret = SipKernel::initSipKernel(SipKernel::getSipKernelType(*pDevice), *pDevice);
             UNRECOVERABLE_IF(!ret);
         }
