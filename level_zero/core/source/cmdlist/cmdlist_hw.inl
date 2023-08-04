@@ -2131,10 +2131,6 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 
     if (hasInOrderDependencies) {
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
-
-        if (NEO::EncodeUserInterruptHelper::isOperationAllowed(NEO::EncodeUserInterruptHelper::afterSemaphoreMask)) {
-            NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
-        }
     }
 
     if (numWaitEvents > 0) {
@@ -2210,6 +2206,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
 
         gpuAddress += sizeof(uint64_t);
     }
+
+    if (NEO::EncodeUserInterruptHelper::isOperationAllowed(NEO::EncodeUserInterruptHelper::afterSemaphoreMask)) {
+        NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2230,6 +2230,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             "zeCommandListAppendWaitOnEvents",
             ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
+
+    if (signalInOrderCompletion) {
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
     }
 
     bool dcFlushRequired = false;
@@ -2395,12 +2399,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     uint64_t *dstptr, ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    if (numWaitEvents > 0) {
-        if (phWaitEvents) {
-            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents, false, true, false);
-        } else {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, false, true);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
     }
 
     Event *signalEvent = nullptr;
