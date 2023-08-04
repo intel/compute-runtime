@@ -23,6 +23,7 @@ struct Mock<TemperatureKmdSysManager> : public TemperatureKmdSysManager {
     uint32_t mockTempGPU = 25;
     uint32_t mockTempMemory = 23;
     uint32_t mockMaxTemperature = 100;
+    bool isIntegrated = false;
     zes_temp_sensors_t mockSensorTypes[3] = {ZES_TEMP_SENSORS_GLOBAL, ZES_TEMP_SENSORS_GPU, ZES_TEMP_SENSORS_MEMORY};
 
     void getTemperatureProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
@@ -40,7 +41,11 @@ struct Mock<TemperatureKmdSysManager> : public TemperatureKmdSysManager {
         switch (pRequest->inRequestId) {
         case KmdSysman::Requests::Temperature::NumTemperatureDomains: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
-            *pValue = mockTempDomainCount;
+            if (isIntegrated == true) {
+                *pValue = 0;
+            } else {
+                *pValue = mockTempDomainCount;
+            }
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;

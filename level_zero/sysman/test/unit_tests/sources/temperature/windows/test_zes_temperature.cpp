@@ -70,6 +70,13 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenEnumeratingTem
     }
 }
 
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidDeviceHandleWhenEnumeratingTemperatureSensorsOnIntegratedDeviceThenZeroCountIsReturned) {
+    uint32_t count = 0;
+    pKmdSysManager->isIntegrated = true;
+    EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 0);
+}
+
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleWhenGettingTemperaturePropertiesAllowSetToTrueThenCallSucceeds) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     uint32_t sensorTypeIndex = 0;
