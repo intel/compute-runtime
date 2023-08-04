@@ -1245,7 +1245,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents,
                                                                    bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) {
-    const bool inOrderCopyOnlySignalingAllowed = this->inOrderExecutionEnabled && !forceDisableCopyOnlyInOrderSignaling;
+    const bool inOrderCopyOnlySignalingAllowed = this->inOrderExecutionEnabled && !forceDisableCopyOnlyInOrderSignaling && isCopyOnly();
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
