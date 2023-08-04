@@ -114,6 +114,7 @@ class IoctlHelperXe : public IoctlHelper {
     struct drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance);
 
   protected:
+    uint64_t xeDecanonize(uint64_t address);
     const char *xeGetClassName(int className);
     const char *xeGetBindOpName(int bindOp);
     const char *xeGetengineClassName(uint32_t engineClass);
@@ -136,6 +137,7 @@ class IoctlHelperXe : public IoctlHelper {
     int hasVram = 0;
     uint32_t xeVmId = 0;
     uint32_t userPtrHandle = 0;
+    uint32_t addressWidth = 48;
     int xeFileHandle = 0;
     std::mutex xeLock;
     std::vector<BindInfo> bindInfo;
