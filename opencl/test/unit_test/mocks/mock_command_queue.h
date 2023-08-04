@@ -441,6 +441,11 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return CommandQueue::isCompleted(gpgpuTaskCount, bcsStates);
     }
 
+    cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+        enqueueMarkerWithWaitListCalledCount++;
+        return BaseClass::enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
+    }
+
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
     MultiDispatchInfo storedMultiDispatchInfo;
@@ -470,6 +475,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     std::optional<WaitStatus> waitForAllEnginesReturnValue{};
     std::optional<WaitStatus> waitUntilCompleteReturnValue{};
     int waitForAllEnginesCalledCount{0};
+    int enqueueMarkerWithWaitListCalledCount{0};
 
     LinearStream *peekCommandStream() {
         return this->commandStream;

@@ -103,6 +103,7 @@ TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, 
     : memObj(memObj), ptr(ptr), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), doTransferOnCpu(doTransferOnCpu) {
     // no size or offset passed for unmap operation
     if (cmdType != CL_COMMAND_UNMAP_MEM_OBJECT) {
+        finishRequired = !memObj->isMemObjZeroCopy() || blocking;
         if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
             size[0] = *sizePtr;
             offset[0] = *offsetPtr;

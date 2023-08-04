@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
@@ -1269,4 +1270,159 @@ HWTEST_F(CommandQueueHwTest, givenRelaxedOrderingEnabledWhenCheckingIfAllowedByC
     ultCsr.heapStorageRequiresRecyclingTag = true;
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
+}
+
+HWTEST_F(CommandQueueHwTest, givenBlockedCommandQueueWhenTransferOnCpuThenEnqueueMarkerIsNotCalled) {
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    cl_event returnEvent = nullptr;
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = CompletionStamp::notReady;
+    size_t offset = 0;
+    size_t size = 4096u;
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_MAP_BUFFER, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+    EventsRequest eventsRequest(0, nullptr, &returnEvent);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(0, commandQueue->enqueueMarkerWithWaitListCalledCount);
+    auto retEvent = reinterpret_cast<MockEvent<Event> *>(castToObject<Event>(returnEvent));
+    [[maybe_unused]] auto cmd = std::unique_ptr<Command>(retEvent->cmdToSubmit.exchange(nullptr));
+    clReleaseEvent(returnEvent);
+}
+
+HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenCpuTransferIsBlockedThenEnqueueMarkerIsNotCalled) {
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    cl_event returnEvent = nullptr;
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = 0u;
+    size_t offset = 0;
+    size_t size = 4096u;
+    auto mem = std::make_unique<uint8_t[]>(size);
+    buffer->hostPtr = mem.get();
+    buffer->memoryStorage = mem.get();
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_MAP_BUFFER, 0, true, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+    EventsRequest eventsRequest(0, nullptr, &returnEvent);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(0, commandQueue->enqueueMarkerWithWaitListCalledCount);
+    clReleaseEvent(returnEvent);
+}
+
+HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenCpuTransferOperationIsOtherThanUnmapAndMemoryIsNotZeroCopyCommandThenEnqueueMarkerIsNotCalled) {
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    buffer->isZeroCopy = false;
+    cl_event returnEvent = nullptr;
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = 0u;
+    size_t offset = 0;
+    size_t size = 4096u;
+    auto mem = std::make_unique<uint8_t[]>(size);
+    buffer->hostPtr = mem.get();
+    buffer->memoryStorage = mem.get();
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_MAP_BUFFER, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+    EventsRequest eventsRequest(0, nullptr, &returnEvent);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(0, commandQueue->enqueueMarkerWithWaitListCalledCount);
+    clReleaseEvent(returnEvent);
+}
+
+HWTEST_F(CommandQueueHwTest, givenOOQWhenCpuTransferIsCalledThenEnqueueMarkerIsNotCalled) {
+    cl_queue_properties ooqProperties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, ooqProperties);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    cl_event returnEvent = nullptr;
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = 0u;
+    size_t offset = 0;
+    size_t size = 4096u;
+    auto mem = std::make_unique<uint8_t[]>(size);
+    buffer->hostPtr = mem.get();
+    buffer->memoryStorage = mem.get();
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_MAP_BUFFER, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+    EventsRequest eventsRequest(0, nullptr, &returnEvent);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(0, commandQueue->enqueueMarkerWithWaitListCalledCount);
+    clReleaseEvent(returnEvent);
+}
+
+HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenOutEventIsNotPassedToCpuTransferThenEnqueueMarkerIsNotCalled) {
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = 0u;
+    size_t offset = 0;
+    size_t size = 4096u;
+    auto mem = std::make_unique<uint8_t[]>(size);
+    buffer->hostPtr = mem.get();
+    buffer->memoryStorage = mem.get();
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_MAP_BUFFER, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(0, commandQueue->enqueueMarkerWithWaitListCalledCount);
+}
+
+HWTEST_F(CommandQueueHwTest, givenNotBlockedIOQWhenCpuTransferIsNotBlockedOutEventPassedCommandTypeIsUnmapAndMemoryIsZeroCopyThenEnqueueMarkerIsCalled) {
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    cl_event returnEvent = nullptr;
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = 0u;
+    size_t offset = 0;
+    size_t size = 4096u;
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_UNMAP_MEM_OBJECT, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+
+    auto returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
+                               transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
+    transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
+                                            transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel, nullptr);
+
+    EventsRequest eventsRequest(0, nullptr, &returnEvent);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(1, commandQueue->enqueueMarkerWithWaitListCalledCount);
+    clReleaseEvent(returnEvent);
+}
+
+HWTEST_F(CommandQueueHwTest, givenNotBlockedIOQWhenCpuTransferIsBlockedOutEventPassedCommandTypeIsUnmapAndMemoryIsNotZeroCopyThenEnqueueMarkerIsCalled) {
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    buffer->isZeroCopy = false;
+    cl_event returnEvent = nullptr;
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = 0u;
+    size_t offset = 0;
+    size_t size = 4096u;
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_UNMAP_MEM_OBJECT, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+
+    auto returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
+                               transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
+    transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
+                                            transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel, nullptr);
+
+    EventsRequest eventsRequest(0, nullptr, &returnEvent);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(1, commandQueue->enqueueMarkerWithWaitListCalledCount);
+    clReleaseEvent(returnEvent);
+}
+
+HWTEST_F(CommandQueueHwTest, givenNotBlockedIOQWhenCpuTransferIsBlockedOutEventPassedCommandTypeIsOtherThanUnmapAndMemoryIsZeroCopyThenEnqueueMarkerIsCalled) {
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    cl_event returnEvent = nullptr;
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = 0u;
+    size_t offset = 0;
+    size_t size = 4096u;
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_MAP_BUFFER, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+    EventsRequest eventsRequest(0, nullptr, &returnEvent);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(1, commandQueue->enqueueMarkerWithWaitListCalledCount);
+    clReleaseEvent(returnEvent);
 }

@@ -27,6 +27,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     EventBuilder eventBuilder;
     bool eventCompleted = false;
     bool mapOperation = transferProperties.cmdType == CL_COMMAND_MAP_BUFFER || transferProperties.cmdType == CL_COMMAND_MAP_IMAGE;
+
     ErrorCodeHelper err(&retVal, CL_SUCCESS);
 
     if (mapOperation) {
@@ -45,21 +46,24 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         }
         transferProperties.memObj->removeMappedPtr(unmapInfo.ptr);
     }
+    auto blockQueue = false;
+    TaskCountType taskLevel = 0u;
+    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, transferProperties.cmdType);
+    bool isMarkerRequiredForEventSignal = !blockQueue &&
+                                          !transferProperties.blocking &&
+                                          !transferProperties.finishRequired &&
+                                          !isOOQEnabled() &&
+                                          eventsRequest.outEvent != nullptr;
 
-    if (eventsRequest.outEvent) {
+    if (eventsRequest.outEvent && !isMarkerRequiredForEventSignal) {
         eventBuilder.create<Event>(this, transferProperties.cmdType, CompletionStamp::notReady, CompletionStamp::notReady);
         outEventObj = eventBuilder.getEvent();
         outEventObj->setQueueTimeStamp();
         outEventObj->setCPUProfilingPath(true);
         *eventsRequest.outEvent = outEventObj;
     }
-
-    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
-    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-
-    auto blockQueue = false;
-    TaskCountType taskLevel = 0u;
-    obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, transferProperties.cmdType);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "taskLevel", taskLevel);
 
@@ -81,9 +85,10 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                                         mapOperation ? transferProperties.mapFlags == CL_MAP_READ : unmapInfo.readOnly,
                                         eventBuilder);
     }
-
-    commandStreamReceiverOwnership.unlock();
-    queueOwnership.unlock();
+    if (!isMarkerRequiredForEventSignal) {
+        commandStreamReceiverOwnership.unlock();
+        queueOwnership.unlock();
+    }
 
     // read/write buffers are always blocking
     if (!blockQueue || transferProperties.blocking) {
@@ -94,11 +99,9 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             outEventObj->setSubmitTimeStamp();
         }
         // wait for the completness of previous commands
-        if (transferProperties.cmdType != CL_COMMAND_UNMAP_MEM_OBJECT) {
-            if (!transferProperties.memObj->isMemObjZeroCopy() || transferProperties.blocking) {
-                finish();
-                eventCompleted = true;
-            }
+        if (transferProperties.finishRequired) {
+            finish();
+            eventCompleted = true;
         }
 
         if (outEventObj) {
@@ -158,6 +161,12 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             } else {
                 outEventObj->updateExecutionStatus();
             }
+        } else if (isMarkerRequiredForEventSignal) {
+            enqueueMarkerWithWaitList(0, nullptr, eventsRequest.outEvent);
+            commandStreamReceiverOwnership.unlock();
+            queueOwnership.unlock();
+            outEventObj = castToObject<Event>(*eventsRequest.outEvent);
+            outEventObj->setCmdType(transferProperties.cmdType);
         }
         if (modifySimulationFlags) {
             auto graphicsAllocation = transferProperties.memObj->getGraphicsAllocation(getDevice().getRootDeviceIndex());

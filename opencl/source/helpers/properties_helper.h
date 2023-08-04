@@ -53,6 +53,7 @@ struct TransferProperties {
     uint32_t mipPtrOffset = 0;
     bool blocking = false;
     bool doTransferOnCpu = false;
+    bool finishRequired = false;
 
     void *getCpuPtrForReadWrite();
 };

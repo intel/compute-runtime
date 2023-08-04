@@ -169,6 +169,9 @@ TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenWaitEventIsUpdated) 
     EXPECT_NE(nullptr, ptrResult);
     EXPECT_NE(nullptr, waitEvent);
 
+    Event *wEvent = castToObject<Event>(waitEvent);
+    EXPECT_EQ(CL_QUEUED, wEvent->peekExecutionStatus());
+
     retVal = clEnqueueUnmapMemObject(
         pCmdQ,
         buffer,
@@ -179,14 +182,15 @@ TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenWaitEventIsUpdated) 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, retEvent);
 
-    Event *wEvent = castToObject<Event>(waitEvent);
     EXPECT_EQ(CL_COMPLETE, wEvent->peekExecutionStatus());
 
     Event *rEvent = castToObject<Event>(retEvent);
-    EXPECT_EQ(CL_COMPLETE, rEvent->peekExecutionStatus());
+    EXPECT_EQ(CL_QUEUED, rEvent->peekExecutionStatus());
 
     retVal = clWaitForEvents(1, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_COMPLETE, rEvent->peekExecutionStatus());
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);

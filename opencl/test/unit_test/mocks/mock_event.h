@@ -37,6 +37,7 @@ struct MockEvent : public BaseEventType {
     using BaseEventType::timeStampNode;
     using Event::calcProfilingData;
     using Event::calculateSubmitTimestampData;
+    using Event::cmdToSubmit;
     using Event::isWaitForTimestampsEnabled;
     using Event::magic;
     using Event::multiRootDeviceTimestampPacketContainer;

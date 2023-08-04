@@ -41,6 +41,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using Buffer::size;
     using MemObj::associatedMemObject;
     using MemObj::context;
+    using MemObj::hostPtr;
     using MemObj::isZeroCopy;
     using MemObj::memObjectType;
     using MemObj::memoryStorage;
