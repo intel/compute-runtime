@@ -159,6 +159,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation) {
             this->downloadAllocationUlt(graphicsAllocation);
         };
+        gpuHangCheckPeriod = {};
     }
     ~UltCommandStreamReceiver() override {
         this->downloadAllocationImpl = nullptr;

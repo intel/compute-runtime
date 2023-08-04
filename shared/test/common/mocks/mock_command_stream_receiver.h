@@ -59,6 +59,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         : CommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
         CommandStreamReceiver::tagAddress = &mockTagAddress[0];
         memset(const_cast<TagAddressType *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(TagAddressType));
+        gpuHangCheckPeriod = {};
     }
 
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
