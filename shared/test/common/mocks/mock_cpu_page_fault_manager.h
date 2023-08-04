@@ -25,6 +25,13 @@ class MockPageFaultManager : public PageFaultManager {
     using PageFaultManager::unprotectAndTransferMemory;
     using PageFaultManager::verifyPageFault;
 
+    bool checkFaultHandlerFromPageFaultManager() override {
+        checkFaultHandlerCalled++;
+        return (registerFaultHandlerCalled != 0);
+    }
+    void registerFaultHandler() override {
+        registerFaultHandlerCalled++;
+    }
     void allowCPUMemoryAccess(void *ptr, size_t size) override {
         allowMemoryAccessCalled++;
         allowedMemoryAccessAddress = ptr;
@@ -89,6 +96,8 @@ class MockPageFaultManager : public PageFaultManager {
         PageFaultManager::moveAllocationToGpuDomain(ptr);
     }
 
+    int checkFaultHandlerCalled = 0;
+    int registerFaultHandlerCalled = 0;
     int allowMemoryAccessCalled = 0;
     int protectMemoryCalled = 0;
     int transferToCpuCalled = 0;
@@ -114,8 +123,10 @@ template <class T>
 class MockPageFaultManagerHandlerInvoke : public T {
   public:
     using T::allowCPUMemoryAccess;
+    using T::checkFaultHandlerFromPageFaultManager;
     using T::evictMemoryAfterImplCopy;
     using T::protectCPUMemoryAccess;
+    using T::registerFaultHandler;
     using T::T;
 
     bool verifyPageFault(void *ptr) override {

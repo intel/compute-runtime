@@ -25,6 +25,18 @@ std::unique_ptr<PageFaultManager> PageFaultManager::create() {
 std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> PageFaultManagerWindows::pageFaultHandler;
 
 PageFaultManagerWindows::PageFaultManagerWindows() {
+    registerFaultHandler();
+}
+
+PageFaultManagerWindows::~PageFaultManagerWindows() {
+    RemoveVectoredExceptionHandler(previousHandler);
+}
+
+bool PageFaultManagerWindows::checkFaultHandlerFromPageFaultManager() {
+    return true;
+}
+
+void PageFaultManagerWindows::registerFaultHandler() {
     pageFaultHandler = [this](struct _EXCEPTION_POINTERS *exceptionInfo) {
         if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
             if (this->verifyPageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]))) {
@@ -37,10 +49,6 @@ PageFaultManagerWindows::PageFaultManagerWindows() {
     };
 
     previousHandler = AddVectoredExceptionHandler(1, pageFaultHandlerWrapper);
-}
-
-PageFaultManagerWindows::~PageFaultManagerWindows() {
-    RemoveVectoredExceptionHandler(previousHandler);
 }
 
 LONG PageFaultManagerWindows::pageFaultHandlerWrapper(_EXCEPTION_POINTERS *exceptionInfo) {

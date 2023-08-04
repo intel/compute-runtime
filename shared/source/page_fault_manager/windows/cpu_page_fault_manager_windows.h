@@ -28,6 +28,9 @@ class PageFaultManagerWindows : public PageFaultManager {
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
     void allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override;
 
+    bool checkFaultHandlerFromPageFaultManager() override;
+    void registerFaultHandler() override;
+
     static std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> pageFaultHandler;
     PVOID previousHandler;
 };

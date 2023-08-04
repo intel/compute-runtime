@@ -77,6 +77,9 @@ inline void PageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultData
         std::chrono::steady_clock::time_point start;
         std::chrono::steady_clock::time_point end;
 
+        if (this->checkFaultHandlerFromPageFaultManager() == false) {
+            this->registerFaultHandler();
+        }
         start = std::chrono::steady_clock::now();
         this->transferToGpu(ptr, pageFaultData.cmdQ);
         end = std::chrono::steady_clock::now();

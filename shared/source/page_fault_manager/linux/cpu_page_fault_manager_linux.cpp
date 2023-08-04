@@ -23,9 +23,30 @@ std::unique_ptr<PageFaultManager> PageFaultManager::create() {
     return pageFaultManager;
 }
 
-std::function<void(int signal, siginfo_t *info, void *context)> PageFaultManagerLinux::pageFaultHandler;
+std::function<void(int signal, siginfo_t *info, void *context)> PageFaultManagerLinux::pageFaultHandler = nullptr;
 
 PageFaultManagerLinux::PageFaultManagerLinux() {
+    PageFaultManagerLinux::registerFaultHandler();
+    UNRECOVERABLE_IF(pageFaultHandler == nullptr);
+
+    this->evictMemoryAfterCopy = DebugManager.flags.EnableDirectSubmission.get() &&
+                                 DebugManager.flags.USMEvictAfterMigration.get();
+}
+
+PageFaultManagerLinux::~PageFaultManagerLinux() {
+    if (!previousHandlerRestored) {
+        auto retVal = sigaction(SIGSEGV, &previousPageFaultHandler, nullptr);
+        UNRECOVERABLE_IF(retVal != 0);
+    }
+}
+
+bool PageFaultManagerLinux::checkFaultHandlerFromPageFaultManager() {
+    struct sigaction currentPageFaultHandler = {};
+    sigaction(SIGSEGV, NULL, &currentPageFaultHandler);
+    return (currentPageFaultHandler.sa_sigaction == pageFaultHandlerWrapper);
+}
+
+void PageFaultManagerLinux::registerFaultHandler() {
     pageFaultHandler = [&](int signal, siginfo_t *info, void *context) {
         if (!this->verifyPageFault(info->si_addr)) {
             callPreviousHandler(signal, info, context);
@@ -38,16 +59,6 @@ PageFaultManagerLinux::PageFaultManagerLinux() {
 
     auto retVal = sigaction(SIGSEGV, &pageFaultManagerHandler, &previousPageFaultHandler);
     UNRECOVERABLE_IF(retVal != 0);
-
-    this->evictMemoryAfterCopy = DebugManager.flags.EnableDirectSubmission.get() &&
-                                 DebugManager.flags.USMEvictAfterMigration.get();
-}
-
-PageFaultManagerLinux::~PageFaultManagerLinux() {
-    if (!previousHandlerRestored) {
-        auto retVal = sigaction(SIGSEGV, &previousPageFaultHandler, nullptr);
-        UNRECOVERABLE_IF(retVal != 0);
-    }
 }
 
 void PageFaultManagerLinux::pageFaultHandlerWrapper(int signal, siginfo_t *info, void *context) {

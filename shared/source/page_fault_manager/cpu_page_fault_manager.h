@@ -54,6 +54,8 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void transferToCpu(void *ptr, size_t size, void *cmdQ);
 
   protected:
+    virtual bool checkFaultHandlerFromPageFaultManager() = 0;
+    virtual void registerFaultHandler() = 0;
     virtual void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) = 0;
     virtual void allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) = 0;
 

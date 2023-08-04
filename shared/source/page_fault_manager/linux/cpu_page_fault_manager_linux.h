@@ -27,6 +27,9 @@ class PageFaultManagerLinux : public PageFaultManager {
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
     void allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override;
 
+    bool checkFaultHandlerFromPageFaultManager() override;
+    void registerFaultHandler() override;
+
     void callPreviousHandler(int signal, siginfo_t *info, void *context);
     bool previousHandlerRestored = false;
 

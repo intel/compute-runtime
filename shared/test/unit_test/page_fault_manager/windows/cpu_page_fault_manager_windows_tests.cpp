@@ -67,6 +67,7 @@ TEST_F(PageFaultManagerWindowsTest, givenProtectedMemoryWhenTryingToAccessThenPa
 
 class MockFailPageFaultManager : public PageFaultManagerWindows {
   public:
+    using PageFaultManagerWindows::checkFaultHandlerFromPageFaultManager;
     using PageFaultManagerWindows::PageFaultManagerWindows;
 
     bool verifyPageFault(void *ptr) override {
@@ -96,6 +97,23 @@ TEST_F(PageFaultManagerWindowsTest, givenPageFaultThatNEOShouldNotHandleThenDefa
     RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, 0, NULL);
     EXPECT_TRUE(mockPageFaultManager.verifyCalled);
     EXPECT_TRUE(MockFailPageFaultManager::mockCalled);
+
+    RemoveVectoredExceptionHandler(previousHandler);
+}
+
+TEST_F(PageFaultManagerWindowsTest,
+       givenDefaultSaHandlerWhenPageFaultManagerIsCreatedThenCheckFaultHandlerFromPageFaultManagerReturnsTrue) {
+    auto previousHandler = AddVectoredExceptionHandler(1, MockFailPageFaultManager::mockPageFaultHandler);
+
+    MockFailPageFaultManager mockPageFaultManager;
+    EXPECT_FALSE(MockFailPageFaultManager::mockCalled);
+
+    EXPECT_TRUE(mockPageFaultManager.checkFaultHandlerFromPageFaultManager());
+
+    RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, 0, NULL);
+    EXPECT_TRUE(mockPageFaultManager.verifyCalled);
+    EXPECT_TRUE(MockFailPageFaultManager::mockCalled);
+    EXPECT_TRUE(mockPageFaultManager.checkFaultHandlerFromPageFaultManager());
 
     RemoveVectoredExceptionHandler(previousHandler);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ using namespace NEO;
 using PageFaultManagerLinuxTest = PageFaultManagerConfigFixture;
 using MockPageFaultManagerLinux = MockPageFaultManagerHandlerInvoke<PageFaultManagerLinux>;
 
-TEST_F(PageFaultManagerLinuxTest, whenPageFaultIsRaisedThenHandlerIsInvoked) {
+TEST_F(PageFaultManagerLinuxTest, whenPageFaultIsRaisedWithFaultHandlerRegisteredThenHandlerIsInvoked) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
     std::raise(SIGSEGV);
@@ -102,7 +102,7 @@ TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionDisabledAndUSMEvictWaEnab
     EXPECT_FALSE(operationInterface->evictCalled);
 }
 
-TEST_F(PageFaultManagerLinuxTest, givenProtectedMemoryWhenTryingToAccessThenPageFaultIsRaisedAndMemoryIsAccessibleAfterHandling) {
+TEST_F(PageFaultManagerLinuxTest, givenProtectedMemoryWithFaultHandlerRegisteredWhenTryingToAccessThenPageFaultIsRaisedAndMemoryIsAccessibleAfterHandling) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     pageFaultManager->allowCPUMemoryAccessOnPageFault = true;
     auto ptr = static_cast<int *>(mmap(nullptr, pageFaultManager->size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0));
@@ -122,8 +122,10 @@ TEST_F(PageFaultManagerLinuxTest, givenProtectedMemoryWhenTryingToAccessThenPage
 class MockFailPageFaultManager : public PageFaultManagerLinux {
   public:
     using PageFaultManagerLinux::callPreviousHandler;
+    using PageFaultManagerLinux::checkFaultHandlerFromPageFaultManager;
     using PageFaultManagerLinux::PageFaultManagerLinux;
     using PageFaultManagerLinux::previousHandlerRestored;
+    using PageFaultManagerLinux::registerFaultHandler;
 
     bool verifyPageFault(void *ptr) override {
         verifyCalled = true;
@@ -208,7 +210,7 @@ TEST_F(PageFaultManagerLinuxTest, givenDefaultSaHandlerWhenInvokeCallPreviousSaH
     sigaction(SIGSEGV, &originalHandler, nullptr);
 }
 
-TEST_F(PageFaultManagerLinuxTest, givenIgnoringSaHandlerWhenInvokeCallPreviousSaHandlerThenNothingHappend) {
+TEST_F(PageFaultManagerLinuxTest, givenIgnoringSaHandlerWithFaultHanderRegisteredWhenInvokeCallPreviousSaHandlerThenNothingHappend) {
     struct sigaction originalHandler = {};
     struct sigaction mockDefaultHandler = {};
     mockDefaultHandler.sa_handler = SIG_IGN;
@@ -219,6 +221,24 @@ TEST_F(PageFaultManagerLinuxTest, givenIgnoringSaHandlerWhenInvokeCallPreviousSa
     mockPageFaultManager->callPreviousHandler(0, nullptr, nullptr);
 
     EXPECT_FALSE(mockPageFaultManager->previousHandlerRestored);
+
+    mockPageFaultManager.reset();
+    sigaction(SIGSEGV, &originalHandler, nullptr);
+}
+
+TEST_F(PageFaultManagerLinuxTest, givenDefaultSaHandlerWhenOverwritingNewHandlersThenCheckFaultHandlerFromPageFaultManagerReturnsFalse) {
+    struct sigaction originalHandler = {};
+    struct sigaction mockDefaultHandler = {};
+    mockDefaultHandler.sa_handler = SIG_DFL;
+    auto retVal = sigaction(SIGSEGV, &mockDefaultHandler, &originalHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    EXPECT_TRUE(mockPageFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    retVal = sigaction(SIGSEGV, &mockDefaultHandler, nullptr);
+    EXPECT_EQ(retVal, 0);
+    EXPECT_FALSE(mockPageFaultManager->checkFaultHandlerFromPageFaultManager());
 
     mockPageFaultManager.reset();
     sigaction(SIGSEGV, &originalHandler, nullptr);
