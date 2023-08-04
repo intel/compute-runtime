@@ -29,6 +29,7 @@ class OsFabricPort {
     virtual ze_result_t setConfig(const zes_fabric_port_config_t *pConfig) = 0;
     virtual ze_result_t getState(zes_fabric_port_state_t *pState) = 0;
     virtual ze_result_t getThroughput(zes_fabric_port_throughput_t *pThroughput) = 0;
+    virtual ze_result_t getErrorCounters(zes_fabric_port_error_counters_t *pErrors) = 0;
 
     static std::unique_ptr<OsFabricPort> create(OsFabricDevice *pOsFabricDevice, uint32_t portNum);
 

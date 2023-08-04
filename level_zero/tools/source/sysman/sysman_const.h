@@ -27,15 +27,6 @@ struct SteadyClock {
     }
 };
 
-typedef struct _zes_fabric_port_error_counters_t {
-    void *pNext;
-    uint64_t linkFailureCount;
-    uint64_t fwCommErrorCount;
-    uint64_t fwErrorCount;
-    uint64_t linkDegradeCount;
-
-} zes_fabric_port_error_counters_t;
-
 } // namespace L0
 
 namespace PciLinkSpeeds {

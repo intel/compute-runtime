@@ -34,7 +34,7 @@ void fabricPortGetTimestamp(uint64_t &timestamp) {
 }
 
 ze_result_t FabricPortImp::fabricPortGetErrorCounters(zes_fabric_port_error_counters_t *pErrors) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pOsFabricPort->getErrorCounters(pErrors);
 }
 
 ze_result_t FabricPortImp::fabricPortGetProperties(zes_fabric_port_properties_t *pProperties) {

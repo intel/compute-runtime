@@ -30,6 +30,7 @@ class LinuxFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableOrMovableCla
     ze_result_t disablePortBeaconing(const zes_fabric_port_id_t portId);
     ze_result_t getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t *pState);
     ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t *pThroughput);
+    ze_result_t getErrorCounters(const zes_fabric_port_id_t portId, zes_fabric_port_error_counters_t *pErrors);
 
     void getPortId(const uint32_t portNumber, zes_fabric_port_id_t &portId);
     void getProperties(const zes_fabric_port_id_t portId, std::string &model, bool &onSubdevice,
@@ -48,6 +49,9 @@ class LinuxFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableOrMovableCla
     ze_result_t disable(const zes_fabric_port_id_t portId);
     ze_result_t enableUsage(const zes_fabric_port_id_t portId);
     ze_result_t disableUsage(const zes_fabric_port_id_t portId);
+    ze_result_t getFabricDevicePath(std::string &fabricDevicePath);
+    void getLinkErrorCount(zes_fabric_port_error_counters_t *pErrors, const std::string &fabricDevicePath, const zes_fabric_port_id_t portId);
+    void getFwErrorCount(zes_fabric_port_error_counters_t *pErrors, const std::string &fabricDevicePath, const zes_fabric_port_id_t portId);
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
@@ -62,6 +66,7 @@ class LinuxFabricPortImp : public OsFabricPort, NEO::NonCopyableOrMovableClass {
     ze_result_t setConfig(const zes_fabric_port_config_t *pConfig) override;
     ze_result_t getState(zes_fabric_port_state_t *pState) override;
     ze_result_t getThroughput(zes_fabric_port_throughput_t *pThroughput) override;
+    ze_result_t getErrorCounters(zes_fabric_port_error_counters_t *pErrors) override;
 
     LinuxFabricPortImp() = delete;
     LinuxFabricPortImp(OsFabricDevice *pOsFabricDevice, uint32_t portNum);
