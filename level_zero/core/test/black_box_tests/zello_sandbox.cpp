@@ -6,10 +6,191 @@
  */
 
 #include "zello_common.h"
+#include "zello_compile.h"
 
 #include <bitset>
 #include <cstring>
 #include <sstream>
+
+const char *addConstModuleSrc = R"===(
+kernel void add_constant(global int *values, int addval) {
+
+    const int xid = get_global_id(0);
+    values[xid] = values[xid] + addval;
+}
+)===";
+
+void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_device_handle_t &device,
+                                            bool &outputValidationSuccessful, bool aubMode, bool asyncMode) {
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
+
+    std::string buildLog;
+    auto spirV = compileToSpirV(addConstModuleSrc, "", buildLog);
+    if (buildLog.size() > 0) {
+        std::cout << "Build log " << buildLog;
+    }
+    SUCCESS_OR_TERMINATE((0 == spirV.size()));
+
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    ze_module_build_log_handle_t buildlog;
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = spirV.data();
+    moduleDesc.inputSize = spirV.size();
+    moduleDesc.pBuildFlags = "";
+
+    if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
+        size_t szLog = 0;
+        zeModuleBuildLogGetString(buildlog, &szLog, nullptr);
+
+        char *strLog = (char *)malloc(szLog);
+        zeModuleBuildLogGetString(buildlog, &szLog, strLog);
+        std::cout << "Build log:" << strLog << std::endl;
+
+        free(strLog);
+        SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+        std::cout << "\nZello Sandbox test Immediate and Regular concurrent execution validation FAILED. Module creation error."
+                  << std::endl;
+        SUCCESS_OR_TERMINATE_BOOL(false);
+    }
+    SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "add_constant";
+    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+
+    ze_command_queue_handle_t cmdQueue = nullptr;
+    ze_command_list_handle_t cmdList = nullptr;
+    ze_command_list_handle_t immediateCmdList = nullptr;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+    cmdQueueDesc.index = 0;
+    selectQueueMode(cmdQueueDesc, !asyncMode);
+
+    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &immediateCmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
+    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+
+    const size_t kernelDataSize = 32;
+    const int numIteration = 5;
+    int constValue = 10;
+    const size_t totalKernelDataSize = kernelDataSize * sizeof(int);
+
+    void *sharedBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    deviceDesc.ordinal = 0;
+    deviceDesc.flags = 0;
+    deviceDesc.pNext = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = nullptr;
+    hostDesc.flags = 0;
+
+    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc,
+                                          totalKernelDataSize, 1, device, &sharedBuffer));
+    memset(sharedBuffer, 0x0, totalKernelDataSize);
+
+    uint32_t groupSizeX = kernelDataSize;
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(sharedBuffer), &sharedBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(constValue), &constValue));
+
+    ze_group_count_t groupCount;
+    groupCount.groupCountX = 1;
+    groupCount.groupCountY = 1;
+    groupCount.groupCountZ = 1;
+
+    const size_t regularCmdlistBufSize = 4096;
+    std::vector<uint8_t> sourceSystemMemory(regularCmdlistBufSize);
+    std::vector<uint8_t> destSystemMemory(regularCmdlistBufSize, 0);
+
+    memset(sourceSystemMemory.data(), 1, regularCmdlistBufSize);
+
+    void *deviceMemory = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, regularCmdlistBufSize, regularCmdlistBufSize, device, &deviceMemory));
+
+    ze_event_pool_handle_t eventPool;
+    ze_event_handle_t events[3];
+    createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 3, events, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, deviceMemory, sourceSystemMemory.data(), regularCmdlistBufSize, events[1], 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, destSystemMemory.data(), deviceMemory, regularCmdlistBufSize, events[2], 1, &events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+
+    int valCheck = constValue;
+    for (uint32_t iter = 0; iter < numIteration; iter++) {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(immediateCmdList, kernel, &groupCount, events[0], 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[0], std::numeric_limits<uint64_t>::max()));
+        SUCCESS_OR_TERMINATE(zeEventHostReset(events[0]));
+
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[2], std::numeric_limits<uint64_t>::max()));
+        SUCCESS_OR_TERMINATE(zeEventHostReset(events[1]));
+        SUCCESS_OR_TERMINATE(zeEventHostReset(events[2]));
+
+        if (!aubMode) {
+            for (size_t i = 0; i < kernelDataSize; i++) {
+                if (static_cast<int *>(sharedBuffer)[i] != valCheck) {
+                    std::cout << "data mismatch at " << i << " expect " << valCheck << " is " << static_cast<int *>(sharedBuffer)[i] << " at iteration " << iter << " \n ";
+                    outputValidationSuccessful = false;
+                }
+            }
+
+            if (0 != memcmp(sourceSystemMemory.data(), destSystemMemory.data(), regularCmdlistBufSize)) {
+                std::cout << "regular cmdlist execution mismatch at iteration " << iter << " \n ";
+                outputValidationSuccessful = false;
+            }
+
+            if (outputValidationSuccessful == false) {
+                break;
+            }
+        }
+
+        constValue += 5;
+        valCheck += constValue;
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(constValue), &constValue));
+
+        uint8_t zero = 0;
+        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(immediateCmdList, deviceMemory, reinterpret_cast<void *>(&zero),
+                                                           sizeof(zero), regularCmdlistBufSize, events[0], 0, nullptr));
+
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[0], std::numeric_limits<uint64_t>::max()));
+        SUCCESS_OR_TERMINATE(zeEventHostReset(events[0]));
+    }
+
+    SUCCESS_OR_TERMINATE(zeEventDestroy(events[0]));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(events[1]));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(events[2]));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, sharedBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, deviceMemory));
+
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(immediateCmdList));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+}
+
+std::string testNameImmediateAndRegularCommandLists(bool async) {
+    std::ostringstream testStream;
+
+    testStream << "Regular and immediate concurrent execution "
+               << (async ? "asynchronous" : "synchronous")
+               << " command list mode";
+
+    return testStream.str();
+}
 
 void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_handle_t &device,
                                       uint32_t flags, bool useImmediate, bool asyncMode, bool &outputValidationSuccessful) {
@@ -403,6 +584,7 @@ TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue) {
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMemoryTransfer5x = 0u;
     constexpr uint32_t bitNumberTestEventSyncForMultiTileAndCopy = 1u;
+    constexpr uint32_t bitNumberTestImmediateAndRegularCommandLists = 2u;
 
     const std::string blackBoxName = "Zello Sandbox";
     std::string currentTest;
@@ -487,6 +669,20 @@ int main(int argc, char *argv[]) {
             currentTest = testEventSyncForMultiTileAndCopy(useImmediate, true);
             testFlag = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
             executeEventSyncForMultiTileAndCopy(context, device, testFlag, useImmediate, outputValidationSuccessful);
+            printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        }
+    }
+
+    if (testMask.test(bitNumberTestImmediateAndRegularCommandLists)) {
+        if (outputValidationSuccessful || aubMode) {
+            currentTest = testNameImmediateAndRegularCommandLists(asyncMode);
+            executeImmediateAndRegularCommandLists(context, device, outputValidationSuccessful, aubMode, asyncMode);
+            printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        }
+
+        if (outputValidationSuccessful || aubMode) {
+            currentTest = testNameImmediateAndRegularCommandLists(!asyncMode);
+            executeImmediateAndRegularCommandLists(context, device, outputValidationSuccessful, aubMode, !asyncMode);
             printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
         }
     }
