@@ -23,6 +23,8 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     ~WddmDirectSubmission() override;
 
+    void flushMonitorFence() override;
+
   protected:
     bool allocateOsResources() override;
     bool submit(uint64_t gpuAddress, size_t size) override;
@@ -31,6 +33,7 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     void handleCompletionFence(uint64_t completionValue, MonitoredFence &fence);
     void ensureRingCompletion() override;
     void handleSwitchRingBuffers() override;
+    void handleStopRingBuffer() override;
     uint64_t updateTagValue() override;
     void getTagAddressValue(TagData &tagData) override;
     bool isCompleted(uint32_t ringBufferIndex) override;

@@ -259,6 +259,7 @@ class CommandStreamReceiver {
     virtual SubmissionStatus flushTagUpdate() = 0;
     virtual void updateTagFromWait() = 0;
     virtual bool isUpdateTagFromWaitEnabled() = 0;
+    virtual void flushMonitorFence(){};
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();

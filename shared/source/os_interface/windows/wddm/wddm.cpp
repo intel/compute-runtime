@@ -9,8 +9,6 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/client_context/map_gpu_va_gmm.h"
@@ -43,7 +41,6 @@
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
-#include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
 
@@ -567,15 +564,11 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     bool ret = true;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (gmm->isCompressionEnabled && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
-        for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
-            if (rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get() == &rootDeviceEnvironment) {
-                for (auto &engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-                    if (engine.commandStreamReceiver->pageTableManager.get()) {
-                        ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
-                    }
-                }
+        this->forEachContextWithinWddm([&](const EngineControl &engine) {
+            if (engine.commandStreamReceiver->pageTableManager.get()) {
+                ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
             }
-        }
+        });
     }
 
     return ret;
@@ -1075,6 +1068,13 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
     NTSTATUS status = STATUS_SUCCESS;
 
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
+        if (lastFenceValue > monitoredFence.lastSubmittedFence) {
+            this->forEachContextWithinWddm([](const EngineControl &engine) {
+                auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                engine.commandStreamReceiver->flushMonitorFence();
+            });
+        }
+
         D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
         waitFromCpu.ObjectCount = 1;
         waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
@@ -1260,13 +1260,7 @@ void Wddm::setNewResourceBoundToPageTable() {
     if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired()) {
         return;
     }
-    for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
-        if (rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get() == &rootDeviceEnvironment) {
-            for (const auto &engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-                engine.osContext->setNewResourceBound();
-            }
-        }
-    }
+    this->forEachContextWithinWddm([](const EngineControl &engine) { engine.osContext->setNewResourceBound(); });
 }
 
 } // namespace NEO

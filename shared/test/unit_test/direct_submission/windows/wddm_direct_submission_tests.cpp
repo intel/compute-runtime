@@ -306,6 +306,21 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
     EXPECT_EQ(nullptr, bbStart);
 }
 
+HWTEST_F(WddmDirectSubmissionTest, givenWddmDirectSubmissionWhenDispatchMonitorFenceThenProgramPipeControl) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    bool ret = wddmDirectSubmission.initialize(false, false);
+    EXPECT_TRUE(ret);
+
+    wddmDirectSubmission.flushMonitorFence();
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, 0u);
+    auto pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_NE(nullptr, pipeControl);
+}
+
 HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenHandleNewResourcesSubmissionThenDispatchProperCommands) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
@@ -403,6 +418,50 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcomple
 
     uint64_t actualTagValue = wddmDirectSubmission.updateTagValue();
     EXPECT_EQ(value, actualTagValue);
+    EXPECT_EQ(value + 1, contextFence.currentFenceValue);
+    EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenUpdatingTagValueThenDoNotUpdateCompletionFenceAndReturnZero) {
+    uint64_t address = 0xFF00FF0000ull;
+    uint64_t value = 0x12345678ull;
+    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+    contextFence.gpuAddress = address;
+    contextFence.currentFenceValue = value;
+
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = true;
+
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue();
+    EXPECT_EQ(0ull, actualTagValue);
+    EXPECT_EQ(value, contextFence.currentFenceValue);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenHandleStopRingBufferThenExpectCompletionFenceUpdated) {
+    uint64_t address = 0xFF00FF0000ull;
+    uint64_t value = 0x12345678ull;
+    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+    contextFence.gpuAddress = address;
+    contextFence.currentFenceValue = value;
+
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = true;
+
+    wddmDirectSubmission.handleStopRingBuffer();
+    EXPECT_EQ(value + 1, contextFence.currentFenceValue);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenHandleSwitchRingBufferThenExpectCompletionFenceUpdated) {
+    uint64_t address = 0xFF00FF0000ull;
+    uint64_t value = 0x12345678ull;
+    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+    contextFence.gpuAddress = address;
+    contextFence.currentFenceValue = value;
+
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = true;
+
+    wddmDirectSubmission.handleSwitchRingBuffers();
     EXPECT_EQ(value + 1, contextFence.currentFenceValue);
     EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
 }

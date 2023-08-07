@@ -6,10 +6,13 @@
  */
 
 #pragma once
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
+#include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 #include <atomic>
 
@@ -38,7 +41,6 @@ struct KmDafListener;
 struct MonitoredFence;
 struct OsHandleStorage;
 struct OSMemory;
-struct RootDeviceEnvironment;
 struct WorkaroundTable;
 
 enum class HeapIndex : uint32_t;
@@ -198,6 +200,17 @@ class Wddm : public DriverModel {
 
     uint32_t getAdditionalAdapterInfoOptions() const {
         return additionalAdapterInfoOptions;
+    }
+
+    template <typename F>
+    void forEachContextWithinWddm(F func) {
+        for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+            if (rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get() == &rootDeviceEnvironment) {
+                for (auto &engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+                    func(engine);
+                }
+            }
+        }
     }
 
   protected:

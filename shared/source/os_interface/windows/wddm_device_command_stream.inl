@@ -170,6 +170,13 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
 }
 
 template <typename GfxFamily>
+void WddmCommandStreamReceiver<GfxFamily>::flushMonitorFence() {
+    if (this->directSubmission.get()) {
+        this->directSubmission->flushMonitorFence();
+    }
+}
+
+template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContainer &allocationsForResidency) {
     for (auto &graphicsAllocation : allocationsForResidency) {
         if ((AllocationType::LINEAR_STREAM == graphicsAllocation->getAllocationType()) ||

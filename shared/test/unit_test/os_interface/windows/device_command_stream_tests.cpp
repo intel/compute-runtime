@@ -1116,8 +1116,67 @@ struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectS
         return false;
     }
 
+    void flushMonitorFence() override {
+        flushMonitorFenceCalled++;
+    }
+
     uint32_t dispatchCommandBufferCalled = 0;
+    uint32_t flushMonitorFenceCalled = 0u;
 };
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceThenFlushMonitorFenceOnDirectSubmission) {
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+
+    mockCsr->callParentInitDirectSubmission = false;
+
+    bool ret = csr->initDirectSubmission();
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+
+    mockCsr->directSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
+    auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
+
+    csr->flushMonitorFence();
+
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerThanFenceValueToWaitWhenWaitFromCpuThenFlushMonitorFence) {
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+
+    mockCsr->callParentInitDirectSubmission = false;
+
+    bool ret = csr->initDirectSubmission();
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+
+    mockCsr->directSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
+    auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
+    wddm->callBaseWaitFromCpu = true;
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
+
+    uint64_t value = 0u;
+    NEO::MonitoredFence monitorFence = {};
+    monitorFence.cpuAddress = &value;
+    wddm->waitFromCpu(1, monitorFence);
+
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
+}
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
@@ -1147,6 +1206,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenF
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     EXPECT_GT(directSubmission->dispatchCommandBufferCalled, 0u);
 
+    mockCsr->directSubmission.reset();
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 

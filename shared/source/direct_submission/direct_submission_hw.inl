@@ -960,9 +960,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         }
     }
 
-    if (ringCommandStream.getAvailableSpace() < requiredMinimalSize) {
-        switchRingBuffers();
-    }
+    this->switchRingBuffersNeeded(requiredMinimalSize);
 
     if (this->relaxedOrderingEnabled && batchBuffer.hasStallingCmds && this->relaxedOrderingSchedulerRequired) {
         dispatchRelaxedOrderingQueueStall();
@@ -1025,6 +1023,13 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
     }
 
     return newResourcesBound;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersNeeded(size_t size) {
+    if (this->ringCommandStream.getAvailableSpace() < size) {
+        this->switchRingBuffers();
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>

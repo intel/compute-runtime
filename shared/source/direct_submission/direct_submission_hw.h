@@ -96,6 +96,8 @@ class DirectSubmissionHw {
         return relaxedOrderingEnabled;
     }
 
+    virtual void flushMonitorFence(){};
+
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
     static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);
@@ -110,6 +112,7 @@ class DirectSubmissionHw {
     size_t getSizeNewResourceHandler();
     virtual void handleStopRingBuffer(){};
     virtual void ensureRingCompletion(){};
+    void switchRingBuffersNeeded(size_t size);
     virtual uint64_t switchRingBuffers();
     virtual void handleSwitchRingBuffers() = 0;
     GraphicsAllocation *switchRingBuffersAllocations();

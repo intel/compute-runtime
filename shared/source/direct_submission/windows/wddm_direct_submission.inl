@@ -41,6 +41,10 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(const DirectSu
     if (this->miMemFenceRequired) {
         this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
     }
+
+    if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
+        this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -51,6 +55,31 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
     }
     this->deallocateResources();
     wddm->getWddmInterface()->destroyMonitorFence(ringFence);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
+    this->startRingBuffer();
+
+    size_t requiredMinimalSize = this->getSizeSemaphoreSection(false) +
+                                 Dispatcher::getSizeMonitorFence(this->rootDeviceEnvironment) +
+                                 this->getSizeNewResourceHandler() +
+                                 this->getSizeSwitchRingBufferSection() +
+                                 this->getSizeEnd(false);
+    this->switchRingBuffersNeeded(requiredMinimalSize);
+
+    this->handleNewResourcesSubmission();
+
+    TagData currentTagData = {};
+    this->getTagAddressValue(currentTagData);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
+
+    this->dispatchSemaphoreSection(this->currentQueueWorkCount + 1);
+    this->handleResidency();
+    this->unblockGpu();
+    this->currentQueueWorkCount++;
+
+    this->updateTagValue();
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -97,18 +126,37 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
+    if (this->disableMonitorFence) {
+        MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+        currentFence.lastSubmittedFence = currentFence.currentFenceValue;
+        currentFence.currentFenceValue++;
+    }
+}
+
+template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
+    if (this->disableMonitorFence) {
+        MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+        currentFence.lastSubmittedFence = currentFence.currentFenceValue;
+        currentFence.currentFenceValue++;
+
+        this->ringBuffers[this->currentRingBuffer].completionFence = currentFence.lastSubmittedFence;
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
 uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue() {
-    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    if (!this->disableMonitorFence) {
+        MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
 
-    currentFence.lastSubmittedFence = currentFence.currentFenceValue;
-    currentFence.currentFenceValue++;
-    this->ringBuffers[this->currentRingBuffer].completionFence = currentFence.lastSubmittedFence;
+        currentFence.lastSubmittedFence = currentFence.currentFenceValue;
+        currentFence.currentFenceValue++;
+        this->ringBuffers[this->currentRingBuffer].completionFence = currentFence.lastSubmittedFence;
 
-    return currentFence.lastSubmittedFence;
+        return currentFence.lastSubmittedFence;
+    }
+    return 0ull;
 }
 
 template <typename GfxFamily, typename Dispatcher>
