@@ -284,7 +284,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->dcFlushSupport                                    // dcFlushEnable
     };
 
-    bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
+    bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation && useCounterAllocationForInOrderMode());
 
     if (inOrderExecSignalRequired) {
         if (isTimestampEvent) {

@@ -188,6 +188,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
     void handleInOrderDependencyCounter();
     bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const;
+    bool useCounterAllocationForInOrderMode() const override { return true; }
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;

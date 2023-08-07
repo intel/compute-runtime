@@ -135,6 +135,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     cmdListCurrentStartOffset = 0;
 
     mappedTsEventList.clear();
+
+    inOrderDependencyCounter = 0;
+    inOrderAllocationOffset = 0;
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1387,7 +1391,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
     addToMappedEventList(signalEvent);
 
-    if (this->inOrderExecutionEnabled && (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed)) {
+    if (this->inOrderExecutionEnabled && useCounterAllocationForInOrderMode() && (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed)) {
         if (!signalEvent && !isCopyOnly()) {
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
@@ -2130,7 +2134,11 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
     }
 
     if (hasInOrderDependencies) {
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
+        if (useCounterAllocationForInOrderMode()) {
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
+        } else if (!isCopyOnly()) {
+            appendComputeBarrierCommand();
+        }
     }
 
     if (numWaitEvents > 0) {
@@ -2139,6 +2147,10 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
+    }
+
+    if (cmdListType == TYPE_REGULAR && this->inOrderExecutionEnabled && !hasInOrderDependencies) {
+        inOrderDependencyCounter++; // First append is without dependencies. Increment counter to program barrier on next calls.
     }
 
     return ZE_RESULT_SUCCESS;
@@ -2263,6 +2275,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         if (event->isInOrderExecEvent()) {
+            UNRECOVERABLE_IF(this->cmdListType != TYPE_IMMEDIATE);
             if (isInOrderEventWaitRequired(*event)) {
                 CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), event->getInOrderAllocationOffset(), relaxedOrderingAllowed);
             }

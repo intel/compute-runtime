@@ -727,6 +727,26 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>> createRegularCmdList(bool copyOnly) {
+        auto cmdList = makeZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
+
+        auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+        ze_command_queue_desc_t desc = {};
+
+        mockCmdQs.emplace_back(std::make_unique<Mock<CommandQueue>>(device, csr, &desc));
+
+        auto engineType = copyOnly ? EngineGroupType::Copy : EngineGroupType::RenderCompute;
+
+        cmdList->initialize(device, engineType, 0u);
+        cmdList->enableInOrderExecution();
+
+        createdCmdLists++;
+
+        return cmdList;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
     DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createCopyOnlyImmCmdList() {
         auto cmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -2668,6 +2688,121 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
+}
+
+using InOrderRegularCmdListTests = InOrderCmdListTests;
+
+HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    size_t offset = cmdStream->getUsed();
+
+    EXPECT_EQ(0u, regularCmdList->inOrderDependencyCounter);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(1u, regularCmdList->inOrderDependencyCounter);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+        EXPECT_EQ(nullptr, genCmdCast<PIPE_CONTROL *>(*cmdList.begin()));
+
+        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), walkerItor);
+
+        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto &postSync = walkerCmd->getPostSync();
+
+        EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), sdiItor);
+    }
+
+    offset = cmdStream->getUsed();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(1u, regularCmdList->inOrderDependencyCounter);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+        EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*cmdList.begin()));
+
+        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), walkerItor);
+
+        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto &postSync = walkerCmd->getPostSync();
+
+        EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), sdiItor);
+    }
+
+    regularCmdList->inOrderAllocationOffset = 123;
+
+    regularCmdList->reset();
+    EXPECT_EQ(0u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(0u, regularCmdList->inOrderAllocationOffset);
+}
+
+using InOrderRegularCopyOnlyCmdListTests = InOrderCmdListTests;
+
+HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenDontProgramBarriers, IsAtLeastXeHpCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(true);
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    size_t offset = cmdStream->getUsed();
+
+    auto alignedPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+
+    regularCmdList->appendMemoryCopy(alignedPtr, alignedPtr, MemoryConstants::cacheLineSize, nullptr, 0, nullptr, false, false);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), sdiItor);
+    }
+
+    offset = cmdStream->getUsed();
+
+    regularCmdList->appendMemoryCopy(alignedPtr, alignedPtr, MemoryConstants::cacheLineSize, nullptr, 0, nullptr, false, false);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), sdiItor);
+
+        auto copyCmd = genCmdCast<XY_COPY_BLT *>(*cmdList.begin());
+
+        EXPECT_NE(nullptr, copyCmd);
+    }
+
+    alignedFree(alignedPtr);
 }
 
 struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {

@@ -327,6 +327,7 @@ struct CommandListCoreFamily : CommandListImp {
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const { return false; }
     virtual void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {}
     bool isInOrderEventWaitRequired(const Event &event) const;
+    virtual bool useCounterAllocationForInOrderMode() const { return false; }
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>
