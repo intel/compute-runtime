@@ -183,7 +183,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         }
         csr->initializeResources();
         csr->initDirectSubmission();
-        returnValue = commandList->initialize(device, engineGroupType, desc->flags);
+        returnValue = commandList->initialize(device, engineGroupType, 0);
 
         if ((desc->flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
             commandList->enableInOrderExecution();

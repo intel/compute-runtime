@@ -163,6 +163,21 @@ TEST_F(CommandListCreate, givenOrdinalBiggerThanAvailableEnginesWhenCreatingComm
     EXPECT_EQ(nullptr, commandList);
 }
 
+TEST_F(CommandListCreate, givenQueueFlagsWhenCreatingImmediateCommandListThenDontCopyFlags) {
+    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_EXPLICIT_ONLY;
+    ze_command_list_handle_t commandList = nullptr;
+
+    auto returnValue = device->createCommandListImmediate(&desc, &commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
+    EXPECT_EQ(0u, whiteboxCommandList->flags);
+
+    whiteboxCommandList->destroy();
+}
+
 TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingCommandListThenValidateQueueOrdinalUsingSubDeviceEngines) {
     NEO::UltDeviceFactory deviceFactory{1, 2};
     auto &rootDevice = *deviceFactory.rootDevices[0];
