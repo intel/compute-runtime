@@ -143,6 +143,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
             EXPECT_EQ(value, pipeControl->getImmediateData());
             EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
             EXPECT_TRUE(pipeControl->getTlbInvalidate());
+            EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
             break;
         }
     }
@@ -177,6 +178,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
             EXPECT_EQ(value, pipeControl->getImmediateData());
             EXPECT_TRUE(pipeControl->getNotifyEnable());
             EXPECT_TRUE(pipeControl->getTlbInvalidate());
+            EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
             break;
         }
     }
@@ -206,6 +208,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWithDcFlushFlagTrueWhenAddingMonitorFe
             if (foundMonitorFence) {
                 EXPECT_TRUE(pipeControl->getDcFlushEnable());
                 EXPECT_TRUE(pipeControl->getTlbInvalidate());
+                EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
                 break;
             }
         }
