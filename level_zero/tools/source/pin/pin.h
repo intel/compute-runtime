@@ -8,11 +8,14 @@
 #pragma once
 #include "shared/source/os_interface/os_library.h"
 
-namespace NEO {
+#include <level_zero/ze_api.h>
+#include <level_zero/zet_api.h>
+
+namespace L0 {
 
 class PinContext {
   public:
-    static bool init(const std::string &gtPinOpenFunctionName);
+    static ze_result_t init();
     using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
     static OsLibraryLoadPtr osLibraryLoadFunction;
 
@@ -20,4 +23,4 @@ class PinContext {
     static const std::string gtPinLibraryFilename;
 };
 
-} // namespace NEO
+} // namespace L0

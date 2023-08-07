@@ -17,7 +17,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/pin/pin.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/api/api.h"
@@ -184,17 +183,6 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
     DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleSubDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
     state = StateInited;
     return true;
-}
-
-bool Platform::notifyGtpinInit() {
-    bool res = false;
-    auto notifyGTPin = [](bool &res) {
-        const std::string gtpinFuncName{"OpenGTPinOCL"};
-        res = PinContext::init(gtpinFuncName);
-        return;
-    };
-    std::call_once(this->oclInitGTPinOnce, notifyGTPin, res);
-    return res;
 }
 
 void Platform::fillGlobalDispatchTable() {

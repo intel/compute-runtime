@@ -297,7 +297,6 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         /* If no suitable device, set a error. */
         if (retNum == 0)
             retVal = CL_DEVICE_NOT_FOUND;
-
     } while (false);
     TRACING_EXIT(ClGetDeviceIDs, &retVal);
     return retVal;
@@ -437,13 +436,6 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
             if (pClDevice->getPlatform() != pPlatform) {
                 retVal = CL_INVALID_DEVICE;
                 break;
-            }
-        }
-        /* At this point we can safely notify GTPin to allow initialization */
-        EnvironmentVariableReader envReader;
-        if (envReader.getSetting("ZET_ENABLE_PROGRAM_INSTRUMENTATION", false)) {
-            if (false == pPlatform->notifyGtpinInit()) {
-                retVal = CL_INVALID_OPERATION;
             }
         }
         if (CL_SUCCESS != retVal) {
