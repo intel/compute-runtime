@@ -2692,6 +2692,18 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
 
 using InOrderRegularCmdListTests = InOrderCmdListTests;
 
+HWTEST2_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEnableInOrderMode, IsAtLeastSkl) {
+    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
+
+    ze_command_list_handle_t cmdList;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
+
+    EXPECT_TRUE(static_cast<CommandListCoreFamily<gfxCoreFamily> *>(cmdList)->isInOrderExecutionEnabled());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
+}
+
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;

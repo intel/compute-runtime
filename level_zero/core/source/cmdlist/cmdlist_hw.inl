@@ -238,6 +238,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         }
     }
 
+    if (this->flags & ZE_COMMAND_LIST_FLAG_IN_ORDER) {
+        enableInOrderExecution();
+    }
+
     createLogicalStateHelper();
     return returnType;
 }
