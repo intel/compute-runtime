@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,17 +16,20 @@ std::unique_ptr<PrefetchManager> PrefetchManager::create() {
     return std::make_unique<PrefetchManager>();
 }
 
-void PrefetchManager::insertAllocation(PrefetchContext &context, SvmAllocationData &svmData) {
+void PrefetchManager::insertAllocation(PrefetchContext &context, const void *usmPtr, SvmAllocationData &allocData) {
     std::unique_lock<SpinLock> lock{context.lock};
-    if (svmData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
-        context.allocations.push_back(svmData);
+    if (allocData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+        context.allocations.push_back(usmPtr);
     }
 }
 
 void PrefetchManager::migrateAllocationsToGpu(PrefetchContext &context, SVMAllocsManager &unifiedMemoryManager, Device &device, CommandStreamReceiver &csr) {
     std::unique_lock<SpinLock> lock{context.lock};
-    for (auto allocData : context.allocations) {
-        unifiedMemoryManager.prefetchMemory(device, csr, allocData);
+    for (auto &ptr : context.allocations) {
+        auto allocData = unifiedMemoryManager.getSVMAlloc(ptr);
+        if (allocData) {
+            unifiedMemoryManager.prefetchMemory(device, csr, *allocData);
+        }
     }
 }
 

@@ -23,6 +23,12 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     using SVMAllocsManager::svmMapOperations;
     using SVMAllocsManager::usmDeviceAllocationsCache;
     using SVMAllocsManager::usmDeviceAllocationsCacheEnabled;
+
+    void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData) override {
+        SVMAllocsManager::prefetchMemory(device, commandStreamReceiver, svmData);
+        prefetchMemoryCalled = true;
+    }
+    bool prefetchMemoryCalled = false;
 };
 
 template <bool enableLocalMemory>

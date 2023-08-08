@@ -21,7 +21,7 @@ class Device;
 class SVMAllocsManager;
 
 struct PrefetchContext {
-    std::vector<SvmAllocationData> allocations;
+    std::vector<const void *> allocations;
     SpinLock lock;
 };
 
@@ -31,7 +31,7 @@ class PrefetchManager : public NonCopyableOrMovableClass {
 
     virtual ~PrefetchManager() = default;
 
-    void insertAllocation(PrefetchContext &context, SvmAllocationData &svmData);
+    void insertAllocation(PrefetchContext &context, const void *usmPtr, SvmAllocationData &allocData);
 
     MOCKABLE_VIRTUAL void migrateAllocationsToGpu(PrefetchContext &context, SVMAllocsManager &unifiedMemoryManager, Device &device, CommandStreamReceiver &csr);
 
