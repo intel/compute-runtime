@@ -205,7 +205,7 @@ class SVMAllocsManager {
     std::atomic<uint32_t> allocationsCounter = 0;
     MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount);
     void prepareIndirectAllocationForDestruction(SvmAllocationData *);
-    void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData);
+    MOCKABLE_VIRTUAL void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData);
     void prefetchSVMAllocs(Device &device, CommandStreamReceiver &commandStreamReceiver);
     std::unique_lock<std::mutex> obtainOwnership();
 
