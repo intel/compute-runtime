@@ -64,12 +64,19 @@ SipKernel::~SipKernel() = default;
 SipKernel::SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah) : stateSaveAreaHeader(std::move(ssah)), sipAllocation(sipAlloc), type(type) {
 }
 
+SipKernel::SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah, std::vector<char> binary) : stateSaveAreaHeader(std::move(ssah)), binary(std::move(binary)), sipAllocation(sipAlloc), type(type) {
+}
+
 GraphicsAllocation *SipKernel::getSipAllocation() const {
     return sipAllocation;
 }
 
 const std::vector<char> &SipKernel::getStateSaveAreaHeader() const {
     return stateSaveAreaHeader;
+}
+
+const std::vector<char> &SipKernel::getBinary() const {
+    return binary;
 }
 
 size_t SipKernel::getStateSaveAreaSize(Device *device) const {
@@ -287,6 +294,26 @@ const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device, OsContext 
         return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
     default:
         return device.getBuiltIns()->getSipKernel(device, context);
+    }
+}
+
+void SipKernel::parseBinaryForContextId() {
+    const int pattern = 0xCAFEBEAD;
+    auto memory = reinterpret_cast<const int *>(binary.data());
+    const auto sizeInDwords = binary.size() / sizeof(int);
+    for (size_t i = 1; i < sizeInDwords; i++) {
+        auto currentDword = memory + i;
+        if (*currentDword == pattern) {
+            for (size_t j = 1; (j < 16) && (i + j < sizeInDwords); j++) {
+
+                if (*(currentDword + j) == pattern) {
+                    contextIdOffsets[0] = i;
+                    contextIdOffsets[1] = i + j;
+                    break;
+                }
+            }
+            break;
+        }
     }
 }
 

@@ -14,10 +14,13 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -462,6 +465,7 @@ TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSip
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
 
     const uint32_t contextId = 0u;
@@ -490,6 +494,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenGettingSipForContextThenCorr
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
     executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
 
@@ -519,6 +524,7 @@ TEST(DebugBindlessSip, givenTwoContextsWhenBindlessDebugSipIsRequestedThenEachSi
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
 
     const uint32_t context0Id = 0u;
@@ -556,6 +562,7 @@ TEST(DebugBindlessSip, givenFailingSipAllocationWhenBindlessDebugSipWithContextI
     executionEnvironment->memoryManager.reset(mockMemoryManager);
 
     auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
 
     const uint32_t contextId = 0u;
@@ -584,6 +591,7 @@ TEST(DebugBindlessSip, givenCorrectSipKernelWhenReleasingAllocationManuallyThenF
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
 
     const uint32_t contextId = 0u;
@@ -601,4 +609,121 @@ TEST(DebugBindlessSip, givenCorrectSipKernelWhenReleasingAllocationManuallyThenF
 
     mockDevice->getMemoryManager()->freeGraphicsMemory(builtIns->perContextSipKernels[contextId].first.get()->getSipAllocation());
     builtIns->perContextSipKernels[contextId].first.reset(nullptr);
+}
+
+TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenSipIsInitializedThenBinaryIsParsed) {
+    MockCompilerDebugVars igcDebugVars;
+    uint32_t binary[20] = {0};
+    binary[2] = 0xcafebead;
+    binary[6] = 0xcafebead;
+    igcDebugVars.binaryToReturnSize = sizeof(binary);
+    igcDebugVars.binaryToReturn = binary;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    auto executionEnvironment = mockDevice->getExecutionEnvironment();
+    auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+
+    auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext->debuggableContext = true;
+
+    auto csr = mockDevice->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    EXPECT_NE(nullptr, mockDevice);
+
+    mockDevice->getBuiltIns()->getSipKernel(SipKernelType::DbgBindless, *mockDevice);
+
+    auto sipKernel = builtIns->sipKernels[static_cast<uint32_t>(SipKernelType::DbgBindless)].first.get();
+
+    EXPECT_NE(nullptr, sipKernel);
+
+    EXPECT_EQ(2u, sipKernel->getCtxOffset());
+    EXPECT_EQ(6u, sipKernel->getPidOffset());
+    EXPECT_EQ(sizeof(binary), sipKernel->getBinary().size());
+
+    gEnvironment->igcPopDebugVars();
+}
+
+TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitializedThenContextIdOffsetsAreZero) {
+    MockCompilerDebugVars igcDebugVars;
+    uint32_t binary[20] = {0};
+    binary[19] = 0xcafebead;
+    igcDebugVars.binaryToReturnSize = sizeof(binary);
+    igcDebugVars.binaryToReturn = binary;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    auto executionEnvironment = mockDevice->getExecutionEnvironment();
+    auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+
+    auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext->debuggableContext = true;
+
+    auto csr = mockDevice->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    EXPECT_NE(nullptr, mockDevice);
+
+    mockDevice->getBuiltIns()->getSipKernel(SipKernelType::DbgBindless, *mockDevice);
+
+    auto sipKernel = builtIns->sipKernels[static_cast<uint32_t>(SipKernelType::DbgBindless)].first.get();
+
+    EXPECT_NE(nullptr, sipKernel);
+
+    EXPECT_EQ(0u, sipKernel->getCtxOffset());
+    EXPECT_EQ(0u, sipKernel->getPidOffset());
+    EXPECT_EQ(sizeof(binary), sipKernel->getBinary().size());
+
+    gEnvironment->igcPopDebugVars();
+}
+
+TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedThenContextIdIsPatched) {
+    MockCompilerDebugVars igcDebugVars;
+    uint32_t binary[20] = {0};
+    binary[2] = 0xcafebead;
+    binary[6] = 0xcafebead;
+    igcDebugVars.binaryToReturnSize = sizeof(binary);
+    igcDebugVars.binaryToReturn = binary;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto executionEnvironment = mockDevice->getExecutionEnvironment();
+    auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+
+    auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext->debuggableContext = true;
+    osContext->offlineDumpCtxId = uint64_t(0xAA) << 32 | 0xBB;
+
+    auto csr = mockDevice->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
+
+    EXPECT_NE(nullptr, &sipKernel);
+
+    EXPECT_EQ(0u, sipKernel.getCtxOffset());
+    EXPECT_EQ(0u, sipKernel.getPidOffset());
+    EXPECT_EQ(0u, sipKernel.getBinary().size());
+
+    uint32_t *patchedBinary = reinterpret_cast<uint32_t *>(sipKernel.getSipAllocation()->getUnderlyingBuffer());
+    uint32_t low = static_cast<uint32_t>(osContext->getOfflineDumpContextId(0) & 0xFFFFFFFFu);
+    uint32_t high = static_cast<uint32_t>((osContext->getOfflineDumpContextId(0) >> 32) & 0xFFFFFFFFu);
+    EXPECT_EQ(low, patchedBinary[2]);
+    EXPECT_EQ(high, patchedBinary[6]);
+
+    gEnvironment->igcPopDebugVars();
 }

@@ -24,6 +24,7 @@ struct RootDeviceEnvironment;
 
 class SipKernel {
   public:
+    SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah, std::vector<char> binary);
     SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah);
     SipKernel(const SipKernel &) = delete;
     SipKernel &operator=(const SipKernel &) = delete;
@@ -35,9 +36,20 @@ class SipKernel {
         return type;
     }
 
+    size_t getCtxOffset() const {
+        return contextIdOffsets[0];
+    }
+
+    size_t getPidOffset() const {
+        return contextIdOffsets[1];
+    }
+
     MOCKABLE_VIRTUAL GraphicsAllocation *getSipAllocation() const;
     MOCKABLE_VIRTUAL const std::vector<char> &getStateSaveAreaHeader() const;
     MOCKABLE_VIRTUAL size_t getStateSaveAreaSize(Device *device) const;
+    MOCKABLE_VIRTUAL const std::vector<char> &getBinary() const;
+
+    MOCKABLE_VIRTUAL void parseBinaryForContextId();
 
     static bool initSipKernel(SipKernelType type, Device &device);
     static void freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager);
@@ -69,6 +81,8 @@ class SipKernel {
     static void selectSipClassType(std::string &fileName, const GfxCoreHelper &gfxCoreHelper);
 
     const std::vector<char> stateSaveAreaHeader;
+    const std::vector<char> binary;
+    size_t contextIdOffsets[2] = {0, 0};
     GraphicsAllocation *sipAllocation = nullptr;
     SipKernelType type = SipKernelType::COUNT;
 };

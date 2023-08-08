@@ -134,6 +134,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     using STATE_SIP = typename FamilyType::STATE_SIP;
     auto executionEnvironment = device->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
     device->executionEnvironment->setDebuggingMode(DebuggingMode::Offline);

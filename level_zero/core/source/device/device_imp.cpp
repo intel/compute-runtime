@@ -1195,6 +1195,13 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
             bool ret = NEO::SipKernel::initSipKernel(NEO::SipKernel::getSipKernelType(*neoDevice), *neoDevice);
             UNRECOVERABLE_IF(!ret);
 
+            if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == NEO::DebuggingMode::Offline) {
+                if (NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getCtxOffset() == 0) {
+                    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                          "Invalid SIP binary.\n");
+                }
+            }
+
             stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaHeader();
             debugSurfaceSize = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaSize(neoDevice);
         } else {

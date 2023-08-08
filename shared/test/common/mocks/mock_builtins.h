@@ -18,13 +18,17 @@ namespace NEO {
 class MockBuiltins : public BuiltIns {
   public:
     using BuiltIns::perContextSipKernels;
+    using BuiltIns::sipKernels;
 
     const SipKernel &getSipKernel(SipKernelType type, Device &device) override {
+        getSipKernelCalled = true;
+        getSipKernelType = type;
         if (sipKernelsOverride.find(type) != sipKernelsOverride.end()) {
             return *sipKernelsOverride[type];
         }
-        getSipKernelCalled = true;
-        getSipKernelType = type;
+        if (callBaseGetSipKernel) {
+            return BuiltIns::getSipKernel(type, device);
+        }
         MockSipData::mockSipKernel->type = type;
         return *MockSipData::mockSipKernel;
     }
@@ -34,6 +38,7 @@ class MockBuiltins : public BuiltIns {
     }
     std::map<SipKernelType, std::unique_ptr<MockSipKernel>> sipKernelsOverride;
     bool getSipKernelCalled = false;
+    bool callBaseGetSipKernel = false;
     SipKernelType getSipKernelType = SipKernelType::COUNT;
 };
 } // namespace NEO

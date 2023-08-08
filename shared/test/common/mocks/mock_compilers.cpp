@@ -538,6 +538,12 @@ bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutine
         return false;
     }
 
+    if (debugVars.binaryToReturnSize > 0 && debugVars.binaryToReturn != nullptr) {
+        outSystemRoutineBuffer->PushBackRawBytes(debugVars.binaryToReturn, debugVars.binaryToReturnSize);
+        stateSaveAreaHeaderInit->PushBackRawBytes(mockData2, 64);
+        return true;
+    }
+
     outSystemRoutineBuffer->PushBackRawBytes(mockData1, 64);
     stateSaveAreaHeaderInit->PushBackRawBytes(mockData2, 64);
     return true;

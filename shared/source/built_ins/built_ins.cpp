@@ -10,6 +10,9 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -56,7 +59,11 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
                                                              device, sipAllocation, 0, sipBinary.data(),
                                                              sipBinary.size());
         }
-        sipBuiltIn.first.reset(new SipKernel(type, sipAllocation, std::move(stateSaveAreaHeader)));
+        sipBuiltIn.first.reset(new SipKernel(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary)));
+
+        if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) {
+            sipBuiltIn.first->parseBinaryForContextId();
+        }
     };
     std::call_once(sipBuiltIn.second, initializer);
     UNRECOVERABLE_IF(sipBuiltIn.first == nullptr);
@@ -67,32 +74,44 @@ const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
     const uint32_t contextId = context->getContextId();
     const SipKernelType type = SipKernelType::DbgBindless;
 
+    auto &bindlessSip = this->getSipKernel(type, device);
+    auto copySuccess = false;
+
     auto initializer = [&] {
-        std::vector<char> sipBinary;
-        std::vector<char> stateSaveAreaHeader;
-        auto compilerInterface = device.getCompilerInterface();
-        UNRECOVERABLE_IF(compilerInterface == nullptr);
+        UNRECOVERABLE_IF(bindlessSip.getBinary().size() == 0);
 
-        auto ret = compilerInterface->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
-
-        UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
-        UNRECOVERABLE_IF(sipBinary.size() == 0);
+        auto binarySize = alignUp(bindlessSip.getBinary().size(), sizeof(uint32_t)) / sizeof(uint32_t);
+        auto binary = std::make_unique<uint32_t[]>(binarySize);
+        memcpy_s(binary.get(), binarySize * sizeof(uint32_t), bindlessSip.getBinary().data(), bindlessSip.getBinary().size());
 
         const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
 
-        AllocationProperties properties = {device.getRootDeviceIndex(), sipBinary.size(), allocType, device.getDeviceBitfield()};
+        AllocationProperties properties = {device.getRootDeviceIndex(), bindlessSip.getBinary().size(), allocType, device.getDeviceBitfield()};
         properties.flags.use32BitFrontWindow = false;
 
         auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
-        auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
-        auto &productHelper = device.getProductHelper();
-
         if (sipAllocation) {
-            MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
-                                                             device, sipAllocation, 0, sipBinary.data(),
-                                                             sipBinary.size());
+
+            for (uint32_t deviceIndex = 0; deviceIndex < context->getDeviceBitfield().size(); deviceIndex++) {
+                if (!context->getDeviceBitfield().test(deviceIndex)) {
+                    continue;
+                }
+
+                if (bindlessSip.getCtxOffset() != 0) {
+                    binary[bindlessSip.getCtxOffset()] = static_cast<uint32_t>(context->getOfflineDumpContextId(deviceIndex) & 0xFFFFFFFF);
+                    binary[bindlessSip.getPidOffset()] = static_cast<uint32_t>((context->getOfflineDumpContextId(deviceIndex) >> 32) & 0xFFFFFFFF);
+                }
+
+                DeviceBitfield copyBitfield{};
+                copyBitfield.set(deviceIndex);
+                copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
+                DEBUG_BREAK_IF(!copySuccess);
+            }
         }
+
+        std::vector<char> stateSaveAreaHeader;
+        stateSaveAreaHeader.assign(bindlessSip.getStateSaveAreaHeader().begin(), bindlessSip.getStateSaveAreaHeader().end());
         perContextSipKernels[contextId].first = std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
     };
     std::call_once(perContextSipKernels[contextId].second, initializer);
