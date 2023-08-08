@@ -26,9 +26,7 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
 };
 
 struct MockExecutionEnvironment : ExecutionEnvironment {
-    using ExecutionEnvironment::adjustCcsCountImpl;
     using ExecutionEnvironment::directSubmissionController;
-    using ExecutionEnvironment::rootDeviceEnvironments;
 
     ~MockExecutionEnvironment() override = default;
     MockExecutionEnvironment();
