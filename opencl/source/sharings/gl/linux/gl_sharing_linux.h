@@ -29,9 +29,6 @@ typedef void (*PFNglArbSyncObjectCleanup)(OSInterface &osInterface, CL_GL_SYNC_I
 typedef void (*PFNglArbSyncObjectSignal)(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo);
 typedef void (*PFNglArbSyncObjectWaitServer)(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo);
 
-typedef EGLImage (*PFNeglCreateImage)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLAttrib *attribList);
-typedef EGLBoolean (*PFNeglDestroyImage)(EGLDisplay dpy, EGLImage image);
-
 class GLSharingFunctionsLinux : public GLSharingFunctions {
   public:
     GLSharingFunctionsLinux() = default;
@@ -104,8 +101,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     PFNglArbSyncObjectCleanup pfnGlArbSyncObjectCleanup = nullptr;
     PFNglArbSyncObjectSignal pfnGlArbSyncObjectSignal = nullptr;
     PFNglArbSyncObjectWaitServer pfnGlArbSyncObjectWaitServer = nullptr;
-    PFNeglCreateImage eglCreateImage = nullptr;
-    PFNeglDestroyImage eglDestroyImage = nullptr;
     // support for GL_ARB_cl_event
     std::mutex glArbEventMutex;
     std::unordered_map<Event *, GlArbSyncEvent *> glArbEventMapping;

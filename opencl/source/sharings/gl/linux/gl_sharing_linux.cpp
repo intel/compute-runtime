@@ -108,8 +108,6 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
 
     if (eglLibrary->isLoaded()) {
         GlFunctionHelper eglGetProc(eglLibrary.get(), "eglGetProcAddress");
-        eglCreateImage = eglGetProc["eglCreateImage"];
-        eglDestroyImage = eglGetProc["eglDestroyImage"];
         eglGLInteropQueryDeviceInfo = eglGetProc["eglGLInteropQueryDeviceInfoMESA"];
         eglGLInteropExportObject = eglGetProc["eglGLInteropExportObjectMESA"];
         eglGLInteropFlushObjects = eglGetProc["eglGLInteropFlushObjectsMESA"];

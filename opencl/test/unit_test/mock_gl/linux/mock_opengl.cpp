@@ -103,17 +103,6 @@ EGLAPI EGLBoolean EGLAPIENTRY eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EG
     return EGL_TRUE;
 };
 
-EGLImage eglCreateImage(EGLDisplay display, EGLContext context, EGLenum target, EGLClientBuffer buffer, const EGLAttrib *attribList) {
-    return mockImage;
-}
-
-EGLBoolean eglDestroyImage(EGLDisplay dpy, EGLImage image) {
-    if (image == mockImage)
-        return EGL_TRUE;
-    else
-        return EGL_FALSE;
-}
-
 void resetParam(const char *name) {
     if (strcmp(name, "GLAcquireSharedBufferCalled") == 0) {
         glAcquireSharedBufferCalled = 0;
@@ -267,10 +256,6 @@ EGLAPI __eglMustCastToProperFunctionPointerType EGLAPIENTRY eglGetProcAddress(co
         return reinterpret_cast<__eglMustCastToProperFunctionPointerType EGLAPIENTRY>(eglDestroyContext);
     } else if (functionName == "eglMakeCurrent") {
         return reinterpret_cast<__eglMustCastToProperFunctionPointerType EGLAPIENTRY>(eglMakeCurrent);
-    } else if (functionName == "eglCreateImage") {
-        return reinterpret_cast<__eglMustCastToProperFunctionPointerType EGLAPIENTRY>(eglCreateImage);
-    } else if (functionName == "eglDestroyImage") {
-        return reinterpret_cast<__eglMustCastToProperFunctionPointerType EGLAPIENTRY>(eglDestroyImage);
     } else if (functionName == "eglExportDMABUFImageMESA") {
         return reinterpret_cast<__eglMustCastToProperFunctionPointerType EGLAPIENTRY>(eglExportDMABUFImageMESA);
     }
