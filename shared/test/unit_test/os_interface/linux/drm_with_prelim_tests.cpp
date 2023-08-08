@@ -465,7 +465,6 @@ TEST_F(IoctlHelperPrelimFixture,
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableBOChunking.set(1);
     DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
-    DebugManager.flags.PrintBOPrefetchingResult.set(1);
 
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
@@ -494,7 +493,6 @@ TEST_F(IoctlHelperPrelimFixture,
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableBOChunking.set(1);
     DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
-    DebugManager.flags.PrintBOPrefetchingResult.set(1);
 
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},

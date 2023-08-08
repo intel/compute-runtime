@@ -566,7 +566,6 @@ TEST_F(DrmMemoryOperationsHandlerBindTest,
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableBOChunking.set(3);
     DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
-    DebugManager.flags.PrintBOPrefetchingResult.set(1);
 
     auto size = 4096u;
     BufferObjects bos;
