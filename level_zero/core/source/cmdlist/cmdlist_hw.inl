@@ -1484,7 +1484,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     addToMappedEventList(signalEvent);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
 
-    if (this->inOrderExecutionEnabled && isCopyOnly() && inOrderCopyOnlySignalingAllowed) {
+    if (this->inOrderExecutionEnabled && useCounterAllocationForInOrderMode() && isCopyOnly() && inOrderCopyOnlySignalingAllowed) {
         appendSignalInOrderDependencyCounter();
     }
 
@@ -1901,7 +1901,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
     addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent);
 
-    if (this->inOrderExecutionEnabled && launchParams.isKernelSplitOperation) {
+    if (this->inOrderExecutionEnabled && useCounterAllocationForInOrderMode() && launchParams.isKernelSplitOperation) {
         if (!signalEvent) {
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
@@ -1967,7 +1967,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
 
         appendSignalEventPostWalker(signalEvent);
 
-        if (isInOrderExecutionEnabled()) {
+        if (isInOrderExecutionEnabled() && useCounterAllocationForInOrderMode()) {
             appendSignalInOrderDependencyCounter();
         }
     }
@@ -2181,7 +2181,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
     dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync);
 
-    if (this->inOrderExecutionEnabled) {
+    if (this->inOrderExecutionEnabled && useCounterAllocationForInOrderMode()) {
         appendSignalInOrderDependencyCounter();
     }
 
@@ -2201,6 +2201,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     UNRECOVERABLE_IF(waitValue > std::numeric_limits<uint32_t>::max());
+    UNRECOVERABLE_IF(!useCounterAllocationForInOrderMode());
 
     commandContainer.addToResidencyContainer(dependencyCounterAllocation);
 
@@ -2313,6 +2314,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter() {
+    UNRECOVERABLE_IF(!useCounterAllocationForInOrderMode());
+
     uint32_t signalValue = this->inOrderDependencyCounter + 1;
 
     uint64_t gpuVa = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
@@ -2942,7 +2945,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 
     appendEventForProfiling(signalEvent, true);
 
-    if (this->inOrderExecutionEnabled) {
+    if (this->inOrderExecutionEnabled && useCounterAllocationForInOrderMode()) {
         appendSignalInOrderDependencyCounter();
     } else if (isCopyOnly()) {
         NEO::MiFlushArgs args{this->dummyBlitWa};

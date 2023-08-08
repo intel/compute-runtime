@@ -77,6 +77,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::initialize;
     using BaseClass::inOrderAllocationOffset;
     using BaseClass::inOrderDependencyCounter;
+    using BaseClass::inOrderDependencyCounterAllocation;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isRelaxedOrderingDispatchAllowed;
     using BaseClass::isSyncModeQueue;

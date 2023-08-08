@@ -2758,6 +2758,62 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     EXPECT_EQ(0u, regularCmdList->inOrderAllocationOffset);
 }
 
+HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenDontUpdateCounterAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto regularCopyOnlyCmdList = createRegularCmdList<gfxCoreFamily>(true);
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+    auto copyOnlyCmdStream = regularCopyOnlyCmdList->getCmdContainer().getCommandStream();
+
+    size_t offset = cmdStream->getUsed();
+
+    EXPECT_EQ(0u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(nullptr, regularCmdList->inOrderDependencyCounterAllocation);
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+
+    regularCmdList->appendMemoryCopyRegion(data, &region, 1, 1, data, &region, 1, 1, nullptr, 0, nullptr, false, false);
+
+    regularCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
+
+    regularCmdList->appendSignalEvent(eventHandle);
+
+    regularCmdList->appendBarrier(nullptr, 1, &eventHandle);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), sdiItor);
+    }
+
+    offset = copyOnlyCmdStream->getUsed();
+    regularCopyOnlyCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(copyOnlyCmdStream->getCpuBase(), offset),
+                                                          (copyOnlyCmdStream->getUsed() - offset)));
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), sdiItor);
+    }
+
+    context->freeMem(data);
+}
+
 using InOrderRegularCopyOnlyCmdListTests = InOrderCmdListTests;
 
 HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenDontProgramBarriers, IsAtLeastXeHpCore) {
