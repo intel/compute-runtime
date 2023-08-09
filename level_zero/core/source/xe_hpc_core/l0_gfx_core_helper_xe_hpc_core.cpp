@@ -30,6 +30,11 @@ bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
     return true;
 }
 
+template <>
+bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking() const {
+    return true;
+}
+
 template class L0GfxCoreHelperHw<Family>;
 
 } // namespace L0
