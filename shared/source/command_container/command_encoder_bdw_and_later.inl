@@ -77,7 +77,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     {
         auto alloc = args.dispatchInterface->getIsaAllocation();
         UNRECOVERABLE_IF(nullptr == alloc);
-        auto offset = alloc->getGpuAddressToPatch();
+        auto offset = alloc->getGpuAddressToPatch() + args.dispatchInterface->getIsaOffsetInParentAllocation();
         idd.setKernelStartPointer(offset);
         idd.setKernelStartPointerHigh(0u);
     }

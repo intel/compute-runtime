@@ -123,19 +123,8 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
 struct ModuleFixture : public DeviceFixture {
 
-    struct ProxyModuleImp : public WhiteBox<::L0::Module> {
-        using BaseClass = WhiteBox<::L0::Module>;
-        using BaseClass::BaseClass;
-
-        std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmDatas() {
-            return kernelImmDatas;
-        }
-
-        static ModuleFixture::ProxyModuleImp *create(L0::Device *device, const ze_module_desc_t *desc,
-                                                     ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
-    };
-
-    void setUp();
+    void setUp(bool skipCreatingModules);
+    void setUp() { this->setUp(false); }
 
     void createModuleFromMockBinary(ModuleType type = ModuleType::User);
 
@@ -147,7 +136,7 @@ struct ModuleFixture : public DeviceFixture {
 
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
-    std::unique_ptr<ProxyModuleImp> module;
+    std::unique_ptr<WhiteBox<::L0::Module>> module;
     std::unique_ptr<WhiteBox<::L0::KernelImp>> kernel;
     std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
     DebugManagerStateRestore restore;
