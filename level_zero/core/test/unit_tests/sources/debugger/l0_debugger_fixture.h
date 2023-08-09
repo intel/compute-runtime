@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -84,6 +85,12 @@ struct L0DebuggerHwFixture : public L0DebuggerFixture {
     MockDebuggerL0Hw<GfxFamily> *getMockDebuggerL0Hw() {
         return static_cast<MockDebuggerL0Hw<GfxFamily> *>(debuggerHw);
     }
+
+    NEO::GraphicsAllocation *allocateIsaMemory(size_t size, bool internal) {
+        auto allocType = (internal ? NEO::AllocationType::KERNEL_ISA_INTERNAL : NEO::AllocationType::KERNEL_ISA);
+        return neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({neoDevice->getRootDeviceIndex(), size, allocType, neoDevice->getDeviceBitfield()});
+    }
+
     DebuggerL0 *debuggerHw = nullptr;
 };
 

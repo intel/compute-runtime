@@ -1865,9 +1865,9 @@ TEST_F(KernelLocalIdsTest, WhenKernelIsCreatedThenDefaultLocalIdGenerationbyRunt
     EXPECT_TRUE(kernel->requiresGenerationOfLocalIdsByRuntime());
 }
 
-struct KernelIsaTests : Test<ModuleFixture> {
-    void SetUp() override {
-        Test<ModuleFixture>::SetUp();
+struct KernelIsaFixture : ModuleFixture {
+    void setUp() {
+        ModuleFixture::setUp(true);
 
         auto &capabilityTable = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
         bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
@@ -1883,137 +1883,98 @@ struct KernelIsaTests : Test<ModuleFixture> {
     }
 
     std::unique_ptr<OsContext> bcsOsContext;
+    uint32_t testKernelHeap = 0;
 };
+
+using KernelIsaTests = Test<KernelIsaFixture>;
 
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllowedCpuAccessThenUseBcsForTransfer) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
     DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
-
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.kernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
-
-    KernelImmutableData kernelImmutableData(device);
+    this->createModuleFromMockBinary(ModuleType::User);
 
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-
-    if (kernelImmutableData.getIsaGraphicsAllocation()->isAllocatedInLocalMemoryPool()) {
+    auto &kernelImmutableData = this->module->kernelImmDatas.back();
+    if (kernelImmutableData->getIsaGraphicsAllocation()->isAllocatedInLocalMemoryPool()) {
         EXPECT_EQ(initialTaskCount + 1, bcsCsr->peekTaskCount());
     } else {
         EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
     }
-
-    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(kernelInfo.kernelAllocation);
 }
 
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowedCpuAccessThenDontUseBcsForTransfer) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
     DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
-
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.kernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
-
-    KernelImmutableData kernelImmutableData(device);
+    this->createModuleFromMockBinary(ModuleType::User);
 
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-
     EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
-
-    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(kernelInfo.kernelAllocation);
 }
 
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallowedCpuAccessAndDisabledBlitterThenFallbackToCpuCopy) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
     DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
+    this->createModuleFromMockBinary(ModuleType::User);
 
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
-
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.kernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
-
-    KernelImmutableData kernelImmutableData(device);
-
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-
     EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
-
-    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(kernelInfo.kernelAllocation);
 }
 
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithInternalIsaThenCorrectAllocationTypeIsUsed) {
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.kernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+    this->createModuleFromMockBinary(ModuleType::Builtin);
 
-    KernelImmutableData kernelImmutableData(device);
-
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, true);
-    EXPECT_EQ(NEO::AllocationType::KERNEL_ISA_INTERNAL, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
+    auto &kernelImmutableData = this->module->kernelImmDatas.back();
+    EXPECT_EQ(NEO::AllocationType::KERNEL_ISA_INTERNAL, kernelImmutableData->getIsaGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonInternalIsaThenCorrectAllocationTypeIsUsed) {
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.kernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+    this->createModuleFromMockBinary(ModuleType::User);
 
-    KernelImmutableData kernelImmutableData(device);
-
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-    EXPECT_EQ(NEO::AllocationType::KERNEL_ISA, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
+    auto &kernelImmutableData = this->module->kernelImmDatas.back();
+    EXPECT_EQ(NEO::AllocationType::KERNEL_ISA, kernelImmutableData->getIsaGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenPaddingIsAdded) {
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.kernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+    this->createModuleFromMockBinary(ModuleType::User);
 
-    KernelImmutableData kernelImmutableData(device);
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-    auto graphicsAllocation = kernelImmutableData.getIsaGraphicsAllocation();
-    auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto &kernelImmutableData = this->module->kernelImmDatas.back();
+    auto kernelHeapSize = kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize;
+    auto &helper = device->getNEODevice()->getGfxCoreHelper();
     size_t isaPadding = helper.getPaddingForISAAllocation();
-    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo.heapInfo.kernelHeapSize + isaPadding);
+    EXPECT_EQ(kernelImmutableData->getIsaSize(), kernelHeapSize + isaPadding);
 }
 
 TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuffersAreAddedToResidencyContainer) {
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.kernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
-
-    KernelImmutableData kernelImmutableData(device);
-
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = 0x1100;
     NEO::MockGraphicsAllocation globalVarBuffer(buffer, gpuAddress, size);
     NEO::MockGraphicsAllocation globalConstBuffer(buffer, gpuAddress, size);
 
-    kernelImmutableData.initialize(&kernelInfo, device, 0,
-                                   &globalConstBuffer, &globalVarBuffer, false);
-    auto &resCont = kernelImmutableData.getResidencyContainer();
-    EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalVarBuffer));
-    EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBuffer));
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    this->module.reset(new WhiteBox<::L0::Module>{this->device, moduleBuildLog, ModuleType::User});
+    this->module->mockGlobalVarBuffer = &globalVarBuffer;
+    this->module->mockGlobalConstBuffer = &globalConstBuffer;
+
+    this->createModuleFromMockBinary(ModuleType::User);
+
+    for (auto &kernelImmData : this->module->kernelImmDatas) {
+        auto &resCont = kernelImmData->getResidencyContainer();
+        EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalVarBuffer));
+        EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBuffer));
+    }
+    this->module->translationUnit->globalConstBuffer = nullptr;
+    this->module->translationUnit->globalVarBuffer = nullptr;
 }
 
 using KernelImpPatchBindlessTest = Test<ModuleFixture>;

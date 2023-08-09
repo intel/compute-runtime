@@ -13,6 +13,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
 #include "gtest/gtest.h"
@@ -48,6 +49,7 @@ constexpr inline MockModuleTranslationUnit *toMockPtr(L0::ModuleTranslationUnit 
 template <>
 struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass = ::L0::ModuleImp;
+    using BaseClass::allocateKernelsIsaMemory;
     using BaseClass::allocatePrivateMemoryPerDispatch;
     using BaseClass::BaseClass;
     using BaseClass::builtFromSPIRv;
@@ -61,6 +63,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::isFunctionSymbolExportEnabled;
     using BaseClass::isGlobalSymbolExportEnabled;
     using BaseClass::kernelImmDatas;
+    using BaseClass::setIsaGraphicsAllocations;
     using BaseClass::symbols;
     using BaseClass::translationUnit;
     using BaseClass::type;
@@ -70,6 +73,11 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
         : ::L0::ModuleImp{device, moduleBuildLog, type} {
         this->translationUnit.reset(new MockModuleTranslationUnit{device});
     }
+
+    ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) override;
+
+    NEO::GraphicsAllocation *mockGlobalVarBuffer = nullptr;
+    NEO::GraphicsAllocation *mockGlobalConstBuffer = nullptr;
 };
 
 using Module = WhiteBox<::L0::Module>;
@@ -91,15 +99,23 @@ struct Mock<Module> : public Module {
                      (uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog));
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_module_properties_t * pModuleProperties));
     ADDMETHOD_NOBASE(getGlobalPointer, ze_result_t, ZE_RESULT_SUCCESS, (const char *pGlobalName, size_t *pSize, void **pPtr));
+    ADDMETHOD(allocateKernelsIsaMemory, NEO::GraphicsAllocation *, true, nullptr, (size_t isaSize), (isaSize));
+    ADDMETHOD(computeKernelIsaAllocationAlignedSizeWithPadding, size_t, true, 0ul, (size_t isaSize), (isaSize));
 };
 
 struct MockModule : public L0::ModuleImp {
+    using ModuleImp::allocateKernelImmutableDatas;
+    using ModuleImp::allocateKernelsIsaMemory;
+    using ModuleImp::computeKernelIsaAllocationAlignedSizeWithPadding;
     using ModuleImp::debugModuleHandle;
     using ModuleImp::getModuleAllocations;
+    using ModuleImp::initializeKernelImmutableDatas;
+    using ModuleImp::isaAllocationPageSize;
     using ModuleImp::isFunctionSymbolExportEnabled;
     using ModuleImp::isGlobalSymbolExportEnabled;
     using ModuleImp::kernelImmDatas;
     using ModuleImp::populateHostGlobalSymbolsMap;
+    using ModuleImp::setIsaGraphicsAllocations;
     using ModuleImp::symbols;
     using ModuleImp::translationUnit;
 
@@ -114,6 +130,8 @@ struct MockModule : public L0::ModuleImp {
     const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override {
         return kernelImmData;
     }
+
+    std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVectorRef() { return kernelImmDatas; }
 
     KernelImmutableData *kernelImmData = nullptr;
 };

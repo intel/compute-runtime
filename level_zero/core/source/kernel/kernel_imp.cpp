@@ -75,20 +75,6 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
     auto neoDevice = deviceImp->getActiveDevice();
-    auto memoryManager = neoDevice->getMemoryManager();
-
-    auto kernelIsaSize = kernelInfo->heapInfo.kernelHeapSize;
-    UNRECOVERABLE_IF(kernelIsaSize == 0);
-    UNRECOVERABLE_IF(!kernelInfo->heapInfo.pKernelHeap);
-    const auto allocType = internalKernel ? NEO::AllocationType::KERNEL_ISA_INTERNAL : NEO::AllocationType::KERNEL_ISA;
-
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(
-        {neoDevice->getRootDeviceIndex(), kernelIsaSize, allocType, neoDevice->getDeviceBitfield()});
-    if (!allocation) {
-        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-    }
-
-    isaGraphicsAllocation.reset(allocation);
 
     if (neoDevice->getDebugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
         createRelocatedDebugData(globalConstBuffer, globalVarBuffer);
@@ -203,16 +189,39 @@ void KernelImmutableData::createRelocatedDebugData(NEO::GraphicsAllocation *glob
     }
 }
 
-ze_result_t KernelImp::getBaseAddress(uint64_t *baseAddress) {
-    if (baseAddress) {
-        auto gmmHelper = module->getDevice()->getNEODevice()->getGmmHelper();
-        *baseAddress = gmmHelper->decanonize(this->kernelImmData->getIsaGraphicsAllocation()->getGpuAddress());
+NEO::GraphicsAllocation *KernelImmutableData::getIsaGraphicsAllocation() const {
+    if (auto allocation = this->getIsaParentAllocation(); allocation != nullptr) {
+        DEBUG_BREAK_IF(this->device->getL0Debugger() != nullptr);
+        DEBUG_BREAK_IF(this->isaGraphicsAllocation != nullptr);
+        return allocation;
+    } else {
+        DEBUG_BREAK_IF(this->isaGraphicsAllocation.get() == nullptr);
+        return this->isaGraphicsAllocation.get();
     }
-    return ZE_RESULT_SUCCESS;
 }
 
 uint32_t KernelImmutableData::getIsaSize() const {
-    return static_cast<uint32_t>(isaGraphicsAllocation->getUnderlyingBufferSize());
+    if (this->getIsaParentAllocation()) {
+        DEBUG_BREAK_IF(this->device->getL0Debugger() != nullptr);
+        DEBUG_BREAK_IF(this->isaGraphicsAllocation != nullptr);
+        return static_cast<uint32_t>(this->isaSubAllocationSize);
+    } else {
+        return static_cast<uint32_t>(this->isaGraphicsAllocation->getUnderlyingBufferSize());
+    }
+}
+
+void KernelImmutableData::setIsaPerKernelAllocation(NEO::GraphicsAllocation *allocation) {
+    DEBUG_BREAK_IF(this->isaParentAllocation != nullptr);
+    this->isaGraphicsAllocation.reset(allocation);
+}
+
+ze_result_t KernelImp::getBaseAddress(uint64_t *baseAddress) {
+    if (baseAddress) {
+        auto gmmHelper = module->getDevice()->getNEODevice()->getGmmHelper();
+        *baseAddress = gmmHelper->decanonize(this->kernelImmData->getIsaGraphicsAllocation()->getGpuAddress() +
+                                             this->kernelImmData->getIsaOffsetInParentAllocation());
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 KernelImp::KernelImp(Module *module) : module(module) {}
@@ -948,10 +957,12 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
     if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL) {
+        isaAllocation->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
+        isaAllocation->setAubWritable(true, std::numeric_limits<uint32_t>::max());
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(neoDevice->getRootDeviceEnvironment(), *isaAllocation),
                                                               *neoDevice,
                                                               isaAllocation,
-                                                              0,
+                                                              this->kernelImmData->getIsaOffsetInParentAllocation(),
                                                               this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap,
                                                               static_cast<size_t>(this->kernelImmData->getKernelInfo()->heapInfo.kernelHeapSize));
     }
@@ -1207,6 +1218,10 @@ ze_result_t KernelImp::getProfileInfo(zet_profile_properties_t *pProfileProperti
 
 NEO::GraphicsAllocation *KernelImp::getIsaAllocation() const {
     return getImmutableData()->getIsaGraphicsAllocation();
+}
+
+uint64_t KernelImp::getIsaOffsetInParentAllocation() const {
+    return static_cast<uint64_t>(getImmutableData()->getIsaOffsetInParentAllocation());
 }
 
 ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) {
