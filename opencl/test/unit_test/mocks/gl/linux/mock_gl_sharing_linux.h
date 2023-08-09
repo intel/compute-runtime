@@ -29,19 +29,10 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
   public:
     ~GlSharingFunctionsMock() override = default;
 
-    using GLSharingFunctionsLinux::glAcquireSharedBuffer;
-    using GLSharingFunctionsLinux::glAcquireSharedRenderBuffer;
     using GLSharingFunctionsLinux::glAcquireSharedTexture;
     using GLSharingFunctionsLinux::glGetIntegerv;
     using GLSharingFunctionsLinux::glGetString;
     using GLSharingFunctionsLinux::glGetStringi;
-    using GLSharingFunctionsLinux::glGetSynciv;
-    using GLSharingFunctionsLinux::glReleaseSharedBuffer;
-    using GLSharingFunctionsLinux::glReleaseSharedRenderBuffer;
-    using GLSharingFunctionsLinux::glReleaseSharedTexture;
-    using GLSharingFunctionsLinux::glReleaseSync;
-    using GLSharingFunctionsLinux::glRetainSync;
-    using GLSharingFunctionsLinux::glSetSharedOCLContextState;
     using GLSharingFunctionsLinux::isOpenGlExtensionSupported;
 
     using GLSharingFunctionsLinux::glArbEventMapping;
@@ -66,8 +57,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
         this->glHGLRCHandleBkpCtx = glHGLRCHandleBkpCtx;
         this->glHDCHandle = glHDCHandle;
     }
-
-    void setGLAcquireSharedBufferMock(PFNOGLAcquireSharedBufferINTEL mock) { glAcquireSharedBuffer = mock; }
 
     void setGLAcquireSharedTextureMock(PFNEGLEXPORTDMABUFIMAGEMESAPROC mock) { glAcquireSharedTexture = mock; }
 };

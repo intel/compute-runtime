@@ -17,16 +17,6 @@
 
 namespace NEO {
 // OpenGL API names
-typedef GLboolean (*PFNOGLSetSharedOCLContextStateINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLboolean state, GLvoid *pContextInfo);
-typedef GLboolean (*PFNOGLAcquireSharedBufferINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pBufferInfo);
-typedef GLboolean (*PFNOGLAcquireSharedRenderBufferINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pResourceInfo);
-typedef GLboolean (*PFNOGLReleaseSharedBufferINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pBufferInfo);
-typedef GLboolean (*PFNOGLReleaseSharedRenderBufferINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pResourceInfo);
-typedef GLboolean (*PFNOGLReleaseSharedTextureINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pResourceInfo);
-typedef GLboolean (*PFNOGLRetainSyncINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pSyncInfo);
-typedef GLboolean (*PFNOGLReleaseSyncINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pSync);
-typedef void (*PFNOGLGetSyncivINTEL)(GLvoid *pSync, GLenum pname, GLint *value);
-
 typedef const GLubyte *(*PFNglGetString)(GLenum name);
 typedef const GLubyte *(*PFNglGetStringi)(GLenum name, GLuint index);
 typedef void (*PFNglGetIntegerv)(GLenum pname, GLint *params);
@@ -61,18 +51,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     void removeGlArbSyncEventMapping(Event &baseEvent);
 
     // Gl functions
-    GLboolean acquireSharedBufferINTEL(GLvoid *pBufferInfo) {
-        return glAcquireSharedBuffer(glHDCHandle, glHGLRCHandle, glHGLRCHandleBkpCtx, pBufferInfo);
-    }
-    GLboolean releaseSharedBufferINTEL(GLvoid *pBufferInfo) {
-        return glReleaseSharedBuffer(glHDCHandle, glHGLRCHandle, glHGLRCHandleBkpCtx, pBufferInfo);
-    }
-    GLboolean acquireSharedRenderBuffer(GLvoid *pResourceInfo) {
-        return glAcquireSharedRenderBuffer(glHDCHandle, glHGLRCHandle, glHGLRCHandleBkpCtx, pResourceInfo);
-    }
-    GLboolean releaseSharedRenderBuffer(GLvoid *pResourceInfo) {
-        return glReleaseSharedRenderBuffer(glHDCHandle, glHGLRCHandle, glHGLRCHandleBkpCtx, pResourceInfo);
-    }
     EGLBoolean acquireSharedTexture(CL_GL_RESOURCE_INFO *pResourceInfo) {
         int fds;
         int stride, offset;
@@ -96,15 +74,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     }
     GLboolean releaseSharedTexture(GLvoid *pResourceInfo) {
         return 1;
-    }
-    GLboolean retainSync(GLvoid *pSyncInfo) {
-        return glRetainSync(glHDCHandle, glHGLRCHandle, glHGLRCHandleBkpCtx, pSyncInfo);
-    }
-    GLboolean releaseSync(GLvoid *pSync) {
-        return glReleaseSync(glHDCHandle, glHGLRCHandle, glHGLRCHandleBkpCtx, pSync);
-    }
-    void getSynciv(GLvoid *pSync, GLenum pname, GLint *value) {
-        return glGetSynciv(pSync, pname, value);
     }
     GLContext getBackupContextHandle() {
         return glHGLRCHandleBkpCtx;
@@ -144,19 +113,10 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     // GL functions
     std::unique_ptr<OsLibrary> glLibrary;
     std::unique_ptr<OsLibrary> eglLibrary;
-    PFNOGLSetSharedOCLContextStateINTEL glSetSharedOCLContextState = nullptr;
-    PFNOGLAcquireSharedBufferINTEL glAcquireSharedBuffer = nullptr;
-    PFNOGLReleaseSharedBufferINTEL glReleaseSharedBuffer = nullptr;
-    PFNOGLAcquireSharedRenderBufferINTEL glAcquireSharedRenderBuffer = nullptr;
-    PFNOGLReleaseSharedRenderBufferINTEL glReleaseSharedRenderBuffer = nullptr;
     PFNEGLEXPORTDMABUFIMAGEMESAPROC glAcquireSharedTexture = nullptr;
-    PFNOGLReleaseSharedTextureINTEL glReleaseSharedTexture = nullptr;
     PFNglGetString glGetString = nullptr;
     PFNglGetStringi glGetStringi = nullptr;
     PFNglGetIntegerv glGetIntegerv = nullptr;
-    PFNOGLRetainSyncINTEL glRetainSync = nullptr;
-    PFNOGLReleaseSyncINTEL glReleaseSync = nullptr;
-    PFNOGLGetSyncivINTEL glGetSynciv = nullptr;
     PFNglArbSyncObjectSetup pfnGlArbSyncObjectSetup = nullptr;
     PFNglArbSyncObjectCleanup pfnGlArbSyncObjectCleanup = nullptr;
     PFNglArbSyncObjectSignal pfnGlArbSyncObjectSignal = nullptr;
