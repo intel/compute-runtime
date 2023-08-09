@@ -12,7 +12,7 @@ namespace NEO {
 class MemoryAllocation;
 
 constexpr size_t bigAllocation = 1 * MB;
-constexpr uintptr_t dummyAddress = 0xFFFFF000u;
+constexpr uint64_t dummyAddress = 0xFFFFF000u;
 
 class OsAgnosticMemoryManager : public MemoryManager {
   public:
