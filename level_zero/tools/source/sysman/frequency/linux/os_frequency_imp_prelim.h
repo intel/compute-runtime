@@ -13,11 +13,6 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 
 namespace L0 {
-namespace Sysman {
-class SysmanKmdInterface;
-} // namespace Sysman
-} // namespace L0
-namespace L0 {
 
 class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
   public:
@@ -43,7 +38,6 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     ~LinuxFrequencyImp() override = default;
 
   protected:
-    L0::Sysman::SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
     ze_result_t getMin(double &min);
     ze_result_t setMin(double min);

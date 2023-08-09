@@ -48,5 +48,8 @@ int scandir(const char *dirp,
             int (*compar)(const struct dirent **,
                           const struct dirent **));
 int unlink(const std::string &pathname);
+DIR *opendir(const char *name);
+struct dirent *readdir(DIR *dir);
+int closedir(DIR *dir);
 } // namespace SysCalls
 } // namespace NEO

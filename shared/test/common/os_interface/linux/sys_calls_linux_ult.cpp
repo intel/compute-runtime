@@ -58,6 +58,9 @@ int mkstempCalled = 0;
 int renameCalled = 0;
 int pathFileExistsCalled = 0;
 int flockCalled = 0;
+int opendirCalled = 0;
+int readdirCalled = 0;
+int closedirCalled = 0;
 
 std::vector<void *> mmapVector(64);
 std::vector<void *> mmapCapturedExtendedPointers(64);
@@ -92,6 +95,9 @@ int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf) = nullptr
 int (*sysCallsMkstemp)(char *fileName) = nullptr;
 int (*sysCallsMkdir)(const std::string &dir) = nullptr;
 bool (*sysCallsPathExists)(const std::string &path) = nullptr;
+DIR *(*sysCallsOpendir)(const char *name) = nullptr;
+struct dirent *(*sysCallsReaddir)(DIR *dir) = nullptr;
+int (*sysCallsClosedir)(DIR *dir) = nullptr;
 
 int mkdir(const std::string &path) {
     if (sysCallsMkdir != nullptr) {
@@ -408,6 +414,33 @@ int unlink(const std::string &pathname) {
 int stat(const std::string &filePath, struct stat *statbuf) {
     if (sysCallsStat != nullptr) {
         return sysCallsStat(filePath, statbuf);
+    }
+
+    return 0;
+}
+
+DIR *opendir(const char *name) {
+    opendirCalled++;
+    if (sysCallsOpendir != nullptr) {
+        return sysCallsOpendir(name);
+    }
+
+    return nullptr;
+}
+
+struct dirent *readdir(DIR *dir) {
+    readdirCalled++;
+    if (sysCallsReaddir != nullptr) {
+        return sysCallsReaddir(dir);
+    }
+
+    return nullptr;
+}
+
+int closedir(DIR *dir) {
+    closedirCalled++;
+    if (sysCallsClosedir != nullptr) {
+        return sysCallsClosedir(dir);
     }
 
     return 0;

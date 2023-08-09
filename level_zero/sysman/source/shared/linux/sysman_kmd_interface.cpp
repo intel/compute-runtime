@@ -13,10 +13,25 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 namespace L0 {
 namespace Sysman {
 using NEO::PrelimI915::I915_SAMPLE_BUSY;
+
+SysmanKmdInterface::SysmanKmdInterface() = default;
+
+SysmanKmdInterfaceI915::SysmanKmdInterfaceI915(const PRODUCT_FAMILY productFamily) {
+    initSysfsNameToFileMap(productFamily);
+}
+
+SysmanKmdInterfaceXe::SysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) {
+    initSysfsNameToFileMap(productFamily);
+}
+
+SysmanKmdInterface::~SysmanKmdInterface() = default;
+SysmanKmdInterfaceI915::~SysmanKmdInterfaceI915() = default;
+SysmanKmdInterfaceXe::~SysmanKmdInterfaceXe() = default;
 
 std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(const NEO::Drm &drm) {
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
@@ -30,6 +45,33 @@ std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(const NEO::Drm &d
     }
 
     return pSysmanKmdInterface;
+}
+
+FsAccessInterface *SysmanKmdInterface::getFsAccess() {
+
+    if (nullptr == pFsAccess.get()) {
+        pFsAccess = FsAccessInterface::create();
+    }
+    UNRECOVERABLE_IF(nullptr == pFsAccess.get());
+    return pFsAccess.get();
+}
+
+ProcFsAccessInterface *SysmanKmdInterface::getProcFsAccess() {
+
+    if (nullptr == pProcfsAccess.get()) {
+        pProcfsAccess = ProcFsAccessInterface::create();
+    }
+    UNRECOVERABLE_IF(nullptr == pProcfsAccess.get());
+    return pProcfsAccess.get();
+}
+
+SysFsAccessInterface *SysmanKmdInterface::getSysFsAccess(std::string deviceName) {
+
+    if (nullptr == pSysfsAccess.get()) {
+        pSysfsAccess = SysFsAccessInterface::create(deviceName);
+    }
+    UNRECOVERABLE_IF(nullptr == pSysfsAccess.get());
+    return pSysfsAccess.get();
 }
 
 std::string SysmanKmdInterfaceI915::getBasePath(uint32_t subDeviceId) const {

@@ -21,6 +21,9 @@ class Drm;
 namespace L0 {
 namespace Sysman {
 
+class FsAccessInterface;
+class ProcFsAccessInterface;
+class SysFsAccessInterface;
 class PmuInterface;
 typedef std::pair<std::string, std::string> valuePair;
 
@@ -79,7 +82,8 @@ enum class SysfsName {
 
 class SysmanKmdInterface {
   public:
-    virtual ~SysmanKmdInterface() = default;
+    SysmanKmdInterface();
+    virtual ~SysmanKmdInterface();
     static std::unique_ptr<SysmanKmdInterface> create(const NEO::Drm &drm);
 
     virtual std::string getBasePath(uint32_t subDeviceId) const = 0;
@@ -89,12 +93,20 @@ class SysmanKmdInterface {
     virtual std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const = 0;
     virtual bool isStandbyModeControlAvailable() const = 0;
     virtual bool clientInfoAvailableInFdInfo() = 0;
+    FsAccessInterface *getFsAccess();
+    ProcFsAccessInterface *getProcFsAccess();
+    SysFsAccessInterface *getSysFsAccess(std::string deviceName);
+
+  protected:
+    std::unique_ptr<FsAccessInterface> pFsAccess;
+    std::unique_ptr<ProcFsAccessInterface> pProcfsAccess;
+    std::unique_ptr<SysFsAccessInterface> pSysfsAccess;
 };
 
 class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
   public:
-    SysmanKmdInterfaceI915(const PRODUCT_FAMILY productFamily) { initSysfsNameToFileMap(productFamily); }
-    ~SysmanKmdInterfaceI915() override = default;
+    SysmanKmdInterfaceI915(const PRODUCT_FAMILY productFamily);
+    ~SysmanKmdInterfaceI915() override;
 
     std::string getBasePath(uint32_t subDeviceId) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
@@ -111,8 +123,8 @@ class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
 
 class SysmanKmdInterfaceXe : public SysmanKmdInterface {
   public:
-    SysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) { initSysfsNameToFileMap(productFamily); }
-    ~SysmanKmdInterfaceXe() override = default;
+    SysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily);
+    ~SysmanKmdInterfaceXe() override;
 
     std::string getBasePath(uint32_t subDeviceId) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;

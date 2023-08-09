@@ -8,6 +8,8 @@
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace NEO {
@@ -19,6 +21,12 @@ extern bool allowFakeDevicePath;
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+struct dirent mockEntries[] = {
+    {0, 0, 0, 0, "."},
+    {0, 0, 0, 0, "mockDir1"},
+    {0, 0, 0, 0, "mockDir2"},
+};
 
 inline static int mockAccessFailure(const char *pathname, int mode) {
     return -1;
@@ -40,6 +48,34 @@ inline static int mockStatSuccess(const char *pathname, struct stat *sb) noexcep
 inline static int mockStatNoPermissions(const char *pathname, struct stat *sb) noexcept {
     sb->st_mode = 0;
     return 0;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidSysmanKmdInterfaceWhenCallingListDirectoriesThenSuccessIsReturned) {
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    auto pFsAccess = pSysmanKmdInterface->getFsAccess();
+    const uint32_t numEntries = sizeof(mockEntries) / sizeof(mockEntries[0]);
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpendir(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        return reinterpret_cast<DIR *>(0xc001);
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
+        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+            static uint32_t entryIndex = 0u;
+            if (entryIndex >= numEntries) {
+                entryIndex = 0;
+                return nullptr;
+            }
+            return &mockEntries[entryIndex++];
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> mockClosedir(&NEO::SysCalls::sysCallsClosedir, [](DIR *dir) -> int {
+        return 0;
+    });
+
+    std::vector<std::string> listFiles;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFsAccess->listDirectory("MockDir", listFiles));
 }
 
 TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallinggetFsAccessThenCreatedFsAccessHandleWillBeRetrieved) {

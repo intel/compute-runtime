@@ -171,5 +171,17 @@ int unlink(const std::string &pathname) {
     return ::unlink(pathname.c_str());
 }
 
+DIR *opendir(const char *name) {
+    return ::opendir(name);
+}
+
+struct dirent *readdir(DIR *dir) {
+    return ::readdir(dir);
+}
+
+int closedir(DIR *dir) {
+    return ::closedir(dir);
+}
+
 } // namespace SysCalls
 } // namespace NEO

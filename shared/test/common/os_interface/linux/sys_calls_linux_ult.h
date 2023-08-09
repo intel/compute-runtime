@@ -41,6 +41,9 @@ extern int (*sysCallsUnlink)(const std::string &pathname);
 extern int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf);
 extern int (*sysCallsMkstemp)(char *fileName);
 extern bool (*sysCallsPathExists)(const std::string &path);
+extern DIR *(*sysCallsOpendir)(const char *name);
+extern struct dirent *(*sysCallsReaddir)(DIR *dir);
+extern int (*sysCallsClosedir)(DIR *dir);
 
 extern int flockRetVal;
 extern int closeFuncRetVal;
