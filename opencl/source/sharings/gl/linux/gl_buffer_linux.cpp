@@ -24,6 +24,7 @@ using namespace NEO;
 
 Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, unsigned int bufferId, cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
+#if 0
     CL_GL_BUFFER_INFO bufferInfo = {0};
     bufferInfo.bufferName = bufferId;
 
@@ -45,9 +46,13 @@ Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, uns
     multiGraphicsAllocation.addAllocation(graphicsAllocation);
 
     return Buffer::createSharedBuffer(context, flags, glHandler, std::move(multiGraphicsAllocation));
+#endif
+    errorCode.set(CL_INVALID_GL_OBJECT);
+    return nullptr;
 }
 
 void GlBuffer::synchronizeObject(UpdateData &updateData) {
+#if 0
     auto sharingFunctions = static_cast<GLSharingFunctionsLinux *>(this->sharingFunctions);
 
     CL_GL_BUFFER_INFO bufferInfo = {};
@@ -64,6 +69,7 @@ void GlBuffer::synchronizeObject(UpdateData &updateData) {
     if (currentSharedHandle != updateData.sharedHandle) {
         updateData.updateData = new CL_GL_BUFFER_INFO(bufferInfo);
     }
+#endif
 }
 
 void GlBuffer::resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) {
@@ -174,8 +180,10 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
 }
 
 void GlBuffer::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
+#if 0
     auto sharingFunctions = static_cast<GLSharingFunctionsLinux *>(this->sharingFunctions);
     CL_GL_BUFFER_INFO bufferInfo = {};
     bufferInfo.bufferName = this->clGlObjectId;
     sharingFunctions->releaseSharedBufferINTEL(&bufferInfo);
+#endif
 }
