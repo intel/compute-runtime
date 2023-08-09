@@ -14,7 +14,7 @@ using namespace NEO;
 using MtlProductHelperWindows = ProductHelperTestWindows;
 
 MTLTEST_F(MtlProductHelperWindows, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+    EXPECT_TRUE(productHelper->isTlbFlushRequired());
 }
 
 MTLTEST_F(MtlProductHelperWindows, whenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {

@@ -17,10 +17,6 @@ constexpr static auto gfxProduct = IGFX_METEORLAKE;
 #include "shared/source/xe_hpg_core/mtl/os_agnostic_product_helper_mtl.inl"
 
 namespace NEO {
-template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    return false;
-}
 
 template <>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
