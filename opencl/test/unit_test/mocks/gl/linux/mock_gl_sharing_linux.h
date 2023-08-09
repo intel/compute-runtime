@@ -46,9 +46,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
     using GLSharingFunctionsLinux::glRetainSync;
     using GLSharingFunctionsLinux::glSetSharedOCLContextState;
     using GLSharingFunctionsLinux::isOpenGlExtensionSupported;
-    using GLSharingFunctionsLinux::pfnEglCreateContext;
-    using GLSharingFunctionsLinux::pfnEglDeleteContext;
-    using GLSharingFunctionsLinux::pfnEglShareLists;
     using GLSharingFunctionsLinux::setSharedOCLContextState;
 
     using GLSharingFunctionsLinux::glArbEventMapping;
@@ -65,7 +62,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
         : GLSharingFunctionsLinux(glHDCType, glHGLRCHandle, glHGLRCHandleBkpCtx, glHDCHandle) {
         initMembers();
         updateOpenGLContext();
-        createBackupContext();
     }
     GlSharingFunctionsMock();
 

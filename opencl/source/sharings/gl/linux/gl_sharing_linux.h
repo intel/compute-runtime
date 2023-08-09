@@ -158,7 +158,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
         }
     }
     GLboolean setSharedOCLContextState();
-    void createBackupContext();
     bool isOpenGlExtensionSupported(const unsigned char *pExtentionString);
 
     // Handles
@@ -184,10 +183,7 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     PFNglGetString glGetString = nullptr;
     PFNglGetStringi glGetStringi = nullptr;
     PFNglGetIntegerv glGetIntegerv = nullptr;
-    PFNeglCreateContext pfnEglCreateContext = nullptr;
     PFNeglMakeCurrent eglMakeCurrent = nullptr;
-    PFNeglShareLists pfnEglShareLists = nullptr;
-    PFNeglDeleteContext pfnEglDeleteContext = nullptr;
     PFNOGLRetainSyncINTEL glRetainSync = nullptr;
     PFNOGLReleaseSyncINTEL glReleaseSync = nullptr;
     PFNOGLGetSyncivINTEL glGetSynciv = nullptr;

@@ -29,13 +29,6 @@ bool GLSharingFunctionsLinux::isGlSharingEnabled() {
     return oglLibAvailable;
 }
 
-void GLSharingFunctionsLinux::createBackupContext() {
-    if (pfnEglCreateContext) {
-        glHGLRCHandleBkpCtx = pfnEglCreateContext(glHDCHandle);
-        pfnEglShareLists(glHGLRCHandle, glHGLRCHandleBkpCtx);
-    }
-}
-
 GLboolean GLSharingFunctionsLinux::setSharedOCLContextState() {
     ContextInfo contextInfo{};
     GLboolean retVal = glSetSharedOCLContextState(glHDCHandle, glHGLRCHandle, CL_TRUE, &contextInfo);
@@ -130,8 +123,6 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
         GlFunctionHelper eglGetProc(eglLibrary.get(), "eglGetProcAddress");
         glGetCurrentContext = eglGetProc["eglGetCurrentContext"];
         glGetCurrentDisplay = eglGetProc["eglGetCurrentDisplay"];
-        pfnEglCreateContext = eglGetProc["eglCreateContext"];
-        pfnEglDeleteContext = eglGetProc["eglDestroyContext"];
         eglMakeCurrent = eglGetProc["eglMakeCurrent"];
         eglCreateImage = eglGetProc["eglCreateImage"];
         eglDestroyImage = eglGetProc["eglDestroyImage"];
