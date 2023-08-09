@@ -380,17 +380,10 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
+    ze_result_t status = ZE_RESULT_SUCCESS;
+
     if (this->isSyncModeQueue || this->printfKernelContainer.size() > 0u) {
-        auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
-        const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, completionStamp.taskCount);
-        if (waitStatus == NEO::WaitStatus::GpuHang) {
-            this->printKernelsPrintfOutput(true);
-            this->checkAssert();
-            return ZE_RESULT_ERROR_DEVICE_LOST;
-        }
-        csr->getInternalAllocationStorage()->cleanAllocationList(completionStamp.taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
-        this->printKernelsPrintfOutput(false);
-        this->checkAssert();
+        status = hostSynchronize(std::numeric_limits<uint64_t>::max(), completionStamp.taskCount, true);
     }
 
     this->cmdListCurrentStartOffset = commandStream->getUsed();
@@ -402,7 +395,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         this->device->getNEODevice()->debugExecutionCounter++;
     }
 
-    return ZE_RESULT_SUCCESS;
+    return status;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -852,31 +845,37 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperati
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout) {
-    auto syncTaskCount = this->csr->peekTaskCount();
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout, TaskCountType taskCount, bool handlePostWaitOperations) {
     ze_result_t status = ZE_RESULT_SUCCESS;
 
     if (isInOrderExecutionEnabled()) {
         status = synchronizeInOrderExecution(timeout);
-    } else if (this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
+    } else {
         const int64_t timeoutInMicroSeconds = timeout / 1000;
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
         const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{indefinitelyPoll, !indefinitelyPoll, timeoutInMicroSeconds},
-                                                                        syncTaskCount);
+                                                                        taskCount);
         if (waitStatus == NEO::WaitStatus::GpuHang) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
         }
     }
 
-    if (status == ZE_RESULT_SUCCESS) {
-        this->cmdQImmediate->unregisterCsrClient();
-        this->csr->getInternalAllocationStorage()->cleanAllocationList(syncTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+    if (handlePostWaitOperations) {
+        if (status == ZE_RESULT_SUCCESS) {
+            this->cmdQImmediate->unregisterCsrClient();
+            this->csr->getInternalAllocationStorage()->cleanAllocationList(taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+        }
+
+        this->printKernelsPrintfOutput(status == ZE_RESULT_ERROR_DEVICE_LOST);
+        this->checkAssert();
     }
 
-    this->printKernelsPrintfOutput(status == ZE_RESULT_ERROR_DEVICE_LOST);
-    this->checkAssert();
-
     return status;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout) {
+    return hostSynchronize(timeout, this->csr->peekTaskCount(), true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1040,20 +1039,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     const void *cpuMemcpySrcPtr = srcLockPointer ? srcLockPointer : cpuMemCopyInfo.srcPtr;
     void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : cpuMemCopyInfo.dstPtr;
 
-    if (this->dependenciesPresent) {
-        auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
-        const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
-        if (waitStatus == NEO::WaitStatus::GpuHang) {
-            return ZE_RESULT_ERROR_DEVICE_LOST;
+    if (this->dependenciesPresent || isInOrderExecutionEnabled()) {
+        auto waitStatus = hostSynchronize(std::numeric_limits<uint64_t>::max(), this->csr->peekTaskCount(), false);
+
+        if (waitStatus != ZE_RESULT_SUCCESS) {
+            return waitStatus;
         }
         this->dependenciesPresent = false;
-    }
-
-    if (isInOrderExecutionEnabled()) {
-        auto status = synchronizeInOrderExecution(std::numeric_limits<uint64_t>::max());
-        if (status != ZE_RESULT_SUCCESS) {
-            return status;
-        }
     }
 
     if (signalEvent) {

@@ -2966,7 +2966,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskEnabledAndNotSyncMo
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenSyncModeThenWaitForCompletionIsNotCalled, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenSyncModeThenWaitForCompletionIsCalled, IsAtLeastSkl) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -2975,10 +2975,10 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenSyncModeThenWaitForCompletio
     EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
 
     uint32_t waitForFlushTagUpdateCalled = csr->waitForCompletionWithTimeoutTaskCountCalled;
-    EXPECT_EQ(waitForFlushTagUpdateCalled, 0u);
+    EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisabledThenWaitForCompletionIsNotCalled, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisabledThenWaitForCompletionIsCalled, IsAtLeastSkl) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -2988,7 +2988,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisable
     EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
 
     uint32_t waitForFlushTagUpdateCalled = csr->waitForCompletionWithTimeoutTaskCountCalled;
-    EXPECT_EQ(waitForFlushTagUpdateCalled, 0u);
+    EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
 HWTEST2_F(ImmediateCommandListHostSynchronize, givenGpuStatusIsHangThenDeviceLostIsReturned, IsAtLeastSkl) {

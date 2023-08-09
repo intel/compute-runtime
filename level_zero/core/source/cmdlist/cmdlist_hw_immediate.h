@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/task_count_helper.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
@@ -184,6 +185,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     void printKernelsPrintfOutput(bool hangDetected);
     ze_result_t synchronizeInOrderExecution(uint64_t timeout) const;
+    ze_result_t hostSynchronize(uint64_t timeout, TaskCountType taskCount, bool handlePostWaitOperations);
     bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const;
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
     void handleInOrderDependencyCounter();

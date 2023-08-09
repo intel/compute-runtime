@@ -673,6 +673,8 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
 
         CommandListAppendLaunchKernel::SetUp();
         createKernel();
+
+        const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.flags.usesPrintf = false;
     }
 
     void TearDown() override {
