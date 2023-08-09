@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include <EGL/egl.h>
 
-using GLDisplay = EGLDisplay;
-using GLContext = EGLContext;
+typedef void *GLDisplay;
+typedef void *GLContext;
 using GLType = uint32_t;
 using GLFunctionType = decltype(&eglGetProcAddress);

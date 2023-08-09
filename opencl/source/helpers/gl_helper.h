@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,9 @@ class GlFunctionHelper {
 
     ConvertibleProcAddr operator[](const char *name) {
         return ConvertibleProcAddr{reinterpret_cast<void *>(glFunctionPtr(name))};
+    }
+    bool ready() const {
+        return glFunctionPtr != nullptr;
     }
 
   protected:

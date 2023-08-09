@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,31 +27,15 @@ GlSyncEvent::GlSyncEvent(Context &context, const GL_CL_SYNC_INFO &sync)
 }
 
 GlSyncEvent::~GlSyncEvent() {
-    ctx->getSharing<GLSharingFunctionsLinux>()->releaseSync(glSync->pSync);
 }
 
 GlSyncEvent *GlSyncEvent::create(Context &context, cl_GLsync sync, cl_int *errCode) {
-    GLContextGuard guard(*context.getSharing<GLSharingFunctionsLinux>());
-
-    ErrorCodeHelper err(errCode, CL_SUCCESS);
-    GL_CL_SYNC_INFO syncInfo = {sync, nullptr};
-
-    context.getSharing<GLSharingFunctionsLinux>()->retainSync(&syncInfo);
-    DEBUG_BREAK_IF(!syncInfo.pSync);
-
-    EventBuilder eventBuilder;
-    eventBuilder.create<GlSyncEvent>(context, syncInfo);
-    return static_cast<GlSyncEvent *>(eventBuilder.finalizeAndRelease());
+    /* Not supported */
+    return nullptr;
 }
 
 void GlSyncEvent::updateExecutionStatus() {
-    GLContextGuard guard(*ctx->getSharing<GLSharingFunctionsLinux>());
-    int retVal = 0;
-
-    ctx->getSharing<GLSharingFunctionsLinux>()->getSynciv(glSync->pSync, GL_SYNC_STATUS, &retVal);
-    if (retVal == GL_SIGNALED) {
-        setStatus(CL_COMPLETE);
-    }
+    /* Not supported */
 }
 
 TaskCountType GlSyncEvent::getTaskLevel() {

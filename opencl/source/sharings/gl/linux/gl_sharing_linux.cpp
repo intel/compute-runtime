@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,42 +11,12 @@
 #include "opencl/source/helpers/gl_helper.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 
-namespace Os {
-extern const char *eglDllName;
-extern const char *openglDllName;
-} // namespace Os
-
 namespace NEO {
 GLSharingFunctionsLinux::GLSharingFunctionsLinux(GLType glhdcType, GLContext glhglrcHandle, GLContext glhglrcHandleBkpCtx, GLDisplay glhdcHandle)
     : glHDCType(glhdcType), glHGLRCHandle(glhglrcHandle), glHGLRCHandleBkpCtx(glhglrcHandleBkpCtx), glHDCHandle(glhdcHandle) {
     GLSharingFunctionsLinux::initGLFunctions();
-    updateOpenGLContext();
 }
 GLSharingFunctionsLinux::~GLSharingFunctionsLinux() = default;
-
-bool GLSharingFunctionsLinux::isGlSharingEnabled() {
-    static bool oglLibAvailable = std::unique_ptr<OsLibrary>(OsLibrary::load(Os::eglDllName)).get() != nullptr;
-    return oglLibAvailable;
-}
-
-void GLSharingFunctionsLinux::createBackupContext() {
-    if (pfnEglCreateContext) {
-        glHGLRCHandleBkpCtx = pfnEglCreateContext(glHDCHandle);
-        pfnEglShareLists(glHGLRCHandle, glHGLRCHandleBkpCtx);
-    }
-}
-
-GLboolean GLSharingFunctionsLinux::setSharedOCLContextState() {
-    ContextInfo contextInfo{};
-    GLboolean retVal = glSetSharedOCLContextState(glHDCHandle, glHGLRCHandle, CL_TRUE, &contextInfo);
-    if (retVal == GL_FALSE) {
-        return GL_FALSE;
-    }
-    glContextHandle = contextInfo.contextHandle;
-    glDeviceHandle = contextInfo.deviceHandle;
-
-    return retVal;
-}
 
 bool GLSharingFunctionsLinux::isOpenGlExtensionSupported(const unsigned char *pExtensionString) {
     if (glGetStringi == nullptr || glGetIntegerv == nullptr) {
@@ -123,26 +93,26 @@ void GLSharingFunctionsLinux::removeGlArbSyncEventMapping(Event &baseEvent) {
 }
 
 GLboolean GLSharingFunctionsLinux::initGLFunctions() {
-    eglLibrary.reset(OsLibrary::load(Os::eglDllName));
-    glLibrary.reset(OsLibrary::load(Os::openglDllName));
+    std::unique_ptr<OsLibrary> dynLibrary(OsLibrary::load(""));
 
-    if (eglLibrary->isLoaded()) {
-        GlFunctionHelper eglGetProc(eglLibrary.get(), "eglGetProcAddress");
-        glGetCurrentContext = eglGetProc["eglGetCurrentContext"];
-        glGetCurrentDisplay = eglGetProc["eglGetCurrentDisplay"];
-        pfnEglCreateContext = eglGetProc["eglCreateContext"];
-        pfnEglDeleteContext = eglGetProc["eglDestroyContext"];
-        eglMakeCurrent = eglGetProc["eglMakeCurrent"];
-        eglCreateImage = eglGetProc["eglCreateImage"];
-        eglDestroyImage = eglGetProc["eglDestroyImage"];
-        glAcquireSharedTexture = eglGetProc["eglExportDMABUFImageMESA"];
+    GlFunctionHelper glXGetProc(dynLibrary.get(), "glXGetProcAddress");
+    if (glXGetProc.ready()) {
+        glXGLInteropQueryDeviceInfo = glXGetProc["glXGLInteropQueryDeviceInfoMESA"];
+        glXGLInteropExportObject = glXGetProc["glXGLInteropExportObjectMESA"];
+        glXGLInteropFlushObjects = glXGetProc["glXGLInteropFlushObjectsMESA"];
     }
-    if (glLibrary->isLoaded()) {
-        glGetString = (*glLibrary)["glGetString"];
-        glGetStringi = (*glLibrary)["glGetStringi"];
-        glGetIntegerv = (*glLibrary)["glGetIntegerv"];
-        glGetTexLevelParameteriv = (*glLibrary)["glGetTexLevelParameteriv"];
+
+    GlFunctionHelper eglGetProc(dynLibrary.get(), "eglGetProcAddress");
+    if (eglGetProc.ready()) {
+        eglGLInteropQueryDeviceInfo = eglGetProc["eglGLInteropQueryDeviceInfoMESA"];
+        eglGLInteropExportObject = eglGetProc["eglGLInteropExportObjectMESA"];
+        eglGLInteropFlushObjects = eglGetProc["eglGLInteropFlushObjectsMESA"];
     }
+
+    glGetString = (*dynLibrary)["glGetString"];
+    glGetStringi = (*dynLibrary)["glGetStringi"];
+    glGetIntegerv = (*dynLibrary)["glGetIntegerv"];
+
     this->pfnGlArbSyncObjectCleanup = cleanupArbSyncObject;
     this->pfnGlArbSyncObjectSetup = setupArbSyncObject;
     this->pfnGlArbSyncObjectSignal = signalArbSyncObject;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,31 +29,16 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
   public:
     ~GlSharingFunctionsMock() override = default;
 
-    using GLSharingFunctionsLinux::eglMakeCurrent;
-    using GLSharingFunctionsLinux::glAcquireSharedBuffer;
-    using GLSharingFunctionsLinux::glAcquireSharedRenderBuffer;
-    using GLSharingFunctionsLinux::glAcquireSharedTexture;
-    using GLSharingFunctionsLinux::glGetCurrentContext;
-    using GLSharingFunctionsLinux::glGetCurrentDisplay;
+    using GLSharingFunctionsLinux::eglGLInteropExportObject;
+    using GLSharingFunctionsLinux::eglGLInteropFlushObjects;
+    using GLSharingFunctionsLinux::eglGLInteropQueryDeviceInfo;
+
     using GLSharingFunctionsLinux::glGetIntegerv;
     using GLSharingFunctionsLinux::glGetString;
     using GLSharingFunctionsLinux::glGetStringi;
-    using GLSharingFunctionsLinux::glGetSynciv;
-    using GLSharingFunctionsLinux::glReleaseSharedBuffer;
-    using GLSharingFunctionsLinux::glReleaseSharedRenderBuffer;
-    using GLSharingFunctionsLinux::glReleaseSharedTexture;
-    using GLSharingFunctionsLinux::glReleaseSync;
-    using GLSharingFunctionsLinux::glRetainSync;
-    using GLSharingFunctionsLinux::glSetSharedOCLContextState;
     using GLSharingFunctionsLinux::isOpenGlExtensionSupported;
-    using GLSharingFunctionsLinux::pfnEglCreateContext;
-    using GLSharingFunctionsLinux::pfnEglDeleteContext;
-    using GLSharingFunctionsLinux::pfnEglShareLists;
-    using GLSharingFunctionsLinux::setSharedOCLContextState;
 
     using GLSharingFunctionsLinux::glArbEventMapping;
-    using GLSharingFunctionsLinux::glContextHandle;
-    using GLSharingFunctionsLinux::glDeviceHandle;
 
     using GLSharingFunctionsLinux::getSupportedFormats;
     using GLSharingFunctionsLinux::pfnGlArbSyncObjectCleanup;
@@ -64,8 +49,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
     GlSharingFunctionsMock(GLType glHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle)
         : GLSharingFunctionsLinux(glHDCType, glHGLRCHandle, glHGLRCHandleBkpCtx, glHDCHandle) {
         initMembers();
-        updateOpenGLContext();
-        createBackupContext();
     }
     GlSharingFunctionsMock();
 
@@ -76,9 +59,11 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
         this->glHDCHandle = glHDCHandle;
     }
 
-    void setGLAcquireSharedBufferMock(PFNOGLAcquireSharedBufferINTEL mock) { glAcquireSharedBuffer = mock; }
+    void setGLInteropQueryDeviceInfoMock(PFNMESAGLINTEROPEGLQUERYDEVICEINFOPROC mock) { eglGLInteropQueryDeviceInfo = mock; }
 
-    void setGLAcquireSharedTextureMock(PFNEGLEXPORTDMABUFIMAGEMESAPROC mock) { glAcquireSharedTexture = mock; }
+    void setGLInteropExportObjectMock(PFNMESAGLINTEROPEGLEXPORTOBJECTPROC mock) { eglGLInteropExportObject = mock; }
+
+    void setGLInteropFlushObjectsMock(PFNMESAGLINTEROPEGLFLUSHOBJECTSPROC mock) { eglGLInteropFlushObjects = mock; }
 };
 
 class MockGlSharing {
@@ -117,7 +102,6 @@ class MockGlSharing {
 class MockGLSharingFunctions : public GLSharingFunctionsLinux {
   public:
     using GLSharingFunctionsLinux::isOpenGlExtensionSupported;
-    using GLSharingFunctionsLinux::setSharedOCLContextState;
 
     static void glGetIntegervTest(GLenum pname, GLint *data) {
         if (pname == GL_NUM_EXTENSIONS)

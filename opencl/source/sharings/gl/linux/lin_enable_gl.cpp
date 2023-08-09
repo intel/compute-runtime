@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,10 @@ bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyT
     case CL_GL_CONTEXT_KHR:
         contextData->glHGLRCHandle = reinterpret_cast<GLContext>(propertyValue);
         return true;
+    case CL_GLX_DISPLAY_KHR:
+        contextData->glHDCType = static_cast<GLType>(CL_GLX_DISPLAY_KHR);
+        contextData->glHDCHandle = reinterpret_cast<GLDisplay>(propertyValue);
+        return true;
     case CL_EGL_DISPLAY_KHR:
         contextData->glHDCType = static_cast<GLType>(CL_EGL_DISPLAY_KHR);
         contextData->glHDCHandle = reinterpret_cast<GLDisplay>(propertyValue);
@@ -54,6 +58,7 @@ bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
                                                             nullptr, contextData->glHDCHandle));
     }
 
+    contextData.reset(nullptr);
     return true;
 }
 
@@ -76,17 +81,19 @@ void GlSharingBuilderFactory::fillGlobalDispatchTable() {
 }
 
 std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
-    if (debugManager.flags.AddClGlSharing.get()) {
-        return "cl_khr_gl_sharing "
-               "cl_khr_gl_depth_images "
-               "cl_khr_gl_event "
-               "cl_khr_gl_msaa_sharing ";
-    } else if (GLSharingFunctionsLinux::isGlSharingEnabled()) {
+    auto isGlSharingEnabled = true;
+
+    if (debugManager.flags.AddClGlSharing.get() != -1) {
+        isGlSharingEnabled = debugManager.flags.AddClGlSharing.get();
+    }
+
+    if (isGlSharingEnabled) {
         return "cl_khr_gl_sharing "
                "cl_khr_gl_depth_images "
                "cl_khr_gl_event "
                "cl_khr_gl_msaa_sharing ";
     }
+
     return "";
 }
 
