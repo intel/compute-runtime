@@ -12,6 +12,7 @@
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 
 namespace Os {
+extern const char *glxDllName;
 extern const char *eglDllName;
 extern const char *openglDllName;
 } // namespace Os
@@ -103,9 +104,16 @@ void GLSharingFunctionsLinux::removeGlArbSyncEventMapping(Event &baseEvent) {
 }
 
 GLboolean GLSharingFunctionsLinux::initGLFunctions() {
+    glxLibrary.reset(OsLibrary::load(Os::glxDllName));
     eglLibrary.reset(OsLibrary::load(Os::eglDllName));
     glLibrary.reset(OsLibrary::load(Os::openglDllName));
 
+    if (glxLibrary->isLoaded()) {
+        GlFunctionHelper glXGetProc(glLibrary.get(), "glXGetProcAddress");
+        glXGLInteropQueryDeviceInfo = glXGetProc["glXGLInteropQueryDeviceInfoMESA"];
+        glXGLInteropExportObject = glXGetProc["glXGLInteropExportObjectMESA"];
+        glXGLInteropFlushObjects = glXGetProc["glXGLInteropFlushObjectsMESA"];
+    }
     if (eglLibrary->isLoaded()) {
         GlFunctionHelper eglGetProc(eglLibrary.get(), "eglGetProcAddress");
         eglGLInteropQueryDeviceInfo = eglGetProc["eglGLInteropQueryDeviceInfoMESA"];

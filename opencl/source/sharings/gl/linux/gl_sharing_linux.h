@@ -90,10 +90,14 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
 
     // GL functions
     std::unique_ptr<OsLibrary> glLibrary;
+    std::unique_ptr<OsLibrary> glxLibrary;
     std::unique_ptr<OsLibrary> eglLibrary;
     PFNglGetString glGetString = nullptr;
     PFNglGetStringi glGetStringi = nullptr;
     PFNglGetIntegerv glGetIntegerv = nullptr;
+    PFNMESAGLINTEROPGLXQUERYDEVICEINFOPROC glXGLInteropQueryDeviceInfo = nullptr;
+    PFNMESAGLINTEROPGLXEXPORTOBJECTPROC glXGLInteropExportObject = nullptr;
+    PFNMESAGLINTEROPGLXFLUSHOBJECTSPROC glXGLInteropFlushObjects = nullptr;
     PFNMESAGLINTEROPEGLQUERYDEVICEINFOPROC eglGLInteropQueryDeviceInfo = nullptr;
     PFNMESAGLINTEROPEGLEXPORTOBJECTPROC eglGLInteropExportObject = nullptr;
     PFNMESAGLINTEROPEGLFLUSHOBJECTSPROC eglGLInteropFlushObjects = nullptr;
