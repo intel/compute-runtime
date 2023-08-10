@@ -389,6 +389,10 @@ void CommandStreamReceiver::cleanupResources() {
         getMemoryManager()->freeGraphicsMemory(globalStatelessHeapAllocation);
         globalStatelessHeapAllocation = nullptr;
     }
+    for (auto &alloc : ownedPrivateAllocations) {
+        getMemoryManager()->freeGraphicsMemory(alloc.second);
+    }
+    ownedPrivateAllocations.clear();
 }
 
 WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) {
@@ -566,6 +570,9 @@ ResidencyContainer &CommandStreamReceiver::getResidencyAllocations() {
 
 ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
     return this->evictionAllocations;
+}
+std::unordered_map<uint32_t, GraphicsAllocation *> &CommandStreamReceiver::getOwnedPrivateAllocations() {
+    return this->ownedPrivateAllocations;
 }
 
 AubSubCaptureStatus CommandStreamReceiver::checkAndActivateAubSubCapture(const std::string &kernelName) { return {false, false}; }

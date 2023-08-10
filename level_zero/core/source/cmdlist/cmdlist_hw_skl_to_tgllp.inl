@@ -89,7 +89,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     kernel->patchGlobalOffset();
 
-    this->allocateKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
+    this->allocateOrReuseKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 
     if (!launchParams.isIndirect) {
         kernel->setGroupCount(threadGroupDimensions->groupCountX,

@@ -35,6 +35,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::baseWaitFunction;
     using CommandStreamReceiver::checkForNewResources;
     using CommandStreamReceiver::checkImplicitFlushForGpuIdle;
+    using CommandStreamReceiver::cleanupResources;
     using CommandStreamReceiver::CommandStreamReceiver;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::internalAllocationStorage;

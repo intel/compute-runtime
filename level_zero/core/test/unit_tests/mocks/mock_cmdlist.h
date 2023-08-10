@@ -15,6 +15,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
+#include <unordered_map>
+
 namespace NEO {
 class GraphicsAllocation;
 }
@@ -30,7 +32,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
     using BaseClass::addFlushRequiredCommand;
-    using BaseClass::allocateKernelPrivateMemoryIfNeeded;
+    using BaseClass::allocateOrReuseKernelPrivateMemoryIfNeeded;
     using BaseClass::appendBlitFill;
     using BaseClass::appendCopyImageBlit;
     using BaseClass::appendEventForProfiling;
@@ -487,12 +489,14 @@ struct MockCommandList : public CommandList {
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
+class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
   public:
     using BaseClass = CommandListCoreFamily<gfxCoreFamily>;
+    using BaseClass::allocateOrReuseKernelPrivateMemoryIfNeeded;
     using BaseClass::commandContainer;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
+    using BaseClass::ownedPrivateAllocations;
 
     ADDMETHOD(appendMemoryCopyKernelWithGA, ze_result_t, false, ZE_RESULT_SUCCESS,
               (void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
@@ -512,6 +516,19 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                       NEO::GraphicsAllocation *srcPtrAlloc,
                       uint64_t srcOffset,
                       uint64_t size));
+
+    ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemory,
+                         false,
+                         (L0::Kernel * kernel,
+                          uint32_t sizePerHwThread,
+                          std::unordered_map<uint32_t, NEO::GraphicsAllocation *> &privateAllocsToReuse),
+                         (kernel, sizePerHwThread, privateAllocsToReuse));
+
+    ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemoryIfNeeded,
+                         false,
+                         (L0::Kernel * kernel,
+                          uint32_t sizePerHwThread),
+                         (kernel, sizePerHwThread));
 
     AlignedAllocationData getAlignedAllocationData(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
         return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(device, buffer, bufferSize, allowHostCopy);
@@ -594,6 +611,19 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     void checkAssert() override {
         checkAssertCalled++;
     }
+
+    ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemory,
+                         false,
+                         (L0::Kernel * kernel,
+                          uint32_t sizePerHwThread,
+                          std::unordered_map<uint32_t, NEO::GraphicsAllocation *> &privateAllocsToReuse),
+                         (kernel, sizePerHwThread, privateAllocsToReuse));
+
+    ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemoryIfNeeded,
+                         false,
+                         (L0::Kernel * kernel,
+                          uint32_t sizePerHwThread),
+                         (kernel, sizePerHwThread));
 
     uint32_t checkAssertCalled = 0;
     bool callBaseExecute = false;
