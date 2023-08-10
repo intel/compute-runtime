@@ -58,30 +58,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     int flushObjects(unsigned count, struct mesa_glinterop_export_in *resources, struct mesa_glinterop_flush_out *out) {
         return eglGLInteropFlushObjects(glHDCHandle, glHGLRCHandle, count, resources, out);
     }
-    EGLBoolean acquireSharedTexture(CL_GL_RESOURCE_INFO *pResourceInfo) {
-        int fds;
-        int stride, offset;
-        int miplevel = 0;
-
-        EGLAttrib attribList[] = {EGL_GL_TEXTURE_LEVEL, miplevel, EGL_NONE};
-        EGLImage image = eglCreateImage(glHDCHandle, glHGLRCHandle, EGL_GL_TEXTURE_2D, reinterpret_cast<EGLClientBuffer>(static_cast<uintptr_t>(pResourceInfo->name)), &attribList[0]);
-        if (image == EGL_NO_IMAGE) {
-            return EGL_FALSE;
-        }
-
-        EGLBoolean ret = glAcquireSharedTexture(glHDCHandle, image, &fds, &stride, &offset);
-        if (ret == EGL_TRUE && fds > 0) {
-            pResourceInfo->globalShareHandle = fds;
-        } else {
-            eglDestroyImage(glHDCHandle, image);
-            ret = EGL_FALSE;
-        }
-
-        return ret;
-    }
-    GLboolean releaseSharedTexture(GLvoid *pResourceInfo) {
-        return 1;
-    }
     GLContext getBackupContextHandle() {
         return glHGLRCHandleBkpCtx;
     }
@@ -118,7 +94,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     // GL functions
     std::unique_ptr<OsLibrary> glLibrary;
     std::unique_ptr<OsLibrary> eglLibrary;
-    PFNEGLEXPORTDMABUFIMAGEMESAPROC glAcquireSharedTexture = nullptr;
     PFNglGetString glGetString = nullptr;
     PFNglGetStringi glGetStringi = nullptr;
     PFNglGetIntegerv glGetIntegerv = nullptr;

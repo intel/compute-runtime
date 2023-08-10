@@ -110,7 +110,6 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
         GlFunctionHelper eglGetProc(eglLibrary.get(), "eglGetProcAddress");
         eglCreateImage = eglGetProc["eglCreateImage"];
         eglDestroyImage = eglGetProc["eglDestroyImage"];
-        glAcquireSharedTexture = eglGetProc["eglExportDMABUFImageMESA"];
         eglGLInteropQueryDeviceInfo = eglGetProc["eglGLInteropQueryDeviceInfoMESA"];
         eglGLInteropExportObject = eglGetProc["eglGLInteropExportObjectMESA"];
         eglGLInteropFlushObjects = eglGetProc["eglGLInteropFlushObjectsMESA"];

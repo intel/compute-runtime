@@ -33,7 +33,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
     using GLSharingFunctionsLinux::eglGLInteropFlushObjects;
     using GLSharingFunctionsLinux::eglGLInteropQueryDeviceInfo;
 
-    using GLSharingFunctionsLinux::glAcquireSharedTexture;
     using GLSharingFunctionsLinux::glGetIntegerv;
     using GLSharingFunctionsLinux::glGetString;
     using GLSharingFunctionsLinux::glGetStringi;
@@ -65,8 +64,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
     void setGLInteropExportObjectMock(PFNMESAGLINTEROPEGLEXPORTOBJECTPROC mock) { eglGLInteropExportObject = mock; }
 
     void setGLInteropFlushObjectsMock(PFNMESAGLINTEROPEGLFLUSHOBJECTSPROC mock) { eglGLInteropFlushObjects = mock; }
-
-    void setGLAcquireSharedTextureMock(PFNEGLEXPORTDMABUFIMAGEMESAPROC mock) { glAcquireSharedTexture = mock; }
 };
 
 class MockGlSharing {
