@@ -11,6 +11,7 @@
 #include "opencl/source/sharings/gl/gl_sharing.h"
 #include "opencl/source/sharings/gl/linux/include/gl_types.h"
 
+#include "third_party/opengl_headers/GL/mesa_glinterop.h"
 #include <GL/gl.h>
 
 #include <EGL/eglext.h>
@@ -48,6 +49,15 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     void removeGlArbSyncEventMapping(Event &baseEvent);
 
     // Gl functions
+    int queryDeviceInfo(struct mesa_glinterop_device_info *out) {
+        return eglGLInteropQueryDeviceInfo(glHDCHandle, glHGLRCHandle, out);
+    }
+    int exportObject(struct mesa_glinterop_export_in *in, struct mesa_glinterop_export_out *out) {
+        return eglGLInteropExportObject(glHDCHandle, glHGLRCHandle, in, out);
+    }
+    int flushObjects(unsigned count, struct mesa_glinterop_export_in *resources, struct mesa_glinterop_flush_out *out) {
+        return eglGLInteropFlushObjects(glHDCHandle, glHGLRCHandle, count, resources, out);
+    }
     EGLBoolean acquireSharedTexture(CL_GL_RESOURCE_INFO *pResourceInfo) {
         int fds;
         int stride, offset;
@@ -112,6 +122,9 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     PFNglGetString glGetString = nullptr;
     PFNglGetStringi glGetStringi = nullptr;
     PFNglGetIntegerv glGetIntegerv = nullptr;
+    PFNMESAGLINTEROPEGLQUERYDEVICEINFOPROC eglGLInteropQueryDeviceInfo = nullptr;
+    PFNMESAGLINTEROPEGLEXPORTOBJECTPROC eglGLInteropExportObject = nullptr;
+    PFNMESAGLINTEROPEGLFLUSHOBJECTSPROC eglGLInteropFlushObjects = nullptr;
     PFNglArbSyncObjectSetup pfnGlArbSyncObjectSetup = nullptr;
     PFNglArbSyncObjectCleanup pfnGlArbSyncObjectCleanup = nullptr;
     PFNglArbSyncObjectSignal pfnGlArbSyncObjectSignal = nullptr;
