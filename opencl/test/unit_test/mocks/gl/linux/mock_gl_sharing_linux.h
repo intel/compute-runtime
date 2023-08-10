@@ -43,7 +43,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
     using GLSharingFunctionsLinux::glRetainSync;
     using GLSharingFunctionsLinux::glSetSharedOCLContextState;
     using GLSharingFunctionsLinux::isOpenGlExtensionSupported;
-    using GLSharingFunctionsLinux::setSharedOCLContextState;
 
     using GLSharingFunctionsLinux::glArbEventMapping;
     using GLSharingFunctionsLinux::glContextHandle;
@@ -109,7 +108,6 @@ class MockGlSharing {
 class MockGLSharingFunctions : public GLSharingFunctionsLinux {
   public:
     using GLSharingFunctionsLinux::isOpenGlExtensionSupported;
-    using GLSharingFunctionsLinux::setSharedOCLContextState;
 
     static void glGetIntegervTest(GLenum pname, GLint *data) {
         if (pname == GL_NUM_EXTENSIONS)

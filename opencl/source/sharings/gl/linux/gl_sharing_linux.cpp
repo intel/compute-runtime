@@ -28,18 +28,6 @@ bool GLSharingFunctionsLinux::isGlSharingEnabled() {
     return oglLibAvailable;
 }
 
-GLboolean GLSharingFunctionsLinux::setSharedOCLContextState() {
-    ContextInfo contextInfo{};
-    GLboolean retVal = glSetSharedOCLContextState(glHDCHandle, glHGLRCHandle, CL_TRUE, &contextInfo);
-    if (retVal == GL_FALSE) {
-        return GL_FALSE;
-    }
-    glContextHandle = contextInfo.contextHandle;
-    glDeviceHandle = contextInfo.deviceHandle;
-
-    return retVal;
-}
-
 bool GLSharingFunctionsLinux::isOpenGlExtensionSupported(const unsigned char *pExtensionString) {
     if (glGetStringi == nullptr || glGetIntegerv == nullptr) {
         return false;

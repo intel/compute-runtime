@@ -131,7 +131,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     PFNglGetTexLevelParameteriv glGetTexLevelParameteriv = nullptr;
 
   protected:
-    GLboolean setSharedOCLContextState();
     bool isOpenGlExtensionSupported(const unsigned char *pExtentionString);
 
     // Handles
