@@ -549,7 +549,6 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledForUnifiedSharedMemoryOnCmdListCopyOnlyThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
@@ -563,17 +562,18 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
     createKernel();
     ze_result_t returnValue;
-    ze_command_queue_desc_t queueDesc = {};
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    ze_command_list_flags_t cmdListFlags = {};
 
-    ze_command_list_handle_t commandListHandle = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue)->toHandle();
-    auto commandList = CommandList::fromHandle(commandListHandle);
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, cmdListFlags, returnValue);
+    auto commandListHandle = commandList->toHandle();
     auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, commandList->isCopyOnly(), false, true, returnValue);
 
-    ze_event_pool_desc_t eventPoolDesc = {};
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    ze_event_desc_t eventDesc = {};
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     eventDesc.index = 0;
 
     auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
@@ -585,8 +585,8 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     void *srcPtr = nullptr;
     void *dstPtr = nullptr;
 
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
 
     auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &srcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -606,6 +606,9 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     EXPECT_EQ(2u, commandList->getPrefetchContext().allocations.size());
 
     result = commandList->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
