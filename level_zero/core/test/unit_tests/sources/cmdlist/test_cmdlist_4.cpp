@@ -1432,5 +1432,22 @@ HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
     EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
 }
 
+using ImmediateCommandListTest = Test<ModuleMutableCommandListFixture>;
+
+HWTEST2_F(ImmediateCommandListTest, givenImmediateCommandListWhenClosingCommandListThenExpectNoEndingCmdDispatched, IsAtLeastSkl) {
+    std::unique_ptr<L0::CommandList> commandList;
+    const ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Compute, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+
+    returnValue = commandListImmediate.close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto &commandContainer = commandListImmediate.commandContainer;
+    EXPECT_EQ(0u, commandContainer.getCommandStream()->getUsed());
+}
+
 } // namespace ult
 } // namespace L0

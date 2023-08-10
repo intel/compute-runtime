@@ -261,7 +261,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediate(bo
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediateImpl(bool performMigration, L0::CommandQueue *cmdQImmediate) {
-    this->close();
+    CommandListCoreFamily<gfxCoreFamily>::close();
     ze_command_list_handle_t immediateHandle = this->toHandle();
 
     this->commandContainer.removeDuplicatesFromResidencyContainer();
