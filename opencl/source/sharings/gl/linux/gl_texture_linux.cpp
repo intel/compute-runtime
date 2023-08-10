@@ -78,7 +78,9 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     imgInfo.imgDesc.imageHeight = imgDesc.image_height;
 
     if (target == GL_RENDERBUFFER_EXT) {
+#if 0
         sharingFunctions->acquireSharedRenderBuffer(&texInfo);
+#endif
     } else {
         if (sharingFunctions->acquireSharedTexture(&texInfo) != EGL_TRUE) {
             errorCode.set(CL_INVALID_GL_OBJECT);
@@ -180,7 +182,9 @@ void GlTexture::synchronizeObject(UpdateData &updateData) {
     CL_GL_RESOURCE_INFO resourceInfo = {0};
     resourceInfo.name = this->clGlObjectId;
     if (target == GL_RENDERBUFFER_EXT) {
+#if 0
         sharingFunctions->acquireSharedRenderBuffer(&resourceInfo);
+#endif
     } else {
         if (sharingFunctions->acquireSharedTexture(&resourceInfo) == EGL_TRUE) {
             // Set texture buffer offset acquired from OpenGL layer in graphics allocation
@@ -278,7 +282,9 @@ cl_GLenum GlTexture::getBaseTargetType(cl_GLenum target) {
 void GlTexture::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     auto sharingFunctions = static_cast<GLSharingFunctionsLinux *>(this->sharingFunctions);
     if (target == GL_RENDERBUFFER_EXT) {
+#if 0
         sharingFunctions->releaseSharedRenderBuffer(&textureInfo);
+#endif
     } else {
         sharingFunctions->releaseSharedTexture(&textureInfo);
         auto memoryManager = memObject->getMemoryManager();
