@@ -183,6 +183,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void printKernelsPrintfOutput(bool hangDetected);
     ze_result_t synchronizeInOrderExecution(uint64_t timeout) const;
     bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch);
+    void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;

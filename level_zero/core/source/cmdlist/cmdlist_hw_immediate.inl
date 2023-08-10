@@ -1153,5 +1153,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
     return status;
 }
-
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
+    L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
+    if (sizePerHwThread != 0U && kernelImp->getParentModule().shouldAllocatePrivateMemoryPerDispatch()) {
+        auto ownership = this->csr->obtainUniqueOwnership();
+        this->allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, this->csr->getOwnedPrivateAllocations());
+    }
+}
 } // namespace L0

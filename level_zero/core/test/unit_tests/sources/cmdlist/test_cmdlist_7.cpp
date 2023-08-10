@@ -10,6 +10,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -3198,6 +3199,121 @@ HWTEST2_F(CommandListMappedTimestampTest, givenCommandListTimestampRefreshInterv
     commandList->addToMappedEventList(event.get());
     commandList->storeReferenceTsToMappedEvents(true);
     EXPECT_EQ(0u, commandList->peekMappedEventList().size());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily, typename BaseMock>
+class MockCommandListCoreFamilyIfPrivateNeeded : public BaseMock {
+  public:
+    void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, std::unordered_map<uint32_t, GraphicsAllocation *> &privateAllocsToReuse) override {
+        passedContainer = &privateAllocsToReuse;
+        BaseMock::allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, privateAllocsToReuse);
+    }
+    std::unordered_map<uint32_t, GraphicsAllocation *> *passedContainer;
+};
+
+HWTEST2_F(CommandListCreate, givenPrivatePerDispatchDisabledWhenAllocatingPrivateMemoryThenAllocateIsNotCalled, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<::L0::Kernel> mockKernel;
+    mockKernel.module = &mockModule;
+    mockModule.allocatePrivateMemoryPerDispatch = false;
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, 0x1000);
+    EXPECT_EQ(commandList->allocateOrReuseKernelPrivateMemoryCalled, 0u);
+}
+
+HWTEST2_F(CommandListCreate, givenPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenAllocateIsCalled, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<::L0::Kernel> mockKernel;
+    mockKernel.module = &mockModule;
+    mockModule.allocatePrivateMemoryPerDispatch = true;
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, 0x1000);
+    EXPECT_EQ(commandList->allocateOrReuseKernelPrivateMemoryCalled, 1u);
+}
+
+HWTEST2_F(CommandListCreate, givenPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenCmdListMaprIsPassed, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<::L0::Kernel> mockKernel;
+    mockKernel.module = &mockModule;
+    mockModule.allocatePrivateMemoryPerDispatch = true;
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, 0x1000);
+    EXPECT_EQ(commandList->passedContainer, &commandList->ownedPrivateAllocations);
+}
+
+HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchDisabledWhenAllocatingPrivateMemoryCalledThenAllocateIsNotCalled, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListImmediateHw<gfxCoreFamily>>>();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<::L0::Kernel> mockKernel;
+    mockKernel.module = &mockModule;
+    mockModule.allocatePrivateMemoryPerDispatch = false;
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, 0x1000);
+    EXPECT_EQ(commandList->allocateOrReuseKernelPrivateMemoryCalled, 0u);
+}
+
+HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenAllocateIsCalled, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListImmediateHw<gfxCoreFamily>>>();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    commandList->csr = &mockCommandStreamReceiver;
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<::L0::Kernel> mockKernel;
+    mockKernel.module = &mockModule;
+    mockModule.allocatePrivateMemoryPerDispatch = true;
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, 0x1000);
+    EXPECT_EQ(commandList->allocateOrReuseKernelPrivateMemoryCalled, 1u);
+}
+
+HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenCsrMapIsPassed, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListImmediateHw<gfxCoreFamily>>>();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    commandList->csr = &mockCommandStreamReceiver;
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<::L0::Kernel> mockKernel;
+    mockKernel.module = &mockModule;
+    mockModule.allocatePrivateMemoryPerDispatch = true;
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, 0x1000);
+    EXPECT_EQ(commandList->passedContainer, &mockCommandStreamReceiver.getOwnedPrivateAllocations());
+}
+
+HWTEST2_F(CommandListCreate, givenCmdListWhenAllocateOrReuseCalledForSizeThatIsStoredInMapThenItsReused, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
+    commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
+    commandList->device = this->device;
+    uint32_t sizePerHwThread = 0x1000;
+    auto mockMem = std::make_unique<uint8_t[]>(0x1000);
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<::L0::Kernel> mockKernel;
+    const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
+    mockKernel.module = &mockModule;
+    MockGraphicsAllocation mockGA(mockMem.get(), 2 * sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
+    std::unordered_map<uint32_t, GraphicsAllocation *> mapForReuse;
+    mapForReuse[sizePerHwThread] = &mockGA;
+    commandList->allocateOrReuseKernelPrivateMemory(&mockKernel, sizePerHwThread, mapForReuse);
+    EXPECT_EQ(mockKernel.residencyContainer[0], &mockGA);
+}
+
+HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPrivateMemoryThenNewAllocationIsCreated, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
+    commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
+    commandList->device = this->device;
+    uint32_t sizePerHwThread = 0x1000;
+    auto mockMem = std::make_unique<uint8_t[]>(0x1000);
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<::L0::Kernel> mockKernel;
+    const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
+    mockKernel.module = &mockModule;
+    MockGraphicsAllocation mockGA(mockMem.get(), sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch / 2);
+    std::unordered_map<uint32_t, GraphicsAllocation *> mapForReuse;
+    mapForReuse[sizePerHwThread] = &mockGA;
+    commandList->allocateOrReuseKernelPrivateMemory(&mockKernel, sizePerHwThread / 2, mapForReuse);
+    EXPECT_NE(mockKernel.residencyContainer[0], &mockGA);
+    neoDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.residencyContainer[0]);
 }
 
 } // namespace ult
