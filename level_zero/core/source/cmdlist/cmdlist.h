@@ -21,6 +21,7 @@
 #include <level_zero/zet_api.h>
 
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 struct _ze_command_list_handle_t {};
@@ -355,7 +356,7 @@ struct CommandList : _ze_command_list_handle_t {
     MOCKABLE_VIRTUAL void synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
-    std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;
+    std::unordered_map<uint32_t, NEO::GraphicsAllocation *> ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
     std::vector<Kernel *> printfKernelContainer;
 

@@ -1299,7 +1299,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogethe
     auto &kernelImmDatas = proxyModuleImpl->getKernelImmDatas();
     for (size_t i = 0; i < kernelsNb; i++) {
         auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
-        kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = overAllocMinSize;
+        kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = overAllocMinSize + static_cast<uint32_t>(i * MemoryConstants::cacheLineSize);
         kernelDesc.kernelAttributes.flags.usesPrintf = false;
         kernelDesc.kernelMetadata.kernelName = kernelNames[i];
     }
@@ -1318,8 +1318,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogethe
         EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), i);
         kernels.push_back(this->createKernelWithName(kernelNames[i]));
         // This function is called by appendLaunchKernelWithParams
-        pCommandList->allocateKernelPrivateMemoryIfNeeded(kernels[i].get(),
-                                                          kernels[i]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+        pCommandList->allocateOrReuseKernelPrivateMemoryIfNeeded(kernels[i].get(),
+                                                                 kernels[i]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
         EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), i + 1);
     }
 }
@@ -1355,8 +1355,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExc
         EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
         kernels.push_back(this->createKernelWithName(kernelNames[i]));
         // This function is called by appendLaunchKernelWithParams
-        pCommandList->allocateKernelPrivateMemoryIfNeeded(kernels[i].get(),
-                                                          kernels[i]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+        pCommandList->allocateOrReuseKernelPrivateMemoryIfNeeded(kernels[i].get(),
+                                                                 kernels[i]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
         EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
     }
 }

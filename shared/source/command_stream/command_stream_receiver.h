@@ -118,6 +118,7 @@ class CommandStreamReceiver {
 
     ResidencyContainer &getResidencyAllocations();
     ResidencyContainer &getEvictionAllocations();
+    std::unordered_map<uint32_t, GraphicsAllocation *> &getOwnedPrivateAllocations();
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
     bool needsPageTableManager() const;
@@ -459,6 +460,8 @@ class CommandStreamReceiver {
 
     ResidencyContainer residencyAllocations;
     ResidencyContainer evictionAllocations;
+    std::unordered_map<uint32_t, GraphicsAllocation *> ownedPrivateAllocations;
+
     MutexType ownershipMutex;
     MutexType hostPtrSurfaceCreationMutex;
     ExecutionEnvironment &executionEnvironment;

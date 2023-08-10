@@ -19,6 +19,7 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
@@ -52,6 +53,7 @@
 #include "CL/cl.h"
 
 #include <algorithm>
+#include <unordered_map>
 
 namespace L0 {
 
@@ -69,8 +71,8 @@ inline ze_result_t parseErrorCode(NEO::CommandContainer::ErrorCode returnValue) 
 template <GFXCORE_FAMILY gfxCoreFamily>
 CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
     clearCommandsToPatch();
-    for (auto alloc : this->ownedPrivateAllocations) {
-        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
+    for (auto &alloc : this->ownedPrivateAllocations) {
+        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc.second);
     }
     this->ownedPrivateAllocations.clear();
     for (auto &patternAlloc : this->patternAllocations) {
@@ -127,8 +129,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         this->returnPoints.clear();
     }
 
-    for (auto alloc : this->ownedPrivateAllocations) {
-        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
+    for (auto &alloc : this->ownedPrivateAllocations) {
+        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc.second);
     }
     this->ownedPrivateAllocations.clear();
     cmdListCurrentStartOffset = 0;
@@ -3124,14 +3126,25 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::allocateKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
+void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
     L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     if (sizePerHwThread != 0U && kernelImp->getParentModule().shouldAllocatePrivateMemoryPerDispatch()) {
-        auto privateMemoryGraphicsAllocation = kernel->allocatePrivateMemoryGraphicsAllocation();
-        kernel->patchCrossthreadDataWithPrivateAllocation(privateMemoryGraphicsAllocation);
-        this->commandContainer.addToResidencyContainer(privateMemoryGraphicsAllocation);
-        this->ownedPrivateAllocations.push_back(privateMemoryGraphicsAllocation);
+        allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, ownedPrivateAllocations);
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, std::unordered_map<uint32_t, NEO::GraphicsAllocation *> &privateAllocsToReuse) {
+    L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
+    NEO::GraphicsAllocation *privateAlloc = nullptr;
+
+    if (privateAllocsToReuse[sizePerHwThread] != nullptr) {
+        privateAlloc = privateAllocsToReuse[sizePerHwThread];
+    } else {
+        privateAlloc = kernelImp->allocatePrivateMemoryGraphicsAllocation();
+        privateAllocsToReuse[sizePerHwThread] = privateAlloc;
+    }
+    kernelImp->patchAndMoveToResidencyContainerPrivateSurface(privateAlloc);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

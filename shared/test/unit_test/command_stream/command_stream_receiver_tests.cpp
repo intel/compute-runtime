@@ -4339,3 +4339,13 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     EXPECT_EQ(nullptr, frontEndCmd);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 }
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCleanUpResourcesThenOwnedPrivateAllocationsAreFreed) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto mockGA = std::make_unique<MockGraphicsAllocation>();
+
+    auto mapForReuse = &csr.getOwnedPrivateAllocations();
+    mapForReuse->insert({0x100, mockGA.release()});
+    csr.cleanupResources();
+    EXPECT_EQ(mapForReuse->size(), 0u);
+}

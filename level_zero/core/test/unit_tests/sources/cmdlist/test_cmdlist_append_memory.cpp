@@ -22,7 +22,7 @@ namespace ult {
 using AppendMemoryCopy = Test<DeviceFixture>;
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenTwoNewAllocationAreAddedToHostMapPtr, IsAtLeastSkl) {
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -33,7 +33,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionC
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCopyRegion2DCalledThenSrcDstPointersArePageAligned, IsAtLeastSkl) {
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -46,7 +46,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCo
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCopyRegion3DCalledThenSrcDstPointersArePageAligned, IsAtLeastSkl) {
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -59,7 +59,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCo
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion2DCalledThenSrcDstNotZeroOffsetsArePassed, IsAtLeastSkl) {
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1233);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -71,7 +71,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemo
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion3DCalledThenSrcDstNotZeroOffsetsArePassed, IsAtLeastSkl) {
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1233);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -83,7 +83,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemo
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndAlignedHostPointersWhenBlitMemoryCopyRegion3DCalledThenSrcDstZeroOffsetsArePassed, IsAtLeastSkl) {
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     void *srcPtr = alignDown(reinterpret_cast<void *>(0x1233), NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
     void *dstPtr = alignDown(reinterpret_cast<void *>(0x2345), NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
@@ -98,7 +98,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemor
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -132,7 +132,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopy
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -166,7 +166,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemor
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -201,7 +201,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopy
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -236,7 +236,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemor
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -270,7 +270,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopy
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -303,7 +303,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopy
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -610,7 +610,7 @@ HWTEST2_F(AppendMemoryCopy, givenSyncModeImmediateCommandListWhenAppendingMemory
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -646,7 +646,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyT
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -701,7 +701,7 @@ HWTEST2_F(AppendMemoryCopy,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -759,7 +759,7 @@ HWTEST2_F(AppendMemoryCopy,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
