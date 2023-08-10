@@ -407,15 +407,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     EXPECT_NE(expectedWaitFence, wddm->waitFromCpuResult.uint64ParamPassed);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, whenCreateWddmDirectSubmissionThenDisableMonitorFence) {
-    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    EXPECT_TRUE(wddmDirectSubmission.disableMonitorFence);
-}
-
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcompletionFenceUpdated) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
-
     uint64_t address = 0xFF00FF0000ull;
     uint64_t value = 0x12345678ull;
     MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();

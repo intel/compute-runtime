@@ -42,8 +42,6 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(const DirectSu
         this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
     }
 
-    this->disableMonitorFence = true;
-
     if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
         this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
     }
