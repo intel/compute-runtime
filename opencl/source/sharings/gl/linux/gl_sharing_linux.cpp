@@ -20,7 +20,6 @@ namespace NEO {
 GLSharingFunctionsLinux::GLSharingFunctionsLinux(GLType glhdcType, GLContext glhglrcHandle, GLContext glhglrcHandleBkpCtx, GLDisplay glhdcHandle)
     : glHDCType(glhdcType), glHGLRCHandle(glhglrcHandle), glHGLRCHandleBkpCtx(glhglrcHandleBkpCtx), glHDCHandle(glhdcHandle) {
     GLSharingFunctionsLinux::initGLFunctions();
-    updateOpenGLContext();
 }
 GLSharingFunctionsLinux::~GLSharingFunctionsLinux() = default;
 
@@ -121,9 +120,6 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
 
     if (eglLibrary->isLoaded()) {
         GlFunctionHelper eglGetProc(eglLibrary.get(), "eglGetProcAddress");
-        glGetCurrentContext = eglGetProc["eglGetCurrentContext"];
-        glGetCurrentDisplay = eglGetProc["eglGetCurrentDisplay"];
-        eglMakeCurrent = eglGetProc["eglMakeCurrent"];
         eglCreateImage = eglGetProc["eglCreateImage"];
         eglDestroyImage = eglGetProc["eglDestroyImage"];
         glAcquireSharedTexture = eglGetProc["eglExportDMABUFImageMESA"];

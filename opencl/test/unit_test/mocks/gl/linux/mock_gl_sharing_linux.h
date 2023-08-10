@@ -29,12 +29,9 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
   public:
     ~GlSharingFunctionsMock() override = default;
 
-    using GLSharingFunctionsLinux::eglMakeCurrent;
     using GLSharingFunctionsLinux::glAcquireSharedBuffer;
     using GLSharingFunctionsLinux::glAcquireSharedRenderBuffer;
     using GLSharingFunctionsLinux::glAcquireSharedTexture;
-    using GLSharingFunctionsLinux::glGetCurrentContext;
-    using GLSharingFunctionsLinux::glGetCurrentDisplay;
     using GLSharingFunctionsLinux::glGetIntegerv;
     using GLSharingFunctionsLinux::glGetString;
     using GLSharingFunctionsLinux::glGetStringi;
@@ -61,7 +58,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
     GlSharingFunctionsMock(GLType glHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle)
         : GLSharingFunctionsLinux(glHDCType, glHGLRCHandle, glHGLRCHandleBkpCtx, glHDCHandle) {
         initMembers();
-        updateOpenGLContext();
     }
     GlSharingFunctionsMock();
 

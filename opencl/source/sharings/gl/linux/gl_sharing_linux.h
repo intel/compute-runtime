@@ -23,9 +23,6 @@ typedef GLboolean (*PFNOGLAcquireSharedRenderBufferINTEL)(GLDisplay hdcHandle, G
 typedef GLboolean (*PFNOGLReleaseSharedBufferINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pBufferInfo);
 typedef GLboolean (*PFNOGLReleaseSharedRenderBufferINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pResourceInfo);
 typedef GLboolean (*PFNOGLReleaseSharedTextureINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pResourceInfo);
-typedef GLContext (*PFNOGLGetCurrentContext)();
-typedef GLDisplay (*PFNOGLGetCurrentDisplay)();
-typedef GLboolean (*PFNOGLMakeCurrent)(GLDisplay hdcHandle, void *draw, void *read, GLContext contextHandle);
 typedef GLboolean (*PFNOGLRetainSyncINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pSyncInfo);
 typedef GLboolean (*PFNOGLReleaseSyncINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pSync);
 typedef void (*PFNOGLGetSyncivINTEL)(GLvoid *pSync, GLenum pname, GLint *value);
@@ -35,12 +32,6 @@ typedef const GLubyte *(*PFNglGetStringi)(GLenum name, GLuint index);
 typedef void (*PFNglGetIntegerv)(GLenum pname, GLint *params);
 typedef void (*PFNglBindTexture)(GLenum target, GLuint texture);
 typedef void (*PFNglGetTexLevelParameteriv)(GLenum target, GLint level, GLenum pname, GLint *params);
-
-// egl
-typedef unsigned char (*PFNeglMakeCurrent)(void *, void *);
-typedef GLContext (*PFNeglCreateContext)(GLDisplay hdcHandle);
-typedef int (*PFNeglShareLists)(GLContext contextHandle, GLContext backupContextHandle);
-typedef EGLBoolean (*PFNeglDeleteContext)(EGLDisplay dpy, EGLContext ctx);
 
 typedef bool (*PFNglArbSyncObjectSetup)(GLSharingFunctions &sharing, OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo);
 typedef void (*PFNglArbSyncObjectCleanup)(OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo);
@@ -115,18 +106,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     void getSynciv(GLvoid *pSync, GLenum pname, GLint *value) {
         return glGetSynciv(pSync, pname, value);
     }
-    GLContext getCurrentContext() {
-        return glGetCurrentContext();
-    }
-    GLDisplay getCurrentDisplay() {
-        return glGetCurrentDisplay();
-    }
-    GLboolean makeCurrent(GLContext contextHandle, GLDisplay displayHandle = 0) {
-        if (displayHandle == 0) {
-            displayHandle = glHDCHandle;
-        }
-        return this->eglMakeCurrent(displayHandle, contextHandle);
-    }
     GLContext getBackupContextHandle() {
         return glHGLRCHandleBkpCtx;
     }
@@ -152,11 +131,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     PFNglGetTexLevelParameteriv glGetTexLevelParameteriv = nullptr;
 
   protected:
-    void updateOpenGLContext() {
-        if (glSetSharedOCLContextState) {
-            setSharedOCLContextState();
-        }
-    }
     GLboolean setSharedOCLContextState();
     bool isOpenGlExtensionSupported(const unsigned char *pExtentionString);
 
@@ -178,12 +152,9 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     PFNOGLReleaseSharedRenderBufferINTEL glReleaseSharedRenderBuffer = nullptr;
     PFNEGLEXPORTDMABUFIMAGEMESAPROC glAcquireSharedTexture = nullptr;
     PFNOGLReleaseSharedTextureINTEL glReleaseSharedTexture = nullptr;
-    PFNOGLGetCurrentContext glGetCurrentContext = nullptr;
-    PFNOGLGetCurrentDisplay glGetCurrentDisplay = nullptr;
     PFNglGetString glGetString = nullptr;
     PFNglGetStringi glGetStringi = nullptr;
     PFNglGetIntegerv glGetIntegerv = nullptr;
-    PFNeglMakeCurrent eglMakeCurrent = nullptr;
     PFNOGLRetainSyncINTEL glRetainSync = nullptr;
     PFNOGLReleaseSyncINTEL glReleaseSync = nullptr;
     PFNOGLGetSyncivINTEL glGetSynciv = nullptr;
