@@ -165,6 +165,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
+    using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::inOrderDependencyCounter;
     using BaseClass::inOrderDependencyCounterAllocation;
@@ -172,6 +173,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
+    using BaseClass::latestFlushIsHostVisible;
     using BaseClass::partitionCount;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
@@ -183,6 +185,9 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::synchronizeInOrderExecution;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
+
+    ADDMETHOD_CONST(synchronizeInOrderExecution, ze_result_t, true, ZE_RESULT_SUCCESS,
+                    (uint64_t timeout), (timeout));
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>

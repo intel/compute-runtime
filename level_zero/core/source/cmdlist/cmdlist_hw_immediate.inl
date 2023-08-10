@@ -848,7 +848,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout, TaskCountType taskCount, bool handlePostWaitOperations) {
     ze_result_t status = ZE_RESULT_SUCCESS;
 
-    if (isInOrderExecutionEnabled()) {
+    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !handlePostWaitOperations && this->latestFlushIsHostVisible);
+
+    if (inOrderWaitAllowed) {
         status = synchronizeInOrderExecution(timeout);
     } else {
         const int64_t timeoutInMicroSeconds = timeout / 1000;
@@ -857,10 +859,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                                                                         taskCount);
         if (waitStatus == NEO::WaitStatus::GpuHang) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
+        } else if (waitStatus == NEO::WaitStatus::NotReady) {
+            status = ZE_RESULT_NOT_READY;
         }
     }
 
-    if (handlePostWaitOperations) {
+    if (handlePostWaitOperations && status != ZE_RESULT_NOT_READY) {
         if (status == ZE_RESULT_SUCCESS) {
             this->cmdQImmediate->unregisterCsrClient();
             this->csr->getInternalAllocationStorage()->cleanAllocationList(taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
@@ -900,10 +904,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 
     if (signalEvent) {
         signalEvent->setCsr(this->csr, isInOrderExecutionEnabled());
+        this->latestFlushIsHostVisible = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
 
         if (isInOrderExecutionEnabled()) {
             signalEvent->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
         }
+    } else {
+        this->latestFlushIsHostVisible = false;
     }
 
     return inputRet;

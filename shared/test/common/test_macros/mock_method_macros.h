@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,4 +56,16 @@
             return BaseClass::funcName invokeParams;                                    \
         }                                                                               \
         return funcName##Result;                                                        \
+    }
+
+#define ADDMETHOD_CONST(funcName, retType, callBase, defaultReturn, funcParams, invokeParams) \
+    retType funcName##Result = defaultReturn;                                                 \
+    bool funcName##CallBase = callBase;                                                       \
+    mutable uint32_t funcName##Called = 0u;                                                   \
+    retType funcName funcParams const override {                                              \
+        funcName##Called++;                                                                   \
+        if (funcName##CallBase) {                                                             \
+            return BaseClass::funcName invokeParams;                                          \
+        }                                                                                     \
+        return funcName##Result;                                                              \
     }
