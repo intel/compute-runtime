@@ -7,7 +7,7 @@
 
 #include <EGL/egl.h>
 
-using GLDisplay = EGLDisplay;
-using GLContext = EGLContext;
+typedef void *GLDisplay;
+typedef void *GLContext;
 using GLType = uint32_t;
 using GLFunctionType = decltype(&eglGetProcAddress);

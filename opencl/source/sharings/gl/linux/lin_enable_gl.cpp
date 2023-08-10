@@ -37,6 +37,10 @@ bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyT
     case CL_GL_CONTEXT_KHR:
         contextData->glHGLRCHandle = reinterpret_cast<GLContext>(propertyValue);
         return true;
+    case CL_GLX_DISPLAY_KHR:
+        contextData->glHDCType = static_cast<GLType>(CL_GLX_DISPLAY_KHR);
+        contextData->glHDCHandle = reinterpret_cast<GLDisplay>(propertyValue);
+        return true;
     case CL_EGL_DISPLAY_KHR:
         contextData->glHDCType = static_cast<GLType>(CL_EGL_DISPLAY_KHR);
         contextData->glHDCHandle = reinterpret_cast<GLDisplay>(propertyValue);
