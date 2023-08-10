@@ -69,3 +69,13 @@
         }                                                                                     \
         return funcName##Result;                                                              \
     }
+
+#define ADDMETHOD_VOIDRETURN(funcName, callBase, funcParams, invokeParams) \
+    bool funcName##CallBase = callBase;                                    \
+    uint32_t funcName##Called = 0u;                                        \
+    void funcName funcParams override {                                    \
+        funcName##Called++;                                                \
+        if (funcName##CallBase) {                                          \
+            BaseClass::funcName invokeParams;                              \
+        }                                                                  \
+    }

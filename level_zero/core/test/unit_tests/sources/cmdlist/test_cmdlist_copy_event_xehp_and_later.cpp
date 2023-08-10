@@ -90,7 +90,7 @@ void testSingleTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpect
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -175,7 +175,7 @@ void testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, 
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -283,7 +283,7 @@ void testSingleTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpect
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -355,7 +355,7 @@ void testSingleTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, 
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -509,7 +509,7 @@ void testMultiTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpecte
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -600,7 +600,7 @@ void testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, T
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -726,7 +726,7 @@ void testMultiTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpecte
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -802,7 +802,7 @@ void testMultiTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, T
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
