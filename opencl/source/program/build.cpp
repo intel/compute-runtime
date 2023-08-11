@@ -229,13 +229,7 @@ void Program::debugNotify(const ClDeviceVector &deviceVector, std::unordered_map
         if (BuildPhase::DebugDataNotification == phasesReached[rootDeviceIndex]) {
             continue;
         }
-
-        auto &buildInfo = this->buildInfos[rootDeviceIndex];
-        auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-        if (!NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
-            processDebugData(rootDeviceIndex);
-        }
-
+        createDebugData(clDevice);
         phasesReached[rootDeviceIndex] = BuildPhase::DebugDataNotification;
     }
 }

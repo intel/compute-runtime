@@ -348,6 +348,17 @@ void Program::createDebugZebin(uint32_t rootDeviceIndex) {
              debugZebin.data(), debugZebin.size());
 }
 
+void Program::createDebugData(ClDevice *clDevice) {
+    auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+    auto &buildInfo = this->buildInfos[rootDeviceIndex];
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+        createDebugZebin(rootDeviceIndex);
+    } else {
+        processDebugData(rootDeviceIndex);
+    }
+}
+
 void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {
     auto &buildInfo = this->buildInfos[rootDeviceIndex];
     auto extractAndDecodeMetadata = [&]() {
