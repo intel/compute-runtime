@@ -582,13 +582,12 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     const auto pageSizeForAlignment = alignUp<size_t>(unifiedMemoryProperties.alignment, MemoryConstants::pageSize64k);
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
-    auto cpuAlignment = std::max(pageSizeForAlignment, memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().getSvmCpuAlignment());
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        !useExternalHostPtrForCpu, // allocateMemory
-                                       alignUp(alignedSize, cpuAlignment), AllocationType::SVM_CPU,
+                                       alignedSize, AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
-    cpuProperties.alignment = cpuAlignment;
+    cpuProperties.alignment = std::max(pageSizeForAlignment, memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().getSvmCpuAlignment());
     cpuProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
     cpuProperties.forceKMDAllocation = true;
     cpuProperties.makeGPUVaDifferentThanCPUPtr = true;
