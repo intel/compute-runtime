@@ -318,6 +318,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     unifiedMemoryProperties.device = &device->getDevice();
     auto allocationSize = 4096u;
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    auto alignment = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().getSvmCpuAlignment();
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -328,7 +329,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     EXPECT_EQ(mockContext.getDevice(0u), allocation->device->getSpecializedDevice<ClDevice>());
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, alignment), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
@@ -348,6 +349,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, 1, rootDeviceIndices, deviceBitfields);
     auto allocationSize = 4096u;
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    auto alignment = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().getSvmCpuAlignment();
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
@@ -357,7 +359,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     EXPECT_EQ(allocationSize, allocation->size);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, alignment), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
