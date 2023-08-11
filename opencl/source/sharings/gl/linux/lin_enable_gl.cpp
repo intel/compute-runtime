@@ -58,6 +58,7 @@ bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
                                                             nullptr, contextData->glHDCHandle));
     }
 
+    contextData.reset(nullptr);
     return true;
 }
 
