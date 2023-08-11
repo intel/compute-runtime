@@ -865,6 +865,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     auto memoryCompressionState = getGpgpuCommandStreamReceiver().getMemoryCompressionState(auxTranslationRequired);
+    bool hasStallingCmds = !relaxedOrderingEnabled && (eventsRequest.numEventsInWaitList > 0 || timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0);
 
     DispatchFlags dispatchFlags(
         {},                                                                                                     // csrDependencies
@@ -895,7 +896,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->areMultipleSubDevicesInContext(),                                                               // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                                      // memoryMigrationRequired
         isTextureCacheFlushNeeded(commandType),                                                                 // textureCacheFlush
-        false,                                                                                                  // hasStallingCmds
+        hasStallingCmds,                                                                                        // hasStallingCmds
         relaxedOrderingEnabled,                                                                                 // hasRelaxedOrderingDependencies
         false,                                                                                                  // stateCacheInvalidation
         isStallingCommandsOnNextFlushRequired(),                                                                // isStallingCommandsOnNextFlushRequired

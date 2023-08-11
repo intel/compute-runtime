@@ -1208,6 +1208,55 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
     clReleaseEvent(outEvent);
 }
 
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenRelaxedOrderingDisabledWhenDispatchingWithDependencyThenMarkAsStallingCmd, IsAtLeastXeHpcCore) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+
+    {
+        MockCommandQueueHw<FamilyType> ioq{context, pClDevice, nullptr};
+
+        ioq.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+        // IOQ without dependency
+        EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+        EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+        ioq.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+        // IOQ with implicit dependency
+        EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+        EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+    }
+
+    {
+        MockCommandQueueHw<FamilyType> ooq{context, pClDevice, nullptr};
+        ooq.setOoqEnabled();
+
+        cl_event event;
+
+        ooq.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+        // OOQ without dependency
+        EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+        EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+        ooq.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
+
+        // OOQ without implicit dependency
+        EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+        EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+        ooq.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &event, nullptr);
+
+        // OOQ with explicit dependency
+        EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+        EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+        clReleaseEvent(event);
+    }
+}
+
 HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlushingThenAllowForRelaxedOrdering, IsAtLeastXeHpcCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
