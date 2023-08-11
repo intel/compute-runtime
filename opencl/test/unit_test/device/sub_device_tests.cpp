@@ -100,6 +100,42 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
     EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
 }
 
+TEST(SubDevicesTest, givenDeviceWithSubDevicesAndSubDevicesAsDevicesIsSetWhenSubDeviceApiRefCountsAreChangedThenChangeIsNotPropagatedToRootDevice) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    initPlatform();
+    platform()->peekExecutionEnvironment()->setExposeSubDevicesAsDevices(1);
+    auto nonDefaultPlatform = std::make_unique<MockPlatform>(*platform()->peekExecutionEnvironment());
+    nonDefaultPlatform->initializeWithNewDevices();
+    auto device = nonDefaultPlatform->getClDevice(0);
+    auto defaultDevice = platform()->getClDevice(0);
+
+    auto subDevice = device->getSubDevice(1);
+    auto baseDeviceApiRefCount = device->getRefApiCount();
+    auto baseDeviceInternalRefCount = device->getRefInternalCount();
+    auto baseSubDeviceApiRefCount = subDevice->getRefApiCount();
+    auto baseSubDeviceInternalRefCount = subDevice->getRefInternalCount();
+    auto baseDefaultDeviceApiRefCount = defaultDevice->getRefApiCount();
+    auto baseDefaultDeviceInternalRefCount = defaultDevice->getRefInternalCount();
+
+    subDevice->retainApi();
+    EXPECT_EQ(baseDeviceApiRefCount, device->getRefApiCount());
+    EXPECT_EQ(baseDeviceInternalRefCount, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceApiRefCount, subDevice->getRefApiCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+    EXPECT_EQ(baseDefaultDeviceApiRefCount, defaultDevice->getRefApiCount());
+    EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
+
+    subDevice->releaseApi();
+    EXPECT_EQ(baseDeviceApiRefCount, device->getRefApiCount());
+    EXPECT_EQ(baseDeviceInternalRefCount, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceApiRefCount, subDevice->getRefApiCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+    EXPECT_EQ(baseDefaultDeviceApiRefCount, defaultDevice->getRefApiCount());
+    EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
+}
+
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
