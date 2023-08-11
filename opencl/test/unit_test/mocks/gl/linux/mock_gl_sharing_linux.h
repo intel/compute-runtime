@@ -36,8 +36,6 @@ class GlSharingFunctionsMock : public GLSharingFunctionsLinux {
     using GLSharingFunctionsLinux::isOpenGlExtensionSupported;
 
     using GLSharingFunctionsLinux::glArbEventMapping;
-    using GLSharingFunctionsLinux::glContextHandle;
-    using GLSharingFunctionsLinux::glDeviceHandle;
 
     using GLSharingFunctionsLinux::getSupportedFormats;
     using GLSharingFunctionsLinux::pfnGlArbSyncObjectCleanup;

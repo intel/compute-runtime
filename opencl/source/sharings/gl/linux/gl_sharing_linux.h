@@ -37,9 +37,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     GLSharingFunctionsLinux(GLType glhdcType, GLContext glhglrcHandle, GLContext glhglrcHandleBkpCtx, GLDisplay glhdcHandle);
     ~GLSharingFunctionsLinux() override;
 
-    OS_HANDLE getGLDeviceHandle() const { return glDeviceHandle; }
-    OS_HANDLE getGLContextHandle() const { return glContextHandle; }
-
     GLboolean initGLFunctions() override;
     bool isOpenGlSharingSupported() override;
     static bool isGlSharingEnabled();
@@ -107,8 +104,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     GLContext glHGLRCHandle = 0;
     GLContext glHGLRCHandleBkpCtx = 0;
     GLDisplay glHDCHandle = 0;
-    OS_HANDLE glDeviceHandle = 0;
-    OS_HANDLE glContextHandle = 0;
 
     // GL functions
     std::unique_ptr<OsLibrary> glLibrary;
