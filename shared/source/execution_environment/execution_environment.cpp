@@ -330,6 +330,10 @@ void ExecutionEnvironment::configureNeoEnvironment() {
     if (strcmp(hierarchyModel.c_str(), "FLAT") == 0) {
         setExposeSubDevicesAsDevices(true);
     }
+
+    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() == 1) {
+        setExposeSubDevicesAsDevices(true);
+    }
 }
 
 bool ExecutionEnvironment::comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2) {

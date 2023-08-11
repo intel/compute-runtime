@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -87,7 +88,7 @@ unique_ptr_if_unused<ClDevice> ClDevice::decRefInternal() {
 
 void ClDevice::retainApi() {
     auto parentDeviceId = deviceInfo.parentDevice;
-    if (parentDeviceId) {
+    if ((parentDeviceId && !getExecutionEnvironment()->isExposingSubDevicesAsDevices())) {
         auto pParentClDevice = static_cast<ClDevice *>(parentDeviceId);
         pParentClDevice->incRefInternal();
         this->incRefApi();
@@ -95,7 +96,7 @@ void ClDevice::retainApi() {
 };
 unique_ptr_if_unused<ClDevice> ClDevice::releaseApi() {
     auto parentDeviceId = deviceInfo.parentDevice;
-    if (!parentDeviceId) {
+    if (!parentDeviceId || getExecutionEnvironment()->isExposingSubDevicesAsDevices()) {
         return unique_ptr_if_unused<ClDevice>(this, false);
     }
     auto pParentClDevice = static_cast<ClDevice *>(parentDeviceId);
