@@ -41,6 +41,18 @@ TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnv
     EXPECT_EQ(0, environment.getRefApiCount());
 }
 
+TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenSubDevicesAsDevicesIsFalse) {
+    ExecutionEnvironment environment;
+    EXPECT_FALSE(environment.isExposingSubDevicesAsDevices());
+}
+
+TEST(ExecutionEnvironment, givenDefaultConstructoWhenItIsCalledAndReturnSubDevicesAsApiDevicesIsSetThenSubDevicesAsDevicesIsTrue) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
+    ExecutionEnvironment environment;
+    EXPECT_TRUE(environment.isExposingSubDevicesAsDevices());
+}
+
 TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
     auto executionEnvironment = new ExecutionEnvironment();
 
