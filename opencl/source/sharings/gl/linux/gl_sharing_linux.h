@@ -128,9 +128,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     GLDisplay glHDCHandle = 0;
 
     // GL functions
-    std::unique_ptr<OsLibrary> glLibrary;
-    std::unique_ptr<OsLibrary> glxLibrary;
-    std::unique_ptr<OsLibrary> eglLibrary;
     PFNglGetString glGetString = nullptr;
     PFNglGetStringi glGetStringi = nullptr;
     PFNglGetIntegerv glGetIntegerv = nullptr;

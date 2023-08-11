@@ -14,7 +14,6 @@ if(UNIX)
       ${CMAKE_CURRENT_SOURCE_DIR}/gl_arb_sync_event_linux.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gl_buffer_linux.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gl_context_guard_linux.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/gl_library_linux.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gl_sharing_linux.h
       ${CMAKE_CURRENT_SOURCE_DIR}/gl_sharing_linux.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gl_sync_event_linux.cpp

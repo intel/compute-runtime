@@ -21,6 +21,9 @@ class GlFunctionHelper {
     ConvertibleProcAddr operator[](const char *name) {
         return ConvertibleProcAddr{reinterpret_cast<void *>(glFunctionPtr(name))};
     }
+    bool ready() const {
+        return glFunctionPtr != nullptr;
+    }
 
   protected:
     GLFunctionType glFunctionPtr = nullptr;

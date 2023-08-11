@@ -11,12 +11,6 @@
 #include "opencl/source/helpers/gl_helper.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 
-namespace Os {
-extern const char *glxDllName;
-extern const char *eglDllName;
-extern const char *openglDllName;
-} // namespace Os
-
 namespace NEO {
 GLSharingFunctionsLinux::GLSharingFunctionsLinux(GLType glhdcType, GLContext glhglrcHandle, GLContext glhglrcHandleBkpCtx, GLDisplay glhdcHandle)
     : glHDCType(glhdcType), glHGLRCHandle(glhglrcHandle), glHGLRCHandleBkpCtx(glhglrcHandleBkpCtx), glHDCHandle(glhdcHandle) {
@@ -104,27 +98,26 @@ void GLSharingFunctionsLinux::removeGlArbSyncEventMapping(Event &baseEvent) {
 }
 
 GLboolean GLSharingFunctionsLinux::initGLFunctions() {
-    glxLibrary.reset(OsLibrary::load(Os::glxDllName));
-    eglLibrary.reset(OsLibrary::load(Os::eglDllName));
-    glLibrary.reset(OsLibrary::load(Os::openglDllName));
+    std::unique_ptr<OsLibrary> dynLibrary(OsLibrary::load(""));
 
-    if (glxLibrary->isLoaded()) {
-        GlFunctionHelper glXGetProc(glLibrary.get(), "glXGetProcAddress");
+    GlFunctionHelper glXGetProc(dynLibrary.get(), "glXGetProcAddress");
+    if (glXGetProc.ready()) {
         glXGLInteropQueryDeviceInfo = glXGetProc["glXGLInteropQueryDeviceInfoMESA"];
         glXGLInteropExportObject = glXGetProc["glXGLInteropExportObjectMESA"];
         glXGLInteropFlushObjects = glXGetProc["glXGLInteropFlushObjectsMESA"];
     }
-    if (eglLibrary->isLoaded()) {
-        GlFunctionHelper eglGetProc(eglLibrary.get(), "eglGetProcAddress");
+
+    GlFunctionHelper eglGetProc(dynLibrary.get(), "eglGetProcAddress");
+    if (eglGetProc.ready()) {
         eglGLInteropQueryDeviceInfo = eglGetProc["eglGLInteropQueryDeviceInfoMESA"];
         eglGLInteropExportObject = eglGetProc["eglGLInteropExportObjectMESA"];
         eglGLInteropFlushObjects = eglGetProc["eglGLInteropFlushObjectsMESA"];
     }
-    if (glLibrary->isLoaded()) {
-        glGetString = (*glLibrary)["glGetString"];
-        glGetStringi = (*glLibrary)["glGetStringi"];
-        glGetIntegerv = (*glLibrary)["glGetIntegerv"];
-    }
+
+    glGetString = (*dynLibrary)["glGetString"];
+    glGetStringi = (*dynLibrary)["glGetStringi"];
+    glGetIntegerv = (*dynLibrary)["glGetIntegerv"];
+
     this->pfnGlArbSyncObjectCleanup = cleanupArbSyncObject;
     this->pfnGlArbSyncObjectSetup = setupArbSyncObject;
     this->pfnGlArbSyncObjectSignal = signalArbSyncObject;

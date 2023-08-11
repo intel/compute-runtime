@@ -6,7 +6,5 @@
  */
 
 namespace Os {
-const char *glxDllName = "";
-const char *eglDllName = "";
 const char *openglDllName = "";
 } // namespace Os
