@@ -521,10 +521,5 @@ class CommandQueueHw : public CommandQueue {
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
     bool relaxedOrderingForGpgpuAllowed(uint32_t numWaitEvents) const;
-
-    void registerGpgpuCsrClient();
-    void registerBcsCsrClient(CommandStreamReceiver &bcsCsr);
-
-    bool gpgpuCsrClientRegistered = false;
 };
 } // namespace NEO

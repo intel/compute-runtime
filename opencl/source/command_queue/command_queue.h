@@ -377,7 +377,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     const std::array<CopyEngineState, bcsInfoMaskSize> &peekActiveBcsStates() const { return bcsStates; }
 
-    void tryReleaseDeferredNodes(bool checkEventsState);
+    void handlePostCompletionOperations(bool checkQueueCompletion);
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
@@ -413,6 +413,14 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
     void assignDataToOverwrittenBcsNode(TagNodeBase *node);
+
+    void registerGpgpuCsrClient();
+    void registerBcsCsrClient(CommandStreamReceiver &bcsCsr);
+
+    void unregisterGpgpuCsrClient();
+    void unregisterBcsCsrClient(CommandStreamReceiver &bcsCsr);
+
+    void unregisterGpgpuAndBcsCsrClients();
 
     Context *context = nullptr;
     ClDevice *device = nullptr;
@@ -463,6 +471,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool stallingCommandsOnNextFlushRequired = false;
     bool dcFlushRequiredOnStallingCommandsOnNextFlush = false;
     bool splitBarrierRequired = false;
+    bool gpgpuCsrClientRegistered = false;
 };
 
 template <typename PtrType>

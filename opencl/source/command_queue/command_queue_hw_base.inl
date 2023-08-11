@@ -245,37 +245,8 @@ void CommandQueueHw<Family>::setupEvent(EventBuilder &eventBuilder, cl_event *ou
     }
 }
 
-template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::registerGpgpuCsrClient() {
-    if (!gpgpuCsrClientRegistered) {
-        gpgpuCsrClientRegistered = true;
-
-        getGpgpuCommandStreamReceiver().registerClient();
-    }
-}
-
-template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::registerBcsCsrClient(CommandStreamReceiver &bcsCsr) {
-    auto engineType = bcsCsr.getOsContext().getEngineType();
-
-    auto &bcsState = bcsStates[EngineHelpers::getBcsIndex(engineType)];
-
-    if (!bcsState.csrClientRegistered) {
-        bcsState.csrClientRegistered = true;
-        bcsCsr.registerClient();
-    }
-}
-
 template <typename Family>
 CommandQueueHw<Family>::~CommandQueueHw() {
-    if (gpgpuCsrClientRegistered) {
-        gpgpuEngine->commandStreamReceiver->unregisterClient();
-    }
-
-    for (auto &copyEngine : bcsStates) {
-        if (copyEngine.isValid() && copyEngine.csrClientRegistered) {
-            bcsEngines[EngineHelpers::getBcsIndex(copyEngine.engineType)]->commandStreamReceiver->unregisterClient();
-        }
-    }
+    unregisterGpgpuAndBcsCsrClients();
 }
 } // namespace NEO

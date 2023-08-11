@@ -39,13 +39,15 @@ HWTEST_F(ClTbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessC
     EngineControl engineControl0{&tbxCsr0, &osContext0};
 
     MockOsContext osContext1(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, pDevice->getDeviceBitfield()));
-    tbxCsr1.setupContext(osContext0);
+    tbxCsr1.setupContext(osContext1);
     EngineControl engineControl1{&tbxCsr1, &osContext1};
 
     MockCommandQueueHw<FamilyType> cmdQ(&context, pClDevice, nullptr);
     cmdQ.gpgpuEngine = &engineControl0;
     cmdQ.clearBcsEngines();
     cmdQ.bcsEngines[0] = &engineControl1;
+
+    cmdQ.bcsStates[0] = {aub_stream::ENGINE_BCS, 0, false};
 
     cl_int error = CL_SUCCESS;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, error));

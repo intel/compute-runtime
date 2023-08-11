@@ -1099,6 +1099,47 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenDispatchingWorkThenRegisterCsr
     EXPECT_EQ(baseNumClients, csr.getNumClients());
 }
 
+HWTEST_F(CommandQueueHwTest, givenCsrClientWhenCallingSyncPointsThenUnregister) {
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    size_t gws = 1;
+
+    auto baseNumClients = csr.getNumClients();
+
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+
+    EXPECT_EQ(CL_SUCCESS, mockCmdQueueHw.enqueueKernel(mockKernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
+
+    EXPECT_EQ(baseNumClients + 1, csr.getNumClients());
+
+    mockCmdQueueHw.finish();
+
+    EXPECT_EQ(baseNumClients, csr.getNumClients()); // queue synchronized
+
+    cl_event e0, e1;
+
+    EXPECT_EQ(CL_SUCCESS, mockCmdQueueHw.enqueueKernel(mockKernel, 1, nullptr, &gws, nullptr, 0, nullptr, &e0));
+    EXPECT_EQ(baseNumClients + 1, csr.getNumClients());
+    *csr.tagAddress = mockCmdQueueHw.taskCount;
+
+    EXPECT_EQ(CL_SUCCESS, mockCmdQueueHw.enqueueKernel(mockKernel, 1, nullptr, &gws, nullptr, 0, nullptr, &e1));
+    EXPECT_EQ(baseNumClients + 1, csr.getNumClients());
+
+    clWaitForEvents(1, &e0);
+    EXPECT_EQ(baseNumClients + 1, csr.getNumClients()); // CSR task count < queue task count
+
+    *csr.tagAddress = mockCmdQueueHw.taskCount;
+
+    clWaitForEvents(1, &e0);
+    EXPECT_EQ(baseNumClients, csr.getNumClients()); // queue ready
+
+    clReleaseEvent(e0);
+    clReleaseEvent(e1);
+}
+
 HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnqueueSurfacesMakeResidentIsCalledOnce) {
     UserEvent userEvent(context);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

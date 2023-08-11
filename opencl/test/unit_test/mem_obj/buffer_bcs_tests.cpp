@@ -609,6 +609,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenAllBcsEnginesReadyWhenWaitingForEventThe
     }
 
     clReleaseEvent(event);
+
+    commandQueue.reset();
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBufferThenStoreMapAllocationInDispatchParameters) {

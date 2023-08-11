@@ -1293,7 +1293,7 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
 
     waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
-    tryReleaseDeferredNodes(false);
+    handlePostCompletionOperations(false);
 
     if (printfHandler) {
         if (!printfHandler->printEnqueueOutput()) {
@@ -1381,12 +1381,14 @@ bool CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpPara
     return migrationHandled;
 }
 
-void CommandQueue::tryReleaseDeferredNodes(bool checkEventsState) {
+void CommandQueue::handlePostCompletionOperations(bool checkQueueCompletion) {
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
 
-    if (checkEventsState && !isCompleted(this->taskCount, this->bcsStates)) {
+    if (checkQueueCompletion && !isCompleted(this->taskCount, this->bcsStates)) {
         return;
     }
+
+    unregisterGpgpuAndBcsCsrClients();
 
     TimestampPacketContainer nodesToRelease;
     if (deferredTimestampPackets) {
@@ -1395,6 +1397,53 @@ void CommandQueue::tryReleaseDeferredNodes(bool checkEventsState) {
     TimestampPacketContainer multiRootSyncNodesToRelease;
     if (deferredMultiRootSyncNodes.get()) {
         deferredMultiRootSyncNodes->swapNodes(multiRootSyncNodesToRelease);
+    }
+}
+
+void CommandQueue::registerGpgpuCsrClient() {
+    if (!gpgpuCsrClientRegistered) {
+        gpgpuCsrClientRegistered = true;
+
+        getGpgpuCommandStreamReceiver().registerClient();
+    }
+}
+
+void CommandQueue::registerBcsCsrClient(CommandStreamReceiver &bcsCsr) {
+    auto engineType = bcsCsr.getOsContext().getEngineType();
+
+    auto &bcsState = bcsStates[EngineHelpers::getBcsIndex(engineType)];
+
+    if (!bcsState.csrClientRegistered) {
+        bcsState.csrClientRegistered = true;
+        bcsCsr.registerClient();
+    }
+}
+
+void CommandQueue::unregisterGpgpuCsrClient() {
+    if (gpgpuCsrClientRegistered) {
+        gpgpuEngine->commandStreamReceiver->unregisterClient();
+        gpgpuCsrClientRegistered = false;
+    }
+}
+
+void CommandQueue::unregisterBcsCsrClient(CommandStreamReceiver &bcsCsr) {
+    auto engineType = bcsCsr.getOsContext().getEngineType();
+
+    auto &bcsState = bcsStates[EngineHelpers::getBcsIndex(engineType)];
+
+    if (bcsState.isValid() && bcsState.csrClientRegistered) {
+        bcsCsr.unregisterClient();
+        bcsState.csrClientRegistered = false;
+    }
+}
+
+void CommandQueue::unregisterGpgpuAndBcsCsrClients() {
+    unregisterGpgpuCsrClient();
+
+    for (auto &engine : this->bcsEngines) {
+        if (engine) {
+            unregisterBcsCsrClient(*engine->commandStreamReceiver);
+        }
     }
 }
 

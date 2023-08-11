@@ -272,6 +272,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::relaxedOrderingForGpgpuAllowed;
     using BaseClass::requiresCacheFlushAfterWalker;
     using BaseClass::splitBarrierRequired;
+    using BaseClass::taskCount;
     using BaseClass::throttle;
     using BaseClass::timestampPacketContainer;
 
