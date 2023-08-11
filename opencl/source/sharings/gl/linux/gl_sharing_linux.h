@@ -25,7 +25,6 @@ typedef const GLubyte *(*PFNglGetString)(GLenum name);
 typedef const GLubyte *(*PFNglGetStringi)(GLenum name, GLuint index);
 typedef void (*PFNglGetIntegerv)(GLenum pname, GLint *params);
 typedef void (*PFNglBindTexture)(GLenum target, GLuint texture);
-typedef void (*PFNglGetTexLevelParameteriv)(GLenum target, GLint level, GLenum pname, GLint *params);
 
 typedef bool (*PFNglArbSyncObjectSetup)(GLSharingFunctions &sharing, OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo);
 typedef void (*PFNglArbSyncObjectCleanup)(OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo);
@@ -118,8 +117,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     // Buffer reuse
     std::mutex mutex;
     std::vector<std::pair<unsigned int, GraphicsAllocation *>> graphicsAllocationsForGlBufferReuse;
-
-    PFNglGetTexLevelParameteriv glGetTexLevelParameteriv = nullptr;
 
   protected:
     bool isOpenGlExtensionSupported(const unsigned char *pExtentionString);

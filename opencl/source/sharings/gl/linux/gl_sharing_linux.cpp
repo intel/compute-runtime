@@ -124,7 +124,6 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
         glGetString = (*glLibrary)["glGetString"];
         glGetStringi = (*glLibrary)["glGetStringi"];
         glGetIntegerv = (*glLibrary)["glGetIntegerv"];
-        glGetTexLevelParameteriv = (*glLibrary)["glGetTexLevelParameteriv"];
     }
     this->pfnGlArbSyncObjectCleanup = cleanupArbSyncObject;
     this->pfnGlArbSyncObjectSetup = setupArbSyncObject;

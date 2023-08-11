@@ -38,23 +38,6 @@ CL_GL_RESOURCE_INFO textureInfoOutput = {0};
 GLboolean glSetSharedOCLContextStateReturnedValue = 1u;
 static const auto mockImage = reinterpret_cast<void *>(0xEEEE);
 
-void glGetTexLevelParameteriv(GLenum target,
-                              GLint level,
-                              GLenum pname,
-                              GLint *params) {
-    switch (pname) {
-    case GL_TEXTURE_WIDTH:
-        *params = 256;
-        break;
-    case GL_TEXTURE_HEIGHT:
-        *params = 256;
-        break;
-    case GL_TEXTURE_INTERNAL_FORMAT:
-        *params = GL_RGBA;
-        break;
-    }
-};
-
 const unsigned char *glGetString(unsigned int name) {
     if (name == GL_VENDOR)
         return reinterpret_cast<const unsigned char *>(glString);
