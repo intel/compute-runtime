@@ -479,27 +479,16 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTim
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
-    memoryManager->returnFakeAllocation = true;
-
-    uint64_t dstAddress = 0x123456785500;
-    uint64_t *dstptr = reinterpret_cast<uint64_t *>(dstAddress);
-    auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.getResidencyContainer().clear();
-
+    uint64_t timestampAddress = 0x12345678555500;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
     ze_event_handle_t hEventHandle = event->toHandle();
 
     commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 1, &hEventHandle);
 
-    auto residencyContainer = commandContainer.getResidencyContainer();
-    auto timestampAlloc = residencyContainer[1];
-    EXPECT_EQ(dstAddress, reinterpret_cast<uint64_t>(timestampAlloc->getUnderlyingBuffer()));
-    auto timestampAddress = timestampAlloc->getGpuAddress();
-
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0),
-        commandContainer.getCommandStream()->getUsed()));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
+        commandList->getCmdContainer().getCommandStream()->getUsed()));
 
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);

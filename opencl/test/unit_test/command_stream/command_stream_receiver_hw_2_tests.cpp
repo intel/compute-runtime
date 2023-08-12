@@ -1365,11 +1365,9 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, true));
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
-    memoryManager->returnFakeAllocation = true;
-
     cl_int retVal = CL_SUCCESS;
     auto buffer1 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    auto buffer2 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
 
     constexpr size_t hostAllocationSize = MemoryConstants::pageSize;
     auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
@@ -1389,6 +1387,8 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
 
     EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(region, rootDeviceEnvironment, false));
 
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->returnFakeAllocation = true;
     // from hostPtr
     HardwareParse hwParser;
     auto offset = csr.commandStream.getUsed();
@@ -1399,6 +1399,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
                                                                           0, srcOrigin, dstOrigin, region,
                                                                           srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch);
 
+    memoryManager->returnFakeAllocation = false;
     flushBcsTask(&csr, blitProperties, true, *pDevice);
     hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -1408,7 +1409,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
     if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
+        EXPECT_EQ(ptrOffset(reinterpret_cast<uint64_t>(hostPtr), srcAddressOffset), bltCmd->getSourceBaseAddress());
     }
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 
@@ -1421,7 +1422,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
     if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
+        EXPECT_EQ(ptrOffset(reinterpret_cast<uint64_t>(hostPtr), srcAddressOffset), bltCmd->getSourceBaseAddress());
     }
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 
@@ -1438,7 +1439,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
     if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
+        EXPECT_EQ(ptrOffset(reinterpret_cast<uint64_t>(hostPtr), srcAddressOffset), bltCmd->getSourceBaseAddress());
     }
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 
@@ -1451,7 +1452,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
     if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
+        EXPECT_EQ(ptrOffset(reinterpret_cast<uint64_t>(hostPtr), srcAddressOffset), bltCmd->getSourceBaseAddress());
     }
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 
@@ -1470,7 +1471,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
     if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
+        EXPECT_EQ(ptrOffset(reinterpret_cast<uint64_t>(hostPtr), srcAddressOffset), bltCmd->getSourceBaseAddress());
     }
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 }
