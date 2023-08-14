@@ -800,8 +800,19 @@ void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &com
         return subDeviceIds;
     };
 
-    if (memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
-        (svmData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) {
+    // Perform prefetch for chunks if EnableBOChunkingPrefetch is 1
+    // and if KMD migration is set, as current target is to use
+    // chunking only with KMD migration
+    bool isChunkingNeededForDeviceAllocations = false;
+    if (NEO::DebugManager.flags.EnableBOChunkingPrefetch.get() &&
+        memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
+        (svmData.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY)) {
+        isChunkingNeededForDeviceAllocations = true;
+    }
+
+    if ((memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
+         (svmData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) ||
+        isChunkingNeededForDeviceAllocations) {
         auto gfxAllocation = svmData.gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
         auto subDeviceIds = commandStreamReceiver.getActivePartitions() > 1 ? getSubDeviceIds(commandStreamReceiver) : SubDeviceIdsVec{getSubDeviceId(device)};
         memoryManager->setMemPrefetch(gfxAllocation, subDeviceIds, device.getRootDeviceIndex());

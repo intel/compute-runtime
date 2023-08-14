@@ -133,6 +133,54 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
 
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset, IsAtLeastSkl) {
     std::unique_ptr<L0::CommandList> commandList;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+
+    commandListImmediate.containsAnyKernel = true;
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    EXPECT_FALSE(commandListImmediate.containsAnyKernel);
+}
+
+HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset2, IsAtLeastSkl) {
+    std::unique_ptr<L0::CommandList> commandList;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    DebugManager.flags.EnableBOChunkingPrefetch.set(false);
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+
+    commandListImmediate.containsAnyKernel = true;
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    EXPECT_FALSE(commandListImmediate.containsAnyKernel);
+}
+
+HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset3, IsAtLeastSkl) {
+    std::unique_ptr<L0::CommandList> commandList;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
+    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+
+    commandListImmediate.containsAnyKernel = true;
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    EXPECT_FALSE(commandListImmediate.containsAnyKernel);
+}
+
+HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset4, IsAtLeastSkl) {
+    std::unique_ptr<L0::CommandList> commandList;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
+    DebugManager.flags.EnableBOChunkingPrefetch.set(false);
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));

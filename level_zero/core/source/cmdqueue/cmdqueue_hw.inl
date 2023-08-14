@@ -67,7 +67,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
 
-    if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get()) {
+    if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get() ||
+        NEO::DebugManager.flags.EnableBOChunkingPrefetch.get() == 1) {
         auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
         svmAllocMgr->prefetchSVMAllocs(*device->getNEODevice(), *csr);
     }

@@ -464,6 +464,7 @@ TEST_F(IoctlHelperPrelimFixture,
     SubDeviceIdsVec subDeviceIds{0, 1};
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
     DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
 
     std::vector<MemoryRegion> memRegions{
@@ -492,6 +493,7 @@ TEST_F(IoctlHelperPrelimFixture,
     SubDeviceIdsVec subDeviceIds{0, 1};
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
     DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
 
     std::vector<MemoryRegion> memRegions{
@@ -513,6 +515,34 @@ TEST_F(IoctlHelperPrelimFixture,
     allocation.storageInfo.numOfChunks = 4;
     allocation.storageInfo.subDeviceBitfield = 0b0001;
     drm->ioctlRetVal = EINVAL;
+    EXPECT_FALSE(allocation.setMemPrefetch(drm.get(), subDeviceIds));
+}
+
+TEST_F(IoctlHelperPrelimFixture,
+       givenDrmAllocationWithChunkingAndsetMemPrefetchWithEnableBOChunkingPrefetchUnsetThenFailureReturned) {
+    SubDeviceIdsVec subDeviceIds{0, 1};
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+
+    std::vector<MemoryRegion> memRegions{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, MemoryConstants::chunkThreshold * 4, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+
+    drm->ioctlCallsCount = 0;
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    bo.isChunked = 1;
+    bo.setSize(1024);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x5;
+    allocation.setNumHandles(1);
+    allocation.storageInfo.isChunked = 1;
+    allocation.storageInfo.numOfChunks = 4;
+    allocation.storageInfo.subDeviceBitfield = 0b0001;
     EXPECT_FALSE(allocation.setMemPrefetch(drm.get(), subDeviceIds));
 }
 

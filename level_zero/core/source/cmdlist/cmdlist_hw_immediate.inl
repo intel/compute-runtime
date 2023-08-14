@@ -328,7 +328,8 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     auto csr = static_cast<CommandQueueImp *>(cmdQ)->getCsr();
     auto lockCSR = csr->obtainUniqueOwnership();
 
-    if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get()) {
+    if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get() ||
+        NEO::DebugManager.flags.EnableBOChunkingPrefetch.get()) {
         auto svmAllocMgr = this->device->getDriverHandle()->getSvmAllocsManager();
         svmAllocMgr->prefetchSVMAllocs(*this->device->getNEODevice(), *csr);
     }

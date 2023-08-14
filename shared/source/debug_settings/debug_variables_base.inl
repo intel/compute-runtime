@@ -513,6 +513,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableConcurrentSharedCrossP2PDeviceAccess, false, 
 DECLARE_DEBUG_VARIABLE(bool, AllocateSharedAllocationsInHeapExtendedHost, true, "When enabled driver can allocate shared unified memory allocation in heap extended host. (0 - disable, 1 - enable)")
 DECLARE_DEBUG_VARIABLE(bool, AllocateHostAllocationsInHeapExtendedHost, true, "When enabled driver can allocate host unified memory allocation in heap extended host. (0 - disable, 1 - enable)")
 DECLARE_DEBUG_VARIABLE(bool, PrintBOChunkingLogs, false, "Print some logs on BO chunking")
+DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPrefetch, false, "Enables prefetching of chunks")
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPreferredLocationHint, false, "Enables preferred location advise on chunks")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOChunking, 0, "Enables use of chunking of BOs in the KMD, mask: 0 = no chunking, 1 = shared allocations only, 2 = device allocations only, 3 = shared and device allocations .")
 DECLARE_DEBUG_VARIABLE(int32_t, NumberOfBOChunks, 2, "Number of chunks to use. Must be a power of two)")
