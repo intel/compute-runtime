@@ -7,13 +7,17 @@
 
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+
+#include "drm/xe_drm.h"
 
 namespace L0 {
 namespace Sysman {
@@ -32,6 +36,33 @@ SysmanKmdInterfaceXe::SysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) {
 SysmanKmdInterface::~SysmanKmdInterface() = default;
 SysmanKmdInterfaceI915::~SysmanKmdInterfaceI915() = default;
 SysmanKmdInterfaceXe::~SysmanKmdInterfaceXe() = default;
+static const std::map<__u16, std::string> i915EngineClassToSysfsEngineMap = {
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, "rcs"},
+    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COMPUTE), "ccs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, "bcs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO, "vcs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE, "vecs"}};
+
+static const std::map<__u16, std::string> xeEngineClassToSysfsEngineMap = {
+    {DRM_XE_ENGINE_CLASS_RENDER, "rcs"},
+    {DRM_XE_ENGINE_CLASS_COMPUTE, "ccs"},
+    {DRM_XE_ENGINE_CLASS_COPY, "bcs"},
+    {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, "vcs"},
+    {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, "vecs"}};
+
+static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineTypeToSysfsEngineMap = {
+    {ZES_ENGINE_TYPE_FLAG_RENDER, "rcs"},
+    {ZES_ENGINE_TYPE_FLAG_COMPUTE, "ccs"},
+    {ZES_ENGINE_TYPE_FLAG_DMA, "bcs"},
+    {ZES_ENGINE_TYPE_FLAG_MEDIA, "vcs"},
+    {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};
+
+static const std::map<std::string, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
+    {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},
+    {"ccs", ZES_ENGINE_TYPE_FLAG_COMPUTE},
+    {"bcs", ZES_ENGINE_TYPE_FLAG_DMA},
+    {"vcs", ZES_ENGINE_TYPE_FLAG_MEDIA},
+    {"vecs", ZES_ENGINE_TYPE_FLAG_OTHER}};
 
 std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(const NEO::Drm &drm) {
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
@@ -108,6 +139,9 @@ void SysmanKmdInterfaceI915::initSysfsNameToFileMap(const PRODUCT_FAMILY product
     sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("addr_range", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("mem_RP0_freq_mhz", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMinMemoryFrequency] = std::make_pair("mem_RPn_freq_mhz", "");
+    sysfsNameToFileMap[SysfsName::syfsNameSchedulerTimeout] = std::make_pair("", "preempt_timeout_ms");
+    sysfsNameToFileMap[SysfsName::syfsNameSchedulerTimeslice] = std::make_pair("", "timeslice_duration_ms");
+    sysfsNameToFileMap[SysfsName::syfsNameSchedulerWatchDogTimeout] = std::make_pair("", "heartbeat_interval_ms");
 }
 
 void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
@@ -135,16 +169,30 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFa
     sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("physical_vram_size_bytes", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("freq_vram_rp0", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMinMemoryFrequency] = std::make_pair("freq_vram_rpn", "");
+    sysfsNameToFileMap[SysfsName::syfsNameSchedulerTimeout] = std::make_pair("", "preempt_timeout_us");
+    sysfsNameToFileMap[SysfsName::syfsNameSchedulerTimeslice] = std::make_pair("", "timeslice_duration_us");
+    sysfsNameToFileMap[SysfsName::syfsNameSchedulerWatchDogTimeout] = std::make_pair("", "job_timeout_ms");
+    sysfsNameToFileMap[SysfsName::syfsNameSchedulerWatchDogTimeoutMaximum] = std::make_pair("", "job_timeout_max");
 }
 
-std::string SysmanKmdInterfaceI915::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) {
-    std::string filePath = baseDirectoryExists ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
-    return filePath;
+std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory) {
+    if (sysfsNameToFileMap.find(sysfsName) != sysfsNameToFileMap.end()) {
+        std::string filePath = prefixBaseDirectory ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
+        return filePath;
+    }
+    // All sysfs accesses are expected to be covered
+    DEBUG_BREAK_IF(1);
+    return {};
 }
 
-std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) {
-    std::string filePath = baseDirectoryExists ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
-    return filePath;
+std::string SysmanKmdInterfaceI915::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory) {
+    if (sysfsNameToFileMap.find(sysfsName) != sysfsNameToFileMap.end()) {
+        std::string filePath = prefixBaseDirectory ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
+        return filePath;
+    }
+    // All sysfs accesses are expected to be covered
+    DEBUG_BREAK_IF(1);
+    return {};
 }
 
 std::string SysmanKmdInterfaceI915::getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) {
@@ -203,6 +251,130 @@ bool SysmanKmdInterfaceI915::clientInfoAvailableInFdInfo() {
 
 bool SysmanKmdInterfaceXe::clientInfoAvailableInFdInfo() {
     return true;
+}
+
+std::optional<std::string> SysmanKmdInterfaceXe::getEngineClassString(uint16_t engineClass) {
+    auto sysfEngineString = xeEngineClassToSysfsEngineMap.find(engineClass);
+    if (sysfEngineString == xeEngineClassToSysfsEngineMap.end()) {
+        DEBUG_BREAK_IF(true);
+        return {};
+    }
+    return sysfEngineString->second;
+}
+
+std::optional<std::string> SysmanKmdInterfaceI915::getEngineClassString(uint16_t engineClass) {
+    auto sysfEngineString = i915EngineClassToSysfsEngineMap.find(static_cast<drm_i915_gem_engine_class>(engineClass));
+    if (sysfEngineString == i915EngineClassToSysfsEngineMap.end()) {
+        DEBUG_BREAK_IF(true);
+        return {};
+    }
+    return sysfEngineString->second;
+}
+
+static ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                                             NEO::Drm *pDrm,
+                                                             SysmanKmdInterface *pSysmanKmdInterface,
+                                                             uint32_t subdeviceId) {
+    auto hwDeviceId = static_cast<SysmanHwDeviceIdDrm *>(pDrm->getHwDeviceId().get());
+    hwDeviceId->openFileDescriptor();
+    auto engineInfo = pDrm->getEngineInfo();
+    hwDeviceId->closeFileDescriptor();
+    if (engineInfo == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    std::vector<NEO::EngineClassInstance> listOfEngines;
+    engineInfo->getListOfEnginesOnATile(subdeviceId, listOfEngines);
+    for (const auto &engine : listOfEngines) {
+        std::string sysfEngineString = pSysmanKmdInterface->getEngineClassString(engine.engineClass).value_or(" ");
+        if (sysfEngineString == " ") {
+            continue;
+        }
+
+        std::string sysfsEngineDirNode = sysfEngineString + std::to_string(engine.engineInstance);
+        auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString);
+        auto ret = mapOfEngines.find(level0EngineType->second);
+        if (ret != mapOfEngines.end()) {
+            ret->second.push_back(sysfsEngineDirNode);
+        } else {
+            std::vector<std::string> engineVec = {};
+            engineVec.push_back(sysfsEngineDirNode);
+            mapOfEngines.emplace(level0EngineType->second, engineVec);
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+static ze_result_t getNumEngineTypeAndInstancesForDevice(std::string engineDir, std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                                         SysfsAccess *pSysfsAccess) {
+    std::vector<std::string> localListOfAllEngines = {};
+    auto result = pSysfsAccess->scanDirEntries(engineDir, localListOfAllEngines);
+    if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    for_each(localListOfAllEngines.begin(), localListOfAllEngines.end(),
+             [&](std::string &mappedEngine) {
+                 for (auto itr = level0EngineTypeToSysfsEngineMap.begin(); itr != level0EngineTypeToSysfsEngineMap.end(); itr++) {
+                     char digits[] = "0123456789";
+                     auto mappedEngineName = mappedEngine.substr(0, mappedEngine.find_first_of(digits, 0));
+                     if (0 == mappedEngineName.compare(itr->second.c_str())) {
+                         auto ret = mapOfEngines.find(itr->first);
+                         if (ret != mapOfEngines.end()) {
+                             ret->second.push_back(mappedEngine);
+                         } else {
+                             std::vector<std::string> engineVec = {};
+                             engineVec.push_back(mappedEngine);
+                             mapOfEngines.emplace(itr->first, engineVec);
+                         }
+                     }
+                 }
+             });
+    return result;
+}
+
+ze_result_t SysmanKmdInterfaceI915::getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                                                 LinuxSysmanImp *pLinuxSysmanImp,
+                                                                 SysfsAccess *pSysfsAccess,
+                                                                 ze_bool_t onSubdevice,
+                                                                 uint32_t subdeviceId) {
+    return getNumEngineTypeAndInstancesForDevice(getEngineBasePath(subdeviceId), mapOfEngines, pSysfsAccess);
+}
+
+ze_result_t SysmanKmdInterfaceXe::getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                                               LinuxSysmanImp *pLinuxSysmanImp,
+                                                               SysfsAccess *pSysfsAccess,
+                                                               ze_bool_t onSubdevice,
+                                                               uint32_t subdeviceId) {
+    if (onSubdevice) {
+        return getNumEngineTypeAndInstancesForSubDevices(mapOfEngines,
+                                                         pLinuxSysmanImp->getDrm(), pLinuxSysmanImp->getSysmanKmdInterface(), subdeviceId);
+    }
+    return getNumEngineTypeAndInstancesForDevice(getEngineBasePath(subdeviceId), mapOfEngines, pSysfsAccess);
+}
+
+SysmanKmdInterface::SysfsValueUnit SysmanKmdInterface::getNativeUnit(const SysfsName sysfsName) {
+    auto sysfsNameToNativeUnitMap = getSysfsNameToNativeUnitMap();
+    if (sysfsNameToNativeUnitMap.find(sysfsName) != sysfsNameToNativeUnitMap.end()) {
+        return sysfsNameToNativeUnitMap[sysfsName];
+    }
+    // Entries are expected to be available at sysfsNameToNativeUnitMap
+    DEBUG_BREAK_IF(true);
+    return unAvailable;
+}
+
+void SysmanKmdInterface::convertSysfsValueUnit(const SysfsValueUnit dstUnit, const SysfsValueUnit srcUnit, const uint64_t srcValue, uint64_t &dstValue) const {
+    dstValue = srcValue;
+
+    if (dstUnit != srcUnit) {
+        if (dstUnit == SysfsValueUnit::milliSecond && srcUnit == SysfsValueUnit::microSecond) {
+            dstValue = srcValue / 1000u;
+        } else if (dstUnit == SysfsValueUnit::microSecond && srcUnit == SysfsValueUnit::milliSecond) {
+            dstValue = srcValue * 1000u;
+        }
+    }
 }
 
 } // namespace Sysman

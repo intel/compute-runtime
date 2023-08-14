@@ -13,6 +13,9 @@
 
 #include <map>
 #include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 namespace NEO {
 class Drm;
@@ -25,6 +28,9 @@ class FsAccessInterface;
 class ProcFsAccessInterface;
 class SysFsAccessInterface;
 class PmuInterface;
+class LinuxSysmanImp;
+class SysfsAccess;
+
 typedef std::pair<std::string, std::string> valuePair;
 
 enum EngineClass {
@@ -78,12 +84,21 @@ enum class SysfsName {
     sysfsNameMemoryAddressRange,
     sysfsNameMaxMemoryFrequency,
     sysfsNameMinMemoryFrequency,
+    syfsNameSchedulerTimeout,
+    syfsNameSchedulerTimeslice,
+    syfsNameSchedulerWatchDogTimeout,
+    syfsNameSchedulerWatchDogTimeoutMaximum,
 };
 
 class SysmanKmdInterface {
   public:
     SysmanKmdInterface();
     virtual ~SysmanKmdInterface();
+    enum SysfsValueUnit : uint32_t {
+        milliSecond,
+        microSecond,
+        unAvailable,
+    };
     static std::unique_ptr<SysmanKmdInterface> create(const NEO::Drm &drm);
 
     virtual std::string getBasePath(uint32_t subDeviceId) const = 0;
@@ -96,11 +111,23 @@ class SysmanKmdInterface {
     FsAccessInterface *getFsAccess();
     ProcFsAccessInterface *getProcFsAccess();
     SysFsAccessInterface *getSysFsAccess(std::string deviceName);
+    virtual std::string getEngineBasePath(uint32_t subDeviceId) const = 0;
+    virtual bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() = 0;
+    virtual ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                                     LinuxSysmanImp *pLinuxSysmanImp,
+                                                     SysfsAccess *pSysfsAccess,
+                                                     ze_bool_t onSubdevice,
+                                                     uint32_t subdeviceId) = 0;
+    SysfsValueUnit getNativeUnit(const SysfsName sysfsName);
+    void convertSysfsValueUnit(const SysfsValueUnit dstUnit, const SysfsValueUnit srcUnit,
+                               const uint64_t srcValue, uint64_t &dstValue) const;
+    virtual std::optional<std::string> getEngineClassString(uint16_t engineClass) = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
     std::unique_ptr<ProcFsAccessInterface> pProcfsAccess;
     std::unique_ptr<SysFsAccessInterface> pSysfsAccess;
+    virtual const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() = 0;
 };
 
 class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
@@ -115,10 +142,26 @@ class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() override;
+    std::string getEngineBasePath(uint32_t subDeviceId) const override { return "engine"; };
+    bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return false; };
+    ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                             LinuxSysmanImp *pLinuxSysmanImp,
+                                             SysfsAccess *pSysfsAccess,
+                                             ze_bool_t onSubdevice,
+                                             uint32_t subdeviceId) override;
+    std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
     void initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily);
+    const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() override {
+        return sysfsNameToNativeUnitMap;
+    }
+    const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
+        {SysfsName::syfsNameSchedulerTimeout, milliSecond},
+        {SysfsName::syfsNameSchedulerTimeslice, milliSecond},
+        {SysfsName::syfsNameSchedulerWatchDogTimeout, milliSecond},
+    };
 };
 
 class SysmanKmdInterfaceXe : public SysmanKmdInterface {
@@ -129,14 +172,31 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getBasePath(uint32_t subDeviceId) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
+    std::string getEngineBasePath(uint32_t subDeviceId) const override { return getBasePath(subDeviceId) + "engines"; };
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return false; }
     bool clientInfoAvailableInFdInfo() override;
+    bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return true; };
+    ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                             LinuxSysmanImp *pLinuxSysmanImp,
+                                             SysfsAccess *pSysfsAccess,
+                                             ze_bool_t onSubdevice,
+                                             uint32_t subdeviceId) override;
+    std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
     void initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily);
+    const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() override {
+        return sysfsNameToNativeUnitMap;
+    }
+    const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
+        {SysfsName::syfsNameSchedulerTimeout, microSecond},
+        {SysfsName::syfsNameSchedulerTimeslice, microSecond},
+        {SysfsName::syfsNameSchedulerWatchDogTimeout, milliSecond},
+        {SysfsName::syfsNameSchedulerWatchDogTimeoutMaximum, milliSecond},
+    };
 };
 
 } // namespace Sysman

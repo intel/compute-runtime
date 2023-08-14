@@ -8,36 +8,91 @@
 #include "level_zero/sysman/source/scheduler/linux/sysman_os_scheduler_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
 namespace Sysman {
 
-const std::string LinuxSchedulerImp::preemptTimeoutMilliSecs("preempt_timeout_ms");
-const std::string LinuxSchedulerImp::defaultPreemptTimeouttMilliSecs(".defaults/preempt_timeout_ms");
-const std::string LinuxSchedulerImp::timesliceDurationMilliSecs("timeslice_duration_ms");
-const std::string LinuxSchedulerImp::defaultTimesliceDurationMilliSecs(".defaults/timeslice_duration_ms");
-const std::string LinuxSchedulerImp::heartbeatIntervalMilliSecs("heartbeat_interval_ms");
-const std::string LinuxSchedulerImp::defaultHeartbeatIntervalMilliSecs(".defaults/heartbeat_interval_ms");
-const std::string LinuxSchedulerImp::enableEuDebug("");
-const std::string LinuxSchedulerImp::engineDir("engine");
+static ze_result_t readSchedulerValueFromSysfs(SysfsName schedulerSysfsName,
+                                               LinuxSysmanImp *pSysmanImp,
+                                               uint32_t subdeviceId,
+                                               ze_bool_t getDefault,
+                                               std::vector<std::string> &listOfEngines,
+                                               zes_engine_type_flag_t engineType,
+                                               uint64_t &readValue) {
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    uint32_t i = 0;
+    std::vector<uint64_t> readValueVec(listOfEngines.size());
+    std::string path = "";
+    auto pSysmanKmdInterface = pSysmanImp->getSysmanKmdInterface();
+    auto engineBasePath = pSysmanKmdInterface->getEngineBasePath(subdeviceId);
+    auto sysfsName = pSysmanKmdInterface->getSysfsFilePath(schedulerSysfsName, subdeviceId, false);
+    for (const auto &engineName : listOfEngines) {
+        if (getDefault) {
+            path = engineBasePath + "/" + engineName + "/" + ".defaults/" + sysfsName;
+        } else {
+            path = engineBasePath + "/" + engineName + "/" + sysfsName;
+        }
+        result = pSysmanImp->getSysfsAccess().read(path, readValue);
+        if (result == ZE_RESULT_SUCCESS) {
+            pSysmanKmdInterface->convertSysfsValueUnit(SysmanKmdInterface::microSecond,
+                                                       pSysmanKmdInterface->getNativeUnit(schedulerSysfsName),
+                                                       readValue, readValue);
+            readValueVec[i] = readValue;
+            i++;
+        } else {
+            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read from %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
+            return result;
+        }
+    }
 
-static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineTypeToSysfsEngineMap = {
-    {ZES_ENGINE_TYPE_FLAG_RENDER, "rcs"},
-    {ZES_ENGINE_TYPE_FLAG_DMA, "bcs"},
-    {ZES_ENGINE_TYPE_FLAG_MEDIA, "vcs"},
-    {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};
+    // For compute engines with different timeout values, use the maximum value
+    if (schedulerSysfsName == SysfsName::syfsNameSchedulerTimeout && engineType == ZES_ENGINE_TYPE_FLAG_COMPUTE) {
+        readValue = *std::max_element(readValueVec.begin(), readValueVec.end());
+        return result;
+    }
 
-ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProperties) {
-    schedProperties.onSubdevice = onSubdevice;
-    schedProperties.subdeviceId = subdeviceId;
-    schedProperties.canControl = canControlScheduler();
-    schedProperties.engines = this->engineType;
-    schedProperties.supportedModes = (1 << ZES_SCHED_MODE_TIMEOUT) | (1 << ZES_SCHED_MODE_TIMESLICE) | (1 << ZES_SCHED_MODE_EXCLUSIVE);
-    return ZE_RESULT_SUCCESS;
+    // check if all engines of the same type have the same scheduling param values
+    if (std::adjacent_find(readValueVec.begin(), readValueVec.end(), std::not_equal_to<>()) == readValueVec.end()) {
+        readValue = readValueVec[0];
+        return result;
+    } else {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+}
+
+static ze_result_t writeSchedulerValueToSysfs(SysfsName schedulerSysfsName,
+                                              LinuxSysmanImp *pSysmanImp,
+                                              uint32_t subdeviceId,
+                                              std::vector<std::string> &listOfEngines,
+                                              zes_engine_type_flag_t engineType,
+                                              uint64_t writeValue) {
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    auto pSysmanKmdInterface = pSysmanImp->getSysmanKmdInterface();
+    auto sysfsName = pSysmanKmdInterface->getSysfsFilePath(schedulerSysfsName, subdeviceId, false);
+    pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(schedulerSysfsName),
+                                               SysmanKmdInterface::microSecond, writeValue, writeValue);
+    auto engineBasePath = pSysmanKmdInterface->getEngineBasePath(subdeviceId);
+    for (const auto &engineName : listOfEngines) {
+        auto path = engineBasePath + "/" + engineName + "/" + sysfsName;
+        result = pSysmanImp->getSysfsAccess().write(path, writeValue);
+        if (result != ZE_RESULT_SUCCESS) {
+            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write into %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
+            return result;
+        }
+    }
+    return result;
 }
 
 ze_result_t LinuxSchedulerImp::getCurrentMode(zes_sched_mode_t *pMode) {
@@ -66,18 +121,36 @@ ze_result_t LinuxSchedulerImp::getCurrentMode(zes_sched_mode_t *pMode) {
         if (timeout > 0) {
             *pMode = ZES_SCHED_MODE_TIMEOUT;
         } else {
-            if (heartbeat == 0) {
-                // If we are here, it means heartbeat = 0, timeout = 0, timeslice = 0.
-                if (isComputeUnitDebugModeEnabled()) {
-                    *pMode = ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG;
-                } else {
+            auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+            if (pSysmanKmdInterface->useDefaultMaximumWatchdogTimeoutForExclusiveMode()) {
+
+                uint64_t defaultHeartbeatInterval = 0;
+                result = readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerWatchDogTimeoutMaximum,
+                                                     pLinuxSysmanImp, subdeviceId, true,
+                                                     listOfEngines, engineType, defaultHeartbeatInterval);
+                if (result != ZE_RESULT_SUCCESS) {
+                    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get default heartbeat interval and returning error:0x%x \n", __FUNCTION__, result);
+                    return result;
+                }
+
+                // If default maximum value is used, then heartbeat is expected to be
+                // set to the default maximum
+                if (heartbeat == defaultHeartbeatInterval) {
                     *pMode = ZES_SCHED_MODE_EXCLUSIVE;
+                } else {
+                    *pMode = ZES_SCHED_MODE_FORCE_UINT32;
+                    result = ZE_RESULT_ERROR_UNKNOWN;
                 }
             } else {
-                // If we are here it means heartbeat > 0, timeout = 0, timeslice = 0.
-                // And we dont know what that mode is.
-                *pMode = ZES_SCHED_MODE_FORCE_UINT32;
-                result = ZE_RESULT_ERROR_UNKNOWN;
+                if (heartbeat == 0) {
+                    // If we are here, it means heartbeat = 0, timeout = 0, timeslice = 0.
+                    *pMode = ZES_SCHED_MODE_EXCLUSIVE;
+                } else {
+                    // If we are here it means heartbeat > 0, timeout = 0, timeslice = 0.
+                    // And we dont know what that mode is.
+                    *pMode = ZES_SCHED_MODE_FORCE_UINT32;
+                    result = ZE_RESULT_ERROR_UNKNOWN;
+                }
             }
         }
     }
@@ -95,6 +168,18 @@ ze_result_t LinuxSchedulerImp::setExclusiveModeImp() {
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set timeslice duration and returning error:0x%x \n", __FUNCTION__, result);
         return result;
+    }
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    if (pSysmanKmdInterface->useDefaultMaximumWatchdogTimeoutForExclusiveMode()) {
+
+        result = readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerWatchDogTimeoutMaximum,
+                                             pLinuxSysmanImp, subdeviceId, true,
+                                             listOfEngines, engineType, heartbeat);
+        if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get default heartbeat interval and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
+        }
     }
     result = setHeartbeatInterval(heartbeat);
     return result;
@@ -236,157 +321,55 @@ ze_result_t LinuxSchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t
     return setHeartbeatInterval(heartbeat);
 }
 
+ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProperties) {
+    schedProperties.onSubdevice = onSubdevice;
+    schedProperties.subdeviceId = subdeviceId;
+    schedProperties.canControl = canControlScheduler();
+    schedProperties.engines = this->engineType;
+    schedProperties.supportedModes = (1 << ZES_SCHED_MODE_TIMEOUT) | (1 << ZES_SCHED_MODE_TIMESLICE) | (1 << ZES_SCHED_MODE_EXCLUSIVE);
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t LinuxSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) {
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    uint32_t i = 0;
-    std::vector<uint64_t> timeoutVec = {};
-    std::string path = "";
-    timeoutVec.resize(listOfEngines.size());
-    for (const auto &engineName : listOfEngines) {
-        if (getDefault) {
-            path = engineDir + "/" + engineName + "/" + defaultPreemptTimeouttMilliSecs;
-            result = pSysfsAccess->read(path, timeout);
-        } else {
-            path = engineDir + "/" + engineName + "/" + preemptTimeoutMilliSecs;
-            result = pSysfsAccess->read(path, timeout);
-        }
-        if (result == ZE_RESULT_SUCCESS) {
-            timeout = timeout * milliSecsToMicroSecs;
-            timeoutVec[i] = timeout;
-            i++;
-        } else {
-            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read preempt timeout from %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
-            return result;
-        }
-    }
-    // check if all engines of the same type have the same scheduling param values
-    if (std::adjacent_find(timeoutVec.begin(), timeoutVec.end(), std::not_equal_to<>()) == timeoutVec.end()) {
-        timeout = timeoutVec[0];
-        return result;
-    } else {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
+
+    return readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerTimeout,
+                                       pLinuxSysmanImp, subdeviceId, getDefault,
+                                       listOfEngines, engineType, timeout);
 }
 
 ze_result_t LinuxSchedulerImp::getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) {
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    uint32_t i = 0;
-    std::vector<uint64_t> timesliceVec = {};
-    std::string path = "";
-    timesliceVec.resize(listOfEngines.size());
-    for (const auto &engineName : listOfEngines) {
-        if (getDefault) {
-            path = engineDir + "/" + engineName + "/" + defaultTimesliceDurationMilliSecs;
-            result = pSysfsAccess->read(path, timeslice);
-        } else {
-            path = engineDir + "/" + engineName + "/" + timesliceDurationMilliSecs;
-            result = pSysfsAccess->read(path, timeslice);
-        }
-        if (result == ZE_RESULT_SUCCESS) {
-            timeslice = timeslice * milliSecsToMicroSecs;
-            timesliceVec[i] = timeslice;
-            i++;
-        } else {
-            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read timeslice duration from %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
-            return result;
-        }
-    }
-    // check if all engines of the same type have the same scheduling param values
-    if (std::adjacent_find(timesliceVec.begin(), timesliceVec.end(), std::not_equal_to<>()) == timesliceVec.end()) {
-        timeslice = timesliceVec[0];
-        return result;
-    } else {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
+
+    return readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerTimeslice,
+                                       pLinuxSysmanImp, subdeviceId, getDefault,
+                                       listOfEngines, engineType, timeslice);
 }
 
 ze_result_t LinuxSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat, ze_bool_t getDefault) {
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    uint32_t i = 0;
-    std::vector<uint64_t> heartbeatVec = {};
-    std::string path = "";
-    heartbeatVec.resize(listOfEngines.size());
-    for (const auto &engineName : listOfEngines) {
-        if (getDefault) {
-            path = engineDir + "/" + engineName + "/" + defaultHeartbeatIntervalMilliSecs;
-            result = pSysfsAccess->read(path, heartbeat);
-        } else {
-            path = engineDir + "/" + engineName + "/" + heartbeatIntervalMilliSecs;
-            result = pSysfsAccess->read(path, heartbeat);
-        }
-        if (result == ZE_RESULT_SUCCESS) {
-            heartbeat = heartbeat * milliSecsToMicroSecs;
-            heartbeatVec[i] = heartbeat;
-            i++;
-        } else {
-            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read heartbeat interval from %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
-            return result;
-        }
-    }
-    // check if all engines of the same type have the same scheduling param values
-    if (std::adjacent_find(heartbeatVec.begin(), heartbeatVec.end(), std::not_equal_to<>()) == heartbeatVec.end()) {
-        heartbeat = heartbeatVec[0];
-        return result;
-    } else {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
+
+    return readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerWatchDogTimeout,
+                                       pLinuxSysmanImp, subdeviceId, getDefault,
+                                       listOfEngines, engineType, heartbeat);
 }
 
 ze_result_t LinuxSchedulerImp::setPreemptTimeout(uint64_t timeout) {
-    timeout = timeout / milliSecsToMicroSecs;
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    for (const auto &engineName : listOfEngines) {
-        result = pSysfsAccess->write(engineDir + "/" + engineName + "/" + preemptTimeoutMilliSecs, timeout);
-        if (result != ZE_RESULT_SUCCESS) {
-            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Preempt timeout into engineDir/%s/preemptTimeoutMilliSecs and returning error:0x%x \n", __FUNCTION__, engineName.c_str(), result);
-            return result;
-        }
-    }
-    return result;
+
+    return writeSchedulerValueToSysfs(SysfsName::syfsNameSchedulerTimeout,
+                                      pLinuxSysmanImp, subdeviceId,
+                                      listOfEngines, engineType, timeout);
 }
 
 ze_result_t LinuxSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
-    timeslice = timeslice / milliSecsToMicroSecs;
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    for (const auto &engineName : listOfEngines) {
-        result = pSysfsAccess->write(engineDir + "/" + engineName + "/" + timesliceDurationMilliSecs, timeslice);
-        if (result != ZE_RESULT_SUCCESS) {
-            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Timeslice duration into engineDir/%s/timesliceDurationMilliSecs and returning error:0x%x \n", __FUNCTION__, engineName.c_str(), result);
-            return result;
-        }
-    }
-    return result;
+
+    return writeSchedulerValueToSysfs(SysfsName::syfsNameSchedulerTimeslice,
+                                      pLinuxSysmanImp, subdeviceId,
+                                      listOfEngines, engineType, timeslice);
 }
 
 ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
-    heartbeat = heartbeat / milliSecsToMicroSecs;
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    for (const auto &engineName : listOfEngines) {
-        result = pSysfsAccess->write(engineDir + "/" + engineName + "/" + heartbeatIntervalMilliSecs, heartbeat);
-        if (result != ZE_RESULT_SUCCESS) {
-            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Heartbeat interval into engineDir/%s/heartbeatIntervalMilliSecs and returning error:0x%x \n", __FUNCTION__, engineName.c_str(), result);
-            return result;
-        }
-    }
-    return result;
+
+    return writeSchedulerValueToSysfs(SysfsName::syfsNameSchedulerWatchDogTimeout,
+                                      pLinuxSysmanImp, subdeviceId,
+                                      listOfEngines, engineType, heartbeat);
 }
 
 ze_bool_t LinuxSchedulerImp::canControlScheduler() {
@@ -395,7 +378,7 @@ ze_bool_t LinuxSchedulerImp::canControlScheduler() {
 
 ze_result_t LinuxSchedulerImp::setComputeUnitDebugMode(ze_bool_t *pNeedReload) {
     *pNeedReload = false;
-    return pSysfsAccess->write(enableEuDebug, 1);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 bool LinuxSchedulerImp::isComputeUnitDebugModeEnabled() {
@@ -404,50 +387,22 @@ bool LinuxSchedulerImp::isComputeUnitDebugModeEnabled() {
 
 ze_result_t LinuxSchedulerImp::disableComputeUnitDebugMode(ze_bool_t *pNeedReload) {
     *pNeedReload = false;
-    return pSysfsAccess->write(enableEuDebug, 0);
-}
-
-static ze_result_t getNumEngineTypeAndInstancesForDevice(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines, SysfsAccess *pSysfsAccess) {
-    std::vector<std::string> localListOfAllEngines = {};
-    auto result = pSysfsAccess->scanDirEntries(LinuxSchedulerImp::engineDir, localListOfAllEngines);
-    if (ZE_RESULT_SUCCESS != result) {
-        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
-        return result;
-    }
-    for_each(localListOfAllEngines.begin(), localListOfAllEngines.end(),
-             [&](std::string &mappedEngine) {
-                 for (auto itr = level0EngineTypeToSysfsEngineMap.begin(); itr != level0EngineTypeToSysfsEngineMap.end(); itr++) {
-                     char digits[] = "0123456789";
-                     auto mappedEngineName = mappedEngine.substr(0, mappedEngine.find_first_of(digits, 0));
-                     if (0 == mappedEngineName.compare(itr->second.c_str())) {
-                         auto ret = mapOfEngines.find(itr->first);
-                         if (ret != mapOfEngines.end()) {
-                             ret->second.push_back(mappedEngine);
-                         } else {
-                             std::vector<std::string> engineVec = {};
-                             engineVec.push_back(mappedEngine);
-                             mapOfEngines.emplace(itr->first, engineVec);
-                         }
-                     }
-                 }
-             });
-    return result;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t OsScheduler::getNumEngineTypeAndInstances(
     std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines, OsSysman *pOsSysman, ze_bool_t onSubDevice, uint32_t subDeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    return getNumEngineTypeAndInstancesForDevice(mapOfEngines, pSysfsAccess);
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    return pSysmanKmdInterface->getNumEngineTypeAndInstances(mapOfEngines, pLinuxSysmanImp, pSysfsAccess,
+                                                             onSubDevice, subDeviceId);
 }
 
 LinuxSchedulerImp::LinuxSchedulerImp(
     OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines, ze_bool_t isSubdevice,
     uint32_t subdeviceId) : engineType(type), onSubdevice(isSubdevice), subdeviceId(subdeviceId) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     this->listOfEngines = listOfEngines;
 }
