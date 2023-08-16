@@ -134,6 +134,24 @@ void MultiDeviceFixtureHierarchy::setUp() {
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 }
 
+void MultiDeviceFixtureCombinedHierarchy::setUp() {
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    auto executionEnvironment = new NEO::ExecutionEnvironment;
+    executionEnvironment->setExposeSubDevicesAsDevices(exposeSubDevices);
+    executionEnvironment->setCombinedDeviceHierarchy(combinedHierarchy);
+    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    ze_result_t res = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+}
+
 void MultipleDevicesWithCustomHwInfo::setUp() {
 
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);

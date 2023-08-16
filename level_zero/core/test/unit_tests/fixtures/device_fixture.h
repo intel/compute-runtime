@@ -117,6 +117,12 @@ struct MultiDeviceFixtureHierarchy : public MultiDeviceFixture {
     bool exposeSubDevices = true;
 };
 
+struct MultiDeviceFixtureCombinedHierarchy : public MultiDeviceFixture {
+    void setUp();
+    bool exposeSubDevices = true;
+    bool combinedHierarchy = true;
+};
+
 struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {
     void setUp();
 

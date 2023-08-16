@@ -143,6 +143,12 @@ void ExecutionEnvironment::prepareRootDeviceEnvironment(const uint32_t rootDevic
 }
 
 void ExecutionEnvironment::parseAffinityMask() {
+
+    // If the device hierarchy is Combined, then skip the affinity mask parsing until level zero device get.
+    if (isCombinedDeviceHierarchy()) {
+        return;
+    }
+
     const auto &affinityMaskString = DebugManager.flags.ZE_AFFINITY_MASK.get();
 
     if (affinityMaskString.compare("default") == 0 ||
@@ -329,6 +335,9 @@ void ExecutionEnvironment::configureNeoEnvironment() {
     }
     if (strcmp(hierarchyModel.c_str(), "FLAT") == 0) {
         setExposeSubDevicesAsDevices(true);
+    }
+    if (strcmp(hierarchyModel.c_str(), "COMBINED") == 0) {
+        setCombinedDeviceHierarchy(true);
     }
 
     if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() == 1) {
