@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -209,7 +210,19 @@ void MetricsLibrary::getSubDeviceClientOptions(
 
     auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
 
-    if (!deviceImp.isSubdevice) {
+    std::tuple<uint32_t, uint32_t, uint32_t> subDeviceMap;
+    uint32_t hwSubDeviceIndex = 0u;
+    uint32_t hwSubDevicesCount = 0u;
+    bool requiresSubDeviceHierarchy = false;
+    bool isSubDevice = deviceImp.isSubdevice;
+    if (deviceImp.getNEODevice()->getExecutionEnvironment()->getSubDeviceHierarchy(deviceImp.getNEODevice()->getRootDeviceIndex(), &subDeviceMap)) {
+        hwSubDeviceIndex = std::get<1>(subDeviceMap);
+        hwSubDevicesCount = std::get<2>(subDeviceMap);
+        requiresSubDeviceHierarchy = true;
+        isSubDevice = true;
+    }
+
+    if (!isSubDevice) {
 
         // Root device.
         subDevice.Type = ClientOptionsType::SubDevice;
@@ -231,10 +244,18 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDevice.SubDevice.Enabled = true;
 
         subDeviceIndex.Type = ClientOptionsType::SubDeviceIndex;
-        subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(deviceImp.getPhysicalSubDeviceId());
+        if (requiresSubDeviceHierarchy) {
+            subDeviceIndex.SubDeviceIndex.Index = hwSubDeviceIndex;
+        } else {
+            subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(deviceImp.getPhysicalSubDeviceId());
+        }
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
+        if (requiresSubDeviceHierarchy) {
+            subDeviceCount.SubDeviceCount.Count = hwSubDevicesCount;
+        } else {
+            subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
+        }
 
         workloadPartition.Type = ClientOptionsType::WorkloadPartition;
         workloadPartition.WorkloadPartition.Enabled = isWorkloadPartitionEnabled;
