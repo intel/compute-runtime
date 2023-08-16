@@ -60,14 +60,33 @@ class WddmKmDafListenerTest : public ::testing::Test {
 };
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenLockResourceIsCalledThenKmDafListenerNotifyLockIsFedWithCorrectParams) {
-    wddmWithKmDafMock->lockResource(ALLOCATION_HANDLE, false, 0x1000);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    auto handle = 0u;
+    auto resourceHandle = 0u;
+    auto ptr = reinterpret_cast<void *>(0x10000);
+
+    wddmWithKmDafMock->createAllocation(ptr, gmm.get(), handle, resourceHandle, nullptr);
+
+    wddmWithKmDafMock->lockResource(handle, false, 0x1000);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->flags.ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAdapter);
     EXPECT_EQ(wddmWithKmDafMock->getDeviceHandle(), wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hDevice);
-    EXPECT_EQ(ALLOCATION_HANDLE, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAllocation);
+    EXPECT_EQ(handle, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAllocation);
     EXPECT_EQ(0, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.pLockFlags);
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.pfnEscape);
+
+    wddmWithKmDafMock->destroyAllocations(&handle, 1, 0);
+}
+
+TEST_F(WddmKmDafListenerTest, givenInvalidAllocationWhenLockResourceFailsThenKmDafListenerIsNotNotified) {
+    wddmWithKmDafMock->lockResource(0, false, 0x1000);
+
+    EXPECT_FALSE(wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.ftrKmdDaf);
+    EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAdapter);
+    EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hDevice);
+    EXPECT_EQ(0, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAllocation);
+    EXPECT_EQ(0, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.pLockFlags);
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafListenerNotifyUnlockIsFedWithCorrectParams) {
@@ -79,6 +98,14 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafListen
     EXPECT_EQ(ALLOCATION_HANDLE, *wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.phAllocation);
     EXPECT_EQ(1u, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.allocations);
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.pfnEscape);
+}
+TEST_F(WddmKmDafListenerTest, givenInvalidAllocationWhenUnlockResourceIsCalledThenKmDafListenerIsNotNotified) {
+    wddmWithKmDafMock->unlockResource(0);
+
+    EXPECT_FALSE(wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.ftrKmdDaf);
+    EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.hAdapter);
+    EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.hDevice);
+    EXPECT_EQ(nullptr, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.phAllocation);
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDafListenerNotifyMapGpuVAIsFedWithCorrectParams) {

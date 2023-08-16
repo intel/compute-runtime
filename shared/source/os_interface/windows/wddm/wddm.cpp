@@ -887,8 +887,10 @@ void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPrio
     lock2.hAllocation = handle;
     lock2.hDevice = this->device;
 
-    [[maybe_unused]] NTSTATUS status = getGdi()->lock2(&lock2);
-    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+    NTSTATUS status = getGdi()->lock2(&lock2);
+    if (status != STATUS_SUCCESS) {
+        return nullptr;
+    }
 
     kmDafLock(handle);
     return lock2.pData;
@@ -900,8 +902,10 @@ void Wddm::unlockResource(const D3DKMT_HANDLE &handle) {
     unlock2.hAllocation = handle;
     unlock2.hDevice = this->device;
 
-    [[maybe_unused]] NTSTATUS status = getGdi()->unlock2(&unlock2);
-    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+    NTSTATUS status = getGdi()->unlock2(&unlock2);
+    if (status != STATUS_SUCCESS) {
+        return;
+    }
 
     kmDafListener->notifyUnlock(featureTable->flags.ftrKmdDaf, getAdapter(), device, &handle, 1, getGdi()->escape);
 }
