@@ -14,6 +14,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -288,6 +289,80 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     return driverHandle;
 }
 
+ze_result_t DriverHandleImp::parseAffinityMaskCombined(uint32_t *pCount, ze_device_handle_t *phDevices) {
+    const auto &affinityMaskString = NEO::DebugManager.flags.ZE_AFFINITY_MASK.get();
+
+    uint32_t totalNumDevices = 0u;
+    for (auto &device : this->devices) {
+        auto deviceImpl = static_cast<DeviceImp *>(device);
+        totalNumDevices += (deviceImpl->numSubDevices > 0 ? deviceImpl->numSubDevices : 1u);
+    }
+
+    auto affinityMaskEntries = StringHelpers::split(affinityMaskString, ",");
+
+    bool retrieveCount = false;
+    if (*pCount == 0) {
+        retrieveCount = true;
+    }
+
+    if (phDevices == nullptr && !retrieveCount) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    uint32_t deviceIndex = 0;
+    for (const auto &entry : affinityMaskEntries) {
+        auto subEntries = StringHelpers::split(entry, ".");
+        uint32_t affinityIndex = StringHelpers::toUint32t(subEntries[0]);
+
+        if (affinityIndex > totalNumDevices) {
+            continue;
+        }
+
+        // Combined Device Hierarchy not supported with AllowSingleTileEngineInstancedSubDevices
+        // so ignore X.Y
+        if (subEntries.size() > 1) {
+            continue;
+        }
+
+        uint32_t actualIndex = 0;
+        for (auto device : devices) {
+            auto deviceImpl = static_cast<DeviceImp *>(device);
+            if (deviceImpl->numSubDevices > 0) {
+                for (auto subdevice : deviceImpl->subDevices) {
+                    if (affinityIndex == actualIndex) {
+                        if (retrieveCount) {
+                            *pCount += 1;
+                        } else {
+                            phDevices[deviceIndex++] = subdevice;
+                        }
+                    }
+                    actualIndex++;
+                    if (!retrieveCount) {
+                        if (deviceIndex == *pCount) {
+                            return ZE_RESULT_SUCCESS;
+                        }
+                    }
+                }
+            } else {
+                if (affinityIndex == actualIndex) {
+                    if (retrieveCount) {
+                        *pCount += 1;
+                    } else {
+                        phDevices[deviceIndex++] = device;
+                    }
+                }
+                actualIndex++;
+                if (!retrieveCount) {
+                    if (deviceIndex == *pCount) {
+                        return ZE_RESULT_SUCCESS;
+                    }
+                }
+            }
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {
     bool exposeSubDevices = false;
 
@@ -296,8 +371,20 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
     }
 
     // If the user has requested FLAT device hierarchy model, then report all the sub devices as devices.
-    if (this->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+    if (this->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT || this->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED) {
         exposeSubDevices = true;
+    }
+
+    const auto &affinityMaskString = NEO::DebugManager.flags.ZE_AFFINITY_MASK.get();
+
+    bool affinitySet = true;
+    if (affinityMaskString.compare("default") == 0 ||
+        affinityMaskString.empty()) {
+        affinitySet = false;
+    }
+
+    if (this->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED && affinitySet) {
+        return parseAffinityMaskCombined(pCount, phDevices);
     }
 
     if (*pCount == 0) {

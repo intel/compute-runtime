@@ -46,7 +46,11 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void setExposeSubDevicesAsDevices(bool value) {
         this->subDevicesAsDevices = value;
     }
+    void setCombinedDeviceHierarchy(bool value) {
+        this->combinedDeviceHierarchy = value;
+    }
     bool isExposingSubDevicesAsDevices() const { return this->subDevicesAsDevices; }
+    bool isCombinedDeviceHierarchy() const { return this->combinedDeviceHierarchy; }
     bool areMetricsEnabled() { return this->metricsEnabled; }
     void setFP64EmulationEnabled() {
         fp64EmulationEnabled = true;
@@ -69,6 +73,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
     bool subDevicesAsDevices = false;
+    bool combinedDeviceHierarchy = false;
 
     DebuggingMode debuggingEnabledMode = DebuggingMode::Disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;

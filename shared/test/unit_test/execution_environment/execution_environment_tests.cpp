@@ -466,6 +466,14 @@ TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithFlatDevic
     EXPECT_TRUE(executionEnvironment.isExposingSubDevicesAsDevices());
 }
 
+TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithCombinedDeviceHierarchyThenExposeSubDevicesAsDevicesIsTrue) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMBINED"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    ExecutionEnvironment executionEnvironment{};
+    EXPECT_FALSE(executionEnvironment.isExposingSubDevicesAsDevices());
+}
+
 void ExecutionEnvironmentSortTests::SetUp() {
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {

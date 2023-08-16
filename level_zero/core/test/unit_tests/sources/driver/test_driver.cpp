@@ -513,7 +513,7 @@ TEST(DriverImpTest, givenFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThen
     L0::GlobalDriver = nullptr;
 }
 
-TEST(DriverImpTest, givenCombinedFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThenCombinedHierarchyIsEnabled) {
+TEST(DriverImpTest, givenCombinedDeviceHierarchyWhenCreatingExecutionEnvironmentThenCombinedHierarchyIsEnabled) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;

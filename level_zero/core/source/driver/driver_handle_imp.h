@@ -98,6 +98,8 @@ struct DriverHandleImp : public DriverHandle {
     uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const override;
     uint32_t getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const override;
 
+    ze_result_t parseAffinityMaskCombined(uint32_t *pCount, ze_device_handle_t *phDevices);
+
     std::unique_ptr<HostPointerManager> hostPointerManager;
     // Experimental functions
     std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
