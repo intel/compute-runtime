@@ -51,6 +51,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     }
     bool isExposingSubDevicesAsDevices() const { return this->subDevicesAsDevices; }
     bool isCombinedDeviceHierarchy() const { return this->combinedDeviceHierarchy; }
+    bool getSubDeviceHierarchy(uint32_t index, std::tuple<uint32_t, uint32_t, uint32_t> *subDeviceMap);
     bool areMetricsEnabled() { return this->metricsEnabled; }
     void setFP64EmulationEnabled() {
         fp64EmulationEnabled = true;
@@ -64,6 +65,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<OsEnvironment> osEnvironment;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
     void releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment);
+    // Map of Sub Device Indicies set during Affinity Mask in the form of:
+    // <RootDeviceIndex, SubDeviceIndex, SubDeviceCount>
+    // Primarily used by the Metrics Library to communicate the actual Sub Device Index being used in queries.
+    std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>> mapOfSubDeviceIndices;
 
   protected:
     static bool comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2);

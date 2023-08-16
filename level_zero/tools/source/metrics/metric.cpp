@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -24,12 +25,24 @@ namespace L0 {
 
 MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevice) {
     auto deviceNeo = device.getNEODevice();
-    bool isSubDevice = deviceNeo->isSubDevice();
-    subDeviceIndex = isSubDevice
-                         ? static_cast<NEO::SubDevice *>(deviceNeo)->getSubDeviceIndex()
-                         : 0;
+    std::tuple<uint32_t, uint32_t, uint32_t> subDeviceMap;
+    uint32_t hwSubDeviceIndex = 0u;
+    bool requiresSubDeviceHierarchy = false;
+    if (deviceNeo->getExecutionEnvironment()->getSubDeviceHierarchy(deviceNeo->getRootDeviceIndex(), &subDeviceMap)) {
+        hwSubDeviceIndex = std::get<1>(subDeviceMap);
+        requiresSubDeviceHierarchy = true;
+    }
+    if (requiresSubDeviceHierarchy) {
+        subDeviceIndex = hwSubDeviceIndex;
+        multiDeviceCapable = false;
+    } else {
+        bool isSubDevice = deviceNeo->isSubDevice();
+        subDeviceIndex = isSubDevice
+                             ? static_cast<NEO::SubDevice *>(deviceNeo)->getSubDeviceIndex()
+                             : 0;
 
-    multiDeviceCapable = !isSubDevice && device.isImplicitScalingCapable();
+        multiDeviceCapable = !isSubDevice && device.isImplicitScalingCapable();
+    }
     metricSources[MetricSource::SourceType::Oa] = OaMetricSourceImp::create(*this);
     metricSources[MetricSource::SourceType::IpSampling] = IpSamplingMetricSourceImp::create(*this);
 }

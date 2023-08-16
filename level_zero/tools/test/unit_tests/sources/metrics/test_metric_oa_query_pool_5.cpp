@@ -500,8 +500,8 @@ TEST_F(MultiDeviceMetricQueryPoolAffinityMaskTest, givenAffinityMaskEnabledWhenG
     metricsLibrary.getSubDeviceClientOptions(subDevice, subDeviceIndex, subDeviceCount, workloadPartition);
 
     EXPECT_EQ(subDevice.Type, MetricsLibraryApi::ClientOptionsType::SubDevice);
-    // Still Root device
-    EXPECT_EQ(subDevice.SubDevice.Enabled, false);
+    // Expect Sub Device Enabled
+    EXPECT_EQ(subDevice.SubDevice.Enabled, true);
 
     EXPECT_EQ(subDeviceIndex.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceIndex);
     // Enabled Sub Device index is used

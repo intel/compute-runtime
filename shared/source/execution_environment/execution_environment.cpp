@@ -50,6 +50,7 @@ ExecutionEnvironment::~ExecutionEnvironment() {
         }
     }
     rootDeviceEnvironments.clear();
+    mapOfSubDeviceIndices.clear();
 }
 
 bool ExecutionEnvironment::initializeMemoryManager() {
@@ -142,6 +143,15 @@ void ExecutionEnvironment::prepareRootDeviceEnvironment(const uint32_t rootDevic
     rootDeviceEnvironments[rootDeviceIndexForReInit] = std::make_unique<RootDeviceEnvironment>(*this);
 }
 
+bool ExecutionEnvironment::getSubDeviceHierarchy(uint32_t index, std::tuple<uint32_t, uint32_t, uint32_t> *subDeviceMap) {
+    if (mapOfSubDeviceIndices.find(index) != mapOfSubDeviceIndices.end()) {
+        *subDeviceMap = mapOfSubDeviceIndices.at(index);
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void ExecutionEnvironment::parseAffinityMask() {
 
     // If the device hierarchy is Combined, then skip the affinity mask parsing until level zero device get.
@@ -172,14 +182,15 @@ void ExecutionEnvironment::parseAffinityMask() {
     // which is enough for typical configurations
     size_t reservedSizeForIndices = numRootDevices * 4;
     mapOfIndexes.reserve(reservedSizeForIndices);
+    uint32_t hwSubDevicesCount = 0u;
     if (exposeSubDevicesAsApiDevices) {
         uint32_t currentDeviceIndex = 0;
         for (uint32_t currentRootDevice = 0u; currentRootDevice < static_cast<uint32_t>(rootDeviceEnvironments.size()); currentRootDevice++) {
             auto hwInfo = rootDeviceEnvironments[currentRootDevice]->getHardwareInfo();
-            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+            hwSubDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
             uint32_t currentSubDevice = 0;
             mapOfIndexes[currentDeviceIndex++] = std::make_tuple(currentRootDevice, currentSubDevice);
-            for (currentSubDevice = 1; currentSubDevice < subDevicesCount; currentSubDevice++) {
+            for (currentSubDevice = 1; currentSubDevice < hwSubDevicesCount; currentSubDevice++) {
                 mapOfIndexes[currentDeviceIndex++] = std::make_tuple(currentRootDevice, currentSubDevice);
             }
         }
@@ -192,6 +203,8 @@ void ExecutionEnvironment::parseAffinityMask() {
 
     auto affinityMaskEntries = StringHelpers::split(affinityMaskString, ",");
 
+    // Index of the Device to be returned to the user, not the physcial device index.
+    uint32_t deviceIndex = 0;
     for (const auto &entry : affinityMaskEntries) {
         auto subEntries = StringHelpers::split(entry, ".");
         uint32_t rootDeviceIndex = StringHelpers::toUint32t(subEntries[0]);
@@ -209,10 +222,11 @@ void ExecutionEnvironment::parseAffinityMask() {
             }
 
             std::tuple<uint32_t, uint32_t> indexKey = mapOfIndexes[rootDeviceIndex];
-            auto deviceIndex = std::get<0>(indexKey);
+            auto hwDeviceIndex = std::get<0>(indexKey);
             auto tileIndex = std::get<1>(indexKey);
-            affinityMaskHelper[deviceIndex].enableGenericSubDevice(tileIndex);
-
+            affinityMaskHelper[hwDeviceIndex].enableGenericSubDevice(tileIndex);
+            // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
+            mapOfSubDeviceIndices[deviceIndex++] = std::make_tuple(hwDeviceIndex, tileIndex, hwSubDevicesCount);
             continue;
         }
 
@@ -232,10 +246,14 @@ void ExecutionEnvironment::parseAffinityMask() {
                     UNRECOVERABLE_IF(subEntries.size() != 2);
 
                     if (subDeviceIndex < hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {
+                        // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
+                        mapOfSubDeviceIndices[rootDeviceIndex] = std::make_tuple(rootDeviceIndex, subDeviceIndex, subDevicesCount);
                         affinityMaskHelper[rootDeviceIndex].enableEngineInstancedSubDevice(0, subDeviceIndex); // Mask: X.Y
                     }
                 } else if (subDeviceIndex < subDevicesCount) {
                     if (subEntries.size() == 2) {
+                        // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
+                        mapOfSubDeviceIndices[rootDeviceIndex] = std::make_tuple(rootDeviceIndex, subDeviceIndex, subDevicesCount);
                         affinityMaskHelper[rootDeviceIndex].enableGenericSubDevice(subDeviceIndex); // Mask: X.Y
                     } else {
                         UNRECOVERABLE_IF(subEntries.size() != 3);
