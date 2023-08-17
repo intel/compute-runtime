@@ -153,6 +153,9 @@ struct ModuleImp : public Module {
     }
 
   protected:
+    ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);
+    ze_result_t checkIfBuildShouldBeFailed(NEO::Device *neoDevice);
+    ze_result_t initializeKernelImmutableDatas();
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();
     void checkIfPrivateMemoryPerDispatchIsNeeded() override;

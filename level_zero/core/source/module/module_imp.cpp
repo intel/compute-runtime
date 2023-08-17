@@ -515,60 +515,120 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     bool linkageSuccessful = true;
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
 
+    if (result = this->initializeTranslationUnit(desc, neoDevice); result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    this->updateBuildLog(neoDevice);
+    this->verifyDebugCapabilities();
+    if (result = this->checkIfBuildShouldBeFailed(neoDevice); result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    if (result = this->initializeKernelImmutableDatas(); result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    auto refBin = ArrayRef<const uint8_t>::fromAny(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize);
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+        isZebinBinary = true;
+    }
+
+    StackVec<NEO::GraphicsAllocation *, 32> moduleAllocs = getModuleAllocations();
+    if (!moduleAllocs.empty()) {
+        auto minGpuAddressAlloc = std::min_element(moduleAllocs.begin(), moduleAllocs.end(), [](const auto &alloc1, const auto &alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
+        moduleLoadAddress = (*minGpuAddressAlloc)->getGpuAddress();
+    }
+
+    registerElfInDebuggerL0();
+
+    checkIfPrivateMemoryPerDispatchIsNeeded();
+
+    linkageSuccessful = this->linkBinary();
+
+    linkageSuccessful &= populateHostGlobalSymbolsMap(this->translationUnit->programInfo.globalsDeviceToHostNameMap);
+    this->updateBuildLog(neoDevice);
+
+    const auto &productHelper = neoDevice->getProductHelper();
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
+
+    if (this->isFullyLinked && this->type == ModuleType::User) {
+        for (auto &ki : kernelImmDatas) {
+
+            if (!ki->isIsaCopiedToAllocation()) {
+
+                NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *ki->getIsaGraphicsAllocation()),
+                                                                      *neoDevice, ki->getIsaGraphicsAllocation(), 0, ki->getKernelInfo()->heapInfo.pKernelHeap,
+                                                                      static_cast<size_t>(ki->getKernelInfo()->heapInfo.kernelHeapSize));
+
+                ki->setIsaCopiedToAllocation();
+            }
+        }
+
+        if (device->getL0Debugger()) {
+            auto allocs = getModuleAllocations();
+            device->getL0Debugger()->notifyModuleLoadAllocations(device->getNEODevice(), allocs);
+            notifyModuleCreate();
+        }
+    }
+    if (linkageSuccessful == false) {
+        result = ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
+    }
+    return result;
+}
+
+inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     std::string buildOptions;
     std::string internalBuildOptions;
 
     if (desc->pNext) {
         const ze_base_desc_t *expDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
-        if (expDesc->stype == ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC) {
-            if (desc->format != ZE_MODULE_FORMAT_IL_SPIRV) {
-                return ZE_RESULT_ERROR_INVALID_ENUMERATION;
-            }
-            this->builtFromSPIRv = true;
-            const ze_module_program_exp_desc_t *programExpDesc =
-                reinterpret_cast<const ze_module_program_exp_desc_t *>(expDesc);
-            std::vector<const char *> inputSpirVs;
-            std::vector<uint32_t> inputModuleSizes;
-            std::vector<const ze_module_constants_t *> specConstants;
-            const ze_module_constants_t *firstSpecConstants = nullptr;
-
-            this->createBuildOptions(nullptr, buildOptions, internalBuildOptions);
-
-            for (uint32_t i = 0; i < static_cast<uint32_t>(programExpDesc->count); i++) {
-                std::string tmpBuildOptions;
-                std::string tmpInternalBuildOptions;
-                inputSpirVs.push_back(reinterpret_cast<const char *>(programExpDesc->pInputModules[i]));
-                auto inputSizesInfo = const_cast<size_t *>(programExpDesc->inputSizes);
-                uint32_t inputSize = static_cast<uint32_t>(inputSizesInfo[i]);
-                inputModuleSizes.push_back(inputSize);
-                if (programExpDesc->pConstants) {
-                    specConstants.push_back(programExpDesc->pConstants[i]);
-                    if (i == 0) {
-                        firstSpecConstants = specConstants[0];
-                    }
-                }
-                if (programExpDesc->pBuildFlags) {
-                    this->createBuildOptions(programExpDesc->pBuildFlags[i], tmpBuildOptions, tmpInternalBuildOptions);
-                    buildOptions = buildOptions + tmpBuildOptions;
-                    internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
-                }
-            }
-            // If the user passed in only 1 SPIRV, then fallback to standard build
-            if (inputSpirVs.size() > 1) {
-                result = this->translationUnit->staticLinkSpirV(inputSpirVs,
-                                                                inputModuleSizes,
-                                                                buildOptions.c_str(),
-                                                                internalBuildOptions.c_str(),
-                                                                specConstants);
-            } else {
-                result = this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(programExpDesc->pInputModules[0]),
-                                                               inputModuleSizes[0],
-                                                               buildOptions.c_str(),
-                                                               internalBuildOptions.c_str(),
-                                                               firstSpecConstants);
-            }
-        } else {
+        if (expDesc->stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        if (desc->format != ZE_MODULE_FORMAT_IL_SPIRV) {
+            return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+        }
+        this->builtFromSPIRv = true;
+        const ze_module_program_exp_desc_t *programExpDesc =
+            reinterpret_cast<const ze_module_program_exp_desc_t *>(expDesc);
+        std::vector<const char *> inputSpirVs;
+        std::vector<uint32_t> inputModuleSizes;
+        std::vector<const ze_module_constants_t *> specConstants;
+        const ze_module_constants_t *firstSpecConstants = nullptr;
+
+        this->createBuildOptions(nullptr, buildOptions, internalBuildOptions);
+
+        for (uint32_t i = 0; i < static_cast<uint32_t>(programExpDesc->count); i++) {
+            std::string tmpBuildOptions;
+            std::string tmpInternalBuildOptions;
+            inputSpirVs.push_back(reinterpret_cast<const char *>(programExpDesc->pInputModules[i]));
+            auto inputSizesInfo = const_cast<size_t *>(programExpDesc->inputSizes);
+            uint32_t inputSize = static_cast<uint32_t>(inputSizesInfo[i]);
+            inputModuleSizes.push_back(inputSize);
+            if (programExpDesc->pConstants) {
+                specConstants.push_back(programExpDesc->pConstants[i]);
+                if (i == 0) {
+                    firstSpecConstants = specConstants[0];
+                }
+            }
+            if (programExpDesc->pBuildFlags) {
+                this->createBuildOptions(programExpDesc->pBuildFlags[i], tmpBuildOptions, tmpInternalBuildOptions);
+                buildOptions = buildOptions + tmpBuildOptions;
+                internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
+            }
+        }
+        // If the user passed in only 1 SPIRV, then fallback to standard build
+        if (inputSpirVs.size() > 1) {
+            return this->translationUnit->staticLinkSpirV(inputSpirVs,
+                                                          inputModuleSizes,
+                                                          buildOptions.c_str(),
+                                                          internalBuildOptions.c_str(),
+                                                          specConstants);
+        } else {
+            return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(programExpDesc->pInputModules[0]),
+                                                         inputModuleSizes[0],
+                                                         buildOptions.c_str(),
+                                                         internalBuildOptions.c_str(),
+                                                         firstSpecConstants);
         }
     } else {
         std::string buildFlagsInput{desc->pBuildFlags != nullptr ? desc->pBuildFlags : ""};
@@ -594,41 +654,37 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
             // Assume Symbol Generation Given Prebuilt Binary
             this->isFunctionSymbolExportEnabled = true;
             this->isGlobalSymbolExportEnabled = true;
-            result = this->translationUnit->createFromNativeBinary(
-                reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);
+            return this->translationUnit->createFromNativeBinary(reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
             this->builtFromSPIRv = true;
-            result = this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
-                                                           static_cast<uint32_t>(desc->inputSize),
-                                                           buildOptions.c_str(),
-                                                           internalBuildOptions.c_str(),
-                                                           desc->pConstants);
+            return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
+                                                         static_cast<uint32_t>(desc->inputSize),
+                                                         buildOptions.c_str(),
+                                                         internalBuildOptions.c_str(),
+                                                         desc->pConstants);
         } else {
             return ZE_RESULT_ERROR_INVALID_ENUMERATION;
         }
     }
+}
 
-    this->updateBuildLog(neoDevice);
-    verifyDebugCapabilities();
-
+inline ze_result_t ModuleImp::checkIfBuildShouldBeFailed(NEO::Device *neoDevice) {
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos, false);
     auto isUserKernel = (type == ModuleType::User);
-
     auto isGeneratedByIgc = translationUnit->isGeneratedByIgc;
-
     auto failBuildProgram = containsStatefulAccess &&
                             isUserKernel &&
                             NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(rootDeviceEnvironment) &&
                             isGeneratedByIgc;
-
     if (failBuildProgram) {
-        result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+        return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
+    return ZE_RESULT_SUCCESS;
+}
 
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
+inline ze_result_t ModuleImp::initializeKernelImmutableDatas() {
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
 
     kernelImmDatas.reserve(this->translationUnit->programInfo.kernelInfos.size());
     for (auto &ki : this->translationUnit->programInfo.kernelInfos) {
@@ -641,52 +697,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
         }
         kernelImmDatas.push_back(std::move(kernelImmData));
     }
-
-    auto refBin = ArrayRef<const uint8_t>::fromAny(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize);
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
-        isZebinBinary = true;
-    }
-
-    StackVec<NEO::GraphicsAllocation *, 32> moduleAllocs = getModuleAllocations();
-    if (!moduleAllocs.empty()) {
-        auto minGpuAddressAlloc = std::min_element(moduleAllocs.begin(), moduleAllocs.end(), [](const auto &alloc1, const auto &alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
-        moduleLoadAddress = (*minGpuAddressAlloc)->getGpuAddress();
-    }
-
-    registerElfInDebuggerL0();
-
-    checkIfPrivateMemoryPerDispatchIsNeeded();
-
-    linkageSuccessful = this->linkBinary();
-
-    linkageSuccessful &= populateHostGlobalSymbolsMap(this->translationUnit->programInfo.globalsDeviceToHostNameMap);
-    this->updateBuildLog(neoDevice);
-
-    const auto &productHelper = neoDevice->getProductHelper();
-
-    if (this->isFullyLinked && this->type == ModuleType::User) {
-        for (auto &ki : kernelImmDatas) {
-
-            if (!ki->isIsaCopiedToAllocation()) {
-
-                NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *ki->getIsaGraphicsAllocation()),
-                                                                      *neoDevice, ki->getIsaGraphicsAllocation(), 0, ki->getKernelInfo()->heapInfo.pKernelHeap,
-                                                                      static_cast<size_t>(ki->getKernelInfo()->heapInfo.kernelHeapSize));
-
-                ki->setIsaCopiedToAllocation();
-            }
-        }
-
-        if (device->getL0Debugger()) {
-            auto allocs = getModuleAllocations();
-            device->getL0Debugger()->notifyModuleLoadAllocations(device->getNEODevice(), allocs);
-            notifyModuleCreate();
-        }
-    }
-    if (linkageSuccessful == false) {
-        result = ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
-    }
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 void ModuleImp::createDebugZebin() {
