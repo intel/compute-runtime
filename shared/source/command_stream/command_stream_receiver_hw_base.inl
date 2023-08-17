@@ -377,7 +377,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             // for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
             levelClosed = true;
             // if we guard with ppc, flush dc as well to speed up completion latency
-            if (dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag) {
+            if (dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag || dispatchFlags.blocking) {
                 dispatchFlags.dcFlush = this->dcFlushSupport;
             }
         }
