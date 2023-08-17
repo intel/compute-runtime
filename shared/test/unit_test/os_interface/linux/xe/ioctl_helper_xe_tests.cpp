@@ -1339,7 +1339,7 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_SOFT_OP), waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_U64), waitUserFence.mask);
-        EXPECT_EQ(static_cast<uint16_t>(XE_ONE_SEC), waitUserFence.timeout);
+        EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
         EXPECT_EQ(0u, waitUserFence.num_engines);
         EXPECT_EQ(0u, waitUserFence.instances);
     }
@@ -1363,7 +1363,7 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_SOFT_OP), waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_U64), waitUserFence.mask);
-        EXPECT_EQ(static_cast<uint16_t>(XE_ONE_SEC), waitUserFence.timeout);
+        EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
         EXPECT_EQ(0u, waitUserFence.num_engines);
         EXPECT_EQ(0u, waitUserFence.instances);
     }

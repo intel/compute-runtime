@@ -23,7 +23,7 @@ struct drm_xe_engine_class_instance;
 
 #define PRELIM_I915_UFENCE_WAIT_SOFT (1 << 15)
 
-#define XE_ONE_SEC 1000
+#define XE_ONE_SEC 1000000000
 
 namespace NEO {
 
