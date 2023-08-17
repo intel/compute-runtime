@@ -454,7 +454,10 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
 
-    cmdQueue->handlePostCompletionOperations(true);
+    bool checkQueueCompletionForPostSyncOperations = !(waitedOnTimestamps && !cmdQueue->isOOQEnabled() &&
+                                                       (this->timestampPacketContainer->peekNodes() == cmdQueue->getTimestampPacketContainer()->peekNodes()));
+
+    cmdQueue->handlePostCompletionOperations(checkQueueCompletionForPostSyncOperations);
 
     auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);

@@ -15,6 +15,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/gtpin/gtpin_defs.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
 
@@ -152,6 +153,60 @@ HWTEST_F(clEnqueueWaitForEventsTests, givenOoqWhenWaitingForEventThenCallWaitFor
 
     EXPECT_TRUE(commandQueueHw.waitForTimestampsCalled);
     EXPECT_TRUE(commandQueueHw.latestWaitForTimestampsStatus);
+}
+
+struct clEnqueueWaitForTimestampsTests : public clEnqueueWaitForEventsTests {
+    void SetUp() override {
+        DebugManager.flags.EnableTimestampWaitForQueues.set(4);
+        DebugManager.flags.EnableTimestampWaitForEvents.set(4);
+        DebugManager.flags.EnableTimestampPacket.set(1);
+
+        clEnqueueWaitForEventsTests::SetUp();
+    }
+
+    DebugManagerStateRestore restore;
+};
+
+HWTEST_F(clEnqueueWaitForTimestampsTests, givenIoqWhenWaitingForLatestEventThenDontCheckQueueCompletion) {
+    MockCommandQueueHw<FamilyType> commandQueueHw(pContext, pDevice, nullptr);
+
+    MockKernelWithInternals kernel(*pDevice);
+
+    cl_event event0, event1;
+
+    const size_t gws[] = {1, 1, 1};
+    commandQueueHw.enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event0);
+    commandQueueHw.enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event1);
+
+    auto eventObj0 = castToObjectOrAbort<Event>(event0);
+    auto eventObj1 = castToObjectOrAbort<Event>(event1);
+
+    auto node0 = eventObj0->getTimestampPacketNodes()->peekNodes()[0];
+    auto node1 = eventObj1->getTimestampPacketNodes()->peekNodes()[0];
+
+    auto contextEnd0 = ptrOffset(node0->getCpuBase(), node0->getContextEndOffset());
+    auto contextEnd1 = ptrOffset(node1->getCpuBase(), node1->getContextEndOffset());
+
+    *reinterpret_cast<typename FamilyType::TimestampPacketType *>(contextEnd0) = 0;
+    *reinterpret_cast<typename FamilyType::TimestampPacketType *>(contextEnd1) = 0;
+
+    EXPECT_EQ(0u, commandQueueHw.isCompletedCalled);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueWaitForEvents(&commandQueueHw, 1, &event0));
+    EXPECT_EQ(1u, commandQueueHw.isCompletedCalled);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueWaitForEvents(&commandQueueHw, 1, &event1));
+    EXPECT_EQ(1u, commandQueueHw.isCompletedCalled);
+
+    commandQueueHw.setOoqEnabled();
+    EXPECT_EQ(CL_SUCCESS, clEnqueueWaitForEvents(&commandQueueHw, 1, &event0));
+    EXPECT_EQ(2u, commandQueueHw.isCompletedCalled);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueWaitForEvents(&commandQueueHw, 1, &event1));
+    EXPECT_EQ(3u, commandQueueHw.isCompletedCalled);
+
+    clReleaseEvent(event0);
+    clReleaseEvent(event1);
 }
 
 HWTEST_F(clEnqueueWaitForEventsTests, givenAlreadyCompletedEventWhenWaitForCompletionThenCheckGpuStateOnce) {

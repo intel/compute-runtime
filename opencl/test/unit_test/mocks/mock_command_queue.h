@@ -433,7 +433,13 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         latestWaitForTimestampsStatus = BaseClass::waitForTimestamps(copyEnginesToWait, status, mainContainer, deferredContainer);
 
         return latestWaitForTimestampsStatus;
-    };
+    }
+
+    bool isCompleted(TaskCountType gpgpuTaskCount, const Range<CopyEngineState> &bcsStates) override {
+        isCompletedCalled++;
+
+        return CommandQueue::isCompleted(gpgpuTaskCount, bcsStates);
+    }
 
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
@@ -459,6 +465,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     } overrideIsCacheFlushForBcsRequired;
     BuiltinOpParams kernelParams;
     std::atomic<TaskCountType> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
+    std::atomic<uint32_t> isCompletedCalled = 0;
     bool flushCalled = false;
     std::optional<WaitStatus> waitForAllEnginesReturnValue{};
     std::optional<WaitStatus> waitUntilCompleteReturnValue{};
