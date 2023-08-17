@@ -51,6 +51,8 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         if (args.bindlessSurfaceStateBaseAddress != 0) {
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.bindlessSurfaceStateBaseAddress);
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+            const auto surfaceStateCount = getMaxBindlessSurfaceStates();
+            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(surfaceStateCount);
         } else if (args.ssh) {
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);

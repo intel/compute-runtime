@@ -50,6 +50,7 @@ struct SurfaceStateInHeapInfo {
     GraphicsAllocation *heapAllocation;
     uint64_t surfaceStateOffset;
     void *ssPtr;
+    size_t ssSize;
 };
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {

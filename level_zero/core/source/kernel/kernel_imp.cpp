@@ -549,7 +549,35 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
     }
 
     const auto image = Image::fromHandle(argVal);
-    image->copyRedescribedSurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
+
+    if (kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode == NEO::KernelDescriptor::Bindless) {
+
+        NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
+        auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
+        const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        if (bindlessHeapsHelper) {
+
+            if (!this->module->getDevice()->getNEODevice()->getMemoryManager()->allocateBindlessSlot(image->getAllocation())) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+
+            auto ssInHeap = image->getAllocation()->getBindlessInfo();
+            auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
+            // redescribed image's surface state is after image's state
+            auto bindlessSlotOffset = ssInHeap.surfaceStateOffset + surfaceStateSize;
+            auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
+            patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+
+            image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap.ssPtr, surfaceStateSize), 0u);
+            this->residencyContainer.push_back(ssInHeap.heapAllocation);
+        } else {
+
+            auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
+            image->copyRedescribedSurfaceStateToSSH(ssPtr, 0u);
+        }
+    } else {
+        image->copyRedescribedSurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
+    }
     residencyContainer[argIndex] = image->getAllocation();
 
     return ZE_RESULT_SUCCESS;

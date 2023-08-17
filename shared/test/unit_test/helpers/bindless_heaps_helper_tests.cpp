@@ -111,6 +111,26 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapThen
     EXPECT_EQ(ssInHeapInfo.ssPtr, allocInHeapPtr);
 }
 
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapForImageThenTwoBindlessSlotsAreAllocated) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto surfaceStateSize = bindlessHeapHelper->surfaceStateSize;
+    memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
+
+    MockGraphicsAllocation alloc;
+    alloc.allocationType = AllocationType::IMAGE;
+    EXPECT_TRUE(getMemoryManager()->allocateBindlessSlot(&alloc));
+    auto ssInHeapInfo1 = alloc.getBindlessInfo();
+
+    EXPECT_EQ(surfaceStateSize * 2, ssInHeapInfo1.ssSize);
+
+    MockGraphicsAllocation alloc2;
+    alloc2.allocationType = AllocationType::SHARED_IMAGE;
+    EXPECT_TRUE(getMemoryManager()->allocateBindlessSlot(&alloc2));
+    auto ssInHeapInfo2 = alloc2.getBindlessInfo();
+
+    EXPECT_EQ(surfaceStateSize * 2, ssInHeapInfo2.ssSize);
+}
+
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapTwiceForTheSameAllocationThenTheSameOffsetReturned) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
 
@@ -213,10 +233,22 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIs
     auto ssInHeapInfo = alloc->getBindlessInfo();
 
     memManager->freeGraphicsMemory(alloc);
-    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse.size(), 1u);
-    auto ssInHeapInfoFromReuseVector = bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse.front();
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[0].size(), 1u);
+    auto ssInHeapInfoFromReuseVector = bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[0].front();
     EXPECT_EQ(ssInHeapInfoFromReuseVector.surfaceStateOffset, ssInHeapInfo.surfaceStateOffset);
     EXPECT_EQ(ssInHeapInfoFromReuseVector.ssPtr, ssInHeapInfo.ssPtr);
+
+    MockGraphicsAllocation *alloc2 = new MockGraphicsAllocation;
+    alloc2->allocationType = AllocationType::IMAGE;
+    memManager->allocateBindlessSlot(alloc2);
+
+    auto ssInHeapInfo2 = alloc2->getBindlessInfo();
+
+    memManager->freeGraphicsMemory(alloc2);
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[1].size(), 1u);
+    ssInHeapInfoFromReuseVector = bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[1].front();
+    EXPECT_EQ(ssInHeapInfoFromReuseVector.surfaceStateOffset, ssInHeapInfo2.surfaceStateOffset);
+    EXPECT_EQ(ssInHeapInfoFromReuseVector.ssPtr, ssInHeapInfo2.ssPtr);
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingBindlessSlotTwiceThenNewSlotIsNotAllocatedAndTrueIsReturned) {
@@ -247,13 +279,13 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenIt
 
     auto ssInHeapInfo = alloc->getBindlessInfo();
     memManager->freeGraphicsMemory(alloc);
-    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse.size(), 1u);
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[0].size(), 1u);
     MockGraphicsAllocation *alloc2 = new MockGraphicsAllocation;
 
     memManager->allocateBindlessSlot(alloc2);
     auto reusedSSinHeapInfo = alloc2->getBindlessInfo();
 
-    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse.size(), 0u);
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[0].size(), 0u);
     EXPECT_EQ(ssInHeapInfo.surfaceStateOffset, reusedSSinHeapInfo.surfaceStateOffset);
     EXPECT_EQ(ssInHeapInfo.ssPtr, reusedSSinHeapInfo.ssPtr);
     memManager->freeGraphicsMemory(alloc2);

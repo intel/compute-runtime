@@ -46,7 +46,18 @@ class BindlessHeapsHelper {
         return globalBindlessDsh;
     }
 
+    int getReusedSshVectorIndex(size_t ssSize) {
+        int index = 0;
+        if (ssSize == 2 * surfaceStateSize) {
+            index = 1;
+        } else {
+            UNRECOVERABLE_IF(ssSize != surfaceStateSize);
+        }
+        return index;
+    }
+
   protected:
+    const size_t surfaceStateSize;
     bool growHeap(BindlesHeapType heapType);
     MemoryManager *memManager = nullptr;
     bool isMultiOsContextCapable = false;
@@ -54,7 +65,7 @@ class BindlessHeapsHelper {
     std::unique_ptr<IndirectHeap> surfaceStateHeaps[BindlesHeapType::NUM_HEAP_TYPES];
     GraphicsAllocation *borderColorStates;
     std::vector<GraphicsAllocation *> ssHeapsAllocations;
-    std::vector<SurfaceStateInHeapInfo> surfaceStateInHeapVectorReuse;
+    std::vector<SurfaceStateInHeapInfo> surfaceStateInHeapVectorReuse[2];
     std::mutex mtx;
     DeviceBitfield deviceBitfield;
     bool globalBindlessDsh = false;

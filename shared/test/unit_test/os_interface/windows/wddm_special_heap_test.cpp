@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -18,15 +19,17 @@
 
 namespace NEO {
 
-class WddmMemManagerFixture {
+class GlobalBindlessWddmMemManagerFixture {
   public:
     struct FrontWindowMemManagerMock : public MockWddmMemoryManager {
         using MemoryManager::allocate32BitGraphicsMemoryImpl;
+
         FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : MockWddmMemoryManager(executionEnvironment) {}
+        FrontWindowMemManagerMock(bool enable64kbPages, bool enableLocalMemory, NEO::ExecutionEnvironment &executionEnvironment) : MockWddmMemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {}
     };
 
     void setUp() {
-        DebugManagerStateRestore dbgRestorer;
+
         DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -40,13 +43,15 @@ class WddmMemManagerFixture {
     }
     void tearDown() {
     }
-    std::unique_ptr<FrontWindowMemManagerMock> memManager;
+
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<FrontWindowMemManagerMock> memManager;
+    DebugManagerStateRestore dbgRestorer;
 };
 
-using WddmFrontWindowPoolAllocatorTests = Test<WddmMemManagerFixture>;
+using WddmGlobalBindlessAllocatorTests = Test<GlobalBindlessWddmMemManagerFixture>;
 
-TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenWddmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
+TEST_F(WddmGlobalBindlessAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenWddmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};
     allocData.type = AllocationType::BUFFER;
     EXPECT_FALSE(GraphicsAllocation::isLockable(allocData.type));
@@ -62,5 +67,47 @@ TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhen
         EXPECT_FALSE(allocation->isAllocationLockable());
     }
     memManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedThenGpuBaseAddressIsSetToCorrectBaseAddress) {
+    MockAllocationProperties properties(0, true, MemoryConstants::pageSize64k, AllocationType::LINEAR_STREAM);
+    properties.flags.use32BitFrontWindow = true;
+
+    memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
+
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
+
+    auto allocation = memManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
+    ASSERT_NE(nullptr, allocation);
+    auto gmmHelper = memManager->getGmmHelper(0);
+    EXPECT_EQ(gmmHelper->canonize(memManager->getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), true)), allocation->getGpuBaseAddress());
+
+    ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper());
+    EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase(), allocation->getGpuBaseAddress());
+
+    memManager->freeGraphicsMemory(allocation);
+    executionEnvironment->rootDeviceEnvironments[0]->bindlessHeapsHelper.reset();
+}
+
+TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToCorrectBaseAddress) {
+    AllocationData allocData = {};
+    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.size = MemoryConstants::pageSize64k;
+
+    memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
+
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
+
+    MemoryManager::AllocationStatus status;
+    auto allocation = memManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    auto gmmHelper = memManager->getGmmHelper(0);
+    EXPECT_EQ(gmmHelper->canonize(memManager->getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), true)), allocation->getGpuBaseAddress());
+
+    ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper());
+    EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase(), allocation->getGpuBaseAddress());
+
+    memManager->freeGraphicsMemory(allocation);
+    executionEnvironment->rootDeviceEnvironments[0]->bindlessHeapsHelper.reset();
 }
 } // namespace NEO

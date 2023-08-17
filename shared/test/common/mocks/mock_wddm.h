@@ -18,7 +18,7 @@
 
 #include <limits>
 #include <memory>
-#include <set>
+#include <unordered_set>
 
 namespace NEO {
 class GraphicsAllocation;
@@ -181,7 +181,7 @@ class WddmMock : public Wddm {
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;
     bool callBaseMapGpuVa = true;
-    std::set<void *> reservedAddresses;
+    std::unordered_multiset<void *> reservedAddresses;
     uintptr_t virtualAllocAddress = NEO::windowsMinAddress;
     bool kmDafEnabled = false;
     uint64_t mockPagingFence = 0u;

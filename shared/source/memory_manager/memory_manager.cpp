@@ -1011,7 +1011,9 @@ bool MemoryManager::allocateBindlessSlot(GraphicsAllocation *allocation) {
 
     if (bindlessHelper && allocation->getBindlessOffset() == std::numeric_limits<uint64_t>::max()) {
         auto &gfxCoreHelper = peekExecutionEnvironment().rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getHelper<GfxCoreHelper>();
-        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        const auto isImage = allocation->getAllocationType() == AllocationType::IMAGE || allocation->getAllocationType() == AllocationType::SHARED_IMAGE;
+        auto surfStateCount = isImage ? 2 : 1;
+        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize();
 
         auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::GLOBAL_SSH);
         if (surfaceStateInfo.heapAllocation == nullptr) {

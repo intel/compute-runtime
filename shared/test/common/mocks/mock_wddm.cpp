@@ -272,7 +272,7 @@ void WddmMock::virtualFree(void *ptr, size_t size) {
 void WddmMock::releaseReservedAddress(void *reservedAddress) {
     releaseReservedAddressResult.called++;
     if (reservedAddress != nullptr) {
-        std::set<void *>::iterator it;
+        std::unordered_multiset<void *>::iterator it;
         it = reservedAddresses.find(reservedAddress);
         EXPECT_NE(reservedAddresses.end(), it);
         reservedAddresses.erase(it);
@@ -284,9 +284,8 @@ bool WddmMock::reserveValidAddressRange(size_t size, void *&reservedMem) {
     reserveValidAddressRangeResult.called++;
     bool ret = Wddm::reserveValidAddressRange(size, reservedMem);
     if (reservedMem != nullptr) {
-        std::set<void *>::iterator it;
+        std::unordered_multiset<void *>::iterator it;
         it = reservedAddresses.find(reservedMem);
-        EXPECT_EQ(reservedAddresses.end(), it);
         reservedAddresses.insert(reservedMem);
     }
     return ret;

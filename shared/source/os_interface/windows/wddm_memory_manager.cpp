@@ -1367,6 +1367,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
         auto gmmHelper = getGmmHelper(wddmAllocation->getRootDeviceIndex());
         wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(getInternalHeapBaseAddress(wddmAllocation->getRootDeviceIndex(), true)));
+    } else if (heapAssigner.useExternal32BitHeap(allocationData.type)) {
+        auto gmmHelper = getGmmHelper(wddmAllocation->getRootDeviceIndex());
+        wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(wddmAllocation->getRootDeviceIndex(), true)));
     }
 
     status = AllocationStatus::Success;

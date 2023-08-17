@@ -751,7 +751,7 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredSsh(const KernelInfo &kernel
     size_t requiredSshSize = kernelInfo.heapInfo.surfaceStateHeapSize;
     bool isBindlessKernel = NEO::KernelDescriptor ::isBindlessAddressingKernel(kernelInfo.kernelDescriptor);
     if (isBindlessKernel) {
-        requiredSshSize = kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful * sizeof(typename Family::RENDER_SURFACE_STATE);
+        requiredSshSize = std::max(requiredSshSize, kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful * sizeof(typename Family::RENDER_SURFACE_STATE));
     }
     requiredSshSize = alignUp(requiredSshSize, EncodeDispatchKernel<Family>::getDefaultSshAlignment());
     return requiredSshSize;

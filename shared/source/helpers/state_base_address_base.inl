@@ -35,7 +35,6 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     StateBaseAddressHelperArgs<GfxFamily> &args) {
 
     *args.stateBaseAddressCmd = GfxFamily::cmdInitStateBaseAddress;
-
     const auto surfaceStateCount = getMaxBindlessSurfaceStates();
     args.stateBaseAddressCmd->setBindlessSurfaceStateSize(surfaceStateCount);
 
@@ -73,6 +72,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.globalHeapsBaseAddress);
+        args.stateBaseAddressCmd->setBindlessSurfaceStateSize(surfaceStateCount);
     } else {
         if (args.dsh) {
             args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);

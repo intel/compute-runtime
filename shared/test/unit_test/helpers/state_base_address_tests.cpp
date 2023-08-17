@@ -560,8 +560,56 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
 
     EXPECT_EQ(0u, sbaCmd.getBindlessSurfaceStateBaseAddress());
     EXPECT_FALSE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
+    uint32_t defaultBindlessSurfaceStateSize = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
+    EXPECT_EQ(defaultBindlessSurfaceStateSize, sbaCmd.getBindlessSurfaceStateSize());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
+            givenNoHeapsProvidedAndBindlessBaseSetWhenSBAIsProgrammedThenBindlessSurfaceStateSizeSetToZeroAndBaseAddressSetToPassedValue) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto gmmHelper = pDevice->getGmmHelper();
+
+    constexpr uint64_t instructionHeapBase = 0x10000;
+    constexpr uint64_t internalHeapBase = 0x10000;
+    constexpr uint64_t generalStateBase = 0x30000;
+
+    STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper);
+    args.generalStateBaseAddress = generalStateBase;
+    args.indirectObjectHeapBaseAddress = internalHeapBase;
+    args.instructionHeapBaseAddress = instructionHeapBase;
+    args.setGeneralStateBaseAddress = true;
+    args.setInstructionStateBaseAddress = true;
+    args.bindlessSurfaceStateBaseAddress = 0x90004000;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd.getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd.getDynamicStateBufferSize());
+
+    EXPECT_FALSE(sbaCmd.getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd.getInstructionBaseAddressModifyEnable());
+    EXPECT_EQ(instructionHeapBase, sbaCmd.getInstructionBaseAddress());
+    EXPECT_TRUE(sbaCmd.getInstructionBufferSizeModifyEnable());
+    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, sbaCmd.getInstructionBufferSize());
+
+    EXPECT_TRUE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
+    if constexpr (is64bit) {
+        EXPECT_EQ(gmmHelper->decanonize(internalHeapBase), sbaCmd.getGeneralStateBaseAddress());
+    } else {
+        EXPECT_EQ(generalStateBase, sbaCmd.getGeneralStateBaseAddress());
+    }
+    EXPECT_EQ(0xfffffu, sbaCmd.getGeneralStateBufferSize());
 
     auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
+    EXPECT_EQ(0x90004000u, sbaCmd.getBindlessSurfaceStateBaseAddress());
+    EXPECT_TRUE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(surfaceStateCount, sbaCmd.getBindlessSurfaceStateSize());
 }
 
@@ -719,15 +767,22 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStat
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &sbaProperties);
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
-
     EXPECT_EQ(defaultBindlessSurfaceStateSize, sbaCmd.getBindlessSurfaceStateSize());
     EXPECT_EQ(0u, sbaCmd.getBindlessSurfaceStateBaseAddress());
     EXPECT_FALSE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
 
+    sbaCmd = FamilyType::cmdInitStateBaseAddress;
+    args.bindlessSurfaceStateBaseAddress = 0x80004000;
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_EQ(defaultBindlessSurfaceStateSize, sbaCmd.getBindlessSurfaceStateSize());
+    EXPECT_EQ(0x80004000u, sbaCmd.getBindlessSurfaceStateBaseAddress());
+    EXPECT_TRUE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
+
     sbaProperties.setPropertiesBindingTableSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize);
 
     sbaCmd = FamilyType::cmdInitStateBaseAddress;
-
+    args.bindlessSurfaceStateBaseAddress = 0;
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_EQ(surfaceHeapSize, sbaCmd.getBindlessSurfaceStateSize());

@@ -7,6 +7,9 @@
 
 #include "shared/source/helpers/bindless_heaps_helper.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -18,7 +21,13 @@ constexpr size_t globalSshAllocationSize = 4 * MemoryConstants::pageSize64k;
 constexpr size_t borderColorAlphaOffset = alignUp(4 * sizeof(float), MemoryConstants::cacheLineSize);
 using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
 
-BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) : memManager(memManager), isMultiOsContextCapable(isMultiOsContextCapable), rootDeviceIndex(rootDeviceIndex), deviceBitfield(deviceBitfield) {
+BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable,
+                                         const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) : surfaceStateSize(memManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>().getRenderSurfaceStateSize()),
+                                                                                                          memManager(memManager),
+                                                                                                          isMultiOsContextCapable(isMultiOsContextCapable),
+                                                                                                          rootDeviceIndex(rootDeviceIndex),
+                                                                                                          deviceBitfield(deviceBitfield) {
+
     for (auto heapType = 0; heapType < BindlesHeapType::NUM_HEAP_TYPES; heapType++) {
         auto allocInFrontWindow = heapType != BindlesHeapType::GLOBAL_DSH;
         auto heapAllocation = getHeapAllocation(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, allocInFrontWindow);
@@ -58,9 +67,11 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
     std::lock_guard<std::mutex> autolock(this->mtx);
     if (heapType == BindlesHeapType::GLOBAL_SSH) {
 
-        if (surfaceStateInHeapVectorReuse.size()) {
-            SurfaceStateInHeapInfo surfaceStateFromVector = surfaceStateInHeapVectorReuse.back();
-            surfaceStateInHeapVectorReuse.pop_back();
+        int index = getReusedSshVectorIndex(ssSize);
+
+        if (surfaceStateInHeapVectorReuse[index].size()) {
+            SurfaceStateInHeapInfo surfaceStateFromVector = surfaceStateInHeapVectorReuse[index].back();
+            surfaceStateInHeapVectorReuse[index].pop_back();
             return surfaceStateFromVector;
         }
     }
@@ -71,7 +82,7 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
         memset(ptrInHeap, 0, ssSize);
         auto bindlessOffset = heap->getGraphicsAllocation()->getGpuAddress() - heap->getGraphicsAllocation()->getGpuBaseAddress() + heap->getUsed() - ssSize;
 
-        bindlesInfo = SurfaceStateInHeapInfo{heap->getGraphicsAllocation(), bindlessOffset, ptrInHeap};
+        bindlesInfo = SurfaceStateInHeapInfo{heap->getGraphicsAllocation(), bindlessOffset, ptrInHeap, ssSize};
     }
 
     return bindlesInfo;
@@ -119,9 +130,11 @@ bool BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
 
 void BindlessHeapsHelper::placeSSAllocationInReuseVectorOnFreeMemory(GraphicsAllocation *gfxAllocation) {
     auto ssAllocatedInfo = gfxAllocation->getBindlessInfo();
+
     if (ssAllocatedInfo.heapAllocation != nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
-        surfaceStateInHeapVectorReuse.push_back(std::move(ssAllocatedInfo));
+        int index = getReusedSshVectorIndex(ssAllocatedInfo.ssSize);
+        surfaceStateInHeapVectorReuse[index].push_back(std::move(ssAllocatedInfo));
     }
     return;
 }
