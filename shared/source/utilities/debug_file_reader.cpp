@@ -7,7 +7,6 @@
 
 #include "shared/source/utilities/debug_file_reader.h"
 
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <fstream>
@@ -31,35 +30,8 @@ SettingsFileReader::~SettingsFileReader() {
     settingStringMap.clear();
 }
 
-int32_t SettingsFileReader::getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) {
-    return static_cast<int32_t>(getSetting(settingName, static_cast<int64_t>(defaultValue), type));
-}
-
 int32_t SettingsFileReader::getSetting(const char *settingName, int32_t defaultValue) {
     return static_cast<int32_t>(getSetting(settingName, static_cast<int64_t>(defaultValue)));
-}
-
-int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) {
-    int64_t value = defaultValue;
-
-    const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
-    const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
-
-    char neoFinal[MAX_NEO_KEY_LENGTH];
-    uint32_t i = 0;
-    for (const auto &prefix : prefixString) {
-        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);
-        strcpy_s(neoFinal + strlen(prefix), strlen(settingName) + 1, settingName);
-        std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(neoFinal));
-        if (it != settingStringMap.end()) {
-            value = strtoll(it->second.c_str(), nullptr, 0);
-            type = prefixType[i];
-            return value;
-        }
-        i++;
-    }
-    type = DebugVarPrefix::None;
-    return value;
 }
 
 int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultValue) {
@@ -73,35 +45,8 @@ int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultV
     return value;
 }
 
-bool SettingsFileReader::getSetting(const char *settingName, bool defaultValue, DebugVarPrefix &type) {
-    return getSetting(settingName, static_cast<int64_t>(defaultValue), type) ? true : false;
-}
-
 bool SettingsFileReader::getSetting(const char *settingName, bool defaultValue) {
     return getSetting(settingName, static_cast<int64_t>(defaultValue)) ? true : false;
-}
-
-std::string SettingsFileReader::getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) {
-    std::string returnValue = value;
-
-    const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
-    const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
-
-    char neoFinal[MAX_NEO_KEY_LENGTH];
-    uint32_t i = 0;
-    for (const auto &prefix : prefixString) {
-        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);
-        strcpy_s(neoFinal + strlen(prefix), strlen(settingName) + 1, settingName);
-        std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(neoFinal));
-        if (it != settingStringMap.end()) {
-            returnValue = it->second;
-            type = prefixType[i];
-            return returnValue;
-        }
-        i++;
-    }
-    type = DebugVarPrefix::None;
-    return returnValue;
 }
 
 std::string SettingsFileReader::getSetting(const char *settingName, const std::string &value) {

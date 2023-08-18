@@ -23,11 +23,6 @@ namespace NEO {
 namespace ImplicitScaling {
 bool apiSupport = false;
 } // namespace ImplicitScaling
-
-const char *neoMockSettingsFileName = "neo_mock.config";
-std::vector<const char *> validPrefixes;
-std::vector<NEO::DebugVarPrefix> validPrefixTypes;
-
 bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties) {
     return false;
 }
@@ -83,31 +78,6 @@ const char *ApiSpecificConfig::getRegistryPath() {
     return "";
 }
 
-void ApiSpecificConfig::initPrefixes() {
-    if (apiTypeForUlts == ApiSpecificConfig::L0) {
-        validPrefixes.push_back("NEO_L0_");
-        validPrefixes.push_back("NEO_");
-        validPrefixes.push_back("");
-        validPrefixTypes.push_back(DebugVarPrefix::Neo_L0);
-        validPrefixTypes.push_back(DebugVarPrefix::Neo);
-        validPrefixTypes.push_back(DebugVarPrefix::None);
-    } else {
-        validPrefixes.push_back("NEO_OCL_");
-        validPrefixes.push_back("NEO_");
-        validPrefixes.push_back("");
-        validPrefixTypes.push_back(DebugVarPrefix::Neo_Ocl);
-        validPrefixTypes.push_back(DebugVarPrefix::Neo);
-        validPrefixTypes.push_back(DebugVarPrefix::None);
-    }
-}
-
-const std::vector<const char *> &ApiSpecificConfig::getPrefixStrings() {
-    return validPrefixes;
-}
-
-const std::vector<DebugVarPrefix> &ApiSpecificConfig::getPrefixTypes() {
-    return validPrefixTypes;
-}
 } // namespace NEO
 
 using namespace NEO;

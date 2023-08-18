@@ -59,13 +59,6 @@ void logDebugString(std::string_view debugString);
 
 class SettingsReader;
 
-enum class DebugVarPrefix : uint8_t {
-    None = 1,
-    Neo = 2,
-    Neo_L0 = 3,
-    Neo_Ocl = 4
-};
-
 template <typename T>
 struct DebugVarBase {
     DebugVarBase(const T &defaultValue) : value(defaultValue), defaultValue(defaultValue) {}
@@ -83,17 +76,10 @@ struct DebugVarBase {
             this->set(data);
         }
     }
-    void setPrefixType(DebugVarPrefix data) {
-        prefixType = std::move(data);
-    }
-    DebugVarPrefix getPrefixType() const {
-        return prefixType;
-    }
 
   private:
     T value;
     T defaultValue;
-    DebugVarPrefix prefixType = DebugVarPrefix::None;
 };
 
 struct DebugVariables {                                 // NOLINT(clang-analyzer-optin.performance.Padding)
@@ -171,8 +157,6 @@ class DebugSettingsManager {
 };
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
-
-#define MAX_NEO_KEY_LENGTH 256
 
 #define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
     NEO::DebugManager.logLazyEvaluateArgs([&] {                    \

@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
@@ -225,8 +224,6 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksAr
 class MockRegistryReaderWithDriverStorePath : public SettingsReader {
   public:
     MockRegistryReaderWithDriverStorePath(const char *driverStorePathArg) : driverStorePath(driverStorePathArg){};
-    std::string getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) override { return ""; };
-
     std::string getSetting(const char *settingName, const std::string &value) override {
         std::string key(settingName);
         if (key == "DriverStorePathForComputeRuntime") {
@@ -237,11 +234,8 @@ class MockRegistryReaderWithDriverStorePath : public SettingsReader {
         return value;
     }
 
-    bool getSetting(const char *settingName, bool defaultValue, DebugVarPrefix &type) override { return defaultValue; };
     bool getSetting(const char *settingName, bool defaultValue) override { return defaultValue; };
-    int64_t getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) override { return defaultValue; };
     int64_t getSetting(const char *settingName, int64_t defaultValue) override { return defaultValue; };
-    int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) override { return defaultValue; };
     int32_t getSetting(const char *settingName, int32_t defaultValue) override { return defaultValue; };
     const char *appSpecificLocation(const std::string &name) override { return name.c_str(); };
 
