@@ -10,7 +10,12 @@
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 
+#include <string>
+#include <vector>
+
 namespace NEO {
+std::vector<const char *> validL0Prefixes;
+std::vector<NEO::DebugVarPrefix> validL0PrefixTypes;
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return false;
 }
@@ -51,4 +56,16 @@ const char *ApiSpecificConfig::getRegistryPath() {
     return L0::registryPath;
 }
 
+void ApiSpecificConfig::initPrefixes() {
+    validL0Prefixes = {"NEO_L0_", "NEO_", ""};
+    validL0PrefixTypes = {DebugVarPrefix::Neo_L0, DebugVarPrefix::Neo, DebugVarPrefix::None};
+}
+
+const std::vector<const char *> &ApiSpecificConfig::getPrefixStrings() {
+    return validL0Prefixes;
+}
+
+const std::vector<DebugVarPrefix> &ApiSpecificConfig::getPrefixTypes() {
+    return validL0PrefixTypes;
+}
 } // namespace NEO

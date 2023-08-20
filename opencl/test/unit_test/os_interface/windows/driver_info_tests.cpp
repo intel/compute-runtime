@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -110,6 +111,8 @@ class MockRegistryReader : public SettingsReader {
   public:
     std::string nameString;
     std::string versionString;
+    std::string getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) override { return ""; };
+
     std::string getSetting(const char *settingName, const std::string &value) override {
         std::string key(settingName);
         if (key == "HardwareInformation.AdapterString") {
@@ -131,8 +134,11 @@ class MockRegistryReader : public SettingsReader {
         return value;
     }
 
+    bool getSetting(const char *settingName, bool defaultValue, DebugVarPrefix &type) override { return defaultValue; };
     bool getSetting(const char *settingName, bool defaultValue) override { return defaultValue; };
+    int64_t getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) override { return defaultValue; };
     int64_t getSetting(const char *settingName, int64_t defaultValue) override { return defaultValue; };
+    int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) override { return defaultValue; };
     int32_t getSetting(const char *settingName, int32_t defaultValue) override { return defaultValue; };
     const char *appSpecificLocation(const std::string &name) override { return name.c_str(); };
 

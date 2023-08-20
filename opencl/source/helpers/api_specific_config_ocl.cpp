@@ -10,7 +10,12 @@
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
+#include <string>
+#include <vector>
+
 namespace NEO {
+std::vector<const char *> validClPrefixes;
+std::vector<NEO::DebugVarPrefix> validClPrefixTypes;
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return true;
 }
@@ -49,5 +54,18 @@ uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {
 
 const char *ApiSpecificConfig::getRegistryPath() {
     return oclRegPath;
+}
+
+void ApiSpecificConfig::initPrefixes() {
+    validClPrefixes = {"NEO_OCL_", "NEO_", ""};
+    validClPrefixTypes = {DebugVarPrefix::Neo_Ocl, DebugVarPrefix::Neo, DebugVarPrefix::None};
+}
+
+const std::vector<const char *> &ApiSpecificConfig::getPrefixStrings() {
+    return validClPrefixes;
+}
+
+const std::vector<DebugVarPrefix> &ApiSpecificConfig::getPrefixTypes() {
+    return validClPrefixTypes;
 }
 } // namespace NEO

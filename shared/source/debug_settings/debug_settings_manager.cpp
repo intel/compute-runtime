@@ -9,9 +9,11 @@
 
 #include "shared/source/debug_settings/debug_variables_helper.h"
 #include "shared/source/debug_settings/definitions/translate_debug_settings.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
+#include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/logger.h"
 
 #include <fstream>
@@ -33,6 +35,7 @@ static std::string toString(const T &arg) {
 template <DebugFunctionalityLevel DebugLevel>
 DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath) {
     readerImpl = SettingsReaderCreator::create(std::string(registryPath));
+    ApiSpecificConfig::initPrefixes();
     injectSettingsFromReader();
     dumpFlags();
     translateDebugSettings(flags);
@@ -57,6 +60,18 @@ void DebugSettingsManager<DebugLevel>::getHardwareInfoOverride(std::string &hwIn
     }
 }
 
+static const char *convPrefixToString(DebugVarPrefix prefix) {
+    if (prefix == DebugVarPrefix::Neo) {
+        return "NEO_";
+    } else if (prefix == DebugVarPrefix::Neo_L0) {
+        return "NEO_L0_";
+    } else if (prefix == DebugVarPrefix::Neo_Ocl) {
+        return "NEO_OCL_";
+    } else {
+        return "";
+    }
+}
+
 template <DebugFunctionalityLevel DebugLevel>
 template <typename DataType>
 void DebugSettingsManager<DebugLevel>::dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue, std::ostringstream &ostring) {
@@ -74,18 +89,31 @@ void DebugSettingsManager<DebugLevel>::getStringWithFlags(std::string &allFlags,
     std::ostringstream changedFlagsStream;
     changedFlagsStream.str("");
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                       \
-    allFlagsStream << getNonReleaseKeyName(#variableName) << " = " << flags.variableName.get() << '\n'; \
-    dumpNonDefaultFlag<dataType>(getNonReleaseKeyName(#variableName), flags.variableName.get(), defaultValue, changedFlagsStream);
-
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                               \
+    {                                                                                                                           \
+        char neoFinal[MAX_NEO_KEY_LENGTH];                                                                                      \
+        const char *prefix = convPrefixToString(flags.variableName.getPrefixType());                                            \
+        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);                                                                         \
+        strcpy_s(neoFinal + strlen(prefix), strlen(#variableName) + 1, #variableName);                                          \
+        const char *neoKey = neoFinal;                                                                                          \
+        allFlagsStream << getNonReleaseKeyName(neoKey) << " = " << flags.variableName.get() << '\n';                            \
+        dumpNonDefaultFlag<dataType>(getNonReleaseKeyName(neoKey), flags.variableName.get(), defaultValue, changedFlagsStream); \
+    }
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
 #undef DECLARE_DEBUG_VARIABLE
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
-    allFlagsStream << #variableName << " = " << flags.variableName.get() << '\n'; \
-    dumpNonDefaultFlag<dataType>(#variableName, flags.variableName.get(), defaultValue, changedFlagsStream);
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                         \
+    {                                                                                                     \
+        char neoFinal[MAX_NEO_KEY_LENGTH];                                                                \
+        const char *prefix = convPrefixToString(flags.variableName.getPrefixType());                      \
+        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);                                                   \
+        strcpy_s(neoFinal + strlen(prefix), strlen(#variableName) + 1, #variableName);                    \
+        const char *neoKey = neoFinal;                                                                    \
+        allFlagsStream << neoKey << " = " << flags.variableName.get() << '\n';                            \
+        dumpNonDefaultFlag<dataType>(neoKey, flags.variableName.get(), defaultValue, changedFlagsStream); \
+    }
 #include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 
@@ -114,10 +142,12 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                  \
-    {                                                                                                              \
-        dataType tempData = readerImpl->getSetting(getNonReleaseKeyName(#variableName), flags.variableName.get()); \
-        flags.variableName.set(tempData);                                                                          \
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                        \
+    {                                                                                                                    \
+        DebugVarPrefix type;                                                                                             \
+        dataType tempData = readerImpl->getSetting(getNonReleaseKeyName(#variableName), flags.variableName.get(), type); \
+        flags.variableName.setPrefixType(type);                                                                          \
+        flags.variableName.set(tempData);                                                                                \
     }
 
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
@@ -125,10 +155,12 @@ void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
     }
 
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)            \
-    {                                                                                        \
-        dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get()); \
-        flags.variableName.set(tempData);                                                    \
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                  \
+    {                                                                                              \
+        DebugVarPrefix type;                                                                       \
+        dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get(), type); \
+        flags.variableName.setPrefixType(type);                                                    \
+        flags.variableName.set(tempData);                                                          \
     }
 #include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
