@@ -191,6 +191,7 @@ class MockMetricsLibraryDll : public OsLibrary {
 
     void *getProcAddress(const std::string &procName) override;
     bool isLoaded() override;
+    std::string getFullPath() override;
 };
 
 //////////////////////////////////////////////////////

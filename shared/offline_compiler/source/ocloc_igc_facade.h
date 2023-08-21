@@ -36,6 +36,9 @@ class OclocIgcFacade {
 
     int initialize(const HardwareInfo &hwInfo);
     bool isInitialized() const;
+    const char *getIgcRevision();
+    size_t getIgcLibSize();
+    time_t getIgcLibMTime();
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> createConstBuffer(const void *data, size_t size);
     CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType);
 
@@ -54,6 +57,9 @@ class OclocIgcFacade {
 
     OclocArgHelper *argHelper{};
     std::unique_ptr<OsLibrary> igcLib;
+    std::vector<char> igcRevision;
+    size_t igcLibSize{0};
+    time_t igcLibMTime{0};
     CIF::RAII::UPtr_t<CIF::CIFMain> igcMain;
     CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> igcDeviceCtx;
     bool initialized{false};

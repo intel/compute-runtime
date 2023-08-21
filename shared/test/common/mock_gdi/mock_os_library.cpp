@@ -14,6 +14,10 @@ bool MockOsLibrary::isLoaded() {
     return true;
 }
 
+std::string MockOsLibrary::getFullPath() {
+    return std::string();
+}
+
 void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "D3DKMTCreateAllocation") {
         return reinterpret_cast<void *>(mockD3DKMTCreateAllocation);

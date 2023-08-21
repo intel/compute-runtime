@@ -135,6 +135,13 @@ bool MockMetricsLibraryDll::isLoaded() {
 }
 
 //////////////////////////////////////////////////////
+// MockMetricsLibrary::getFullPath
+//////////////////////////////////////////////////////
+std::string MockMetricsLibraryDll::getFullPath() {
+    return std::string();
+}
+
+//////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ContextCreate
 //////////////////////////////////////////////////////
 StatusCode MockMetricsLibraryValidInterface::contextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle) {

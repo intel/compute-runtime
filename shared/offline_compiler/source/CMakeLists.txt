@@ -136,6 +136,7 @@ endif()
 if(WIN32)
   list(APPEND CLOC_LIB_SRCS_LIB
        ${NEO_SHARED_DIRECTORY}/compiler_interface/windows/compiler_cache_windows.cpp
+       ${NEO_SHARED_DIRECTORY}/compiler_interface/windows/os_compiler_cache_helper.cpp
        ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_inc.h
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
@@ -145,6 +146,7 @@ if(WIN32)
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
        ${NEO_SHARED_DIRECTORY}/compiler_interface/linux/compiler_cache_linux.cpp
+       ${NEO_SHARED_DIRECTORY}/compiler_interface/linux/os_compiler_cache_helper.cpp
        ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_inc.h
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp

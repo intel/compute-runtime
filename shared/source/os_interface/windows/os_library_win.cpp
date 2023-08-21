@@ -98,5 +98,11 @@ bool OsLibrary::isLoaded() {
 void *OsLibrary::getProcAddress(const std::string &procName) {
     return ::GetProcAddress(this->handle, procName.c_str());
 }
+
+std::string OsLibrary::getFullPath() {
+    char dllPath[MAX_PATH];
+    getModuleFileNameA(GetModuleHINSTANCE(), dllPath, MAX_PATH);
+    return std::string(dllPath);
+}
 } // namespace Windows
 } // namespace NEO

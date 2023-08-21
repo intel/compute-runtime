@@ -21,6 +21,7 @@ int mkdir(const std::string &path);
 int open(const char *file, int flags);
 int openWithMode(const char *file, int flags, int mode);
 void *dlopen(const char *filename, int flag);
+int dlinfo(void *handle, int request, void *info);
 int ioctl(int fileDescriptor, unsigned long int request, void *arg);
 int getDevicePath(int deviceFd, char *buf, size_t &bufSize);
 int access(const char *pathname, int mode);

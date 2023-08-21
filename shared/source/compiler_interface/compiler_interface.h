@@ -156,6 +156,9 @@ class CompilerInterface {
     std::unique_ptr<OsLibrary> igcLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> igcMain = nullptr;
     std::map<const Device *, igcDevCtxUptr> igcDeviceContexts;
+    std::string igcRevision;
+    size_t igcLibSize;
+    time_t igcLibMTime;
 
     std::unique_ptr<OsLibrary> fclLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> fclMain = nullptr;

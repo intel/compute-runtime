@@ -10,9 +10,11 @@
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/compiler_interface/igc_platform_helper.h"
+#include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_library.h"
 
@@ -36,6 +38,10 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         argHelper->printf("Error! Loading of IGC library has failed! Filename: %s\n", Os::igcDllName);
         return OclocErrorCode::OUT_OF_HOST_MEMORY;
     }
+
+    std::string igcPath = igcLib->getFullPath();
+    igcLibSize = NEO::getFileSize(igcPath);
+    igcLibMTime = NEO::getFileModificationTime(igcPath);
 
     const auto igcCreateMainFunction = loadCreateIgcMainFunction();
     if (!igcCreateMainFunction) {
@@ -61,6 +67,16 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     if (!isPatchtokenInterfaceSupported()) {
         argHelper->printf("Error! Patchtoken interface is missing.\n");
         return OclocErrorCode::OUT_OF_HOST_MEMORY;
+    }
+
+    {
+        auto igcDeviceCtx3 = igcMain->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
+        if (igcDeviceCtx3) {
+            const char *revision = igcDeviceCtx3->GetIGCRevision();
+            // revision is sha-1 hash
+            igcRevision.resize(41);
+            strncpy_s(igcRevision.data(), 41, revision, 40);
+        }
     }
 
     igcDeviceCtx = createIgcDeviceContext();
@@ -138,6 +154,18 @@ void OclocIgcFacade::populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *
 
     handle->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
     handle->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
+}
+
+const char *OclocIgcFacade::getIgcRevision() {
+    return igcRevision.data();
+}
+
+size_t OclocIgcFacade::getIgcLibSize() {
+    return igcLibSize;
+}
+
+time_t OclocIgcFacade::getIgcLibMTime() {
+    return igcLibMTime;
 }
 
 CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocIgcFacade::createConstBuffer(const void *data, size_t size) {

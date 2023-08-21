@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,5 +39,6 @@ class OsLibrary {
     }
     virtual void *getProcAddress(const std::string &procName) = 0;
     virtual bool isLoaded() = 0;
+    virtual std::string getFullPath() = 0;
 };
 } // namespace NEO

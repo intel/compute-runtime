@@ -34,12 +34,15 @@ int MockProgram::getInternalOptionsCalled = 0;
 
 std::string MockProgram::getCachedFileName() const {
     CompilerCache cache(CompilerCacheConfig{});
+    std::string igcRevision = "0001";
+    size_t igcLibSize = 1000;
+    time_t igcLibMTime = 0;
     auto hwInfo = this->context->getDevice(0)->getHardwareInfo();
     auto input = ArrayRef<const char>(this->sourceCode.c_str(), this->sourceCode.size());
     auto opts = ArrayRef<const char>(this->options.c_str(), this->options.size());
     auto internalOptions = getInternalOptions();
     auto internalOpts = ArrayRef<const char>(internalOptions.c_str(), internalOptions.size());
-    return cache.getCachedFileName(hwInfo, input, opts, internalOpts);
+    return cache.getCachedFileName(hwInfo, input, opts, internalOpts, igcRevision, igcLibSize, igcLibMTime);
 }
 
 } // namespace NEO

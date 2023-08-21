@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,9 @@ class MockNlDll : public NEO::OsLibrary {
   public:
     bool isLoaded() override { return false; }
     void *getProcAddress(const std::string &procName) override;
+    std::string getFullPath() override {
+        return std::string();
+    }
 
     void deleteEntryPoint(const std::string &procName);
 

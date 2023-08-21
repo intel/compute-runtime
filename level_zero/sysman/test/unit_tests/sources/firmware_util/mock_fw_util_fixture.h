@@ -60,6 +60,9 @@ struct MockFwUtilOsLibrary : public OsLibrary {
     bool isLoaded() override {
         return false;
     }
+    std::string getFullPath() override {
+        return std::string();
+    }
     static OsLibrary *load(const std::string &name) {
         if (mockLoad == true) {
             auto ptr = new (std::nothrow) MockFwUtilOsLibrary();

@@ -9,6 +9,10 @@
 
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/source/utilities/io_functions.h"
+
+#include <dlfcn.h>
+#include <link.h>
 
 namespace NEO {
 bool createCompilerCachePath(std::string &cacheDir) {
@@ -53,5 +57,26 @@ bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader)
     }
 
     return false;
+}
+
+time_t getFileModificationTime(std::string &path) {
+    struct stat st;
+    if (NEO::SysCalls::stat(path, &st) == 0) {
+        return st.st_mtim.tv_sec;
+    }
+    return 0;
+}
+
+size_t getFileSize(std::string &path) {
+    size_t size = 0u;
+    FILE *fileDescriptor = NEO::IoFunctions::fopenPtr(path.c_str(), "rb");
+    if (fileDescriptor == nullptr) {
+        return 0u;
+    }
+
+    NEO::IoFunctions::fseekPtr(fileDescriptor, 0, SEEK_END);
+    size = NEO::IoFunctions::ftellPtr(fileDescriptor);
+    NEO::IoFunctions::fclosePtr(fileDescriptor);
+    return size;
 }
 } // namespace NEO

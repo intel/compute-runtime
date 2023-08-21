@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class OsLibrary : public NEO::OsLibrary {
     void *getProcAddress(const std::string &procName);
     static decltype(&GetSystemDirectoryA) getSystemDirectoryA;
     void getLastErrorString(std::string *errorValue);
+    std::string getFullPath();
 
   protected:
     HMODULE loadDependency(const std::string &dependencyFileName) const;

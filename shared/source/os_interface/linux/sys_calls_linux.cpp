@@ -72,6 +72,10 @@ void *dlopen(const char *filename, int flag) {
     return ::dlopen(filename, flag);
 }
 
+int dlinfo(void *handle, int request, void *info) {
+    return ::dlinfo(handle, request, info);
+}
+
 int access(const char *pathName, int mode) {
     return ::access(pathName, mode);
 }

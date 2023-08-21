@@ -157,6 +157,9 @@ TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitalize
             return nullptr;
         }
         bool isLoaded() override { return true; }
+        std::string getFullPath() override {
+            return std::string();
+        }
         std::map<std::string, void *> ifrFuncMap;
     };
     uint16_t domain = 0;
@@ -193,6 +196,9 @@ TEST(FwEccTest, GivenFwEccConfigCallFailsWhenCallingFirmwareUtilSetAndGetEccThen
         }
         bool isLoaded() override {
             return false;
+        }
+        std::string getFullPath() override {
+            return std::string();
         }
         std::map<std::string, void *> eccFuncMap;
     };
@@ -235,6 +241,9 @@ TEST(LinuxFwEccTest, GivenValidFwUtilMethodWhenCallingFirmwareUtilSetAndGetEccTh
         }
         bool isLoaded() override {
             return false;
+        }
+        std::string getFullPath() override {
+            return std::string();
         }
         std::map<std::string, void *> eccFuncMap;
     };
@@ -322,6 +331,9 @@ TEST(FwGetMemErrorCountTest, GivenValidFwUtilMethodWhenMemoryErrorCountIsRequest
         }
         bool isLoaded() override {
             return false;
+        }
+        std::string getFullPath() override {
+            return std::string();
         }
         std::map<std::string, void *> memErrFuncMap;
     };

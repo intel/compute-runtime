@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <dlfcn.h>
+#include <link.h>
 
 namespace NEO {
 OsLibrary *OsLibrary::load(const std::string &name) {
@@ -68,6 +69,15 @@ void *OsLibrary::getProcAddress(const std::string &procName) {
     DEBUG_BREAK_IF(this->handle == nullptr);
 
     return dlsym(this->handle, procName.c_str());
+}
+
+std::string OsLibrary::getFullPath() {
+    struct link_map *map = nullptr;
+    int retVal = NEO::SysCalls::dlinfo(this->handle, RTLD_DI_LINKMAP, &map);
+    if (retVal == 0 && map != nullptr) {
+        return std::string(map->l_name);
+    }
+    return std::string();
 }
 } // namespace Linux
 } // namespace NEO

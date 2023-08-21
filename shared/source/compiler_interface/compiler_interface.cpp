@@ -12,6 +12,7 @@
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/igc_platform_helper.h"
+#include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -83,7 +84,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
         kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
                                                   input.src,
                                                   input.apiOptions,
-                                                  input.internalOptions);
+                                                  input.internalOptions, igcRevision, igcLibSize, igcLibMTime);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
             return TranslationOutput::ErrorCode::Success;
@@ -136,7 +137,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
     if (cachingMode == CachingMode::PreProcess) {
         kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
                                                   input.apiOptions,
-                                                  input.internalOptions);
+                                                  input.internalOptions, igcRevision, igcLibSize, igcLibMTime);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
             return TranslationOutput::ErrorCode::Success;
@@ -374,7 +375,19 @@ bool CompilerInterface::loadFcl() {
 }
 
 bool CompilerInterface::loadIgc() {
-    return NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
+    bool result = NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
+
+    if (result) {
+        std::string igcPath = igcLib->getFullPath();
+        igcLibSize = NEO::getFileSize(igcPath);
+        igcLibMTime = NEO::getFileModificationTime(igcPath);
+
+        auto igcDeviceCtx3 = igcMain->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
+        if (igcDeviceCtx3) {
+            igcRevision = igcDeviceCtx3->GetIGCRevision();
+        }
+    }
+    return result;
 }
 
 bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {

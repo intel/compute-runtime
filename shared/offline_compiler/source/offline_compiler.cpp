@@ -209,10 +209,13 @@ int OfflineCompiler::buildIrBinary() {
     int retVal = SUCCESS;
 
     if (allowCaching) {
+        const std::string igcRevision = igcFacade->getIgcRevision();
+        const auto igcLibSize = igcFacade->getIgcLibSize();
+        const auto igcLibMTime = igcFacade->getIgcLibMTime();
         irHash = cache->getCachedFileName(getHardwareInfo(),
                                           sourceCode,
                                           options,
-                                          internalOptions);
+                                          internalOptions, igcRevision, igcLibSize, igcLibMTime);
         irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
         if (irBinary) {
             return retVal;
@@ -329,17 +332,20 @@ int OfflineCompiler::buildSourceCode() {
     }
 
     if (allowCaching) {
-        irHash = cache->getCachedFileName(getHardwareInfo(), sourceCode, options, internalOptions);
+        const std::string igcRevision = igcFacade->getIgcRevision();
+        const auto igcLibSize = igcFacade->getIgcLibSize();
+        const auto igcLibMTime = igcFacade->getIgcLibMTime();
+        irHash = cache->getCachedFileName(getHardwareInfo(), sourceCode, options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
         irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
 
-        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions);
+        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
         genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
 
         if (irBinary && genBinary) {
             if (!CompilerOptions::contains(options, CompilerOptions::generateDebugInfo))
                 return retVal;
             else {
-                dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions);
+                dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
                 debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
                 if (debugDataBinary)
                     return retVal;
@@ -1121,10 +1127,13 @@ bool OfflineCompiler::generateElfBinary() {
     }
 
     if (allowCaching) {
+        const std::string igcRevision = igcFacade->getIgcRevision();
+        const auto igcLibSize = igcFacade->getIgcLibSize();
+        const auto igcLibMTime = igcFacade->getIgcLibMTime();
         elfHash = cache->getCachedFileName(getHardwareInfo(),
                                            genHash,
                                            options,
-                                           internalOptions);
+                                           internalOptions, igcRevision, igcLibSize, igcLibMTime);
         auto loadedData = cache->loadCachedBinary(elfHash, elfBinarySize);
         elfBinary.assign(loadedData.get(), loadedData.get() + elfBinarySize);
         if (!elfBinary.empty()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,10 @@ class MockOsLibrary : public NEO::OsLibrary {
 
     bool isLoaded() override {
         return false;
+    }
+
+    std::string getFullPath() override {
+        return std::string();
     }
 
     static OsLibrary *load(const std::string &name) {

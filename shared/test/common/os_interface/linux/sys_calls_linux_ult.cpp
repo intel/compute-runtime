@@ -21,6 +21,7 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <iostream>
+#include <link.h>
 #include <poll.h>
 #include <string.h>
 #include <string_view>
@@ -155,6 +156,13 @@ void *dlopen(const char *filename, int flag) {
     dlOpenFlags = flag;
     dlOpenCalled = true;
     return ::dlopen(filename, flag);
+}
+
+int dlinfo(void *handle, int request, void *info) {
+    if (request == RTLD_DI_LINKMAP) {
+        return ::dlinfo(handle, request, info);
+    }
+    return -1;
 }
 
 int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
