@@ -80,8 +80,6 @@ struct CommandQueueImp : public CommandQueue {
 
     Device *getDevice() { return device; }
 
-    TaskCountType getTaskCount() { return taskCount; }
-
     NEO::CommandStreamReceiver *getCsr() { return csr; }
 
     MOCKABLE_VIRTUAL NEO::WaitStatus reserveLinearStreamSize(size_t size);
@@ -140,8 +138,6 @@ struct CommandQueueImp : public CommandQueue {
     NEO::HeapContainer heapContainer;
     ze_command_queue_desc_t desc;
     std::vector<Kernel *> printfKernelContainer;
-
-    std::atomic<TaskCountType> taskCount{0};
 
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;

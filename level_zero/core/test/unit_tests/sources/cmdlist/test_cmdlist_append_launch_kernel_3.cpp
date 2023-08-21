@@ -806,6 +806,52 @@ HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
+HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCountForWaits, IsAtLeastSkl) {
+    DebugManager.flags.UseCounterAllocToSyncInOrderCmdList.set(0);
+
+    auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(1u, immCmdList0->cmdQImmediate->getTaskCount());
+    EXPECT_EQ(2u, immCmdList1->cmdQImmediate->getTaskCount());
+
+    // explicit wait
+    {
+        immCmdList0->hostSynchronize(0);
+        EXPECT_EQ(1u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+        immCmdList1->hostSynchronize(0);
+        EXPECT_EQ(2u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    }
+
+    // implicit wait
+    {
+        immCmdList0->copyThroughLockedPtrEnabled = true;
+        immCmdList1->copyThroughLockedPtrEnabled = true;
+
+        void *deviceAlloc = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+        uint32_t hostCopyData = 0;
+
+        immCmdList0->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, false, false);
+        EXPECT_EQ(1u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+        immCmdList1->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, false, false);
+        EXPECT_EQ(2u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+        context->freeMem(deviceAlloc);
+    }
+}
+
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence, IsAtLeastXeHpCore) {
     NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
 

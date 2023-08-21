@@ -383,6 +383,8 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
     ze_result_t status = ZE_RESULT_SUCCESS;
 
+    this->cmdQImmediate->setTaskCount(completionStamp.taskCount);
+
     if (this->isSyncModeQueue || this->printfKernelContainer.size() > 0u) {
         status = hostSynchronize(std::numeric_limits<uint64_t>::max(), completionStamp.taskCount, true);
     }
@@ -849,7 +851,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout, TaskCountType taskCount, bool handlePostWaitOperations) {
     ze_result_t status = ZE_RESULT_SUCCESS;
 
-    if (isInOrderExecutionEnabled()) {
+    if (isInOrderExecutionEnabled() && NEO::DebugManager.flags.UseCounterAllocToSyncInOrderCmdList.get() != 0) {
         status = synchronizeInOrderExecution(timeout);
     } else {
         const int64_t timeoutInMicroSeconds = timeout / 1000;
@@ -876,7 +878,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout) {
-    return hostSynchronize(timeout, this->csr->peekTaskCount(), true);
+    return hostSynchronize(timeout, this->cmdQImmediate->getTaskCount(), true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1041,7 +1043,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : cpuMemCopyInfo.dstPtr;
 
     if (this->dependenciesPresent || isInOrderExecutionEnabled()) {
-        auto waitStatus = hostSynchronize(std::numeric_limits<uint64_t>::max(), this->csr->peekTaskCount(), false);
+        auto waitStatus = hostSynchronize(std::numeric_limits<uint64_t>::max(), this->cmdQImmediate->getTaskCount(), false);
 
         if (waitStatus != ZE_RESULT_SUCCESS) {
             return waitStatus;

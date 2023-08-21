@@ -2401,8 +2401,13 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndCpuMemcpyWhenGpuHangThenDontSynchronizeEvent, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = mockCmdQ.get();
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->callBaseWaitForCompletionWithTimeout = false;
@@ -2441,8 +2446,13 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithBarrierThenWaitForTagUpdate, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = mockCmdQ.get();
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -2455,8 +2465,13 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierThenSetDependenciesPresent, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = mockCmdQ.get();
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -2473,8 +2488,13 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrier
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEventsThenSetDependenciesPresent, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = mockCmdQ.get();
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -2627,8 +2647,13 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSiz
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyThenAppendBarrierCalled, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.cmdQImmediate = mockCmdQ.get();
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     constexpr uint32_t numEvents = 5;
@@ -2658,8 +2683,13 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyWithinThresholdThenWaitOnHost, IsAtLeastSkl) {
     DebugManagerStateRestore restore;
 
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.cmdQImmediate = mockCmdQ.get();
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     constexpr uint32_t numEvents = 4;
