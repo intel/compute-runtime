@@ -23,9 +23,9 @@
 
 using namespace NEO;
 
-using clEnqueueWaitForEventsTests = ApiTests;
+using ClEnqueueWaitForEventsTests = ApiTests;
 
-TEST_F(clEnqueueWaitForEventsTests, GivenInvalidCommandQueueWhenClEnqueueWaitForEventsIsCalledThenReturnError) {
+TEST_F(ClEnqueueWaitForEventsTests, GivenInvalidCommandQueueWhenClEnqueueWaitForEventsIsCalledThenReturnError) {
     auto retVal = CL_SUCCESS;
 
     auto userEvent = clCreateUserEvent(
@@ -44,7 +44,7 @@ TEST_F(clEnqueueWaitForEventsTests, GivenInvalidCommandQueueWhenClEnqueueWaitFor
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueWaitForEventsTests, GivenQueueIncapableWhenEnqueingWaitForEventsThenInvalidOperationReturned) {
+TEST_F(ClEnqueueWaitForEventsTests, GivenQueueIncapableWhenEnqueingWaitForEventsThenInvalidOperationReturned) {
     MockEvent<Event> events[] = {
         {pCommandQueue, CL_COMMAND_READ_BUFFER, 0, 0},
         {pCommandQueue, CL_COMMAND_READ_BUFFER, 0, 0},
@@ -61,7 +61,7 @@ TEST_F(clEnqueueWaitForEventsTests, GivenQueueIncapableWhenEnqueingWaitForEvents
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clEnqueueWaitForEventsTests, GivenProperParamsWhenClEnqueueWaitForEventsIsCalledAndEventStatusIsCompleteThenWaitAndReturnSuccess) {
+TEST_F(ClEnqueueWaitForEventsTests, GivenProperParamsWhenClEnqueueWaitForEventsIsCalledAndEventStatusIsCompleteThenWaitAndReturnSuccess) {
     struct MyEvent : public UserEvent {
         MyEvent(Context *context)
             : UserEvent(context) {
@@ -86,7 +86,7 @@ TEST_F(clEnqueueWaitForEventsTests, GivenProperParamsWhenClEnqueueWaitForEventsI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueWaitForEventsTests, GivenProperParamsWhenClEnqueueWaitForEventsIsCalledAndEventStatusIsNotCompleteThenReturnError) {
+TEST_F(ClEnqueueWaitForEventsTests, GivenProperParamsWhenClEnqueueWaitForEventsIsCalledAndEventStatusIsNotCompleteThenReturnError) {
     auto retVal = CL_SUCCESS;
 
     auto userEvent = clCreateUserEvent(
@@ -108,7 +108,7 @@ TEST_F(clEnqueueWaitForEventsTests, GivenProperParamsWhenClEnqueueWaitForEventsI
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueWaitForEventsTests, GivenInvalidEventWhenClEnqueueWaitForEventsIsCalledThenReturnError) {
+TEST_F(ClEnqueueWaitForEventsTests, GivenInvalidEventWhenClEnqueueWaitForEventsIsCalledThenReturnError) {
     auto retVal = CL_SUCCESS;
 
     auto validUserEvent = clCreateUserEvent(
@@ -131,7 +131,7 @@ TEST_F(clEnqueueWaitForEventsTests, GivenInvalidEventWhenClEnqueueWaitForEventsI
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(clEnqueueWaitForEventsTests, givenOoqWhenWaitingForEventThenCallWaitForTimestamps) {
+HWTEST_F(ClEnqueueWaitForEventsTests, givenOoqWhenWaitingForEventThenCallWaitForTimestamps) {
     MockCommandQueueHw<FamilyType> commandQueueHw(pContext, pDevice, nullptr);
 
     DebugManagerStateRestore restore;
@@ -155,19 +155,19 @@ HWTEST_F(clEnqueueWaitForEventsTests, givenOoqWhenWaitingForEventThenCallWaitFor
     EXPECT_TRUE(commandQueueHw.latestWaitForTimestampsStatus);
 }
 
-struct clEnqueueWaitForTimestampsTests : public clEnqueueWaitForEventsTests {
+struct ClEnqueueWaitForTimestampsTests : public ClEnqueueWaitForEventsTests {
     void SetUp() override {
         DebugManager.flags.EnableTimestampWaitForQueues.set(4);
         DebugManager.flags.EnableTimestampWaitForEvents.set(4);
         DebugManager.flags.EnableTimestampPacket.set(1);
 
-        clEnqueueWaitForEventsTests::SetUp();
+        ClEnqueueWaitForEventsTests::SetUp();
     }
 
     DebugManagerStateRestore restore;
 };
 
-HWTEST_F(clEnqueueWaitForTimestampsTests, givenIoqWhenWaitingForLatestEventThenDontCheckQueueCompletion) {
+HWTEST_F(ClEnqueueWaitForTimestampsTests, givenIoqWhenWaitingForLatestEventThenDontCheckQueueCompletion) {
     MockCommandQueueHw<FamilyType> commandQueueHw(pContext, pDevice, nullptr);
 
     MockKernelWithInternals kernel(*pDevice);
@@ -209,7 +209,7 @@ HWTEST_F(clEnqueueWaitForTimestampsTests, givenIoqWhenWaitingForLatestEventThenD
     clReleaseEvent(event1);
 }
 
-HWTEST_F(clEnqueueWaitForEventsTests, givenAlreadyCompletedEventWhenWaitForCompletionThenCheckGpuStateOnce) {
+HWTEST_F(ClEnqueueWaitForEventsTests, givenAlreadyCompletedEventWhenWaitForCompletionThenCheckGpuStateOnce) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto csrTagAddress = ultCsr.getTagAddress();
 
@@ -280,7 +280,7 @@ namespace NEO {
 extern bool isGTPinInitialized;
 extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
 extern std::deque<gtpinkexec_t> kernelExecQueue;
-TEST_F(clEnqueueWaitForEventsTests, WhenGTPinIsInitializedAndEnqueingWaitForEventsThenGTPinIsNotified) {
+TEST_F(ClEnqueueWaitForEventsTests, WhenGTPinIsInitializedAndEnqueingWaitForEventsThenGTPinIsNotified) {
 
     auto gtpinMockCommandQueue = new GTPinMockCommandQueue(pContext, pDevice);
     pCommandQueue->release();
