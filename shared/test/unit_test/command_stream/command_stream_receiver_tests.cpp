@@ -4404,3 +4404,30 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFlagProgramBarrierInCommandStreamTask
     ASSERT_NE(nullptr, pipeControl);
     pDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenNextDispatchRequiresScratchSpaceAndSshPointerIsNullThenFrontEndCommandIsNotDispatched,
+          IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    commandStreamReceiver.setRequiredScratchSizes(0x100, 0);
+    immediateFlushTaskFlags.sshCpuBase = nullptr;
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    auto frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    EXPECT_EQ(nullptr, frontEndCmd);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+}
