@@ -1492,15 +1492,6 @@ HWTEST_F(GfxCoreHelperTest, WhenIsDynamicallyPopulatedIsTrueThenGetHighestEnable
     EXPECT_EQ(maxDualSubSlice, 16u);
 }
 
-HWTEST_F(ProductHelperCommonTest, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenSameIndexIsReturned) {
-    auto &gfxCoreHelper = getHelper<ProductHelper>();
-    uint64_t patIndex = 1u;
-    auto allocationType = NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
-    EXPECT_EQ(patIndex, gfxCoreHelper.overridePatIndex(allocationType, patIndex));
-    allocationType = NEO::AllocationType::BUFFER;
-    patIndex = 3u;
-    EXPECT_EQ(patIndex, gfxCoreHelper.overridePatIndex(allocationType, patIndex));
-}
 HWTEST_F(ProductHelperCommonTest, givenHwHelperWhenIsFusedEuDisabledForDpasCalledThenFalseReturned) {
     auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<ProductHelper>();

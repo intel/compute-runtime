@@ -26,6 +26,7 @@ class GfxCoreHelper;
 class MemoryManager;
 struct DeviceInfo;
 class CompilerProductHelper;
+enum class AllocationType;
 } // namespace NEO
 
 namespace L0 {

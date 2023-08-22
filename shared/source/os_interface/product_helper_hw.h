@@ -116,7 +116,6 @@ class ProductHelperHw : public ProductHelper {
     bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const override;
     bool isMidThreadPreemptionDisallowedForRayTracingKernels() const override;
     bool isBufferPoolAllocatorSupported() const override;
-    uint64_t overridePatIndex(AllocationType allocationType, uint64_t patIndex) const override;
     bool isTlbFlushRequired() const override;
     bool isDummyBlitWaRequired() const override;
     bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const override;

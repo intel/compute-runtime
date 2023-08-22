@@ -247,17 +247,6 @@ MTLTEST_F(MtlProductHelper, givenDebugFlagWhenCheckingIsResolveDependenciesByPip
 
 using ProductHelperTestMtl = Test<DeviceFixture>;
 
-MTLTEST_F(ProductHelperTestMtl, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenForTimestampPacketTagBufferReturnTwo) {
-    auto &helper = getHelper<ProductHelper>();
-    uint64_t expectedPatIndexWhenTimestampPacketTagBuffer = 2u;
-    uint64_t patIndex = 1u;
-    auto allocationType = NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
-    EXPECT_EQ(expectedPatIndexWhenTimestampPacketTagBuffer, helper.overridePatIndex(allocationType, patIndex));
-    allocationType = NEO::AllocationType::BUFFER;
-    patIndex = 3u;
-    EXPECT_EQ(patIndex, helper.overridePatIndex(allocationType, patIndex));
-}
-
 MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCheckIsCachingOnCpuAvailableThenAlwaysFalse) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(productHelper.isCachingOnCpuAvailable());

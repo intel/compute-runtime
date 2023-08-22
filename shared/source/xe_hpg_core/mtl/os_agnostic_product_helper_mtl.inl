@@ -84,15 +84,6 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 };
 
 template <>
-uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(AllocationType allocationType, uint64_t patIndex) const {
-    if (allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
-        constexpr uint64_t uncached = 2u;
-        return uncached;
-    }
-    return patIndex;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
     return true;
 }
