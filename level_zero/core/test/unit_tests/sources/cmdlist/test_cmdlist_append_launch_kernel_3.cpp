@@ -671,7 +671,6 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     };
 
     void SetUp() override {
-        NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.set(1);
         NEO::DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
 
         CommandListAppendLaunchKernel::SetUp();
@@ -716,6 +715,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
         ze_command_queue_desc_t desc = {};
+        desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
 
         mockCmdQs.emplace_back(std::make_unique<Mock<CommandQueue>>(device, csr, &desc));
 
@@ -744,8 +744,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
 
         auto engineType = copyOnly ? EngineGroupType::Copy : EngineGroupType::RenderCompute;
 
-        cmdList->initialize(device, engineType, 0u);
-        cmdList->enableInOrderExecution();
+        cmdList->initialize(device, engineType, ZE_COMMAND_LIST_FLAG_IN_ORDER);
 
         createdCmdLists++;
 
