@@ -189,7 +189,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using BaseClass = CommandListCoreFamilyImmediate<gfxCoreFamily>;
     using BaseClass::checkAssert;
-    using BaseClass::cmdListCurrentStartOffset;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::compactL3FlushEventPacket;

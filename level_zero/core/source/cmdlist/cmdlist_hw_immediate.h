@@ -151,22 +151,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
-    ze_result_t close() override {
-        if (this->isFlushTaskSubmissionEnabled) {
-            return ZE_RESULT_SUCCESS;
-        } else {
-            return CommandListCoreFamily<gfxCoreFamily>::close();
-        }
-    }
-
-    ze_result_t reset() override {
-        if (this->isFlushTaskSubmissionEnabled) {
-            return ZE_RESULT_SUCCESS;
-        } else {
-            return CommandListCoreFamily<gfxCoreFamily>::reset();
-        }
-    }
-
     MOCKABLE_VIRTUAL ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies);
     ze_result_t executeCommandListImmediateWithFlushTaskImpl(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, CommandQueue *cmdQ);
 
