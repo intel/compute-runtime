@@ -429,7 +429,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         DataType *onStackMem;
     };
 
-    alignas(alignof(DataType)) char onStackMemRawBytes[sizeof(DataType[onStackCaps])];
+    alignas(alignof(DataType)) char onStackMemRawBytes[sizeof(DataType[onStackCaps])]{};
     SizeT onStackSize = 0U;
 };
 
