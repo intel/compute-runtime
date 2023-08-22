@@ -16,6 +16,12 @@
 #include <unordered_map>
 
 namespace NEO {
+#ifdef _WIN32
+using HandleType = void *;
+#else
+using HandleType = int;
+#endif // _WIN32
+
 struct HardwareInfo;
 
 struct CompilerCacheConfig {
@@ -50,7 +56,7 @@ class CompilerCache {
     MOCKABLE_VIRTUAL bool evictCache();
     MOCKABLE_VIRTUAL bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash);
     MOCKABLE_VIRTUAL bool createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, const char *pBinary, size_t binarySize);
-    MOCKABLE_VIRTUAL void lockConfigFileAndReadSize(const std::string &configFilePath, int &fd, size_t &directorySize);
+    MOCKABLE_VIRTUAL void lockConfigFileAndReadSize(const std::string &configFilePath, HandleType &fd, size_t &directorySize);
 
     static std::mutex cacheAccessMtx;
     CompilerCacheConfig config;

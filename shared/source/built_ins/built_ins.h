@@ -68,7 +68,6 @@ BuiltinResourceT createBuiltinResource(const char *ptr, size_t size);
 BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r);
 std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension);
 StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device);
-std::string joinPath(const std::string &lhs, const std::string &rhs);
 const char *getBuiltinAsString(EBuiltInOps::Type builtin);
 const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin);
 

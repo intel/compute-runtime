@@ -11,9 +11,6 @@ namespace NEO {
 int64_t defaultCacheEnabled() {
     return 0l;
 }
-std::string makePath(const std::string &lhs, const std::string &rhs) {
-    return lhs + rhs;
-}
 bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader) {
     return false;
 }

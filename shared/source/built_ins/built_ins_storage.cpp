@@ -12,6 +12,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/path.h"
 
 #include "os_inc.h"
 
@@ -123,22 +124,6 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
         resourcesToLookup.push_back(createBuiltinResourceName("", addressingMode, builtinName, extension));
     }
     return resourcesToLookup;
-}
-
-std::string joinPath(const std::string &lhs, const std::string &rhs) {
-    if (lhs.size() == 0) {
-        return rhs;
-    }
-
-    if (rhs.size() == 0) {
-        return lhs;
-    }
-
-    if (*lhs.rbegin() == PATH_SEPARATOR) {
-        return lhs + rhs;
-    }
-
-    return lhs + PATH_SEPARATOR + rhs;
 }
 
 std::string getDriverInstallationPath() {

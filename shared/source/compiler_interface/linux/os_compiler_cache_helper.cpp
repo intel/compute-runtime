@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 
+#include "shared/source/helpers/path.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/io_functions.h"
@@ -21,35 +22,19 @@ int64_t defaultCacheEnabled() {
     return 1l;
 }
 
-std::string makePath(const std::string &lhs, const std::string &rhs) {
-    if (lhs.size() == 0) {
-        return rhs;
-    }
-
-    if (rhs.size() == 0) {
-        return lhs;
-    }
-
-    if (*lhs.rbegin() == PATH_SEPARATOR) {
-        return lhs + rhs;
-    }
-
-    return lhs + PATH_SEPARATOR + rhs;
-}
-
 bool createCompilerCachePath(std::string &cacheDir) {
     if (NEO::SysCalls::pathExists(cacheDir)) {
-        if (NEO::SysCalls::pathExists(makePath(cacheDir, "neo_compiler_cache"))) {
-            cacheDir = makePath(cacheDir, "neo_compiler_cache");
+        if (NEO::SysCalls::pathExists(joinPath(cacheDir, "neo_compiler_cache"))) {
+            cacheDir = joinPath(cacheDir, "neo_compiler_cache");
             return true;
         }
 
-        if (NEO::SysCalls::mkdir(makePath(cacheDir, "neo_compiler_cache")) == 0) {
-            cacheDir = makePath(cacheDir, "neo_compiler_cache");
+        if (NEO::SysCalls::mkdir(joinPath(cacheDir, "neo_compiler_cache")) == 0) {
+            cacheDir = joinPath(cacheDir, "neo_compiler_cache");
             return true;
         } else {
             if (errno == EEXIST) {
-                cacheDir = makePath(cacheDir, "neo_compiler_cache");
+                cacheDir = joinPath(cacheDir, "neo_compiler_cache");
                 return true;
             }
         }
@@ -70,7 +55,7 @@ bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader)
         }
 
         // .cache might not exist on fresh installation
-        cacheDir = makePath(cacheDir, ".cache/");
+        cacheDir = joinPath(cacheDir, ".cache/");
         if (!NEO::SysCalls::pathExists(cacheDir)) {
             NEO::SysCalls::mkdir(cacheDir);
         }

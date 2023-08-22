@@ -40,6 +40,10 @@ unsigned long getNumThreads() {
     return 1;
 }
 
+DWORD getLastError() {
+    return GetLastError();
+}
+
 bool pathExists(const std::string &path) {
     DWORD ret = GetFileAttributesA(path.c_str());
 
@@ -62,6 +66,58 @@ BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
 }
 DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     return GetModuleFileName(hModule, lpFilename, nSize);
+}
+
+UINT getTempFileNameA(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPSTR lpTempFileName) {
+    return GetTempFileNameA(lpPathName, lpPrefixString, uUnique, lpTempFileName);
+}
+
+BOOL moveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags) {
+    return MoveFileExA(lpExistingFileName, lpNewFileName, dwFlags);
+}
+
+BOOL lockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved, DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped) {
+    return LockFileEx(hFile, dwFlags, dwReserved, nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh, lpOverlapped);
+}
+
+BOOL unlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped) {
+    return UnlockFileEx(hFile, dwReserved, nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh, lpOverlapped);
+}
+
+BOOL getOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait) {
+    return GetOverlappedResult(hFile, lpOverlapped, lpNumberOfBytesTransferred, bWait);
+}
+
+HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
+    return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+BOOL deleteFileA(LPCSTR lpFileName) {
+    return DeleteFileA(lpFileName);
+}
+
+BOOL readFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+    return ReadFileEx(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped, lpCompletionRoutine);
+}
+
+BOOL writeFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped) {
+    return WriteFile(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
+}
+
+HANDLE findFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
+    return FindFirstFileA(lpFileName, lpFindFileData);
+}
+
+BOOL findNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData) {
+    return FindNextFileA(hFindFile, lpFindFileData);
+}
+
+BOOL findClose(HANDLE hFindFile) {
+    return FindClose(hFindFile);
+}
+
+DWORD getFileAttributesA(LPCSTR lpFileName) {
+    return GetFileAttributesA(lpFileName);
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {

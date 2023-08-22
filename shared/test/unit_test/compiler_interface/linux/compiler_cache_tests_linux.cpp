@@ -875,19 +875,3 @@ TEST(CompilerCacheHelper, GivenNotExistingPathWhenGettingFileSizeThenZeroIsRetur
 
     EXPECT_EQ(getFileSize("/tmp/file1"), 0u);
 }
-
-TEST(CompilerCacheHelper, makePathGivenEmptyRhsThenLhsIsReturned) {
-    EXPECT_STREQ(makePath("", "path").c_str(), "path");
-}
-
-TEST(CompilerCacheHelper, makePathGivenEmptyLhsThenRhsIsReturned) {
-    EXPECT_STREQ(makePath("path", "").c_str(), "path");
-}
-
-TEST(CompilerCacheHelper, makePathGivenPathWithTrailingSlashThenSlashIsNotAdded) {
-    EXPECT_STREQ(makePath("path/", "test").c_str(), "path/test");
-}
-
-TEST(CompilerCacheHelper, makePathGivenPathWithoutTrailingSlashThenSlashIsAdded) {
-    EXPECT_STREQ(makePath("path", "test").c_str(), "path/test");
-}

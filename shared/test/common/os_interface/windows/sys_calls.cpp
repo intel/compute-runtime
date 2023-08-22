@@ -10,6 +10,7 @@
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 
 #include <cstdint>
+#include <vector>
 
 namespace NEO {
 
@@ -23,6 +24,8 @@ unsigned long getNumThreads() {
     return 1;
 }
 
+DWORD getLastErrorResult = 0u;
+
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
 const wchar_t *currentLibraryPath = L"";
@@ -35,11 +38,54 @@ bool mmapAllowExtendedPointers = false;
 bool pathExistsMock = false;
 const char *driverStorePath = nullptr;
 
+size_t closeHandleCalled = 0u;
+
+size_t getTempFileNameACalled = 0u;
+UINT getTempFileNameAResult = 0u;
+
+size_t lockFileExCalled = 0u;
+BOOL lockFileExResult = TRUE;
+
+size_t unlockFileExCalled = 0u;
+BOOL unlockFileExResult = TRUE;
+
+size_t createFileACalled = 0u;
+extern const size_t createFileAResultsCount = 4;
+HANDLE createFileAResults[createFileAResultsCount] = {nullptr, nullptr, nullptr, nullptr};
+
+size_t deleteFileACalled = 0u;
+const size_t deleteFilesCount = 4;
+std::string deleteFiles[deleteFilesCount];
+
+bool callBaseReadFileEx = true;
+BOOL readFileExResult = TRUE;
+size_t readFileExCalled = 0u;
+size_t readFileExBufferData = 0u;
+
+size_t writeFileCalled = 0u;
+BOOL writeFileResult = true;
+extern const size_t writeFileBufferSize = 10;
+char writeFileBuffer[writeFileBufferSize];
+DWORD writeFileNumberOfBytesWritten = 0u;
+
+HANDLE findFirstFileAResult = nullptr;
+
+size_t findNextFileACalled = 0u;
+extern const size_t findNextFileAFileDataCount = 4;
+WIN32_FIND_DATAA findNextFileAFileData[findNextFileAFileDataCount];
+
+size_t getFileAttributesCalled = 0u;
+DWORD getFileAttributesResult = TRUE;
+
 bool pathExists(const std::string &path) {
     return pathExistsMock;
 }
 
 void exit(int code) {
+}
+
+DWORD getLastError() {
+    return getLastErrorResult;
 }
 
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName) {
@@ -50,6 +96,7 @@ HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, B
 }
 
 BOOL closeHandle(HANDLE hObject) {
+    closeHandleCalled++;
     if (mockCloseHandleClb) {
         return mockCloseHandleClb(hObject, mockCloseHandleClbData);
     }
@@ -60,6 +107,7 @@ BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr) {
     systemPowerStatusPtr->ACLineStatus = systemPowerStatusACLineStatusOverride;
     return systemPowerStatusRetVal;
 }
+
 BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
     constexpr auto expectedFlags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
     if (dwFlags != expectedFlags) {
@@ -68,9 +116,98 @@ BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
     *phModule = handleValue;
     return TRUE;
 }
+
 DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     lstrcpyW(lpFilename, currentLibraryPath);
     return TRUE;
+}
+
+UINT getTempFileNameA(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPSTR lpTempFileName) {
+    getTempFileNameACalled++;
+    return getTempFileNameAResult;
+}
+
+BOOL moveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags) {
+    return TRUE;
+}
+
+BOOL lockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved, DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped) {
+    lockFileExCalled++;
+    return lockFileExResult;
+}
+
+BOOL unlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped) {
+    unlockFileExCalled++;
+    return unlockFileExResult;
+}
+
+BOOL getOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait) {
+    return TRUE;
+}
+
+HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
+    HANDLE retVal = nullptr;
+
+    if (createFileACalled < createFileAResultsCount) {
+        retVal = createFileAResults[createFileACalled];
+    }
+
+    createFileACalled++;
+    return retVal;
+}
+
+BOOL deleteFileA(LPCSTR lpFileName) {
+    if (deleteFileACalled < deleteFilesCount) {
+        deleteFiles[deleteFileACalled] = std::string(lpFileName);
+    }
+    deleteFileACalled++;
+    return TRUE;
+}
+
+BOOL readFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+    readFileExCalled++;
+    if (callBaseReadFileEx) {
+        return ReadFileEx(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped, lpCompletionRoutine);
+    }
+    if (lpBuffer) {
+        *static_cast<size_t *>(lpBuffer) = readFileExBufferData;
+    }
+    return readFileExResult;
+}
+
+BOOL writeFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped) {
+    writeFileCalled++;
+    memcpy_s(writeFileBuffer, writeFileBufferSize, lpBuffer, nNumberOfBytesToWrite);
+    if (lpNumberOfBytesWritten) {
+        *lpNumberOfBytesWritten = writeFileNumberOfBytesWritten;
+    }
+    return writeFileResult;
+}
+
+HANDLE findFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
+    return findFirstFileAResult;
+}
+
+BOOL findNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData) {
+    BOOL retVal = TRUE;
+
+    if (findNextFileACalled < findNextFileAFileDataCount) {
+        *lpFindFileData = findNextFileAFileData[findNextFileACalled];
+    } else {
+        retVal = FALSE;
+    }
+    findNextFileACalled++;
+
+    return retVal;
+}
+
+BOOL findClose(HANDLE hFindFile) {
+    return TRUE;
+}
+
+DWORD getFileAttributesA(LPCSTR lpFileName) {
+    getFileAttributesCalled++;
+    return getFileAttributesResult;
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {

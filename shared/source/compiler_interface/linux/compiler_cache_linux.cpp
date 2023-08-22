@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/path.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/io_functions.h"
@@ -59,7 +60,7 @@ bool CompilerCache::evictCache() {
     vec.reserve(static_cast<size_t>(filesCount));
     for (int i = 0; i < filesCount; ++i) {
         ElementsStruct fileElement = {};
-        fileElement.path = makePath(config.cacheDir, files[i]->d_name);
+        fileElement.path = joinPath(config.cacheDir, files[i]->d_name);
         if (NEO::SysCalls::stat(fileElement.path.c_str(), &fileElement.statEl) == 0) {
             vec.push_back(std::move(fileElement));
         }
@@ -125,7 +126,7 @@ void unlockFileAndClose(int fd) {
     NEO::SysCalls::close(fd);
 }
 
-void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, int &fd, size_t &directorySize) {
+void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, HandleType &fd, size_t &directorySize) {
     bool countDirectorySize = false;
     errno = 0;
     fd = NEO::SysCalls::open(configFilePath.c_str(), O_RDWR);
@@ -172,7 +173,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
             std::string_view fileName = files[i]->d_name;
             if (fileName.find(config.cacheFileExtension) != fileName.npos) {
                 ElementsStruct fileElement = {};
-                fileElement.path = makePath(config.cacheDir, files[i]->d_name);
+                fileElement.path = joinPath(config.cacheDir, files[i]->d_name);
                 if (NEO::SysCalls::stat(fileElement.path.c_str(), &fileElement.statEl) == 0) {
                     vec.push_back(std::move(fileElement));
                 }
@@ -208,8 +209,8 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     std::unique_lock<std::mutex> lock(cacheAccessMtx);
     constexpr std::string_view configFileName = "config.file";
 
-    std::string configFilePath = makePath(config.cacheDir, configFileName.data());
-    std::string filePath = makePath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
+    std::string configFilePath = joinPath(config.cacheDir, configFileName.data());
+    std::string filePath = joinPath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
 
     int fd = -1;
     size_t directorySize = 0u;
@@ -237,7 +238,7 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
 
     std::string tmpFileName = "cl_cache.XXXXXX";
 
-    std::string tmpFilePath = makePath(config.cacheDir, tmpFileName);
+    std::string tmpFilePath = joinPath(config.cacheDir, tmpFileName);
 
     if (!createUniqueTempFileAndWriteData(tmpFilePath.data(), pBinary, binarySize)) {
         unlockFileAndClose(fd);
@@ -259,7 +260,7 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
 }
 
 std::unique_ptr<char[]> CompilerCache::loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize) {
-    std::string filePath = makePath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
+    std::string filePath = joinPath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
 
     return loadDataFromFile(filePath.c_str(), cachedBinarySize);
 }

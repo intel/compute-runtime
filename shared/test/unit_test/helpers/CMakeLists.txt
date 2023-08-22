@@ -37,6 +37,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/matcher_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/path_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
