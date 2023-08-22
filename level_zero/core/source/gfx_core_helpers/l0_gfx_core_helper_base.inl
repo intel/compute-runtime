@@ -39,4 +39,9 @@ bool L0GfxCoreHelperHw<Family>::multiTileCapablePlatform() const {
     return false;
 }
 
+template <typename Family>
+zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
+    return ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU;
+}
+
 } // namespace L0

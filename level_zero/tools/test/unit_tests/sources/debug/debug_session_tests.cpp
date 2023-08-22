@@ -20,7 +20,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
-#include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/debug_session_registers_access.h"
 
 #include "common/StateSaveAreaHeader.h"
 #include "encode_surface_state_args.h"
@@ -2228,50 +2228,6 @@ TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThr
     EXPECT_TRUE(stopped);
 }
 
-struct DebugSessionRegistersAccess {
-    void setUp() {
-        zet_debug_config_t config = {};
-        config.pid = 0x1234;
-        auto hwInfo = *NEO::defaultHwInfo.get();
-
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-        deviceImp = std::make_unique<Mock<L0::DeviceImp>>(neoDevice, neoDevice->getExecutionEnvironment());
-
-        session = std::make_unique<MockDebugSession>(config, deviceImp.get());
-
-        session->allThreads[stoppedThreadId]->stopThread(1u);
-        session->allThreads[stoppedThreadId]->reportAsStopped();
-    }
-
-    void tearDown() {
-    }
-
-    void dumpRegisterState() {
-        if (session->stateSaveAreaHeader.size() == 0) {
-            return;
-        }
-        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
-
-        for (uint32_t thread = 0; thread < pStateSaveAreaHeader->regHeader.num_threads_per_eu; thread++) {
-            EuThread::ThreadId threadId(0, 0, 0, 0, thread);
-            auto threadSlotOffset = session->calculateThreadSlotOffset(threadId);
-
-            auto srMagicOffset = threadSlotOffset + pStateSaveAreaHeader->regHeader.sr_magic_offset;
-            SIP::sr_ident srMagic;
-            srMagic.count = 1;
-            srMagic.version.major = pStateSaveAreaHeader->versionHeader.version.major;
-
-            session->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(pStateSaveAreaHeader) + srMagicOffset);
-        }
-    }
-
-    ze_device_thread_t stoppedThread = {0, 0, 0, 0};
-    EuThread::ThreadId stoppedThreadId{0, stoppedThread};
-    std::unique_ptr<MockDebugSession> session;
-    std::unique_ptr<Mock<L0::DeviceImp>> deviceImp;
-    NEO::MockDevice *neoDevice = nullptr;
-};
-
 using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
 
 TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
@@ -2317,6 +2273,72 @@ TEST_F(DebugSessionRegistersAccessTest, givenGetThreadRegisterSetPropertiesCalle
     session->areRequestedThreadsStoppedReturnValue = 0;
     session->allThreads[stoppedThreadId]->resumeThread();
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugGetThreadRegisterSetProperties(session->toHandle(), stoppedThread, &threadCount, nullptr));
+}
+
+TEST_F(DebugSessionRegistersAccessTest,
+       givenNonZeroCountAndNullRegsetPointerWhenGetThreadRegisterSetPropertiesCalledTheniInvalidNullPointerIsReturned) {
+    uint32_t threadCount = 10;
+    ze_device_thread_t thread = stoppedThread;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER,
+              zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
+}
+
+HWTEST2_F(DebugSessionRegistersAccessTest,
+          givenGetThreadRegisterSetPropertiesCalledWhenLargeGrfIsSetThen256GrfRegisterCountIsReported,
+          IsXeHpOrXeHpcOrXeHpgCore) {
+    auto mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    ze_device_thread_t thread = stoppedThread;
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cr;
+    uint32_t cr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    cr0[0] = 0x80002000;
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, cr0, true);
+
+    uint32_t threadCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
+    std::vector<zet_debug_regset_properties_t> threadRegsetProps(threadCount);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, threadRegsetProps.data()));
+    EXPECT_EQ(256u, threadRegsetProps[0].count);
+}
+
+HWTEST2_F(DebugSessionRegistersAccessTest,
+          givenGetThreadRegisterSetPropertiesCalledWhenLargeGrfIsNotSetThen128GrfRegisterCountIsReported,
+          IsXeHpOrXeHpcOrXeHpgCore) {
+    auto mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    ze_device_thread_t thread = stoppedThread;
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cr;
+    uint32_t cr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    cr0[0] = 0x80000000;
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, cr0, true);
+
+    uint32_t threadCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
+    std::vector<zet_debug_regset_properties_t> threadRegsetProps(threadCount);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, threadRegsetProps.data()));
+    EXPECT_EQ(128u, threadRegsetProps[0].count);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenGetThreadRegisterSetPropertiesCalledPropertieAreTheSameAsgetRegisterSetProperties) {

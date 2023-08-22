@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,6 +13,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_api.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_common.h
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_common.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_registers_access.h
 )
 
 add_subdirectories()
