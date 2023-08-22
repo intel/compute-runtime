@@ -665,6 +665,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         using EventImp<uint32_t>::inOrderExecSignalValue;
         using EventImp<uint32_t>::inOrderAllocationOffset;
         using EventImp<uint32_t>::csrs;
+        using EventImp<uint32_t>::signalScope;
     };
 
     void SetUp() override {
@@ -694,6 +695,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         }
 
         ze_event_desc_t eventDesc = {};
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
 
         auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
@@ -807,8 +809,6 @@ HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxe
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCountForWaits, IsAtLeastSkl) {
-    DebugManager.flags.UseCounterAllocToSyncInOrderCmdList.set(0);
-
     auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
     auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
 
@@ -1413,6 +1413,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->signalScope = 0;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
@@ -1454,6 +1455,40 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynchronizeThenUseInOrderSync, IsAtLeastSkl) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->signalScope = 0;
+
+    EXPECT_FALSE(immCmdList->latestFlushIsHostVisible);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    EXPECT_FALSE(immCmdList->latestFlushIsHostVisible);
+
+    EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+
+    immCmdList->hostSynchronize(0, 1, false);
+    EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+
+    events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
+
+    immCmdList->hostSynchronize(0, 1, false);
+    EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+
+    // handle post sync operations
+    immCmdList->hostSynchronize(0, 1, true);
+    EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 }
 
 using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
@@ -2173,7 +2208,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
     auto hostAddress = static_cast<uint32_t *>(ptrOffset(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), counterOffset));
     *hostAddress = 0;
@@ -2191,8 +2228,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
     // single check - not ready
     {
-        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0));
-
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
         EXPECT_EQ(1u, callCounter);
         EXPECT_EQ(1u, ultCsr->checkGpuHangDetectedCalled);
         EXPECT_EQ(0u, *hostAddress);
@@ -2201,8 +2237,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     // timeout - not ready
     {
         forceFail = true;
-        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10));
-
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
         EXPECT_EQ(0u, *hostAddress);
@@ -2212,7 +2247,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     {
         ultCsr->forceReturnGpuHang = true;
 
-        EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10));
+        EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
 
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
@@ -2225,12 +2260,21 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
         ultCsr->forceReturnGpuHang = false;
         forceFail = false;
         callCounter = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), ultCsr->taskCount, false));
 
         EXPECT_EQ(failCounter, callCounter);
         EXPECT_EQ(failCounter - 1, ultCsr->checkGpuHangDetectedCalled);
         EXPECT_EQ(1u, *hostAddress);
     }
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    *ultCsr->getTagAddress() = ultCsr->taskCount - 1;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, true));
+
+    *ultCsr->getTagAddress() = ultCsr->taskCount + 1;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, ultCsr->taskCount, true));
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, IsAtLeastXeHpCore) {
@@ -2283,12 +2327,14 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathT
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->copyThroughLockedPtrEnabled = true;
 
+    auto eventPool = createEvents<FamilyType>(1, false);
+
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
     *hostAddress = 0;
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -2476,6 +2522,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSy
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSyncThenHandleCompletion, IsAtLeastXeHpCore) {
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
 
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
     auto eventPool = createEvents<FamilyType>(1, false);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
@@ -2485,26 +2533,26 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
 
     *hostAddress0 = 0;
     *hostAddress1 = 0;
-    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(0));
 
     *hostAddress0 = 1;
-    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(0));
 
     *hostAddress0 = 0;
     *hostAddress1 = 1;
-    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(0));
 
     *hostAddress0 = 1;
     *hostAddress1 = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(0));
 
     *hostAddress0 = 3;
     *hostAddress1 = 3;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(0));
 }
 
@@ -2518,6 +2566,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
 
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();
+    events[0]->signalScope = 0;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle, 0, nullptr, launchParams, false);
 
@@ -2566,6 +2615,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
 
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();
+    events[0]->signalScope = 0;
 
     immCmdList->signalAllEventPackets = true;
     events[0]->maxPacketCount = 4;
