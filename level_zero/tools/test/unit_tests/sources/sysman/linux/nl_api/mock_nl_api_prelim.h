@@ -84,6 +84,8 @@ class MockNlApi : public NlApi {
     struct nl_sock *nlSocketAlloc() override;
     int genlConnect(struct nl_sock *sock) override;
     int nlSocketModifyCb(struct nl_sock *sock, enum nl_cb_type type, enum nl_cb_kind kind, nl_recvmsg_msg_cb_t cb, void *arg) override;
+    struct nlattr *nlaNestStart(struct nl_msg *msg, int id) override;
+    int nlaNestEnd(struct nl_msg *msg, struct nlattr *attr) override;
 
     ADDMETHOD_NOBASE(nlmsgHdr, struct nlmsghdr *, nullptr, (struct nl_msg * msg));
     ADDMETHOD_NOBASE_VOIDRETURN(nlSocketDisableSeqCheck, (struct nl_sock * sock));
@@ -124,6 +126,7 @@ class MockNlApi : public NlApi {
     uint8_t fportReasonLinkDown = 0;
     uint8_t fportReasonDidNotTrain = 0;
     uint8_t fportReasonFlapping = 0;
+    uint8_t testMultiPortThroughputCount = 1;
 
     const uint8_t testLinkWidthUnknown = -1;
     const uint8_t testLinkWidth1x = 1;
@@ -148,6 +151,7 @@ class MockNlApi : public NlApi {
     int cmdIndex = 0;
     std::map<int, uint64_t> attribs;
     struct genl_ops *pOps = nullptr;
+    bool isNestedAttr = false;
 
     void validateId(bool checkFabricId, bool checkAttachId, bool checkPortNumber);
     MyNlattr *copyId(struct genl_info &info, MyNlattr *next, bool checkFabricId, bool checkAttachId, bool checkPortNumber);

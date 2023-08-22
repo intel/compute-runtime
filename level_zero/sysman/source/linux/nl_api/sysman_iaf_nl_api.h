@@ -56,6 +56,11 @@ struct IafPortThroughPut {
     uint64_t txCounter = 0;
 };
 
+struct IafThroughPutInfo {
+    IafPortThroughPut iafThroughput = {};
+    IafPortId iafPortId = {};
+};
+
 struct IafPortState {
     uint8_t healthStatus = 0;
     uint8_t lqi = 0;
@@ -101,6 +106,7 @@ class IafNlApi {
                                                  IafPortSpeed &maxRxSpeed, IafPortSpeed &maxTxSpeed,
                                                  IafPortSpeed &rxSpeed, IafPortSpeed &txSpeed);
     MOCKABLE_VIRTUAL ze_result_t getPorts(const std::string &devicePciPath, std::vector<IafPort> &ports);
+    MOCKABLE_VIRTUAL ze_result_t getMultiPortThroughPut(std::vector<IafPortId> &iafPortIdList, std::vector<IafThroughPutInfo> &throughput);
     std::list<uint64_t> validContexts = {};
 
     int handleMsg(struct nl_msg *msg);
@@ -117,6 +123,7 @@ class IafNlApi {
     ze_result_t issueRequest(const uint16_t cmdOp, const uint32_t fabricId, const uint32_t attachId, void *pOutput);
     ze_result_t issueRequest(const uint16_t cmdOp, const uint32_t fabricId, void *pOutput);
     ze_result_t issueRequest(const uint16_t cmdOp, void *pOutput);
+    ze_result_t issueRequest(const uint16_t cmdOp, std::vector<IafPortId> &iafPortIdList, void *pOutput);
     ze_result_t performTransaction(const uint16_t cmdOp, struct nl_msg *msg, void *pOutput);
     ze_result_t fPortStatusQueryRsp(struct genl_info *info, void *pOutput);
     ze_result_t getThroughputRsp(struct genl_info *info, void *pOutput);
@@ -128,7 +135,9 @@ class IafNlApi {
     ze_result_t subdevicePropertiesGetRsp(struct genl_info *info, void *pOutput);
     ze_result_t fportPropertiesRsp(struct genl_info *info, void *pOutput);
     ze_result_t initPorts(const uint32_t fabricId, std::vector<IafPort> &iafPorts);
+    ze_result_t getMultiPortThroughputRsp(struct genl_info *info, void *pOutput);
     int32_t translateWidth(uint8_t width);
+    void addNestedFabricPortList(struct nl_msg *msg, std::vector<IafPortId> &iafPortIdList);
 
     bool initted = false;
     struct nl_sock *nlSock = nullptr;

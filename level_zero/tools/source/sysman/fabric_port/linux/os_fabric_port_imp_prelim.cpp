@@ -21,6 +21,10 @@ uint32_t LinuxFabricDeviceImp::getNumPorts() {
     return static_cast<uint32_t>(portIds.size());
 }
 
+ze_result_t LinuxFabricDeviceImp::getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) {
+    return pFabricDeviceAccess->getMultiPortThroughput(portIdList, pThroughput);
+}
+
 void LinuxFabricDeviceImp::getPortId(uint32_t portNumber, zes_fabric_port_id_t &portId) {
     UNRECOVERABLE_IF(getNumPorts() <= portNumber);
     portId = portIds[portNumber];

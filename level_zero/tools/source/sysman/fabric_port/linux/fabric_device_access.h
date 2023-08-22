@@ -36,6 +36,7 @@ class FabricDeviceAccess : NEO::NonCopyableOrMovableClass {
     virtual ze_result_t getPorts(std::vector<zes_fabric_port_id_t> &ports) = 0;
     virtual void getProperties(const zes_fabric_port_id_t portId, std::string &model, bool &onSubdevice,
                                uint32_t &subdeviceId, zes_fabric_port_speed_t &maxRxSpeed, zes_fabric_port_speed_t &maxTxSpeed) = 0;
+    virtual ze_result_t getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) = 0;
 
     virtual ~FabricDeviceAccess() = default;
 

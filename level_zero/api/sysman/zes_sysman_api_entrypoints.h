@@ -1472,9 +1472,9 @@ ze_result_t zesFabricPortGetMultiPortThroughput(
     zes_fabric_port_handle_t *phPort,
     zes_fabric_port_throughput_t **pThroughput) {
     if (L0::sysmanInitFromCore) {
-        return L0::SysmanDevice::fabricPortGetMultiportThroughput(hDevice, numPorts, phPort, pThroughput);
+        return L0::SysmanDevice::fabricPortGetMultiPortThroughput(hDevice, numPorts, phPort, pThroughput);
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::SysmanDevice::fabricPortGetMultiportThroughput(hDevice, numPorts, phPort, pThroughput);
+        return L0::Sysman::SysmanDevice::fabricPortGetMultiPortThroughput(hDevice, numPorts, phPort, pThroughput);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }

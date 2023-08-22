@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,10 @@ ze_result_t FabricDeviceAccessStub::routingQuery(uint32_t &start, uint32_t &end)
 }
 
 ze_result_t FabricDeviceAccessStub::getPorts(std::vector<zes_fabric_port_id_t> &ports) {
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) {
     return ZE_RESULT_SUCCESS;
 }
 

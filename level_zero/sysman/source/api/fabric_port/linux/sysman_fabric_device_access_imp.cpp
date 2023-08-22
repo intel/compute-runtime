@@ -108,6 +108,34 @@ ze_result_t FabricDeviceAccessNl::getThroughput(const zes_fabric_port_id_t portI
     return result;
 }
 
+ze_result_t FabricDeviceAccessNl::getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) {
+    std::vector<IafPortId> iafPortIdList = {};
+    std::vector<IafThroughPutInfo> iafThroughPutList = {};
+    for (const auto &portId : portIdList) {
+        IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+        iafPortIdList.push_back(iafPortId);
+    }
+
+    ze_result_t result = pIafNlApi->getMultiPortThroughPut(iafPortIdList, iafThroughPutList);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to retrieve throughput, Returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    zes_fabric_port_throughput_t *throughputArray = *pThroughput;
+    memset(throughputArray, 0, sizeof(zes_fabric_port_throughput_t) * portIdList.size());
+    for (uint32_t i = 0; i < portIdList.size(); i++) {
+        auto it = std::find_if(iafThroughPutList.begin(), iafThroughPutList.end(), [&](auto &info) {
+            return (info.iafPortId.portNumber == iafPortIdList[i].portNumber) && (info.iafPortId.fabricId == iafPortIdList[i].fabricId) && (info.iafPortId.attachId == iafPortIdList[i].attachId);
+        });
+        if (it != iafThroughPutList.end()) {
+            readIafPortThroughPut(throughputArray[i], it->iafThroughput);
+            throughputArray[i].timestamp = SysmanDevice::getSysmanTimestamp();
+            iafThroughPutList.erase(it);
+        }
+    }
+    return result;
+}
+
 ze_result_t FabricDeviceAccessNl::getPortEnabledState(const zes_fabric_port_id_t portId, bool &enabled) {
     const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
     return pIafNlApi->portStateQuery(iafPortId, enabled);

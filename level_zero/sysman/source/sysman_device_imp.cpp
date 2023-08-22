@@ -184,6 +184,10 @@ bool SysmanDeviceImp::deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t
     return pEvents->eventListen(pEvent, timeout);
 }
 
+ze_result_t SysmanDeviceImp::fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) {
+    return pFabricPortHandleContext->fabricPortGetMultiPortThroughput(numPorts, phPort, pThroughput);
+}
+
 OsSysman *SysmanDeviceImp::deviceGetOsInterface() {
     return pOsSysman;
 }

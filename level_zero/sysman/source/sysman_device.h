@@ -124,7 +124,8 @@ struct SysmanDevice : _ze_device_handle_t {
     static uint64_t getSysmanTimestamp();
 
     static ze_result_t deviceResetExt(zes_device_handle_t hDevice, zes_reset_properties_t *pProperties);
-    static ze_result_t fabricPortGetMultiportThroughput(zes_device_handle_t hDevice, uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput);
+    static ze_result_t fabricPortGetMultiPortThroughput(zes_device_handle_t hDevice, uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput);
+    virtual ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) = 0;
 
     virtual OsSysman *deviceGetOsInterface() = 0;
 };

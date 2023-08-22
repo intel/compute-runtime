@@ -62,7 +62,7 @@ struct SysmanDevice : _ze_device_handle_t {
     static bool deviceEventListen(zes_device_handle_t hDevice, zes_event_type_flags_t &pEvent, uint64_t timeout);
     static uint64_t getSysmanTimestamp();
     static ze_result_t deviceResetExt(zes_device_handle_t hDevice, zes_reset_properties_t *pProperties);
-    static ze_result_t fabricPortGetMultiportThroughput(zes_device_handle_t hDevice, uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput);
+    static ze_result_t fabricPortGetMultiPortThroughput(zes_device_handle_t hDevice, uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput);
 
     virtual ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) = 0;
     virtual ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) = 0;
@@ -91,6 +91,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t deviceEccConfigurable(ze_bool_t *pConfigurable) = 0;
     virtual ze_result_t deviceGetEccState(zes_device_ecc_properties_t *pState) = 0;
     virtual ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) = 0;
+    virtual ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) = 0;
     virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) = 0;
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual ~SysmanDevice() = default;

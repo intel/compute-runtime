@@ -20,6 +20,7 @@ class LinuxSysmanImp;
 class LinuxFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableOrMovableClass {
   public:
     uint32_t getNumPorts() override;
+    ze_result_t getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) override;
 
     ze_result_t performSweep();
     ze_result_t getPortEnabledState(const zes_fabric_port_id_t portId, bool &enabled);

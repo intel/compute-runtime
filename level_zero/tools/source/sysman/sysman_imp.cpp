@@ -177,6 +177,10 @@ ze_result_t SysmanDeviceImp::fabricPortGet(uint32_t *pCount, zes_fabric_port_han
     return pFabricPortHandleContext->fabricPortGet(pCount, phPort);
 }
 
+ze_result_t SysmanDeviceImp::fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) {
+    return pFabricPortHandleContext->fabricPortGetMultiPortThroughput(numPorts, phPort, pThroughput);
+}
+
 ze_result_t SysmanDeviceImp::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {
     return pTempHandleContext->temperatureGet(pCount, phTemperature);
 }

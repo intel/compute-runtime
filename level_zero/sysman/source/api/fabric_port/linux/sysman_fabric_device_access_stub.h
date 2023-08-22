@@ -35,6 +35,7 @@ class FabricDeviceAccessStub : public FabricDeviceAccess {
     ze_result_t getPorts(std::vector<zes_fabric_port_id_t> &ports) override;
     void getProperties(const zes_fabric_port_id_t portId, std::string &model, bool &onSubdevice,
                        uint32_t &subdeviceId, zes_fabric_port_speed_t &maxRxSpeed, zes_fabric_port_speed_t &maxTxSpeed) override;
+    ze_result_t getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) override;
 };
 
 } // namespace Sysman

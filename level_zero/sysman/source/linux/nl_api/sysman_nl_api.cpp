@@ -45,6 +45,8 @@ static constexpr std::string_view nlmsgAttrdataRoutine = "nlmsg_attrdata";
 static constexpr std::string_view nlmsgAttrlenRoutine = "nlmsg_attrlen";
 static constexpr std::string_view nlmsgFreeRoutine = "nlmsg_free";
 static constexpr std::string_view nlmsgHdrRoutine = "nlmsg_hdr";
+static constexpr std::string_view nlaNestStartRoutine = "nla_nest_start";
+static constexpr std::string_view nlaNestEndRoutine = "nla_nest_end";
 
 template <class T>
 bool NlApi::getSymbolAddr(const std::string_view &name, T &sym) {
@@ -88,6 +90,8 @@ bool NlApi::loadEntryPoints() {
     ok = ok && getSymbolAddr(nlmsgAttrlenRoutine, nlmsgAttrlenEntry);
     ok = ok && getSymbolAddr(nlmsgFreeRoutine, nlmsgFreeEntry);
     ok = ok && getSymbolAddr(nlmsgHdrRoutine, nlmsgHdrEntry);
+    ok = ok && getSymbolAddr(nlaNestStartRoutine, nlaNestStartEntry);
+    ok = ok && getSymbolAddr(nlaNestEndRoutine, nlaNestEndEntry);
 
     return ok;
 }
@@ -248,6 +252,16 @@ void NlApi::nlmsgFree(struct nl_msg *msg) {
 struct nlmsghdr *NlApi::nlmsgHdr(struct nl_msg *msg) {
     UNRECOVERABLE_IF(nullptr == nlmsgHdrEntry);
     return (*nlmsgHdrEntry)(msg);
+}
+
+struct nlattr *NlApi::nlaNestStart(struct nl_msg *msg, int id) {
+    UNRECOVERABLE_IF(nullptr == nlaNestStartEntry);
+    return (*nlaNestStartEntry)(msg, id);
+}
+
+int NlApi::nlaNestEnd(struct nl_msg *msg, struct nlattr *attr) {
+    UNRECOVERABLE_IF(nullptr == nlaNestEndEntry);
+    return (*nlaNestEndEntry)(msg, attr);
 }
 
 NlApi::NlApi() {

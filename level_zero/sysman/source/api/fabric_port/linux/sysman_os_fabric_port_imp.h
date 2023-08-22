@@ -18,6 +18,7 @@ namespace Sysman {
 class LinuxFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableOrMovableClass {
   public:
     uint32_t getNumPorts() override;
+    ze_result_t getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) override;
 
     LinuxFabricDeviceImp() = delete;
     LinuxFabricDeviceImp(OsSysman *pOsSysman);

@@ -31,6 +31,7 @@ class MockIafNlApi : public IafNlApi {
     ze_result_t mockportDisableReturnStatus = ZE_RESULT_SUCCESS;
     ze_result_t mockportStateQueryReturnStatus = ZE_RESULT_SUCCESS;
     ze_result_t mockremRequestReturnStatus = ZE_RESULT_SUCCESS;
+    ze_result_t mockgetMultiPortThroughPutReturnStatus = ZE_RESULT_SUCCESS;
     bool isRepeated = false;
 
     ze_result_t getPorts(const std::string &devicePciPath, std::vector<IafPort> &ports) override {
@@ -75,6 +76,7 @@ class MockIafNlApi : public IafNlApi {
                                 IafPortSpeed &maxRxSpeed, IafPortSpeed &maxTxSpeed,
                                 IafPortSpeed &rxSpeed, IafPortSpeed &txSpeed) override;
 
+    ze_result_t getMultiPortThroughPut(std::vector<IafPortId> &iafPortIdList, std::vector<IafThroughPutInfo> &throughput) override;
     bool validateParams = true;
 
     static constexpr uint32_t defaultFabricId = 0x10000000U;
@@ -108,6 +110,7 @@ class MockIafNlApi : public IafNlApi {
     uint32_t genStart = 0;
     uint32_t genEnd = 0;
     std::vector<IafPort> mockPorts = {};
+    std::vector<IafPortId> mockIafPortIds = {};
     ze_result_t mockGetPortsResult = ZE_RESULT_SUCCESS;
     IafPortState mockPortState = {};
 };

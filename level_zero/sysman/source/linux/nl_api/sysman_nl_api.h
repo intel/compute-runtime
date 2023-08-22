@@ -55,6 +55,8 @@ typedef struct nlattr *(*pNlmsgAttrdata)(const struct nlmsghdr *, int);
 typedef int (*pNlmsgAttrlen)(const struct nlmsghdr *, int);
 typedef void (*pNlmsgFree)(struct nl_msg *);
 typedef struct nlmsghdr *(*pNlmsgHdr)(struct nl_msg *);
+typedef struct nlattr *(*pNlaNestStart)(struct nl_msg *, int);
+typedef int (*pNlaNestEnd)(struct nl_msg *, struct nlattr *);
 
 class NlApi : public NEO::NonCopyableOrMovableClass {
   public:
@@ -89,6 +91,8 @@ class NlApi : public NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL int nlmsgAttrlen(const struct nlmsghdr *hdr, int attr);
     MOCKABLE_VIRTUAL void nlmsgFree(struct nl_msg *msg);
     MOCKABLE_VIRTUAL struct nlmsghdr *nlmsgHdr(struct nl_msg *msg);
+    MOCKABLE_VIRTUAL struct nlattr *nlaNestStart(struct nl_msg *msg, int id);
+    MOCKABLE_VIRTUAL int nlaNestEnd(struct nl_msg *msg, struct nlattr *attr);
 
     bool isAvailable() { return nullptr != genlLibraryHandle.get(); }
 
@@ -134,6 +138,8 @@ class NlApi : public NEO::NonCopyableOrMovableClass {
     pNlmsgAttrlen nlmsgAttrlenEntry = nullptr;
     pNlmsgFree nlmsgFreeEntry = nullptr;
     pNlmsgHdr nlmsgHdrEntry = nullptr;
+    pNlaNestStart nlaNestStartEntry = nullptr;
+    pNlaNestEnd nlaNestEndEntry = nullptr;
 };
 
 } // namespace Sysman

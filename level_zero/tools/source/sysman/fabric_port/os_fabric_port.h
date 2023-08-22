@@ -15,6 +15,7 @@ namespace L0 {
 class OsFabricDevice {
   public:
     virtual uint32_t getNumPorts() = 0;
+    virtual ze_result_t getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) = 0;
 
     static OsFabricDevice *create(OsSysman *pOsSysman);
 

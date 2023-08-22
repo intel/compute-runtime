@@ -65,9 +65,16 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingFabricPortE
 }
 
 TEST_F(SysmanFabricPortFixture, GivenDeviceHandleWhenCallingzesFabricPortGetMultiPortThroughputThenUnsupportedFeatureErrorIsReturned) {
-    uint32_t count = 0;
-    zes_fabric_port_handle_t hPorts[maxNumPorts];
+    uint32_t count = 1;
+    zes_fabric_port_handle_t hPorts[1] = {};
+    hPorts[0] = pFabricPortImp->toZesHandle();
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFabricPortGetMultiPortThroughput(pSysmanDevice->toHandle(), count, hPorts, nullptr));
+}
+
+TEST_F(SysmanFabricPortFixture, GivenDeviceHandleWhenCallingzesFabricPortGetMultiPortThroughputWithCountAsZeroThenInvalidArgumentErrorIsReturned) {
+    zes_fabric_port_handle_t hPorts[1] = {};
+    hPorts[0] = pFabricPortImp->toZesHandle();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesFabricPortGetMultiPortThroughput(pSysmanDevice->toHandle(), 0, hPorts, nullptr));
 }
 
 } // namespace ult

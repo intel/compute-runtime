@@ -56,6 +56,7 @@ static const struct {
     {.id = IAF_CMD_OP_SUB_DEVICE_TRAP_COUNT_QUERY, .name = const_cast<char *>("FPORT_EVENT_COUNT_QUERY")},
     {.id = IAF_CMD_OP_FPORT_PROPERTIES, .name = const_cast<char *>("FPORT_PROPERTIES")},
     {.id = IAF_CMD_OP_FPORT_XMIT_RECV_COUNTS, .name = const_cast<char *>("FPORT_XMIT_RECV_COUNTS")},
+    {.id = IAF_CMD_OP_FPORT_THROUGHPUT, .name = const_cast<char *>("FPORT_THROUGHPUT")},
     {.id = 0, .name = nullptr},
 };
 
@@ -108,6 +109,32 @@ ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, const uint32_t fabricId
         pNlApi->nlaPutU32(msg, IAF_ATTR_FABRIC_ID, fabricId);
         pNlApi->nlaPutU8(msg, IAF_ATTR_SD_INDEX, attachId);
         pNlApi->nlaPutU8(msg, IAF_ATTR_FABRIC_PORT_NUMBER, portNumber);
+        result = performTransaction(cmdOp, msg, pOutput);
+    }
+    cleanup();
+    return result;
+}
+
+void IafNlApi::addNestedFabricPortList(struct nl_msg *msg, std::vector<IafPortId> &iafPortIdList) {
+    for (const auto &iafPortId : iafPortIdList) {
+        struct nlattr *attr = pNlApi->nlaNestStart(msg, IAF_ATTR_FABRIC_PORT);
+        pNlApi->nlaPutU32(msg, IAF_ATTR_FABRIC_ID, iafPortId.fabricId);
+        pNlApi->nlaPutU8(msg, IAF_ATTR_SD_INDEX, iafPortId.attachId);
+        pNlApi->nlaPutU8(msg, IAF_ATTR_FABRIC_PORT_NUMBER, iafPortId.portNumber);
+        pNlApi->nlaNestEnd(msg, attr);
+    }
+}
+
+ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, std::vector<IafPortId> &iafPortIdList, void *pOutput) {
+    ze_result_t result = init();
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    struct nl_msg *msg;
+    result = allocMsg(cmdOp, msg);
+    if (ZE_RESULT_SUCCESS == result) {
+        addNestedFabricPortList(msg, iafPortIdList);
         result = performTransaction(cmdOp, msg, pOutput);
     }
     cleanup();
@@ -208,6 +235,8 @@ ze_result_t IafNlApi::handleResponse(const uint16_t cmdOp, struct genl_info *inf
         return subdevicePropertiesGetRsp(info, pOutput);
     case IAF_CMD_OP_FPORT_PROPERTIES:
         return fportPropertiesRsp(info, pOutput);
+    case IAF_CMD_OP_FPORT_THROUGHPUT:
+        return getMultiPortThroughputRsp(info, pOutput);
     case IAF_CMD_OP_PORT_BEACON_ENABLE:
     case IAF_CMD_OP_PORT_BEACON_DISABLE:
     case IAF_CMD_OP_PORT_ENABLE:
@@ -219,6 +248,45 @@ ze_result_t IafNlApi::handleResponse(const uint16_t cmdOp, struct genl_info *inf
     default:
         return ZE_RESULT_ERROR_UNKNOWN;
     }
+}
+
+ze_result_t IafNlApi::getMultiPortThroughputRsp(struct genl_info *info, void *pOutput) {
+    std::vector<IafThroughPutInfo> *iafPortThroughputList = reinterpret_cast<std::vector<IafThroughPutInfo> *>(pOutput);
+    iafPortThroughputList->clear();
+    const struct nlmsghdr *nlh = info->nlh;
+
+    auto nla = pNlApi->nlmsgAttrdata(nlh, GENL_HDRLEN);
+    auto rem = pNlApi->nlmsgAttrlen(nlh, GENL_HDRLEN);
+    for (; pNlApi->nlaOk(nla, rem); nla = pNlApi->nlaNext(nla, &rem)) {
+        if (pNlApi->nlaType(nla) == IAF_ATTR_FABRIC_PORT_THROUGHPUT) {
+            auto cur = (struct nlattr *)pNlApi->nlaData(nla);
+            auto rem = pNlApi->nlaLen(nla);
+            IafThroughPutInfo iafPortThroughputInfo = {};
+            for (; pNlApi->nlaOk(cur, rem); cur = pNlApi->nlaNext(cur, &rem)) {
+                switch (pNlApi->nlaType(cur)) {
+                case IAF_ATTR_FPORT_RX_BYTES:
+                    iafPortThroughputInfo.iafThroughput.rxCounter = pNlApi->nlaGetU64(cur);
+                    break;
+                case IAF_ATTR_FPORT_TX_BYTES:
+                    iafPortThroughputInfo.iafThroughput.txCounter = pNlApi->nlaGetU64(cur);
+                    break;
+                case IAF_ATTR_FABRIC_PORT_NUMBER:
+                    iafPortThroughputInfo.iafPortId.portNumber = pNlApi->nlaGetU8(cur);
+                    break;
+                case IAF_ATTR_FABRIC_ID:
+                    iafPortThroughputInfo.iafPortId.fabricId = pNlApi->nlaGetU32(cur);
+                    break;
+                case IAF_ATTR_SD_INDEX:
+                    iafPortThroughputInfo.iafPortId.attachId = pNlApi->nlaGetU8(cur);
+                    break;
+                default:
+                    break;
+                }
+            }
+            iafPortThroughputList->push_back(iafPortThroughputInfo);
+        }
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t IafNlApi::fPortStatusQueryRsp(struct genl_info *info, void *pOutput) {
@@ -510,6 +578,10 @@ ze_result_t IafNlApi::fPortStatusQuery(const IafPortId portId, IafPortState &sta
 
 ze_result_t IafNlApi::getThroughput(const IafPortId portId, IafPortThroughPut &throughput) {
     return issueRequest(IAF_CMD_OP_FPORT_XMIT_RECV_COUNTS, portId.fabricId, portId.attachId, portId.portNumber, reinterpret_cast<void *>(&throughput));
+}
+
+ze_result_t IafNlApi::getMultiPortThroughPut(std::vector<IafPortId> &iafPortIdList, std::vector<IafThroughPutInfo> &throughput) {
+    return issueRequest(IAF_CMD_OP_FPORT_THROUGHPUT, iafPortIdList, reinterpret_cast<void *>(&throughput));
 }
 
 ze_result_t IafNlApi::portStateQuery(const IafPortId portId, bool &enabled) {
@@ -842,6 +914,7 @@ IafNlApi::IafNlApi() {
     policy[IAF_ATTR_FPORT_RX_BYTES].type = NLA_U64;
     policy[IAF_ATTR_FPORT_BPS_LINK_SPEED_MAX].type = NLA_U64;
     policy[IAF_ATTR_FPORT_LQI_CHANGE_COUNT].type = NLA_U32;
+    policy[IAF_ATTR_FABRIC_PORT_THROUGHPUT].type = NLA_NESTED;
 
     int i;
     memset(cmds, 0, sizeof(genl_cmd) * _IAF_CMD_OP_COUNT);

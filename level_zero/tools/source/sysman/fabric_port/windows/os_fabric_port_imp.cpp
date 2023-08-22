@@ -15,6 +15,10 @@ uint32_t WddmFabricDeviceImp::getNumPorts() {
     return numPorts;
 }
 
+ze_result_t WddmFabricDeviceImp::getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 WddmFabricDeviceImp::WddmFabricDeviceImp(OsSysman *pOsSysman) {
 }
 

@@ -53,6 +53,7 @@ struct FabricPortHandleContext : NEO::NonCopyableOrMovableClass {
     ze_result_t init();
 
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort);
+    ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput);
 
     FabricDevice *pFabricDevice = nullptr;
     std::vector<std::unique_ptr<FabricPort>> handleList = {};

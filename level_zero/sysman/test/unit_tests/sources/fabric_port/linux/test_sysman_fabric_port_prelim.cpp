@@ -558,14 +558,97 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortG
     EXPECT_EQ(pMockIafNlApi->txCounter, throughput.txCounter);
 }
 
-TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetMultiPortThroughputThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortGetMultiPortThroughputThenZesFabricPortGetMultiPortThroughputCallSucceeds) {
     uint32_t count = pMockIafNlApi->numPorts;
     ASSERT_LE(count, maxNumPorts);
     zes_fabric_port_handle_t hPorts[maxNumPorts];
     ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFabricPortGetMultiPortThroughput(device, count, hPorts, nullptr));
+    zes_fabric_port_throughput_t throughputArray[maxNumPorts] = {};
+    zes_fabric_port_throughput_t *pThroughput = throughputArray;
+    result = zesFabricPortGetMultiPortThroughput(device, count, hPorts, &pThroughput);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (uint32_t i = 0; i < count; i++) {
+        EXPECT_EQ(pMockIafNlApi->rxCounter, throughputArray[i].rxCounter);
+        EXPECT_EQ(pMockIafNlApi->txCounter, throughputArray[i].txCounter);
+    }
+}
+
+TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingGetMultiPortThroughputAndGetThroughputThenVerifyThroughputFromBothApisAreEqual) {
+    uint32_t count = pMockIafNlApi->numPorts;
+    ASSERT_LE(count, maxNumPorts);
+    zes_fabric_port_handle_t hPorts[maxNumPorts];
+    ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint8_t portNumberIndex = pMockIafNlApi->testPortId.portNumber - 1U;
+
+    if (1U == pMockIafNlApi->testPortId.attachId) {
+        portNumberIndex += pMockIafNlApi->portsPerSubdevice;
+    }
+
+    zes_fabric_port_throughput_t throughput = {};
+    result = zesFabricPortGetThroughput(hPorts[portNumberIndex], &throughput);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zes_fabric_port_throughput_t throughputArray[1] = {};
+    zes_fabric_port_throughput_t *pThroughput = throughputArray;
+    result = zesFabricPortGetMultiPortThroughput(device, 1, &hPorts[portNumberIndex], &pThroughput);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(throughput.rxCounter, throughputArray[0].rxCounter);
+    EXPECT_EQ(throughput.txCounter, throughputArray[0].txCounter);
+}
+
+TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortGetMultiPortThroughputAndIafGetThroughPutFailsThenApiCallReturnsFailure) {
+    uint32_t count = pMockIafNlApi->numPorts;
+    ASSERT_LE(count, maxNumPorts);
+    zes_fabric_port_handle_t hPorts[maxNumPorts];
+    ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    pMockIafNlApi->mockgetMultiPortThroughPutReturnStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    zes_fabric_port_throughput_t throughputArray[maxNumPorts] = {};
+    zes_fabric_port_throughput_t *pThroughput = throughputArray;
+    result = zesFabricPortGetMultiPortThroughput(device, count, hPorts, &pThroughput);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
+TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortGetMultiPortThroughputWithCountAsZeroThenApiCallReturnsFailure) {
+    uint32_t count = pMockIafNlApi->numPorts;
+    ASSERT_LE(count, maxNumPorts);
+    zes_fabric_port_handle_t hPorts[maxNumPorts];
+    ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zes_fabric_port_throughput_t throughputArray[maxNumPorts] = {};
+    zes_fabric_port_throughput_t *pThroughput = throughputArray;
+    result = zesFabricPortGetMultiPortThroughput(device, 0, hPorts, &pThroughput);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortGetMultiPortThroughputAndPortIdAreInvalidThenCountersOfZeroAreReturned) {
+    uint32_t count = 3;
+    zes_fabric_port_handle_t hPorts[maxNumPorts];
+    ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::Sysman::IafPortId invalidPortNumber = {pMockIafNlApi->defaultFabricId, pMockIafNlApi->testPortId.attachId, pMockIafNlApi->testPortId.portNumber + 1U};
+    L0::Sysman::IafPortId invalidAttachId = {pMockIafNlApi->defaultFabricId, pMockIafNlApi->testPortId.attachId + 10U, pMockIafNlApi->testPortId.portNumber};
+    L0::Sysman::IafPortId invalidFabricId = {pMockIafNlApi->defaultFabricId + 20U, pMockIafNlApi->testPortId.attachId, pMockIafNlApi->testPortId.portNumber};
+    pMockIafNlApi->mockIafPortIds.insert(pMockIafNlApi->mockIafPortIds.end(), {invalidPortNumber, invalidAttachId, invalidFabricId});
+
+    zes_fabric_port_throughput_t throughputArray[maxNumPorts] = {};
+    zes_fabric_port_throughput_t *pThroughput = throughputArray;
+    result = zesFabricPortGetMultiPortThroughput(device, count, hPorts, &pThroughput);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (uint32_t i = 0; i < count; i++) {
+        EXPECT_EQ(0U, throughputArray[i].rxCounter);
+        EXPECT_EQ(0U, throughputArray[i].txCounter);
+    }
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersWithLegacyPathAndCallSucceeds) {

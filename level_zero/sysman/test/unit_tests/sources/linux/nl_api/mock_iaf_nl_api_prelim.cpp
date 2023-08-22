@@ -61,6 +61,28 @@ ze_result_t MockIafNlApi::getThroughput(const L0::Sysman::IafPortId portId, L0::
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t MockIafNlApi::getMultiPortThroughPut(std::vector<L0::Sysman::IafPortId> &iafPortIdList, std::vector<L0::Sysman::IafThroughPutInfo> &throughputList) {
+    if (mockgetMultiPortThroughPutReturnStatus != ZE_RESULT_SUCCESS) {
+        return mockgetMultiPortThroughPutReturnStatus;
+    }
+
+    throughputList.resize(iafPortIdList.size());
+    for (uint64_t i = 0; i < iafPortIdList.size(); i++) {
+        throughputList[i].iafThroughput.rxCounter = rxCounter;
+        throughputList[i].iafThroughput.txCounter = txCounter;
+        if (mockIafPortIds.empty()) {
+            throughputList[i].iafPortId.portNumber = testPortId.portNumber;
+            throughputList[i].iafPortId.attachId = testPortId.attachId;
+            throughputList[i].iafPortId.fabricId = testPortId.fabricId;
+            continue;
+        }
+        throughputList[i].iafPortId.portNumber = mockIafPortIds[i].portNumber;
+        throughputList[i].iafPortId.attachId = mockIafPortIds[i].attachId;
+        throughputList[i].iafPortId.fabricId = mockIafPortIds[i].fabricId;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t MockIafNlApi::portStateQuery(const L0::Sysman::IafPortId portId, bool &enabled) {
     if (mockportStateQueryReturnStatus != ZE_RESULT_SUCCESS) {
         return mockportStateQueryReturnStatus;
