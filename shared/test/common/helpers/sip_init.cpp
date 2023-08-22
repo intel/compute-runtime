@@ -33,7 +33,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version) {
 }
 
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum) {
-    return createStateSaveAreaHeader(version, 128, 1);
+    return createStateSaveAreaHeader(version, grfNum, 1);
 }
 
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, uint16_t mmeNum) {

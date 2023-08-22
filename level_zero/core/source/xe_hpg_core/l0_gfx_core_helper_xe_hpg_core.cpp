@@ -18,6 +18,11 @@ namespace L0 {
 using Family = NEO::XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
+template <>
+zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
+    return ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU;
+}
+
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"
 
 template class L0GfxCoreHelperHw<Family>;

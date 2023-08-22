@@ -10,6 +10,7 @@
 #include "shared/source/helpers/api_gfx_core_helper.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
+#include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
 #include <level_zero/ze_api.h>
 
@@ -78,6 +79,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual NEO::HeapAddressModel getPlatformHeapAddressModel() const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
     virtual bool platformSupportsImmediateComputeFlushTask() const = 0;
+    virtual zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -115,6 +117,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     NEO::HeapAddressModel getPlatformHeapAddressModel() const override;
     std::vector<uint32_t> getSupportedNumGrfs() const override;
     bool platformSupportsImmediateComputeFlushTask() const override;
+    zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;
