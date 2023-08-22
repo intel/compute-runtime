@@ -40,6 +40,8 @@ bool VASurface::isSupportedPackedFormat(uint32_t imageFourcc) {
         return true;
     case VA_FOURCC_Y210:
         return true;
+    case VA_FOURCC_ARGB:
+        return true;
     default:
         return false;
     }
@@ -156,6 +158,9 @@ void VASurface::applyPlaneSettings(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint
 void VASurface::applyPackedOptions(SharedSurfaceInfo &sharedSurfaceInfo) {
     if (sharedSurfaceInfo.imageFourcc == VA_FOURCC_Y210) {
         sharedSurfaceInfo.channelType = CL_UNORM_INT16;
+        sharedSurfaceInfo.channelOrder = CL_RGBA;
+    } else if (sharedSurfaceInfo.imageFourcc == VA_FOURCC_ARGB) {
+        sharedSurfaceInfo.channelType = CL_UNORM_INT8;
         sharedSurfaceInfo.channelOrder = CL_RGBA;
     } else {
         sharedSurfaceInfo.channelType = CL_UNORM_INT8;
@@ -311,6 +316,17 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
                                                             2,
                                                             8}};
         return &formatInfoY210;
+    }
+
+    if (formatFourCC == VA_FOURCC_ARGB) {
+        static const ClSurfaceFormatInfo formatInfoARGB = {{CL_RGBA, CL_UNORM_INT8},
+                                                           {GMM_RESOURCE_FORMAT::GMM_FORMAT_R8G8B8A8_UNORM_TYPE,
+                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM),
+                                                            0,
+                                                            4,
+                                                            1,
+                                                            4}};
+        return &formatInfoARGB;
     }
 
     return nullptr;
