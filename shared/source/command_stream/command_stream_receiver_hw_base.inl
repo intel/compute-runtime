@@ -275,7 +275,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     flushData.stateComputeModeFullConfigurationNeeded = getStateComputeModeDirty();
     flushData.stateBaseAddressFullConfigurationNeeded = getGSBAStateDirty();
 
-    if (this->requiredScratchSize > 0 || this->requiredPrivateScratchSize > 0) {
+    if (dispatchFlags.sshCpuBase != nullptr && (this->requiredScratchSize > 0 || this->requiredPrivateScratchSize > 0)) {
         bool checkFeStateDirty = false;
         bool checkSbaStateDirty = false;
         scratchSpaceController->setRequiredScratchSpace(dispatchFlags.sshCpuBase,
