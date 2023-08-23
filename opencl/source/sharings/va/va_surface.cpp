@@ -159,8 +159,7 @@ void VASurface::applyPackedOptions(SharedSurfaceInfo &sharedSurfaceInfo) {
     if (sharedSurfaceInfo.imageFourcc == VA_FOURCC_Y210) {
         sharedSurfaceInfo.channelType = CL_UNORM_INT16;
         sharedSurfaceInfo.channelOrder = CL_RGBA;
-    }
-    else if (sharedSurfaceInfo.imageFourcc == VA_FOURCC_ARGB) {
+    } else if (sharedSurfaceInfo.imageFourcc == VA_FOURCC_ARGB) {
         sharedSurfaceInfo.channelType = CL_UNORM_INT8;
         sharedSurfaceInfo.channelOrder = CL_RGBA;
     } else {
