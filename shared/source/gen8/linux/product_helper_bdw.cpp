@@ -14,6 +14,7 @@
 constexpr static auto gfxProduct = IGFX_BROADWELL;
 
 #include "shared/source/gen8/bdw/os_agnostic_product_helper_bdw.inl"
+#include "shared/source/os_interface/product_helper_before_gen12lp.inl"
 
 namespace NEO {
 

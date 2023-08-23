@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/product_helper_bdw_and_later.inl"
 
 constexpr static auto gfxProduct = IGFX_ELKHARTLAKE;
+#include "shared/source/os_interface/product_helper_before_gen12lp.inl"
 
 namespace NEO {
 

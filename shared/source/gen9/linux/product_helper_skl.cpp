@@ -14,6 +14,7 @@
 constexpr static auto gfxProduct = IGFX_SKYLAKE;
 
 #include "shared/source/gen9/skl/os_agnostic_product_helper_skl.inl"
+#include "shared/source/os_interface/product_helper_before_gen12lp.inl"
 
 namespace NEO {
 

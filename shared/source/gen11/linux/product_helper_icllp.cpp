@@ -13,6 +13,7 @@
 
 constexpr static auto gfxProduct = IGFX_ICELAKE_LP;
 #include "shared/source/gen11/icllp/os_agnostic_product_helper_icllp.inl"
+#include "shared/source/os_interface/product_helper_before_gen12lp.inl"
 namespace NEO {
 
 template <>

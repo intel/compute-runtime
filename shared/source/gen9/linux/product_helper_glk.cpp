@@ -16,6 +16,7 @@
 constexpr static auto gfxProduct = IGFX_GEMINILAKE;
 
 #include "shared/source/gen9/glk/os_agnostic_product_helper_glk.inl"
+#include "shared/source/os_interface/product_helper_before_gen12lp.inl"
 
 namespace NEO {
 

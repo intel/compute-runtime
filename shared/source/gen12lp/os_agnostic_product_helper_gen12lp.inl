@@ -18,15 +18,6 @@ bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
-    using SAMPLER_STATE = typename Gen12LpFamily::SAMPLER_STATE;
-    auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
-    if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
-        samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
-    }
-}
-
-template <>
 uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
 }

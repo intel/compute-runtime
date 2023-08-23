@@ -13,14 +13,6 @@
 #include "platforms.h"
 
 namespace NEO {
-template <>
-void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
-    using SAMPLER_STATE = typename XeHpgCoreFamily::SAMPLER_STATE;
-    auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
-    if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
-        samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
-    }
-}
 
 template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod() const {
@@ -35,16 +27,6 @@ uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
 template <>
 bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
     return hwInfo.capabilityTable.ftrRenderCompressedBuffers || hwInfo.capabilityTable.ftrRenderCompressedImages;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
-    return CommonConstants::invalidStepping;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    return CommonConstants::invalidStepping;
 }
 
 template <>

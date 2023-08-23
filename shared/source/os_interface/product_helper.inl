@@ -51,7 +51,13 @@ template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {}
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {}
+void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
+    using SAMPLER_STATE = typename HwMapper<gfxProduct>::GfxFamily::SAMPLER_STATE;
+    auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
+    if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
+        samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
+    }
+}
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
