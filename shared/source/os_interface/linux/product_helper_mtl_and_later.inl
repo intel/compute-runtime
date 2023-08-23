@@ -5,7 +5,11 @@
  *
  */
 
+#include "shared/source/os_interface/product_helper_hw.h"
+
+namespace NEO {
 template <>
 bool ProductHelperHw<gfxProduct>::isPlatformQuerySupported() const {
     return true;
 }
+} // namespace NEO

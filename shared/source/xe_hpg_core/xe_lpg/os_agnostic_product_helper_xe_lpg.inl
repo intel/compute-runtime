@@ -8,6 +8,10 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/product_helper.inl"
+#include "shared/source/os_interface/product_helper_dg2_and_later.inl"
+#include "shared/source/os_interface/product_helper_xehp_and_later.inl"
 
 #include "aubstream/product_family.h"
 #include "platforms.h"

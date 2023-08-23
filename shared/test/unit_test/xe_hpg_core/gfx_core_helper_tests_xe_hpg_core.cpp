@@ -159,11 +159,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, WhenCheckingSipWAThenFalseIsReturn
     EXPECT_FALSE(gfxCoreHelper.isSipWANeeded(pDevice->getHardwareInfo()));
 }
 
-XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimestampWaitSupportForEventsThenReturnFalse) {
-    auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_FALSE(productHelper.isTimestampWaitSupportedForEvents());
-}
-
 XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isDummyBlitWaRequired());

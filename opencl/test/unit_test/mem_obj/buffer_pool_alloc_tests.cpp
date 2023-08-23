@@ -96,12 +96,52 @@ class AggregatedSmallBuffersKernelTest : public AggregatedSmallBuffersTestTempla
 
 using AggregatedSmallBuffersDefaultTest = AggregatedSmallBuffersTestTemplate<-1>;
 
-HWTEST_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue) {
+HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue, IsNotXeHpgCore) {
     DebugManagerStateRestore restore;
     // Single device context
     {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
+        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+    }
+    // Multi device context
+    context->devices.push_back(nullptr);
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
+        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
+        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+    }
+    context->devices.pop_back();
+}
+
+HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue, IsXeHpgCore) {
+    DebugManagerStateRestore restore;
+    // Single device context
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
+        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);

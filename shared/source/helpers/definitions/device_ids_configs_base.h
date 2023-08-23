@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "device_ids_configs_dg2.h"
 #endif
 #ifdef SUPPORT_MTL
-#include "shared/source/xe_hpg_core/mtl/device_ids_configs_mtl.h"
+#include "shared/source/xe_hpg_core/xe_lpg/device_ids_configs_xe_lpg.h"
 #endif
 #endif
 
