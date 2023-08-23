@@ -33,6 +33,10 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version) {
 }
 
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum) {
+    return createStateSaveAreaHeader(version, 128, 1);
+}
+
+std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, uint16_t mmeNum) {
     SIP::StateSaveAreaHeader stateSaveAreaHeader = {
         {
             // versionHeader
@@ -66,7 +70,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum) {
             {4256, 1, 96, 12},    // notification
             {4288, 1, 128, 16},   // tdr
             {4320, 10, 256, 32},  // acc
-            {0, 0, 0, 0},         // mme
+            {4320, 10, 256, 32},  // mme
             {4672, 1, 32, 4},     // ce
             {4704, 1, 128, 16},   // sp
             {0, 0, 0, 0},         // cmd
@@ -109,7 +113,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum) {
             {4256, 1, 96, 12},       // notification
             {4288, 1, 128, 16},      // tdr
             {4320, 10, 256, 32},     // acc
-            {0, 0, 0, 0},            // mme
+            {4320, mmeNum, 256, 32}, // mme
             {4672, 1, 32, 4},        // ce
             {4704, 1, 128, 16},      // sp
             {4768, 1, 128 * 8, 128}, // cmd

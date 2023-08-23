@@ -2326,7 +2326,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenGetThreadRegisterSetPropertiesCalle
     uint32_t threadCount = 0;
     ze_device_thread_t thread = stoppedThread;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(session->getConnectedDevice(), &count, nullptr));
-    EXPECT_EQ(12u, count);
+    EXPECT_EQ(13u, count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
     ASSERT_EQ(threadCount, count);
 
@@ -2378,20 +2378,6 @@ TEST_F(DebugSessionRegistersAccessTest, givenThreadAllWhenReadWriteRegistersCall
     ze_device_thread_t threadAll = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugReadRegisters(session->toHandle(), threadAll, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugWriteRegisters(session->toHandle(), threadAll, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 2, nullptr));
-}
-
-TEST_F(DebugSessionRegistersAccessTest, givenNotReportedRegisterSetAndValidRegisterIndicesWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
-    session->areRequestedThreadsStoppedReturnValue = 1;
-
-    // MME is not present
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, 0, 1, nullptr));
-}
-
-TEST_F(DebugSessionRegistersAccessTest, givenNotReportedRegisterSetAndValidRegisterIndicesWhenWriteRegistersCalledThenErrorInvalidArgumentIsReturned) {
-    session->areRequestedThreadsStoppedReturnValue = 1;
-
-    // MME is not present
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, 0, 1, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
