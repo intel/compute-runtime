@@ -295,23 +295,20 @@ TEST(SettingsFileReader, givenPrefixFileReadCorrectValueReturned) {
     EXPECT_EQ(DebugVarPrefix::None, type);
     EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
 
-    auto neo_reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::getNeoStringTestPath().c_str());
-    ASSERT_NE(nullptr, neo_reader.get());
+    auto neoReader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::getNeoStringTestPath().c_str());
+    ASSERT_NE(nullptr, neoReader.get());
 
     retValue = 0;
-    returnedIntValue = 0;
-    returnedIntValue = neo_reader->getSetting("IntTestKey", retValue, type);
+    returnedIntValue = neoReader->getSetting("IntTestKey", retValue, type);
     EXPECT_EQ(DebugVarPrefix::Neo, type);
     EXPECT_EQ(123, returnedIntValue);
 
-    returnedIntValueHex = 0;
-    returnedIntValueHex = neo_reader->getSetting("IntTestKeyHex", 0, type);
+    returnedIntValueHex = neoReader->getSetting("IntTestKeyHex", 0, type);
     EXPECT_EQ(DebugVarPrefix::Neo, type);
     EXPECT_EQ(0xABCD, returnedIntValueHex);
 
     retValueString = "";
-    returnedStringValue = "";
-    returnedStringValue = neo_reader->getSetting("StringTestKey", retValueString, type);
+    returnedStringValue = neoReader->getSetting("StringTestKey", retValueString, type);
     EXPECT_EQ(DebugVarPrefix::Neo, type);
     EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
 }
