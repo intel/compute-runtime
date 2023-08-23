@@ -88,8 +88,8 @@ TEST_F(SysmanDevicePowerFixture, GivenUninitializedPowerHandlesAndWhenGettingCar
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesWhenhwmonInterfaceExistsThenCallSucceeds) {
     auto handles = getPowerHandles(powerHandleComponentCount);
 
-    for (auto handle : handles) {
-        zes_power_properties_t properties;
+    for (auto &handle : handles) {
+        zes_power_properties_t properties{};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
@@ -112,8 +112,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     auto handles = getPowerHandles(powerHandleComponentCount);
-    for (auto handle : handles) {
-        zes_power_properties_t properties;
+    for (auto &handle : handles) {
+        zes_power_properties_t properties{};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
@@ -140,8 +140,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     auto handles = getPowerHandles(powerHandleComponentCount);
-    for (auto handle : handles) {
-        zes_power_properties_t properties;
+    for (auto &handle : handles) {
+        zes_power_properties_t properties{};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
@@ -166,8 +166,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     auto handles = getPowerHandles(powerHandleComponentCount);
-    for (auto handle : handles) {
-        zes_power_properties_t properties;
+    for (auto &handle : handles) {
+        zes_power_properties_t properties{};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
@@ -482,8 +482,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     auto handles = getPowerHandles(powerHandleComponentCount);
 
-    for (auto handle : handles) {
-        zes_power_properties_t properties;
+    for (auto &handle : handles) {
+        zes_power_properties_t properties{};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
