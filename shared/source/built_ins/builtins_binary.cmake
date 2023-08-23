@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -78,7 +78,6 @@ target_include_directories(${BUILTINS_BINARIES_BINDFUL_LIB_NAME} PRIVATE
                            ${KHRONOS_GL_HEADERS_DIR}
                            ${NEO__GMM_INCLUDE_DIR}
                            ${NEO__IGC_INCLUDE_DIR}
-                           ${THIRD_PARTY_DIR}
 )
 
 if(COMPILE_BUILT_INS)
@@ -96,7 +95,6 @@ target_include_directories(${BUILTINS_BINARIES_BINDLESS_LIB_NAME} PRIVATE
                            ${KHRONOS_GL_HEADERS_DIR}
                            ${NEO__GMM_INCLUDE_DIR}
                            ${NEO__IGC_INCLUDE_DIR}
-                           ${THIRD_PARTY_DIR}
 )
 
 if(COMPILE_BUILT_INS)
@@ -114,6 +112,5 @@ target_include_directories(${BUILTINS_BINARIES_STATELESS_LIB_NAME} PRIVATE
                            ${KHRONOS_GL_HEADERS_DIR}
                            ${NEO__GMM_INCLUDE_DIR}
                            ${NEO__IGC_INCLUDE_DIR}
-                           ${THIRD_PARTY_DIR}
 )
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -49,7 +49,6 @@ endif()
 
 set(CLOC_SEGFAULT_TEST_INCLUDES
     ${NEO_SOURCE_DIR}
-    ${THIRD_PARTY_DIR}
 )
 
 if(CMAKE_COMPILER_IS_GNUCC)
