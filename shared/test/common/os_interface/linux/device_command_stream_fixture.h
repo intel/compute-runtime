@@ -95,6 +95,7 @@ class DrmMockCustom : public Drm {
     using Drm::completionFenceSupported;
     using Drm::ioctlHelper;
     using Drm::memoryInfo;
+    using Drm::pageFaultSupported;
     using Drm::setupIoctlHelper;
 
     struct IoctlResExt {

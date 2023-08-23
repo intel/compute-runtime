@@ -1084,8 +1084,12 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         struct drm_xe_vm_create args = {};
         args.flags = DRM_XE_VM_CREATE_ASYNC_BIND_OPS |
                      DRM_XE_VM_CREATE_COMPUTE_MODE;
+        if (drm.hasPageFaultSupport()) {
+            args.flags |= DRM_XE_VM_CREATE_FAULT_MODE;
+        }
         ret = IoctlHelper::ioctl(request, &args);
         d->vmId = ret ? 0 : args.vm_id;
+        d->flags = ret ? 0 : args.flags;
         xeVmId = d->vmId;
         xeLog(" -> IoctlHelperXe::ioctl GemVmCreate vmid=0x%x r=%d\n", d->vmId, ret);
 

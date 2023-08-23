@@ -666,10 +666,22 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     }
     {
         GemVmControl test = {};
-        test.flags = 3;
+        drm.pageFaultSupported = false;
+        uint32_t expectedVmCreateFlags = DRM_XE_VM_CREATE_ASYNC_BIND_OPS |
+                                         DRM_XE_VM_CREATE_COMPUTE_MODE;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
+        EXPECT_EQ(test.flags, expectedVmCreateFlags);
+
+        drm.pageFaultSupported = true;
+        expectedVmCreateFlags = DRM_XE_VM_CREATE_ASYNC_BIND_OPS |
+                                DRM_XE_VM_CREATE_COMPUTE_MODE |
+                                DRM_XE_VM_CREATE_FAULT_MODE;
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemVmCreate, &test);
+        EXPECT_EQ(0, ret);
+        EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
+        EXPECT_EQ(test.flags, expectedVmCreateFlags);
     }
     {
         GemVmControl test = {};
