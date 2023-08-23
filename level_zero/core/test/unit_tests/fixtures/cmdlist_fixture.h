@@ -162,6 +162,11 @@ struct CommandListGlobalHeapsFixture : public CommandListGlobalHeapsFixtureInit 
 
 struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixture {
     void setUp();
+    void tearDown();
+
+    std::unique_ptr<L0::ult::CommandList> commandListImmediateCoexisting;
+    std::unique_ptr<EventPool> eventPool;
+    std::unique_ptr<Event> event;
 };
 
 class AppendFillFixture : public DeviceFixture {

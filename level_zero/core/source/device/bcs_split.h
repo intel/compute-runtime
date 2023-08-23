@@ -107,7 +107,7 @@ struct BcsSplit {
             result = appendCall(localDstPtr, localSrcPtr, localSize, eventHandle);
 
             if (cmdList->flushTaskSubmissionEnabled()) {
-                cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, false, hasRelaxedOrderingDependencies, cmdQsForSplit[i]);
+                cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, false, hasRelaxedOrderingDependencies, false, cmdQsForSplit[i]);
             } else {
                 cmdList->executeCommandListImmediateImpl(performMigration, cmdQsForSplit[i]);
             }

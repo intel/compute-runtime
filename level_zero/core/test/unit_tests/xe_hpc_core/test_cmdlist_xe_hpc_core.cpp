@@ -247,7 +247,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
-    result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto mockMemoryManager = reinterpret_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());

@@ -84,7 +84,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.requiredStreamState.stateComputeMode.isCoherencyRequired.value = 1;
     commandListImmediate.requiredStreamState.stateComputeMode.largeGrfMode.value = 1;
     commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::RoundRobin;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, true);
 
     NEO::StateComputeModePropertiesSupport scmPropertiesSupport = {};
     productHelper.fillScmPropertiesSupportStructure(scmPropertiesSupport);
@@ -113,7 +113,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.requiredStreamState.stateComputeMode.isCoherencyRequired.value = 0;
     commandListImmediate.requiredStreamState.stateComputeMode.largeGrfMode.value = 0;
     commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::AgeBased;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, true);
 
     expectedLargeGrfMode = scmPropertiesSupport.largeGrfMode ? 0 : -1;
     expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? 0 : -1;
@@ -142,7 +142,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
     commandListImmediate.containsAnyKernel = true;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, true);
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
@@ -157,7 +157,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
     commandListImmediate.containsAnyKernel = true;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, true);
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
@@ -172,7 +172,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
     commandListImmediate.containsAnyKernel = true;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, true);
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
@@ -187,7 +187,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
     commandListImmediate.containsAnyKernel = true;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, true);
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
@@ -198,7 +198,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false));
 }
 
 HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, IsAtLeastSkl) {
@@ -210,7 +210,7 @@ HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecu
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false));
 }
 
 HWTEST2_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, IsAtLeastSkl) {
@@ -222,7 +222,7 @@ HWTEST2_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExe
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false));
 }
 
 HWTEST2_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListIsCreatedThenCsrStateIsNotSet, IsAtLeastSkl) {
@@ -513,7 +513,7 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverri
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     cmdList.csr = event->csrs[0];
     event->csrs[0] = &mockCommandStreamReceiver;
-    cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, false, false, event->toHandle());
+    cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, false, false, false, event->toHandle());
     EXPECT_EQ(event->csrs[0], cmdList.csr);
 }
 
@@ -1030,7 +1030,7 @@ HWTEST2_F(CommandListTest, givenCmdListWithIndirectAccessWhenExecutingCommandLis
     auto oldCommandQueue = commandListImmediate.cmdQImmediate;
     commandListImmediate.cmdQImmediate = &mockCommandQueue;
     commandListImmediate.indirectAllocationsAllowed = true;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false);
     EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 1u);
     commandListImmediate.cmdQImmediate = oldCommandQueue;
 }
@@ -1049,7 +1049,7 @@ HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandL
     auto oldCommandQueue = commandListImmediate.cmdQImmediate;
     commandListImmediate.cmdQImmediate = &mockCommandQueue;
     commandListImmediate.indirectAllocationsAllowed = false;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false);
     EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 0u);
     commandListImmediate.cmdQImmediate = oldCommandQueue;
 }
@@ -1060,36 +1060,8 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
-    auto &hwInfo = device->getHwInfo();
-
-    uint32_t expectedSbaCount = 1;
-    auto &productHelper = device->getProductHelper();
-    if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-        expectedSbaCount++;
-    }
 
     auto &cmdContainer = commandListImmediate->commandContainer;
-
-    bool dshPresent = hwInfo.capabilityTable.supportsImages || NEO::UnitTestHelper<FamilyType>::getAdditionalDshSize(cmdContainer.getNumIddPerBlock()) > 0;
-
-    if (dshPresent) {
-        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers = 2;
-        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset = sizeof(SAMPLER_BORDER_COLOR_STATE);
-        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
-
-        kernel->dynamicStateHeapDataSize = static_cast<uint32_t>(sizeof(SAMPLER_STATE) * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
-        kernel->dynamicStateHeapData.reset(new uint8_t[kernel->dynamicStateHeapDataSize]);
-
-        mockKernelImmData->mockKernelDescriptor->payloadMappings.samplerTable = mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable;
-    }
-
-    mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize = static_cast<uint32_t>(sizeof(RENDER_SURFACE_STATE) + sizeof(uint32_t));
-    mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
-    mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.tableOffset = 0x40;
-    mockKernelImmData->mockKernelDescriptor->kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
-
-    kernel->surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize;
-    kernel->surfaceStateHeapData.reset(new uint8_t[kernel->surfaceStateHeapDataSize]);
 
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
@@ -1119,7 +1091,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     NEO::IndirectHeap *containerDshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
     NEO::IndirectHeap *containerSshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
 
-    if (dshPresent) {
+    if (this->dshRequired) {
         EXPECT_EQ(csrDshHeap, containerDshHeap);
     } else {
         EXPECT_EQ(nullptr, containerDshHeap);
@@ -1132,10 +1104,10 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         (csrUsedAfter - csrUsedBefore)));
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(expectedSbaCount, sbaCmds.size());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
 
     auto &sbaCmd = *genCmdCast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
-    if (dshPresent) {
+    if (this->dshRequired) {
         EXPECT_TRUE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
         EXPECT_EQ(csrDshHeap->getHeapGpuBase(), sbaCmd.getDynamicStateBaseAddress());
     } else {
@@ -1147,7 +1119,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
 
     dshUsed = csrDshHeap->getUsed() - dshUsed;
     sshUsed = csrSshHeap->getUsed() - sshUsed;
-    if (dshPresent) {
+    if (this->dshRequired) {
         EXPECT_LT(0u, dshUsed);
     } else {
         EXPECT_EQ(0u, dshUsed);
@@ -1159,14 +1131,6 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
 
     EXPECT_GE(dshEstimated, dshUsed);
     EXPECT_GE(sshEstimated, sshUsed);
-
-    ze_command_queue_desc_t queueDesc{};
-    queueDesc.ordinal = 0u;
-    queueDesc.index = 0u;
-    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-
-    std::unique_ptr<L0::ult::CommandList> commandListImmediateCoexisting;
-    commandListImmediateCoexisting.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, result)));
 
     auto &cmdContainerCoexisting = commandListImmediateCoexisting->commandContainer;
     EXPECT_EQ(1u, cmdContainerCoexisting.getNumIddPerBlock());
@@ -1191,7 +1155,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     size_t expectedSshAlignedSize = sshEstimated + ptrDiff(alignUp(ptr, sshAlignment), ptr);
 
     size_t expectedDshAlignedSize = dshEstimated;
-    if (dshPresent) {
+    if (this->dshRequired) {
         ptr = containerDshHeapCoexisting->getSpace(0);
         expectedDshAlignedSize += ptrDiff(alignUp(ptr, dshAlignment), ptr);
 
@@ -1214,7 +1178,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     dshUsed = csrDshHeap->getUsed() - dshUsed;
     sshUsed = csrSshHeap->getUsed() - sshUsed;
 
-    if (dshPresent) {
+    if (this->dshRequired) {
         EXPECT_LT(0u, dshUsed);
     } else {
         EXPECT_EQ(0u, dshUsed);

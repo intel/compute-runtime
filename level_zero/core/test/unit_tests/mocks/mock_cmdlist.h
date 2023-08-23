@@ -598,10 +598,10 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
         return executeCommandListImmediateReturnValue;
     }
 
-    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies) override {
+    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation) override {
         ++executeCommandListImmediateWithFlushTaskCalledCount;
         if (callBaseExecute) {
-            return BaseClass::executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies);
+            return BaseClass::executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, kernelOperation);
         }
         return executeCommandListImmediateWithFlushTaskReturnValue;
     }

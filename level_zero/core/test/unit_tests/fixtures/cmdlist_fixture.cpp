@@ -230,9 +230,70 @@ void CommandListGlobalHeapsFixtureInit::tearDown() {
 }
 
 void ImmediateCmdListSharedHeapsFixture::setUp() {
+    constexpr uint32_t storeAllocations = 4;
+
     DebugManager.flags.EnableFlushTaskSubmission.set(1);
     DebugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    DebugManager.flags.SetAmountOfReusableAllocations.set(storeAllocations);
+
     ModuleMutableCommandListFixture::setUp();
+
+    for (uint32_t i = 0; i < storeAllocations; i++) {
+        auto heapAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), true, 2 * MB,
+                                                                                                   NEO::AllocationType::LINEAR_STREAM, false, false,
+                                                                                                   neoDevice->getDeviceBitfield()});
+        commandListImmediate->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapAllocation), REUSABLE_ALLOCATION);
+    }
+
+    ze_result_t returnValue;
+
+    ze_command_queue_desc_t queueDesc{};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    commandListImmediateCoexisting.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+
+    if (this->dshRequired) {
+        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers = 2;
+        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 16;
+        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
+
+        kernel->dynamicStateHeapDataSize = static_cast<uint32_t>(16 * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
+        kernel->dynamicStateHeapData.reset(new uint8_t[kernel->dynamicStateHeapDataSize]);
+
+        mockKernelImmData->mockKernelDescriptor->payloadMappings.samplerTable = mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable;
+    }
+
+    mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize = static_cast<uint32_t>(64 + sizeof(uint32_t));
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.tableOffset = 0x40;
+    mockKernelImmData->mockKernelDescriptor->kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
+
+    kernel->surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize;
+    kernel->surfaceStateHeapData.reset(new uint8_t[kernel->surfaceStateHeapDataSize]);
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.index = 0;
+    eventDesc.wait = 0;
+    eventDesc.signal = 0;
+
+    eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    event = std::unique_ptr<Event>(static_cast<Event *>(l0GfxCoreHelper.createEvent(eventPool.get(), &eventDesc, device)));
+}
+
+void ImmediateCmdListSharedHeapsFixture::tearDown() {
+    event.reset(nullptr);
+    eventPool.reset(nullptr);
+    commandListImmediateCoexisting.reset(nullptr);
+
+    ModuleMutableCommandListFixture::tearDown();
 }
 
 bool AppendFillFixture::MockDriverFillHandle::findAllocationDataForRange(const void *buffer,
