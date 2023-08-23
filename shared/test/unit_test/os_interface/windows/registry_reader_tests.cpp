@@ -148,7 +148,7 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenPrefixedEnvironmentInt64Variab
 struct DebugReaderWithRegistryAndEnvTest : ::testing::Test {
     VariableBackup<uint32_t> openRegCountBackup{&SysCalls::regOpenKeySuccessCount};
     VariableBackup<uint32_t> queryRegCountBackup{&SysCalls::regQueryValueSuccessCount};
-    TestedRegistryReader registryReader{""};
+    TestedRegistryReader registryReader{std::string("")};
 };
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
