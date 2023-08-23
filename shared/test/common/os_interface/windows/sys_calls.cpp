@@ -72,15 +72,6 @@ DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     return TRUE;
 }
 
-char *openCLDriverName = "igdrcl.dll";
-
-char *getenv(const char *variableName) {
-    if (strcmp(variableName, "OpenCLDriverName") == 0) {
-        return openCLDriverName;
-    }
-    return ::getenv(variableName);
-}
-
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
     if (regOpenKeySuccessCount > 0) {
         regOpenKeySuccessCount--;

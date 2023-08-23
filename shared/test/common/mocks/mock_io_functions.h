@@ -9,6 +9,7 @@
 #include "shared/source/utilities/io_functions.h"
 
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <unordered_map>
 
@@ -52,9 +53,13 @@ inline int mockFclose(FILE *stream) {
     mockFcloseCalled++;
     return 0;
 }
+extern const char *openCLDriverName;
 
 inline char *mockGetenv(const char *name) noexcept {
     mockGetenvCalled++;
+    if (strcmp(name, "OpenCLDriverName") == 0) {
+        return const_cast<char *>(openCLDriverName);
+    }
     if (mockableEnvValues != nullptr && mockableEnvValues->find(name) != mockableEnvValues->end()) {
         return const_cast<char *>(mockableEnvValues->find(name)->second.c_str());
     }

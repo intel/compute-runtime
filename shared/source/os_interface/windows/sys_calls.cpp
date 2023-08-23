@@ -63,9 +63,6 @@ BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
 DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     return GetModuleFileName(hModule, lpFilename, nSize);
 }
-char *getenv(const char *variableName) {
-    return ::getenv(variableName);
-}
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
     return RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);

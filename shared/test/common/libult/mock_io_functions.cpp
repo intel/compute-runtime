@@ -36,6 +36,8 @@ uint32_t mockFwriteCalled = 0;
 size_t mockFwriteReturn = 0;
 bool mockVfptrinfUseStdioFunction = false;
 
+const char *openCLDriverName = "igdrcl.dll";
+
 std::unordered_map<std::string, std::string> *mockableEnvValues = nullptr;
 
 } // namespace IoFunctions

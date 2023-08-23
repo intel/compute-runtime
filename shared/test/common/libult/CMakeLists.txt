@@ -115,7 +115,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/debug_settings_reader_creator.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/global_environment.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/global_environment.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/io_functions.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/mock_io_functions.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/options_unit_tests.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/sleep.cpp

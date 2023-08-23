@@ -22,7 +22,7 @@ SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string
 }
 
 char *SettingsReader::getenv(const char *settingName) {
-    return SysCalls::getenv(settingName);
+    return IoFunctions::getenvPtr(settingName);
 }
 
 RegistryReader::RegistryReader(bool userScope, const std::string &regKey) : registryReadRootKey(regKey) {
