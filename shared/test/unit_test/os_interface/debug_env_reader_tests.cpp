@@ -5,9 +5,8 @@
  *
  */
 
-#include "shared/source/os_interface/debug_env_reader.h"
-
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -22,13 +21,12 @@ extern ApiSpecificConfig::ApiType apiTypeForUlts;
 class DebugEnvReaderTests : public ::testing::Test {
   public:
     void SetUp() override {
-        evr = SettingsReader::createOsReader(false, "");
-        EXPECT_NE(nullptr, evr);
+        environmentVariableReader = std::make_unique<EnvironmentVariableReader>();
+        EXPECT_NE(nullptr, environmentVariableReader);
     }
     void TearDown() override {
-        delete evr;
     }
-    SettingsReader *evr = nullptr;
+    std::unique_ptr<EnvironmentVariableReader> environmentVariableReader;
 };
 
 TEST_F(DebugEnvReaderTests, GivenSetVariableThenSetValueIsReturned) {
@@ -44,7 +42,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableThenSetValueIsReturned) {
         std::unordered_map<std::string, std::string> mockableEnvs = {{testingVariableName, testingVariableValue}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
-        ret = evr->getSetting(testingVariableName, 1);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(1234, ret);
     }
@@ -53,7 +51,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableThenSetValueIsReturned) {
         std::unordered_map<std::string, std::string> mockableEnvs = {{testingVariableName, setString.c_str()}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
-        retString = evr->getSetting("TestingVariable", defaultString);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(0, retString.compare(setString));
     }
@@ -62,7 +60,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableThenSetValueIsReturned) {
         std::unordered_map<std::string, std::string> mockableEnvs = {};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
-        ret = evr->getSetting("TestingVariable", 1);
+        ret = environmentVariableReader->getSetting("TestingVariable", 1);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(1, ret);
     }
@@ -83,7 +81,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithNoPrefixThenSetValueIsReturned) 
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(3u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::None, type);
         EXPECT_EQ(1234, ret);
@@ -94,7 +92,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithNoPrefixThenSetValueIsReturned) 
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(3u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::None, type);
         EXPECT_EQ(0, retString.compare(setString));
@@ -105,7 +103,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithNoPrefixThenSetValueIsReturned) 
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        ret = evr->getSetting(testingVariableName, defaultBoolValue, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, defaultBoolValue, type);
         EXPECT_EQ(3u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::None, type);
         EXPECT_EQ(0, ret);
@@ -128,7 +126,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithNeoPrefixThenSetValueIsReturned)
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(2u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo, type);
         EXPECT_EQ(1234, ret);
@@ -139,7 +137,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithNeoPrefixThenSetValueIsReturned)
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(2u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo, type);
         EXPECT_EQ(0, retString.compare(setString));
@@ -150,7 +148,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithNeoPrefixThenSetValueIsReturned)
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        ret = evr->getSetting(testingVariableName, defaultBoolValue, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, defaultBoolValue, type);
         EXPECT_EQ(2u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo, type);
         EXPECT_EQ(0, ret);
@@ -173,7 +171,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithOclPrefixThenSetValueIsReturned)
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_Ocl, type);
         EXPECT_EQ(1234, ret);
@@ -184,7 +182,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithOclPrefixThenSetValueIsReturned)
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_Ocl, type);
         EXPECT_EQ(0, retString.compare(setString));
@@ -195,7 +193,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithOclPrefixThenSetValueIsReturned)
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        ret = evr->getSetting(testingVariableName, defaultBoolValue, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, defaultBoolValue, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_Ocl, type);
         EXPECT_EQ(0, ret);
@@ -217,7 +215,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithL0PrefixThenSetValueIsReturned) 
         std::unordered_map<std::string, std::string> mockableEnvs = {{lzeroTestingVariableName, testingVariableValue}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_L0, type);
         EXPECT_EQ(1234, ret);
@@ -228,7 +226,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithL0PrefixThenSetValueIsReturned) 
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_L0, type);
         EXPECT_EQ(0, retString.compare(setString));
@@ -239,7 +237,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithL0PrefixThenSetValueIsReturned) 
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        ret = evr->getSetting(testingVariableName, defaultBoolValue, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, defaultBoolValue, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_L0, type);
         EXPECT_EQ(0, ret);
@@ -263,7 +261,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithL0MultiplePrefixesThenHighestPri
                                                                      {lzeroTestingVariableName, testingVariableValue}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_L0, type);
         EXPECT_EQ(1234, ret);
@@ -274,7 +272,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithL0MultiplePrefixesThenHighestPri
                                                                      {neoTestingVariableName, "2"}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(2u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo, type);
         EXPECT_EQ(2, ret);
@@ -287,7 +285,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithL0MultiplePrefixesThenHighestPri
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_L0, type);
         EXPECT_EQ(0, retString.compare(setString));
@@ -299,7 +297,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithL0MultiplePrefixesThenHighestPri
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(2u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo, type);
         EXPECT_EQ(0, retString.compare("Default Neo"));
@@ -323,7 +321,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithOclMultipPrefixesThenHighestPrio
                                                                      {oclTestingVariableName, testingVariableValue}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_Ocl, type);
         EXPECT_EQ(1234, ret);
@@ -334,7 +332,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithOclMultipPrefixesThenHighestPrio
                                                                      {neoTestingVariableName, "2"}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(2u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo, type);
         EXPECT_EQ(2, ret);
@@ -347,7 +345,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithOclMultipPrefixesThenHighestPrio
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_Ocl, type);
         EXPECT_EQ(0, retString.compare(setString));
@@ -359,7 +357,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithOclMultipPrefixesThenHighestPrio
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(2u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo, type);
         EXPECT_EQ(0, retString.compare("Default Neo"));
@@ -383,7 +381,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithBothOclAndL0PrefixCorrectDriverV
                                                                      {oclTestingVariableName, testingVariableValue}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_Ocl, type);
         EXPECT_EQ(1234, ret);
@@ -395,7 +393,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithBothOclAndL0PrefixCorrectDriverV
                                                                      {oclTestingVariableName, testingVariableValue}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
-        ret = evr->getSetting(testingVariableName, 1, type);
+        ret = environmentVariableReader->getSetting(testingVariableName, 1, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_L0, type);
         EXPECT_EQ(5678, ret);
@@ -408,7 +406,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithBothOclAndL0PrefixCorrectDriverV
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_Ocl, type);
         EXPECT_EQ(0, retString.compare(setString));
@@ -421,7 +419,7 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableWithBothOclAndL0PrefixCorrectDriverV
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         DebugVarPrefix type = DebugVarPrefix::None;
 
-        retString = evr->getSetting("TestingVariable", defaultString, type);
+        retString = environmentVariableReader->getSetting("TestingVariable", defaultString, type);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(DebugVarPrefix::Neo_L0, type);
         EXPECT_EQ(0, retString.compare("Default Level Zero"));
@@ -438,7 +436,7 @@ TEST_F(DebugEnvReaderTests, givenMaxInt64AsEnvWhenGetSettingThenProperValueIsRet
     std::unordered_map<std::string, std::string> mockableEnvs = {{testingVariableName, testingVariableValue}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
-    EXPECT_EQ(expectedValue, evr->getSetting(testingVariableName, defaultValue));
+    EXPECT_EQ(expectedValue, environmentVariableReader->getSetting(testingVariableName, defaultValue));
     EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
 }
 
@@ -451,11 +449,11 @@ TEST_F(DebugEnvReaderTests, GivenUnsetVariableThenDefaultValueIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs = {};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
-    ret = evr->getSetting("TestingVariable", 1);
+    ret = environmentVariableReader->getSetting("TestingVariable", 1);
     EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
     EXPECT_EQ(1, ret);
 
-    retString = evr->getSetting("TestingVariable", defaultString);
+    retString = environmentVariableReader->getSetting("TestingVariable", defaultString);
     EXPECT_EQ(2u, IoFunctions::mockGetenvCalled);
     EXPECT_EQ(0, retString.compare(defaultString));
 }
@@ -470,7 +468,7 @@ TEST_F(DebugEnvReaderTests, GivenBoolEnvVariableWhenGettingThenCorrectValueIsRet
         std::unordered_map<std::string, std::string> mockableEnvs = {{"TestingVariable", "0"}};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
-        ret = evr->getSetting("TestingVariable", defaultValue);
+        ret = environmentVariableReader->getSetting("TestingVariable", defaultValue);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(expectedValue, ret);
     }
@@ -479,7 +477,7 @@ TEST_F(DebugEnvReaderTests, GivenBoolEnvVariableWhenGettingThenCorrectValueIsRet
         std::unordered_map<std::string, std::string> mockableEnvs = {};
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
-        ret = evr->getSetting("TestingVariable", defaultValue);
+        ret = environmentVariableReader->getSetting("TestingVariable", defaultValue);
         EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
         EXPECT_EQ(defaultValue, ret);
     }
@@ -488,11 +486,11 @@ TEST_F(DebugEnvReaderTests, GivenBoolEnvVariableWhenGettingThenCorrectValueIsRet
 TEST_F(DebugEnvReaderTests, WhenSettingAppSpecificLocationThenLocationIsReturned) {
     std::string appSpecific;
     appSpecific = "cl_cache_dir";
-    EXPECT_EQ(appSpecific, evr->appSpecificLocation(appSpecific));
+    EXPECT_EQ(appSpecific, environmentVariableReader->appSpecificLocation(appSpecific));
 }
 
 TEST_F(DebugEnvReaderTests, givenEnvironmentVariableReaderWhenCreateOsReaderWithStringThenNotNullPointer) {
-    std::unique_ptr<SettingsReader> evr(SettingsReader::createOsReader(false, ""));
-    EXPECT_NE(nullptr, evr);
+    std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(false, ""));
+    EXPECT_NE(nullptr, settingsReader);
 }
 } // namespace NEO
