@@ -464,7 +464,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
 
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync);
+    dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync, false);
 
     if (!isCopyOnly()) {
         if (this->partitionCount > 1) {
@@ -1983,7 +1983,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
 
         event->setPacketsInUse(this->partitionCount);
-        dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, !isCopyOnly());
+        dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, !isCopyOnly(), false);
     }
 }
 
@@ -2000,7 +2000,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
         NEO::MiFlushArgs args{this->dummyBlitWa};
         NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), 0, 0, args);
         makeResidentDummyAllocation();
-        dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false);
+        dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false, false);
     }
     appendWriteKernelTimestamp(event, beforeWalker, false, false);
 }
@@ -2168,7 +2168,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 
     event->setPacketsInUse(this->partitionCount);
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync);
+    dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false);
 
     if (this->inOrderExecutionEnabled) {
         appendSignalInOrderDependencyCounter();
@@ -2365,7 +2365,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             bool workloadPartition = setupTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, beforeWalker, true, workloadPartition);
         } else {
-            dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false);
+            dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false, true);
 
             const auto &hwInfo = this->device->getHwInfo();
             const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
@@ -3156,6 +3156,7 @@ CmdListEventOperation CommandListCoreFamily<gfxCoreFamily>::estimateEventPostSyn
     ret.operationCount = operations / this->partitionCount;
     ret.operationOffset = event->getSinglePacketSize() * this->partitionCount;
     ret.workPartitionOperation = this->partitionCount > 1;
+    ret.isTimestmapEvent = event->isEventTimestampFlagSet();
 
     return ret;
 }
@@ -3186,7 +3187,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuA
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming) {
     decltype(&CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute) dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute;
     if (isCopyOnly()) {
         dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy;
@@ -3195,6 +3196,10 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
     auto operationCount = eventOperations.operationCount;
     if (useLastPipeControl) {
         operationCount--;
+    }
+
+    if (eventOperations.isTimestmapEvent && !skipPartitionOffsetProgramming) {
+        appendDispatchOffsetRegister(eventOperations.workPartitionOperation, true);
     }
 
     for (uint32_t i = 0; i < operationCount; i++) {
@@ -3225,10 +3230,14 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
             device->getNEODevice()->getRootDeviceEnvironment(),
             pipeControlArgs);
     }
+
+    if (eventOperations.isTimestmapEvent && !skipPartitionOffsetProgramming) {
+        appendDispatchOffsetRegister(eventOperations.workPartitionOperation, false);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming) {
     uint32_t packets = event->getPacketsInUse();
     if (this->signalAllEventPackets || useMax) {
         packets = event->getMaxPacketsCount();
@@ -3241,7 +3250,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event 
         eventPostSync.operationCount--;
     }
 
-    dispatchPostSyncCommands(eventPostSync, gpuAddress, value, useLastPipeControl, event->isSignalScope());
+    dispatchPostSyncCommands(eventPostSync, gpuAddress, value, useLastPipeControl, event->isSignalScope(), skipPartitionOffsetProgramming);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3254,7 +3263,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
         eventAddress += event->getSinglePacketSize() * event->getPacketsInUse();
 
         constexpr bool appendLastPipeControl = false;
-        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope());
+        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope(), false);
     }
 }
 

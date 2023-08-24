@@ -62,6 +62,7 @@ struct CmdListEventOperation {
     size_t operationOffset = 0;
     uint32_t operationCount = 0;
     bool workPartitionOperation = false;
+    bool isTimestmapEvent = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -313,9 +314,9 @@ struct CommandListCoreFamily : CommandListImp {
     CmdListEventOperation estimateEventPostSync(Event *event, uint32_t operations);
     void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
     void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
-    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope);
+    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming);
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event);
-    void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl);
+    void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming);
     bool isKernelUncachedMocsRequired(bool kernelState) {
         this->containsStatelessUncachedResource |= kernelState;
         if (this->stateBaseAddressTracking) {

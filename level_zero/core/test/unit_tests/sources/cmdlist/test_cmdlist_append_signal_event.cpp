@@ -242,6 +242,69 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     EXPECT_EQ(1u, postSyncFound);
 }
 
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSyncLayoutWhenAppendingSignalingTimestampEventThenExpectOffsetRegisters, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    event->setEventTimestampFlag(true);
+
+    commandList->partitionCount = 2;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle()));
+
+    size_t expectedSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false) +
+                          (2 * sizeof(MI_LOAD_REGISTER_IMM));
+    size_t usedSize = cmdStream->getUsed() - offset;
+    EXPECT_EQ(expectedSize, usedSize);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), usedSize));
+
+        auto lriItor = cmdList.begin();
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lriItor);
+        ASSERT_NE(nullptr, lriCmd);
+
+        EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, lriCmd->getRegisterOffset());
+        EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset(), lriCmd->getDataDword());
+
+        auto pipeControlList = findAll<PIPE_CONTROL *>(++lriItor, cmdList.end());
+        ASSERT_NE(0u, pipeControlList.size());
+
+        auto endLriItor = cmdList.rbegin();
+
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*endLriItor);
+        ASSERT_NE(nullptr, lriCmd);
+
+        EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, lriCmd->getRegisterOffset());
+        EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), lriCmd->getDataDword());
+    }
+
+    event->setEventTimestampFlag(false);
+
+    offset = cmdStream->getUsed();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle()));
+
+    expectedSize = sizeof(MI_STORE_DATA_IMM);
+    usedSize = cmdStream->getUsed() - offset;
+    EXPECT_EQ(expectedSize, usedSize);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), usedSize));
+
+        auto lriList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(0u, lriList.size());
+
+        auto sdiList = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(1u, sdiList.size());
+    }
+}
+
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenMultiTileCommandListWhenAppendingNonScopeEventSignalThenExpectPartitionedStoreDataImm, IsAtLeastXeHpCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
