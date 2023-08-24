@@ -255,17 +255,5 @@ TEST(EuThread, GivenEuThreadWhenGettingLastCounterThenCorrectValueIsReturned) {
     EXPECT_EQ(9u, euThread.getLastCounter());
 }
 
-TEST(EuThread, GivenEuThreadWhenGettingPageFaultThenCorrectValueIsReturned) {
-    ze_device_thread_t devThread = {3, 4, 5, 6};
-    EuThread::ThreadId threadId(0, devThread);
-    EuThread euThread(threadId);
-
-    EXPECT_EQ(false, euThread.getPageFault());
-    euThread.setPageFault(true);
-    EXPECT_EQ(true, euThread.getPageFault());
-    euThread.setPageFault(false);
-    EXPECT_EQ(false, euThread.getPageFault());
-}
-
 } // namespace ult
 } // namespace L0

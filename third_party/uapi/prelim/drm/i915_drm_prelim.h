@@ -772,8 +772,7 @@ struct prelim_drm_i915_debug_event {
 #define PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM 7
 #define PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION 8
 #define PRELIM_DRM_I915_DEBUG_EVENT_ENGINES 9
-#define PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT 10
-#define PRELIM_DRM_I915_DEBUG_EVENT_MAX_EVENT PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT
+#define PRELIM_DRM_I915_DEBUG_EVENT_MAX_EVENT PRELIM_DRM_I915_DEBUG_EVENT_ENGINES
 
 	__u32 flags;
 #define PRELIM_DRM_I915_DEBUG_EVENT_CREATE	(1 << 31)
@@ -866,34 +865,6 @@ struct prelim_drm_i915_debug_event_eu_attention {
 	 * the bitmask includu only half of logical EU count
 	 * provided by topology query as we only control the
 	 * 'pair' instead of individual EUs.
-	 */
-
-	__u8 bitmask[0];
-} __attribute__((packed));
-
-struct prelim_drm_i915_debug_event_page_fault {
-        struct prelim_drm_i915_debug_event base;
-	__u64 client_handle;
-	__u64 ctx_handle;
-	__u64 lrc_handle;
-
-	__u32 flags;
-
-	struct i915_engine_class_instance ci;
-
-	__u64 page_fault_address;
-
-	/**
-	 * Size of one bitmask: sum of size before/after/resolved att bits.
-	 * It has three times the size of prelim_drm_i915_debug_event_eu_attention.bitmask_size.
-	 */
-	__u32 bitmask_size;
-
-	/**
-	 * Bitmask of thread attentions starting from natural
-	 * hardware order of slice=0,subslice=0,eu=0, 8 attention
-	 * bits per eu.
-	 * The order of the bitmask array is before, after, resolved.
 	 */
 
 	__u8 bitmask[0];

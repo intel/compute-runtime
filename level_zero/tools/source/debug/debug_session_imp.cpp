@@ -821,12 +821,7 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
             memset(reg.get(), 0, regSize);
             readRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
 
-            if (allThreads[newlyStopped]->getPageFault()) {
-                const uint32_t cr0PFBit16 = 0x10000;
-                reg[1] = reg[1] | cr0PFBit16;
-                writeRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
-            }
-            if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get()) && !allThreads[newlyStopped]->getPageFault()) {
+            if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get())) {
                 bool threadWasInterrupted = false;
 
                 for (auto &request : pendingInterrupts) {
@@ -850,7 +845,6 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
                 }
             } else {
                 PRINT_DEBUGGER_THREAD_LOG("Newly stopped thread = %s, exception bits = %#010" PRIx32 "\n", allThreads[newlyStopped]->toString().c_str(), reg[1]);
-                allThreads[newlyStopped]->setPageFault(false);
                 stoppedThreadsToReport.push_back(newlyStopped);
             }
         }

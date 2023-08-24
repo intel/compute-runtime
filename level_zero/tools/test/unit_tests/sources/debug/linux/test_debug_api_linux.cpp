@@ -3044,6 +3044,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClientCreateAndDestroyEventsReadO
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
     EXPECT_EQ(eventsCount, static_cast<size_t>(session->getInternalEventCounter.load()));
 }
+
 TEST_F(DebugApiLinuxTest, GivenEventWithInvalidFlagsWhenReadingEventThenUnknownErrorIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -3067,7 +3068,7 @@ TEST_F(DebugApiLinuxTest, GivenEventWithInvalidFlagsWhenReadingEventThenUnknownE
     auto memory = std::make_unique<uint64_t[]>(MockDebugSessionLinux::maxEventSize / sizeof(uint64_t));
     prelim_drm_i915_debug_event *event = reinterpret_cast<prelim_drm_i915_debug_event *>(memory.get());
     event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
-    event->flags = 0x8000;
+    event->flags = 0;
     event->size = MockDebugSessionLinux::maxEventSize;
 
     ze_result_t result = session->readEventImp(event);
@@ -3096,6 +3097,33 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionInitializationWhenNoValidEventsAreRea
 
     ze_result_t result = session->initialize();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(DebugApiLinuxTest, GivenInvalidFlagsWhenReadingEventThenUnknownErrorIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    prelim_drm_i915_debug_event_client clientInvalidFlag = {};
+    clientInvalidFlag.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    clientInvalidFlag.base.flags = 0x8000;
+    clientInvalidFlag.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    clientInvalidFlag.handle = 1;
+
+    auto handler = new MockIoctlHandler;
+    handler->eventQueue.push({reinterpret_cast<char *>(&clientInvalidFlag), static_cast<uint64_t>(clientInvalidFlag.base.size)});
+    handler->pollRetVal = 1;
+
+    session->ioctlHandler.reset(handler);
+
+    uint64_t data[512];
+    auto drmDebugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(data);
+
+    ze_result_t result = session->readEventImp(drmDebugEvent);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(1u, static_cast<size_t>(handler->ioctlCalled));
 }
 
 TEST_F(DebugApiLinuxTest, GivenValidFlagsWhenReadingEventThenEventIsNotProcessed) {
@@ -5843,130 +5871,6 @@ TEST_F(DebugApiLinuxTest, givenTileAttachEnabledWhenDeviceDoesNotHaveTilesThenTi
     EXPECT_EQ(0u, session->tileSessions.size());
 }
 
-using DebugApiLinuxPageFaultEventTest = Test<DebugApiPageFaultEventFixture>;
-
-TEST_F(DebugApiLinuxPageFaultEventTest, GivenNoPageFaultingThreadWhenHandlingPageFaultEventThenL0ApiEventGenerated) {
-    auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-
-    std::vector<EuThread::ThreadId> threads{
-        {0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 1},
-        {0, 0, 0, 0, 2},
-        {0, 0, 0, 0, 3},
-        {0, 0, 0, 0, 4},
-        {0, 0, 0, 0, 5},
-        {0, 0, 0, 0, 6}};
-
-    for (auto thread : threads) {
-        sessionMock->stoppedThreads[thread.packed] = 1;
-    }
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskBefore, bitmaskSize);
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskAfter, bitmaskSize);
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskResolved, bitmaskSize);
-
-    bitmaskSize = std::min(size_t(128), bitmaskSize);
-    buildPfi915Event();
-    sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
-    EXPECT_EQ(threads.size(), sessionMock->newlyStoppedThreads.size());
-    for (auto thread : threads) {
-        EXPECT_FALSE(sessionMock->allThreads[thread]->getPageFault());
-    }
-    ASSERT_EQ(1u, sessionMock->apiEvents.size());
-    auto event = sessionMock->apiEvents.front();
-    ASSERT_EQ(event.type, ZET_DEBUG_EVENT_TYPE_PAGE_FAULT);
-}
-
-TEST_F(DebugApiLinuxPageFaultEventTest, GivenPageFaultEventWIthInvalidClientHandleThenNoThreadsReportedStopped) {
-
-    auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-
-    std::vector<EuThread::ThreadId> threads;
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskBefore, bitmaskSize);
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskAfter, bitmaskSize);
-
-    threads.push_back({0, 0, 0, 0, 0});
-    threads.push_back({0, 0, 0, 0, 2});
-    threads.push_back({0, 0, 0, 0, 3});
-    threads.push_back({0, 0, 0, 0, 4});
-    threads.push_back({0, 0, 0, 0, 6});
-    for (auto thread : threads) {
-        sessionMock->stoppedThreads[thread.packed] = 1;
-    }
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskResolved, bitmaskSize);
-
-    bitmaskSize = std::min(size_t(128), bitmaskSize);
-    buildPfi915Event(MockDebugSessionLinux::invalidClientHandle);
-    sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
-
-    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
-}
-
-TEST_F(DebugApiLinuxPageFaultEventTest, GivenPageFaultEventWhenHandlingEventThenThreadsReportedStoppedAndPfSet) {
-
-    auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-
-    std::vector<EuThread::ThreadId> threads;
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskBefore, bitmaskSize);
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskAfter, bitmaskSize);
-
-    threads.push_back({0, 0, 0, 0, 0});
-    threads.push_back({0, 0, 0, 0, 2});
-    threads.push_back({0, 0, 0, 0, 3});
-    threads.push_back({0, 0, 0, 0, 4});
-    threads.push_back({0, 0, 0, 0, 6});
-    for (auto thread : threads) {
-        sessionMock->stoppedThreads[thread.packed] = 1;
-    }
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskResolved, bitmaskSize);
-
-    bitmaskSize = std::min(size_t(128), bitmaskSize);
-    buildPfi915Event();
-    sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
-
-    EXPECT_EQ(threads.size(), sessionMock->newlyStoppedThreads.size());
-    for (auto thread : threads) {
-        EXPECT_TRUE(sessionMock->allThreads[thread]->getPageFault());
-    }
-}
-
-TEST_F(DebugApiLinuxPageFaultEventTest, GivenPageFaultEventWhenHandlingEventThenThreadsNotNewlyResolvedAreNotMarkedAsPf) {
-
-    auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-
-    std::vector<EuThread::ThreadId> threadsBefore, threadsAfter, threadsResolved;
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threadsBefore, hwInfo, bitmaskBefore, bitmaskSize);
-    threadsAfter.push_back({0, 0, 0, 0, 0});
-    threadsAfter.push_back({0, 0, 0, 0, 1});
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threadsAfter, hwInfo, bitmaskAfter, bitmaskSize);
-    threadsResolved.push_back({0, 0, 0, 0, 0});
-    threadsResolved.push_back({0, 0, 0, 0, 1});
-    threadsResolved.push_back({0, 0, 0, 0, 2});
-    threadsResolved.push_back({0, 0, 0, 0, 3});
-
-    for (auto thread : threadsResolved) {
-        sessionMock->stoppedThreads[thread.packed] = 1;
-    }
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threadsResolved, hwInfo, bitmaskResolved, bitmaskSize);
-
-    bitmaskSize = std::min(size_t(128), bitmaskSize);
-    buildPfi915Event();
-    sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
-
-    EXPECT_EQ(threadsResolved.size(), sessionMock->newlyStoppedThreads.size());
-
-    for (auto thread : threadsResolved) {
-        if (std::find(threadsAfter.begin(), threadsAfter.end(), thread) == threadsAfter.end()) {
-            EXPECT_TRUE(sessionMock->allThreads[thread]->getPageFault());
-        } else {
-            EXPECT_FALSE(sessionMock->allThreads[thread]->getPageFault());
-        }
-    }
-}
-
 using DebugApiLinuxAttentionTest = Test<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEventThenNewlyStoppedThreadsSaved) {
@@ -8627,37 +8531,6 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotW
     EXPECT_EQ(0u, debugSession->clientHandleToConnection[debugSession->clientHandle]->isaMap[0].size());
     EXPECT_EQ(0u, debugSession->clientHandleToConnection[debugSession->clientHandle]->isaMap[2].size());
     EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
-}
-
-TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenPfEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
-    auto debugSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{1234}, deviceImp, 10);
-
-    uint64_t ctxHandle = 2;
-    uint64_t vmHandle = 7;
-    uint64_t lrcHandle = 8;
-
-    debugSession->clientHandleToConnection[debugSession->clientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
-    debugSession->clientHandleToConnection[debugSession->clientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
-    debugSession->clientHandleToConnection[debugSession->clientHandle]->vmToTile[vmHandle] = 2;
-
-    prelim_drm_i915_debug_event_page_fault pf = {};
-    pf.base.type = PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT;
-    pf.base.flags = 0;
-    pf.base.size = sizeof(prelim_drm_i915_debug_event_page_fault);
-    pf.client_handle = MockDebugSessionLinux::mockClientHandle;
-    pf.lrc_handle = lrcHandle;
-    pf.flags = 0;
-
-    auto engineInfo = mockDrm->getEngineInfo();
-    auto ci = engineInfo->getEngineInstance(2, hwInfo.capabilityTable.defaultEngineType);
-    pf.ci.engine_class = ci->engineClass;
-    pf.ci.engine_instance = ci->engineInstance;
-
-    ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
-    debugSession->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
-
-    debugSession->handleEvent(&pf.base);
-    EXPECT_FALSE(debugSession->triggerEvents);
 }
 
 TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenAttEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {

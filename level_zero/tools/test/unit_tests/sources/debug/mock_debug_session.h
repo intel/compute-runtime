@@ -298,6 +298,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
             [[maybe_unused]] auto offset = ptrDiff(gpuVa, reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()));
             memcpy_s(reinterpret_cast<void *>(gpuVa), size, input, size);
         }
+
         return writeMemoryResult;
     }
 
