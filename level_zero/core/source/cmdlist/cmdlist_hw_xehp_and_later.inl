@@ -295,7 +295,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (inOrderExecSignalRequired) {
         if (isTimestampEvent) {
-            dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, false, false);
+            dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, false, false, false);
         } else {
             dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
             dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
