@@ -138,8 +138,9 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
     auto maskBits = stateComputeMode.getMaskBits();
 
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    bool ignoreIsDirty = productHelper.programAllStateComputeCommandFields();
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    UNRECOVERABLE_IF(!releaseHelper);
+    bool ignoreIsDirty = releaseHelper->isProgramAllStateComputeCommandFieldsWARequired();
 
     if (properties.zPassAsyncComputeThreadLimit.isDirty ||
         (ignoreIsDirty && (properties.zPassAsyncComputeThreadLimit.value != -1))) {
@@ -162,6 +163,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
     stateComputeMode.setMaskBits(maskBits);
 
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
     productHelper.setForceNonCoherent(&stateComputeMode, properties);
 
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();

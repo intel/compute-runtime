@@ -175,11 +175,6 @@ uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const Hardwa
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::programAllStateComputeCommandFields() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return true;
 }

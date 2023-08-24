@@ -50,11 +50,6 @@ std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipeli
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::programAllStateComputeCommandFields() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

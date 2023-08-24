@@ -10,6 +10,11 @@
 namespace NEO {
 
 template <>
+bool ReleaseHelperHw<release>::isProgramAllStateComputeCommandFieldsWARequired() const {
+    return true;
+}
+
+template <>
 bool ReleaseHelperHw<release>::isSplitMatrixMultiplyAccumulateSupported() const {
     return true;
 }

@@ -290,11 +290,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isFlushTaskAllowed() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::programAllStateComputeCommandFields() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
