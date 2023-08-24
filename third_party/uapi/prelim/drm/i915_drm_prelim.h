@@ -166,6 +166,9 @@ struct prelim_i915_user_extension {
 #define PRELIM_I915_PMU_GT_ERROR_CORRECTABLE_L3BANK             (122)
 #define PRELIM_I915_PMU_GT_ERROR_FATAL_SUBSLICE                 (123)
 #define PRELIM_I915_PMU_GT_ERROR_FATAL_L3BANK                   (124)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_NONFATAL_CD0_MDFI         (125)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_NONFATAL_MDFI_EAST        (126)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_NONFATAL_MDFI_SOUTH       (127)
 
 #define PRELIM_I915_PMU_HW_ERROR(gt, id) \
 	((__PRELIM_I915_PMU_HW_ERROR_EVENT_ID_OFFSET + (id)) | \
@@ -208,6 +211,7 @@ struct prelim_i915_user_extension {
 #define PRELIM_DRM_I915_GEM_CACHE_RESERVE	0x53
 #define PRELIM_DRM_I915_GEM_VM_GETPARAM		DRM_I915_GEM_CONTEXT_GETPARAM
 #define PRELIM_DRM_I915_GEM_VM_SETPARAM		DRM_I915_GEM_CONTEXT_SETPARAM
+#define PRELIM_DRM_I915_GEM_OBJECT_SETPARAM	DRM_I915_GEM_CONTEXT_SETPARAM
 
 
 #define PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_CREATE, struct prelim_drm_i915_gem_create_ext)
@@ -224,6 +228,8 @@ struct prelim_i915_user_extension {
 #define PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE		DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_GEM_CACHE_RESERVE, struct prelim_drm_i915_gem_cache_reserve)
 #define PRELIM_DRM_IOCTL_I915_GEM_VM_GETPARAM		DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_GEM_VM_GETPARAM, struct prelim_drm_i915_gem_vm_param)
 #define PRELIM_DRM_IOCTL_I915_GEM_VM_SETPARAM		DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_GEM_VM_SETPARAM, struct prelim_drm_i915_gem_vm_param)
+#define PRELIM_DRM_IOCTL_I915_GEM_OBJECT_SETPARAM	DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_GEM_OBJECT_SETPARAM, struct prelim_drm_i915_gem_object_param)
+
 /* End PRELIM ioctl's */
 
 /* getparam */
@@ -263,10 +269,9 @@ struct prelim_i915_user_extension {
 /* EU Debugger support */
 #define PRELIM_I915_PARAM_EU_DEBUGGER_VERSION  (PRELIM_I915_PARAM | 9)
 
-/* End getparam */
-
 /* BO chunk granularity support */
 #define PRELIM_I915_PARAM_HAS_CHUNK_SIZE	(PRELIM_I915_PARAM | 10)
+/* End getparam */
 
 struct prelim_drm_i915_gem_create_ext {
 
@@ -335,10 +340,9 @@ struct prelim_drm_i915_gem_object_param {
  *
  * Specifies that this buffer object should support 'chunking' and chunk
  * granularity. Allows internal KMD paging/migration/eviction handling to
- * operate on a single chunk instead of the whole buffer object.
- * Size specified in bytes and must be non-zero and a power of 2.
- * KMD will return error (-ENOSPC) if CHUNK_SIZE is deemed to be too small
- * to be supported.
+ * operate on a single chunk instead of the whole buffer object. Size is
+ * specified in bytes. KMD will return error (-ENOSPC) if CHUNK_SIZE is
+ * smaller than 64 KiB or (-EINVAL) if not aligned to 64 KiB.
  */
 #define PRELIM_I915_PARAM_SET_CHUNK_SIZE ((1 << 18) | 1)
 	__u64 param;
@@ -392,6 +396,11 @@ struct prelim_drm_i915_perf_oa_buffer_info {
 	__u64 size;   /* out */
 	__u64 offset; /* out */
 	__u64 rsvd;   /* mbz */
+};
+
+struct prelim_drm_i915_gem_mmap_offset {
+	/* Specific MMAP offset for PCI memory barrier */
+#define PRELIM_I915_PCI_BARRIER_MMAP_OFFSET (0x50 << PAGE_SHIFT)
 };
 
 enum prelim_drm_i915_eu_stall_property_id {
@@ -772,7 +781,8 @@ struct prelim_drm_i915_debug_event {
 #define PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM 7
 #define PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION 8
 #define PRELIM_DRM_I915_DEBUG_EVENT_ENGINES 9
-#define PRELIM_DRM_I915_DEBUG_EVENT_MAX_EVENT PRELIM_DRM_I915_DEBUG_EVENT_ENGINES
+#define PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT 10
+#define PRELIM_DRM_I915_DEBUG_EVENT_MAX_EVENT PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT
 
 	__u32 flags;
 #define PRELIM_DRM_I915_DEBUG_EVENT_CREATE	(1 << 31)
@@ -865,6 +875,34 @@ struct prelim_drm_i915_debug_event_eu_attention {
 	 * the bitmask includu only half of logical EU count
 	 * provided by topology query as we only control the
 	 * 'pair' instead of individual EUs.
+	 */
+
+	__u8 bitmask[0];
+} __attribute__((packed));
+
+struct prelim_drm_i915_debug_event_page_fault {
+	struct prelim_drm_i915_debug_event base;
+	__u64 client_handle;
+	__u64 ctx_handle;
+	__u64 lrc_handle;
+
+	__u32 flags;
+
+	struct i915_engine_class_instance ci;
+
+	__u64 page_fault_address;
+
+	/**
+	 * Size of one bitmask: sum of size before/after/resolved att bits.
+	 * It has three times the size of prelim_drm_i915_debug_event_eu_attention.bitmask_size.
+	 */
+	__u32 bitmask_size;
+
+	/**
+	 * Bitmask of thread attentions starting from natural
+	 * hardware order of slice=0,subslice=0,eu=0, 8 attention
+	 * bits per eu.
+	 * The order of the bitmask array is before, after, resolved.
 	 */
 
 	__u8 bitmask[0];
@@ -1015,8 +1053,8 @@ struct prelim_drm_i915_lmem_memory_region_info {
 /**
  * struct prelim_drm_i915_query_lmem_memory_regions
  *
- * Region info query enumerates all lmem regions known to the driver by filling in
- * an array of struct prelim_drm_i915_lmem_memory_region_info structures.
+ * Region info query enumerates all lmem regions known to the driver by filling
+ * in an array of struct prelim_drm_i915_lmem_memory_region_info structures.
  */
 struct prelim_drm_i915_query_lmem_memory_regions {
 	/** Number of supported regions */
@@ -1025,7 +1063,7 @@ struct prelim_drm_i915_query_lmem_memory_regions {
 	/** MBZ */
 	__u32 rsvd[3];
 
-	/* Info about each supported region */
+	/** Info about each supported region */
 	struct prelim_drm_i915_lmem_memory_region_info regions[];
 };
 
@@ -1215,7 +1253,7 @@ struct prelim_drm_i915_gem_vm_bind {
 	/** vm to [un]bind **/
 	__u32 vm_id;
 
-	/** BO handle or file descriptor. Set 'fd' to -1 for system pages **/
+	/** BO handle or file descriptor **/
 	union {
 		__u32 handle; /* For unbind, it is reserved and must be 0 */
 		__s32 fd;
@@ -1235,6 +1273,29 @@ struct prelim_drm_i915_gem_vm_bind {
 #define PRELIM_I915_GEM_VM_BIND_IMMEDIATE	(1ull << 63)
 #define PRELIM_I915_GEM_VM_BIND_READONLY	(1ull << 62)
 #define PRELIM_I915_GEM_VM_BIND_CAPTURE		(1ull << 61)
+
+/*
+ * PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT
+ *
+ * The legacy behaviour of a VM_BIND is that it is resident whenever the
+ * context/vm is active on the GPU. That is when the user is executing their
+ * batch, all current VM_BIND objects are accessible via their defined user
+ * virtual addresses. This is relaxed for pagefaultable vm, where the virtual
+ * address may be faulted and loaded upon demand, thus not all the user objects
+ * are bound at the time of user execution.
+ *
+ * PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT changes the behaviour of the faultable
+ * VM_BIND such that is resident in memory and bound to that virtual address
+ * for the duration of the binding (until the equivalent VM_UNBIND). Like with
+ * the non-faultable vm, a resident object is always accessible by user
+ * execution without generating pagefaults. The exception being that if the
+ * object is marked for atomic access, the buffer has to be faulted in and out
+ * of device memory for CPU access. It is also possible for the buffer to be
+ * migrated via its preferred placement hint.
+ *
+ * If the entire resident set cannot fit within memory, an out of memory error
+ * is immediately reported from the ioctl.
+ */
 #define PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT	(1ull << 60)
 #define PRELIM_I915_GEM_VM_BIND_FD		(1ull << 59)
 
@@ -1266,7 +1327,10 @@ struct prelim_drm_i915_gem_vm_advise {
 	/** BO handle to apply hint */
 	__u32 handle;
 
-	/** VA start of address range to apply hint */
+	/**
+	 * chunk granular hints: offset from beginning of object to apply hint
+	 * address range hints: VA start of address range to apply hint
+	 */
 	__u64 start;
 
 	/** Length of range to apply attribute */
@@ -1275,10 +1339,17 @@ struct prelim_drm_i915_gem_vm_advise {
 	/**
 	 * Attributes to apply to address range or buffer object
 	 *
+	 * For object hints, hints may not be set on imported (prime_import)
+	 * objects and will return error (-EPERM). Hints may only be set against
+	 * the exported object,
+	 *
 	 * ATOMIC_SYSTEM
 	 *      inform that atomic access is enabled for both CPU and GPU.
 	 *      For some platforms, this may be required for correctness
 	 *      and this hint will influence migration policy.
+	 *      This hint is not allowed unless placement list includes SMEM,
+	 *      and is not allowed for exported buffer objects (prime_export)
+	 *	with placement list of LMEM + SMEM and returns error (-EPERM).
 	 * ATOMIC_DEVICE
 	 *      inform that atomic access is enabled for GPU devices. For
 	 *      some platforms, this may be required for correctness and

@@ -756,6 +756,45 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenFillingResumeAndStoppedThreadsFrom
     }
 }
 
+TEST(DebugSessionTest, givenThreadsStoppedWithPageFaultWhenCallingfillResumeAndStoppedThreadsFromNewlyStoppedThenCRIsWritten) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    EuThread::ThreadId thread = {0, 0, 0, 0, 1};
+
+    sessionMock->newlyStoppedThreads.push_back(thread);
+    sessionMock->onlyForceException = true;
+
+    std::vector<EuThread::ThreadId> resumeThreads;
+    std::vector<EuThread::ThreadId> stoppedThreads;
+    std::vector<EuThread::ThreadId> interruptedThreads;
+
+    sessionMock->allThreads[thread]->stopThread(1u);
+    sessionMock->allThreads[thread]->setPageFault(true);
+
+    sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
+    EXPECT_EQ(0u, resumeThreads.size());
+    EXPECT_EQ(1u, stoppedThreads.size());
+    EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
+    EXPECT_EQ(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, sessionMock->writeRegistersReg);
+    EXPECT_EQ(false, sessionMock->allThreads[thread]->getPageFault());
+
+    resumeThreads.clear();
+    stoppedThreads.clear();
+    sessionMock->newlyStoppedThreads.push_back(thread);
+    sessionMock->onlyForceException = true;
+    sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
+    EXPECT_EQ(1u, resumeThreads.size());
+    EXPECT_EQ(0u, stoppedThreads.size());
+    EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
+}
+
 TEST(DebugSessionTest, givenNoThreadsStoppedWhenCallingfillResumeAndStoppedThreadsFromNewlyStoppedThenReadStateSaveAreaNotCalled) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

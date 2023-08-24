@@ -20,6 +20,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 
 #include "common/StateSaveAreaHeader.h"
 
@@ -617,6 +618,61 @@ struct DebugApiLinuxFixture : public DeviceFixture {
     }
     DrmQueryMock *mockDrm = nullptr;
     static constexpr uint8_t bufferSize = 16;
+};
+
+struct DebugApiPageFaultEventFixture : public DebugApiLinuxFixture {
+    void setUp() {
+        DebugApiLinuxFixture::setUp();
+        zet_debug_config_t config = {};
+        config.pid = 0x1234;
+
+        sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+        ASSERT_NE(nullptr, sessionMock);
+        sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+        auto handler = new MockIoctlHandler;
+        sessionMock->ioctlHandler.reset(handler);
+        SIP::version version = {2, 0, 0};
+        initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+        handler->setPreadMemory(sessionMock->stateSaveAreaHeader.data(), sessionMock->stateSaveAreaHeader.size(), 0x1000);
+        sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
+        sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
+        DebugSessionLinux::BindInfo cssaInfo = {0x1000, sessionMock->stateSaveAreaHeader.size()};
+        sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
+    }
+
+    void tearDown() {
+        DebugApiLinuxFixture::tearDown();
+    }
+
+    void buildPfi915Event() {
+        buildPfi915Event(MockDebugSessionLinux::mockClientHandle);
+    }
+    void buildPfi915Event(uint64_t clientHandle) {
+        prelim_drm_i915_debug_event_page_fault pf = {};
+        pf.base.type = PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT;
+        pf.base.flags = 0;
+        pf.base.size = sizeof(prelim_drm_i915_debug_event_page_fault) + (bitmaskSize * 3u);
+        pf.client_handle = clientHandle;
+        pf.lrc_handle = lrcHandle;
+        pf.flags = 0;
+        pf.ci.engine_class = 0;
+        pf.ci.engine_instance = 0;
+        pf.bitmask_size = static_cast<uint32_t>(bitmaskSize * 3);
+
+        memcpy(data, &pf, sizeof(prelim_drm_i915_debug_event_page_fault));
+        memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_page_fault, bitmask)), bitmaskBefore.get(), bitmaskSize);
+        memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_page_fault, bitmask) + bitmaskSize), bitmaskAfter.get(), bitmaskSize);
+        memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_page_fault, bitmask) + (2 * bitmaskSize)), bitmaskResolved.get(), bitmaskSize);
+    }
+
+    size_t bitmaskSize = 256;
+    uint8_t data[sizeof(prelim_drm_i915_debug_event_page_fault) + (256 * 3)];
+    std::unique_ptr<uint8_t[]> bitmaskBefore, bitmaskAfter, bitmaskResolved;
+    std::unique_ptr<MockDebugSessionLinux> sessionMock;
+    uint64_t ctxHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
 };
 
 struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo {

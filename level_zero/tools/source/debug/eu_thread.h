@@ -163,6 +163,13 @@ class EuThread {
         DEBUG_BREAK_IF(reportedAsStopped && state != State::Stopped);
         return reportedAsStopped;
     }
+    void setPageFault(bool value) {
+        hasPageFault = value;
+    }
+    bool getPageFault() {
+        return hasPageFault;
+        ;
+    }
 
   public:
     static constexpr uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();
@@ -173,6 +180,7 @@ class EuThread {
     uint8_t systemRoutineCounter = 0;
     std::atomic<uint64_t> memoryHandle = invalidHandle;
     std::atomic<bool> reportedAsStopped = false;
+    bool hasPageFault = false;
 };
 
 static_assert(sizeof(EuThread::ThreadId) == sizeof(uint64_t));
