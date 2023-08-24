@@ -1215,14 +1215,14 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendBarrier(event, 0, nullptr);
+    commandList->appendBarrier(event, 0, nullptr, false);
 
     auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(event, 0, nullptr);
+    commandList->appendBarrier(event, 0, nullptr, false);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -1297,8 +1297,8 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
             auto event2 = std::unique_ptr<L0::Event>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
             ze_event_handle_t events[] = {event1->toHandle(), event2->toHandle()};
 
-            commandList->appendBarrier(nullptr, 0, nullptr);
-            commandList->appendBarrier(event->toHandle(), 2, events);
+            commandList->appendBarrier(nullptr, 0, nullptr, false);
+            commandList->appendBarrier(event->toHandle(), 2, events, false);
 
             auto result = event->hostSignal();
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);

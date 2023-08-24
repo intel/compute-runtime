@@ -1019,14 +1019,14 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendBarrier(nullptr, 1, &event);
+    commandList->appendBarrier(nullptr, 1, &event, false);
 
     auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(nullptr, 0, nullptr, false);
 }
 
 HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
@@ -1084,7 +1084,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
     verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, false), false, false);
 
-    verifyFlags(commandList->appendBarrier(nullptr, 0, nullptr), true, true);
+    verifyFlags(commandList->appendBarrier(nullptr, 0, nullptr, false), true, true);
 
     verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false), false, false);
 
@@ -1447,7 +1447,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
         verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, nullptr, numWaitlistEvents, waitlist, false),
                     hasEventDependencies, hasEventDependencies);
 
-        verifyFlags(commandList->appendBarrier(nullptr, numWaitlistEvents, waitlist),
+        verifyFlags(commandList->appendBarrier(nullptr, numWaitlistEvents, waitlist, false),
                     false, false);
 
         verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, numWaitlistEvents, waitlist, false, false),
@@ -1560,6 +1560,69 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 }
 
+HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingBarrierThenAllowForRelaxedOrdering, IsAtLeastXeHpcCore) {
+    bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    auto commandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+    whiteBoxCmdList->enableInOrderExecution();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+    ultCsr->registerClient();
+    ultCsr->registerClient();
+
+    // Initialize NP state
+    commandList->appendBarrier(nullptr, 1, &event, false);
+
+    if (useImmediateFlushTask) {
+        EXPECT_TRUE(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies);
+        EXPECT_FALSE(ultCsr->recordedImmediateDispatchFlags.hasStallingCmds);
+    } else {
+        EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies);
+        EXPECT_FALSE(ultCsr->recordedDispatchFlags.hasStallingCmds);
+    }
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+
+    commandList->appendBarrier(nullptr, 1, &event, false);
+
+    if (useImmediateFlushTask) {
+        EXPECT_TRUE(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies);
+        EXPECT_FALSE(ultCsr->recordedImmediateDispatchFlags.hasStallingCmds);
+    } else {
+        EXPECT_TRUE(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies);
+        EXPECT_FALSE(ultCsr->recordedDispatchFlags.hasStallingCmds);
+    }
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+}
+
 HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrderingThenProgramConditionalBbStart, IsAtLeastXeHpcCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
@@ -1642,7 +1705,7 @@ TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppen
     whiteBoxCmdList->csr = &mockCommandStreamReceiver;
     static_cast<WhiteBox<::L0::CommandQueue> *>(whiteBoxCmdList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
-    const auto appendBarrierResult = commandList->appendBarrier(nullptr, 0, nullptr);
+    const auto appendBarrierResult = commandList->appendBarrier(nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, appendBarrierResult);
 
     whiteBoxCmdList->csr = oldCsr;
@@ -1706,7 +1769,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    returnValue = commandList->appendBarrier(nullptr, 1, &event);
+    returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -1997,7 +2060,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    returnValue = commandList->appendBarrier(nullptr, 1, &event);
+    returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendSignalEvent(event);
@@ -2211,14 +2274,14 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendBarrier(event, 0, nullptr);
+    commandList->appendBarrier(event, 0, nullptr, false);
 
     auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(nullptr, 0, nullptr, false);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndCopyEngineAndAppendBarrierThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -2255,14 +2318,14 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndCopyEngineAndApp
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendBarrier(event, 0, nullptr);
+    commandList->appendBarrier(event, 0, nullptr, false);
 
     auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(nullptr, 0, nullptr, false);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -2509,7 +2572,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenSetBarrierThenMiFlus
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(nullptr, 0, nullptr, false);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -2532,7 +2595,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWithCopyOnlyWhenSetBarrierT
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     auto &commandContainer = commandList->getCmdContainer();
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(nullptr, 0, nullptr, false);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -2600,7 +2663,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenSetBarrierThenPipeControlIsProgr
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(nullptr, 0, nullptr, false);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -2615,7 +2678,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendingBarrierThenPipeControl
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    returnValue = commandList->appendBarrier(nullptr, 0, nullptr);
+    returnValue = commandList->appendBarrier(nullptr, 0, nullptr, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -2635,7 +2698,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendingBarrierThenPipeControl
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    returnValue = commandList->appendBarrier(nullptr, 0, nullptr);
+    returnValue = commandList->appendBarrier(nullptr, 0, nullptr, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -2653,7 +2716,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendingBarrierThenPipeControl
 HWTEST_F(CommandListCreate, givenCommandListWhenAppendingBarrierWithIncorrectWaitEventsThenInvalidArgumentIsReturned) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    returnValue = commandList->appendBarrier(nullptr, 4, nullptr);
+    returnValue = commandList->appendBarrier(nullptr, 4, nullptr, false);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 

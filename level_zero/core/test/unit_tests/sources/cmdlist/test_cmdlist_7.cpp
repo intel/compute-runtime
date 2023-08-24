@@ -2425,7 +2425,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
-    cmdList.appendBarrier(nullptr, 0, nullptr);
+    cmdList.appendBarrier(nullptr, 0, nullptr, false);
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, event->toHandle(), 0, nullptr, false, false);
     EXPECT_EQ(res, ZE_RESULT_ERROR_DEVICE_LOST);
 
@@ -2456,7 +2456,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
-    cmdList.appendBarrier(nullptr, 0, nullptr);
+    cmdList.appendBarrier(nullptr, 0, nullptr, false);
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
@@ -2477,7 +2477,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrier
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
 
-    cmdList.appendBarrier(nullptr, 0, nullptr);
+    cmdList.appendBarrier(nullptr, 0, nullptr, false);
 
     EXPECT_TRUE(cmdList.dependenciesPresent);
 
@@ -2536,9 +2536,9 @@ class MockAppendMemoryLockedCopyTestImmediateCmdList : public MockCommandListImm
         appendMemoryCopyKernelWithGACalled++;
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t appendBarrier(ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+    ze_result_t appendBarrier(ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
         appendBarrierCalled++;
-        return MockCommandListImmediateHw<gfxCoreFamily>::appendBarrier(hEvent, numWaitEvents, phWaitEvents);
+        return MockCommandListImmediateHw<gfxCoreFamily>::appendBarrier(hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     }
 
     void synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList) override {
@@ -3157,7 +3157,7 @@ HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenApp
 
     returnValue = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = commandList->appendBarrier(event->toHandle(), 0, nullptr);
+    returnValue = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_EQ(event.get(), commandList->peekMappedEventList()[0]);

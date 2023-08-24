@@ -694,7 +694,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendBarrier(nullptr, 1, &eventHandle);
+    commandListImmediate->appendBarrier(nullptr, 1, &eventHandle, false);
 
     EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 }

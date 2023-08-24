@@ -785,7 +785,7 @@ HWTEST_F(CommandQueueCreate, givenQueueInAsyncModeAndRugularCmdListWithAppendBar
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(nullptr, 0, nullptr, false);
 
     commandQueue->destroy();
 }
@@ -807,7 +807,7 @@ HWTEST_F(CommandQueueCreate, givenQueueInSyncModeAndRugularCmdListWithAppendBarr
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(nullptr, 0, nullptr, false);
 
     commandQueue->destroy();
 }

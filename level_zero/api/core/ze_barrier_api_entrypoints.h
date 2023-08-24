@@ -17,7 +17,7 @@ ze_result_t zeCommandListAppendBarrier(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeCommandListAppendMemoryRangesBarrier(

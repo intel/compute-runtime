@@ -302,7 +302,7 @@ struct MockCommandList : public CommandList {
     ADDMETHOD_NOBASE(appendBarrier, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents));
+                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
 
     ADDMETHOD_NOBASE(appendMemoryRangesBarrier, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numRanges,

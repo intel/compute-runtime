@@ -487,28 +487,29 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSkippingInOrderBarrierAllo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
-    if (isInOrderExecutionEnabled() && isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
-        if (hSignalEvent) {
-            Event::fromHandle(hSignalEvent)->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
+    if (isInOrderExecutionEnabled()) {
+        if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
+            if (hSignalEvent) {
+                Event::fromHandle(hSignalEvent)->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
+            }
+
+            return ZE_RESULT_SUCCESS;
         }
 
-        return ZE_RESULT_SUCCESS;
+        relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
     }
 
     checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize);
     if (this->isFlushTaskSubmissionEnabled) {
         checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
-    ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
+    ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
 
     this->dependenciesPresent = true;
-    return flushImmediate(ret, true, true, false, hSignalEvent);
+    return flushImmediate(ret, true, !relaxedOrderingDispatch, relaxedOrderingDispatch, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1030,7 +1031,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         if (waitOnHost) {
             this->synchronizeEventList(numWaitEvents, phWaitEvents);
         } else {
-            this->appendBarrier(nullptr, numWaitEvents, phWaitEvents);
+            this->appendBarrier(nullptr, numWaitEvents, phWaitEvents, false);
         }
     }
 

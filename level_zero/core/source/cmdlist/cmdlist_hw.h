@@ -77,7 +77,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t close() override;
     ze_result_t appendEventReset(ze_event_handle_t hEvent) override;
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents) override;
+                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
     ze_result_t appendMemoryRangesBarrier(uint32_t numRanges,
                                           const size_t *pRangeSizes,
                                           const void **pRanges,

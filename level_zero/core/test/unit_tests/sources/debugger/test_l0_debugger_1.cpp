@@ -330,7 +330,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = commandList->appendBarrier(nullptr, 1, &event);
+    returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendSignalEvent(event);
@@ -394,7 +394,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
     returnValue = commandList->appendWaitOnEvents(1, &event, false, true, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = commandList->appendBarrier(nullptr, 1, &event);
+    returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendSignalEvent(event);

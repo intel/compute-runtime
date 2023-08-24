@@ -2200,7 +2200,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     auto &csrStream = csrImmediate.commandStream;
 
     size_t csrUsedBefore = csrStream.getUsed();
-    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr);
+    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr, false);
     size_t csrUsedAfter = csrStream.getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

@@ -628,7 +628,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
-    result = commandList->appendBarrier(event->toHandle(), 0, nullptr);
+    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -660,7 +660,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
-    result = commandList->appendBarrier(event->toHandle(), 0, nullptr);
+    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -673,7 +673,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr);
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -703,7 +703,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
-    result = commandList->appendBarrier(event->toHandle(), 0, nullptr);
+    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -719,7 +719,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenI
 
     EXPECT_EQ(whiteBoxCmdList->csr->getNextBarrierCount(), 0u);
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr);
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(whiteBoxCmdList->csr->getNextBarrierCount(), 2u);
 

@@ -80,7 +80,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t appendEventReset(ze_event_handle_t hEvent) = 0;
     virtual ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents) = 0;
+                                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
     virtual ze_result_t appendMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                                   const void **pRanges,
                                                   ze_event_handle_t hSignalEvent,

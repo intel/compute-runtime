@@ -2948,11 +2948,9 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
-                                                                uint32_t numWaitEvents,
-                                                                ze_event_handle_t *phWaitEvents) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, false, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, true);
     if (ret) {
         return ret;
     }

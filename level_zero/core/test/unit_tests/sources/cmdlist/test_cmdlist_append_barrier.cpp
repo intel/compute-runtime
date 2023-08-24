@@ -24,7 +24,7 @@ HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerate
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr);
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -47,7 +47,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     commandList->reset();
-    auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr);
+    auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -63,7 +63,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
 
     commandList->reset();
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendBarrier(nullptr, 0, nullptr);
+    result = commandList->appendBarrier(nullptr, 0, nullptr, false);
     usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -243,7 +243,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
 
         auto useSizeBefore = cmdListStream->getUsed();
-        auto result = commandList->appendBarrier(eventHandle, 0, nullptr);
+        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, false);
         auto useSizeAfter = cmdListStream->getUsed();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, event->getPacketsInUse());
@@ -357,7 +357,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         size_t stopRegisters = timestampRegisters + postBarrierSynchronization;
 
         auto useSizeBefore = cmdListStream->getUsed();
-        auto result = commandList->appendBarrier(eventHandle, 0, nullptr);
+        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, false);
         auto useSizeAfter = cmdListStream->getUsed();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, eventTimeStamp->getPacketsInUse());
@@ -461,7 +461,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
     auto gpuStartAddress = gpuBaseAddress +
                            startOffset;
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr);
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -511,7 +511,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
                 sizeof(PIPE_CONTROL));
     cmdListStream->getSpace(useSize);
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr);
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto secondBatchBufferAllocation = cmdListStream->getGraphicsAllocation();
@@ -602,7 +602,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     uint64_t crossTileSyncGpuAddress = startGpuAddress +
                                        sizeBarrierCommands;
 
-    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr);
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedAfterSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, estimatedSize);
@@ -681,7 +681,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
     size_t usedBeforeSize = cmdStream->getUsed();
 
-    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr);
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedAfterSize = cmdStream->getUsed();
 

@@ -969,7 +969,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingSemaphoreThenProg
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendBarrier(nullptr, 1, &eventHandle);
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -1005,7 +1005,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenP
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendBarrier(nullptr, 1, &eventHandle);
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -1048,7 +1048,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAsMaskWhenDispatchingStoreDataIm
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendBarrier(nullptr, 1, &eventHandle);
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
 
     {
         GenCmdList cmdList;
@@ -1065,7 +1065,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAsMaskWhenDispatchingStoreDataIm
 
     offset = cmdStream->getUsed();
 
-    immCmdList->appendBarrier(nullptr, 1, &eventHandle);
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
 
     {
         GenCmdList cmdList;
@@ -2046,7 +2046,7 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingBarrierThe
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList2->appendBarrier(nullptr, 1, &eventHandle);
+    immCmdList2->appendBarrier(nullptr, 1, &eventHandle, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -2081,7 +2081,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithW
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList2->appendBarrier(nullptr, 1, &eventHandle);
+    immCmdList2->appendBarrier(nullptr, 1, &eventHandle, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -2117,8 +2117,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
 
     auto eventHandle = events[0]->toHandle();
 
-    immCmdList->appendBarrier(nullptr, 0, nullptr);
-    immCmdList->appendBarrier(eventHandle, 0, nullptr);
+    immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+    immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
 
     EXPECT_EQ(offset, cmdStream->getUsed());
 
@@ -2143,7 +2143,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithD
 
     ze_event_handle_t waitlist[] = {events[0]->toHandle(), events[1]->toHandle()};
 
-    immCmdList2->appendBarrier(events[2]->toHandle(), 2, waitlist);
+    immCmdList2->appendBarrier(events[2]->toHandle(), 2, waitlist, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -2181,7 +2181,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
 
     auto eventHandle = events[0]->toHandle();
 
-    immCmdList->appendBarrier(eventHandle, 0, nullptr);
+    immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -2895,7 +2895,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     regularCmdList->appendSignalEvent(eventHandle);
 
-    regularCmdList->appendBarrier(nullptr, 1, &eventHandle);
+    regularCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
 
     {
         GenCmdList cmdList;
