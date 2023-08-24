@@ -320,3 +320,9 @@ HWTEST2_F(XeLpgProductHelperTests, whenSetForceNonCoherentThenNothingChanged, Is
     EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED, stateComputeMode.getForceNonCoherent());
     EXPECT_EQ(0u, stateComputeMode.getMaskBits());
 }
+
+HWTEST2_F(XeLpgProductHelperTests, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet, IsXeLpg) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::MTL_M_A0);
+}

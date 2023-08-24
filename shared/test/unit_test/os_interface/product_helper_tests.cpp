@@ -340,7 +340,7 @@ HWTEST_F(ProductHelperTest, WhenCheckAssignEngineRoundRobinSupportedThenReturnFa
     EXPECT_FALSE(productHelper->isAssignEngineRoundRobinSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned, IsNotXeHpgOrXeHpcCore) {
 
     auto isRcs = false;
     const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(pInHwInfo, isRcs, releaseHelper);
