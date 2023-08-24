@@ -123,12 +123,6 @@ MTLTEST_F(MtlProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSuppor
     FrontEndPropertiesSupport fePropertiesSupport{};
     productHelper->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, hwInfo);
     EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
-
-    hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, hwInfo);
-    EXPECT_TRUE(productHelper->isDisableOverdispatchAvailable(hwInfo));
-
-    productHelper->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, hwInfo);
-    EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
 MTLTEST_F(MtlProductHelper, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
@@ -151,62 +145,20 @@ MTLTEST_F(MtlProductHelper, givenCompressionFtrEnabledWhenAskingForPageTableMana
     EXPECT_TRUE(productHelper->isPageTableManagerSupported(hwInfo));
 }
 
-MTLTEST_F(MtlProductHelper, givenHwIpVersionWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenAllowOnlyOn12700And12710) {
+MTLTEST_F(MtlProductHelper, givenHwIpVersionWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenAllowBasedOnReleaseHelper) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    hwInfo.ipVersion.architecture = 12;
-    hwInfo.ipVersion.release = 70;
-    hwInfo.ipVersion.revision = 0;
-    refreshReleaseHelper(&hwInfo);
+    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_M_A0, AOT::MTL_M_B0, AOT::MTL_P_A0, AOT::MTL_P_B0};
+    for (auto &ipRelease : ipReleases) {
+        hwInfo.ipVersion.value = ipRelease;
+        refreshReleaseHelper(&hwInfo);
 
-    {
         const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
 
         EXPECT_FALSE(isExtendedWARequired);
-        EXPECT_TRUE(isBasicWARequired);
+        EXPECT_EQ(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(), isBasicWARequired);
     }
-
-    hwInfo.ipVersion.revision = 4;
-    refreshReleaseHelper(&hwInfo);
-
-    {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
-
-        EXPECT_FALSE(isExtendedWARequired);
-        EXPECT_FALSE(isBasicWARequired);
-    }
-
-    hwInfo.ipVersion.release = 71;
-    hwInfo.ipVersion.revision = 0;
-    refreshReleaseHelper(&hwInfo);
-
-    {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
-
-        EXPECT_FALSE(isExtendedWARequired);
-        EXPECT_TRUE(isBasicWARequired);
-    }
-
-    hwInfo.ipVersion.revision = 4;
-    refreshReleaseHelper(&hwInfo);
-
-    {
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
-
-        EXPECT_FALSE(isExtendedWARequired);
-        EXPECT_FALSE(isBasicWARequired);
-    }
-}
-
-MTLTEST_F(MtlProductHelper, givenNoReleaseHelperWhenisPipeControlPriorToNonPipelinedStateCommandsWARequiredThenCorrectValuesAreReturned) {
-    auto &rootDeviceEnvironment = *this->executionEnvironment->rootDeviceEnvironments[0].get();
-    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    ReleaseHelper *releaseHelper = nullptr;
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, false, releaseHelper);
-
-    EXPECT_FALSE(isExtendedWARequired);
-    EXPECT_TRUE(isBasicWARequired);
 }
 
 MTLTEST_F(MtlProductHelper, givenMtlAndReleaseHelperNullptrWhenCallingGetMediaFrequencyTileIndexThenReturnFalse) {
