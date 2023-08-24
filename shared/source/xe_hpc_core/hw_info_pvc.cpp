@@ -186,6 +186,7 @@ void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 
     // non-zero values for unit tests
     if (gtSysInfo->SliceCount == 0) {
+        setupHardwareInfoMultiTileBase(hwInfo, true);
         gtSysInfo->SliceCount = 2;
         gtSysInfo->SubSliceCount = 8;
         gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
@@ -213,5 +214,11 @@ void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     }
 };
 
-#include "hw_info_setup_pvc.inl"
+const HardwareInfo PVC::hwInfo = PvcHwConfig::hwInfo;
+
+void setupPVCHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+    PvcHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+}
+
+void (*PVC::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupPVCHardwareInfoImpl;
 } // namespace NEO

@@ -51,7 +51,6 @@ set(RUNTIME_SRCS_DLL_LINUX
     ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
-    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
     ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp

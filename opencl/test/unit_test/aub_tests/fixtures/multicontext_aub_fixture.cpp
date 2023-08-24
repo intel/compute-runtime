@@ -39,7 +39,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
 
     HardwareInfo localHwInfo = *defaultHwInfo;
-    if ((EnabledCommandStreamers::All == enabledCommandStreamers) && localHwInfo.gtSystemInfo.SliceCount < 8) {
+    if (EnabledCommandStreamers::All == enabledCommandStreamers) {
         overridePlatformConfigForAllEnginesSupport(localHwInfo);
     }
 

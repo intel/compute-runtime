@@ -64,8 +64,6 @@ To check support for any device, you can follow these steps:
 1. Check if this Device ID is enumerated in the
 [supported device list](https://github.com/intel/compute-runtime/blob/master/shared/source/dll/devices/devices_base.inl)
 
-Note: Additional [list](https://github.com/intel/compute-runtime/blob/master/shared/source/dll/devices/devices_additional.inl) for some newer devices
-
 ### When will support for platform X be added?
 
 We will start adding platform support after platform is disclosed by Intel.

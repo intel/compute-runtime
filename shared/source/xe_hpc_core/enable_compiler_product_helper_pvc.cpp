@@ -16,7 +16,6 @@
 #include "shared/source/xe_hpc_core/hw_cmds.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 
-#include "compiler_product_helper_pvc.inl"
 #include "platforms.h"
 namespace NEO {
 template <>

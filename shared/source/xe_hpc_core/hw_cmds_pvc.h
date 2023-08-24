@@ -77,5 +77,4 @@ class PvcHwConfig : public PVC {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-#include "hw_cmds_pvc.inl"
 } // namespace NEO
