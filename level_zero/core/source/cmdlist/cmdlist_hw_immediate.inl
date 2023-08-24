@@ -385,7 +385,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
     this->cmdQImmediate->setTaskCount(completionStamp.taskCount);
 
-    if (this->isSyncModeQueue) {
+    if (this->isSyncModeQueue || this->printfKernelContainer.size() > 0u) {
         status = hostSynchronize(std::numeric_limits<uint64_t>::max(), completionStamp.taskCount, true);
     }
 
@@ -1242,10 +1242,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::printKernelsPrintfOutput(bool hangDetected) {
     size_t size = this->printfKernelContainer.size();
     for (size_t i = 0; i < size; i++) {
-        std::lock_guard<std::mutex> lock(static_cast<DeviceImp *>(this->device)->printfKernelMutex);
-        if (!this->printfKernelContainer[i].expired()) {
-            this->printfKernelContainer[i].lock()->printPrintfOutput(hangDetected);
-        }
+        this->printfKernelContainer[i]->printPrintfOutput(hangDetected);
     }
     this->printfKernelContainer.clear();
 }

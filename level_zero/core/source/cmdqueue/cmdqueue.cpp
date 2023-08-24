@@ -189,10 +189,7 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
 void CommandQueueImp::printKernelsPrintfOutput(bool hangDetected) {
     size_t size = this->printfKernelContainer.size();
     for (size_t i = 0; i < size; i++) {
-        std::lock_guard<std::mutex> lock(static_cast<DeviceImp *>(this->getDevice())->printfKernelMutex);
-        if (!this->printfKernelContainer[i].expired()) {
-            this->printfKernelContainer[i].lock()->printPrintfOutput(hangDetected);
-        }
+        this->printfKernelContainer[i]->printPrintfOutput(hangDetected);
     }
     this->printfKernelContainer.clear();
 }

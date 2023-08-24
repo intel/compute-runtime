@@ -24,9 +24,7 @@
 #include "shared/source/xe_hp_core/hw_info.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
-#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
@@ -173,9 +171,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     Event *compactEvent = nullptr;
     if (event) {
         if (kernel->getPrintfBufferAllocation() != nullptr) {
-            auto module = static_cast<const ModuleImp *>(&static_cast<KernelImp *>(kernel)->getParentModule());
-            event->setKernelForPrintf(module->getPrintfKernelWeakPtr(kernel->toHandle()));
-            event->setKernelWithPrintfDeviceMutex(kernel->getDevicePrintfKernelMutex());
+            event->setKernelForPrintf(kernel);
         }
         isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
         if (compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {

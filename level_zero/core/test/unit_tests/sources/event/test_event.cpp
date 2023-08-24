@@ -3569,36 +3569,31 @@ TEST_F(EventTests, GivenResetAllPacketsFalseWhenResetPacketsThenKernelCountAndPa
 TEST_F(EventTests, givenCallToEventQueryStatusWithKernelPointerReturnsCounter) {
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     Mock<Module> mockModule(this->device, nullptr);
-    std::shared_ptr<Mock<KernelImp>> mockKernel{new Mock<KernelImp>()};
-    mockKernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel->module = &mockModule;
+    Mock<KernelImp> mockKernel;
+    mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
+    mockKernel.module = &mockModule;
 
-    std::mutex mockDevicePrintfKernelMutex;
-    event->setKernelForPrintf(std::weak_ptr<Kernel>{mockKernel});
-    event->setKernelWithPrintfDeviceMutex(&mockDevicePrintfKernelMutex);
-    EXPECT_FALSE(event->getKernelForPrintf().expired());
-    EXPECT_NE(nullptr, event->getKernelWithPrintfDeviceMutex());
+    event->setKernelForPrintf(&mockKernel);
+    EXPECT_NE(nullptr, event->getKernelForPrintf());
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     event->hostSynchronize(timeout);
-    EXPECT_EQ(1u, mockKernel->printPrintfOutputCalledTimes);
+    EXPECT_EQ(1u, mockKernel.printPrintfOutputCalledTimes);
 }
 
 TEST_F(EventTests, givenCallToEventQueryStatusWithNullKernelPointerReturnsCounter) {
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     Mock<Module> mockModule(this->device, nullptr);
-    std::shared_ptr<Mock<KernelImp>> mockKernel{new Mock<KernelImp>()};
-    mockKernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel->module = &mockModule;
+    Mock<KernelImp> mockKernel;
+    mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
+    mockKernel.module = &mockModule;
 
-    event->resetKernelForPrintf();
-    event->resetKernelWithPrintfDeviceMutex();
-    EXPECT_TRUE(event->getKernelForPrintf().expired());
-    EXPECT_EQ(nullptr, event->getKernelWithPrintfDeviceMutex());
+    event->setKernelForPrintf(nullptr);
+    EXPECT_EQ(nullptr, event->getKernelForPrintf());
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     event->hostSynchronize(timeout);
-    EXPECT_EQ(0u, mockKernel->printPrintfOutputCalledTimes);
+    EXPECT_EQ(0u, mockKernel.printPrintfOutputCalledTimes);
 }
 
 TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {

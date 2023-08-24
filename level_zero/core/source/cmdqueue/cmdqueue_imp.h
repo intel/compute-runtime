@@ -137,7 +137,7 @@ struct CommandQueueImp : public CommandQueue {
     NEO::LinearStream firstCmdListStream{};
     NEO::HeapContainer heapContainer;
     ze_command_queue_desc_t desc;
-    std::vector<std::weak_ptr<Kernel>> printfKernelContainer;
+    std::vector<Kernel *> printfKernelContainer;
 
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;

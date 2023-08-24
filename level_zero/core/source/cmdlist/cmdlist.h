@@ -226,7 +226,7 @@ struct CommandList : _ze_command_list_handle_t {
         return indirectAllocationsAllowed;
     }
 
-    std::vector<std::weak_ptr<Kernel>> &getPrintfKernelContainer() {
+    std::vector<Kernel *> &getPrintfKernelContainer() {
         return this->printfKernelContainer;
     }
 
@@ -357,7 +357,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
-    std::vector<std::weak_ptr<Kernel>> printfKernelContainer;
+    std::vector<Kernel *> printfKernelContainer;
 
     NEO::CommandContainer commandContainer;
 

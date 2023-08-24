@@ -22,7 +22,6 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel.h"
-#include "level_zero/core/source/kernel/kernel_imp.h"
 
 namespace L0 {
 
@@ -39,12 +38,11 @@ CommandList::~CommandList() {
 }
 
 void CommandList::storePrintfKernel(Kernel *kernel) {
-    auto it = std::find_if(this->printfKernelContainer.begin(), this->printfKernelContainer.end(),
-                           [&kernel](const auto &printfKernel) { return printfKernel.lock().get() == kernel; });
+    auto it = std::find(this->printfKernelContainer.begin(), this->printfKernelContainer.end(),
+                        kernel);
 
     if (it == this->printfKernelContainer.end()) {
-        auto module = static_cast<const ModuleImp *>(&static_cast<KernelImp *>(kernel)->getParentModule());
-        this->printfKernelContainer.push_back(module->getPrintfKernelWeakPtr(kernel->toHandle()));
+        this->printfKernelContainer.push_back(kernel);
     }
 }
 

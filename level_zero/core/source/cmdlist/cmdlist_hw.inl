@@ -388,10 +388,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     if (hEvent) {
         event = Event::fromHandle(hEvent);
         if (Kernel::fromHandle(kernelHandle)->getPrintfBufferAllocation() != nullptr) {
-            Kernel *kernel = Kernel::fromHandle(kernelHandle);
-            auto module = static_cast<const ModuleImp *>(&static_cast<KernelImp *>(kernel)->getParentModule());
-            event->setKernelForPrintf(module->getPrintfKernelWeakPtr(kernelHandle));
-            event->setKernelWithPrintfDeviceMutex(kernel->getDevicePrintfKernelMutex());
+            event->setKernelForPrintf(Kernel::fromHandle(kernelHandle));
         }
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }

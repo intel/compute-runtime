@@ -18,7 +18,6 @@
 #include <chrono>
 #include <limits>
 #include <memory>
-#include <mutex>
 #include <vector>
 
 struct _ze_event_handle_t {};
@@ -197,23 +196,11 @@ struct Event : _ze_event_handle_t {
     uint32_t getMaxKernelCount() const {
         return maxKernelCount;
     }
-    void setKernelForPrintf(std::weak_ptr<Kernel> inputKernelWeakPtr) {
-        kernelWithPrintf = inputKernelWeakPtr;
+    void setKernelForPrintf(Kernel *inputKernelPtr) {
+        kernelWithPrintf = inputKernelPtr;
     }
-    std::weak_ptr<Kernel> getKernelForPrintf() {
+    Kernel *getKernelForPrintf() {
         return kernelWithPrintf;
-    }
-    void resetKernelForPrintf() {
-        kernelWithPrintf.reset();
-    }
-    void setKernelWithPrintfDeviceMutex(std::mutex *mutexPtr) {
-        kernelWithPrintfDeviceMutex = mutexPtr;
-    }
-    std::mutex *getKernelWithPrintfDeviceMutex() {
-        return kernelWithPrintfDeviceMutex;
-    }
-    void resetKernelWithPrintfDeviceMutex() {
-        kernelWithPrintfDeviceMutex = nullptr;
     }
 
     bool isSignalScope() const {
@@ -275,8 +262,7 @@ struct Event : _ze_event_handle_t {
     void *hostAddress = nullptr;
     Device *device = nullptr;
     EventPool *eventPool = nullptr;
-    std::weak_ptr<Kernel> kernelWithPrintf = std::weak_ptr<Kernel>();
-    std::mutex *kernelWithPrintfDeviceMutex = nullptr;
+    Kernel *kernelWithPrintf = nullptr;
     NEO::GraphicsAllocation *inOrderExecDataAllocation = nullptr;
     CommandQueue *latestUsedCmdQueue = nullptr;
 

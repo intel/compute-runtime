@@ -178,7 +178,7 @@ std::unique_ptr<WhiteBox<::L0::KernelImp>> ModuleFixture::createKernelWithName(s
 }
 
 void ModuleFixture::tearDown() {
-    kernel.reset();
+    kernel.reset(nullptr);
     module.reset(nullptr);
     DeviceFixture::tearDown();
 }
@@ -219,7 +219,7 @@ void MultiDeviceModuleFixture::createKernel(uint32_t rootDeviceIndex) {
 }
 
 void MultiDeviceModuleFixture::tearDown() {
-    kernel.reset();
+    kernel.reset(nullptr);
     for (auto &module : modules) {
         module.reset(nullptr);
     }
