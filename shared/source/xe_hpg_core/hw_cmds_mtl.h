@@ -25,7 +25,6 @@ struct MTL : public XeHpgCoreFamily {
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper);
-    static void setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo);
 };
 
 class MtlHwConfig : public MTL {
@@ -37,5 +36,4 @@ class MtlHwConfig : public MTL {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-#include "hw_cmds_mtl.inl"
 } // namespace NEO

@@ -21,6 +21,11 @@ bool CompilerProductHelperHw<gfxProduct>::isForceEmuInt32DivRemSPRequired() cons
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint64_t CompilerProductHelperHw<gfxProduct>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x0;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isStatelessToStatefulBufferOffsetSupported() const {
     return true;
 }

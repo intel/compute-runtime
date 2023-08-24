@@ -138,11 +138,6 @@ void MTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-void MTL::setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->MultiTileArchInfo.IsValid = false;
-}
-
 const HardwareInfo MtlHwConfig::hwInfo = {
     &MTL::platform,
     &MTL::featureTable,
@@ -152,6 +147,7 @@ const HardwareInfo MtlHwConfig::hwInfo = {
 
 GT_SYSTEM_INFO MtlHwConfig::gtSystemInfo = {0};
 void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    MTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsL3HashModeEnabled = false;
@@ -167,11 +163,7 @@ void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
         gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
 
-        gtSysInfo->L3CacheSizeInKb = 1;
         gtSysInfo->L3BankCount = 1;
-
-        gtSysInfo->CCSInfo.IsValid = true;
-        gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
 
         hwInfo->featureTable.ftrBcsInfo = 1;
         gtSysInfo->IsDynamicallyPopulated = true;
@@ -179,11 +171,18 @@ void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
             gtSysInfo->SliceInfo[slice].Enabled = true;
         }
     }
+    gtSysInfo->L3CacheSizeInKb = 1;
 
     if (setupFeatureTableAndWorkaroundTable) {
         MTL::setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
 
+const HardwareInfo MTL::hwInfo = MtlHwConfig::hwInfo;
+
+void setupMTLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+    MtlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+}
+
+void (*MTL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupMTLHardwareInfoImpl;
 } // namespace NEO
-#include "hw_info_setup_mtl.inl"

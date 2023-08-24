@@ -38,6 +38,13 @@ NAMEDDEVICE(0x56A6, Dg2HwConfig, "Intel(R) Arc(TM) A310 Graphics")
 NAMEDDEVICE(0x56C0, Dg2HwConfig, "Intel(R) Data Center GPU Flex 170")
 NAMEDDEVICE(0x56C1, Dg2HwConfig, "Intel(R) Data Center GPU Flex 140")
 #endif
+#ifdef SUPPORT_MTL
+DEVICE(0x7D40, MtlHwConfig)
+DEVICE(0x7D55, MtlHwConfig)
+DEVICE(0x7DD5, MtlHwConfig)
+DEVICE(0x7D45, MtlHwConfig)
+DEVICE(0x7D60, MtlHwConfig)
+#endif
 #endif
 
 #ifdef SUPPORT_XE_HP_CORE

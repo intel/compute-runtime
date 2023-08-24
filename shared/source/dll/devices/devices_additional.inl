@@ -18,13 +18,3 @@ NAMEDDEVICE(0x0BDB, PvcHwConfig, "Intel(R) Data Center GPU Max 1100")
 NAMEDDEVICE(0x0B69, PvcHwConfig, "Intel(R) Data Center GPU Max 1450")
 #endif
 #endif
-
-#ifdef SUPPORT_XE_HPG_CORE
-#ifdef SUPPORT_MTL
-DEVICE(0x7D40, MtlHwConfig)
-DEVICE(0x7D55, MtlHwConfig)
-DEVICE(0x7DD5, MtlHwConfig)
-DEVICE(0x7D45, MtlHwConfig)
-DEVICE(0x7D60, MtlHwConfig)
-#endif
-#endif

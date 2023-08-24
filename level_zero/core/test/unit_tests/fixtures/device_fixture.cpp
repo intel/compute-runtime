@@ -163,6 +163,12 @@ void MultipleDevicesWithCustomHwInfo::setUp() {
     hwInfo = *NEO::defaultHwInfo.get();
 
     hwInfo.gtSystemInfo.SliceCount = sliceCount;
+    for (uint32_t slice = 0; slice < sliceCount; slice++) {
+        hwInfo.gtSystemInfo.SliceInfo[slice].Enabled = true;
+    }
+    for (uint32_t slice = sliceCount; slice < GT_MAX_SLICE; slice++) {
+        hwInfo.gtSystemInfo.SliceInfo[slice].Enabled = false;
+    }
     hwInfo.gtSystemInfo.SubSliceCount = subsliceCount;
     hwInfo.gtSystemInfo.EUCount = subsliceCount * numEuPerSubslice;
     hwInfo.gtSystemInfo.ThreadCount = subsliceCount * numEuPerSubslice * numThreadsPerEu;
