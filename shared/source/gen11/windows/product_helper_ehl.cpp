@@ -12,4 +12,6 @@
 
 constexpr static auto gfxProduct = IGFX_ELKHARTLAKE;
 
+#include "shared/source/os_interface/product_helper_before_gen12lp.inl"
+
 template class NEO::ProductHelperHw<gfxProduct>;
