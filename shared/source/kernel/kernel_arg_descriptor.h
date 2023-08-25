@@ -264,7 +264,7 @@ template <>
 inline ArgDescValue &ArgDescriptor::as<ArgDescValue>(bool initIfUnknown) {
     if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTValue;
-        this->asByValue = {};
+        this->asByValue.elements.clear();
     }
     UNRECOVERABLE_IF(type != ArgTValue);
     return this->asByValue;
