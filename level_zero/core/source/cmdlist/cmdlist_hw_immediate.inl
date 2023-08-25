@@ -483,7 +483,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSkippingInOrderBarrierAllo
 
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
-    return !(signalEvent && signalEvent->isEventTimestampFlagSet());
+    return !(signalEvent && (signalEvent->isEventTimestampFlagSet() || !signalEvent->isInOrderExecEvent()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -493,7 +493,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
             if (hSignalEvent) {
-                Event::fromHandle(hSignalEvent)->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
+                Event::fromHandle(hSignalEvent)->updateInOrderExecState(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
             }
 
             return ZE_RESULT_SUCCESS;
@@ -910,8 +910,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
         signalEvent->setCsr(this->csr, isInOrderExecutionEnabled());
         this->latestFlushIsHostVisible = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
 
-        if (isInOrderExecutionEnabled()) {
-            signalEvent->enableInOrderExecMode(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
+        if (isInOrderExecutionEnabled() && signalEvent->isInOrderExecEvent()) {
+            signalEvent->updateInOrderExecState(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
         }
     } else {
         this->latestFlushIsHostVisible = false;

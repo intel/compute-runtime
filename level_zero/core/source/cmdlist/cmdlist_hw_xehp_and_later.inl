@@ -166,6 +166,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;
+    bool isInOrderExecEvent = false;
     bool l3FlushEnable = false;
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
     Event *compactEvent = nullptr;
@@ -174,6 +175,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             event->setKernelForPrintf(kernel);
         }
         isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
+        isInOrderExecEvent = event->isInOrderExecEvent();
         if (compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
             compactEvent = event;
             event = nullptr;
@@ -288,9 +290,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     };
 
     bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation && useCounterAllocationForInOrderMode());
+    bool inOrderNonWalkerSignalling = event && (isTimestampEvent || !isInOrderExecEvent);
 
     if (inOrderExecSignalRequired) {
-        if (isTimestampEvent) {
+        if (inOrderNonWalkerSignalling) {
             dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, false, false, false);
         } else {
             dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
@@ -316,7 +319,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    if (inOrderExecSignalRequired && isTimestampEvent) {
+    if (inOrderExecSignalRequired && inOrderNonWalkerSignalling) {
         appendWaitOnSingleEvent(event, false);
 
         appendSignalInOrderDependencyCounter();

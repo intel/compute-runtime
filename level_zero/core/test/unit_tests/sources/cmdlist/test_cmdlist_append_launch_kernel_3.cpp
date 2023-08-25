@@ -701,6 +701,8 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         for (uint32_t i = 0; i < numEvents; i++) {
             eventDesc.index = i;
             events.emplace_back(std::unique_ptr<MockEvent>(static_cast<MockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
+            EXPECT_FALSE(events.back()->inOrderExecEvent);
+            events.back()->inOrderExecEvent = true;
         }
 
         return eventPool;
@@ -891,6 +893,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
     EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
 
     // non in-order event
+    events[1]->inOrderExecEvent = false;
     events[1]->hostSynchronize(2);
     EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
 }
@@ -914,6 +917,20 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEven
 
     EXPECT_FALSE(events[0]->inOrderExecEvent);
 
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
+    EXPECT_EQ(events[0]->inOrderExecDataAllocation, nullptr);
+    EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenDontSetInOrderParams, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = false;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_FALSE(events[0]->inOrderExecEvent);
     EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
     EXPECT_EQ(events[0]->inOrderExecDataAllocation, nullptr);
     EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
@@ -960,6 +977,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingSemaphoreThenProg
 
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
+    events[0]->inOrderExecEvent = false;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -996,6 +1014,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenP
 
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
+    events[0]->inOrderExecEvent = false;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1039,6 +1058,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAsMaskWhenDispatchingStoreDataIm
 
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
+    events[0]->inOrderExecEvent = false;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1439,6 +1459,62 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
 
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
+    EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walkerCmd);
+    ASSERT_NE(nullptr, semaphoreCmd);
+
+    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+    EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+
+    sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+    ASSERT_NE(nullptr, sdiCmd);
+
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(1u, sdiCmd->getDataDword0());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenClearAndChainWithSyncAllocSignaling, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->signalScope = 0;
+    events[0]->inOrderExecEvent = false;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    ASSERT_NE(nullptr, sdiCmd);
+
+    EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
+
+    auto walkerItor = find<COMPUTE_WALKER *>(sdiItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto &postSync = walkerCmd->getPostSync();
+
+    auto eventBaseGpuVa = events[0]->getPacketAddress(device);
+    auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
+
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
     EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
 
     auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walkerCmd);
@@ -2199,6 +2275,43 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAndRegularEventThenSignalSyncAllocation, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
+
+    auto offset = cmdStream->getUsed();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = false;
+
+    auto eventHandle = events[0]->toHandle();
+
+    immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(2u, sdiCmd->getDataDword0());
+    EXPECT_EQ(0u, sdiCmd->getDataDword1());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompletion, IsAtLeastXeHpCore) {
     uint32_t counterOffset = 64;
 
@@ -2872,6 +2985,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();
+    events[0]->inOrderExecEvent = false;
 
     auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
     auto regularCopyOnlyCmdList = createRegularCmdList<gfxCoreFamily>(true);
