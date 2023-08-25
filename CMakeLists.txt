@@ -384,11 +384,6 @@ if(NOT DEFINED AOT_CONFIG_HEADERS_DIR)
   message(STATUS "AOT config headers dir: ${AOT_CONFIG_HEADERS_DIR}")
 endif()
 
-if(NOT THIRD_PARTY_DIR)
-  get_filename_component(THIRD_PARTY_DIR "../third_party/" ABSOLUTE)
-endif()
-message(STATUS "Third party dir: ${THIRD_PARTY_DIR}")
-
 # Intel Graphics Compiler detection
 include(cmake/find_igc.cmake)
 

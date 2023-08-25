@@ -14,7 +14,6 @@ target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE
                            ${KHRONOS_GL_HEADERS_DIR}
                            ${NEO__GMM_INCLUDE_DIR}
                            ${NEO__IGC_INCLUDE_DIR}
-                           ${THIRD_PARTY_DIR}
 )
 
 if(UNIX AND NOT DISABLE_WDDM_LINUX)

@@ -46,7 +46,6 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
                            ${IGC_OCL_ADAPTOR_DIR}
                            ${VISA_INCLUDE_DIR}
                            ${NEO__IGC_INCLUDE_DIR}
-                           ${THIRD_PARTY_DIR}
                            ${NEO__GMM_INCLUDE_DIR}
 )
 
