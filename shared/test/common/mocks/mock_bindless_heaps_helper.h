@@ -29,13 +29,18 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     }
 
     using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
+    using BaseClass::allocateFromReusePool;
+    using BaseClass::allocatePoolIndex;
     using BaseClass::borderColorStates;
     using BaseClass::globalBindlessDsh;
     using BaseClass::growHeap;
     using BaseClass::isMultiOsContextCapable;
     using BaseClass::memManager;
+    using BaseClass::releasePoolIndex;
+    using BaseClass::reuseSlotCountThreshold;
     using BaseClass::rootDeviceIndex;
     using BaseClass::ssHeapsAllocations;
+    using BaseClass::stateCacheDirtyForContext;
     using BaseClass::surfaceStateHeaps;
     using BaseClass::surfaceStateInHeapVectorReuse;
     using BaseClass::surfaceStateSize;

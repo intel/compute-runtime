@@ -233,8 +233,11 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIs
     auto ssInHeapInfo = alloc->getBindlessInfo();
 
     memManager->freeGraphicsMemory(alloc);
-    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[0].size(), 1u);
-    auto ssInHeapInfoFromReuseVector = bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[0].front();
+
+    auto freePoolIndex = bindlessHeapHelperPtr->releasePoolIndex;
+
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[freePoolIndex][0].size(), 1u);
+    auto ssInHeapInfoFromReuseVector = bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[freePoolIndex][0].front();
     EXPECT_EQ(ssInHeapInfoFromReuseVector.surfaceStateOffset, ssInHeapInfo.surfaceStateOffset);
     EXPECT_EQ(ssInHeapInfoFromReuseVector.ssPtr, ssInHeapInfo.ssPtr);
 
@@ -245,8 +248,8 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIs
     auto ssInHeapInfo2 = alloc2->getBindlessInfo();
 
     memManager->freeGraphicsMemory(alloc2);
-    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[1].size(), 1u);
-    ssInHeapInfoFromReuseVector = bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[1].front();
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[freePoolIndex][1].size(), 1u);
+    ssInHeapInfoFromReuseVector = bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[freePoolIndex][1].front();
     EXPECT_EQ(ssInHeapInfoFromReuseVector.surfaceStateOffset, ssInHeapInfo2.surfaceStateOffset);
     EXPECT_EQ(ssInHeapInfoFromReuseVector.ssPtr, ssInHeapInfo2.ssPtr);
 }
@@ -268,7 +271,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingBindlessSl
     memManager->freeGraphicsMemory(alloc);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenItShouldBeReused) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenItShouldNotBeReusedIfThresholdNotReached) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
@@ -279,21 +282,250 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenIt
 
     auto ssInHeapInfo = alloc->getBindlessInfo();
     memManager->freeGraphicsMemory(alloc);
-    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[0].size(), 1u);
+
+    auto freePoolIndex = bindlessHeapHelperPtr->releasePoolIndex;
+
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[freePoolIndex][0].size(), 1u);
     MockGraphicsAllocation *alloc2 = new MockGraphicsAllocation;
 
     memManager->allocateBindlessSlot(alloc2);
-    auto reusedSSinHeapInfo = alloc2->getBindlessInfo();
+    auto newSSinHeapInfo = alloc2->getBindlessInfo();
 
-    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[0].size(), 0u);
-    EXPECT_EQ(ssInHeapInfo.surfaceStateOffset, reusedSSinHeapInfo.surfaceStateOffset);
-    EXPECT_EQ(ssInHeapInfo.ssPtr, reusedSSinHeapInfo.ssPtr);
+    EXPECT_NE(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse[freePoolIndex][0].size(), 0u);
+    EXPECT_NE(ssInHeapInfo.surfaceStateOffset, newSSinHeapInfo.surfaceStateOffset);
+    EXPECT_NE(ssInHeapInfo.ssPtr, newSSinHeapInfo.ssPtr);
     memManager->freeGraphicsMemory(alloc2);
 }
+
 TEST_F(BindlessHeapsHelperTests, givenDeviceWhenBindlessHeapHelperInitializedThenCorrectDeviceBitFieldIsUsed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     DeviceBitfield deviceBitfield = 7;
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, deviceBitfield);
     EXPECT_EQ(reinterpret_cast<MockMemoryManager *>(getMemoryManager())->recentlyPassedDeviceBitfield, deviceBitfield);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenCreatedThenAllocateAndReleasePoolIndicesAreInitializedToZero) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+
+    EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
+    EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
+    EXPECT_EQ(0u, bindlessHeapHelper->releasePoolIndex);
+
+    EXPECT_EQ(0u, bindlessHeapHelper->stateCacheDirtyForContext.to_ulong());
+}
+
+TEST_F(BindlessHeapsHelperTests, givenFreeSlotsExceedingThresholdInResuePoolWhenNewSlotsAllocatedThenSlotsAreAllocatedFromReusePool) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    bindlessHeapHelper->reuseSlotCountThreshold = 4;
+
+    size_t size = bindlessHeapHelper->surfaceStateSize;
+
+    SurfaceStateInHeapInfo ssInHeapInfos[5];
+
+    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[1] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    // allocate double size for image
+    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+
+    EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
+
+    for (int i = 0; i < 5; i++) {
+        bindlessHeapHelper->releaseSSToReusePool(ssInHeapInfos[i]);
+        ssInHeapInfos[i] = {0};
+    }
+
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    EXPECT_TRUE(bindlessHeapHelper->allocateFromReusePool);
+
+    EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
+    EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
+
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), bindlessHeapHelper->stateCacheDirtyForContext.to_ullong());
+}
+
+TEST_F(BindlessHeapsHelperTests, givenReusePoolExhaustedWhenNewSlotsAllocatedThenSlotsAreNotResuedAndStateCacheDirtyFlagsAreNotSet) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    bindlessHeapHelper->reuseSlotCountThreshold = 4;
+
+    size_t size = bindlessHeapHelper->surfaceStateSize;
+
+    SurfaceStateInHeapInfo ssInHeapInfos[5];
+
+    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[1] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    // allocate double size for image
+    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+
+    EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
+
+    for (int i = 0; i < 5; i++) {
+        bindlessHeapHelper->releaseSSToReusePool(ssInHeapInfos[i]);
+        ssInHeapInfos[i] = {0};
+    }
+    EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
+    EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
+    EXPECT_EQ(0u, bindlessHeapHelper->releasePoolIndex);
+
+    for (int i = 0; i < 3; i++) {
+        ssInHeapInfos[i] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    }
+
+    EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
+    EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
+
+    auto allocatePoolIndex = bindlessHeapHelper->allocatePoolIndex;
+    auto releasePoolIndex = bindlessHeapHelper->releasePoolIndex;
+
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][0].size(), 0u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size(), 2u);
+
+    bindlessHeapHelper->stateCacheDirtyForContext.reset();
+
+    ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    EXPECT_NE(0u, ssInHeapInfos[3].surfaceStateOffset);
+    EXPECT_NE(nullptr, ssInHeapInfos[3].ssPtr);
+
+    EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
+    EXPECT_EQ(0u, bindlessHeapHelper->stateCacheDirtyForContext.to_ullong());
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][0].size(), 0u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 0u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size(), 0u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size(), 2u);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenReleasedSlotsToSecondPoolWhenThresholdReachedThenPoolsAreSwitchedAndSlotsAllocatedFromReusePool) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    bindlessHeapHelper->reuseSlotCountThreshold = 4;
+
+    size_t size = bindlessHeapHelper->surfaceStateSize;
+
+    SurfaceStateInHeapInfo ssInHeapInfos[5];
+
+    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[1] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    // allocate double size for image
+    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+
+    for (int i = 0; i < 5; i++) {
+        bindlessHeapHelper->releaseSSToReusePool(ssInHeapInfos[i]);
+        ssInHeapInfos[i] = {0};
+    }
+
+    for (int i = 0; i < 3; i++) {
+        ssInHeapInfos[i] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    }
+
+    EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
+    EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
+
+    auto allocatePoolIndex = bindlessHeapHelper->allocatePoolIndex;
+    auto releasePoolIndex = bindlessHeapHelper->releasePoolIndex;
+
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][0].size(), 0u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size(), 2u);
+
+    for (int i = 0; i < 3; i++) {
+        bindlessHeapHelper->releaseSSToReusePool(ssInHeapInfos[i]);
+        ssInHeapInfos[i] = {0};
+    }
+
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size(), 3u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size(), 2u);
+
+    ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+
+    EXPECT_EQ(1u, bindlessHeapHelper->allocatePoolIndex);
+    EXPECT_EQ(0u, bindlessHeapHelper->releasePoolIndex);
+
+    allocatePoolIndex = bindlessHeapHelper->allocatePoolIndex;
+    releasePoolIndex = bindlessHeapHelper->releasePoolIndex;
+
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 1u);
+
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 0u);
+    EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
+
+    bindlessHeapHelper->releaseSSToReusePool(ssInHeapInfos[3]);
+    bindlessHeapHelper->releaseSSToReusePool(ssInHeapInfos[4]);
+
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][0].size(), 0u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 0u);
+
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size(), 3u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size(), 2u);
+
+    bindlessHeapHelper->stateCacheDirtyForContext.reset();
+
+    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+
+    EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
+    EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), bindlessHeapHelper->stateCacheDirtyForContext.to_ullong());
+    EXPECT_TRUE(bindlessHeapHelper->allocateFromReusePool);
+
+    allocatePoolIndex = bindlessHeapHelper->allocatePoolIndex;
+    releasePoolIndex = bindlessHeapHelper->releasePoolIndex;
+
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][0].size(), 3u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 1u);
+
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size(), 0u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size(), 0u);
+
+    for (int i = 0; i < 8; i++) {
+        bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    }
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][0].size(), 0u);
+    EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenFreeSlotsInReusePoolForONeSizeWhenAllocatingDifferentSizeThenNewSlotFromHeapIsAllocated) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    bindlessHeapHelper->reuseSlotCountThreshold = 4;
+
+    size_t size = bindlessHeapHelper->surfaceStateSize;
+
+    SurfaceStateInHeapInfo ssInHeapInfos[5];
+
+    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[1] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+
+    for (int i = 0; i < 5; i++) {
+        bindlessHeapHelper->releaseSSToReusePool(ssInHeapInfos[i]);
+        ssInHeapInfos[i] = {0};
+    }
+
+    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(2 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+
+    EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
+    EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
+
+    EXPECT_NE(0u, ssInHeapInfos[0].surfaceStateOffset);
+    EXPECT_NE(nullptr, ssInHeapInfos[0].ssPtr);
+
+    auto allocatePoolIndex = bindlessHeapHelper->allocatePoolIndex;
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][0].size(), 5u);
+    EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 0u);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHelperWhenGettingAndClearingDirstyStateForContextThenCorrectFlagIsReturnedAdCleard) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+
+    EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(1));
+    bindlessHeapHelper->stateCacheDirtyForContext.set(3);
+    EXPECT_TRUE(bindlessHeapHelper->getStateDirtyForContext(3));
+
+    bindlessHeapHelper->clearStateDirtyForContext(3);
+    EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(3));
 }

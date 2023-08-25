@@ -10,6 +10,7 @@
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
+#include <array>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -18,7 +19,6 @@
 namespace NEO {
 
 class IndirectHeap;
-
 class BindlessHeapsHelper {
   public:
     enum BindlesHeapType {
@@ -41,7 +41,7 @@ class BindlessHeapsHelper {
     uint32_t getDefaultBorderColorOffset();
     uint32_t getAlphaBorderColorOffset();
     IndirectHeap *getHeap(BindlesHeapType heapType);
-    void placeSSAllocationInReuseVectorOnFreeMemory(GraphicsAllocation *gfxAllocation);
+    void releaseSSToReusePool(const SurfaceStateInHeapInfo &surfStateInfo);
     bool isGlobalDshSupported() {
         return globalBindlessDsh;
     }
@@ -55,6 +55,8 @@ class BindlessHeapsHelper {
         }
         return index;
     }
+    bool getStateDirtyForContext(uint32_t osContextId);
+    void clearStateDirtyForContext(uint32_t osContextId);
 
   protected:
     const size_t surfaceStateSize;
@@ -65,7 +67,14 @@ class BindlessHeapsHelper {
     std::unique_ptr<IndirectHeap> surfaceStateHeaps[BindlesHeapType::NUM_HEAP_TYPES];
     GraphicsAllocation *borderColorStates;
     std::vector<GraphicsAllocation *> ssHeapsAllocations;
-    std::vector<SurfaceStateInHeapInfo> surfaceStateInHeapVectorReuse[2];
+
+    size_t reuseSlotCountThreshold = 512;
+    uint32_t allocatePoolIndex = 0;
+    uint32_t releasePoolIndex = 0;
+    bool allocateFromReusePool = false;
+    std::array<std::vector<SurfaceStateInHeapInfo>, 2> surfaceStateInHeapVectorReuse[2];
+    std::bitset<64> stateCacheDirtyForContext;
+
     std::mutex mtx;
     DeviceBitfield deviceBitfield;
     bool globalBindlessDsh = false;

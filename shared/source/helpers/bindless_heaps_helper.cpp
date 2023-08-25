@@ -14,6 +14,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 
@@ -61,20 +62,59 @@ GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size
     return this->memManager->allocateGraphicsMemoryWithProperties(properties);
 }
 
+void BindlessHeapsHelper::clearStateDirtyForContext(uint32_t osContextId) {
+    std::lock_guard<std::mutex> autolock(this->mtx);
+
+    stateCacheDirtyForContext.reset(osContextId);
+}
+
+bool BindlessHeapsHelper::getStateDirtyForContext(uint32_t osContextId) {
+    std::lock_guard<std::mutex> autolock(this->mtx);
+
+    return stateCacheDirtyForContext.test(osContextId);
+}
+
 SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) {
     auto heap = surfaceStateHeaps[heapType].get();
 
     std::lock_guard<std::mutex> autolock(this->mtx);
     if (heapType == BindlesHeapType::GLOBAL_SSH) {
 
-        int index = getReusedSshVectorIndex(ssSize);
+        if (!allocateFromReusePool) {
+            if ((surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() + surfaceStateInHeapVectorReuse[releasePoolIndex][1].size()) > reuseSlotCountThreshold) {
 
-        if (surfaceStateInHeapVectorReuse[index].size()) {
-            SurfaceStateInHeapInfo surfaceStateFromVector = surfaceStateInHeapVectorReuse[index].back();
-            surfaceStateInHeapVectorReuse[index].pop_back();
-            return surfaceStateFromVector;
+                // invalidate all contexts
+                stateCacheDirtyForContext.set();
+                allocateFromReusePool = true;
+                allocatePoolIndex = releasePoolIndex;
+                releasePoolIndex = allocatePoolIndex == 0 ? 1 : 0;
+            }
+        }
+
+        if (allocateFromReusePool) {
+            int index = getReusedSshVectorIndex(ssSize);
+
+            if (surfaceStateInHeapVectorReuse[allocatePoolIndex][index].size()) {
+                SurfaceStateInHeapInfo surfaceStateFromVector = surfaceStateInHeapVectorReuse[allocatePoolIndex][index].back();
+                surfaceStateInHeapVectorReuse[allocatePoolIndex][index].pop_back();
+
+                if (surfaceStateInHeapVectorReuse[allocatePoolIndex][index].empty()) {
+                    allocateFromReusePool = false;
+
+                    // copy remaining slots from allocate pool to release pool
+                    int otherSizeIndex = index == 0 ? 1 : 0;
+                    surfaceStateInHeapVectorReuse[releasePoolIndex][otherSizeIndex].insert(surfaceStateInHeapVectorReuse[releasePoolIndex][otherSizeIndex].end(),
+                                                                                           surfaceStateInHeapVectorReuse[allocatePoolIndex][otherSizeIndex].begin(),
+                                                                                           surfaceStateInHeapVectorReuse[allocatePoolIndex][otherSizeIndex].end());
+
+                    surfaceStateInHeapVectorReuse[allocatePoolIndex][otherSizeIndex].clear();
+                }
+
+                return surfaceStateFromVector;
+            }
         }
     }
+
     void *ptrInHeap = getSpaceInHeap(ssSize, heapType);
     SurfaceStateInHeapInfo bindlesInfo = {nullptr, 0, nullptr};
 
@@ -128,14 +168,13 @@ bool BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
     return true;
 }
 
-void BindlessHeapsHelper::placeSSAllocationInReuseVectorOnFreeMemory(GraphicsAllocation *gfxAllocation) {
-    auto ssAllocatedInfo = gfxAllocation->getBindlessInfo();
-
-    if (ssAllocatedInfo.heapAllocation != nullptr) {
+void BindlessHeapsHelper::releaseSSToReusePool(const SurfaceStateInHeapInfo &surfStateInfo) {
+    if (surfStateInfo.heapAllocation != nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
-        int index = getReusedSshVectorIndex(ssAllocatedInfo.ssSize);
-        surfaceStateInHeapVectorReuse[index].push_back(std::move(ssAllocatedInfo));
+        int index = getReusedSshVectorIndex(surfStateInfo.ssSize);
+        surfaceStateInHeapVectorReuse[releasePoolIndex][index].push_back(std::move(surfStateInfo));
     }
+
     return;
 }
 
