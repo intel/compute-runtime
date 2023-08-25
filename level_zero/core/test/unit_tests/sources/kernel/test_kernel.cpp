@@ -3127,6 +3127,40 @@ TEST_F(KernelPrintHandlerTest, whenPrintPrintfOutputIsCalledThenPrintfBufferIsUs
     EXPECT_EQ(buffer, MyPrintfHandler::getPrintfSurfaceInitialDataSize());
 }
 
+using PrintfKernelOwnershipTest = Test<ModuleFixture>;
+
+TEST_F(PrintfKernelOwnershipTest, givenKernelWithPrintfThenModuleStoresItCorrectly) {
+    ze_kernel_handle_t kernelHandle;
+    ze_kernel_desc_t kernelDesc{};
+    kernelDesc.pKernelName = kernelName.c_str();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module->createKernel(&kernelDesc, &kernelHandle));
+
+    auto kernel = static_cast<Mock<KernelImp> *>(Kernel::fromHandle(kernelHandle));
+    EXPECT_NE(nullptr, kernel->getPrintfBufferAllocation());
+    EXPECT_NE(nullptr, kernel->getDevicePrintfKernelMutex());
+    EXPECT_EQ(1u, static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().size());
+    EXPECT_EQ(kernel, static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer()[0].get());
+}
+
+TEST_F(PrintfKernelOwnershipTest, givenKernelWithPrintfDestroyedFirstThenModuleDestructionReturnsTheCorrectStatus) {
+    ze_kernel_handle_t kernelHandle;
+    ze_kernel_desc_t kernelDesc{};
+    kernelDesc.pKernelName = kernelName.c_str();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module->createKernel(&kernelDesc, &kernelHandle));
+
+    auto kernel = static_cast<Mock<KernelImp> *>(Kernel::fromHandle(kernelHandle));
+    EXPECT_NE(nullptr, kernel->getPrintfBufferAllocation());
+    EXPECT_NE(nullptr, kernel->getDevicePrintfKernelMutex());
+    EXPECT_EQ(1u, static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().size());
+    EXPECT_EQ(kernel, static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer()[0].get());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->destroy());
+
+    EXPECT_EQ(1u, static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().size());
+    EXPECT_EQ(nullptr, static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer()[0].get());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, static_cast<ModuleImp *>(module.get())->destroyPrintfKernel(kernelHandle));
+}
+
 using PrintfTest = Test<DeviceFixture>;
 
 TEST_F(PrintfTest, givenKernelWithPrintfThenPrintfBufferIsCreated) {

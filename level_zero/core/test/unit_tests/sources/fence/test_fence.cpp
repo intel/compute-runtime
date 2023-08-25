@@ -365,13 +365,13 @@ HWTEST_F(FenceTest, givenPrintfKernelWhenSynchronizingFenceThenPrintPrintfOutput
                                                           false,
                                                           false,
                                                           returnValue));
-    Mock<KernelImp> kernel;
+    std::shared_ptr<Mock<KernelImp>> kernel{new Mock<KernelImp>{}};
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.returnWaitForCompletionWithTimeout = WaitStatus::Ready;
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     *csr.tagAddress = currentTaskCount;
-    commandQueue->printfKernelContainer.push_back(&kernel);
+    commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel});
 
     ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,
                                  nullptr,
@@ -383,8 +383,8 @@ HWTEST_F(FenceTest, givenPrintfKernelWhenSynchronizingFenceThenPrintPrintfOutput
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
-    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
-    EXPECT_FALSE(kernel.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(1u, kernel->printPrintfOutputCalledTimes);
+    EXPECT_FALSE(kernel->hangDetectedPassedToPrintfOutput);
 
     delete fence;
 
@@ -408,14 +408,14 @@ HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPr
                                                           false,
                                                           returnValue));
 
-    Mock<KernelImp> kernel;
+    std::shared_ptr<Mock<KernelImp>> kernel{new Mock<KernelImp>{}};
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
     *csr.tagAddress = 0;
     csr.gpuHangCheckPeriod = 0us;
-    commandQueue->printfKernelContainer.push_back(&kernel);
+    commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel});
 
     ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,
                                  nullptr,
@@ -427,8 +427,8 @@ HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPr
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 
     EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
-    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
-    EXPECT_TRUE(kernel.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(1u, kernel->printPrintfOutputCalledTimes);
+    EXPECT_TRUE(kernel->hangDetectedPassedToPrintfOutput);
 
     delete fence;
     commandQueue->destroy();
@@ -445,14 +445,14 @@ HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroT
                                                           false,
                                                           false,
                                                           returnValue));
-    Mock<KernelImp> kernel;
+    std::shared_ptr<Mock<KernelImp>> kernel{new Mock<KernelImp>{}};
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.returnWaitForCompletionWithTimeout = WaitStatus::Ready;
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     *csr.tagAddress = currentTaskCount - 1;
 
-    commandQueue->printfKernelContainer.push_back(&kernel);
+    commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel});
 
     ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,
                                  nullptr,
@@ -464,7 +464,7 @@ HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroT
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
     EXPECT_EQ(1u, commandQueue->printfKernelContainer.size());
-    EXPECT_EQ(0u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_EQ(0u, kernel->printPrintfOutputCalledTimes);
 
     delete fence;
     commandQueue->destroy();

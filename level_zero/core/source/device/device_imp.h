@@ -132,6 +132,8 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     ze_pci_speed_ext_t pciMaxSpeed = {-1, -1, -1};
     Device *rootDevice = nullptr;
 
+    std::mutex printfKernelMutex;
+
     BcsSplit bcsSplit;
 
     bool resourcesReleased = false;

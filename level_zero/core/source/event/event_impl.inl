@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_time.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel.h"
@@ -467,9 +468,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             ret = queryStatus();
         }
         if (ret == ZE_RESULT_SUCCESS) {
-            if (this->getKernelForPrintf() != nullptr) {
-                static_cast<Kernel *>(this->getKernelForPrintf())->printPrintfOutput(true);
-                this->setKernelForPrintf(nullptr);
+            if (this->getKernelWithPrintfDeviceMutex() != nullptr) {
+                std::lock_guard<std::mutex> lock(*this->getKernelWithPrintfDeviceMutex());
+                if (!this->getKernelForPrintf().expired()) {
+                    this->getKernelForPrintf().lock()->printPrintfOutput(true);
+                }
+                this->resetKernelForPrintf();
+                this->resetKernelWithPrintfDeviceMutex();
             }
             if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
                 device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();

@@ -1114,11 +1114,11 @@ void KernelImp::createPrintfBuffer() {
         if (pImplicitArgs) {
             pImplicitArgs->printfBufferPtr = printfBuffer->getGpuAddress();
         }
+        this->devicePrintfKernelMutex = &(static_cast<DeviceImp *>(this->module->getDevice())->printfKernelMutex);
     }
 }
 
 void KernelImp::printPrintfOutput(bool hangDetected) {
-    std::lock_guard<std::mutex> lock(this->printfLock);
     PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice(), hangDetected);
 }
 

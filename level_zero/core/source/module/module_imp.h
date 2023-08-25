@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/program/program_info.h"
 
+#include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 
 #include "igfxfmid.h"
@@ -155,6 +156,10 @@ struct ModuleImp : public Module {
         return this->translationUnit.get();
     }
 
+    std::vector<std::shared_ptr<Kernel>> &getPrintfKernelContainer() { return this->printfKernelContainer; }
+    std::weak_ptr<Kernel> getPrintfKernelWeakPtr(ze_kernel_handle_t kernelHandle) const;
+    ze_result_t destroyPrintfKernel(ze_kernel_handle_t kernelHandle);
+
   protected:
     MOCKABLE_VIRTUAL ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);
     ze_result_t checkIfBuildShouldBeFailed(NEO::Device *neoDevice);
@@ -182,6 +187,7 @@ struct ModuleImp : public Module {
     ModuleBuildLog *moduleBuildLog = nullptr;
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;
     std::unique_ptr<NEO::GraphicsAllocation> kernelsIsaParentRegion;
+    std::vector<std::shared_ptr<Kernel>> printfKernelContainer;
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;
 

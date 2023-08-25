@@ -271,7 +271,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (event != nullptr && kernel->getPrintfBufferAllocation() != nullptr) {
-        event->setKernelForPrintf(kernel);
+        auto module = static_cast<const ModuleImp *>(&static_cast<KernelImp *>(kernel)->getParentModule());
+        event->setKernelForPrintf(module->getPrintfKernelWeakPtr(kernel->toHandle()));
+        event->setKernelWithPrintfDeviceMutex(kernel->getDevicePrintfKernelMutex());
     }
 
     if (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation) {

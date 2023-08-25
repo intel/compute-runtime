@@ -18,6 +18,7 @@
 #include <chrono>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 struct _ze_event_handle_t {};
@@ -206,11 +207,23 @@ struct Event : _ze_event_handle_t {
     uint32_t getMaxKernelCount() const {
         return maxKernelCount;
     }
-    void setKernelForPrintf(Kernel *inputKernelPtr) {
-        kernelWithPrintf = inputKernelPtr;
+    void setKernelForPrintf(std::weak_ptr<Kernel> inputKernelWeakPtr) {
+        kernelWithPrintf = inputKernelWeakPtr;
     }
-    Kernel *getKernelForPrintf() {
+    std::weak_ptr<Kernel> getKernelForPrintf() {
         return kernelWithPrintf;
+    }
+    void resetKernelForPrintf() {
+        kernelWithPrintf.reset();
+    }
+    void setKernelWithPrintfDeviceMutex(std::mutex *mutexPtr) {
+        kernelWithPrintfDeviceMutex = mutexPtr;
+    }
+    std::mutex *getKernelWithPrintfDeviceMutex() {
+        return kernelWithPrintfDeviceMutex;
+    }
+    void resetKernelWithPrintfDeviceMutex() {
+        kernelWithPrintfDeviceMutex = nullptr;
     }
 
     bool isSignalScope() const {
@@ -280,7 +293,8 @@ struct Event : _ze_event_handle_t {
     void *hostAddress = nullptr;
     Device *device = nullptr;
     EventPool *eventPool = nullptr;
-    Kernel *kernelWithPrintf = nullptr;
+    std::weak_ptr<Kernel> kernelWithPrintf = std::weak_ptr<Kernel>{};
+    std::mutex *kernelWithPrintfDeviceMutex = nullptr;
     std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
     CommandQueue *latestUsedCmdQueue = nullptr;
 

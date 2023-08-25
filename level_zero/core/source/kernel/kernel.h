@@ -151,6 +151,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual UnifiedMemoryControls getUnifiedMemoryControls() const = 0;
     virtual bool hasIndirectAllocationsAllowed() const = 0;
 
+    virtual std::mutex *getDevicePrintfKernelMutex() = 0;
     virtual NEO::GraphicsAllocation *getPrintfBufferAllocation() = 0;
     virtual void printPrintfOutput(bool hangDetected) = 0;
 

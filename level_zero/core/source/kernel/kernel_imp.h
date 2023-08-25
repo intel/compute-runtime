@@ -14,6 +14,8 @@
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
+#include "level_zero/core/source/module/module.h"
+#include "level_zero/core/source/module/module_imp.h"
 
 #include <memory>
 #include <mutex>
@@ -38,8 +40,12 @@ struct KernelImp : Kernel {
     ~KernelImp() override;
 
     ze_result_t destroy() override {
-        delete this;
-        return ZE_RESULT_SUCCESS;
+        if (this->devicePrintfKernelMutex == nullptr) {
+            delete this;
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return static_cast<ModuleImp *>(this->module)->destroyPrintfKernel(this);
+        }
     }
 
     ze_result_t getBaseAddress(uint64_t *baseAddress) override;
@@ -99,6 +105,7 @@ struct KernelImp : Kernel {
     uint32_t getNumThreadsPerThreadGroup() const override { return numThreadsPerThreadGroup; }
     uint32_t getThreadExecutionMask() const override { return threadExecutionMask; }
 
+    std::mutex *getDevicePrintfKernelMutex() override { return this->devicePrintfKernelMutex; }
     NEO::GraphicsAllocation *getPrintfBufferAllocation() override { return this->printfBuffer; }
     void printPrintfOutput(bool hangDetected) override;
 
@@ -207,6 +214,7 @@ struct KernelImp : Kernel {
     std::vector<KernelImp::KernelArgHandler> kernelArgHandlers;
     std::vector<NEO::GraphicsAllocation *> residencyContainer;
 
+    std::mutex *devicePrintfKernelMutex = nullptr;
     NEO::GraphicsAllocation *printfBuffer = nullptr;
 
     uint32_t groupSize[3] = {0u, 0u, 0u};
@@ -248,7 +256,6 @@ struct KernelImp : Kernel {
     std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
 
     std::unique_ptr<KernelExt> pExtension;
-    std::mutex printfLock;
 
     struct SuggestGroupSizeCacheEntry {
         Vec3<size_t> groupSize;
