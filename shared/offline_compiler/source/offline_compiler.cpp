@@ -331,26 +331,36 @@ int OfflineCompiler::buildSourceCode() {
         return INVALID_PROGRAM;
     }
 
+    const std::string igcRevision = igcFacade->getIgcRevision();
+    const auto igcLibSize = igcFacade->getIgcLibSize();
+    const auto igcLibMTime = igcFacade->getIgcLibMTime();
+
     if (allowCaching) {
-        const std::string igcRevision = igcFacade->getIgcRevision();
-        const auto igcLibSize = igcFacade->getIgcLibSize();
-        const auto igcLibMTime = igcFacade->getIgcLibMTime();
         irHash = cache->getCachedFileName(getHardwareInfo(), sourceCode, options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
         irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
 
         genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
         genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
 
+        const bool generateDebugInfo = CompilerOptions::contains(options, CompilerOptions::generateDebugInfo);
+        if (generateDebugInfo) {
+            dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
+            debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
+        }
+
         if (irBinary && genBinary) {
-            if (!CompilerOptions::contains(options, CompilerOptions::generateDebugInfo))
+            bool isZebin = isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize));
+
+            auto asBitcode = ArrayRef<const uint8_t>::fromAny(irBinary, irBinarySize);
+            isSpirV = NEO::isSpirVBitcode(asBitcode);
+
+            if (!generateDebugInfo) {
                 return retVal;
-            else {
-                dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
-                debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
-                if (debugDataBinary)
-                    return retVal;
+            } else if (debugDataBinary || isZebin) {
+                return retVal;
             }
         }
+
         delete[] irBinary;
         delete[] genBinary;
         irBinary = nullptr;
@@ -399,6 +409,7 @@ int OfflineCompiler::buildSourceCode() {
         storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
     }
     if (allowCaching) {
+        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
         cache->cacheBinary(irHash, irBinary, static_cast<uint32_t>(irBinarySize));
         cache->cacheBinary(genHash, genBinary, static_cast<uint32_t>(genBinarySize));
         cache->cacheBinary(dbgHash, debugDataBinary, static_cast<uint32_t>(debugDataBinarySize));

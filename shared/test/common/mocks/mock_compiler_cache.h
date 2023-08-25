@@ -19,6 +19,7 @@ class CompilerCacheMock : public CompilerCache {
 
     bool cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize) override {
         cacheInvoked++;
+        cacheBinaryKernelFileHashes.push_back(kernelFileHash);
         return cacheResult;
     }
 
@@ -31,6 +32,7 @@ class CompilerCacheMock : public CompilerCache {
             return nullptr;
     }
 
+    std::vector<std::string> cacheBinaryKernelFileHashes{};
     bool cacheResult = false;
     uint32_t cacheInvoked = 0u;
     bool loadResult = false;

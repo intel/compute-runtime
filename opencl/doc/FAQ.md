@@ -56,7 +56,7 @@ which improves performance.
 
 ##### Environment flags (Linux only)
 
-NEO_PERSISTENT_CACHE - integer value to enable (1)/disable (0) on-disk binary cache. When enabled 
+NEO_CACHE_PERSISTENT - integer value to enable (1)/disable (0) on-disk binary cache. When enabled 
                        Neo will try to cache and reuse compiled binaries. Default is off.
 
 NEO_CACHE_DIR        - path to persistent cache directory. Default values are $XDG_CACHE_HOME/neo_compiler_cache

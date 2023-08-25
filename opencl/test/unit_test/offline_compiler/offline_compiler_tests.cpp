@@ -2521,6 +2521,44 @@ TEST(OfflineCompilerTest, GivenGenBinaryWhenGenerateElfBinaryThenElfIsLoaded) {
     EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->elfBinarySize));
 }
 
+TEST(OfflineCompilerTest, givenAllowCachingWhenBuildSourceCodeThenGenBinaryIsCachedUsingHashBasedOnNonNullIrBinary) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-allow_caching"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+    auto retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto cacheMock = new CompilerCacheMock();
+    mockOfflineCompiler->cache.reset(cacheMock);
+    retVal = mockOfflineCompiler->buildSourceCode();
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, mockOfflineCompiler->irBinary);
+    ASSERT_NE(0u, mockOfflineCompiler->irBinarySize);
+
+    // 0 - buildIrBinary   > irBinary
+    // 1 - buildSourceCode > irBinary
+    // 2 - buildSourceCode > genBinary
+    // 3 - buildSourceCode > debugDataBinary
+    const auto givenCacheBinaryGenHash = cacheMock->cacheBinaryKernelFileHashes[2];
+    const auto expectedCacheBinaryGenHash = cacheMock->getCachedFileName(mockOfflineCompiler->getHardwareInfo(),
+                                                                         ArrayRef<const char>(mockOfflineCompiler->irBinary, mockOfflineCompiler->irBinarySize),
+                                                                         mockOfflineCompiler->options,
+                                                                         mockOfflineCompiler->internalOptions,
+                                                                         std::string(mockOfflineCompiler->igcFacade->getIgcRevision()),
+                                                                         mockOfflineCompiler->igcFacade->getIgcLibSize(),
+                                                                         mockOfflineCompiler->igcFacade->getIgcLibMTime());
+
+    EXPECT_EQ(expectedCacheBinaryGenHash, givenCacheBinaryGenHash);
+}
+
 TEST(OfflineCompilerTest, WhenParsingCmdLineThenOptionsAreReadCorrectly) {
     std::vector<std::string> argv = {
         "ocloc",
