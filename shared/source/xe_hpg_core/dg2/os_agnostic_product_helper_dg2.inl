@@ -255,9 +255,4 @@ void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const 
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
 } // namespace NEO
