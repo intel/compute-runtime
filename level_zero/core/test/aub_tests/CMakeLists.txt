@@ -84,6 +84,7 @@ if(DEFINED AUB_STREAM_PROJECT_NAME)
                              ${ENGINE_NODE_DIR}
                              ${CIF_BASE_DIR}
                              ${NEO__GMM_INCLUDE_DIR}
+                             ${THIRD_PARTY_DIR}
                              ${WDK_DIR}
   )
 

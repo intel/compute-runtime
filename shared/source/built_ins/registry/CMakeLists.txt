@@ -19,6 +19,7 @@ target_include_directories(${BUILTINS_SOURCES_LIB_NAME} PRIVATE
                            ${KHRONOS_GL_HEADERS_DIR}
                            ${NEO__GMM_INCLUDE_DIR}
                            ${NEO__IGC_INCLUDE_DIR}
+                           ${THIRD_PARTY_DIR}
 )
 
 add_subdirectories()
