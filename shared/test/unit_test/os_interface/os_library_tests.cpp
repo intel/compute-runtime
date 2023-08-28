@@ -71,13 +71,6 @@ TEST(OSLibraryTest, whenSymbolNameIsInvalidThenGetProcAddressReturnsNullPointer)
     EXPECT_EQ(nullptr, ptr);
 }
 
-TEST(OSLibraryTest, GivenValidLibNameWhenGettingFullPathThenPathIsNotEmpty) {
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
-    EXPECT_NE(nullptr, library);
-    std::string path = library->getFullPath();
-    EXPECT_NE(0u, path.size());
-}
-
 using OsLibraryTestWithFailureInjection = Test<MemoryManagementFixture>;
 
 TEST_F(OsLibraryTestWithFailureInjection, GivenFailureInjectionWhenLibraryIsLoadedThenOnlyFailedAllocationIsNull) {

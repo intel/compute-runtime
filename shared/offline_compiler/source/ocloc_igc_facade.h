@@ -49,6 +49,7 @@ class OclocIgcFacade {
     MOCKABLE_VIRTUAL bool isIgcInterfaceCompatible(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const;
     MOCKABLE_VIRTUAL std::string getIncompatibleInterface(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const;
     MOCKABLE_VIRTUAL bool isPatchtokenInterfaceSupported() const;
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> createIgcDeviceContext3() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> createIgcDeviceContext() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getIgcPlatformHandle() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> getGTSystemInfoHandle() const;

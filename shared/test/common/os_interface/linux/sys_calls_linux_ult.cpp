@@ -74,6 +74,7 @@ uint32_t munmapFuncCalled = 0u;
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 int (*sysCallsClose)(int fileDescriptor) = nullptr;
 int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode) = nullptr;
+int (*sysCallsDlinfo)(void *handle, int request, void *info) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
 ssize_t (*sysCallsPwrite)(int fd, const void *buf, size_t count, off_t offset) = nullptr;
 int (*sysCallsReadlink)(const char *path, char *buf, size_t bufsize) = nullptr;
@@ -165,6 +166,10 @@ void *dlopen(const char *filename, int flag) {
 }
 
 int dlinfo(void *handle, int request, void *info) {
+    if (sysCallsDlinfo != nullptr) {
+        return sysCallsDlinfo(handle, request, info);
+    }
+
     if (request == RTLD_DI_LINKMAP) {
         return ::dlinfo(handle, request, info);
     }

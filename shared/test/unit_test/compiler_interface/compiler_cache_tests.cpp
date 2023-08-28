@@ -129,9 +129,16 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     HardwareInfo hwInfo = *defaultHwInfo;
 
     std::set<std::string> hashes;
-    std::string igcRevision = "0001";
-    size_t igcLibSize = 1000;
-    time_t igcLibMTime = 0;
+
+    std::array<std::string, 4> igcRevisions = {{std::string(""),
+                                                std::string("0000000000000000000000000000000000000000"),
+                                                std::string("0000000000000000000000000000000000000001"),
+                                                std::string("abcdef1234567890abcdef123456789000000000")}};
+
+    const size_t igcLibSize = 304297;
+    const time_t igcLibMTime = 167594873;
+    const size_t igcLibSizes[] = {0, 1, 1024, igcLibSize};
+    const time_t igcLibMTimes[] = {0, 102, igcLibMTime};
 
     PLATFORM p1 = {(PRODUCT_FAMILY)1};
     PLATFORM p2 = {(PRODUCT_FAMILY)2};
@@ -160,10 +167,12 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
                                                         std::string("--some --options"),
                                                         std::string("--some --different --options")}};
 
+    std::unique_ptr<char[]> buf0(new char[bufSize]);
     std::unique_ptr<char[]> buf1(new char[bufSize]);
     std::unique_ptr<char[]> buf2(new char[bufSize]);
     std::unique_ptr<char[]> buf3(new char[bufSize]);
-    std::unique_ptr<char[]> buf4(new char[bufSize]);
+
+    ArrayRef<char> igcRevision;
 
     ArrayRef<char> src;
     ArrayRef<char> apiOptions;
@@ -171,31 +180,40 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
 
     CompilerCache cache(CompilerCacheConfig{});
 
-    for (auto platform : platforms) {
-        hwInfo.platform = *platform;
+    for (size_t i0 = 0; i0 < igcRevisions.size(); i0++) {
+        strcpy_s(buf0.get(), bufSize, igcRevisions[i0].c_str());
+        igcRevision = ArrayRef<char>(buf0.get(), strlen(buf0.get()));
 
-        for (auto sku : skus) {
-            hwInfo.featureTable = *sku;
+        for (auto libSize : igcLibSizes) {
+            for (auto libMTime : igcLibMTimes) {
+                for (auto platform : platforms) {
+                    hwInfo.platform = *platform;
 
-            for (auto wa : was) {
-                hwInfo.workaroundTable = *wa;
+                    for (auto sku : skus) {
+                        hwInfo.featureTable = *sku;
 
-                for (size_t i1 = 0; i1 < inputArray.size(); i1++) {
-                    strcpy_s(buf1.get(), bufSize, inputArray[i1].c_str());
-                    src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
-                    for (size_t i2 = 0; i2 < optionsArray.size(); i2++) {
-                        strcpy_s(buf2.get(), bufSize, optionsArray[i2].c_str());
-                        apiOptions = ArrayRef<char>(buf2.get(), strlen(buf2.get()));
-                        for (size_t i3 = 0; i3 < internalOptionsArray.size(); i3++) {
-                            strcpy_s(buf3.get(), bufSize, internalOptionsArray[i3].c_str());
-                            internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
+                        for (auto wa : was) {
+                            hwInfo.workaroundTable = *wa;
 
-                            std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, igcRevision, igcLibSize, igcLibMTime);
+                            for (size_t i1 = 0; i1 < inputArray.size(); i1++) {
+                                strcpy_s(buf1.get(), bufSize, inputArray[i1].c_str());
+                                src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
+                                for (size_t i2 = 0; i2 < optionsArray.size(); i2++) {
+                                    strcpy_s(buf2.get(), bufSize, optionsArray[i2].c_str());
+                                    apiOptions = ArrayRef<char>(buf2.get(), strlen(buf2.get()));
+                                    for (size_t i3 = 0; i3 < internalOptionsArray.size(); i3++) {
+                                        strcpy_s(buf3.get(), bufSize, internalOptionsArray[i3].c_str());
+                                        internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
 
-                            if (hashes.find(hash) != hashes.end()) {
-                                FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3;
+                                        std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, igcRevision, libSize, libMTime);
+
+                                        if (hashes.find(hash) != hashes.end()) {
+                                            FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3;
+                                        }
+                                        hashes.emplace(hash);
+                                    }
+                                }
                             }
-                            hashes.emplace(hash);
                         }
                     }
                 }
@@ -216,6 +234,7 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCrea
         bool matched;
         const char *pattern;
     } verifyData[] = {
+        {false, "---- igcRevision ----"},
         {false, "---- input ----"},
         {false, "---- options ----"},
         {false, "---- internal options ----"},

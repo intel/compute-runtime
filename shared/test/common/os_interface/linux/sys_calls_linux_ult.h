@@ -20,6 +20,7 @@ namespace SysCalls {
 extern int (*sysCallsMkdir)(const std::string &dir);
 extern int (*sysCallsOpen)(const char *pathname, int flags);
 extern int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode);
+extern int (*sysCallsDlinfo)(void *handle, int request, void *info);
 extern ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset);
 extern ssize_t (*sysCallsPwrite)(int fd, const void *buf, size_t count, off_t offset);
 extern int (*sysCallsReadlink)(const char *path, char *buf, size_t bufsize);

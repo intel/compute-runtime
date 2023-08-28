@@ -59,7 +59,7 @@ bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader)
     return false;
 }
 
-time_t getFileModificationTime(std::string &path) {
+time_t getFileModificationTime(const std::string &path) {
     struct stat st;
     if (NEO::SysCalls::stat(path, &st) == 0) {
         return st.st_mtim.tv_sec;
@@ -67,16 +67,11 @@ time_t getFileModificationTime(std::string &path) {
     return 0;
 }
 
-size_t getFileSize(std::string &path) {
-    size_t size = 0u;
-    FILE *fileDescriptor = NEO::IoFunctions::fopenPtr(path.c_str(), "rb");
-    if (fileDescriptor == nullptr) {
-        return 0u;
+size_t getFileSize(const std::string &path) {
+    struct stat st;
+    if (NEO::SysCalls::stat(path, &st) == 0) {
+        return static_cast<size_t>(st.st_size);
     }
-
-    NEO::IoFunctions::fseekPtr(fileDescriptor, 0, SEEK_END);
-    size = NEO::IoFunctions::ftellPtr(fileDescriptor);
-    NEO::IoFunctions::fclosePtr(fileDescriptor);
-    return size;
+    return 0u;
 }
 } // namespace NEO

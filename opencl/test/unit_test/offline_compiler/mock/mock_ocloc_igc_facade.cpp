@@ -70,6 +70,14 @@ CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> MockOclocIgcFacade::createIgcDevic
     }
 }
 
+CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> MockOclocIgcFacade::createIgcDeviceContext3() const {
+    if (shouldFailCreationOfIgcDeviceContext3) {
+        return nullptr;
+    } else {
+        return OclocIgcFacade::createIgcDeviceContext3();
+    }
+}
+
 CIF::RAII::UPtr_t<IGC::PlatformTagOCL> MockOclocIgcFacade::getIgcPlatformHandle() const {
     if (shouldReturnInvalidIgcPlatformHandle) {
         return nullptr;

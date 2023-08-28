@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,6 +161,19 @@ TEST_F(OclocIgcFacadeTest, GivenInitializedIgcWhenGettingIncompatibleInterfaceTh
     const auto incompatibleInterface = mockIgcFacade.getIncompatibleInterface(interfacesToIgnore);
 
     EXPECT_TRUE(incompatibleInterface.empty()) << incompatibleInterface;
+}
+
+TEST_F(OclocIgcFacadeTest, GivenFailingCreationOfIgcDeviceContext3WhenGettingRevisionThenEmptyStringIsReturned) {
+    MockOclocIgcFacade mockIgcFacade{&mockArgHelper};
+    mockIgcFacade.shouldFailCreationOfIgcDeviceContext3 = true;
+
+    ::testing::internal::CaptureStdout();
+    const auto igcPreparationResult{mockIgcFacade.initialize(hwInfo)};
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    ASSERT_EQ(OclocErrorCode::SUCCESS, igcPreparationResult);
+
+    EXPECT_STREQ(mockIgcFacade.getIgcRevision(), "");
 }
 
 } // namespace NEO

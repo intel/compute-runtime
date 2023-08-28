@@ -804,3 +804,45 @@ TEST(CompilerCacheHelper, GivenHomeEnvWhenOtherProcessCreatesNeoCompilerCacheFol
     EXPECT_EQ(cacheDir, "home/directory/.cache/neo_compiler_cache");
     EXPECT_TRUE(HomePathIsSetAndOtherProcessCreatesPath::mkdirCalled);
 }
+
+TEST(CompilerCacheHelper, GivenExistingPathWhenGettingFileModificationTimeThenModificationTimeIsReturned) {
+    decltype(NEO::SysCalls::sysCallsStat) mockStat = [](const std::string &filePath, struct stat *statbuf) -> int {
+        if (filePath.find("file1") != filePath.npos) {
+            statbuf->st_mtime = 3;
+        }
+        return 0;
+    };
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, mockStat);
+
+    EXPECT_EQ(getFileModificationTime("/tmp/file1"), 3);
+}
+
+TEST(CompilerCacheHelper, GivenNotExistingPathWhenGettingFileModificationTimeThenZeroIsReturned) {
+    decltype(NEO::SysCalls::sysCallsStat) mockStat = [](const std::string &filePath, struct stat *statbuf) -> int {
+        return -1;
+    };
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, mockStat);
+
+    EXPECT_EQ(getFileModificationTime("/tmp/file1"), 0);
+}
+
+TEST(CompilerCacheHelper, GivenExistingPathWhenGettingFileSizeThenSizeIsReturned) {
+    decltype(NEO::SysCalls::sysCallsStat) mockStat = [](const std::string &filePath, struct stat *statbuf) -> int {
+        if (filePath.find("file1") != filePath.npos) {
+            statbuf->st_size = 20;
+        }
+        return 0;
+    };
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, mockStat);
+
+    EXPECT_EQ(getFileSize("/tmp/file1"), 20u);
+}
+
+TEST(CompilerCacheHelper, GivenNotExistingPathWhenGettingFileSizeThenZeroIsReturned) {
+    decltype(NEO::SysCalls::sysCallsStat) mockStat = [](const std::string &filePath, struct stat *statbuf) -> int {
+        return -1;
+    };
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, mockStat);
+
+    EXPECT_EQ(getFileSize("/tmp/file1"), 0u);
+}

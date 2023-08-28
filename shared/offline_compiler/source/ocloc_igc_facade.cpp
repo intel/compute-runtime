@@ -70,11 +70,12 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     }
 
     {
-        auto igcDeviceCtx3 = igcMain->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
+        // revision is sha-1 hash
+        igcRevision.resize(41);
+        igcRevision[0] = '\0';
+        auto igcDeviceCtx3 = createIgcDeviceContext3();
         if (igcDeviceCtx3) {
             const char *revision = igcDeviceCtx3->GetIGCRevision();
-            // revision is sha-1 hash
-            igcRevision.resize(41);
             strncpy_s(igcRevision.data(), 41, revision, 40);
         }
     }
@@ -133,6 +134,10 @@ bool OclocIgcFacade::isPatchtokenInterfaceSupported() const {
 
 CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> OclocIgcFacade::createIgcDeviceContext() const {
     return igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
+}
+
+CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> OclocIgcFacade::createIgcDeviceContext3() const {
+    return igcMain->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
 }
 
 CIF::RAII::UPtr_t<IGC::PlatformTagOCL> OclocIgcFacade::getIgcPlatformHandle() const {
