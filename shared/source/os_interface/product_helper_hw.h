@@ -159,6 +159,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCachingOnCpuAvailable() const override;
     bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const override;
     bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const override;
+    bool isResolvingBuiltinsNeeded(const ReleaseHelper *releaseHelper) const override;
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod() const override;
 
     ~ProductHelperHw() override = default;

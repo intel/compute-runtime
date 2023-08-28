@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/program_info.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "RelocationInfo.h"
 
@@ -326,7 +327,13 @@ LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const Segm
     removeLocalSymbolsFromRelocatedSymbols();
 
     resolveImplicitArgs(kernelDescriptors, pDevice);
-    resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
+
+    auto &productHelper = pDevice->getProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+    if (productHelper.isResolvingBuiltinsNeeded(releaseHelper)) {
+        resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
+    }
+
     if (initialUnresolvedExternalsCount < outUnresolvedExternals.size()) {
         return LinkingStatus::LinkedPartially;
     }

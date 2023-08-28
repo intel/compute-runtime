@@ -800,4 +800,12 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
     return {};
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isResolvingBuiltinsNeeded(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isResolvingBuiltinsNeeded();
+    }
+    return true;
+}
+
 } // namespace NEO

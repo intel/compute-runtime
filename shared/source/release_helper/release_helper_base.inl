@@ -52,4 +52,9 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::getMediaFrequencyTileIndex(uint32_t &tileIndex) const {
     return false;
 }
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isResolvingBuiltinsNeeded() const {
+    return true;
+}
 } // namespace NEO

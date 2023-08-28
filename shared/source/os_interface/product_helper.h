@@ -208,6 +208,7 @@ class ProductHelper {
     virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
     virtual bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const = 0;
+    virtual bool isResolvingBuiltinsNeeded(const ReleaseHelper *releaseHelper) const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod() const = 0;
 
     virtual ~ProductHelper() = default;
