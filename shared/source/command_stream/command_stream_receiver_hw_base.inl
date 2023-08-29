@@ -2002,7 +2002,11 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStateBaseAddressSta
         flushData.stateBaseAddressDirty = true;
         setGSBAStateDirty(false);
     } else {
-        this->streamProperties.stateBaseAddress.copyPropertiesStatelessMocs(dispatchFlags.requiredState->stateBaseAddress);
+        if (this->streamProperties.stateBaseAddress.indirectObjectBaseAddress.value == StreamProperty64::initValue) {
+            this->streamProperties.stateBaseAddress.copyPropertiesStatelessMocsIndirectState(dispatchFlags.requiredState->stateBaseAddress);
+        } else {
+            this->streamProperties.stateBaseAddress.copyPropertiesStatelessMocs(dispatchFlags.requiredState->stateBaseAddress);
+        }
         if (globalStatelessHeapAllocation == nullptr) {
             this->streamProperties.stateBaseAddress.copyPropertiesBindingTableSurfaceState(dispatchFlags.requiredState->stateBaseAddress);
             if (this->dshSupported) {

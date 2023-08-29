@@ -3568,6 +3568,60 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 }
 
 HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskAndBindingPoolBaseAddressNeededWhenStateBaseAddressPropertiesNotProvidedForFirstFlushThenDispatchSecondSbaCommandWhenProvided,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(commandStreamReceiver.getGSBAStateDirty());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
+    ASSERT_NE(nullptr, stateBaseAddress);
+    EXPECT_EQ(0u, stateBaseAddress->getGeneralStateBaseAddress());
+
+    auto bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+    EXPECT_EQ(nullptr, bindingTableAddress);
+
+    EXPECT_FALSE(commandStreamReceiver.getGSBAStateDirty());
+
+    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(false, 1, 0x1000, 0x100, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
+    ASSERT_NE(nullptr, stateBaseAddress);
+    EXPECT_EQ(0x4000u, stateBaseAddress->getGeneralStateBaseAddress());
+    bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+    ASSERT_NE(nullptr, bindingTableAddress);
+    EXPECT_EQ(0x1000u, bindingTableAddress->getBindingTablePoolBaseAddress());
+
+    usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
+    EXPECT_EQ(nullptr, stateBaseAddress);
+    bindingTableAddress = hwParserCsr.getCommand<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+    EXPECT_EQ(nullptr, bindingTableAddress);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskAndGlobalStatelessHeapWhenStateBaseAddressNotInitializedThenDispatchStateBaseAddressAndNoBindingPoolBaseAddressCommand,
           IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
