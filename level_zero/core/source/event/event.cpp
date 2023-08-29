@@ -388,7 +388,7 @@ void Event::setIsCompleted() {
     if (this->isCompleted.load() == STATE_CLEARED) {
         this->isCompleted = STATE_SIGNALED;
     }
-    unsetCmdQueue(true);
+    unsetCmdQueue();
 }
 
 void Event::updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint32_t signalValue, uint32_t allocationOffset) {
@@ -401,8 +401,8 @@ void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {
     this->latestUsedCmdQueue = newCmdQ;
 }
 
-void Event::unsetCmdQueue(bool unregisterClient) {
-    if (latestUsedCmdQueue && unregisterClient) {
+void Event::unsetCmdQueue() {
+    if (latestUsedCmdQueue) {
         latestUsedCmdQueue->unregisterCsrClient();
     }
     latestUsedCmdQueue = nullptr;
