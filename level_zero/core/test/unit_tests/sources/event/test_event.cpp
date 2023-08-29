@@ -3104,8 +3104,7 @@ HWTEST_F(EventTests, givenDebugFlagSetWhenCreatingNonTimestampEventsThenPacketsS
     regularEvent->destroy();
 }
 
-HWTEST_F(EventTests,
-         WhenHostEventSyncThenExpectDownloadEventAllocationWithEachQuery) {
+HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventAllocationOnlyWhenEventWasUsedOnGpu) {
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
 
     constexpr uint32_t iterations = 5;
@@ -3147,19 +3146,34 @@ HWTEST_F(EventTests,
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
+    auto eventAllocation = &event->getAllocation(device);
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     auto result = event->hostSynchronize(timeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto eventAllocation = &event->getAllocation(device);
     uint32_t downloadedAllocations = downloadAllocationTrack[eventAllocation];
-    EXPECT_EQ(iterations + 1, downloadedAllocations);
+    EXPECT_EQ(0u, downloadedAllocations);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+
+    event->reset();
+    CpuIntrinsicsTests::pauseCounter = 0u;
+    CpuIntrinsicsTests::pauseAddress = eventAddress;
+    *eventAddress = Event::STATE_INITIAL;
+    ultCsr->downloadAllocationsCalledCount = 0;
+
+    eventAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
+
+    result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    downloadedAllocations = downloadAllocationTrack[eventAllocation];
+    EXPECT_EQ(iterations + 1u, downloadedAllocations);
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 
     event->destroy();
 }
 
-HWTEST_F(EventTests, givenInOrderEventWhenHostEventSyncThenExpectDownloadEventAllocationWithEachQuery) {
+HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
 
     neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
@@ -3187,6 +3201,21 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostEventSyncThenExpectDownloadEventAl
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     auto result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, downloadAllocationTrack[&syncAllocation]);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+
+    auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+
+    event2->inOrderExecEvent = true;
+    event2->updateInOrderExecState(syncAllocation, 1, 0);
+    syncAllocation.updateTaskCount(0u, ultCsr->getOsContext().getContextId());
+    ultCsr->downloadAllocationsCalledCount = 0;
+    eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
+    *eventAddress = Event::STATE_SIGNALED;
+
+    result = event2->hostSynchronize(timeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_NE(0u, downloadAllocationTrack[&syncAllocation]);

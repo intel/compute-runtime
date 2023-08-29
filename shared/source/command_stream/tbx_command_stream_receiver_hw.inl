@@ -544,7 +544,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAlloca
 
     if (hardwareContextController) {
         hardwareContextController->readMemory(gpuAddress, cpuAddress, size,
-                                              this->getMemoryBank(&gfxAllocation), MemoryConstants::pageSize64k);
+                                              this->getMemoryBank(&gfxAllocation), gfxAllocation.getUsedPageSize());
         return;
     }
 

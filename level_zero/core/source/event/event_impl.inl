@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/event/event_imp.h"
@@ -233,9 +234,15 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     }
     if (this->downloadAllocationRequired) {
         for (auto &csr : csrs) {
-            csr->downloadAllocation(this->getAllocation(this->device));
+
+            if (auto &alloc = this->getAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
+                csr->downloadAllocation(alloc);
+            }
+
             if (inOrderExecEvent) {
-                csr->downloadAllocation(*this->inOrderExecDataAllocation);
+                if (auto &alloc = *this->inOrderExecDataAllocation; alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
+                    csr->downloadAllocation(alloc);
+                }
             }
         }
     }
