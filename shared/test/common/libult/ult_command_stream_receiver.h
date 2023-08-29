@@ -196,7 +196,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         recordedDispatchFlags = dispatchFlags;
-        recordedSsh = ssh;
         this->lastFlushedCommandStream = &commandStream;
         return BaseClass::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
@@ -452,7 +451,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     TaskCountType flushBcsTaskReturnValue{};
 
     LinearStream *lastFlushedCommandStream = nullptr;
-    const IndirectHeap *recordedSsh = nullptr;
 
     std::atomic<uint32_t> recursiveLockCounter;
     std::atomic<uint32_t> waitForCompletionWithTimeoutTaskCountCalled{0};

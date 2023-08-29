@@ -296,64 +296,6 @@ void ImmediateCmdListSharedHeapsFixture::tearDown() {
     ModuleMutableCommandListFixture::tearDown();
 }
 
-void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::setUp(int32_t useImmediateFlushTask) {
-    this->useImmediateFlushTask = useImmediateFlushTask;
-    DebugManager.flags.UseImmediateFlushTask.set(useImmediateFlushTask);
-
-    ImmediateCmdListSharedHeapsFixture::setUp();
-}
-
-void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L0::ult::CommandList *currentCmdList, NonKernelOperation operation) {
-    ze_result_t result;
-
-    if (operation == NonKernelOperation::Barrier) {
-        result = currentCmdList->appendBarrier(nullptr, 0, nullptr, false);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    } else if (operation == NonKernelOperation::SignalEvent) {
-        result = currentCmdList->appendSignalEvent(event->toHandle());
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    } else if (operation == NonKernelOperation::ResetEvent) {
-        result = currentCmdList->appendEventReset(event->toHandle());
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    } else if (operation == NonKernelOperation::WaitOnEvents) {
-        auto eventHandle = event->toHandle();
-        result = currentCmdList->appendWaitOnEvents(1, &eventHandle, false, false, false);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    } else if (operation == NonKernelOperation::WriteGlobalTimestamp) {
-        uint64_t timestampAddress = 0xfffffffffff0L;
-        uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
-
-        result = currentCmdList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    } else if (operation == NonKernelOperation::MemoryRangesBarrier) {
-        uint8_t dstPtr[64] = {};
-        driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
-
-        size_t rangeSizes = 1;
-        const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
-        result = currentCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-        driverHandle->releaseImportedPointer(dstPtr);
-    }
-}
-
-void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::validateDispatchFlags(bool nonKernel, NEO::ImmediateDispatchFlags &recordedImmediateFlushTaskFlags, const NEO::IndirectHeap *recordedSsh) {
-    if (this->useImmediateFlushTask == 1) {
-        if (nonKernel) {
-            EXPECT_EQ(nullptr, recordedImmediateFlushTaskFlags.sshCpuBase);
-        } else {
-            EXPECT_NE(nullptr, recordedImmediateFlushTaskFlags.sshCpuBase);
-        }
-    } else {
-        if (nonKernel) {
-            EXPECT_EQ(nullptr, recordedSsh);
-        } else {
-            EXPECT_NE(nullptr, recordedSsh);
-        }
-    }
-}
-
 bool AppendFillFixture::MockDriverFillHandle::findAllocationDataForRange(const void *buffer,
                                                                          size_t size,
                                                                          NEO::SvmAllocationData **allocData) {

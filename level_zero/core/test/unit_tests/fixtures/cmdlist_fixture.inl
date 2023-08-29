@@ -7,7 +7,6 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -1211,62 +1210,6 @@ void TbxImmediateCommandListFixture::setUpT() {
     event = std::unique_ptr<Event>(static_cast<Event *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
 
     setEvent();
-}
-
-template <typename FamilyType>
-void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperation operation) {
-    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    const ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-    auto result = ZE_RESULT_SUCCESS;
-
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
-
-    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
-
-    auto &cmdContainer = commandListImmediate->commandContainer;
-    auto &cmdContainerCoexisting = commandListImmediateCoexisting->commandContainer;
-
-    auto sshFirstCmdList = cmdContainer.getSurfaceStateHeapReserve().indirectHeapReservation;
-    auto sshCoexistingCmdList = cmdContainerCoexisting.getSurfaceStateHeapReserve().indirectHeapReservation;
-
-    void *firstSshCpuPointer = sshFirstCmdList->getCpuBase();
-
-    EXPECT_EQ(sshFirstCmdList->getCpuBase(), sshCoexistingCmdList->getCpuBase());
-
-    auto csrSshHeap = &ultCsr.getIndirectHeap(HeapType::SURFACE_STATE, 0);
-
-    EXPECT_EQ(csrSshHeap->getCpuBase(), sshFirstCmdList->getCpuBase());
-
-    csrSshHeap->getSpace(csrSshHeap->getAvailableSpace());
-
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
-
-    EXPECT_NE(firstSshCpuPointer, sshFirstCmdList->getCpuBase());
-
-    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
-
-    EXPECT_EQ(sshFirstCmdList->getCpuBase(), sshCoexistingCmdList->getCpuBase());
-    EXPECT_EQ(csrSshHeap->getCpuBase(), sshFirstCmdList->getCpuBase());
-
-    appendNonKernelOperation(commandListImmediate.get(), operation);
-    validateDispatchFlags(true, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
-
-    appendNonKernelOperation(commandListImmediateCoexisting.get(), operation);
-    validateDispatchFlags(true, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
 }
 
 } // namespace ult

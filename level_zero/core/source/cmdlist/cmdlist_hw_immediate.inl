@@ -113,87 +113,81 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation) {
-    void *sshCpuPointer = nullptr;
+    bool sbaDirty = this->csr->getGSBAStateDirty();
 
-    if (kernelOperation) {
-        bool sbaDirty = this->csr->getGSBAStateDirty();
+    NEO::IndirectHeap *dsh = nullptr;
+    NEO::IndirectHeap *ssh = nullptr;
 
-        NEO::IndirectHeap *dsh = nullptr;
-        NEO::IndirectHeap *ssh = nullptr;
+    NEO::IndirectHeap *ioh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT);
+    this->csr->makeResident(*ioh->getGraphicsAllocation());
+    if (sbaDirty) {
+        this->requiredStreamState.stateBaseAddress.setPropertiesIndirectState(ioh->getHeapGpuBase(), ioh->getHeapSizeInPages());
+    }
 
-        NEO::IndirectHeap *ioh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT);
-        this->csr->makeResident(*ioh->getGraphicsAllocation());
+    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+        ssh = this->csr->getGlobalStatelessHeap();
+        this->csr->makeResident(*ssh->getGraphicsAllocation());
         if (sbaDirty) {
-            this->requiredStreamState.stateBaseAddress.setPropertiesIndirectState(ioh->getHeapGpuBase(), ioh->getHeapSizeInPages());
+            this->requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
         }
-
-        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
-            ssh = this->csr->getGlobalStatelessHeap();
+    } else if (this->immediateCmdListHeapSharing) {
+        ssh = this->commandContainer.getSurfaceStateHeapReserve().indirectHeapReservation;
+        if (ssh->getGraphicsAllocation()) {
             this->csr->makeResident(*ssh->getGraphicsAllocation());
-            if (sbaDirty) {
-                this->requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
-            }
-        } else if (this->immediateCmdListHeapSharing) {
-            ssh = this->commandContainer.getSurfaceStateHeapReserve().indirectHeapReservation;
-            if (ssh->getGraphicsAllocation()) {
-                this->csr->makeResident(*ssh->getGraphicsAllocation());
 
-                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
-                                                                                                 ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
-            }
-            if (this->dynamicHeapRequired) {
-                dsh = this->commandContainer.getDynamicStateHeapReserve().indirectHeapReservation;
-                if (dsh->getGraphicsAllocation()) {
-                    this->csr->makeResident(*dsh->getGraphicsAllocation());
-                    this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
-                }
-            }
-        } else {
-            if (this->dynamicHeapRequired) {
-                dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
-                this->csr->makeResident(*dsh->getGraphicsAllocation());
-                this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
-            }
-            ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
-            this->csr->makeResident(*ssh->getGraphicsAllocation());
             this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
                                                                                              ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
         }
-
-        sshCpuPointer = ssh->getCpuBase();
-
-        if (this->device->getL0Debugger()) {
-            this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
-            this->csr->makeResident(*this->device->getDebugSurface());
-        }
-
-        NEO::Device *neoDevice = this->device->getNEODevice();
-        if (neoDevice->getDebugger()) {
-            auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
-            auto &sshState = csrHw->getSshState();
-            bool sshDirty = sshState.updateAndCheck(ssh);
-
-            if (sshDirty) {
-                auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
-                auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
-
-                NEO::EncodeSurfaceStateArgs args;
-                args.outMemory = &surfaceState;
-                args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
-                args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
-                args.mocs = this->device->getMOCS(false, false);
-                args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
-                args.allocation = this->device->getDebugSurface();
-                args.gmmHelper = neoDevice->getGmmHelper();
-                args.useGlobalAtomics = false;
-                args.areMultipleSubDevicesInContext = false;
-                args.isDebuggerActive = true;
-                NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
-                *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+        if (this->dynamicHeapRequired) {
+            dsh = this->commandContainer.getDynamicStateHeapReserve().indirectHeapReservation;
+            if (dsh->getGraphicsAllocation()) {
+                this->csr->makeResident(*dsh->getGraphicsAllocation());
+                this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
             }
         }
+    } else {
+        if (this->dynamicHeapRequired) {
+            dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
+            this->csr->makeResident(*dsh->getGraphicsAllocation());
+            this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
+        }
+        ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+        this->csr->makeResident(*ssh->getGraphicsAllocation());
+        this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
+                                                                                         ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
+    }
 
-        this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
+    void *sshCpuPointer = ssh->getCpuBase();
+
+    if (this->device->getL0Debugger()) {
+        this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
+        this->csr->makeResident(*this->device->getDebugSurface());
+    }
+
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    if (neoDevice->getDebugger()) {
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+        auto &sshState = csrHw->getSshState();
+        bool sshDirty = sshState.updateAndCheck(ssh);
+
+        if (sshDirty) {
+            auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
+            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
+            NEO::EncodeSurfaceStateArgs args;
+            args.outMemory = &surfaceState;
+            args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
+            args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
+            args.mocs = this->device->getMOCS(false, false);
+            args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+            args.allocation = this->device->getDebugSurface();
+            args.gmmHelper = neoDevice->getGmmHelper();
+            args.useGlobalAtomics = false;
+            args.areMultipleSubDevicesInContext = false;
+            args.isDebuggerActive = true;
+            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+        }
     }
 
     NEO::ImmediateDispatchFlags dispatchFlags{
@@ -203,6 +197,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         hasRelaxedOrderingDependencies, // hasRelaxedOrderingDependencies
         hasStallingCmds                 // hasStallingCmds
     };
+    this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
     return this->csr->flushImmediateTask(
@@ -250,60 +245,58 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         false                                                        // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
+    this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
+    this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
+
     auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT));
     NEO::IndirectHeap *dsh = nullptr;
     NEO::IndirectHeap *ssh = nullptr;
 
-    if (kernelOperation) {
-        this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
-        this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
-
-        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
-            ssh = this->csr->getGlobalStatelessHeap();
-        } else if (this->immediateCmdListHeapSharing) {
-            auto &sshReserveConfig = this->commandContainer.getSurfaceStateHeapReserve();
-            if (sshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
-                ssh = sshReserveConfig.indirectHeapReservation;
-            }
-            auto &dshReserveConfig = this->commandContainer.getDynamicStateHeapReserve();
-            if (this->dynamicHeapRequired && dshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
-                dsh = dshReserveConfig.indirectHeapReservation;
-            }
-        } else {
-            dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
-            ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+        ssh = this->csr->getGlobalStatelessHeap();
+    } else if (this->immediateCmdListHeapSharing) {
+        auto &sshReserveConfig = this->commandContainer.getSurfaceStateHeapReserve();
+        if (sshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
+            ssh = sshReserveConfig.indirectHeapReservation;
         }
-
-        if (this->device->getL0Debugger()) {
-            UNRECOVERABLE_IF(!NEO::Debugger::isDebugEnabled(this->internalUsage));
-            this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
-            this->csr->makeResident(*this->device->getDebugSurface());
+        auto &dshReserveConfig = this->commandContainer.getDynamicStateHeapReserve();
+        if (this->dynamicHeapRequired && dshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
+            dsh = dshReserveConfig.indirectHeapReservation;
         }
+    } else {
+        dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
+        ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+    }
 
-        NEO::Device *neoDevice = this->device->getNEODevice();
-        if (neoDevice->getDebugger() && this->immediateCmdListHeapSharing) {
-            auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
-            auto sshStateCopy = csrHw->getSshState();
-            bool sshDirty = sshStateCopy.updateAndCheck(ssh);
+    if (this->device->getL0Debugger()) {
+        UNRECOVERABLE_IF(!NEO::Debugger::isDebugEnabled(this->internalUsage));
+        this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
+        this->csr->makeResident(*this->device->getDebugSurface());
+    }
 
-            if (sshDirty) {
-                auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
-                auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    if (neoDevice->getDebugger() && this->immediateCmdListHeapSharing) {
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+        auto sshStateCopy = csrHw->getSshState();
+        bool sshDirty = sshStateCopy.updateAndCheck(ssh);
 
-                NEO::EncodeSurfaceStateArgs args;
-                args.outMemory = &surfaceState;
-                args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
-                args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
-                args.mocs = this->device->getMOCS(false, false);
-                args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
-                args.allocation = this->device->getDebugSurface();
-                args.gmmHelper = neoDevice->getGmmHelper();
-                args.useGlobalAtomics = false;
-                args.areMultipleSubDevicesInContext = false;
-                args.isDebuggerActive = true;
-                NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
-                *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
-            }
+        if (sshDirty) {
+            auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
+            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
+            NEO::EncodeSurfaceStateArgs args;
+            args.outMemory = &surfaceState;
+            args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
+            args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
+            args.mocs = this->device->getMOCS(false, false);
+            args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+            args.allocation = this->device->getDebugSurface();
+            args.gmmHelper = neoDevice->getGmmHelper();
+            args.useGlobalAtomics = false;
+            args.areMultipleSubDevicesInContext = false;
+            args.isDebuggerActive = true;
+            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
         }
     }
 

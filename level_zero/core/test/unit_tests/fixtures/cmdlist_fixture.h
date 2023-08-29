@@ -169,35 +169,6 @@ struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixtu
     std::unique_ptr<Event> event;
 };
 
-struct ImmediateCmdListSharedHeapsFlushTaskFixtureInit : public ImmediateCmdListSharedHeapsFixture {
-    void setUp(int32_t useImmediateFlushTask);
-
-    enum NonKernelOperation {
-        Barrier = 0,
-        SignalEvent,
-        ResetEvent,
-        WaitOnEvents,
-        WriteGlobalTimestamp,
-        MemoryRangesBarrier
-    };
-
-    template <typename FamilyType>
-    void testBody(NonKernelOperation operation);
-
-    void appendNonKernelOperation(L0::ult::CommandList *currentCmdList, NonKernelOperation operation);
-
-    void validateDispatchFlags(bool nonKernel, NEO::ImmediateDispatchFlags &recordedImmediateFlushTaskFlags, const NEO::IndirectHeap *recordedSsh);
-
-    int32_t useImmediateFlushTask;
-};
-
-template <int32_t useImmediateFlushTaskT>
-struct ImmediateCmdListSharedHeapsFlushTaskFixture : public ImmediateCmdListSharedHeapsFlushTaskFixtureInit {
-    void setUp() {
-        ImmediateCmdListSharedHeapsFlushTaskFixtureInit::setUp(useImmediateFlushTaskT);
-    }
-};
-
 class AppendFillFixture : public DeviceFixture {
   public:
     class MockDriverFillHandle : public L0::DriverHandleImp {
