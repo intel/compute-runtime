@@ -336,6 +336,7 @@ endif()
 
 if(TARGET aub_stream)
   set(AUB_STREAM_PROJECT_NAME "aub_stream")
+  get_target_property(AUB_STREAM_HEADERS_DIR ${AUB_STREAM_PROJECT_NAME} INTERFACE_INCLUDE_DIRECTORIES)
 else()
   if(NOT DEFINED AUB_STREAM_DIR)
     get_filename_component(TEMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../aub_stream/aub_mem_dump" ABSOLUTE)
