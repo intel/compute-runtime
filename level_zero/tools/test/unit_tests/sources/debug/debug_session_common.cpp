@@ -37,7 +37,7 @@ void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version, L
         stateSaveArea.resize(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo) + MemoryConstants::pageSize);
     }
 
-    memcpy(stateSaveArea.data(), pStateSaveAreaHeader, sizeof(*pStateSaveAreaHeader));
+    memcpy_s(stateSaveArea.data(), stateSaveArea.size(), pStateSaveAreaHeader, stateSaveAreaHeader.size());
 
     auto fillRegForThread = [&](const SIP::regset_desc *regdesc, int slice, int subslice, int eu, int thread, int start, char value) {
         memset(stateSaveArea.data() + threadSlotOffset(pStateSaveAreaHeader, slice, subslice, eu, thread) + regOffsetInThreadSlot(regdesc, start), value, regdesc->bytes);
