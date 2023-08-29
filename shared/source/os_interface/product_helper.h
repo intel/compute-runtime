@@ -210,6 +210,7 @@ class ProductHelper {
     virtual bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const = 0;
     virtual bool isResolvingBuiltinsNeeded(const ReleaseHelper *releaseHelper) const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod() const = 0;
+    virtual uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const = 0;
 
     virtual ~ProductHelper() = default;
 

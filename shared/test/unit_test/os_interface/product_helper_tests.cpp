@@ -808,3 +808,12 @@ HWTEST_F(ProductHelperTest, whenDisableL3ForDebugCalledThenFalseIsReturned) {
 HWTEST_F(ProductHelperTest, whenCheckIsCachingOnCpuAvailableThenAlwaysTrue) {
     EXPECT_TRUE(productHelper->isCachingOnCpuAvailable());
 }
+
+HWTEST_F(ProductHelperTest, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned) {
+    uint64_t patIndex = 1u;
+    bool isUncached = true;
+    EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex));
+
+    isUncached = false;
+    EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex));
+}

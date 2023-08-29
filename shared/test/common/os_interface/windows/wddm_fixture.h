@@ -36,6 +36,7 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
     void SetUp() override {
         MockExecutionEnvironmentGmmFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        rootDeviceEnvironment->initProductHelper();
         auto osEnvironment = new OsEnvironmentWin();
         gdi = new MockGdi();
         osEnvironment->gdi.reset(gdi);
@@ -104,6 +105,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
         MockExecutionEnvironmentGmmFixture::setUp();
         GdiDllFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        rootDeviceEnvironment->initProductHelper();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddmMockInterface = new WddmMockInterface20(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);

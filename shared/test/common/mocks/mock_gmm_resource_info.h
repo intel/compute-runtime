@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,6 +83,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     GMM_RESOURCE_INFO *peekGmmResourceInfo() const override { return mockResourceInfoHandle; }
 
+    GMM_RESOURCE_USAGE_TYPE getCachePolicyUsage() const override { return usageType; }
+
     void *peekHandle() const override { return mockResourceInfoHandle; }
 
     size_t peekHandleSize() const override { return sizeof(GMM_RESOURCE_INFO); }
@@ -120,6 +122,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     static constexpr uint32_t getHAlignSurfaceStateResult = 2u;
     static constexpr uint32_t yMajorTileModeValue = 3u;
     uint32_t refreshHandleCalled = 0u;
+    GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
 
   protected:
     MockGmmResourceInfo();

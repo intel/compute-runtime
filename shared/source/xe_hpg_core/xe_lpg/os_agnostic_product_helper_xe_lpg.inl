@@ -91,4 +91,13 @@ bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
     return true;
 }
 
+template <>
+uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint64_t patIndex) const {
+    if (isUncachedType) {
+        constexpr uint64_t uncached = 2u;
+        return uncached;
+    }
+    return patIndex;
+}
+
 } // namespace NEO

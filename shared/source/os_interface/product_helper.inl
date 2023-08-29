@@ -808,4 +808,9 @@ bool ProductHelperHw<gfxProduct>::isResolvingBuiltinsNeeded(const ReleaseHelper 
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint64_t patIndex) const {
+    return patIndex;
+}
+
 } // namespace NEO

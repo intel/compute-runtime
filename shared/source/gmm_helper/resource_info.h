@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,8 @@ class GmmResourceInfo {
     MOCKABLE_VIRTUAL bool is64KBPageSuitable() const { return resourceInfo->Is64KBPageSuitable(); }
 
     MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *peekGmmResourceInfo() const { return resourceInfo.get(); }
+
+    MOCKABLE_VIRTUAL GMM_RESOURCE_USAGE_TYPE getCachePolicyUsage() const { return resourceInfo->GetCachePolicyUsage(); }
 
     MOCKABLE_VIRTUAL void *peekHandle() const { return handle; }
 

@@ -23,6 +23,7 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
+#include "shared/test/unit_test/xe_hpg_core/os_agnostic_product_helper_xe_lpg_tests.h"
 
 #include "aubstream/product_family.h"
 #include "platforms.h"
@@ -183,4 +184,9 @@ MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCheckPreferredAllocationMethodThenAl
     auto preferredAllocationMethod = productHelper.getPreferredAllocationMethod();
     EXPECT_TRUE(preferredAllocationMethod.has_value());
     EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
+}
+
+MTLTEST_F(ProductHelperTestMtl, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    XeLpgTests::testOverridePatIndex(productHelper);
 }
