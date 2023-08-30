@@ -285,9 +285,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
             memcpy_s(output, size, reinterpret_cast<void *>(gpuVa), size);
         }
 
-        else if (gpuVa != 0 && gpuVa >= reinterpret_cast<uint64_t>(readMemoryBuffer) &&
-                 gpuVa <= reinterpret_cast<uint64_t>(ptrOffset(readMemoryBuffer, sizeof(readMemoryBuffer)))) {
-            memcpy_s(output, size, reinterpret_cast<void *>(gpuVa), std::min(size, sizeof(readMemoryBuffer)));
+        else if (!readMemoryBuffer.empty() &&
+                 (gpuVa != 0 && gpuVa >= reinterpret_cast<uint64_t>(readMemoryBuffer.data()) &&
+                  gpuVa <= reinterpret_cast<uint64_t>(ptrOffset(readMemoryBuffer.data(), readMemoryBuffer.size())))) {
+            memcpy_s(output, size, reinterpret_cast<void *>(gpuVa), std::min(size, readMemoryBuffer.size()));
         }
         return readMemoryResult;
     }
@@ -511,7 +512,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;
 
     NEO::SbaTrackedAddresses sba;
-    uint64_t readMemoryBuffer[64];
+    std::vector<uint8_t> readMemoryBuffer;
     uint64_t regs[16];
 
     int returnTimeDiff = -1;
