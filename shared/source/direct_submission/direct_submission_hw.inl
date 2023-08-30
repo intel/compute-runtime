@@ -767,7 +767,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         Dispatcher::dispatchCacheFlush(ringCommandStream, this->rootDeviceEnvironment, gpuVaForMiFlush);
     }
 
-    if (!disableMonitorFence) {
+    if (!disableMonitorFence || this->dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds)) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
         Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment,
@@ -981,7 +981,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     currentQueueWorkCount++;
     DirectSubmissionDiagnostics::diagnosticModeOneSubmit(diagnostic.get());
 
-    uint64_t flushValue = updateTagValue();
+    uint64_t flushValue = updateTagValue(batchBuffer.hasStallingCmds);
     flushStamp.setStamp(flushValue);
 
     return ringStart;
@@ -1085,6 +1085,11 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
     }
     UNRECOVERABLE_IF(this->currentRingBuffer == this->previousRingBuffer);
     return nextAllocation;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(bool hasStallingCmds) {
+    return false;
 }
 
 template <typename GfxFamily, typename Dispatcher>

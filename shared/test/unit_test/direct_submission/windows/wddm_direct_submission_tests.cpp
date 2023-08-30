@@ -424,7 +424,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcomple
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue();
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(false);
     EXPECT_EQ(value, actualTagValue);
     EXPECT_EQ(value + 1, contextFence.currentFenceValue);
     EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
@@ -440,9 +440,25 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenUpdatingTagVa
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     wddmDirectSubmission.disableMonitorFence = true;
 
-    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue();
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(false);
     EXPECT_EQ(0ull, actualTagValue);
     EXPECT_EQ(value, contextFence.currentFenceValue);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceAndStallingCmdsWhenUpdatingTagValueThenUpdateCompletionFence) {
+    uint64_t address = 0xFF00FF0000ull;
+    uint64_t value = 0x12345678ull;
+    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+    contextFence.gpuAddress = address;
+    contextFence.currentFenceValue = value;
+
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = true;
+
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(true);
+    EXPECT_EQ(value, actualTagValue);
+    EXPECT_EQ(value + 1, contextFence.currentFenceValue);
+    EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenHandleStopRingBufferThenExpectCompletionFenceUpdated) {

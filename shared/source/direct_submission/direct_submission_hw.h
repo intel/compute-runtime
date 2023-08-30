@@ -116,7 +116,8 @@ class DirectSubmissionHw {
     virtual uint64_t switchRingBuffers();
     virtual void handleSwitchRingBuffers() = 0;
     GraphicsAllocation *switchRingBuffersAllocations();
-    virtual uint64_t updateTagValue() = 0;
+    virtual uint64_t updateTagValue(bool hasStallingCmds) = 0;
+    virtual bool dispatchMonitorFenceRequired(bool hasStallingCmds);
     virtual void getTagAddressValue(TagData &tagData) = 0;
     void unblockGpu();
     bool copyCommandBufferIntoRing(BatchBuffer &batchBuffer);

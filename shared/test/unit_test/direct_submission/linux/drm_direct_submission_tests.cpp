@@ -118,7 +118,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
 
     EXPECT_NE(0ull, drmDirectSubmission.switchRingBuffers());
 
-    EXPECT_EQ(0ull, drmDirectSubmission.updateTagValue());
+    EXPECT_EQ(0ull, drmDirectSubmission.updateTagValue(false));
 
     TagData tagData = {1ull, 1ull};
     drmDirectSubmission.getTagAddressValue(tagData);
@@ -662,7 +662,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThe
     EXPECT_TRUE(ret);
 
     auto currentTag = directSubmission.currentTagData.tagValue;
-    directSubmission.updateTagValue();
+    directSubmission.updateTagValue(false);
 
     auto updatedTag = directSubmission.currentTagData.tagValue;
 

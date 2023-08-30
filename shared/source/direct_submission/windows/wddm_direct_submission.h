@@ -34,7 +34,9 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     void ensureRingCompletion() override;
     void handleSwitchRingBuffers() override;
     void handleStopRingBuffer() override;
-    uint64_t updateTagValue() override;
+    uint64_t updateTagValue(bool hasStallingCmds) override;
+    bool dispatchMonitorFenceRequired(bool hasStallingCmds) override;
+    uint64_t updateTagValueImpl();
     void getTagAddressValue(TagData &tagData) override;
     bool isCompleted(uint32_t ringBufferIndex) override;
 
