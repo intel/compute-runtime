@@ -20,7 +20,13 @@ namespace NEO {
 
 template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
-    return GfxMemoryAllocationMethod::AllocateByKmd;
+    switch (allocationType) {
+    case AllocationType::TAG_BUFFER:
+    case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+        return {};
+    default:
+        return GfxMemoryAllocationMethod::AllocateByKmd;
+    }
 }
 
 template <>

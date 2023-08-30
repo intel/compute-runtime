@@ -23,8 +23,14 @@ void XeLpgTests::testOverridePatIndex(const ProductHelper &productHelper) {
 
 void XeLpgTests::testPreferredAllocationMethod(const ProductHelper &productHelper) {
     for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
-        auto preferredAllocationMethod = productHelper.getPreferredAllocationMethod(static_cast<AllocationType>(i));
-        EXPECT_TRUE(preferredAllocationMethod.has_value());
-        EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
+        auto allocationType = static_cast<AllocationType>(i);
+        auto preferredAllocationMethod = productHelper.getPreferredAllocationMethod(allocationType);
+        if (allocationType == AllocationType::TAG_BUFFER ||
+            allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
+            EXPECT_FALSE(preferredAllocationMethod.has_value());
+        } else {
+            EXPECT_TRUE(preferredAllocationMethod.has_value());
+            EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
+        }
     }
 }
