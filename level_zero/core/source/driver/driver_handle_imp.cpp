@@ -184,6 +184,11 @@ DriverHandleImp::~DriverHandleImp() {
         delete this->svmAllocsManager;
         this->svmAllocsManager = nullptr;
     }
+
+    if (this->rtasLibraryHandle) {
+        delete this->rtasLibraryHandle;
+        this->rtasLibraryHandle = nullptr;
+    }
 }
 
 void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &neoDevice) {
