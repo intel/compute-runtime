@@ -796,7 +796,7 @@ bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const Ke
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod() const {
+std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
     return {};
 }
 

@@ -19,7 +19,7 @@
 namespace NEO {
 
 template <>
-std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod() const {
+std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
     return GfxMemoryAllocationMethod::AllocateByKmd;
 }
 

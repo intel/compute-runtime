@@ -9,5 +9,6 @@ namespace NEO {
 class ProductHelper;
 struct XeLpgTests {
     static void testOverridePatIndex(const ProductHelper &productHelper);
+    static void testPreferredAllocationMethod(const ProductHelper &productHelper);
 };
 } // namespace NEO

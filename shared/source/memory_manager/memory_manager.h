@@ -314,6 +314,7 @@ class MemoryManager {
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
     virtual void registerAllocationInOs(GraphicsAllocation *allocation) {}
+    virtual GfxMemoryAllocationMethod getPreferredAllocationMethod(const AllocationProperties &allocationProperties) const;
     bool isAllocationTypeToCapture(AllocationType type) const;
     void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size);
     void updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex);

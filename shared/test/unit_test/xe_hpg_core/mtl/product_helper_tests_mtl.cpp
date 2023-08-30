@@ -181,9 +181,7 @@ MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCheckIsCachingOnCpuAvailableThenAlwa
 
 MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCheckPreferredAllocationMethodThenAllocateByKmdIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
-    auto preferredAllocationMethod = productHelper.getPreferredAllocationMethod();
-    EXPECT_TRUE(preferredAllocationMethod.has_value());
-    EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
+    XeLpgTests::testPreferredAllocationMethod(productHelper);
 }
 
 MTLTEST_F(ProductHelperTestMtl, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned) {

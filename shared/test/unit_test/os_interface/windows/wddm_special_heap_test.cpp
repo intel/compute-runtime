@@ -52,16 +52,19 @@ class GlobalBindlessWddmMemManagerFixture {
 using WddmGlobalBindlessAllocatorTests = Test<GlobalBindlessWddmMemManagerFixture>;
 
 TEST_F(WddmGlobalBindlessAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenWddmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
-    AllocationData allocData = {};
-    allocData.type = AllocationType::BUFFER;
+    AllocationProperties allocationProperties{0u, MemoryConstants::kiloByte, NEO::AllocationType::BUFFER, {}};
+    NEO::AllocationData allocData = {};
+    allocData.rootDeviceIndex = allocationProperties.rootDeviceIndex;
+    allocData.type = allocationProperties.allocationType;
+    allocData.size = allocationProperties.size;
+    allocData.allocationMethod = memManager->getPreferredAllocationMethod(allocationProperties);
     EXPECT_FALSE(GraphicsAllocation::isLockable(allocData.type));
     allocData.flags.use32BitFrontWindow = true;
-    allocData.size = MemoryConstants::kiloByte;
     auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData, false);
     auto gmmHelper = memManager->getGmmHelper(allocData.rootDeviceIndex);
     EXPECT_EQ(allocation->getGpuBaseAddress(), gmmHelper->canonize(allocation->getGpuAddress()));
 
-    if (memManager->getPreferredAllocationMethod(allocData.rootDeviceIndex) == GfxMemoryAllocationMethod::AllocateByKmd) {
+    if (allocData.allocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
         EXPECT_TRUE(allocation->isAllocationLockable());
     } else {
         EXPECT_FALSE(allocation->isAllocationLockable());

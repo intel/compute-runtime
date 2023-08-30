@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/xe_hpg_core/os_agnostic_product_helper_xe_lpg_tests.h"
 
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -18,4 +19,12 @@ void XeLpgTests::testOverridePatIndex(const ProductHelper &productHelper) {
 
     isUncached = false;
     EXPECT_EQ(patIndex, productHelper.overridePatIndex(isUncached, patIndex));
+}
+
+void XeLpgTests::testPreferredAllocationMethod(const ProductHelper &productHelper) {
+    for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
+        auto preferredAllocationMethod = productHelper.getPreferredAllocationMethod(static_cast<AllocationType>(i));
+        EXPECT_TRUE(preferredAllocationMethod.has_value());
+        EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
+    }
 }

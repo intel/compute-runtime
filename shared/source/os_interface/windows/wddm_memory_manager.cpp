@@ -72,15 +72,16 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     initialized = true;
 }
 
-GfxMemoryAllocationMethod WddmMemoryManager::getPreferredAllocationMethod(uint32_t rootDeviceIndex) {
+GfxMemoryAllocationMethod WddmMemoryManager::getPreferredAllocationMethod(const AllocationProperties &allocationProperties) const {
     if (DebugManager.flags.ForcePreferredAllocationMethod.get() != -1) {
         return static_cast<GfxMemoryAllocationMethod>(DebugManager.flags.ForcePreferredAllocationMethod.get());
     }
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[allocationProperties.rootDeviceIndex].get();
     UNRECOVERABLE_IF(!rootDeviceEnvironment);
     auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
-    if (productHelper.getPreferredAllocationMethod()) {
-        return *productHelper.getPreferredAllocationMethod();
+    auto preference = productHelper.getPreferredAllocationMethod(allocationProperties.allocationType);
+    if (preference) {
+        return *preference;
     }
 
     return preferredAllocationMethod;
@@ -184,7 +185,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     }
 
     // algin gpu address of device part of usm shared allocation to 64kb for WSL2
-    auto alignGpuAddressTo64KB = getPreferredAllocationMethod(allocationData.rootDeviceIndex) == GfxMemoryAllocationMethod::AllocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr;
+    auto alignGpuAddressTo64KB = allocationData.allocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr;
 
     if (alignGpuAddressTo64KB) {
         sizeAligned = sizeAligned + allocationData.alignment;
@@ -334,7 +335,7 @@ GraphicsAllocation *WddmMemoryManager::allocateUSMHostGraphicsMemory(const Alloc
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
     auto pageSize = NEO::OSInterface::osEnabled64kbPages ? MemoryConstants::pageSize64k : MemoryConstants::pageSize;
     bool requiresNonStandardAlignment = allocationData.alignment > pageSize;
-    if ((getPreferredAllocationMethod(allocationData.rootDeviceIndex) == GfxMemoryAllocationMethod::UseUmdSystemPtr) || (requiresNonStandardAlignment && allocationData.forceKMDAllocation == false)) {
+    if ((allocationData.allocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) || (requiresNonStandardAlignment && allocationData.forceKMDAllocation == false)) {
         return allocateSystemMemoryAndCreateGraphicsAllocationFromIt(allocationData);
     } else {
         return allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, NEO::OSInterface::osEnabled64kbPages);
@@ -482,7 +483,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         ptrAligned = alignDown(allocationData.hostPtr, MemoryConstants::allocationAlignment);
         sizeAligned = alignSizeWholePage(allocationData.hostPtr, sizeAligned);
         offset = ptrDiff(allocationData.hostPtr, ptrAligned);
-    } else if (getPreferredAllocationMethod(allocationData.rootDeviceIndex) == GfxMemoryAllocationMethod::UseUmdSystemPtr) {
+    } else if (allocationData.allocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) {
         sizeAligned = alignUp(sizeAligned, MemoryConstants::allocationAlignment);
         pSysMem = allocateSystemMemory(sizeAligned, MemoryConstants::allocationAlignment);
         if (pSysMem == nullptr) {
@@ -511,7 +512,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
     StorageInfo storageInfo{};
-    storageInfo.isLockable = getPreferredAllocationMethod(allocationData.rootDeviceIndex) != GfxMemoryAllocationMethod::UseUmdSystemPtr;
+    storageInfo.isLockable = allocationData.allocationMethod != GfxMemoryAllocationMethod::UseUmdSystemPtr;
 
     gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), ptrAligned, sizeAligned, 0u,
                   CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, storageInfo, true);

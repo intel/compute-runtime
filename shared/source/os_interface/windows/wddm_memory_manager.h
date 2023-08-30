@@ -75,7 +75,7 @@ class WddmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL NTSTATUS createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex);
 
   protected:
-    GfxMemoryAllocationMethod getPreferredAllocationMethod(uint32_t rootDeviceIndex);
+    GfxMemoryAllocationMethod getPreferredAllocationMethod(const AllocationProperties &allocationProperties) const override;
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;

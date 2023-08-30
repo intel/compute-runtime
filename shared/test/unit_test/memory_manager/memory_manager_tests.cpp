@@ -72,6 +72,14 @@ TEST(MemoryManagerTest, givenDefaultMemoryManagerWhenGraphicsAllocationContainsE
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsReturned) {
+    MockMemoryManager memoryManager;
+    for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
+        AllocationProperties allocationProperties{0u, 0u, static_cast<AllocationType>(i), {}};
+        EXPECT_EQ(GfxMemoryAllocationMethod::NotDefined, memoryManager.getPreferredAllocationMethod(allocationProperties));
+    }
+}
+
 TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
     MockMemoryManager mockMemoryManager;
 

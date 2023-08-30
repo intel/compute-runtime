@@ -526,8 +526,13 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     allocationData.storageInfo.systemMemoryPlacement = allocationData.flags.useSystemMemory;
     allocationData.storageInfo.systemMemoryForced = properties.flags.forceSystemMemory;
+    allocationData.allocationMethod = getPreferredAllocationMethod(properties);
 
     return true;
+}
+
+GfxMemoryAllocationMethod MemoryManager::getPreferredAllocationMethod(const AllocationProperties &allocationProperties) const {
+    return GfxMemoryAllocationMethod::NotDefined;
 }
 
 GraphicsAllocation *MemoryManager::allocatePhysicalGraphicsMemory(const AllocationProperties &properties) {
