@@ -69,6 +69,7 @@ enum class PreferredLocation : int16_t {
     System = 0,
     Device = 1,
     None = 2,
+    Default = Device
 };
 
 enum class PostSyncMode : uint32_t {

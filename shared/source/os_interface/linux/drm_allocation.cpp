@@ -455,6 +455,10 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
         success &= setPreferredLocation(drm, flags.devicePreferredLocation ? PreferredLocation::Device : PreferredLocation::Clear);
     }
 
+    if (flags.systemPreferredLocation != enabledMemAdviseFlags.systemPreferredLocation) {
+        success &= setPreferredLocation(drm, flags.systemPreferredLocation ? PreferredLocation::System : PreferredLocation::Default);
+    }
+
     if (success) {
         enabledMemAdviseFlags = flags;
     }

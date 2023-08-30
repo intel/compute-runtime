@@ -342,6 +342,25 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
 
+TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithSystemPreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
+    drm->ioctlCallsCount = 0;
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x1;
+    allocation.setNumHandles(1);
+
+    MemAdviseFlags memAdviseFlags{};
+
+    for (auto systemPreferredLocation : {true, false}) {
+        memAdviseFlags.systemPreferredLocation = systemPreferredLocation;
+
+        EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+    }
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
+}
+
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingPreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferChunks) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableBOChunking.set(1);

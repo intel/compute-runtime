@@ -1008,6 +1008,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
         case ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION:
             flags.devicePreferredLocation = 0;
             break;
+        case ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION:
+            flags.systemPreferredLocation = 1;
+            break;
+        case ZE_MEMORY_ADVICE_CLEAR_SYSTEM_MEMORY_PREFERRED_LOCATION:
+            flags.systemPreferredLocation = 0;
+            break;
         case ZE_MEMORY_ADVICE_BIAS_CACHED:
             flags.cachedMemory = 1;
             break;

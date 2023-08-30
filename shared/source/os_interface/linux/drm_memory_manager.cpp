@@ -2304,7 +2304,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         return nullptr;
     }
 
-    PreferredLocation preferredLocation = PreferredLocation::Device;
+    PreferredLocation preferredLocation = PreferredLocation::Default;
     if (NEO::DebugManager.flags.CreateContextWithAccessCounters.get() > 0) {
         preferredLocation = PreferredLocation::None;
     }
