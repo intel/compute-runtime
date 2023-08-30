@@ -18,36 +18,6 @@ using namespace NEO;
 
 using SamplerTestDG2 = ::testing::Test;
 
-HWTEST2_F(SamplerTestDG2, givenDG2SamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsDG2) {
-    EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-
-    auto state = FamilyType::cmdInitSamplerState;
-
-    MockExecutionEnvironment executionEnvironment{};
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    productHelper.adjustSamplerState(&state, *defaultHwInfo);
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-}
-
-HWTEST2_F(SamplerTestDG2, giveDG2SamplerWhenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsDG2) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
-    EXPECT_TRUE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-
-    auto state = FamilyType::cmdInitSamplerState;
-
-    MockExecutionEnvironment executionEnvironment{};
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    productHelper.adjustSamplerState(&state, *defaultHwInfo);
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
-}
-
 HWTEST2_F(SamplerTestDG2, giveDG2G10BelowC0WhenProgrammingSamplerForNearestFilterWithMirrorAddressThenRoundEnableForRDirectionIsEnabled, IsDG2) {
     auto state = FamilyType::cmdInitSamplerState;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;

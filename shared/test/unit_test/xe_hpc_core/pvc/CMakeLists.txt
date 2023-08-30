@@ -17,7 +17,6 @@ if(TESTS_PVC)
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_tests_pvc.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_pvc.cpp

@@ -14,6 +14,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -263,4 +264,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenXeHpPlatformsWhenGettingD
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformsWhenGettingDefaultSshSizeThenExpectSixtyFourKilobytes) {
     constexpr size_t expectedSize = 64 * MemoryConstants::kiloByte;
     EXPECT_EQ(expectedSize, EncodeStates<FamilyType>::getSshHeapSize());
+}
+
+HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsAtLeastGen12lp) {
+    EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
+
+    auto state = FamilyType::cmdInitSamplerState;
+
+    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
+    productHelper.adjustSamplerState(&state, *defaultHwInfo);
+    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
+}
+
+HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsAtLeastGen12lp) {
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
+    EXPECT_TRUE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
+
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+
+    auto state = FamilyType::cmdInitSamplerState;
+
+    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
+    productHelper.adjustSamplerState(&state, *defaultHwInfo);
+    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }
