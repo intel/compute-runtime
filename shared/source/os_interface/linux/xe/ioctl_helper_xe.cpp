@@ -1127,9 +1127,9 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::PrimeHandleToFd: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
+        ret = IoctlHelper::ioctl(request, arg);
         xeLog(" ->PrimeHandleToFd h=0x%x f=0x%x d=0x%x r=%d\n",
               prime->handle, prime->flags, prime->fileDescriptor, ret);
-        ret = IoctlHelper::ioctl(request, arg);
     } break;
     case DrmIoctl::GemCreate: {
         GemCreate *gemCreate = static_cast<GemCreate *>(arg);
