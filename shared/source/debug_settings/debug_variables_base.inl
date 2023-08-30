@@ -52,6 +52,7 @@ DECLARE_DEBUG_VARIABLE(bool, TrackParentEvents, false, "Events track their paren
 DECLARE_DEBUG_VARIABLE(bool, RebuildPrecompiledKernels, false, "Forces driver to recompile precompiled kernels from sources; applies to builtin and user kernels")
 DECLARE_DEBUG_VARIABLE(bool, DisableKernelRecompilation, false, "Disable kernel recompilation")
 DECLARE_DEBUG_VARIABLE(bool, LoopAtDriverInit, false, "Adds endless loop in DebugSettingsManager constructor")
+DECLARE_DEBUG_VARIABLE(bool, DoNotValidateDriverPath, false, "Skips validating DriverStore path allowing to load driver from any path")
 DECLARE_DEBUG_VARIABLE(bool, DoNotRegisterTrimCallback, false, "Do not register trim callback")
 DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "Default to engine 0 if specified engine is not found")
 DECLARE_DEBUG_VARIABLE(bool, ForceImplicitFlush, false, "Flush after each enqueue; useful for debugging batched submission logic")

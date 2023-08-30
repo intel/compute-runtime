@@ -372,7 +372,7 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     }
 
     std::unique_ptr<UmKmDataTranslator> umKmDataTranslator = createUmKmDataTranslator(*osEnvironment.gdi, openAdapterData.hAdapter);
-    if (false == umKmDataTranslator->enabled()) {
+    if (false == umKmDataTranslator->enabled() && !DebugManager.flags.DoNotValidateDriverPath.get()) {
         if (false == validDriverStorePath(osEnvironment, openAdapterData.hAdapter)) {
             return nullptr;
         }

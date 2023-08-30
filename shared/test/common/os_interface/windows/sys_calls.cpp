@@ -33,6 +33,7 @@ const HKEY validHkey = reinterpret_cast<HKEY>(0);
 bool getNumThreadsCalled = false;
 bool mmapAllowExtendedPointers = false;
 bool pathExistsMock = false;
+const char *driverStorePath = nullptr;
 
 bool pathExists(const std::string &path) {
     return pathExistsMock;
@@ -125,6 +126,16 @@ LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDW
                 if (*lpcbData == sizeof(int64_t)) {
                     if (lpData) {
                         *reinterpret_cast<uint64_t *>(lpData) = regQueryValueExpectedData;
+                    }
+                }
+            } else if (driverStorePath && (strcmp(lpValueName, "DriverStorePathForComputeRuntime") == 0)) {
+                if (lpData) {
+                    strcpy(reinterpret_cast<char *>(lpData), driverStorePath);
+                }
+                if (lpcbData) {
+                    *lpcbData = static_cast<DWORD>(strlen(driverStorePath) + 1u);
+                    if (lpType) {
+                        *lpType = REG_SZ;
                     }
                 }
             }
