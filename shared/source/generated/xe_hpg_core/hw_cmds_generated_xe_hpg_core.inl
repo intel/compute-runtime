@@ -1728,6 +1728,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         TheStructure.Common.MemoryCompressionType = MEMORY_COMPRESSION_TYPE_MEDIA_COMPRESSION;
         TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma = HALF_PITCH_FOR_CHROMA_DISABLE;
         TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode = AUXILIARY_SURFACE_MODE_AUX_NONE;
+        TheStructure.Common.DisallowLowQualityFiltering = false;
     }
     static tagRENDER_SURFACE_STATE sInit() {
         RENDER_SURFACE_STATE state;
@@ -2128,7 +2129,8 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline uint32_t getClearColorAddressHigh() const { // patched
         return TheStructure.Common.ClearAddressHigh;
     }
-    inline void setDisallowLowQualityFiltering(const bool value) {
+    inline void setDisallowLowQualityFiltering(const bool value) { // patched
+        UNRECOVERABLE_IF(true);
         TheStructure.Common.DisallowLowQualityFiltering = value;
     }
     inline bool getDisallowLowQualityFiltering() const {

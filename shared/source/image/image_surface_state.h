@@ -16,9 +16,6 @@
 
 namespace NEO {
 template <typename GfxFamily>
-void setFilterMode(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo);
-
-template <typename GfxFamily>
 inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, Gmm *gmm, GmmHelper &gmmHelper, uint32_t cubeFaceIndex, uint64_t gpuAddress, const SurfaceOffsets &surfaceOffsets, bool isNV12Format) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
@@ -92,7 +89,6 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
     }
 
     surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->genxSurfaceFormat));
-    setFilterMode<GfxFamily>(surfaceState, gmmHelper.getHardwareInfo());
 }
 
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,4 @@ typedef Gen8Family Family;
 
 template <>
 void setMipTailStartLod<Family>(Family::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {}
-
-// clang-format off
-#include "shared/source/image/image_bdw_and_later.inl"
-// clang-format on
 } // namespace NEO
