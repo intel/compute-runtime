@@ -49,7 +49,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCA
     EXPECT_EQ(true, cmd->getPostSync().getDataportSubsliceCacheFlush());
 }
 
-HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndDG2ThenMocsIndex2IsSet, IsDG2) {
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeThenMocsIndex2IsSet, IsXeHpgCore) {
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     uint32_t dims[] = {2, 1, 1};
