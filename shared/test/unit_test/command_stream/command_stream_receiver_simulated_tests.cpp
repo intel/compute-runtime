@@ -9,11 +9,14 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hardware_context_controller.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -593,5 +596,100 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
             EXPECT_TRUE(mockManager->writeMemory2Called);
             EXPECT_EQ(MemoryConstants::pageSize64k, mockManager->writeMemoryPageSizePassed);
         }
+    }
+}
+
+HWTEST_F(CommandStreamSimulatedTests, givenBarrierNodesWhenProgramStallingCommandsForBarrierCalledThenPostSyncWritePipeControlIsProgrammed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(osContext);
+
+    TagAllocatorBase *allocator = pDevice->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+    auto barrierNode = allocator->getTag();
+    const auto barrierNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*barrierNode);
+    TimestampPacketContainer barrierNodes{};
+    barrierNodes.add(barrierNode);
+
+    {
+        MockGraphicsAllocation streamAllocation{};
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(&streamAllocation, streamBuffer, sizeof(streamBuffer));
+
+        csr->programStallingCommandsForBarrier(linearStream, &barrierNodes, false);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(linearStream);
+        auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
+        if (UnitTestHelper<FamilyType>::isPipeControlWArequired(hardwareInfo)) {
+            auto nextPipeControlItor = find<PIPE_CONTROL *>(++pipeControlItor, hwParser.cmdList.end());
+            pipeControl = genCmdCast<PIPE_CONTROL *>(*nextPipeControlItor);
+        }
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+        EXPECT_FALSE(pipeControl->getDcFlushEnable());
+        EXPECT_EQ(barrierNodeAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    }
+    {
+        MockGraphicsAllocation streamAllocation{};
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(&streamAllocation, streamBuffer, sizeof(streamBuffer));
+
+        csr->programStallingCommandsForBarrier(linearStream, &barrierNodes, true);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(linearStream);
+        auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
+        if (UnitTestHelper<FamilyType>::isPipeControlWArequired(hardwareInfo)) {
+            auto nextPipeControlItor = find<PIPE_CONTROL *>(++pipeControlItor, hwParser.cmdList.end());
+            pipeControl = genCmdCast<PIPE_CONTROL *>(*nextPipeControlItor);
+        }
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+        EXPECT_EQ(csr->getDcFlushSupport(), pipeControl->getDcFlushEnable());
+        EXPECT_EQ(barrierNodeAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    }
+}
+
+HWTEST_F(CommandStreamSimulatedTests, givenEmptyBarrierNodesWhenProgramStallingCommandsForBarrierCalledThenNoWritePipeControlIsProgrammed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(osContext);
+
+    {
+        TimestampPacketContainer barrierNodes{};
+
+        MockGraphicsAllocation streamAllocation{};
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(&streamAllocation, streamBuffer, sizeof(streamBuffer));
+
+        csr->programStallingCommandsForBarrier(linearStream, &barrierNodes, false);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(linearStream);
+        const auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControl->getPostSyncOperation());
+        EXPECT_EQ(0u, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    }
+
+    {
+        MockGraphicsAllocation streamAllocation{};
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(&streamAllocation, streamBuffer, sizeof(streamBuffer));
+
+        csr->programStallingCommandsForBarrier(linearStream, nullptr, false);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(linearStream);
+        const auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControl->getPostSyncOperation());
+        EXPECT_EQ(0u, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     }
 }

@@ -820,16 +820,18 @@ HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDR
 
     EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
     EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr));
     auto ccsStart = pCmdQ->getGpgpuCommandStreamReceiver().getCS().getUsed();
-
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr));
     EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
+
+    HardwareParse queueHwParser;
+    queueHwParser.parseCommands<FamilyType>(*pDevice->getUltCommandStreamReceiver<FamilyType>().lastFlushedCommandStream, 0u);
+    const auto memFenceItor = find<MI_MEM_FENCE *>(queueHwParser.cmdList.begin(), queueHwParser.cmdList.end());
+    EXPECT_NE(queueHwParser.cmdList.end(), memFenceItor);
 
     HardwareParse ccsHwParser;
     ccsHwParser.parseCommands<FamilyType>(pCmdQ->getGpgpuCommandStreamReceiver().getCS(0), ccsStart);
 
     const auto memFenceStateItor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
-    const auto memFenceItor = find<MI_MEM_FENCE *>(memFenceStateItor, ccsHwParser.cmdList.end());
-    EXPECT_NE(ccsHwParser.cmdList.end(), memFenceItor);
     EXPECT_NE(ccsHwParser.cmdList.end(), memFenceStateItor);
 }

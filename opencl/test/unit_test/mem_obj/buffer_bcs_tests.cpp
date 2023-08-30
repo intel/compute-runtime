@@ -811,7 +811,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     }
 }
 
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWithEmptyWaitlistWhenReleasingMultipleBlockedEnqueuesThenProgramBarrierOnce) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenStallingCommandsOnNextFlushWhenReleasingMultipleBlockedEnqueuesThenProgramBarrierOnce) {
     DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -827,7 +827,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWithEmptyWaitlistWhenReleasingMul
     cl_event waitlist0[] = {&userEvent0};
     cl_event waitlist1[] = {&userEvent1};
 
-    cmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr);
+    cmdQ->setStallingCommandsOnNextFlush(true);
     cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, waitlist0, nullptr);
     cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, waitlist1, nullptr);
 

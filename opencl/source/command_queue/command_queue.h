@@ -348,7 +348,12 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void fillCsrDependenciesWithLastBcsPackets(CsrDependencies &csrDeps);
     void clearLastBcsPackets();
 
-    void setStallingCommandsOnNextFlush(const bool isStallingCommandsOnNextFlushRequired) { stallingCommandsOnNextFlushRequired = isStallingCommandsOnNextFlushRequired; }
+    void setStallingCommandsOnNextFlush(const bool isStallingCommandsOnNextFlushRequired) {
+        stallingCommandsOnNextFlushRequired = isStallingCommandsOnNextFlushRequired;
+        if (!isStallingCommandsOnNextFlushRequired) {
+            dcFlushRequiredOnStallingCommandsOnNextFlush = false;
+        }
+    }
     bool isStallingCommandsOnNextFlushRequired() const { return stallingCommandsOnNextFlushRequired; }
 
     void setDcFlushRequiredOnStallingCommandsOnNextFlush(const bool isDcFlushRequiredOnStallingCommandsOnNextFlush) { dcFlushRequiredOnStallingCommandsOnNextFlush = isDcFlushRequiredOnStallingCommandsOnNextFlush; }

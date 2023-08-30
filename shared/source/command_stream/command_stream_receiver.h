@@ -359,6 +359,8 @@ class CommandStreamReceiver {
     virtual void programComputeBarrierCommand(LinearStream &cmdStream) = 0;
     virtual size_t getCmdsSizeForComputeBarrierCommand() const = 0;
 
+    virtual void programStallingCommandsForBarrier(LinearStream &cmdStream, TimestampPacketContainer *barrierTimestampPacketNodes, const bool isDcFlushRequired) = 0;
+
     const HardwareInfo &peekHwInfo() const;
     const RootDeviceEnvironment &peekRootDeviceEnvironment() const;
 

@@ -272,11 +272,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType && !isNonStallingIoqBarrier) {
             setStallingCommandsOnNextFlush(true);
-            if (NEO::DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.get() == 0 || event) {
-                setDcFlushRequiredOnStallingCommandsOnNextFlush(true);
-            }
-            this->splitBarrierRequired = true;
+            const bool isDcFlushRequiredOnBarrier = NEO::DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.get() == 0 || event;
+            setDcFlushRequiredOnStallingCommandsOnNextFlush(isDcFlushRequiredOnBarrier);
         }
+        this->splitBarrierRequired = true;
 
         for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
             auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
@@ -778,6 +777,18 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     UNRECOVERABLE_IF(multiDispatchInfo.empty());
 
+    if (!relaxedOrderingEnabled && !getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled() && isStallingCommandsOnNextFlushRequired() && !isBlitAuxTranslationRequired(multiDispatchInfo)) {
+        CsrDependencies csrDeps{};
+        fillCsrDependenciesWithLastBcsPackets(csrDeps);
+        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, false);
+
+        setupBarrierTimestampForBcsEngines(getGpgpuCommandStreamReceiver().getOsContext().getEngineType(), timestampPacketDependencies);
+        getGpgpuCommandStreamReceiver().programStallingCommandsForBarrier(commandStream, &timestampPacketDependencies.barrierNodes, isDcFlushRequiredOnStallingCommandsOnNextFlush());
+
+        clearLastBcsPackets();
+        setStallingCommandsOnNextFlush(false);
+    }
+
     auto implicitFlush = false;
 
     if (printfHandler) {
@@ -964,7 +975,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (isHandlingBarrier) {
         clearLastBcsPackets();
         setStallingCommandsOnNextFlush(false);
-        setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
     }
 
     if (gtpinIsGTPinInitialized()) {
@@ -1185,7 +1195,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         if (isHandlingBarrier) {
             clearLastBcsPackets();
             setStallingCommandsOnNextFlush(false);
-            setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
         }
     }
 

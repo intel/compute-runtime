@@ -273,7 +273,6 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
     if (isHandlingBarrier) {
         commandQueue.clearLastBcsPackets();
         commandQueue.setStallingCommandsOnNextFlush(false);
-        commandQueue.setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
     }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
@@ -434,7 +433,6 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
     if (isHandlingBarrier) {
         commandQueue.clearLastBcsPackets();
         commandQueue.setStallingCommandsOnNextFlush(false);
-        commandQueue.setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
     }
 
     if (kernelOperation->blitEnqueue) {
