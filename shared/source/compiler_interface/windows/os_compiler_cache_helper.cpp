@@ -8,6 +8,10 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 
 namespace NEO {
+
+std::string makePath(const std::string &lhs, const std::string &rhs) {
+    return lhs + rhs;
+}
 bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader) {
     return false;
 }

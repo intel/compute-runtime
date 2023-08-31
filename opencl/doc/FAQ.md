@@ -60,7 +60,7 @@ NEO_CACHE_PERSISTENT - integer value to enable (1)/disable (0) on-disk binary ca
                        Neo will try to cache and reuse compiled binaries. Default is off.
 
 NEO_CACHE_DIR        - path to persistent cache directory. Default values are $XDG_CACHE_HOME/neo_compiler_cache
-                       if $XDG_CACHE_HOME is set, $HOME/neo_compiler_cache otherwise. If none of environment
+                       if $XDG_CACHE_HOME is set, $HOME/.cache/neo_compiler_cache otherwise. If none of environment
                        variables are set then on-disk cache is disabled.
 
 NEO_CACHE_MAX_SIZE   - Cache eviction is triggered once total size of cached binaries exceeds the value in

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
@@ -26,22 +27,6 @@
 #include <vector>
 
 namespace NEO {
-std::string makePath(const std::string &lhs, const std::string &rhs) {
-    if (lhs.size() == 0) {
-        return rhs;
-    }
-
-    if (rhs.size() == 0) {
-        return lhs;
-    }
-
-    if (*lhs.rbegin() == PATH_SEPARATOR) {
-        return lhs + rhs;
-    }
-
-    return lhs + PATH_SEPARATOR + rhs;
-}
-
 int filterFunction(const struct dirent *file) {
     std::string_view fileName = file->d_name;
     if (fileName.find(".cl_cache") != fileName.npos || fileName.find(".l0_cache") != fileName.npos) {

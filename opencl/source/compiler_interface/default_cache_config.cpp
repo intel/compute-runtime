@@ -50,6 +50,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
             }
         }
 
+        ret.cacheFileExtension = ".cl_cache";
         ret.cacheSize = static_cast<size_t>(settingsReader->getSetting(settingsReader->appSpecificLocation(NeoCacheMaxSize), static_cast<int64_t>(MemoryConstants::gigaByte)));
 
         if (ret.cacheSize == 0u) {

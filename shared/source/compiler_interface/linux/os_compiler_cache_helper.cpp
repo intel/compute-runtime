@@ -11,23 +11,41 @@
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/io_functions.h"
 
+#include "os_inc.h"
+
 #include <dlfcn.h>
 #include <link.h>
 
 namespace NEO {
+std::string makePath(const std::string &lhs, const std::string &rhs) {
+    if (lhs.size() == 0) {
+        return rhs;
+    }
+
+    if (rhs.size() == 0) {
+        return lhs;
+    }
+
+    if (*lhs.rbegin() == PATH_SEPARATOR) {
+        return lhs + rhs;
+    }
+
+    return lhs + PATH_SEPARATOR + rhs;
+}
+
 bool createCompilerCachePath(std::string &cacheDir) {
     if (NEO::SysCalls::pathExists(cacheDir)) {
-        if (NEO::SysCalls::pathExists(cacheDir + "neo_compiler_cache")) {
-            cacheDir = cacheDir + "neo_compiler_cache";
+        if (NEO::SysCalls::pathExists(makePath(cacheDir, "neo_compiler_cache"))) {
+            cacheDir = makePath(cacheDir, "neo_compiler_cache");
             return true;
         }
 
-        if (NEO::SysCalls::mkdir(cacheDir + "neo_compiler_cache") == 0) {
-            cacheDir = cacheDir + "neo_compiler_cache";
+        if (NEO::SysCalls::mkdir(makePath(cacheDir, "neo_compiler_cache")) == 0) {
+            cacheDir = makePath(cacheDir, "neo_compiler_cache");
             return true;
         } else {
             if (errno == EEXIST) {
-                cacheDir = cacheDir + "neo_compiler_cache";
+                cacheDir = makePath(cacheDir, "neo_compiler_cache");
                 return true;
             }
         }
@@ -47,7 +65,11 @@ bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader)
             return false;
         }
 
-        cacheDir = cacheDir + ".cache/";
+        // .cache might not exist on fresh installation
+        cacheDir = makePath(cacheDir, ".cache/");
+        if (!NEO::SysCalls::pathExists(cacheDir)) {
+            NEO::SysCalls::mkdir(cacheDir);
+        }
 
         return createCompilerCachePath(cacheDir);
     }
