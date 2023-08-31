@@ -878,6 +878,52 @@ HWTEST_F(TimestampPacketTests, givenAllEnginesReadyWhenWaitingForEventThenClearD
     cmdQ.reset();
 }
 
+HWTEST_F(TimestampPacketTests, givenNewSubmissionWhileWaitingThenDontReleaseDeferredNodes) {
+    class MyMockCmdQ : public MockCommandQueueHw<FamilyType> {
+      public:
+        using MockCommandQueueHw<FamilyType>::MockCommandQueueHw;
+
+        WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
+            this->taskCount++;
+
+            return MockCommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList, skipWait);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(0);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+
+    auto cmdQ = std::make_unique<MyMockCmdQ>(context, device.get(), nullptr);
+
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+    TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    cmdQ->flush();
+
+    EXPECT_EQ(2u, csr.taskCount);
+    EXPECT_EQ(2u, cmdQ->taskCount);
+
+    auto tagAddress = csr.getTagAddress();
+    *tagAddress = 2;
+
+    cmdQ->finish();
+
+    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+    *tagAddress = 3;
+
+    cmdQ.reset();
+}
+
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
 extern volatile TagAddressType *pauseAddress;

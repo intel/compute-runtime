@@ -454,6 +454,8 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
 
+    TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
+
     bool checkQueueCompletionForPostSyncOperations = !(waitedOnTimestamps && !cmdQueue->isOOQEnabled() &&
                                                        (this->timestampPacketContainer->peekNodes() == cmdQueue->getTimestampPacketContainer()->peekNodes()));
 
