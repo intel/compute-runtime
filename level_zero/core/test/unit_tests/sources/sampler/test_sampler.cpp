@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -220,6 +220,72 @@ HWTEST2_F(ContextCreateSamplerTest, givenInvalidFilterModeThenSamplerIsNotCreate
     L0::Sampler *sampler = Sampler::create(gfxCoreFamily, device, &desc);
 
     EXPECT_EQ(nullptr, sampler);
+}
+
+using SamplerInitTest = Test<DeviceFixture>;
+HWTEST2_F(SamplerInitTest, givenValidHandleReturnUnitialized, IsXeHpcCore) {
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    ze_sampler_handle_t hSampler;
+    ze_result_t res = context->createSampler(device, &desc, &hSampler);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
+}
+
+struct SupportsLowQualityFilterSampler {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() >= IGFX_GEN12LP_CORE && NEO::ToGfxCoreFamily<productFamily>::get() != IGFX_XE_HPC_CORE;
+    }
+};
+
+HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsFalseThenLowQualityFilterIsDisabled, SupportsLowQualityFilterSampler) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_REPEAT;
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_NEAREST;
+    ze_bool_t isNormalized = true;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    auto sampler = static_cast<MockSamplerHw<gfxCoreFamily> *>((*samplerFactory[productFamily])());
+    sampler->initialize(device, &desc);
+
+    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, sampler->samplerState.getLowQualityFilter());
+
+    sampler->destroy();
+}
+
+HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsTrueThenLowQualityFilterIsEnabled, SupportsLowQualityFilterSampler) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
+    EXPECT_TRUE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_REPEAT;
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_NEAREST;
+    ze_bool_t isNormalized = true;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    auto sampler = static_cast<MockSamplerHw<gfxCoreFamily> *>((*samplerFactory[productFamily])());
+    sampler->initialize(device, &desc);
+
+    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, sampler->samplerState.getLowQualityFilter());
+
+    sampler->destroy();
 }
 
 } // namespace ult
