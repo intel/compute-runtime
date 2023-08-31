@@ -63,8 +63,6 @@ class FsAccessInterface {
 
   protected:
     FsAccessInterface();
-    decltype(&NEO::SysCalls::access) accessSyscall = NEO::SysCalls::access;
-    decltype(&stat) statSyscall = stat;
 
   private:
     template <typename T>

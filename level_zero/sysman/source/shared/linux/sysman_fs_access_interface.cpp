@@ -185,7 +185,7 @@ ze_result_t FsAccessInterface::write(const std::string file, const std::string v
 
 ze_result_t FsAccessInterface::canRead(const std::string file) {
     struct stat sb;
-    if (statSyscall(file.c_str(), &sb) != 0) {
+    if (NEO::SysCalls::stat(file.c_str(), &sb) != 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     if (sb.st_mode & S_IRUSR) {
@@ -196,7 +196,7 @@ ze_result_t FsAccessInterface::canRead(const std::string file) {
 
 ze_result_t FsAccessInterface::canWrite(const std::string file) {
     struct stat sb;
-    if (statSyscall(file.c_str(), &sb) != 0) {
+    if (NEO::SysCalls::stat(file.c_str(), &sb) != 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     if (sb.st_mode & S_IWUSR) {
@@ -214,7 +214,7 @@ bool FsAccessInterface::fileExists(const std::string file) {
 
 ze_result_t FsAccessInterface::getFileMode(const std::string file, ::mode_t &mode) {
     struct stat sb;
-    if (0 != statSyscall(file.c_str(), &sb)) {
+    if (0 != NEO::SysCalls::stat(file.c_str(), &sb)) {
         return getResult(errno);
     }
     mode = sb.st_mode;
@@ -296,7 +296,7 @@ bool FsAccessInterface::isRootUser() {
 }
 
 bool FsAccessInterface::directoryExists(const std::string path) {
-    if (accessSyscall(path.c_str(), F_OK)) {
+    if (NEO::SysCalls::access(path.c_str(), F_OK)) {
         return false;
     }
     return true;

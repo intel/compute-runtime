@@ -55,7 +55,7 @@ static ze_result_t readSchedulerValueFromSysfs(SysfsName schedulerSysfsName,
     }
 
     // For compute engines with different timeout values, use the maximum value
-    if (schedulerSysfsName == SysfsName::syfsNameSchedulerTimeout && engineType == ZES_ENGINE_TYPE_FLAG_COMPUTE) {
+    if (schedulerSysfsName == SysfsName::sysfsNameSchedulerTimeout && engineType == ZES_ENGINE_TYPE_FLAG_COMPUTE) {
         readValue = *std::max_element(readValueVec.begin(), readValueVec.end());
         return result;
     }
@@ -125,7 +125,7 @@ ze_result_t LinuxSchedulerImp::getCurrentMode(zes_sched_mode_t *pMode) {
             if (pSysmanKmdInterface->useDefaultMaximumWatchdogTimeoutForExclusiveMode()) {
 
                 uint64_t defaultHeartbeatInterval = 0;
-                result = readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerWatchDogTimeoutMaximum,
+                result = readSchedulerValueFromSysfs(SysfsName::sysfsNameSchedulerWatchDogTimeoutMaximum,
                                                      pLinuxSysmanImp, subdeviceId, true,
                                                      listOfEngines, engineType, defaultHeartbeatInterval);
                 if (result != ZE_RESULT_SUCCESS) {
@@ -173,7 +173,7 @@ ze_result_t LinuxSchedulerImp::setExclusiveModeImp() {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     if (pSysmanKmdInterface->useDefaultMaximumWatchdogTimeoutForExclusiveMode()) {
 
-        result = readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerWatchDogTimeoutMaximum,
+        result = readSchedulerValueFromSysfs(SysfsName::sysfsNameSchedulerWatchDogTimeoutMaximum,
                                              pLinuxSysmanImp, subdeviceId, true,
                                              listOfEngines, engineType, heartbeat);
         if (result != ZE_RESULT_SUCCESS) {
@@ -332,42 +332,42 @@ ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProper
 
 ze_result_t LinuxSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) {
 
-    return readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerTimeout,
+    return readSchedulerValueFromSysfs(SysfsName::sysfsNameSchedulerTimeout,
                                        pLinuxSysmanImp, subdeviceId, getDefault,
                                        listOfEngines, engineType, timeout);
 }
 
 ze_result_t LinuxSchedulerImp::getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) {
 
-    return readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerTimeslice,
+    return readSchedulerValueFromSysfs(SysfsName::sysfsNameSchedulerTimeslice,
                                        pLinuxSysmanImp, subdeviceId, getDefault,
                                        listOfEngines, engineType, timeslice);
 }
 
 ze_result_t LinuxSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat, ze_bool_t getDefault) {
 
-    return readSchedulerValueFromSysfs(SysfsName::syfsNameSchedulerWatchDogTimeout,
+    return readSchedulerValueFromSysfs(SysfsName::sysfsNameSchedulerWatchDogTimeout,
                                        pLinuxSysmanImp, subdeviceId, getDefault,
                                        listOfEngines, engineType, heartbeat);
 }
 
 ze_result_t LinuxSchedulerImp::setPreemptTimeout(uint64_t timeout) {
 
-    return writeSchedulerValueToSysfs(SysfsName::syfsNameSchedulerTimeout,
+    return writeSchedulerValueToSysfs(SysfsName::sysfsNameSchedulerTimeout,
                                       pLinuxSysmanImp, subdeviceId,
                                       listOfEngines, engineType, timeout);
 }
 
 ze_result_t LinuxSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
 
-    return writeSchedulerValueToSysfs(SysfsName::syfsNameSchedulerTimeslice,
+    return writeSchedulerValueToSysfs(SysfsName::sysfsNameSchedulerTimeslice,
                                       pLinuxSysmanImp, subdeviceId,
                                       listOfEngines, engineType, timeslice);
 }
 
 ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
 
-    return writeSchedulerValueToSysfs(SysfsName::syfsNameSchedulerWatchDogTimeout,
+    return writeSchedulerValueToSysfs(SysfsName::sysfsNameSchedulerWatchDogTimeout,
                                       pLinuxSysmanImp, subdeviceId,
                                       listOfEngines, engineType, heartbeat);
 }

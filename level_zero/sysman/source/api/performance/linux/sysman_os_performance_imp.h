@@ -15,6 +15,8 @@
 namespace L0 {
 namespace Sysman {
 
+class SysmanKmdInterface;
+class SysFsAccessInterface;
 class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t osPerformanceGetProperties(zes_perf_properties_t &pProperties) override;
@@ -25,8 +27,26 @@ class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableOrMovableClass
 
     LinuxPerformanceImp() = delete;
     LinuxPerformanceImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId,
-                        zes_engine_type_flag_t domain) {}
+                        zes_engine_type_flag_t domain);
     ~LinuxPerformanceImp() override = default;
+
+  protected:
+    ze_result_t getMediaFrequencyScaleFactor();
+    ze_result_t getBaseFrequencyScaleFactor();
+    ze_result_t getErrorCode(ze_result_t result);
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
+    SysFsAccessInterface *pSysFsAccess = nullptr;
+    PRODUCT_FAMILY productFamily{};
+    zes_engine_type_flag_t domain = ZES_ENGINE_TYPE_FLAG_OTHER;
+    double baseScaleReading = 0;
+    double mediaScaleReading = 0;
+    uint32_t subdeviceId = 0;
+    ze_bool_t isSubdevice = 0;
+    std::string mediaFreqFactor = "";
+    std::string baseFreqFactor = "";
+    std::string systemPowerBalance = "";
+    std::string baseFreqFactorScale = "";
+    std::string mediaFreqFactorScale = "";
 };
 
 } // namespace Sysman

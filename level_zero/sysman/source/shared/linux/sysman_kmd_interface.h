@@ -84,10 +84,15 @@ enum class SysfsName {
     sysfsNameMemoryAddressRange,
     sysfsNameMaxMemoryFrequency,
     sysfsNameMinMemoryFrequency,
-    syfsNameSchedulerTimeout,
-    syfsNameSchedulerTimeslice,
-    syfsNameSchedulerWatchDogTimeout,
-    syfsNameSchedulerWatchDogTimeoutMaximum,
+    sysfsNameSchedulerTimeout,
+    sysfsNameSchedulerTimeslice,
+    sysfsNameSchedulerWatchDogTimeout,
+    sysfsNameSchedulerWatchDogTimeoutMaximum,
+    sysfsNamePerformanceBaseFrequencyFactor,
+    sysfsNamePerformanceMediaFrequencyFactor,
+    sysfsNamePerformanceBaseFrequencyFactorScale,
+    sysfsNamePerformanceMediaFrequencyFactorScale,
+    sysfsNamePerformanceSystemPowerBalance,
 };
 
 class SysmanKmdInterface {
@@ -107,9 +112,11 @@ class SysmanKmdInterface {
     virtual int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) = 0;
     virtual std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const = 0;
     virtual bool isStandbyModeControlAvailable() const = 0;
-    virtual bool clientInfoAvailableInFdInfo() = 0;
+    virtual bool clientInfoAvailableInFdInfo() const = 0;
     virtual bool isGroupEngineInterfaceAvailable() const = 0;
     void initFsAccessInterface(const NEO::Drm &drm);
+    virtual bool isBaseFrequencyFactorAvailable() const = 0;
+    virtual bool isSystemPowerBalanceAvailable() const = 0;
     FsAccessInterface *getFsAccess();
     ProcFsAccessInterface *getProcFsAccess();
     SysFsAccessInterface *getSysFsAccess();
@@ -145,7 +152,7 @@ class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
-    bool clientInfoAvailableInFdInfo() override;
+    bool clientInfoAvailableInFdInfo() const override { return false; }
     bool isGroupEngineInterfaceAvailable() const override { return false; }
     std::string getEngineBasePath(uint32_t subDeviceId) const override { return "engine"; };
     bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return false; };
@@ -156,6 +163,8 @@ class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
     uint32_t getEventType(const bool isIntegratedDevice) override;
+    bool isBaseFrequencyFactorAvailable() const override { return false; }
+    bool isSystemPowerBalanceAvailable() const override { return false; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -164,9 +173,9 @@ class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
         return sysfsNameToNativeUnitMap;
     }
     const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
-        {SysfsName::syfsNameSchedulerTimeout, milliSecond},
-        {SysfsName::syfsNameSchedulerTimeslice, milliSecond},
-        {SysfsName::syfsNameSchedulerWatchDogTimeout, milliSecond},
+        {SysfsName::sysfsNameSchedulerTimeout, milliSecond},
+        {SysfsName::sysfsNameSchedulerTimeslice, milliSecond},
+        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milliSecond},
     };
 };
 
@@ -182,7 +191,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return false; }
-    bool clientInfoAvailableInFdInfo() override;
+    bool clientInfoAvailableInFdInfo() const override { return true; }
     bool isGroupEngineInterfaceAvailable() const override { return true; }
     bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return true; };
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
@@ -192,6 +201,8 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
     uint32_t getEventType(const bool isIntegratedDevice) override;
+    bool isBaseFrequencyFactorAvailable() const override { return true; }
+    bool isSystemPowerBalanceAvailable() const override { return true; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -200,10 +211,10 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
         return sysfsNameToNativeUnitMap;
     }
     const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
-        {SysfsName::syfsNameSchedulerTimeout, microSecond},
-        {SysfsName::syfsNameSchedulerTimeslice, microSecond},
-        {SysfsName::syfsNameSchedulerWatchDogTimeout, milliSecond},
-        {SysfsName::syfsNameSchedulerWatchDogTimeoutMaximum, milliSecond},
+        {SysfsName::sysfsNameSchedulerTimeout, microSecond},
+        {SysfsName::sysfsNameSchedulerTimeslice, microSecond},
+        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milliSecond},
+        {SysfsName::sysfsNameSchedulerWatchDogTimeoutMaximum, milliSecond},
     };
 };
 

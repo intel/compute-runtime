@@ -16,6 +16,7 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
 else()
   list(APPEND L0_TESTS_SYSMAN_PERFORMANCE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_performance.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_performance.h
   )
 endif()
 

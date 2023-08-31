@@ -137,9 +137,11 @@ void SysmanKmdInterfaceI915::initSysfsNameToFileMap(const PRODUCT_FAMILY product
     sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("addr_range", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("mem_RP0_freq_mhz", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMinMemoryFrequency] = std::make_pair("mem_RPn_freq_mhz", "");
-    sysfsNameToFileMap[SysfsName::syfsNameSchedulerTimeout] = std::make_pair("", "preempt_timeout_ms");
-    sysfsNameToFileMap[SysfsName::syfsNameSchedulerTimeslice] = std::make_pair("", "timeslice_duration_ms");
-    sysfsNameToFileMap[SysfsName::syfsNameSchedulerWatchDogTimeout] = std::make_pair("", "heartbeat_interval_ms");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerTimeout] = std::make_pair("", "preempt_timeout_ms");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerTimeslice] = std::make_pair("", "timeslice_duration_ms");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerWatchDogTimeout] = std::make_pair("", "heartbeat_interval_ms");
+    sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactor] = std::make_pair("media_freq_factor", "");
+    sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale] = std::make_pair("media_freq_factor.scale", "");
 }
 
 void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
@@ -167,10 +169,15 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(const PRODUCT_FAMILY productFa
     sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("physical_vram_size_bytes", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("freq_vram_rp0", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMinMemoryFrequency] = std::make_pair("freq_vram_rpn", "");
-    sysfsNameToFileMap[SysfsName::syfsNameSchedulerTimeout] = std::make_pair("", "preempt_timeout_us");
-    sysfsNameToFileMap[SysfsName::syfsNameSchedulerTimeslice] = std::make_pair("", "timeslice_duration_us");
-    sysfsNameToFileMap[SysfsName::syfsNameSchedulerWatchDogTimeout] = std::make_pair("", "job_timeout_ms");
-    sysfsNameToFileMap[SysfsName::syfsNameSchedulerWatchDogTimeoutMaximum] = std::make_pair("", "job_timeout_max");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerTimeout] = std::make_pair("", "preempt_timeout_us");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerTimeslice] = std::make_pair("", "timeslice_duration_us");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerWatchDogTimeout] = std::make_pair("", "job_timeout_ms");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerWatchDogTimeoutMaximum] = std::make_pair("", "job_timeout_max");
+    sysfsNameToFileMap[SysfsName::sysfsNamePerformanceBaseFrequencyFactor] = std::make_pair("base_freq_factor", "");
+    sysfsNameToFileMap[SysfsName::sysfsNamePerformanceBaseFrequencyFactorScale] = std::make_pair("base_freq_factor.scale", "");
+    sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactor] = std::make_pair("media_freq_factor", "");
+    sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale] = std::make_pair("media_freq_factor.scale", "");
+    sysfsNameToFileMap[SysfsName::sysfsNamePerformanceSystemPowerBalance] = std::make_pair("sys_pwr_balance", "");
 }
 
 std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory) {
@@ -244,14 +251,6 @@ std::string SysmanKmdInterfaceI915::getHwmonName(uint32_t subDeviceId, bool isSu
 std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
     std::string filePath = isSubdevice ? "xe_tile" + std::to_string(subDeviceId) : "xe";
     return filePath;
-}
-
-bool SysmanKmdInterfaceI915::clientInfoAvailableInFdInfo() {
-    return false;
-}
-
-bool SysmanKmdInterfaceXe::clientInfoAvailableInFdInfo() {
-    return true;
 }
 
 std::optional<std::string> SysmanKmdInterfaceXe::getEngineClassString(uint16_t engineClass) {

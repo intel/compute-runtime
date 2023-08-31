@@ -49,6 +49,12 @@ TEST_F(SysmanFixtureDeviceI915, GivenSysmanKmdInterfaceInstanceWhenIsGroupEngine
     EXPECT_FALSE(pSysmanKmdInterface->isGroupEngineInterfaceAvailable());
 }
 
+TEST_F(SysmanFixtureDeviceI915, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfBaseFrequencyFactorAndSystemPowerBalanceThenFalseValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_FALSE(pSysmanKmdInterface->isBaseFrequencyFactorAvailable());
+    EXPECT_FALSE(pSysmanKmdInterface->isSystemPowerBalanceAvailable());
+}
+
 TEST_F(SysmanFixtureDeviceI915, GivenGroupEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdIsCalledThenInvalidFdIsReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
@@ -178,6 +184,12 @@ class SysmanFixtureDeviceXe : public SysmanDeviceFixture {
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenIsGroupEngineInterfaceAvailableCalledThenTrueValueIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_TRUE(pSysmanKmdInterface->isGroupEngineInterfaceAvailable());
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfBaseFrequencyFactorAndSystemPowerBalanceThenTrueValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->isBaseFrequencyFactorAvailable());
+    EXPECT_TRUE(pSysmanKmdInterface->isSystemPowerBalanceAvailable());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenGroupEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdIsCalledThenValidFdIsReturned) {
