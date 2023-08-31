@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -339,5 +341,179 @@ HWTEST2_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandAndRevisionB0T
 
         EXPECT_EQ(bltCmd->getDestinationTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
         EXPECT_EQ(bltCmd->getSourceTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
+    }
+}
+
+XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenResolveBlitIsCalledThenProgramSpecialOperationMode) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
+    MockContext context(clDevice.get());
+    MockGraphicsAllocation clearColorAlloc;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
+    auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
+                                                                               buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                               &clearColorAlloc);
+
+    flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr->commandStream);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
+    EXPECT_NE(nullptr, bltCmd);
+
+    EXPECT_EQ(XY_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE, bltCmd->getSpecialModeOfOperation());
+}
+
+XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenNonAuxToAuxBlitIsCalledThenDontProgramSourceCompression) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
+    MockContext context(clDevice.get());
+    MockGraphicsAllocation clearColorAlloc;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
+    auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::NonAuxToAux,
+                                                                               buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                               &clearColorAlloc);
+
+    flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr->commandStream);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
+    EXPECT_NE(nullptr, bltCmd);
+
+    EXPECT_EQ(XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE, bltCmd->getSourceCompressionEnable());
+}
+
+XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenProgrammingBltCommandThenSetCompressionFields) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
+    MockContext context(clDevice.get());
+
+    cl_int retVal = CL_SUCCESS;
+    auto bufferCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
+    bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled = true;
+    auto bufferNotCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_UNCOMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
+
+    auto notCompressedGmm = bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm();
+    if (notCompressedGmm) {
+        notCompressedGmm->isCompressionEnabled = false;
+    }
+
+    auto gmmHelper = clDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper();
+    uint32_t compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
+
+    {
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr->commandStream);
+
+        auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
+        EXPECT_NE(nullptr, bltCmd);
+
+        EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        EXPECT_EQ(bltCmd->getDestinationAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_NONE);
+        EXPECT_EQ(bltCmd->getDestinationCompressionFormat(), 0u);
+        EXPECT_EQ(bltCmd->getSourceCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+        EXPECT_EQ(bltCmd->getSourceAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        EXPECT_EQ(bltCmd->getSourceCompressionFormat(), compressionFormat);
+    }
+
+    {
+        auto offset = csr->commandStream.getUsed();
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr->commandStream, offset);
+
+        auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
+        EXPECT_NE(nullptr, bltCmd);
+
+        EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+        EXPECT_EQ(bltCmd->getDestinationAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        EXPECT_EQ(bltCmd->getDestinationCompressionFormat(), compressionFormat);
+        EXPECT_EQ(bltCmd->getSourceCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        EXPECT_EQ(bltCmd->getSourceAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_NONE);
+        EXPECT_EQ(bltCmd->getSourceCompressionFormat(), 0u);
+    }
+}
+
+XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenDebugFlagSetWhenCompressionEnabledThenForceCompressionFormat) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    uint32_t compressionFormat = 3;
+    DebugManager.flags.ForceBufferCompressionFormat.set(compressionFormat);
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
+    MockContext context(clDevice.get());
+
+    cl_int retVal = CL_SUCCESS;
+    auto bufferCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
+    bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled = true;
+    auto bufferNotCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_UNCOMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
+
+    auto uncompressedGmm = bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm();
+    if (uncompressedGmm) {
+        uncompressedGmm->isCompressionEnabled = false;
+    }
+
+    {
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr->commandStream);
+
+        auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
+        EXPECT_NE(nullptr, bltCmd);
+
+        EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        EXPECT_EQ(bltCmd->getDestinationAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_NONE);
+        EXPECT_EQ(bltCmd->getDestinationCompressionFormat(), 0u);
+        EXPECT_EQ(bltCmd->getSourceCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+        EXPECT_EQ(bltCmd->getSourceAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        EXPECT_EQ(bltCmd->getSourceCompressionFormat(), compressionFormat);
+    }
+
+    {
+        auto offset = csr->commandStream.getUsed();
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr->commandStream, offset);
+
+        auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
+        EXPECT_NE(nullptr, bltCmd);
+
+        EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+        EXPECT_EQ(bltCmd->getDestinationAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        EXPECT_EQ(bltCmd->getDestinationCompressionFormat(), compressionFormat);
+        EXPECT_EQ(bltCmd->getSourceCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        EXPECT_EQ(bltCmd->getSourceAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_NONE);
+        EXPECT_EQ(bltCmd->getSourceCompressionFormat(), 0u);
     }
 }
