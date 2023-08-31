@@ -344,6 +344,8 @@ struct CommandList : _ze_command_list_handle_t {
         return kernelWithAssertAppended;
     }
 
+    ze_event_handle_t getLatestUsedEvent() const { return latestUsedEvent; }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
@@ -376,6 +378,7 @@ struct CommandList : _ze_command_list_handle_t {
     int64_t currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
 
+    ze_event_handle_t latestUsedEvent = nullptr;
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;

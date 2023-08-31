@@ -142,6 +142,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     inOrderDependencyCounter = 0;
     inOrderAllocationOffset = 0;
 
+    latestUsedEvent = nullptr;
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -343,6 +345,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
             callId);
     }
 
+    this->latestUsedEvent = hEvent;
+
     return res;
 }
 
@@ -370,6 +374,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
     ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), launchKernelArgs,
                                        event, launchParams);
     addToMappedEventList(event);
+
+    this->latestUsedEvent = hSignalEvent;
+
     return ret;
 }
 
@@ -401,6 +408,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
                                        nullptr, launchParams);
     addToMappedEventList(event);
     appendSignalEventPostWalker(event);
+
+    this->latestUsedEvent = hEvent;
 
     return ret;
 }
@@ -447,6 +456,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     }
     addToMappedEventList(event);
     appendSignalEventPostWalker(event);
+
+    this->latestUsedEvent = hEvent;
 
     return ret;
 }
@@ -515,6 +526,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
     appendSignalEventPostWalker(signalEvent);
     addToMappedEventList(signalEvent);
+
+    this->latestUsedEvent = hSignalEvent;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -667,6 +680,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
                                                                            event, numWaitEvents, phWaitEvents,
                                                                            launchParams, relaxedOrderingDispatch);
     addToMappedEventList(Event::fromHandle(hEvent));
+
+    this->latestUsedEvent = hEvent;
+
     return status;
 }
 
@@ -826,6 +842,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     addFlushRequiredCommand(allocationStruct.needsFlush, event);
 
+    this->latestUsedEvent = hEvent;
+
     return ret;
 }
 
@@ -969,6 +987,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
                                                                            event, numWaitEvents, phWaitEvents,
                                                                            launchParams, relaxedOrderingDispatch);
     addToMappedEventList(event);
+
+    this->latestUsedEvent = hEvent;
+
     return status;
 }
 
@@ -1046,8 +1067,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
         memoryManager->setMemAdvise(alloc, flags, deviceImp->getRootDeviceIndex());
 
         deviceImp->memAdviseSharedAllocations[allocData] = flags;
+
         return ZE_RESULT_SUCCESS;
     }
+
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
@@ -1427,6 +1450,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
             callId);
     }
 
+    this->latestUsedEvent = hSignalEvent;
+
     return ret;
 }
 
@@ -1515,6 +1540,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
             "zeCommandListAppendMemoryCopyRegion",
             callId);
     }
+
+    this->latestUsedEvent = hSignalEvent;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1943,6 +1970,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             callId);
     }
 
+    this->latestUsedEvent = hSignalEvent;
+
     return res;
 }
 
@@ -2220,6 +2249,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
             callId);
     }
 
+    this->latestUsedEvent = hEvent;
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2486,6 +2517,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
 
     addToMappedEventList(signalEvent);
 
+    this->latestUsedEvent = hSignalEvent;
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2598,6 +2631,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     }
 
     addToMappedEventList(Event::fromHandle(hSignalEvent));
+
+    this->latestUsedEvent = hSignalEvent;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -2991,6 +3026,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 
     addToMappedEventList(signalEvent);
     appendSignalEventPostWalker(signalEvent);
+
+    this->latestUsedEvent = hSignalEvent;
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -3131,6 +3169,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     }
 
     appendSignalEventPostWalker(signalEvent);
+
+    this->latestUsedEvent = signalEventHandle;
 
     return ZE_RESULT_SUCCESS;
 }

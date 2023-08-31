@@ -103,6 +103,7 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::isCompleted;
     using ::L0::Event::isFromIpcPool;
     using ::L0::Event::l3FlushAppliedOnKernel;
+    using ::L0::Event::latestUsedCmdQueue;
     using ::L0::Event::maxKernelCount;
     using ::L0::Event::signalAllEventPackets;
     using ::L0::Event::signalScope;
