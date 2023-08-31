@@ -11,6 +11,7 @@
 #include "shared/source/utilities/io_functions.h"
 
 #include <chrono>
+#include <cstring>
 #include <sstream>
 
 namespace NEO {
@@ -23,13 +24,23 @@ constexpr bool wddmResidencyLoggingAvailable = false;
 
 class WddmResidencyLogger {
   public:
-    WddmResidencyLogger(unsigned int device, void *fenceValueCpuVirtualAddress) {
+    WddmResidencyLogger(unsigned int device, void *fenceValueCpuVirtualAddress, std::string outDirectory) {
+        const char *wddmResidencyLoggerDefaultDirectory = "unk";
+
         std::stringstream id;
         id << std::hex;
         id << "device-0x" << device << "_"
            << "pfencecpu-0x" << fenceValueCpuVirtualAddress;
+
         std::stringstream filename;
+        if (std::strcmp(wddmResidencyLoggerDefaultDirectory, outDirectory.c_str()) != 0) {
+            filename << outDirectory;
+            if (outDirectory.back() != '\\') {
+                filename << "\\";
+            }
+        }
         filename << "pagingfence_" << id.str() << ".log";
+
         pagingLog = IoFunctions::fopenPtr(filename.str().c_str(), "at");
         UNRECOVERABLE_IF(pagingLog == nullptr);
         IoFunctions::fprintf(pagingLog, "%s\n", id.str().c_str());

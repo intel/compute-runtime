@@ -1236,7 +1236,7 @@ uint32_t Wddm::getRequestedEUCount() const {
 
 void Wddm::createPagingFenceLogger() {
     if (DebugManager.flags.WddmResidencyLogger.get()) {
-        residencyLogger = std::make_unique<WddmResidencyLogger>(device, pagingFenceAddress);
+        residencyLogger = std::make_unique<WddmResidencyLogger>(device, pagingFenceAddress, DebugManager.flags.WddmResidencyLoggerOutputDirectory.get());
     }
 }
 

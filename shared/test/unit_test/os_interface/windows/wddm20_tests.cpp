@@ -1388,13 +1388,36 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenAdapterIsClosed) {
     EXPECT_EQ(adapter, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
 }
 
-TEST_F(WddmTest, WhenResidencyLoggingEnabledThenExpectLoggerCreated) {
-    NEO::IoFunctions::mockFopenCalled = 0;
-    NEO::IoFunctions::mockVfptrinfCalled = 0;
-    NEO::IoFunctions::mockFcloseCalled = 0;
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
+namespace MockWddmResidencyLoggerFunctions {
+std::string recordedFileName(256, 0);
 
+FILE *testFopen(const char *filename, const char *mode) {
+    MockWddmResidencyLoggerFunctions::recordedFileName.assign(filename);
+    return NEO::IoFunctions::mockFopen(filename, mode);
+}
+} // namespace MockWddmResidencyLoggerFunctions
+
+struct WddmResidencyLoggerTest : public WddmTest {
+    void SetUp() override {
+        MockWddmResidencyLoggerFunctions::recordedFileName.clear();
+
+        WddmTest::SetUp();
+
+        NEO::IoFunctions::mockFopenCalled = 0;
+        NEO::IoFunctions::mockVfptrinfCalled = 0;
+        NEO::IoFunctions::mockFcloseCalled = 0;
+
+        DebugManager.flags.WddmResidencyLogger.set(true);
+
+        mockFopenBackup = std::make_unique<VariableBackup<NEO::IoFunctions::fopenFuncPtr>>(&NEO::IoFunctions::fopenPtr);
+        NEO::IoFunctions::fopenPtr = &MockWddmResidencyLoggerFunctions::testFopen;
+    }
+
+    DebugManagerStateRestore dbgRestore;
+    std::unique_ptr<VariableBackup<NEO::IoFunctions::fopenFuncPtr>> mockFopenBackup;
+};
+
+TEST_F(WddmResidencyLoggerTest, WhenResidencyLoggingEnabledThenExpectLoggerCreated) {
     wddm->createPagingFenceLogger();
     EXPECT_NE(nullptr, wddm->residencyLogger.get());
     wddm->residencyLogger.reset();
@@ -1405,16 +1428,10 @@ TEST_F(WddmTest, WhenResidencyLoggingEnabledThenExpectLoggerCreated) {
     }
 }
 
-TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSizeRapport) {
+TEST_F(WddmResidencyLoggerTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSizeRapport) {
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::IoFunctions::mockFopenCalled = 0;
-    NEO::IoFunctions::mockVfptrinfCalled = 0;
-    NEO::IoFunctions::mockFcloseCalled = 0;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
     wddm->callBaseCreatePagingLogger = false;
     wddm->callBaseMakeResident = true;
 
@@ -1432,16 +1449,10 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSi
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
 }
 
-TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimReport) {
+TEST_F(WddmResidencyLoggerTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimReport) {
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::IoFunctions::mockFopenCalled = 0;
-    NEO::IoFunctions::mockVfptrinfCalled = 0;
-    NEO::IoFunctions::mockFcloseCalled = 0;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
     wddm->callBaseCreatePagingLogger = false;
     wddm->callBaseMakeResident = true;
 
@@ -1470,16 +1481,10 @@ TEST_F(WddmTest, GivenInvalidHandleAndCantTrimFurtherSetToTrueWhenCallingMakeRes
     EXPECT_FALSE(retVal);
 }
 
-TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenEnterWaitCalledThenExpectInternalFlagOn) {
+TEST_F(WddmResidencyLoggerTest, GivenResidencyLoggingEnabledWhenEnterWaitCalledThenExpectInternalFlagOn) {
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::IoFunctions::mockFopenCalled = 0;
-    NEO::IoFunctions::mockVfptrinfCalled = 0;
-    NEO::IoFunctions::mockFcloseCalled = 0;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
     wddm->callBaseCreatePagingLogger = false;
 
     wddm->createPagingFenceLogger();
@@ -1489,16 +1494,10 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenEnterWaitCalledThenExpectIntern
     EXPECT_TRUE(logger->enterWait);
 }
 
-TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenExpectFlagsOff) {
+TEST_F(WddmResidencyLoggerTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenExpectFlagsOff) {
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::IoFunctions::mockFopenCalled = 0;
-    NEO::IoFunctions::mockVfptrinfCalled = 0;
-    NEO::IoFunctions::mockFcloseCalled = 0;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
     wddm->callBaseCreatePagingLogger = false;
     wddm->callBaseMakeResident = true;
 
@@ -1523,16 +1522,10 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenEx
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->startWaitPagingFenceSave);
 }
 
-TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingOnGpuThenExpectFlagsOff) {
+TEST_F(WddmResidencyLoggerTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingOnGpuThenExpectFlagsOff) {
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::IoFunctions::mockFopenCalled = 0;
-    NEO::IoFunctions::mockVfptrinfCalled = 0;
-    NEO::IoFunctions::mockFcloseCalled = 0;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
     wddm->callBaseCreatePagingLogger = false;
     wddm->callBaseMakeResident = true;
 
@@ -1557,16 +1550,10 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingOnGpuT
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->startWaitPagingFenceSave);
 }
 
-TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentRequiresTrimToBudgetAndWaitPagingOnGpuThenExpectProperLoggingCount) {
+TEST_F(WddmResidencyLoggerTest, GivenResidencyLoggingEnabledWhenMakeResidentRequiresTrimToBudgetAndWaitPagingOnGpuThenExpectProperLoggingCount) {
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::IoFunctions::mockFopenCalled = 0;
-    NEO::IoFunctions::mockVfptrinfCalled = 0;
-    NEO::IoFunctions::mockFcloseCalled = 0;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
     wddm->callBaseCreatePagingLogger = false;
     wddm->callBaseMakeResident = true;
 
@@ -1588,6 +1575,51 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentRequiresTrimToBudge
     EXPECT_EQ(7u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_FALSE(logger->makeResidentCall);
     EXPECT_FALSE(logger->enterWait);
+}
+
+TEST_F(WddmResidencyLoggerTest, givenResidencyLoggingEnabledWhenDefaultDirectorySelectedThenDoNotUseDirectoryName) {
+    std::string defaultDirectory("unk");
+    std::string filenameLead("pagingfence_device-0x");
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+
+    EXPECT_EQ(std::string::npos, MockWddmResidencyLoggerFunctions::recordedFileName.find(defaultDirectory));
+    EXPECT_EQ(0u, MockWddmResidencyLoggerFunctions::recordedFileName.find(filenameLead));
+}
+
+TEST_F(WddmResidencyLoggerTest, givenResidencyLoggingEnabledWhenNonDefaultDirectorySelectedWithoutTrailingBackslashThenUseDirectoryNameWithAddedSlash) {
+    std::string nonDefaultDirectory("c:\\temp\\logs");
+    std::string filenameLead("pagingfence_device-0x");
+
+    DebugManager.flags.WddmResidencyLoggerOutputDirectory.set(nonDefaultDirectory);
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+
+    EXPECT_EQ(0u, MockWddmResidencyLoggerFunctions::recordedFileName.find(nonDefaultDirectory));
+
+    auto backslashPos = nonDefaultDirectory.length();
+    auto pos = MockWddmResidencyLoggerFunctions::recordedFileName.find('\\', backslashPos);
+    EXPECT_EQ(backslashPos, pos);
+
+    auto filenameLeadPos = backslashPos + 1;
+    EXPECT_EQ(filenameLeadPos, MockWddmResidencyLoggerFunctions::recordedFileName.find(filenameLead));
+}
+
+TEST_F(WddmResidencyLoggerTest, givenResidencyLoggingEnabledWhenNonDefaultDirectorySelectedWithTrailingBackslashThenUseDirectoryNameWithoutAddingSlash) {
+    std::string nonDefaultDirectory("c:\\temp\\logs\\");
+    std::string filenameLead("pagingfence_device-0x");
+
+    DebugManager.flags.WddmResidencyLoggerOutputDirectory.set(nonDefaultDirectory);
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+
+    EXPECT_EQ(0u, MockWddmResidencyLoggerFunctions::recordedFileName.find(nonDefaultDirectory));
+
+    auto filenameLeadPos = nonDefaultDirectory.length();
+    EXPECT_EQ(filenameLeadPos, MockWddmResidencyLoggerFunctions::recordedFileName.find(filenameLead));
 }
 
 TEST(VerifyAdapterType, whenAdapterDoesntSupportRenderThenDontCreateHwDeviceId) {

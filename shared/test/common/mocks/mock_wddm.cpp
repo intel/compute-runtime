@@ -323,7 +323,7 @@ void WddmMock::createPagingFenceLogger() {
         Wddm::createPagingFenceLogger();
     } else {
         if (DebugManager.flags.WddmResidencyLogger.get()) {
-            residencyLogger = std::make_unique<MockWddmResidencyLogger>(device, pagingFenceAddress);
+            residencyLogger = std::make_unique<MockWddmResidencyLogger>(device, pagingFenceAddress, DebugManager.flags.WddmResidencyLoggerOutputDirectory.get());
         }
     }
 }

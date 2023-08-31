@@ -93,6 +93,7 @@ DECLARE_DEBUG_VARIABLE(std::string, InjectInternalBuildOptions, std::string("unk
 DECLARE_DEBUG_VARIABLE(std::string, InjectApiBuildOptions, std::string("unk"), "Append provided string to api build options for user modules; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Override device name to provided string; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, OverridePlatformName, std::string("unk"), "Override platform name to provided string; ignored when unk")
+DECLARE_DEBUG_VARIABLE(std::string, WddmResidencyLoggerOutputDirectory, std::string("unk"), "Selects non-default output directory for Wddm Residency logger file")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "Place memory only in selected tiles indicated by bit mask; ignore when -1")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceCompressionDisabledForCompressedBlitCopies, -1, "If compression is required, set AUX_CCS_E, but force CompressionEnable filed; 0 should result in uncompressed read/write; values = -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1Caching, -1, "Program L1 cache policy for surface state and stateless accesses; values = -1: default, 0: disable, 1: enable")
