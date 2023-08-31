@@ -19,6 +19,47 @@ namespace SysCalls {
 extern bool pathExistsMock;
 }
 
+namespace LegacyPathWorksIfNewEnvIsSetToDisabled {
+bool pathExistsMock(const std::string &path) {
+    if (path.find("cl_cache") != path.npos)
+        return true;
+
+    return false;
+}
+} // namespace LegacyPathWorksIfNewEnvIsSetToDisabled
+
+TEST(CompilerCache, GivenDefaultClCacheConfigWithPathExistsAndNewEnvSetToDisabledThenValuesAreProperlyPopulated) {
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
+
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, LegacyPathWorksIfNewEnvIsSetToDisabled::pathExistsMock);
+
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    EXPECT_STREQ("cl_cache", cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(".cl_cache", cacheConfig.cacheFileExtension.c_str());
+    EXPECT_TRUE(cacheConfig.enabled);
+}
+
+namespace NewEnvIsDisabledAndLegacyPathDoesNotExist {
+bool pathExistsMock(const std::string &path) {
+    return false;
+}
+} // namespace NewEnvIsDisabledAndLegacyPathDoesNotExist
+
+TEST(CompilerCache, GivenDefaultClCacheConfigWithNotExistingPathAndNewEnvSetToDisabledThenValuesAreProperlyPopulated) {
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
+
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, NewEnvIsDisabledAndLegacyPathDoesNotExist::pathExistsMock);
+
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    EXPECT_STREQ("cl_cache", cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(".cl_cache", cacheConfig.cacheFileExtension.c_str());
+    EXPECT_FALSE(cacheConfig.enabled);
+}
+
 namespace AllVariablesCorrectlySet {
 bool pathExistsMock(const std::string &path) {
     if (path.find("ult/directory/") != path.npos)
