@@ -17,7 +17,6 @@ if(TESTS_XE_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_product_helper_xe_lpg_tests.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_product_helper_xe_lpg_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_xe_hpg_core.cpp

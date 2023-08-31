@@ -85,3 +85,10 @@ using IsNotPvcOrDg2 = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
 using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 using HasNoStatefulSupport = IsAnyGfxCores<IGFX_XE_HPC_CORE>;
+
+struct IsXeLpg {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsXeHpgCore::isMatched<productFamily>() && !IsDG2::isMatched<productFamily>();
+    }
+};
