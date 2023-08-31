@@ -454,6 +454,8 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
 
+    TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
+
     cmdQueue->tryReleaseDeferredNodes(true);
 
     auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();

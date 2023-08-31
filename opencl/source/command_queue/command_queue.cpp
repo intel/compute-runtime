@@ -1291,9 +1291,13 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
         }
     }
 
-    waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
+    auto taskCountToWait = taskCount;
 
-    tryReleaseDeferredNodes(false);
+    waitStatus = waitUntilComplete(taskCountToWait, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
+
+    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
+
+    tryReleaseDeferredNodes(this->taskCount != taskCountToWait);
 
     if (printfHandler) {
         if (!printfHandler->printEnqueueOutput()) {
@@ -1382,8 +1386,6 @@ bool CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpPara
 }
 
 void CommandQueue::tryReleaseDeferredNodes(bool checkEventsState) {
-    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
-
     if (checkEventsState && !isCompleted(this->taskCount, this->bcsStates)) {
         return;
     }
