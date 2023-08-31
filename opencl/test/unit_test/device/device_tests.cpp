@@ -754,3 +754,53 @@ TEST(ClDeviceHelperTest, givenZeroNumberOfTilesWhenPrepareDeviceEnvironmentsCoun
     uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
+
+using MultipleDeviceTest = ::testing::TestWithParam<uint32_t>;
+
+TEST_P(MultipleDeviceTest, givenMultipleDevicesWhenGetNumTilesThenReturnNumberOfDevices) {
+    DebugManagerStateRestore debugStateRestorer;
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = true;
+    ultHwConfig.forceOsAgnosticMemoryManager = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    auto numDevices = GetParam();
+    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
+    DebugManager.flags.EngineInstancedSubDevices.set(false);
+    DebugManager.flags.DeferOsContextInitialization.set(0);
+    initPlatform();
+    auto device = platform()->getClDevice(0);
+    cl_uint numTiles;
+    size_t paramRetSize;
+
+    EXPECT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_PARTITION_MAX_SUB_DEVICES, sizeof(cl_uint), &numTiles, &paramRetSize));
+    cl_uint expectedNumTiles = (numDevices > 1 ? numDevices : 0);
+    EXPECT_EQ(expectedNumTiles, numTiles);
+    EXPECT_EQ(sizeof(cl_uint), paramRetSize);
+    platformsImpl->clear();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    MultiDeviceTests,
+    MultipleDeviceTest,
+    testing::Range<uint32_t>(1u, 5u));
+
+using ClDeviceHelperTests = ::testing::Test;
+
+TEST(DeviceEngineTest, givenDebugVariableOverrideEngineTypeWhenDeviceIsCreatedThenUseDebugVariable) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto actualEngine = defaultHwInfo->capabilityTable.defaultEngineType;
+    auto expectedEngine = actualEngine == aub_stream::ENGINE_RCS ? aub_stream::ENGINE_CCS
+                                                                 : aub_stream::ENGINE_RCS;
+
+    auto supportedGpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    if (supportedGpgpuEngines[0].first != expectedEngine) {
+        return;
+    }
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(expectedEngine));
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    EXPECT_EQ(expectedEngine, device->getDefaultEngine().osContext->getEngineType());
+}

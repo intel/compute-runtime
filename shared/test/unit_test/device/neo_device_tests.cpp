@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/driver_model_type.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -980,4 +981,72 @@ TEST_F(DeviceTests, givenDeviceThreadGroupPreemptionWhenDebuggerDisabledThenStat
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     device->setPreemptionMode(NEO::PreemptionMode::ThreadGroup);
     EXPECT_FALSE(device->isStateSipRequired());
+}
+
+HWTEST2_F(DeviceTests, GivenXeHpAndLaterThenDefaultPreemptionModeIsThreadGroup, IsWithinXeGfxFamily) {
+    EXPECT_EQ(PreemptionMode::ThreadGroup, defaultHwInfo->capabilityTable.defaultPreemptionMode);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTest, GivenXeHpAndLaterThenProfilingTimerResolutionIs83) {
+    const auto &caps = pDevice->getDeviceInfo();
+    EXPECT_EQ(83u, caps.outProfilingTimerResolution);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, GivenXeHpAndLaterThenKmdNotifyIsDisabled) {
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify);
+    EXPECT_EQ(0, defaultHwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
+    EXPECT_EQ(0, defaultHwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
+    EXPECT_EQ(0, defaultHwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
+    EXPECT_EQ(0, defaultHwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, GivenXeHpAndLaterThenCompressionFeatureFlagIsFalse) {
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.ftrRenderCompressedImages);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTest, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto &productHelper = pDevice->getProductHelper();
+
+    const uint32_t multiplyFactor = productHelper.getThreadEuRatioForScratch(hwInfo) / 8u;
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) * multiplyFactor;
+    uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice * numThreadsPerEu;
+
+    EXPECT_EQ(expectedValue, gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebugFlagSetWhenAskingForComputeUnitsForScratchThenReturnNewValue) {
+    DebugManagerStateRestore restore;
+    uint32_t expectedValue = defaultHwInfo->gtSystemInfo.ThreadCount + 11;
+    DebugManager.flags.OverrideNumComputeUnitsForScratch.set(static_cast<int32_t>(expectedValue));
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+
+    EXPECT_EQ(expectedValue, gfxCoreHelper.getComputeUnitsUsedForScratch(device->getRootDeviceEnvironment()));
+    EXPECT_EQ(expectedValue, device->getDeviceInfo().computeUnitsUsedForScratch);
+}
+
+HWTEST2_F(DeviceTests, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue, IsXeHpgCore) {
+    EXPECT_EQ(64u, defaultHwInfo->capabilityTable.slmSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenCheckingDeviceEnqueueSupportThenFalseIsReturned) {
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.supportsDeviceEnqueue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenCheckingPipesSupportThenFalseIsReturned) {
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.supportsPipes);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenRequestedVmeFlagsThenReturnFalse) {
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.supportsVme);
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.ftrSupportsVmeAvcTextureSampler);
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.ftrSupportsVmeAvcPreemption);
 }

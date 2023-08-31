@@ -1268,3 +1268,28 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenBindlessHeapHelperC
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->createBindlessHeapsHelper(device->getMemoryManager(), device->getNumGenericSubDevices() > 1, device->getRootDeviceIndex(), device->getDeviceBitfield());
     EXPECT_EQ(device->getBindlessHeapsHelper(), device->subdevices.at(0)->getBindlessHeapsHelper());
 }
+
+TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagsEnabledWhenDevicesAreCreatedThenRootOsContextContainsAllSubDeviceBitfields) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    initPlatform();
+    auto rootDevice = platform()->getClDevice(0);
+
+    EXPECT_EQ(0b11ul, rootDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong());
+}
+
+TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetToOneWhenCreateRootDeviceThenDontCreateSubDevices) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(1);
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    initPlatform();
+    auto rootDevice = static_cast<RootDevice *>(&platform()->getClDevice(0)->getDevice());
+    if (rootDevice->getNumSubDevices() > 0) {
+        EXPECT_TRUE(rootDevice->getSubDevice(0)->isEngineInstanced());
+    }
+    EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
+}

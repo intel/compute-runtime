@@ -1732,3 +1732,30 @@ TEST_F(DeviceGetCapsTest, givenClKhrExternalMemoryExtensionEnabledWhenCapsAreCre
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_TRUE(device->deviceInfo.externalMemorySharing);
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceGetCapsTest, givenXeHPAndLaterProductWhenInitializeCapsThenVmeIsNotSupported) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->driverInfo.reset();
+    device->name.clear();
+    device->initializeCaps();
+    cl_uint expectedVmeAvcVersion = CL_AVC_ME_VERSION_0_INTEL;
+    cl_uint expectedVmeVersion = CL_ME_VERSION_LEGACY_INTEL;
+
+    EXPECT_EQ(expectedVmeVersion, device->getDeviceInfo().vmeVersion);
+    EXPECT_EQ(expectedVmeAvcVersion, device->getDeviceInfo().vmeAvcVersion);
+
+    EXPECT_FALSE(device->getDeviceInfo().vmeAvcSupportsTextureSampler);
+    EXPECT_FALSE(device->getDevice().getDeviceInfo().vmeAvcSupportsPreemption);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceGetCapsTest, givenCopyQueueWhenGettingQueueFamilyCapabilitiesThenDoNotReturnUnsupportedOperations) {
+    const cl_command_queue_capabilities_intel capabilitiesNotSupportedOnBlitter = CL_QUEUE_CAPABILITY_KERNEL_INTEL |
+                                                                                  CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL |
+                                                                                  CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL |
+                                                                                  CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL |
+                                                                                  CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL |
+                                                                                  CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL;
+    const cl_command_queue_capabilities_intel expectedBlitterCapabilities = setBits(MockClDevice::getQueueFamilyCapabilitiesAll(), false, capabilitiesNotSupportedOnBlitter);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    EXPECT_EQ(expectedBlitterCapabilities, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Copy));
+}
