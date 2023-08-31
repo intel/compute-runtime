@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -24,8 +26,10 @@ struct XeLpgProductHelperTests : public ::Test<DeviceFixture> {
     void SetUp() override {
         ::Test<DeviceFixture>::SetUp();
         productHelper = &pDevice->getProductHelper();
+        gfxCoreHelper = &pDevice->getGfxCoreHelper();
     }
     ProductHelper const *productHelper = nullptr;
+    GfxCoreHelper const *gfxCoreHelper = nullptr;
 };
 
 using XeLpgHwInfoTests = ::testing::Test;
@@ -297,4 +301,40 @@ HWTEST2_F(XeLpgProductHelperTests, whenCheckIsCachingOnCpuAvailableThenAlwaysFal
 
 HWTEST2_F(XeLpgProductHelperTests, whenCheckFp64SupportThenReturnTrue, IsXeLpg) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
+}
+
+HWTEST2_F(XeLpgProductHelperTests, givenAllocationThenCheckResourceCompatibilityReturnsTrue, IsXeLpg) {
+    auto allocation = std::make_unique<GraphicsAllocation>(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, 3u, 0llu);
+    EXPECT_TRUE(gfxCoreHelper->checkResourceCompatibility(*allocation));
+}
+
+HWTEST2_F(XeLpgProductHelperTests, givenIsCompressionEnabledAndWaAuxTable64KGranularWhenCheckIs1MbAlignmentSupportedThenReturnCorrectValue, IsXeLpg) {
+    auto hardwareInfo = *defaultHwInfo;
+    auto isCompressionEnabled = true;
+    hardwareInfo.workaroundTable.flags.waAuxTable64KGranular = true;
+    EXPECT_FALSE(gfxCoreHelper->is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
+
+    isCompressionEnabled = false;
+    hardwareInfo.workaroundTable.flags.waAuxTable64KGranular = true;
+    EXPECT_FALSE(gfxCoreHelper->is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
+
+    isCompressionEnabled = false;
+    hardwareInfo.workaroundTable.flags.waAuxTable64KGranular = false;
+    EXPECT_FALSE(gfxCoreHelper->is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
+
+    isCompressionEnabled = true;
+    hardwareInfo.workaroundTable.flags.waAuxTable64KGranular = false;
+    EXPECT_TRUE(gfxCoreHelper->is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
+}
+
+HWTEST2_F(XeLpgProductHelperTests, whenSetForceNonCoherentThenNothingChanged, IsXeLpg) {
+    using FORCE_NON_COHERENT = typename FamilyType::STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
+
+    auto stateComputeMode = FamilyType::cmdInitStateComputeMode;
+    auto properties = StateComputeModeProperties{};
+
+    properties.isCoherencyRequired.set(true);
+    productHelper->setForceNonCoherent(&stateComputeMode, properties);
+    EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED, stateComputeMode.getForceNonCoherent());
+    EXPECT_EQ(0u, stateComputeMode.getMaskBits());
 }

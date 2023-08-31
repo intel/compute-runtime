@@ -9,8 +9,11 @@
 #include "shared/source/xe_hpg_core/hw_cmds.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/platform/platform_info.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "hw_cmds_xe_hpg_core_base.h"
@@ -62,4 +65,12 @@ XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, givenDeviceThatHasHighNumberOfExecution
 
     EXPECT_EQ(1024u, device->sharedDeviceInfo.maxWorkGroupSize);
     EXPECT_EQ(device->sharedDeviceInfo.maxWorkGroupSize / 8, device->getDeviceInfo().maxNumOfSubGroups);
+}
+
+using XeLpgClDeviceCaps = Test<PlatformFixture>;
+
+HWTEST2_F(XeLpgClDeviceCaps, givenSkuWhenCheckingExtensionThenFp64IsReported, IsXeLpg) {
+    const auto &caps = pPlatform->getPlatformInfo();
+
+    EXPECT_NE(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));
 }
