@@ -5319,6 +5319,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
     allocData.type = AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
     allocData.storageInfo.memoryBanks = 0b11;
+    allocData.storageInfo.subDeviceBitfield = 0b11;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
@@ -5352,6 +5353,29 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
+       givenDeviceMemoryAllocationWithChunkingModeSetToDeviceAndOnlyOneTileThenChunkingIsNotUsed) {
+    VariableBackup<bool> backupChunkingCallParent{&mock->getChunkingAvailableCall.callParent, false};
+    VariableBackup<bool> backupChunkingReturnValue{&mock->getChunkingAvailableCall.returnValue, true};
+    VariableBackup<bool> backupChunkingModeCallParent{&mock->getChunkingModeCall.callParent, false};
+    VariableBackup<uint32_t> backupChunkingModeReturnValue{&mock->getChunkingModeCall.returnValue, 0x2};
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize2M;
+    allocData.type = AllocationType::BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks = 0b11;
+    allocData.storageInfo.subDeviceBitfield = 0b01;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_FALSE(allocation->storageInfo.isChunked);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
        givenDeviceMemoryAllocationWithChunkingModeSetToDeviceThenChunkingIsUsed) {
     VariableBackup<bool> backupChunkingCallParent{&mock->getChunkingAvailableCall.callParent, false};
     VariableBackup<bool> backupChunkingReturnValue{&mock->getChunkingAvailableCall.returnValue, true};
@@ -5365,6 +5389,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
     allocData.type = AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
     allocData.storageInfo.memoryBanks = 0b11;
+    allocData.storageInfo.subDeviceBitfield = 0b11;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
@@ -5460,6 +5485,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
     allocData.type = AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
     allocData.storageInfo.memoryBanks = 0b11;
+    allocData.storageInfo.subDeviceBitfield = 0b11;
     static_cast<MockedMemoryInfo *>(mock->getMemoryInfo())->failOnCreateGemExtWithMultipleRegions = true;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);

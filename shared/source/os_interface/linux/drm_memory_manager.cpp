@@ -1881,9 +1881,11 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
         uint32_t numOfChunks = DebugManager.flags.NumberOfBOChunks.get();
         size_t chunkingSize = boTotalChunkSize / numOfChunks;
 
-        // Dont chunk for sizes less than chunkThreshold
+        // Do not chunk for sizes less than chunkThreshold
+        // Do not chunk for single tile device memory
         if (boTotalChunkSize >= drm->getMinimalSizeForChunking() &&
-            !(chunkingSize & (MemoryConstants::chunkThreshold - 1))) {
+            !(chunkingSize & (MemoryConstants::chunkThreshold - 1)) &&
+            (allocation->storageInfo.subDeviceBitfield.count() > 1)) {
 
             handles = 1;
             allocation->resizeBufferObjects(handles);
