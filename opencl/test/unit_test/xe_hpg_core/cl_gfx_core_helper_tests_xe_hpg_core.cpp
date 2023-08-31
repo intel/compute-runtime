@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/xe_hpg_core/hw_info.h"
 #include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
@@ -14,6 +15,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_gfx_core_helper.h"
 
 using ClGfxCoreHelperTestsXeHpgCore = Test<ClDeviceFixture>;
@@ -119,4 +121,19 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenDifferentCLImageFormatsWhe
         bool result = clGfxCoreHelper.allowImageCompression(format.imageFormat);
         EXPECT_EQ(format.isCompressable, result);
     }
+}
+
+XE_HPG_CORETEST_F(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledThenClSuccessIsReturned) {
+    auto productHelper = ProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    std::vector<TestParams> params = {
+        {CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, productHelper->getHostMemCapabilities(defaultHwInfo.get())},
+        {CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL,
+         (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL)},
+        {CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL,
+         (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL)},
+        {CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL,
+         (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL)},
+        {CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL, 0}};
+
+    check(params);
 }

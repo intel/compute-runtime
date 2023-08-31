@@ -45,15 +45,6 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionConstantCacheInvalidationNee
 }
 
 template <>
-std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
-    UNRECOVERABLE_IF(!releaseHelper);
-    auto isBasicWARequired = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired();
-    auto isExtendedWARequired = false;
-
-    return {isBasicWARequired, isExtendedWARequired};
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

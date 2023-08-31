@@ -291,7 +291,15 @@ bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
-    return {false, false};
+    auto isBasicWARequired = false;
+    if (releaseHelper) {
+        isBasicWARequired = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired();
+    }
+    auto isExtendedWARequired = false;
+    if (DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        isExtendedWARequired = DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
+    }
+    return {isBasicWARequired, isExtendedWARequired};
 }
 
 template <PRODUCT_FAMILY gfxProduct>

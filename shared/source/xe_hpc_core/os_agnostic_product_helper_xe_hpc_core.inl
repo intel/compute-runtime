@@ -27,18 +27,6 @@ bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
 }
 
 template <>
-std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
-    auto isBasicWARequired = false;
-    auto isExtendedWARequired = false;
-
-    if (DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
-        isExtendedWARequired = DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
-    }
-
-    return {isBasicWARequired, isExtendedWARequired};
-}
-
-template <>
 void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
     using SAMPLER_STATE = typename XeHpcCoreFamily::SAMPLER_STATE;
 

@@ -73,7 +73,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionEnabledWhen
     EXPECT_EQ(image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), mockGmmClient->capturedFormat);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferThenTwoIsSetAsCompressionFormat) {
+HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferThenTwoIsSetAsCompressionFormat, IsXeHpcCore) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
 
@@ -112,7 +112,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionWhenAppendi
     clReleaseMemObject(imageDesc.mem_object);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThenPickCompressionFormatFromDebugVariable) {
+HWTEST2_F(XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThenPickCompressionFormatFromDebugVariable, IsXeHpcCore) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
 
