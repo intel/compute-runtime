@@ -39,7 +39,6 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
 
@@ -98,23 +97,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence);
     }
 
-    assignLatestUsedEvents(numCommandLists, phCommandLists);
-
     if (NEO::DebugManager.flags.PauseOnEnqueue.get() != -1) {
         neoDevice->debugExecutionCounter++;
     }
 
     return ret;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::assignLatestUsedEvents(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
-    for (uint32_t i = 0; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        if (auto signalEvent = Event::fromHandle(commandList->getLatestUsedEvent())) {
-            signalEvent->setLatestUsedCmdQueue(this);
-        }
-    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

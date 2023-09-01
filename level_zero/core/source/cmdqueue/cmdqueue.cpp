@@ -211,8 +211,6 @@ void CommandQueueImp::postSyncOperations(bool hangDetected) {
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::DebugManager.flags.DebuggerLogBitmask.get()) {
         device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());
     }
-
-    unregisterCsrClient();
 }
 
 CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,

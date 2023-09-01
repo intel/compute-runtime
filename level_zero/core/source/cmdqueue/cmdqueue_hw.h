@@ -234,8 +234,6 @@ struct CommandQueueHw : public CommandQueueImp {
                                                               CommandListRequiredStateChange &cmdListRequired);
     inline void updateBaseAddressState(CommandList *lastCommandList);
 
-    void assignLatestUsedEvents(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists);
-
     size_t alignedChildStreamPadding{};
 };
 
