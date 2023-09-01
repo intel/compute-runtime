@@ -17,10 +17,6 @@
 #include <link.h>
 
 namespace NEO {
-int64_t defaultCacheEnabled() {
-    return 1l;
-}
-
 std::string makePath(const std::string &lhs, const std::string &rhs) {
     if (lhs.size() == 0) {
         return rhs;

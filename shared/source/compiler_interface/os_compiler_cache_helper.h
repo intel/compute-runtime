@@ -10,7 +10,6 @@
 
 namespace NEO {
 class SettingsReader;
-int64_t defaultCacheEnabled();
 std::string makePath(const std::string &lhs, const std::string &rhs);
 bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader);
 time_t getFileModificationTime(const std::string &path);

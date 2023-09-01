@@ -32,7 +32,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
 
     auto cachePersistentKey = oclRegPath + NeoCachePersistent;
 
-    if (settingsReader->getSetting(settingsReader->appSpecificLocation(cachePersistentKey), defaultCacheEnabled()) != 0) {
+    if (settingsReader->getSetting(settingsReader->appSpecificLocation(cachePersistentKey), 0l) != 0) {
         ret.enabled = true;
         std::string emptyString = "";
         ret.cacheDir = settingsReader->getSetting(settingsReader->appSpecificLocation(NeoCacheDir), emptyString);
