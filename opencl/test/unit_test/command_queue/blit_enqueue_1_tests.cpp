@@ -760,6 +760,9 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingD
     UserEvent userEvent;
     cl_event waitlist[] = {&userEvent};
 
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+    *ultCsr->getTagAddress() = 0;
+
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
 
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
@@ -769,6 +772,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingD
     EXPECT_FALSE(commandQueue->isQueueBlocked());
 
     EXPECT_EQ(4u, deferredTimestampPackets->peekNodes().size()); // Barrier, CacheFlush, AuxToNonAux, NonAuxToAux
+
+    *ultCsr->getTagAddress() = ultCsr->taskCount;
 
     device->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
 }

@@ -131,6 +131,10 @@ Event::~Event() {
     }
 
     if (cmdQueue != nullptr) {
+        {
+            TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
+            cmdQueue->handlePostCompletionOperations(true);
+        }
         if (timeStampNode != nullptr) {
             timeStampNode->returnTag();
         }

@@ -227,6 +227,10 @@ class MockCommandQueue : public CommandQueue {
     bool isCompleted(TaskCountType gpgpuTaskCount, const Range<CopyEngineState> &bcsStates) override {
         isCompletedCalled++;
 
+        if (!device || !getGpgpuCommandStreamReceiver().getTagAddress()) {
+            return true;
+        }
+
         return CommandQueue::isCompleted(gpgpuTaskCount, bcsStates);
     }
 

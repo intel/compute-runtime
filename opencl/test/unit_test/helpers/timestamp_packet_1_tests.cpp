@@ -352,13 +352,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 
     clReleaseEvent(event2);
     EXPECT_EQ(0u, mockTagAllocator->returnedToFreePoolNodes.size()); // nothing returned. cmdQ owns node2
-    EXPECT_EQ(2u, mockTagAllocator->releaseReferenceNodes.size());   // event2 released  node2
-    EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(1));
+    EXPECT_EQ(3u, mockTagAllocator->releaseReferenceNodes.size());   // event2 released node2 + deferred queue node
+    EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(2));
 
     clReleaseEvent(event1);
-    EXPECT_EQ(0u, mockTagAllocator->returnedToFreePoolNodes.size());
-    EXPECT_EQ(3u, mockTagAllocator->releaseReferenceNodes.size()); // event1 released node1
-    EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(2));
+    EXPECT_EQ(1u, mockTagAllocator->returnedToFreePoolNodes.size());
+    EXPECT_EQ(4u, mockTagAllocator->releaseReferenceNodes.size()); // event1 released node1 + deferred queue node
+    EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(3));
     {
         TimestampPacketContainer release;
         cmdQ->deferredTimestampPackets->swapNodes(release);
@@ -813,6 +813,47 @@ HWTEST_F(TimestampPacketTests, givenOOQAndWithoutEventWhenEnqueueCalledThenMoveC
     cmdQ->finish();
 
     clReleaseEvent(event);
+
+    cmdQ.reset();
+}
+
+HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(0);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+    TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
+
+    cl_event clEvent;
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &clEvent);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    cmdQ->flush();
+
+    auto tagAddress = csr.getTagAddress();
+    *tagAddress = 1;
+
+    EXPECT_EQ(2u, csr.taskCount);
+    EXPECT_EQ(2u, cmdQ->taskCount);
+
+    clWaitForEvents(1, &clEvent);
+
+    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+    *tagAddress = 2;
+
+    clReleaseEvent(clEvent);
+
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
     cmdQ.reset();
 }
