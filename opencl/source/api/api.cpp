@@ -1650,7 +1650,7 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
 
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *pContext = nullptr;
-    Program *pProgram = nullptr;
+    cl_program clProgram = nullptr;
 
     retVal = validateObjects(withCastToInternal(context, &pContext), Program::isValidCallback(funcNotify, userData));
 
@@ -1661,17 +1661,16 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
     }
 
     if (CL_SUCCESS == retVal) {
-
-        pProgram = new Program(pContext, false, *deviceVectorPtr);
+        clProgram = new Program(pContext, false, *deviceVectorPtr);
+        auto pProgram = castToObject<Program>(clProgram);
         retVal = pProgram->link(*deviceVectorPtr, options,
                                 numInputPrograms, inputPrograms);
         pProgram->invokeCallback(funcNotify, userData);
     }
 
     err.set(retVal);
-
-    TRACING_EXIT(ClLinkProgram, (cl_program *)&pProgram);
-    return pProgram;
+    TRACING_EXIT(ClLinkProgram, &clProgram);
+    return clProgram;
 }
 
 cl_int CL_API_CALL clUnloadPlatformCompiler(cl_platform_id platform) {
