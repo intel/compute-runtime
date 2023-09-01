@@ -19,11 +19,6 @@
 
 using GfxCoreHelperTestDg1 = GfxCoreHelperTest;
 
-DG1TEST_F(GfxCoreHelperTestDg1, givenDg1SteppingWhenLargeGrfModeSupportedIsQueriedThenFalseIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.largeGrfModeSupported());
-}
-
 DG1TEST_F(GfxCoreHelperTestDg1, givenDg1SteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();

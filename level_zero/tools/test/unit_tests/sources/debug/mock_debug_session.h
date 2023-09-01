@@ -116,14 +116,6 @@ struct DebugSessionMock : public L0::DebugSession {
         return true;
     }
 
-    ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    uint32_t getRegisterSize(uint32_t type) override {
-        return 0;
-    }
-
     void detachTileDebugSession(DebugSession *tileSession) override {}
     bool areAllTileDebugSessionDetached() override { return true; }
 

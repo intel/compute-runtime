@@ -1160,40 +1160,6 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
     return ZE_RESULT_SUCCESS;
 }
 
-void DebugSession::updateGrfRegisterSetProperties(EuThread::ThreadId thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
-    if (pRegisterSetProperties == nullptr) {
-        return;
-    }
-
-    auto &gfxCoreHelper = this->connectedDevice->getGfxCoreHelper();
-    if (!gfxCoreHelper.largeGrfModeSupported()) {
-        return;
-    }
-
-    // update GRF, if large GRF is enabled
-    auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    auto regsetType = l0GfxCoreHelper.getRegsetTypeForLargeGrfDetection();
-    bool largeGrfModeEnabled = false;
-    const auto regSize = std::max(getRegisterSize(regsetType), 64u);
-    auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
-    memset(reg.get(), 0, regSize);
-    readRegistersImp(thread, regsetType, 0, 1, reg.get());
-    auto regPtr = reg.get();
-    if (regsetType == ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU) {
-        largeGrfModeEnabled = regPtr[0] & 0x2000;
-    } else if (regsetType == ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU) {
-        largeGrfModeEnabled = regPtr[1] & 0x6000;
-    }
-
-    if (!largeGrfModeEnabled) {
-        for (uint32_t i = 0; i < *pCount; i++) {
-            if (pRegisterSetProperties[i].type == ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU) {
-                pRegisterSetProperties[i].count = 128;
-            }
-        }
-    }
-}
-
 ze_result_t DebugSession::getThreadRegisterSetProperties(ze_device_thread_t thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
     if (!isSingleThread(thread)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -1204,13 +1170,7 @@ ze_result_t DebugSession::getThreadRegisterSetProperties(ze_device_thread_t thre
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    auto ret = getRegisterSetProperties(this->connectedDevice, pCount, pRegisterSetProperties);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
-
-    updateGrfRegisterSetProperties(threadId, pCount, pRegisterSetProperties);
-    return ret;
+    return getRegisterSetProperties(this->connectedDevice, pCount, pRegisterSetProperties);
 }
 
 ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
@@ -1233,6 +1193,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
     auto parseRegsetDesc = [&](const SIP::regset_desc &regsetDesc, zet_debug_regset_type_intel_gpu_t regsetType) {
         if (regsetDesc.num) {
             if (totalRegsetNum < *pCount) {
+                uint16_t num = (regsetType == ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU) ? 128 : regsetDesc.num;
                 zet_debug_regset_properties_t regsetProps = {
                     ZET_STRUCTURE_TYPE_DEBUG_REGSET_PROPERTIES,
                     nullptr,
@@ -1240,7 +1201,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
                     0,
                     DebugSessionImp::typeToRegsetFlags(regsetType),
                     0,
-                    regsetDesc.num,
+                    num,
                     regsetDesc.bits,
                     regsetDesc.bytes,
                 };

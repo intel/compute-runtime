@@ -71,7 +71,7 @@ struct DebugSessionImp : DebugSession {
     using ApiEventQueue = std::queue<zet_debug_event_t>;
 
   protected:
-    ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
+    MOCKABLE_VIRTUAL ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
     MOCKABLE_VIRTUAL ze_result_t writeRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
     Error resumeThreadsWithinDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread);
     MOCKABLE_VIRTUAL bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds);
@@ -120,7 +120,7 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
 
     const SIP::regset_desc *typeToRegsetDesc(uint32_t type);
-    uint32_t getRegisterSize(uint32_t type) override;
+    uint32_t getRegisterSize(uint32_t type);
 
     size_t calculateThreadSlotOffset(EuThread::ThreadId threadId);
     size_t calculateRegisterOffsetInThreadSlot(const SIP::regset_desc *const regdesc, uint32_t start);

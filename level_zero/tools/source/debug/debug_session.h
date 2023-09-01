@@ -110,9 +110,6 @@ struct DebugSession : _zet_debug_session_handle_t {
   protected:
     DebugSession(const zet_debug_config_t &config, Device *device);
     void createEuThreads();
-    void updateGrfRegisterSetProperties(EuThread::ThreadId thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties);
-    virtual uint32_t getRegisterSize(uint32_t type) = 0;
-    virtual ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
 
     virtual void startAsyncThread() = 0;
 

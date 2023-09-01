@@ -232,9 +232,4 @@ bool GfxCoreHelperHw<Family>::isChipsetUniqueUUIDSupported() const {
     return true;
 }
 
-template <>
-bool GfxCoreHelperHw<Family>::largeGrfModeSupported() const {
-    return true;
-}
-
 } // namespace NEO

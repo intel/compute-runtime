@@ -35,11 +35,6 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking() const
     return true;
 }
 
-template <>
-zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
-    return ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU;
-}
-
 template class L0GfxCoreHelperHw<Family>;
 
 } // namespace L0
