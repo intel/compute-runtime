@@ -84,7 +84,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
         kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
                                                   input.src,
                                                   input.apiOptions,
-                                                  input.internalOptions, igcRevision, igcLibSize, igcLibMTime);
+                                                  input.internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
             return TranslationOutput::ErrorCode::Success;
@@ -135,9 +135,12 @@ TranslationOutput::ErrorCode CompilerInterface::build(
     }
 
     if (cachingMode == CachingMode::PreProcess) {
-        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
+        const ArrayRef<const char> irRef(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>());
+        const ArrayRef<const char> specIdsRef(idsBuffer->GetMemory<char>(), idsBuffer->GetSize<char>());
+        const ArrayRef<const char> specValuesRef(valuesBuffer->GetMemory<char>(), valuesBuffer->GetSize<char>());
+        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), irRef,
                                                   input.apiOptions,
-                                                  input.internalOptions, igcRevision, igcLibSize, igcLibMTime);
+                                                  input.internalOptions, specIdsRef, specValuesRef, igcRevision, igcLibSize, igcLibMTime);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
             return TranslationOutput::ErrorCode::Success;

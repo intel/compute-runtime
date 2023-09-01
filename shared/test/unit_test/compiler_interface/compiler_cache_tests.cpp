@@ -205,7 +205,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
                                         strcpy_s(buf3.get(), bufSize, internalOptionsArray[i3].c_str());
                                         internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
 
-                                        std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, igcRevision, libSize, libMTime);
+                                        std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, libSize, libMTime);
 
                                         if (hashes.find(hash) != hashes.end()) {
                                             FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3;
@@ -221,8 +221,8 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
         }
     }
 
-    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, igcRevision, igcLibSize, igcLibMTime);
-    std::string hash2 = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, igcRevision, igcLibSize, igcLibMTime);
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
+    std::string hash2 = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
 }
 
@@ -275,7 +275,7 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCrea
     size_t libSize = 0;
     time_t libMTime = 0;
     CompilerCache cache(CompilerCacheConfig{});
-    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, revision, libSize, libMTime);
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), revision, libSize, libMTime);
 
     for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
         EXPECT_TRUE(verifyData[idx].matched);
@@ -309,7 +309,7 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetAndOpenFailesThenNoCl
     size_t libSize = 0;
     time_t libMTime = 0;
     CompilerCache cache(CompilerCacheConfig{});
-    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, revision, libSize, libMTime);
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), revision, libSize, libMTime);
 
     EXPECT_EQ(IoFunctions::mockFopenCalled, 2u);
     EXPECT_EQ(IoFunctions::mockFcloseCalled, 0u);

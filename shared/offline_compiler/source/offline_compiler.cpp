@@ -215,7 +215,7 @@ int OfflineCompiler::buildIrBinary() {
         irHash = cache->getCachedFileName(getHardwareInfo(),
                                           sourceCode,
                                           options,
-                                          internalOptions, igcRevision, igcLibSize, igcLibMTime);
+                                          internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
         irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
         if (irBinary) {
             return retVal;
@@ -336,15 +336,15 @@ int OfflineCompiler::buildSourceCode() {
     const auto igcLibMTime = igcFacade->getIgcLibMTime();
 
     if (allowCaching) {
-        irHash = cache->getCachedFileName(getHardwareInfo(), sourceCode, options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
+        irHash = cache->getCachedFileName(getHardwareInfo(), sourceCode, options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
         irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
 
-        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
+        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
         genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
 
         const bool generateDebugInfo = CompilerOptions::contains(options, CompilerOptions::generateDebugInfo);
         if (generateDebugInfo) {
-            dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
+            dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
             debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
         }
 
@@ -409,7 +409,7 @@ int OfflineCompiler::buildSourceCode() {
         storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
     }
     if (allowCaching) {
-        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, igcRevision, igcLibSize, igcLibMTime);
+        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
         cache->cacheBinary(irHash, irBinary, static_cast<uint32_t>(irBinarySize));
         cache->cacheBinary(genHash, genBinary, static_cast<uint32_t>(genBinarySize));
         cache->cacheBinary(dbgHash, debugDataBinary, static_cast<uint32_t>(debugDataBinarySize));
@@ -1144,7 +1144,7 @@ bool OfflineCompiler::generateElfBinary() {
         elfHash = cache->getCachedFileName(getHardwareInfo(),
                                            genHash,
                                            options,
-                                           internalOptions, igcRevision, igcLibSize, igcLibMTime);
+                                           internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
         auto loadedData = cache->loadCachedBinary(elfHash, elfBinarySize);
         elfBinary.assign(loadedData.get(), loadedData.get() + elfBinarySize);
         if (!elfBinary.empty()) {

@@ -2552,6 +2552,7 @@ TEST(OfflineCompilerTest, givenAllowCachingWhenBuildSourceCodeThenGenBinaryIsCac
                                                                          ArrayRef<const char>(mockOfflineCompiler->irBinary, mockOfflineCompiler->irBinarySize),
                                                                          mockOfflineCompiler->options,
                                                                          mockOfflineCompiler->internalOptions,
+                                                                         ArrayRef<const char>(), ArrayRef<const char>(),
                                                                          std::string(mockOfflineCompiler->igcFacade->getIgcRevision()),
                                                                          mockOfflineCompiler->igcFacade->getIgcLibSize(),
                                                                          mockOfflineCompiler->igcFacade->getIgcLibMTime());

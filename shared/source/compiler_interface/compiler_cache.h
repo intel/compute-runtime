@@ -40,6 +40,7 @@ class CompilerCache {
 
     const std::string getCachedFileName(const HardwareInfo &hwInfo, ArrayRef<const char> input,
                                         ArrayRef<const char> options, ArrayRef<const char> internalOptions,
+                                        ArrayRef<const char> specIds, ArrayRef<const char> specValues,
                                         ArrayRef<const char> igcRevision, size_t igcLibSize, time_t igcLibMTime);
 
     MOCKABLE_VIRTUAL bool cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize);

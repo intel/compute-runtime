@@ -30,6 +30,7 @@ std::mutex CompilerCache::cacheAccessMtx;
 
 const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
                                                    const ArrayRef<const char> options, const ArrayRef<const char> internalOptions,
+                                                   const ArrayRef<const char> specIds, const ArrayRef<const char> specValues,
                                                    const ArrayRef<const char> igcRevision, size_t igcLibSize, time_t igcLibMTime) {
     Hash hash;
 
@@ -44,6 +45,9 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
     hash.update(&*options.begin(), options.size());
     hash.update("----", 4);
     hash.update(&*internalOptions.begin(), internalOptions.size());
+    hash.update("----", 4);
+    hash.update(&*specIds.begin(), specIds.size());
+    hash.update(&*specValues.begin(), specValues.size());
     hash.update("----", 4);
     hash.update(safePodCast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
     hash.update("----", 4);
@@ -78,6 +82,17 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
             NEO::IoFunctions::fprintf(fp, "%s\n", &*options.begin());
             NEO::IoFunctions::fprintf(fp, "---- internal options ----\n");
             NEO::IoFunctions::fprintf(fp, "%s\n", &*internalOptions.begin());
+            NEO::IoFunctions::fprintf(fp, "---- specialization constants ----\n");
+            NEO::IoFunctions::fprintf(fp, "specIds=");
+            for (size_t idx = 0; idx < specIds.size(); idx++) {
+                NEO::IoFunctions::fprintf(fp, "%02x", specIds[idx]);
+            }
+            NEO::IoFunctions::fprintf(fp, "\n");
+            NEO::IoFunctions::fprintf(fp, "specValues=");
+            for (size_t idx = 0; idx < specValues.size(); idx++) {
+                NEO::IoFunctions::fprintf(fp, "%02x", specValues[idx]);
+            }
+            NEO::IoFunctions::fprintf(fp, "\n");
 
             NEO::IoFunctions::fprintf(fp, "---- platform ----\n");
             NEO::IoFunctions::fprintf(fp, "  eProductFamily=%d\n", hwInfo.platform.eProductFamily);

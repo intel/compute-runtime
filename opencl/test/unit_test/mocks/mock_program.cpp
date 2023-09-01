@@ -42,7 +42,7 @@ std::string MockProgram::getCachedFileName() const {
     auto opts = ArrayRef<const char>(this->options.c_str(), this->options.size());
     auto internalOptions = getInternalOptions();
     auto internalOpts = ArrayRef<const char>(internalOptions.c_str(), internalOptions.size());
-    return cache.getCachedFileName(hwInfo, input, opts, internalOpts, igcRevision, igcLibSize, igcLibMTime);
+    return cache.getCachedFileName(hwInfo, input, opts, internalOpts, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
 }
 
 } // namespace NEO
