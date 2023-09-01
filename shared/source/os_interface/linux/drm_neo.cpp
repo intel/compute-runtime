@@ -1146,7 +1146,7 @@ bool Drm::isSetPairAvailable() {
 }
 
 bool Drm::isChunkingAvailable() {
-    if (DebugManager.flags.EnableBOChunking.get() != 0) {
+    if ((DebugManager.flags.EnableBOChunking.get() != 0) && (hasKmdMigrationSupport())) {
         std::call_once(checkChunkingOnce, [this]() {
             int ret = ioctlHelper->isChunkingAvailable();
             if (ret) {
