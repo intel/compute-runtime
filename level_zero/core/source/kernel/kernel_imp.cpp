@@ -673,10 +673,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
     }
     NEO::SvmAllocationData *peerAllocData = nullptr;
-    if (driverHandle->isRemoteResourceNeeded(requestedAddress, alloc, allocData, device)) {
-        if (allocData == nullptr) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+    if (allocData && driverHandle->isRemoteResourceNeeded(requestedAddress, alloc, allocData, device)) {
 
         uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
         uint64_t offset = (uint64_t)requestedAddress - pbase;
@@ -686,10 +683,23 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         }
         gpuAddress += offset;
     }
-    const uint32_t allocId = allocData ? allocData->getAllocId() : 0u;
+
+    if (allocData == nullptr) {
+        if (NEO::DebugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
+            const auto &argAsPtr = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+            auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
+            patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(requestedAddress));
+            kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, 0, 0, false};
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
+    const uint32_t allocId = allocData->getAllocId();
     kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
 
-    if (allocData && allocData->virtualReservationData) {
+    if (allocData->virtualReservationData) {
         for (const auto &mappedAllocationData : allocData->virtualReservationData->mappedAllocations) {
             // Add additional allocations to the residency container if the virtual reservation spans multiple allocations.
             if (requestedAddress != mappedAllocationData.second->ptr) {
