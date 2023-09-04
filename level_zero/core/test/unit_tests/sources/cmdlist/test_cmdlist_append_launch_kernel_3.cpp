@@ -27,6 +27,7 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/event/event_imp.h"
@@ -1704,6 +1705,198 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendSignalEventT
     }
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThenWaitForDependencyAndSignalSyncAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    uint64_t inOrderSyncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
+    uint8_t ptr[64] = {};
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    uint32_t inOrderCounter = 1;
+
+    auto verifySemaphore = [&inOrderSyncVa](const GenCmdList::iterator &iterator, uint32_t waitValue) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
+
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        EXPECT_EQ(waitValue, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(inOrderSyncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+    };
+
+    auto verifySdi = [&inOrderSyncVa](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint32_t signalValue) {
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rIterator);
+        while (sdiCmd == nullptr) {
+            sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++rIterator));
+            if (rIterator == rEnd) {
+                break;
+            }
+        }
+
+        ASSERT_NE(nullptr, sdiCmd);
+
+        EXPECT_EQ(inOrderSyncVa, sdiCmd->getAddress());
+        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(signalValue, sdiCmd->getDataDword0());
+        EXPECT_EQ(0u, sdiCmd->getDataDword1());
+    };
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendEventReset(events[0]->toHandle());
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        verifySemaphore(cmdList.begin(), inOrderCounter);
+        verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        size_t rangeSizes = 1;
+        const void **ranges = reinterpret_cast<const void **>(&ptr[0]);
+        immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        verifySemaphore(cmdList.begin(), inOrderCounter);
+        verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(ptr), nullptr, 0, nullptr);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        verifySemaphore(cmdList.begin(), inOrderCounter);
+        verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
+    }
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKernelAppendThenWaitForDependencyAndSignalSyncAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    uint8_t ptr[64] = {};
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto verifyPc = [](const GenCmdList::iterator &iterator) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*iterator);
+
+        ASSERT_NE(nullptr, pcCmd);
+    };
+
+    auto verifySdi = [](GenCmdList::reverse_iterator rIterator) {
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rIterator);
+        EXPECT_EQ(nullptr, sdiCmd);
+    };
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        regularCmdList->appendEventReset(events[0]->toHandle());
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        verifyPc(cmdList.begin());
+        verifySdi(cmdList.rbegin());
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        size_t rangeSizes = 1;
+        const void **ranges = reinterpret_cast<const void **>(&ptr[0]);
+        regularCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        verifyPc(cmdList.begin());
+        verifySdi(cmdList.rbegin());
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        regularCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(ptr), nullptr, 0, nullptr);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        verifyPc(cmdList.begin());
+        verifySdi(cmdList.rbegin());
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        zex_wait_on_mem_desc_t desc;
+        desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+        regularCmdList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, 1, nullptr);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        verifyPc(cmdList.begin());
+        verifySdi(cmdList.rbegin());
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        zex_write_to_mem_desc_t desc = {};
+        uint64_t data = 0xabc;
+        regularCmdList->appendWriteToMemory(reinterpret_cast<void *>(&desc), ptr, data);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        verifyPc(cmdList.begin());
+        verifySdi(cmdList.rbegin());
+    }
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker, IsAtLeastXeHpCore) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
@@ -2048,6 +2241,41 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEvents
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(3u, sdiCmd->getDataDword0());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenRegularInOrderCmdListWhenProgrammingAppendWaitOnEventsThenDontSignalSyncAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = false;
+
+    auto eventHandle = events[0]->toHandle();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle, 0, nullptr, launchParams, false);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    zeCommandListAppendWaitOnEvents(regularCmdList->toHandle(), 1, &eventHandle);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    auto pcItor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), pcItor);
+
+    auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+    ASSERT_NE(nullptr, pcCmd);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), sdiItor);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflowThenHandleItCorrectly, IsAtLeastXeHpCore) {

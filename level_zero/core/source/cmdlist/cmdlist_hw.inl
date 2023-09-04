@@ -466,6 +466,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
+    if (this->inOrderExecutionEnabled) {
+        handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0));
+    }
+
     event->resetPackets(false);
     event->disableHostCaching(this->cmdListType == CommandList::CommandListType::TYPE_REGULAR);
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
@@ -480,6 +484,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         if (this->partitionCount > 1) {
             appendMultiTileBarrier(*neoDevice);
         }
+    }
+
+    if (this->inOrderExecutionEnabled && useCounterAllocationForInOrderMode()) {
+        appendSignalInOrderDependencyCounter();
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -515,6 +523,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
     appendSignalEventPostWalker(signalEvent);
     addToMappedEventList(signalEvent);
+
+    if (this->inOrderExecutionEnabled && useCounterAllocationForInOrderMode()) {
+        appendSignalInOrderDependencyCounter();
+    }
 
     return ZE_RESULT_SUCCESS;
 }
@@ -2153,19 +2165,34 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies) {
+void CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(bool relaxedOrderingAllowed) {
     auto hasInOrderDependencies = (inOrderDependencyCounter > 0);
 
-    if (relaxedOrderingAllowed && (numWaitEvents > 0 || hasInOrderDependencies)) {
-        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
-    }
-
     if (hasInOrderDependencies) {
+        if (relaxedOrderingAllowed) {
+            NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
+        }
+
         if (useCounterAllocationForInOrderMode()) {
             CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
         } else if (!isCopyOnly()) {
             appendComputeBarrierCommand();
         }
+    }
+
+    if (cmdListType == TYPE_REGULAR && this->inOrderExecutionEnabled && !hasInOrderDependencies) {
+        inOrderDependencyCounter++; // First append is without dependencies. Increment counter to program barrier on next calls.
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies) {
+    auto hasInOrderDependencies = (inOrderDependencyCounter > 0);
+
+    handleInOrderImplicitDependencies(relaxedOrderingAllowed);
+
+    if (relaxedOrderingAllowed && numWaitEvents > 0 && !hasInOrderDependencies) {
+        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
     }
 
     if (numWaitEvents > 0) {
@@ -2176,17 +2203,13 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
         }
     }
 
-    if (cmdListType == TYPE_REGULAR && this->inOrderExecutionEnabled && !hasInOrderDependencies) {
-        inOrderDependencyCounter++; // First append is without dependencies. Increment counter to program barrier on next calls.
-    }
-
     return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent) {
     if (this->inOrderExecutionEnabled) {
-        addEventsToCmdList(0, nullptr, isRelaxedOrderingDispatchAllowed(0), false);
+        handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0));
     }
 
     auto event = Event::fromHandle(hEvent);
@@ -2273,7 +2296,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     }
 
     if (signalInOrderCompletion) {
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
+        handleInOrderImplicitDependencies(false);
     }
 
     bool dcFlushRequired = false;
@@ -2322,7 +2345,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
     }
 
-    if (signalInOrderCompletion) {
+    if (signalInOrderCompletion && useCounterAllocationForInOrderMode()) {
         appendSignalInOrderDependencyCounter();
     }
 
@@ -2477,6 +2500,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     }
 
     appendSignalEventPostWalker(signalEvent);
+
+    if (this->inOrderExecutionEnabled && useCounterAllocationForInOrderMode()) {
+        appendSignalInOrderDependencyCounter();
+    }
 
     auto allocationStruct = getAlignedAllocationData(this->device, dstptr, sizeof(uint64_t), false);
     if (allocationStruct.alloc == nullptr) {
@@ -3112,6 +3139,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     }
     UNRECOVERABLE_IF(srcAllocationStruct.alloc == nullptr);
 
+    if (this->inOrderExecutionEnabled) {
+        handleInOrderImplicitDependencies(false);
+    }
+
     appendEventForProfiling(signalEvent, true);
 
     commandContainer.addToResidencyContainer(srcAllocationStruct.alloc);
@@ -3149,6 +3180,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     UNRECOVERABLE_IF(dstAllocationStruct.alloc == nullptr);
     commandContainer.addToResidencyContainer(dstAllocationStruct.alloc);
 
+    if (this->inOrderExecutionEnabled) {
+        handleInOrderImplicitDependencies(false);
+    }
+
     const uint64_t gpuAddress = static_cast<uint64_t>(dstAllocationStruct.alignedAllocationPtr);
 
     if (isCopyOnly()) {
@@ -3170,6 +3205,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
             device->getNEODevice()->getRootDeviceEnvironment(),
             args);
     }
+
     return ZE_RESULT_SUCCESS;
 }
 
