@@ -250,6 +250,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeEventBeforeReset, -1, "-1: default, 0
 DECLARE_DEBUG_VARIABLE(int32_t, TrackNumCsrClientsOnSyncPoints, -1, "-1: default, 0: Disabled, 1: If set, synchronization points like zeEventHostSynchronize will unregister CmdQ from CSR clients")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDriverVersion, -1, "-1: default, >=0: Use value as reported driver version")
 DECLARE_DEBUG_VARIABLE(int32_t, WaitForUserFenceOnEventHostSynchronize, -1, "-1: default, 0: Disabled, 1: Enabled. If enabled, use WaitUserFence KMD call for in-order Events instead of active polling on host.")
+DECLARE_DEBUG_VARIABLE(int32_t, DisableSystemPointerKernelArgument, -1, "-1: default, 0: Disabled, 1: using a system pointer for kernel argument returns an error.")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramUserInterruptOnResolvedDependency, -1, "-1: default, 0: Disabled, >=1: bitfield. 01b: program after semaphore, 10b: on signaling fence (non-walker append).")
 
 /*LOGGING FLAGS*/
