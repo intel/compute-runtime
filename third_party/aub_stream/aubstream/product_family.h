@@ -27,6 +27,7 @@ enum class ProductFamily : uint32_t {
     Dg2 = 13u,
     Pvc = 14u,
     Mtl = 15u,
+    Arl = 15u,
     MaxProduct,
 };
 } // namespace aub_stream

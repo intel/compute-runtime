@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,13 +9,13 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "allocation_params.h"
 #include "page_info.h"
 #include "shared_mem_info.h"
 #include "physical_allocation_info.h"
 
 namespace aub_stream {
 
-struct AllocationParams;
 struct HardwareContext;
 
 struct AubManagerOptions {
@@ -57,6 +57,10 @@ class AubManager {
 
     virtual bool reservePhysicalMemory(AllocationParams allocationParams, PhysicalAllocationInfo &physicalAllocInfo) = 0;
     virtual bool mapGpuVa(uint64_t gfxAddress, size_t size, PhysicalAllocationInfo physicalAllocInfo) = 0;
+
+    virtual bool reserveOnlyPhysicalSpace(AllocationParams allocationParams, PhysicalAllocationInfo &physicalAllocInfo) { return false; }
+    virtual bool mapSystemMemoryToPhysicalAddress(uint64_t physAddress, size_t size, size_t alignment, bool isLocalMemory, const void *p) { return false; }
+    virtual void *translatePhysicalAddressToSystemMemory(uint64_t physicalAddress, bool isLocalMemory) { return nullptr; }
 };
 
 } // namespace aub_stream
