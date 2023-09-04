@@ -3182,15 +3182,22 @@ void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemoryIfN
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, std::unordered_map<uint32_t, NEO::GraphicsAllocation *> &privateAllocsToReuse) {
+void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse) {
     L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     NEO::GraphicsAllocation *privateAlloc = nullptr;
 
-    if (privateAllocsToReuse[sizePerHwThread] != nullptr) {
-        privateAlloc = privateAllocsToReuse[sizePerHwThread];
-    } else {
+    bool allocToReuseFound = false;
+
+    for (auto &alloc : privateAllocsToReuse) {
+        if (sizePerHwThread == alloc.first) {
+            privateAlloc = alloc.second;
+            allocToReuseFound = true;
+            break;
+        }
+    }
+    if (!allocToReuseFound) {
         privateAlloc = kernelImp->allocatePrivateMemoryGraphicsAllocation();
-        privateAllocsToReuse[sizePerHwThread] = privateAlloc;
+        privateAllocsToReuse.push_back({sizePerHwThread, privateAlloc});
     }
     kernelImp->patchAndMoveToResidencyContainerPrivateSurface(privateAlloc);
 }

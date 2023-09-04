@@ -4491,7 +4491,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCleanUpResourcesThenOwnedPrivate
     auto mockGA = std::make_unique<MockGraphicsAllocation>();
 
     auto mapForReuse = &csr.getOwnedPrivateAllocations();
-    mapForReuse->insert({0x100, mockGA.release()});
+    mapForReuse->push_back({0x100, mockGA.release()});
     csr.cleanupResources();
     EXPECT_EQ(mapForReuse->size(), 0u);
 }

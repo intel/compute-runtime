@@ -534,7 +534,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                          false,
                          (L0::Kernel * kernel,
                           uint32_t sizePerHwThread,
-                          std::unordered_map<uint32_t, NEO::GraphicsAllocation *> &privateAllocsToReuse),
+                          NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse),
                          (kernel, sizePerHwThread, privateAllocsToReuse));
 
     ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemoryIfNeeded,
@@ -631,7 +631,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
                          false,
                          (L0::Kernel * kernel,
                           uint32_t sizePerHwThread,
-                          std::unordered_map<uint32_t, NEO::GraphicsAllocation *> &privateAllocsToReuse),
+                          NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse),
                          (kernel, sizePerHwThread, privateAllocsToReuse));
 
     ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemoryIfNeeded,

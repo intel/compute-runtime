@@ -309,7 +309,7 @@ struct CommandListCoreFamily : CommandListImp {
         return (this->pipeControlMultiKernelEventSync && splitKernel) ||
                compactL3FlushEvent(dcFlush);
     }
-    MOCKABLE_VIRTUAL void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, std::unordered_map<uint32_t, NEO::GraphicsAllocation *> &privateAllocsToReuse);
+    MOCKABLE_VIRTUAL void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse);
     virtual void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
     CmdListEventOperation estimateEventPostSync(Event *event, uint32_t operations);
     void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition);

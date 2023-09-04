@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
@@ -356,7 +357,7 @@ struct CommandList : _ze_command_list_handle_t {
     MOCKABLE_VIRTUAL void synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
-    std::unordered_map<uint32_t, NEO::GraphicsAllocation *> ownedPrivateAllocations;
+    NEO::PrivateAllocsToReuseContainer ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
     std::vector<Kernel *> printfKernelContainer;
 

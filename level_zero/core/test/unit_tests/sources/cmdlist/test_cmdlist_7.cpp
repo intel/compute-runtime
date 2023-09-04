@@ -3193,11 +3193,11 @@ HWTEST2_F(CommandListMappedTimestampTest, givenEventIsAddedToMappedEventListWhen
 template <GFXCORE_FAMILY gfxCoreFamily, typename BaseMock>
 class MockCommandListCoreFamilyIfPrivateNeeded : public BaseMock {
   public:
-    void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, std::unordered_map<uint32_t, GraphicsAllocation *> &privateAllocsToReuse) override {
+    void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, PrivateAllocsToReuseContainer &privateAllocsToReuse) override {
         passedContainer = &privateAllocsToReuse;
         BaseMock::allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, privateAllocsToReuse);
     }
-    std::unordered_map<uint32_t, GraphicsAllocation *> *passedContainer;
+    PrivateAllocsToReuseContainer *passedContainer;
 };
 
 HWTEST2_F(CommandListCreate, givenPrivatePerDispatchDisabledWhenAllocatingPrivateMemoryThenAllocateIsNotCalled, IsAtLeastSkl) {
@@ -3281,8 +3281,8 @@ HWTEST2_F(CommandListCreate, givenCmdListWhenAllocateOrReuseCalledForSizeThatIsS
     const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
     mockKernel.module = &mockModule;
     MockGraphicsAllocation mockGA(mockMem.get(), 2 * sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
-    std::unordered_map<uint32_t, GraphicsAllocation *> mapForReuse;
-    mapForReuse[sizePerHwThread] = &mockGA;
+    PrivateAllocsToReuseContainer mapForReuse;
+    mapForReuse.push_back({sizePerHwThread, &mockGA});
     commandList->allocateOrReuseKernelPrivateMemory(&mockKernel, sizePerHwThread, mapForReuse);
     EXPECT_EQ(mockKernel.residencyContainer[0], &mockGA);
 }
@@ -3298,8 +3298,8 @@ HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPr
     const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
     mockKernel.module = &mockModule;
     MockGraphicsAllocation mockGA(mockMem.get(), sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch / 2);
-    std::unordered_map<uint32_t, GraphicsAllocation *> mapForReuse;
-    mapForReuse[sizePerHwThread] = &mockGA;
+    PrivateAllocsToReuseContainer mapForReuse;
+    mapForReuse.push_back({sizePerHwThread, &mockGA});
     commandList->allocateOrReuseKernelPrivateMemory(&mockKernel, sizePerHwThread / 2, mapForReuse);
     EXPECT_NE(mockKernel.residencyContainer[0], &mockGA);
     neoDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.residencyContainer[0]);

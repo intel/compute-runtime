@@ -571,7 +571,7 @@ ResidencyContainer &CommandStreamReceiver::getResidencyAllocations() {
 ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
     return this->evictionAllocations;
 }
-std::unordered_map<uint32_t, GraphicsAllocation *> &CommandStreamReceiver::getOwnedPrivateAllocations() {
+PrivateAllocsToReuseContainer &CommandStreamReceiver::getOwnedPrivateAllocations() {
     return this->ownedPrivateAllocations;
 }
 

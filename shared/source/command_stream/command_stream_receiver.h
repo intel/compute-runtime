@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/blit_properties_container.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/spinlock.h"
@@ -118,7 +119,7 @@ class CommandStreamReceiver {
 
     ResidencyContainer &getResidencyAllocations();
     ResidencyContainer &getEvictionAllocations();
-    std::unordered_map<uint32_t, GraphicsAllocation *> &getOwnedPrivateAllocations();
+    PrivateAllocsToReuseContainer &getOwnedPrivateAllocations();
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
     bool needsPageTableManager() const;
@@ -461,7 +462,7 @@ class CommandStreamReceiver {
 
     ResidencyContainer residencyAllocations;
     ResidencyContainer evictionAllocations;
-    std::unordered_map<uint32_t, GraphicsAllocation *> ownedPrivateAllocations;
+    PrivateAllocsToReuseContainer ownedPrivateAllocations;
 
     MutexType ownershipMutex;
     MutexType hostPtrSurfaceCreationMutex;

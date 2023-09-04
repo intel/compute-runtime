@@ -13,11 +13,13 @@
 #include <vector>
 
 namespace NEO {
+class GraphicsAllocation;
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
 using MultiDeviceEngineControlContainer = StackVec<EngineControlContainer, 6u>;
 class Device;
 using DeviceVector = std::vector<std::unique_ptr<Device>>;
+using PrivateAllocsToReuseContainer = StackVec<std::pair<uint32_t, GraphicsAllocation *>, 8>;
 
 enum class DebugPauseState : uint32_t {
     disabled,
