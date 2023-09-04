@@ -33,7 +33,7 @@ class ReleaseHelper {
     virtual bool isBFloat16ConversionSupported() const = 0;
     virtual int getProductMaxPreferredSlmSize(int preferredEnumValue) const = 0;
     virtual bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const = 0;
-    virtual bool isResolvingBuiltinsNeeded() const = 0;
+    virtual bool isResolvingSubDeviceIDNeeded() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -56,7 +56,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isBFloat16ConversionSupported() const override;
     int getProductMaxPreferredSlmSize(int preferredEnumValue) const override;
     bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const override;
-    bool isResolvingBuiltinsNeeded() const override;
+    bool isResolvingSubDeviceIDNeeded() const override;
 
   private:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

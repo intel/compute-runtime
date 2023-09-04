@@ -27,7 +27,7 @@ TEST(ReleaseHelperTest, givenReleaseHelper1257ThenCorrectPropertiesAreReturned) 
         EXPECT_FALSE(releaseHelper->isPrefetchDisablingRequired());
         EXPECT_TRUE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
-        EXPECT_TRUE(releaseHelper->isResolvingBuiltinsNeeded());
+        EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
     }
 }
 

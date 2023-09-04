@@ -55,6 +55,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::device;
     using BaseClass::exportedFunctionsSurface;
     using BaseClass::importedSymbolAllocations;
+    using BaseClass::isaSegmentsForPatching;
     using BaseClass::isFullyLinked;
     using BaseClass::isFunctionSymbolExportEnabled;
     using BaseClass::isGlobalSymbolExportEnabled;

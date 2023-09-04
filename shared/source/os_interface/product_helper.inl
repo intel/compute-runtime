@@ -809,9 +809,9 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isResolvingBuiltinsNeeded(const ReleaseHelper *releaseHelper) const {
+bool ProductHelperHw<gfxProduct>::isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
-        return releaseHelper->isResolvingBuiltinsNeeded();
+        return releaseHelper->isResolvingSubDeviceIDNeeded();
     }
     return true;
 }

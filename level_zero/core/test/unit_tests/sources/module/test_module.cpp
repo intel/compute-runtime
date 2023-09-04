@@ -2018,6 +2018,73 @@ TEST_F(ModuleDynamicLinkTest, givenUnresolvedSymbolsWhenModuleIsCreatedThenIsaAl
     EXPECT_FALSE(module->isFullyLinked);
 }
 
+TEST_F(ModuleDynamicLinkTest, givenModuleWithUnresolvedSymbolWhenKernelIsCreatedThenErrorIsReturned) {
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::make_unique<Module>(device, moduleBuildLog, ModuleType::User);
+    ASSERT_NE(nullptr, module.get());
+
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->dataRelocations.push_back(unresolvedRelocation);
+    linkerInput->traits.requiresPatchingOfGlobalVariablesBuffer = true;
+    module->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+    module->initialize(&moduleDesc, neoDevice);
+    ASSERT_FALSE(module->isFullyLinked);
+
+    ze_kernel_handle_t kernelHandle;
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "nonexistent_kernel";
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED, res);
+}
+
+TEST_F(ModuleDynamicLinkTest, givenModuleWithSubDeviceIDSymbolToResolveWhenKernelIsCreatedThenSuccessIsReturned) {
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::make_unique<Module>(device, moduleBuildLog, ModuleType::User);
+    ASSERT_NE(nullptr, module.get());
+
+    module->unresolvedExternalsInfo.push_back({{"__SubDeviceID", 0, NEO::Linker::RelocationInfo::Type::AddressLow, NEO::SegmentType::Instructions}, 0u, false});
+    module->unresolvedExternalsInfo.push_back({{"__SubDeviceID", 64, NEO::Linker::RelocationInfo::Type::AddressHigh, NEO::SegmentType::Instructions}, 0u, false});
+
+    std::vector<char> instructionSegment;
+    instructionSegment.resize(128u);
+    module->isaSegmentsForPatching.push_back({instructionSegment.data(), 64u});
+    module->isaSegmentsForPatching.push_back({&instructionSegment[64], 64u});
+    module->initialize(&moduleDesc, neoDevice);
+    ASSERT_TRUE(module->isFullyLinked);
+
+    ze_kernel_handle_t kernelHandle;
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "test";
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+}
+
 TEST_F(ModuleDynamicLinkTests, givenModuleWithFunctionDependenciesWhenOtherModuleDefinesThisFunctionThenBarrierCountIsProperlyResolved) {
     std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
 

@@ -209,7 +209,7 @@ class ProductHelper {
     virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
     virtual bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const = 0;
-    virtual bool isResolvingBuiltinsNeeded(const ReleaseHelper *releaseHelper) const = 0;
+    virtual bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
     virtual uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const = 0;
 

@@ -845,18 +845,12 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalsWhenLinkThenSubDeviceIDSymbolsAreC
         patchableGlobalVarSeg, patchableConstVarSeg, instructionsSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
 
-    auto releaseHelper = pDevice->getReleaseHelper();
-    auto &productHelper = pDevice->getProductHelper();
-    size_t expectedUnresolvedExternals = productHelper.isResolvingBuiltinsNeeded(releaseHelper) ? 2u : 4u;
-
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, relocatedSymbols.size());
-    EXPECT_EQ(expectedUnresolvedExternals, unresolvedExternals.size());
+    EXPECT_EQ(2u, unresolvedExternals.size());
 
-    if (productHelper.isResolvingBuiltinsNeeded(releaseHelper)) {
-        for (auto &symbol : unresolvedExternals) {
-            EXPECT_NE(NEO::Linker::subDeviceID, symbol.unresolvedRelocation.symbolName);
-        }
+    for (auto &symbol : unresolvedExternals) {
+        EXPECT_NE(NEO::Linker::subDeviceID, symbol.unresolvedRelocation.symbolName);
     }
 
     auto gpuAddressAs64bit = pDevice->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();

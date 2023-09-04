@@ -325,14 +325,8 @@ LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const Segm
     patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg,
                       outUnresolvedExternals, pDevice, constantsInitData, constantsInitDataSize, variablesInitData, variablesInitDataSize);
     removeLocalSymbolsFromRelocatedSymbols();
-
     resolveImplicitArgs(kernelDescriptors, pDevice);
-
-    auto &productHelper = pDevice->getProductHelper();
-    auto releaseHelper = pDevice->getReleaseHelper();
-    if (productHelper.isResolvingBuiltinsNeeded(releaseHelper)) {
-        resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
-    }
+    resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
 
     if (initialUnresolvedExternalsCount < outUnresolvedExternals.size()) {
         return LinkingStatus::LinkedPartially;
@@ -662,16 +656,20 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
 }
 
 void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments) {
+    auto &productHelper = pDevice->getProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+
     int vecIndex = static_cast<int>(outUnresolvedExternals.size() - 1u);
     for (; vecIndex >= 0; --vecIndex) {
         if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == subDeviceID) {
-            RelocatedSymbol<SymbolInfo> symbol;
-            symbol.gpuAddress = static_cast<uintptr_t>(pDevice->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress());
-            auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
-                                          static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
+            if (productHelper.isResolvingSubDeviceIDNeeded(releaseHelper)) {
+                RelocatedSymbol<SymbolInfo> symbol;
+                symbol.gpuAddress = static_cast<uintptr_t>(pDevice->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress());
+                auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
+                                              static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
 
-            NEO::Linker::patchAddress(relocAddress, symbol.gpuAddress, outUnresolvedExternals[vecIndex].unresolvedRelocation);
-
+                NEO::Linker::patchAddress(relocAddress, symbol.gpuAddress, outUnresolvedExternals[vecIndex].unresolvedRelocation);
+            }
             outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
             outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);
         }
