@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@
 
 class OclocArgHelper;
 namespace Ocloc {
-void printOclocCmdLine(const std::vector<std::string> &args);
-void printHelp(OclocArgHelper *helper);
+void printOclocCmdLine(OclocArgHelper &wrapper, const std::vector<std::string> &args);
+void printHelp(OclocArgHelper &wrapper);
 
 namespace CommandNames {
 inline constexpr NEO::ConstStringRef compile = "compile";

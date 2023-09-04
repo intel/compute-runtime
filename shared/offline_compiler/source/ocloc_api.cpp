@@ -28,7 +28,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
 
     try {
         if (numArgs <= 1 || NEO::ConstStringRef("-h") == args[1] || NEO::ConstStringRef("--help") == args[1]) {
-            printHelp(helper.get());
+            printHelp(*helper);
             return NEO::OclocErrorCode::SUCCESS;
         }
         auto &command = args[1];
@@ -52,8 +52,8 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             return Commands::compile(helper.get(), args);
         }
     } catch (const std::exception &e) {
-        printf("%s\n", e.what());
-        printOclocCmdLine(args);
+        helper->printf("%s\n", e.what());
+        printOclocCmdLine(*helper, args);
         return -1;
     }
 }

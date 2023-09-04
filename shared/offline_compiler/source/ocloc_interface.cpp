@@ -25,25 +25,25 @@
 namespace Ocloc {
 using namespace NEO;
 
-void printOclocCmdLine(const std::vector<std::string> &args) {
+void printOclocCmdLine(OclocArgHelper &wrapper, const std::vector<std::string> &args) {
     auto areQuotesRequired = [](const std::string_view &argName) -> bool {
         return argName == "-options" || argName == "-internal_options";
     };
-    printf("Command was:");
+    wrapper.printf("Command was:");
     bool useQuotes = false;
     for (auto &currArg : args) {
         if (useQuotes) {
-            printf(" \"%s\"", currArg.c_str());
+            wrapper.printf(" \"%s\"", currArg.c_str());
             useQuotes = false;
         } else {
-            printf(" %s", currArg.c_str());
+            wrapper.printf(" %s", currArg.c_str());
             useQuotes = areQuotesRequired(currArg.c_str());
         }
     }
-    printf("\n");
+    wrapper.printf("\n");
 }
 
-void printHelp(OclocArgHelper *helper) {
+void printHelp(OclocArgHelper &wrapper) {
     const char *help = R"===(ocloc is a tool for managing Intel Compute GPU device binary format.
 It can be used for generation (as part of 'compile' command) as well as
 manipulation (decoding/modifying - as part of 'disasm'/'asm' commands) of such
@@ -99,19 +99,19 @@ Examples:
     ocloc concat <fat binary> <fat binary> ... [-out <concatenated fat binary name>]
 }
 )===";
-    helper->printf("%s", help);
+    wrapper.printf("%s", help);
 }
 
-void printOclocOptionsReadFromFile(OfflineCompiler *pCompiler) {
+void printOclocOptionsReadFromFile(OclocArgHelper &wrapper, OfflineCompiler *pCompiler) {
     if (pCompiler) {
         std::string options = pCompiler->getOptionsReadFromFile();
         if (options != "") {
-            printf("Compiling options read from file were:\n%s\n", options.c_str());
+            wrapper.printf("Compiling options read from file were:\n%s\n", options.c_str());
         }
 
         std::string internalOptions = pCompiler->getInternalOptionsReadFromFile();
         if (internalOptions != "") {
-            printf("Internal options read from file were:\n%s\n", internalOptions.c_str());
+            wrapper.printf("Internal options read from file were:\n%s\n", internalOptions.c_str());
         }
     }
 }
@@ -146,8 +146,8 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
     }
 
     if (retVal != OclocErrorCode::SUCCESS) {
-        printOclocOptionsReadFromFile(pCompiler.get());
-        printOclocCmdLine(args);
+        printOclocOptionsReadFromFile(*argHelper, pCompiler.get());
+        printOclocCmdLine(*argHelper, args);
     }
     return retVal;
 };
