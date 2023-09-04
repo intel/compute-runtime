@@ -274,7 +274,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    // same value but no svmData - ZE_RESULT_ERROR_INVALID_ARGUMENT
+    // same value but no svmData - ZE_RESULT_SUCCESS with allocId as 0
     svmAllocsManager->freeSVMAlloc(secondSvmAllocation);
     ++svmAllocsManager->allocationsCounter;
     ASSERT_GT(mockKernel.kernelArgInfos[0].allocId, 0u);
@@ -282,7 +282,9 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     ASSERT_EQ(mockKernel.kernelArgInfos[0].value, secondSvmAllocation);
     ASSERT_GT(svmAllocsManager->allocationsCounter, 0u);
     ASSERT_NE(mockKernel.kernelArgInfos[0].allocIdMemoryManagerCounter, svmAllocsManager->allocationsCounter);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
+    ASSERT_EQ(mockKernel.kernelArgInfos[0].value, secondSvmAllocation);
+    ASSERT_EQ(mockKernel.kernelArgInfos[0].allocId, 0u);
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
 
     svmAllocsManager->freeSVMAlloc(svmAllocation);
@@ -626,15 +628,22 @@ HWTEST2_F(SetKernelArg, givenSamplerAndKernelWhenSetArgSamplerThenCrossThreadDat
     EXPECT_EQ(static_cast<uint32_t>(SamplerPatchValues::NormalizedCoordsTrue), *pSamplerNormalizedCoords);
 }
 
-using ArgSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
-
-HWTEST2_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThenInvalidArgumentIsReturned, ArgSupport) {
+TEST_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThenSuccessIsReturned) {
     createKernel();
 
     uint64_t hostAddress = 0x1234;
-
     ze_result_t res = kernel->setArgBuffer(0, sizeof(hostAddress), &hostAddress);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
 
+TEST_F(SetKernelArg, givenDisableSystemPointerKernelArgumentIsEnabledWhenBufferArgumentisNotAllocatedByRuntimeThenErrorIsReturned) {
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DisableSystemPointerKernelArgument.set(1);
+    createKernel();
+
+    uint64_t hostAddress = 0x1234;
+    ze_result_t res = kernel->setArgBuffer(0, sizeof(hostAddress), &hostAddress);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
