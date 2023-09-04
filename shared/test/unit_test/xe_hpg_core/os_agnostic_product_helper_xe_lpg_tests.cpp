@@ -198,10 +198,6 @@ HWTEST2_F(XeLpgProductHelperTests, whenGettingAubstreamProductFamilyThenProperEn
     EXPECT_EQ(aub_stream::ProductFamily::Mtl, productHelper->getAubStreamProductFamily());
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(*defaultHwInfo));
-}
-
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckDirectSubmissionConstantCacheInvalidationNeededThenTrueIsReturned, IsXeLpg) {
     auto hwInfo = *defaultHwInfo;
     EXPECT_TRUE(productHelper->isDirectSubmissionConstantCacheInvalidationNeeded(hwInfo));

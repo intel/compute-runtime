@@ -12,4 +12,11 @@ constexpr static auto gfxProduct = IGFX_METEORLAKE;
 #include "shared/source/xe_hpg_core/xe_lpg/linux/product_helper_xe_lpg_linux.inl"
 #include "shared/source/xe_hpg_core/xe_lpg/os_agnostic_product_helper_xe_lpg.inl"
 
+namespace NEO {
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+} // namespace NEO
+
 template class NEO::ProductHelperHw<gfxProduct>;
