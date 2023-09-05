@@ -4177,8 +4177,8 @@ TEST(OclocCompile, givenCommandLineWithoutDeviceWhenCompilingToSpirvThenSucceeds
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
     EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300"
-                                                 " -cl-ext=-all,+cl_khr_3d_image_writes,+__opencl_c_3d_image_writes,+__opencl_c_images"
-                                                 " -D__IMAGE_SUPPORT__=1"));
+                                                 " -cl-ext=-all,+cl_khr_3d_image_writes,+__opencl_c_3d_image_writes,+__opencl_c_images"));
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, " -D__IMAGE_SUPPORT__=1"));
 }
 
 TEST(OclocCompile, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenInternalOptionsAreSetCorrectly) {
@@ -4289,6 +4289,22 @@ TEST(OclocCompile, givenFormatFlagWithKnownFormatPassedThenEnforceSpecifiedForma
     retVal = ocloc.initialize(argvEnforcedFormatPatchtokens.size(), argvEnforcedFormatPatchtokens);
     ASSERT_EQ(0, retVal);
     EXPECT_TRUE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
+}
+
+TEST(OclocCompile, givenNoFormatFlagSpecifiedWhenOclocInitializeThenZebinFormatIsEnforcedByDefault) {
+    MockOfflineCompiler ocloc;
+
+    std::vector<std::string> argvNoFormatFlag = {
+        "ocloc",
+        "-q",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-spv_only"};
+
+    int retVal = ocloc.initialize(argvNoFormatFlag.size(), argvNoFormatFlag);
+    ASSERT_EQ(0, retVal);
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::allowZebin}));
+    EXPECT_FALSE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
 }
 
 TEST(OclocCompile, givenFormatFlagWithUnknownFormatPassedThenPrintWarning) {

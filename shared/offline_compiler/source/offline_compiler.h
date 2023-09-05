@@ -150,7 +150,7 @@ All supported acronyms: %s.
     std::string buildLog;
     std::string optionsReadFromFile = "";
     std::string internalOptionsReadFromFile = "";
-    std::string formatToEnforce = "";
+    std::string formatToEnforce = "zebin";
     std::string irHash, genHash, dbgHash, elfHash;
     std::string cacheDir;
 
