@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
+#include <bitset>
 #include <mutex>
 
 struct drm_xe_engine_class_instance;
