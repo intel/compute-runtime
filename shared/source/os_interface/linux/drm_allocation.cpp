@@ -183,10 +183,6 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
 }
 
 bool DrmAllocation::prefetchBOWithChunking(Drm *drm) {
-    if (!(NEO::DebugManager.flags.EnableBOChunkingPrefetch.get())) {
-        return false;
-    }
-
     auto getSubDeviceIds = [](const DeviceBitfield &subDeviceBitfield) {
         SubDeviceIdsVec subDeviceIds;
         for (auto subDeviceId = 0u; subDeviceId < subDeviceBitfield.size(); subDeviceId++) {
