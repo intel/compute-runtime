@@ -46,11 +46,14 @@ struct KernelHw : public KernelImp {
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
                                                                          argInfo.bufferOffset, static_cast<uint32_t>(offset));
+        bool offsetedAddress = false;
         if (false == offsetWasPatched) {
             // fallback to handling offset in surface state
+            offsetedAddress = baseAddress != reinterpret_cast<uintptr_t>(address);
             baseAddress = reinterpret_cast<uintptr_t>(address);
             bufferSizeForSsh -= offset;
             DEBUG_BREAK_IF(baseAddress != (baseAddress & sshAlignmentMask));
+
             offset = 0;
         }
         void *surfaceStateAddress = nullptr;
@@ -61,9 +64,13 @@ struct KernelHw : public KernelImp {
             surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
 
         } else if (NEO::isValidOffset(argInfo.bindless)) {
-            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper()) {
+            isBindlessOffsetSet[argIndex] = false;
+            usingSurfaceStateHeap[argIndex] = false;
+            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetedAddress) {
                 surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
+                isBindlessOffsetSet[argIndex] = true;
             } else {
+                usingSurfaceStateHeap[argIndex] = true;
                 surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE));
             }
         }

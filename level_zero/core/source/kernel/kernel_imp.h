@@ -108,7 +108,14 @@ struct KernelImp : Kernel {
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
 
     const uint8_t *getSurfaceStateHeapData() const override { return surfaceStateHeapData.get(); }
-    uint32_t getSurfaceStateHeapDataSize() const override { return surfaceStateHeapDataSize; }
+    uint32_t getSurfaceStateHeapDataSize() const override {
+        if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelImmData->getDescriptor())) {
+            if (std::none_of(usingSurfaceStateHeap.cbegin(), usingSurfaceStateHeap.cend(), [](bool i) { return i; })) {
+                return 0;
+            }
+        }
+        return surfaceStateHeapDataSize;
+    }
 
     const uint8_t *getDynamicStateHeapData() const override { return dynamicStateHeapData.get(); }
 
@@ -230,6 +237,8 @@ struct KernelImp : Kernel {
     uint32_t kernelRequiresUncachedMocsCount = 0;
     uint32_t kernelRequiresQueueUncachedMocsCount = 0;
     std::vector<bool> isArgUncached;
+    std::vector<bool> isBindlessOffsetSet;
+    std::vector<bool> usingSurfaceStateHeap;
 
     uint32_t globalOffsets[3] = {};
 

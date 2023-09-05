@@ -70,6 +70,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
             NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment()};
 
+        // update SSH size - when global bindless addressing is used, kernel args may not require ssh space
+        if (kernel->getSurfaceStateHeapDataSize() == 0) {
+            sshReserveArgs.size = 0;
+        }
+
         auto &dshReserveConfig = commandContainer.getDynamicStateHeapReserve();
         NEO::HeapReserveArguments dshReserveArgs = {
             dshReserveConfig.indirectHeapReservation,

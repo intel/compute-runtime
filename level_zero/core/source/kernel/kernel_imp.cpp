@@ -569,6 +569,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
 
             image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap.ssPtr, surfaceStateSize), 0u);
+            isBindlessOffsetSet[argIndex] = true;
             this->residencyContainer.push_back(ssInHeap.heapAllocation);
         } else {
 
@@ -764,6 +765,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
             }
 
             auto ssPtr = patchBindlessSurfaceState(image->getAllocation(), arg.bindless);
+            isBindlessOffsetSet[argIndex] = true;
             image->copySurfaceStateToSSH(ssPtr, 0u, isMediaBlockImage);
         } else {
             auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
@@ -976,6 +978,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     slmArgSizes.resize(this->kernelArgHandlers.size(), 0);
     kernelArgInfos.resize(this->kernelArgHandlers.size(), {});
     isArgUncached.resize(this->kernelArgHandlers.size(), 0);
+    isBindlessOffsetSet.resize(this->kernelArgHandlers.size(), 0);
+    usingSurfaceStateHeap.resize(this->kernelArgHandlers.size(), 0);
 
     if (kernelImmData->getSurfaceStateHeapSize() > 0) {
         this->surfaceStateHeapData.reset(new uint8_t[kernelImmData->getSurfaceStateHeapSize()]);
@@ -1253,7 +1257,7 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
             auto patchLocation = ptrOffset(getCrossThreadData(), crossThreadOffset);
             auto index = getSurfaceStateIndexForBindlessOffset(crossThreadOffset);
 
-            if (index < std::numeric_limits<uint32_t>::max()) {
+            if (index < std::numeric_limits<uint32_t>::max() && !isBindlessOffsetSet[argIndex]) {
                 auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + index * surfaceStateSize);
                 auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
 

@@ -124,8 +124,8 @@ void ModuleImmutableDataFixture::tearDown() {
     DeviceFixture::tearDown();
 }
 
-L0::Module *ModuleFixture::ProxyModuleImp::create(L0::Device *device, const ze_module_desc_t *desc,
-                                                  ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
+ModuleFixture::ProxyModuleImp *ModuleFixture::ProxyModuleImp::create(L0::Device *device, const ze_module_desc_t *desc,
+                                                                     ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
     auto module = new ProxyModuleImp(device, moduleBuildLog, type);
 
     *result = module->initialize(desc, device->getNEODevice());

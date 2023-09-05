@@ -48,6 +48,7 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::dynamicStateHeapData;
     using ::L0::KernelImp::dynamicStateHeapDataSize;
     using ::L0::KernelImp::groupSize;
+    using ::L0::KernelImp::isBindlessOffsetSet;
     using ::L0::KernelImp::kernelHasIndirectAccess;
     using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
@@ -69,6 +70,7 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::surfaceStateHeapData;
     using ::L0::KernelImp::surfaceStateHeapDataSize;
     using ::L0::KernelImp::unifiedMemoryControls;
+    using ::L0::KernelImp::usingSurfaceStateHeap;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address,
                                NEO::GraphicsAllocation *alloc) override {}

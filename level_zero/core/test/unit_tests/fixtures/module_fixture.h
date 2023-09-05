@@ -13,6 +13,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 namespace ult {
@@ -122,15 +123,16 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
 struct ModuleFixture : public DeviceFixture {
 
-    struct ProxyModuleImp : public ModuleImp {
-        using ModuleImp::ModuleImp;
+    struct ProxyModuleImp : public WhiteBox<::L0::Module> {
+        using BaseClass = WhiteBox<::L0::Module>;
+        using BaseClass::BaseClass;
 
         std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmDatas() {
             return kernelImmDatas;
         }
 
-        static L0::Module *create(L0::Device *device, const ze_module_desc_t *desc,
-                                  ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
+        static ModuleFixture::ProxyModuleImp *create(L0::Device *device, const ze_module_desc_t *desc,
+                                                     ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
     };
 
     void setUp();
@@ -145,7 +147,7 @@ struct ModuleFixture : public DeviceFixture {
 
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
-    std::unique_ptr<L0::Module> module;
+    std::unique_ptr<ProxyModuleImp> module;
     std::unique_ptr<WhiteBox<::L0::KernelImp>> kernel;
     std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
     DebugManagerStateRestore restore;

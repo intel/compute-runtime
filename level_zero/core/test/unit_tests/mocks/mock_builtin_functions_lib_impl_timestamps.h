@@ -54,7 +54,7 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
 
         [[maybe_unused]] ze_result_t res;
 
-        Module *module;
+        L0::Module *module;
         ze_module_handle_t moduleHandle;
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = builtInCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;

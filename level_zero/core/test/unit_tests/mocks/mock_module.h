@@ -51,6 +51,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::allocatePrivateMemoryPerDispatch;
     using BaseClass::BaseClass;
     using BaseClass::builtFromSPIRv;
+    using BaseClass::checkIfPrivateMemoryPerDispatchIsNeeded;
     using BaseClass::copyPatchedSegments;
     using BaseClass::device;
     using BaseClass::exportedFunctionsSurface;
