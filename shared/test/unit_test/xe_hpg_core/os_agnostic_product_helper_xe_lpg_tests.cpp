@@ -291,10 +291,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenReleaseHelperNullptrWhenCallingGetMediaF
     EXPECT_FALSE(productHelper->getMediaFrequencyTileIndex(releaseHelper, tileIndex));
 }
 
-HWTEST2_F(XeLpgProductHelperTests, whenCheckIsCachingOnCpuAvailableThenAlwaysFalse, IsXeLpg) {
-    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
-}
-
 HWTEST2_F(XeLpgProductHelperTests, whenCheckFp64SupportThenReturnTrue, IsXeLpg) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
 }

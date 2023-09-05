@@ -65,11 +65,6 @@ bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
     const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
     if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
