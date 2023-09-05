@@ -10,7 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <algorithm>
-#include <bitset>
 #include <cstdint>
 #include <limits>
 #include <tuple>
@@ -476,13 +475,16 @@ class RootDeviceIndicesContainer : protected StackVec<uint32_t, MaxRootDeviceInd
     using StackVec<uint32_t, MaxRootDeviceIndices>::operator[];
 
     inline void pushUnique(uint32_t rootDeviceIndex) {
-        if (!indexPresent.test(rootDeviceIndex)) {
+        if (indexPresent.size() <= rootDeviceIndex) {
+            indexPresent.resize(rootDeviceIndex + 1);
+        }
+        if (!indexPresent[rootDeviceIndex]) {
             push_back(rootDeviceIndex);
-            indexPresent.set(rootDeviceIndex);
+            indexPresent[rootDeviceIndex] = 1;
         }
     }
 
   protected:
-    std::bitset<MaxRootDeviceIndices> indexPresent{};
+    StackVec<int8_t, MaxRootDeviceIndices> indexPresent;
 };
 using RootDeviceIndicesMap = StackVec<std::tuple<uint32_t, uint32_t>, MaxRootDeviceIndices>;
