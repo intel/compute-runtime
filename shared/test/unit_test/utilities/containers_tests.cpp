@@ -1705,8 +1705,8 @@ TEST(StackVec, GivenStackVecWithDynamicMemWhenSelfAssignedThenMemoryIsReused) {
 }
 
 TEST(StackVec, whenPushingUniqueToRootDeviceIndicesContainerThenOnlyUniqueValuesArePopulated) {
-    StackVec<uint32_t, 8> input = {6, 5, 4, 3, 2, 1, 5, 4, 5, 4, 2, 4, 3, 1, 6, 1};
-    ASSERT_EQ(input.size(), 16u);
+    StackVec<uint32_t, 8> input = {6, 5, 4, 3, 2, 1, 5, 4, 5, 4, 2, 4, 3, 1, 6, 1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0};
+    ASSERT_EQ(input.size(), 27u);
 
     RootDeviceIndicesContainer rootDeviceIndices{};
 
@@ -1714,8 +1714,8 @@ TEST(StackVec, whenPushingUniqueToRootDeviceIndicesContainerThenOnlyUniqueValues
         rootDeviceIndices.pushUnique(index);
     }
 
-    EXPECT_EQ(rootDeviceIndices.size(), 6u);
-    const RootDeviceIndicesContainer expectedContainer = {6, 5, 4, 3, 2, 1};
+    EXPECT_EQ(rootDeviceIndices.size(), 17u);
+    const RootDeviceIndicesContainer expectedContainer = {6, 5, 4, 3, 2, 1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0};
     for (auto i = 0u; i < rootDeviceIndices.size(); i++) {
         EXPECT_EQ(rootDeviceIndices[i], expectedContainer[i]);
     }
