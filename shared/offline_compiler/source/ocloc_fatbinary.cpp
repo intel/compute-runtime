@@ -7,8 +7,8 @@
 
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
 #include "shared/source/compiler_interface/compiler_options.h"
@@ -343,7 +343,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
 
     if (deviceArgIndex == static_cast<size_t>(-1)) {
         argHelper->printf("Error! Command does not contain device argument!\n");
-        return OclocErrorCode::INVALID_COMMAND_LINE;
+        return OCLOC_INVALID_COMMAND_LINE;
     }
 
     Ar::ArEncoder fatbinary(true);
@@ -365,7 +365,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         argsCopy[deviceArgIndex] = product.str();
 
         std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, false, retVal, argHelper)};
-        if (OclocErrorCode::SUCCESS != retVal) {
+        if (OCLOC_SUCCESS != retVal) {
             argHelper->printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
             return retVal;
         }
@@ -381,7 +381,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
 
     if (shouldPreserveGenericIr) {
         const auto errorCode = appendGenericIr(fatbinary, inputFileName, argHelper, optionsForIr);
-        if (errorCode != OclocErrorCode::SUCCESS) {
+        if (errorCode != OCLOC_SUCCESS) {
             argHelper->printf("Error! Couldn't append generic IR file!\n");
             return errorCode;
         }
@@ -405,7 +405,7 @@ int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, Oclo
     std::unique_ptr<char[]> fileContents = argHelper->loadDataFromFile(inputFile, fileSize);
     if (fileSize == 0) {
         argHelper->printf("Error! Couldn't read input file!\n");
-        return OclocErrorCode::INVALID_FILE;
+        return OCLOC_INVALID_FILE;
     }
 
     const auto ir = ArrayRef<const uint8_t>::fromAny(fileContents.get(), fileSize);
@@ -413,14 +413,14 @@ int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, Oclo
     if (!isSpirVBitcode(ir)) {
         argHelper->printf("Error! Input file is not in supported generic IR format! "
                           "Currently supported format is SPIR-V.\n");
-        return OclocErrorCode::INVALID_FILE;
+        return OCLOC_INVALID_FILE;
     }
 
     const auto encodedElf = createEncodedElfWithSpirv(ir, opt);
     ArrayRef<const uint8_t> genericIrFile{encodedElf.data(), encodedElf.size()};
 
     fatbinary.appendFileEntry("generic_ir", genericIrFile);
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 std::vector<uint8_t> createEncodedElfWithSpirv(const ArrayRef<const uint8_t> &spirv, const ArrayRef<const uint8_t> &options) {

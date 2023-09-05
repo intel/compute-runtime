@@ -7,8 +7,8 @@
 
 #include "shared/offline_compiler/source/multi_command.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/offline_compiler/source/utilities/get_current_dir.h"
@@ -19,13 +19,13 @@
 
 namespace NEO {
 int MultiCommand::singleBuild(const std::vector<std::string> &args) {
-    int retVal = OclocErrorCode::SUCCESS;
+    int retVal = OCLOC_SUCCESS;
 
     if (requestedFatBinary(args, argHelper)) {
         retVal = buildFatBinary(args, argHelper);
     } else {
         std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(args.size(), args, true, retVal, argHelper)};
-        if (retVal == OclocErrorCode::SUCCESS) {
+        if (retVal == OCLOC_SUCCESS) {
             retVal = buildWithSafetyGuard(pCompiler.get());
 
             std::string &buildLog = pCompiler->getBuildLog();
@@ -35,14 +35,14 @@ int MultiCommand::singleBuild(const std::vector<std::string> &args) {
         }
         outFileName += ".bin";
     }
-    if (retVal == OclocErrorCode::SUCCESS) {
+    if (retVal == OCLOC_SUCCESS) {
         if (!quiet)
             argHelper->printf("Build succeeded.\n");
     } else {
         argHelper->printf("Build failed with error code: %d\n", retVal);
     }
 
-    if (retVal == OclocErrorCode::SUCCESS) {
+    if (retVal == OCLOC_SUCCESS) {
         outputFile << getCurrentDirectoryOwn(outDirForBuilds) + outFileName;
     } else {
         outputFile << "Unsuccesful build";
@@ -53,7 +53,7 @@ int MultiCommand::singleBuild(const std::vector<std::string> &args) {
 }
 
 MultiCommand *MultiCommand::create(const std::vector<std::string> &args, int &retVal, OclocArgHelper *helper) {
-    retVal = OclocErrorCode::SUCCESS;
+    retVal = OCLOC_SUCCESS;
     auto pMultiCommand = new MultiCommand();
 
     if (pMultiCommand) {
@@ -61,7 +61,7 @@ MultiCommand *MultiCommand::create(const std::vector<std::string> &args, int &re
         retVal = pMultiCommand->initialize(args);
     }
 
-    if (retVal != OclocErrorCode::SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         delete pMultiCommand;
         pMultiCommand = nullptr;
     }
@@ -112,7 +112,7 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
         } else {
             argHelper->printf("Invalid option (arg %zu): %s\n", argIndex, currArg.c_str());
             printHelp();
-            return OclocErrorCode::INVALID_COMMAND_LINE;
+            return OCLOC_INVALID_COMMAND_LINE;
         }
     }
 
@@ -121,11 +121,11 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
         argHelper->readFileToVectorOfStrings(pathToCommandFile, lines);
         if (lines.empty()) {
             argHelper->printf("Command file was empty.\n");
-            return OclocErrorCode::INVALID_FILE;
+            return OCLOC_INVALID_FILE;
         }
     } else {
         argHelper->printf("Could not find/open file with builds argument.s\n");
-        return OclocErrorCode::INVALID_FILE;
+        return OCLOC_INVALID_FILE;
     }
 
     runBuilds(args[0]);
@@ -141,7 +141,7 @@ void MultiCommand::runBuilds(const std::string &argZero) {
         std::vector<std::string> args = {argZero};
 
         int retVal = splitLineInSeparateArgs(args, lines[i], i);
-        if (retVal != OclocErrorCode::SUCCESS) {
+        if (retVal != OCLOC_SUCCESS) {
             retValues.push_back(retVal);
             continue;
         }
@@ -193,22 +193,22 @@ int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const
         }
         if (end == std::string::npos) {
             argHelper->printf("One of the quotes is open in build number %zu\n", numberOfBuild + 1);
-            return OclocErrorCode::INVALID_FILE;
+            return OCLOC_INVALID_FILE;
         }
         argLen = end - start;
         i = end;
         qargs.push_back(commandsLine.substr(start, argLen));
     }
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 int MultiCommand::showResults() {
-    int retValue = OclocErrorCode::SUCCESS;
+    int retValue = OCLOC_SUCCESS;
     int indexRetVal = 0;
     for (int retVal : retValues) {
         retValue |= retVal;
         if (!quiet) {
-            if (retVal != OclocErrorCode::SUCCESS) {
+            if (retVal != OCLOC_SUCCESS) {
                 argHelper->printf("Build command %d: failed. Error code: %d\n", indexRetVal, retVal);
             } else {
                 argHelper->printf("Build command %d: successful\n", indexRetVal);

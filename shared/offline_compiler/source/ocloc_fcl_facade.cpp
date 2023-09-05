@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "shared/offline_compiler/source/ocloc_fcl_facade.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
@@ -32,19 +32,19 @@ int OclocFclFacade::initialize(const HardwareInfo &hwInfo) {
     fclLib = loadFclLibrary();
     if (!fclLib) {
         argHelper->printf("Error! Loading of FCL library has failed! Filename: %s\n", Os::frontEndDllName);
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     const auto fclCreateMainFunction = loadCreateFclMainFunction();
     if (!fclCreateMainFunction) {
         argHelper->printf("Error! Cannot load required functions from FCL library.\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     fclMain = createFclMain(fclCreateMainFunction);
     if (!fclMain) {
         argHelper->printf("Error! Cannot create FCL main component!\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     if (!isFclInterfaceCompatible()) {
@@ -52,13 +52,13 @@ int OclocFclFacade::initialize(const HardwareInfo &hwInfo) {
         argHelper->printf("Error! Incompatible interface in FCL: %s\n", incompatibleInterface.c_str());
 
         DEBUG_BREAK_IF(true);
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     fclDeviceCtx = createFclDeviceContext();
     if (!fclDeviceCtx) {
         argHelper->printf("Error! Cannot create FCL device context!\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     fclDeviceCtx->SetOclApiVersion(hwInfo.capabilityTable.clVersionSupport * 10);
@@ -67,14 +67,14 @@ int OclocFclFacade::initialize(const HardwareInfo &hwInfo) {
         const auto platform = getPlatformHandle();
         if (!platform) {
             argHelper->printf("Error! FCL device context has not been properly created!\n");
-            return OclocErrorCode::OUT_OF_HOST_MEMORY;
+            return OCLOC_OUT_OF_HOST_MEMORY;
         }
 
         populateFclInterface(*platform, hwInfo);
     }
 
     initialized = true;
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 std::unique_ptr<OsLibrary> OclocFclFacade::loadFclLibrary() const {

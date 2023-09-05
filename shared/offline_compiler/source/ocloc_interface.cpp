@@ -11,8 +11,8 @@
 #include "shared/offline_compiler/source/decoder/binary_encoder.h"
 #include "shared/offline_compiler/source/decoder/zebin_manipulator.h"
 #include "shared/offline_compiler/source/multi_command.h"
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_concat.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/offline_compiler/source/ocloc_validator.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
@@ -123,10 +123,10 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
         return NEO::buildFatBinary(args, argHelper);
     }
 
-    int retVal = OclocErrorCode::SUCCESS;
+    int retVal = OCLOC_SUCCESS;
 
     std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(args.size(), args, true, retVal, argHelper)};
-    if (retVal == OclocErrorCode::SUCCESS) {
+    if (retVal == OCLOC_SUCCESS) {
         if (pCompiler->showHelpOnly()) {
             return retVal;
         }
@@ -137,7 +137,7 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
             argHelper->printf("%s\n", buildLog.c_str());
         }
 
-        if (retVal == OclocErrorCode::SUCCESS) {
+        if (retVal == OCLOC_SUCCESS) {
             if (!pCompiler->isQuiet())
                 argHelper->printf("Build succeeded.\n");
         } else {
@@ -145,7 +145,7 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
         }
     }
 
-    if (retVal != OclocErrorCode::SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         printOclocOptionsReadFromFile(*argHelper, pCompiler.get());
         printOclocCmdLine(*argHelper, args);
     }
@@ -153,7 +153,7 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 };
 
 int link(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
-    int createResult{OclocErrorCode::SUCCESS};
+    int createResult{OCLOC_SUCCESS};
     const auto linker{OfflineLinker::create(args.size(), args, createResult, argHelper)};
     const auto linkingResult{linkWithSafetyGuard(linker.get())};
 
@@ -162,7 +162,7 @@ int link(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
         argHelper->printf("%s\n", buildLog.c_str());
     }
 
-    if (createResult == OclocErrorCode::SUCCESS && linkingResult == OclocErrorCode::SUCCESS) {
+    if (createResult == OCLOC_SUCCESS && linkingResult == OCLOC_SUCCESS) {
         argHelper->printf("Linker execution has succeeded!\n");
     }
 
@@ -175,9 +175,9 @@ int disassemble(OclocArgHelper *argHelper, const std::vector<std::string> &args)
         int retVal = decoder.validateInput(args);
         if (decoder.showHelp) {
             decoder.printHelp();
-            return OclocErrorCode::SUCCESS;
+            return OCLOC_SUCCESS;
         }
-        return (retVal == OclocErrorCode::SUCCESS) ? decoder.decode() : retVal;
+        return (retVal == OCLOC_SUCCESS) ? decoder.decode() : retVal;
     };
 
     if (binaryFormat == Zebin::Manipulator::BinaryFormats::PatchTokens) {
@@ -199,9 +199,9 @@ int assemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
         int retVal = encoder.validateInput(args);
         if (encoder.showHelp) {
             encoder.printHelp();
-            return OclocErrorCode::SUCCESS;
+            return OCLOC_SUCCESS;
         }
-        return (retVal == OclocErrorCode::SUCCESS) ? encoder.encode() : retVal;
+        return (retVal == OCLOC_SUCCESS) ? encoder.encode() : retVal;
     };
     if (binaryFormat == Zebin::Manipulator::BinaryFormats::PatchTokens) {
         BinaryEncoder assembler(argHelper);
@@ -216,7 +216,7 @@ int assemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 }
 
 int multi(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
-    int retValue = OclocErrorCode::SUCCESS;
+    int retValue = OCLOC_SUCCESS;
     std::unique_ptr<MultiCommand> pMulti{(MultiCommand::create(args, retValue, argHelper))};
     return retValue;
 }
@@ -236,7 +236,7 @@ int ids(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 int concat(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
     auto arConcat = NEO::OclocConcat(argHelper);
     auto error = arConcat.initialize(args);
-    if (OclocErrorCode::SUCCESS != error) {
+    if (OCLOC_SUCCESS != error) {
         arConcat.printHelp();
         return error;
     }

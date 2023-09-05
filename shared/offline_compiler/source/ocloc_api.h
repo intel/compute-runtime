@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,17 @@ typedef enum _ocloc_version_t {
     OCLOC_VERSION_CURRENT = OCLOC_MAKE_VERSION(1, 0), ///< latest known version
     OCLOC_VERSION_FORCE_UINT32 = 0x7fffffff
 } ocloc_version_t;
+
+typedef enum _ocloc_error_t {
+    OCLOC_SUCCESS = 0,
+    OCLOC_OUT_OF_HOST_MEMORY = -6,
+    OCLOC_BUILD_PROGRAM_FAILURE = -11,
+    OCLOC_INVALID_DEVICE = -33,
+    OCLOC_INVALID_PROGRAM = -44,
+    OCLOC_INVALID_COMMAND_LINE = -5150,
+    OCLOC_INVALID_FILE = -5151,
+    OCLOC_COMPILATION_CRASH = -5152,
+} ocloc_error_t;
 
 #ifdef _WIN32
 #define SIGNATURE __declspec(dllexport) int __cdecl

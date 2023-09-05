@@ -7,8 +7,8 @@
 
 #include "offline_compiler.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/ocloc_fcl_facade.h"
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/offline_compiler/source/queries.h"
@@ -44,8 +44,6 @@
 #define MakeDirectory(dir) mkdir(dir, 0777)
 #define GetCurrentWorkingDirectory getcwd
 #endif
-
-using namespace NEO::OclocErrorCode;
 
 namespace NEO {
 
@@ -89,7 +87,7 @@ OfflineCompiler::~OfflineCompiler() {
 }
 
 OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper) {
-    retVal = SUCCESS;
+    retVal = OCLOC_SUCCESS;
     auto pOffCompiler = new OfflineCompiler();
 
     if (pOffCompiler) {
@@ -99,7 +97,7 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
         retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
     }
 
-    if (retVal != SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         delete pOffCompiler;
         pOffCompiler = nullptr;
     }
@@ -114,10 +112,10 @@ void printQueryHelp(OclocArgHelper *helper) {
 int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
     if (allArgs.size() != 3) {
         helper->printf("Error: Invalid command line. Expected ocloc query <argument>");
-        return INVALID_COMMAND_LINE;
+        return OCLOC_INVALID_COMMAND_LINE;
     }
 
-    auto retVal = SUCCESS;
+    auto retVal = OCLOC_SUCCESS;
     auto &arg = allArgs[2];
 
     if (Queries::queryNeoRevision == arg) {
@@ -130,7 +128,7 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
         printQueryHelp(helper);
     } else {
         helper->printf("Error: Invalid command line. Unknown argument %s.", arg.c_str());
-        retVal = INVALID_COMMAND_LINE;
+        retVal = OCLOC_INVALID_COMMAND_LINE;
     }
 
     return retVal;
@@ -142,11 +140,11 @@ void printAcronymIdsHelp(OclocArgHelper *helper) {
 
 int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
     const size_t numArgRequested = 3u;
-    auto retVal = SUCCESS;
+    auto retVal = OCLOC_SUCCESS;
 
     if (numArgs != numArgRequested) {
         helper->printf("Error: Invalid command line. Expected ocloc ids <acronym>.\n");
-        retVal = INVALID_COMMAND_LINE;
+        retVal = OCLOC_INVALID_COMMAND_LINE;
         return retVal;
     } else if ((ConstStringRef("-h") == allArgs[2] || ConstStringRef("--help") == allArgs[2])) {
         printAcronymIdsHelp(helper);
@@ -183,7 +181,7 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
         }
     } else {
         helper->printf("Error: Invalid command line. Unknown acronym %s.\n", allArgs[2].c_str());
-        retVal = INVALID_COMMAND_LINE;
+        retVal = OCLOC_INVALID_COMMAND_LINE;
         return retVal;
     }
 
@@ -206,7 +204,7 @@ struct OfflineCompiler::buildInfo {
 };
 
 int OfflineCompiler::buildIrBinary() {
-    int retVal = SUCCESS;
+    int retVal = OCLOC_SUCCESS;
 
     if (allowCaching) {
         const std::string igcRevision = igcFacade->getIgcRevision();
@@ -258,13 +256,13 @@ int OfflineCompiler::buildIrBinary() {
 
     if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
         updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
-        retVal = BUILD_PROGRAM_FAILURE;
+        retVal = OCLOC_BUILD_PROGRAM_FAILURE;
         return retVal;
     }
 
     if (false == NEO::areNotNullptr(fclSrc.get(), pBuildInfo->fclOptions.get(), pBuildInfo->fclInternalOptions.get(),
                                     fclTranslationCtx.get())) {
-        retVal = OUT_OF_HOST_MEMORY;
+        retVal = OCLOC_OUT_OF_HOST_MEMORY;
         return retVal;
     }
 
@@ -272,7 +270,7 @@ int OfflineCompiler::buildIrBinary() {
                                                          pBuildInfo->fclInternalOptions.get(), nullptr, 0);
 
     if (pBuildInfo->fclOutput == nullptr) {
-        retVal = OUT_OF_HOST_MEMORY;
+        retVal = OCLOC_OUT_OF_HOST_MEMORY;
         return retVal;
     }
 
@@ -281,7 +279,7 @@ int OfflineCompiler::buildIrBinary() {
 
     if (pBuildInfo->fclOutput->Successful() == false) {
         updateBuildLog(pBuildInfo->fclOutput->GetBuildLog()->GetMemory<char>(), pBuildInfo->fclOutput->GetBuildLog()->GetSizeRaw());
-        retVal = BUILD_PROGRAM_FAILURE;
+        retVal = OCLOC_BUILD_PROGRAM_FAILURE;
         return retVal;
     }
 
@@ -325,10 +323,10 @@ std::string OfflineCompiler::validateInputType(const std::string &input, bool is
 }
 
 int OfflineCompiler::buildSourceCode() {
-    int retVal = SUCCESS;
+    int retVal = OCLOC_SUCCESS;
 
     if (sourceCode.empty()) {
-        return INVALID_PROGRAM;
+        return OCLOC_INVALID_PROGRAM;
     }
 
     const std::string igcRevision = igcFacade->getIgcRevision();
@@ -378,7 +376,7 @@ int OfflineCompiler::buildSourceCode() {
     bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
     if (false == inputIsIntermediateRepresentation) {
         retVal = buildIrBinary();
-        if (retVal != SUCCESS)
+        if (retVal != OCLOC_SUCCESS)
             return retVal;
 
         auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
@@ -396,7 +394,7 @@ int OfflineCompiler::buildSourceCode() {
         igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
     }
     if (igcOutput == nullptr) {
-        return OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
     UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
     UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
@@ -415,13 +413,13 @@ int OfflineCompiler::buildSourceCode() {
         cache->cacheBinary(dbgHash, debugDataBinary, static_cast<uint32_t>(debugDataBinarySize));
     }
 
-    retVal = igcOutput->Successful() ? SUCCESS : BUILD_PROGRAM_FAILURE;
+    retVal = igcOutput->Successful() ? OCLOC_SUCCESS : OCLOC_BUILD_PROGRAM_FAILURE;
 
     return retVal;
 }
 
 int OfflineCompiler::build() {
-    int retVal = SUCCESS;
+    int retVal = OCLOC_SUCCESS;
     if (isOnlySpirV()) {
         retVal = buildIrBinary();
     } else {
@@ -477,10 +475,10 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
             releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
 
-            return SUCCESS;
+            return OCLOC_SUCCESS;
         }
     }
-    return INVALID_DEVICE;
+    return OCLOC_INVALID_DEVICE;
 }
 
 bool OfflineCompiler::isArgumentDeviceId(const std::string &argument) const {
@@ -496,37 +494,37 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
         auto deviceID = static_cast<unsigned short>(std::stoi(deviceName, 0, 16));
         productConfig = argHelper->getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(hwInfo, deviceID, revisionId, compilerProductHelper, releaseHelper);
         if (productConfig == AOT::UNKNOWN_ISA) {
-            return INVALID_DEVICE;
+            return OCLOC_INVALID_DEVICE;
         }
         auto product = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
         argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
     } else if (revisionId == -1) {
         productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(deviceName);
         if (!argHelper->setHwInfoForProductConfig(productConfig, hwInfo, compilerProductHelper, releaseHelper)) {
-            return INVALID_DEVICE;
+            return OCLOC_INVALID_DEVICE;
         }
     } else {
-        return INVALID_DEVICE;
+        return OCLOC_INVALID_DEVICE;
     }
     argHelper->setHwInfoForHwInfoConfig(hwInfo, hwInfoConfig, compilerProductHelper, releaseHelper);
     deviceConfig = hwInfo.ipVersion.value;
     productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
-    return SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 int OfflineCompiler::initHardwareInfo(std::string deviceName) {
-    int retVal = INVALID_DEVICE;
+    int retVal = OCLOC_INVALID_DEVICE;
     if (deviceName.empty()) {
         return retVal;
     }
 
     retVal = initHardwareInfoForProductConfig(deviceName);
-    if (retVal == SUCCESS) {
+    if (retVal == OCLOC_SUCCESS) {
         return retVal;
     }
 
     retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, compilerProductHelper, releaseHelper);
-    if (retVal != SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Could not determine device target: %s.\n", deviceName.c_str());
     }
     return retVal;
@@ -550,7 +548,7 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
 
 int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles) {
     this->dumpFiles = dumpFiles;
-    int retVal = SUCCESS;
+    int retVal = OCLOC_SUCCESS;
     const char *source = nullptr;
     std::unique_ptr<char[]> sourceFromFile;
     size_t sourceFromFileSize = 0;
@@ -561,7 +559,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     if (showHelp) {
         printUsage();
         return retVal;
-    } else if (retVal != SUCCESS) {
+    } else if (retVal != OCLOC_SUCCESS) {
         return retVal;
     }
 
@@ -583,7 +581,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
                     std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
 
                 retVal = parseCommandLine(tokens.size(), tokens);
-                if (retVal != SUCCESS) {
+                if (retVal != OCLOC_SUCCESS) {
                     argHelper->printf("Failed with ocloc options from file:\n%s\n", oclocOptionsFromFile.c_str());
                     return retVal;
                 }
@@ -615,8 +613,8 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         }
     }
 
-    retVal = deviceName.empty() ? SUCCESS : initHardwareInfo(deviceName.c_str());
-    if (retVal != SUCCESS) {
+    retVal = deviceName.empty() ? OCLOC_SUCCESS : initHardwareInfo(deviceName.c_str());
+    if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
         return retVal;
     }
@@ -649,7 +647,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     // set up the device inside the program
     sourceFromFile = argHelper->loadDataFromFile(inputFile, sourceFromFileSize);
     if (sourceFromFileSize == 0) {
-        retVal = INVALID_FILE;
+        retVal = OCLOC_INVALID_FILE;
         return retVal;
     }
 
@@ -664,7 +662,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     if ((inputFileSpirV == false) && (inputFileLlvm == false)) {
         const auto fclInitializationResult = fclFacade->initialize(hwInfo);
-        if (fclInitializationResult != SUCCESS) {
+        if (fclInitializationResult != OCLOC_SUCCESS) {
             argHelper->printf("Error! FCL initialization failure. Error code = %d\n", fclInitializationResult);
             return fclInitializationResult;
         }
@@ -678,7 +676,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     }
 
     const auto igcInitializationResult = igcFacade->initialize(hwInfo);
-    if (igcInitializationResult != SUCCESS) {
+    if (igcInitializationResult != OCLOC_SUCCESS) {
         argHelper->printf("Error! IGC initialization failure. Error code = %d\n", igcInitializationResult);
         return igcInitializationResult;
     }
@@ -692,7 +690,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 }
 
 int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::string> &argv) {
-    int retVal = SUCCESS;
+    int retVal = OCLOC_SUCCESS;
     bool compile32 = false;
     bool compile64 = false;
     std::set<std::string> deviceAcronymsFromDeviceOptions;
@@ -770,7 +768,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             outputNoSuffix = true;
         } else if ("--help" == currArg) {
             showHelp = true;
-            return SUCCESS;
+            return OCLOC_SUCCESS;
         } else if (("-revision_id" == currArg) && hasMoreArgs) {
             revisionId = std::stoi(argv[argIndex + 1], nullptr, 0);
             argIndex++;
@@ -783,7 +781,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             parseHwInfoConfigString(argv[argIndex + 1], hwInfoConfig);
             if (!hwInfoConfig) {
                 argHelper->printf("Error: Invalid config.\n");
-                retVal = INVALID_COMMAND_LINE;
+                retVal = OCLOC_INVALID_COMMAND_LINE;
                 break;
             }
             argIndex++;
@@ -791,7 +789,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             allowCaching = true;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
-            retVal = INVALID_COMMAND_LINE;
+            retVal = OCLOC_INVALID_COMMAND_LINE;
             break;
         }
     }
@@ -802,7 +800,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
 
     if (!binaryOutputFile.empty() && (useGenFile || useCppFile || outputNoSuffix || !outputFile.empty())) {
         argHelper->printf("Error: options: -gen_file/-cpp_file/-output_no_suffix/-output cannot be used with -o\n");
-        retVal = INVALID_COMMAND_LINE;
+        retVal = OCLOC_INVALID_COMMAND_LINE;
         return retVal;
     }
     unifyExcludeIrFlags();
@@ -811,15 +809,15 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         revisionId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
     }
 
-    if (retVal == SUCCESS) {
+    if (retVal == OCLOC_SUCCESS) {
         if (compile32 && compile64) {
             argHelper->printf("Error: Cannot compile for 32-bit and 64-bit, please choose one.\n");
-            retVal |= INVALID_COMMAND_LINE;
+            retVal |= OCLOC_INVALID_COMMAND_LINE;
         }
 
         if (deviceName.empty() && (false == onlySpirV)) {
             argHelper->printf("Error: Device name missing.\n");
-            retVal = INVALID_COMMAND_LINE;
+            retVal = OCLOC_INVALID_COMMAND_LINE;
         }
 
         for (const auto &device : deviceAcronymsFromDeviceOptions) {
@@ -837,17 +835,17 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                 }
                 if (!isDeprecatedName) {
                     argHelper->printf("Error: Invalid device acronym passed to -device_options: %s\n", device.c_str());
-                    retVal = INVALID_COMMAND_LINE;
+                    retVal = OCLOC_INVALID_COMMAND_LINE;
                 }
             }
         }
 
         if (inputFile.empty()) {
             argHelper->printf("Error: Input file name missing.\n");
-            retVal = INVALID_COMMAND_LINE;
+            retVal = OCLOC_INVALID_COMMAND_LINE;
         } else if (!argHelper->fileExists(inputFile)) {
             argHelper->printf("Error: Input file %s missing.\n", inputFile.c_str());
-            retVal = INVALID_FILE;
+            retVal = OCLOC_INVALID_FILE;
         }
     }
 

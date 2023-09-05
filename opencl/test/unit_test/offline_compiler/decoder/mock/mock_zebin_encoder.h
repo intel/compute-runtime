@@ -76,9 +76,9 @@ struct MockZebinEncoder : public NEO::Zebin::Manipulator::ZebinEncoder<numBits> 
 
     MockIgaWrapper *mockIga;
     std::vector<NEO::Zebin::Elf::IntelGTNote> retValGetIntelGTNotes;
-    ErrorCode retValLoadSectionsInfo = NEO::OclocErrorCode::SUCCESS;
-    ErrorCode retValCheckIfAllFilesExist = NEO::OclocErrorCode::SUCCESS;
-    ErrorCode retValAppendSections = NEO::OclocErrorCode::SUCCESS;
+    ErrorCode retValLoadSectionsInfo = OCLOC_SUCCESS;
+    ErrorCode retValCheckIfAllFilesExist = OCLOC_SUCCESS;
+    ErrorCode retValAppendSections = OCLOC_SUCCESS;
     bool callBaseGetIntelGTNotesSection = false;
     bool callBaseGetIntelGTNotes = false;
     bool callBaseLoadSectionsInfo = false;

@@ -7,8 +7,8 @@
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/ar/ar.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
@@ -330,7 +330,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeTooExtensiveWhenProdu
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_NE(retVal, OCLOC_SUCCESS);
         resString << "Invalid range : " << acronymsString.str() << " - should be from:to or :to or from:\n";
         resString << "Failed to parse target devices from : " << target << "\n";
         EXPECT_STREQ(output.c_str(), resString.str().c_str());
@@ -388,7 +388,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfProductsWhenFatBinar
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -425,7 +425,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoVersionsOfProductConfigsWhenF
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -459,7 +459,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsAcronymsWithoutDashesWhe
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
     for (const auto &product : expected) {
         resString << "Build succeeded for : " << product.str() + ".\n";
@@ -495,7 +495,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputNameOptionWhenBuildi
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         EXPECT_EQ(1u, NEO::virtualFileList.size());
         EXPECT_TRUE(NEO::virtualFileList.find("expected_output.bin") != NEO::virtualFileList.end());
@@ -603,7 +603,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfReleasesWhenFatBinar
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -644,7 +644,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfFamiliesWhenFatBinar
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -689,7 +689,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWhenFatBinary
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -728,7 +728,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWithoutDashes
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
     for (const auto &product : expected) {
         resString << "Build succeeded for : " << product.str() + ".\n";
@@ -821,7 +821,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWhenFatBinary
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -855,7 +855,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWhenFatBinar
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -891,7 +891,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWithoutDashe
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
     for (const auto &product : expected) {
         resString << "Build succeeded for : " << product.str() + ".\n";
@@ -924,7 +924,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToProductWhenFatBinaryB
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -1067,7 +1067,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinar
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -1206,7 +1206,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryB
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -1392,7 +1392,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromFamilyWhenFatBinary
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -1434,7 +1434,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBu
         testing::internal::CaptureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -1472,7 +1472,7 @@ TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveCon
 
     mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
-    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(OCLOC_SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
 
     const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
@@ -1525,7 +1525,7 @@ TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveCon
 
     mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
-    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(OCLOC_SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
 
     const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
@@ -1568,7 +1568,7 @@ TEST_F(OclocFatBinaryTest, givenDeviceFlagWithoutConsecutiveArgumentWhenBuilding
     const auto result = buildFatBinary(args, &mockArgHelper);
     const auto output{::testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, result);
 
     const std::string expectedErrorMessage{"Error! Command does not contain device argument!\n"};
     EXPECT_EQ(expectedErrorMessage, output);
@@ -1592,7 +1592,7 @@ TEST_F(OclocFatBinaryTest, givenFlagsWhichRequireMoreArgsWithoutThemWhenBuilding
         const auto result = buildFatBinary(args, &mockArgHelper);
         const auto output{::testing::internal::GetCapturedStdout()};
 
-        EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+        EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, result);
 
         const std::string expectedErrorMessage{"Invalid option (arg 3): " + flag + "\nError! Couldn't create OfflineCompiler. Exiting.\n"};
         EXPECT_EQ(expectedErrorMessage, output);
@@ -1628,7 +1628,7 @@ TEST_F(OclocFatBinaryTest, givenBitFlagsWhenBuildingFatbinaryThenFilesInArchiveH
 
         mockArgHelper.getPrinterRef().setSuppressMessages(true);
         const auto buildResult = buildFatBinary(args, &mockArgHelper);
-        ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+        ASSERT_EQ(OCLOC_SUCCESS, buildResult);
         ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
 
         const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
@@ -1668,7 +1668,7 @@ TEST_F(OclocFatBinaryTest, givenOutputDirectoryFlagWhenBuildingFatbinaryThenArch
 
     mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
-    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(OCLOC_SUCCESS, buildResult);
 
     const auto expectedArchivePath{outputDirectory + "/" + outputArchiveName};
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(expectedArchivePath));
@@ -1693,7 +1693,7 @@ TEST_F(OclocFatBinaryTest, givenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequest
 
     mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
-    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(OCLOC_SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
 
     const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
@@ -1732,7 +1732,7 @@ TEST_F(OclocFatBinaryTest, givenClInputFileWhenFatBinaryIsRequestedThenArchiveDo
 
     mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
-    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(OCLOC_SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
 
     const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
@@ -1761,7 +1761,7 @@ TEST_F(OclocFatBinaryTest, givenEmptyFileWhenAppendingGenericIrThenInvalidFileIs
     const auto errorCode{appendGenericIr(ar, emptyFile, &mockArgHelper, dummyOptions)};
     const auto output{::testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(OclocErrorCode::INVALID_FILE, errorCode);
+    EXPECT_EQ(OCLOC_INVALID_FILE, errorCode);
     EXPECT_EQ("Error! Couldn't read input file!\n", output);
 }
 
@@ -1775,7 +1775,7 @@ TEST_F(OclocFatBinaryTest, givenInvalidIrFileWhenAppendingGenericIrThenInvalidFi
     const auto errorCode{appendGenericIr(ar, dummyFile, &mockArgHelper, dummyOptions)};
     const auto output{::testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(OclocErrorCode::INVALID_FILE, errorCode);
+    EXPECT_EQ(OCLOC_INVALID_FILE, errorCode);
 
     const auto expectedErrorMessage{"Error! Input file is not in supported generic IR format! "
                                     "Currently supported format is SPIR-V.\n"};
@@ -1797,17 +1797,17 @@ TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationErrorWhenBuildingFatbina
     // We expect that nothing is done and error is returned.
     // Therefore, if offline compiler is used, ensure that it just returns error code,
     // which is different than expected one.
-    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+    mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
-    const int previousReturnValue{OclocErrorCode::INVALID_FILE};
+    const int previousReturnValue{OCLOC_INVALID_FILE};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
 
-    EXPECT_EQ(OclocErrorCode::INVALID_FILE, buildResult);
+    EXPECT_EQ(OCLOC_INVALID_FILE, buildResult);
     EXPECT_EQ(0, mockOfflineCompiler.buildCalledCount);
 }
 
@@ -1822,7 +1822,7 @@ TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationSuccessAndFailingBuildWh
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.initialize(argv.size(), argv);
 
-    mockOfflineCompiler.buildReturnValue = OclocErrorCode::INVALID_FILE;
+    mockOfflineCompiler.buildReturnValue = OCLOC_INVALID_FILE;
 
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
@@ -1830,11 +1830,11 @@ TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationSuccessAndFailingBuildWh
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     ::testing::internal::CaptureStdout();
-    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
     const auto output{::testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(OclocErrorCode::INVALID_FILE, buildResult);
+    EXPECT_EQ(OCLOC_INVALID_FILE, buildResult);
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
 
     std::string commandString{};
@@ -1865,7 +1865,7 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
 
     const char buildWarning[] = "warning: This is a build log!";
     mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
-    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+    mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     // Dummy value
     mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -1876,11 +1876,11 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     ::testing::internal::CaptureStdout();
-    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
     const auto output{::testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    EXPECT_EQ(OCLOC_SUCCESS, buildResult);
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
 
     const std::string expectedOutput{buildWarning + "\nBuild succeeded for : "s + deviceConfig + ".\n"s};
@@ -1906,14 +1906,14 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
 
     const char buildWarning[] = "Warning: this is a build log!";
     mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
-    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+    mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
 
-    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    const int previousReturnValue{OCLOC_SUCCESS};
     buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
     const auto output{::testing::internal::GetCapturedStdout()};
 
@@ -1936,7 +1936,7 @@ TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThen
 
     // Dummy value
     mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+    mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
@@ -1944,11 +1944,11 @@ TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThen
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     ::testing::internal::CaptureStdout();
-    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
     const auto output{::testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    EXPECT_EQ(OCLOC_SUCCESS, buildResult);
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
 
     EXPECT_TRUE(output.empty()) << output;

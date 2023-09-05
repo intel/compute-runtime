@@ -7,8 +7,8 @@
 
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -36,7 +36,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     igcLib = loadIgcLibrary();
     if (!igcLib) {
         argHelper->printf("Error! Loading of IGC library has failed! Filename: %s\n", Os::igcDllName);
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     std::string igcPath = igcLib->getFullPath();
@@ -46,13 +46,13 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     const auto igcCreateMainFunction = loadCreateIgcMainFunction();
     if (!igcCreateMainFunction) {
         argHelper->printf("Error! Cannot load required functions from IGC library.\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     igcMain = createIgcMain(igcCreateMainFunction);
     if (!igcMain) {
         argHelper->printf("Error! Cannot create IGC main component!\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     const std::vector<CIF::InterfaceId_t> interfacesToIgnore = {IGC::OclGenBinaryBase::GetInterfaceId()};
@@ -61,12 +61,12 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         argHelper->printf("Error! Incompatible interface in IGC: %s\n", incompatibleInterface.c_str());
 
         DEBUG_BREAK_IF(true);
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     if (!isPatchtokenInterfaceSupported()) {
         argHelper->printf("Error! Patchtoken interface is missing.\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     {
@@ -83,7 +83,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     igcDeviceCtx = createIgcDeviceContext();
     if (!igcDeviceCtx) {
         argHelper->printf("Error! Cannot create IGC device context!\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
     igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(hwInfo.capabilityTable.defaultProfilingTimerResolution));
@@ -94,7 +94,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
 
     if (!igcPlatform || !igcGtSystemInfo || !igcFtrWa) {
         argHelper->printf("Error! IGC device context has not been properly created!\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
+        return OCLOC_OUT_OF_HOST_MEMORY;
     }
     auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
 
@@ -109,7 +109,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     populateWithFeatures(igcFtrWa.get(), copyHwInfo, compilerProductHelper.get());
 
     initialized = true;
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 std::unique_ptr<OsLibrary> OclocIgcFacade::loadIgcLibrary() const {

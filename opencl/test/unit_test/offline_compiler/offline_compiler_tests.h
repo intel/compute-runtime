@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/offline_compiler/source/multi_command.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
@@ -23,7 +23,7 @@ namespace NEO {
 class OfflineCompilerTests : public ::testing::Test {
   public:
     OfflineCompiler *pOfflineCompiler = nullptr;
-    int retVal = OclocErrorCode::SUCCESS;
+    int retVal = OCLOC_SUCCESS;
     std::map<std::string, std::string> filesMap;
     std::unique_ptr<MockOclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<MockOclocArgHelper>(filesMap);
 
@@ -41,7 +41,7 @@ class MultiCommandTests : public ::testing::Test {
     MultiCommand *pMultiCommand = nullptr;
     std::string nameOfFileWithArgs;
     std::string outFileList;
-    int retVal = OclocErrorCode::SUCCESS;
+    int retVal = OCLOC_SUCCESS;
     std::map<std::string, std::string> filesMap;
     std::unique_ptr<MockOclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<MockOclocArgHelper>(filesMap);
 

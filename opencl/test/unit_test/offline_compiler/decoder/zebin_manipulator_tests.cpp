@@ -7,7 +7,6 @@
 
 #include "shared/offline_compiler/source/decoder/zebin_manipulator.h"
 #include "shared/offline_compiler/source/ocloc_api.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/product_config_helper.h"
@@ -132,7 +131,7 @@ TEST(ZebinManipulatorTests, GivenValidZebinWhenItIsDisassembledAndAssembledBackT
                                  numSources, dataSources, lenSources, nameSources,
                                  0, nullptr, nullptr, nullptr,
                                  &disasmNumOutputs, &disasmDataOutputs, &disasmLenOutputs, &disasmNameOutputs);
-        EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+        EXPECT_EQ(OCLOC_SUCCESS, retVal);
 
         // Assemble
         std::array asmArgs = {
@@ -150,7 +149,7 @@ TEST(ZebinManipulatorTests, GivenValidZebinWhenItIsDisassembledAndAssembledBackT
                              disasmNumOutputs, const_cast<const uint8_t **>(disasmDataOutputs), disasmLenOutputs, (const char **)disasmNameOutputs,
                              0, nullptr, nullptr, nullptr,
                              &asmNumOutputs, &asmDataOutputs, &asmLenOutputs, &asmNameOutputs);
-        EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+        EXPECT_EQ(OCLOC_SUCCESS, retVal);
 
         // Check
         ArrayRef<uint8_t> rebuiltZebin(asmDataOutputs[0], static_cast<size_t>(asmLenOutputs[0]));
@@ -188,7 +187,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenValidInputWhenValidatingInputThe
                                      "-skip-asm-translation"};
 
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
 
     EXPECT_EQ("zebin.bin", arguments.binaryFile);
     EXPECT_EQ("./dump/", arguments.pathToDump);
@@ -202,7 +201,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenHelpArgumentWhenValidatingInputT
                                      "asm/disasm",
                                      "--help"};
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_TRUE(arguments.showHelp);
 }
 
@@ -215,7 +214,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenInvalidInputWhenValidatingInputT
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
     EXPECT_EQ("Unknown argument -unknown_arg\n", output);
 }
 
@@ -229,7 +228,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenMissingFileWhenValidatingInputTh
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
     EXPECT_EQ("Error: Missing -file argument\n", output);
 }
 
@@ -243,7 +242,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenMissingSecondPartOfTheArgumentWh
         auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
         const auto output{testing::internal::GetCapturedStdout()};
 
-        EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
+        EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
         const auto expectedOutput = "Unknown argument " + std::string(halfArg) + "\n";
         EXPECT_EQ(expectedOutput, output);
     }
@@ -258,7 +257,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenValidArgsButDumpNotSpecifiedWhen
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{testing::internal::GetCapturedStdout()};
 
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_EQ("Warning: Path to dump -dump not specified. Using \"./dump/\" as dump folder.\n", output);
 }
 
@@ -271,7 +270,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithProductFamilyWhenParsingIntelGT
 
     auto iga = std::make_unique<MockIgaWrapper>();
     auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), nullptr);
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_TRUE(iga->setProductFamilyWasCalled);
 }
 
@@ -284,7 +283,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithGfxCoreFamilyWhenParsingIntelGT
 
     auto iga = std::make_unique<MockIgaWrapper>();
     auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), nullptr);
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_TRUE(iga->setGfxCoreWasCalled);
 }
 
@@ -302,7 +301,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithValidProductConfigWhenParsingIn
 
     auto iga = std::make_unique<MockIgaWrapper>();
     auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), &argHelper);
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_TRUE(iga->setProductFamilyWasCalled);
 }
 
@@ -319,7 +318,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithInvalidProductConfigWhenParsing
 
     auto iga = std::make_unique<MockIgaWrapper>();
     auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), &argHelper);
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_DEVICE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_DEVICE, retVal);
 }
 
 TEST(ZebinManipulatorTests, GivenIntelGTNotesWithoutProductFamilyOrGfxCoreFamilyEntryWhenParsingIntelGTNoteSectionsForDeviceThenReturnError) {
@@ -327,7 +326,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithoutProductFamilyOrGfxCoreFamily
 
     auto iga = std::make_unique<MockIgaWrapper>();
     auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get(), nullptr);
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_DEVICE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_DEVICE, retVal);
 }
 
 TEST(ZebinManipulatorTests, GivenNonZebinBinaryWhenGetBinaryFormatForDisassembleThenReturnPatchTokensFormat) {
@@ -370,7 +369,7 @@ struct ZebinDecoderFixture {
 
 using ZebinDecoderTests = Test<ZebinDecoderFixture<NEO::Elf::EI_CLASS_64>>;
 TEST_F(ZebinDecoderTests, GivenErrorWhenDecodingZebinWhenDecodeThenErrorIsReturned) {
-    decoder.returnValueDecodeZebin = NEO::OclocErrorCode::INVALID_FILE;
+    decoder.returnValueDecodeZebin = OCLOC_INVALID_FILE;
     const auto retVal = decoder.decode();
     EXPECT_EQ(decoder.returnValueDecodeZebin, retVal);
     EXPECT_EQ("Error while decoding zebin.\n", getOutput());
@@ -379,7 +378,7 @@ TEST_F(ZebinDecoderTests, GivenErrorWhenDecodingZebinWhenDecodeThenErrorIsReturn
 TEST_F(ZebinDecoderTests, GivenNoIntelGTNotesWhenDecodeThenErrorIsReturned) {
     decoder.returnValueGetIntelGTNotes = {};
     const auto retVal = decoder.decode();
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
     EXPECT_EQ("Error missing or invalid Intel GT Notes section.\n", getOutput());
 }
 
@@ -391,7 +390,7 @@ TEST_F(ZebinDecoderTests, GivenInvalidIntelGTNotesWhenDecodeThenErrorIsReturned)
     decoder.returnValueGetIntelGTNotes[0].data = ArrayRef<const uint8_t>::fromAny(zebinVersion.data(), zebinVersion.length());
 
     const auto retVal = decoder.decode();
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_DEVICE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_DEVICE, retVal);
     EXPECT_EQ("Error while parsing Intel GT Notes section for device.\n", getOutput());
 }
 
@@ -439,7 +438,7 @@ TEST_F(ZebinDecoderTests, GivenSkipIGADisassemblyWhenDecodeThenDoNotParseIntelGT
     decoder.arguments.skipIGAdisassembly = true;
 
     const auto retVal = decoder.decode();
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_FALSE(decoder.callBaseDecodeZebin);
 }
 
@@ -451,7 +450,7 @@ TEST_F(ZebinDecoderTests, GivenNoFailsWhenDecodeThenSuccessIsReturned) {
     decoder.returnValueGetIntelGTNotes[0].data = ArrayRef<const uint8_t>::fromAny(&productFamily, 1U);
 
     const auto retVal = decoder.decode();
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
 }
 
 TEST_F(ZebinDecoderTests, GivenInvalidZebinWhenDecodeZebinThenErrorIsReturned) {
@@ -459,7 +458,7 @@ TEST_F(ZebinDecoderTests, GivenInvalidZebinWhenDecodeZebinThenErrorIsReturned) {
     uint8_t invalidFile[16] = {0};
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
     const auto retVal = decoder.decodeZebin(ArrayRef<const uint8_t>::fromAny(invalidFile, 16), elf);
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
     EXPECT_EQ("decodeElf error: Invalid or missing ELF header\n", getOutput());
 }
 
@@ -517,14 +516,14 @@ struct ZebinEncoderFixture {
 
 using ZebinEncoderTests = Test<ZebinEncoderFixture<NEO::Elf::EI_CLASS_64>>;
 TEST_F(ZebinEncoderTests, GivenErrorOnLoadSectionsInfoWhenEncodeThenErrorIsReturned) {
-    encoder.retValLoadSectionsInfo = NEO::OclocErrorCode::INVALID_FILE;
+    encoder.retValLoadSectionsInfo = OCLOC_INVALID_FILE;
     auto retVal = encoder.encode();
     EXPECT_EQ(encoder.retValLoadSectionsInfo, retVal);
     EXPECT_EQ("Error while loading sections file.\n", getOutput());
 }
 
 TEST_F(ZebinEncoderTests, GivenErrorOnCheckIfAllFilesExistWhenEncodeThenErrorIsReturned) {
-    encoder.retValCheckIfAllFilesExist = NEO::OclocErrorCode::INVALID_FILE;
+    encoder.retValCheckIfAllFilesExist = OCLOC_INVALID_FILE;
     auto retVal = encoder.encode();
     EXPECT_EQ(encoder.retValCheckIfAllFilesExist, retVal);
     EXPECT_EQ("Error: Missing one or more section files.\n", getOutput());
@@ -533,14 +532,14 @@ TEST_F(ZebinEncoderTests, GivenErrorOnCheckIfAllFilesExistWhenEncodeThenErrorIsR
 TEST_F(ZebinEncoderTests, GivenMissingIntelGTNotesWhenEncodeThenErrorIsReturned) {
     encoder.retValGetIntelGTNotes = {};
     auto retVal = encoder.encode();
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_DEVICE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_DEVICE, retVal);
     EXPECT_EQ("Error while parsing Intel GT Notes section for device.\n", getOutput());
 }
 
 TEST_F(ZebinEncoderTests, GivenErrorOnAppendingSectionsWhenEncodeThenErrorIsReturned) {
-    encoder.retValAppendSections = NEO::OclocErrorCode::INVALID_FILE;
+    encoder.retValAppendSections = OCLOC_INVALID_FILE;
     auto retVal = encoder.encode();
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
     EXPECT_EQ("Error while appending elf sections.\n", getOutput());
 }
 
@@ -556,7 +555,7 @@ TEST_F(ZebinEncoderTests, GivenInvalidSectionsInfoFileWhenLoadSectionsInfoThenEr
     encoder.callBaseLoadSectionsInfo = true;
     std::vector<NEO::Zebin::Manipulator::SectionInfo> sectionInfos;
     auto retVal = encoder.loadSectionsInfo(sectionInfos);
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
     EXPECT_TRUE(sectionInfos.empty());
 }
 
@@ -574,7 +573,7 @@ TEST_F(ZebinEncoderTests, GivenInvalidSymtabFileWhenAppendSymtabThenErrorIsRetur
     sectionInfo.type = NEO::Elf::SHT_SYMTAB;
     std::unordered_map<std::string, size_t> secNameToId;
     auto retVal = encoder.appendSymtab(elfEncoder, sectionInfo, 0U, secNameToId);
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
     EXPECT_EQ("Error: Empty symtab file: .symtab\n", getOutput());
 }
 
@@ -585,7 +584,7 @@ TEST_F(ZebinEncoderTests, GivenInvalidRelFileWhenAppendRelThenErrorIsReturned) {
     sectionInfo.type = NEO::Elf::SHT_REL;
     std::unordered_map<std::string, size_t> secNameToId;
     auto retVal = encoder.appendRel(elfEncoder, sectionInfo, 1U, 2U);
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
     EXPECT_EQ("Error: Empty relocations file: .rel.text\n", getOutput());
 }
 
@@ -596,7 +595,7 @@ TEST_F(ZebinEncoderTests, GivenInvalidRelaFileWhenAppendRelaThenErrorIsReturned)
     sectionInfo.type = NEO::Elf::SHT_RELA;
     std::unordered_map<std::string, size_t> secNameToId;
     auto retVal = encoder.appendRela(elfEncoder, sectionInfo, 1U, 2U);
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
     EXPECT_EQ("Error: Empty relocations file: .rela.text\n", getOutput());
 }
 
@@ -608,7 +607,7 @@ TEST_F(ZebinEncoderTests, GivenAsmFileWhenAppendKernelThenTranslateItToBinaryFil
     filesMap.insert({sectionInfo.name + ".asm", "assembly"});
 
     auto retVal = encoder.appendKernel(elfEncoder, sectionInfo);
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_TRUE(encoder.parseKernelAssemblyCalled);
 }
 
@@ -619,7 +618,7 @@ TEST_F(ZebinEncoderTests, GivenAsmFileMissingWhenAppendKernelThenUseBinaryFile) 
     sectionInfo.type = NEO::Elf::SHT_PROGBITS;
     filesMap.insert({sectionInfo.name, "kernelData"});
     auto retVal = encoder.appendKernel(elfEncoder, sectionInfo);
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_FALSE(encoder.parseKernelAssemblyCalled);
 }
 
@@ -644,7 +643,7 @@ TEST_F(ZebinEncoderTests, GivenMissingFileWhenCheckIfAllFilesExistThenErrorIsRet
     sectionInfos[0].name = ".text.kernel";
     sectionInfos[0].type = NEO::Elf::SHT_PROGBITS;
     auto retVal = encoder.checkIfAllFilesExist(sectionInfos);
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
 }
 
 TEST_F(ZebinEncoderTests, WhenPrintHelpIsCalledThenHelpIsPrinted) {

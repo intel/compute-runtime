@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ class MockMultiCommand : public MultiCommand {
             return MultiCommand::singleBuild(args);
         }
 
-        return OclocErrorCode::SUCCESS;
+        return OCLOC_SUCCESS;
     }
 
     std::map<std::string, std::string> filesMap{};

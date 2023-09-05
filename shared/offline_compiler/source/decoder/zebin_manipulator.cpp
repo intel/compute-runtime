@@ -8,8 +8,8 @@
 #include "zebin_manipulator.h"
 
 #include "shared/offline_compiler/source/decoder/iga_wrapper.h"
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
@@ -51,21 +51,21 @@ ErrorCode parseIntelGTNotesSectionForDevice(const std::vector<Zebin::Elf::IntelG
         }
         if (IGFX_UNKNOWN != hwInfo.platform.eProductFamily) {
             iga->setProductFamily(hwInfo.platform.eProductFamily);
-            return OclocErrorCode::SUCCESS;
+            return OCLOC_SUCCESS;
         }
     } else if (productFamilyNoteId != std::numeric_limits<size_t>::max()) {
         UNRECOVERABLE_IF(sizeof(PRODUCT_FAMILY) != intelGTNotes[productFamilyNoteId].data.size());
         auto productFamily = *reinterpret_cast<const PRODUCT_FAMILY *>(intelGTNotes[productFamilyNoteId].data.begin());
         iga->setProductFamily(productFamily);
-        return OclocErrorCode::SUCCESS;
+        return OCLOC_SUCCESS;
     } else if (gfxCoreNoteId != std::numeric_limits<size_t>::max()) {
         UNRECOVERABLE_IF(sizeof(GFXCORE_FAMILY) != intelGTNotes[gfxCoreNoteId].data.size());
         auto gfxCore = *reinterpret_cast<const GFXCORE_FAMILY *>(intelGTNotes[gfxCoreNoteId].data.begin());
         iga->setGfxCore(gfxCore);
-        return OclocErrorCode::SUCCESS;
+        return OCLOC_SUCCESS;
     }
 
-    return OclocErrorCode::INVALID_DEVICE;
+    return OCLOC_INVALID_DEVICE;
 }
 
 ErrorCode validateInput(const std::vector<std::string> &args, IgaWrapper *iga, OclocArgHelper *argHelper, Arguments &outArguments) {
@@ -81,7 +81,7 @@ ErrorCode validateInput(const std::vector<std::string> &args, IgaWrapper *iga, O
             addSlash(outArguments.pathToDump);
         } else if ("--help" == currArg) {
             outArguments.showHelp = true;
-            return OclocErrorCode::SUCCESS;
+            return OCLOC_SUCCESS;
         } else if ("-q" == currArg) {
             argHelper->getPrinterRef().setSuppressMessages(true);
             iga->setMessagePrinter(argHelper->getPrinterRef());
@@ -89,13 +89,13 @@ ErrorCode validateInput(const std::vector<std::string> &args, IgaWrapper *iga, O
             outArguments.skipIGAdisassembly = true;
         } else {
             argHelper->printf("Unknown argument %s\n", currArg.c_str());
-            return OclocErrorCode::INVALID_COMMAND_LINE;
+            return OCLOC_INVALID_COMMAND_LINE;
         }
     }
 
     if (outArguments.binaryFile.empty()) {
         argHelper->printf("Error: Missing -file argument\n");
-        return OclocErrorCode::INVALID_COMMAND_LINE;
+        return OCLOC_INVALID_COMMAND_LINE;
     }
 
     if (outArguments.pathToDump.empty()) {
@@ -103,7 +103,7 @@ ErrorCode validateInput(const std::vector<std::string> &args, IgaWrapper *iga, O
         outArguments.pathToDump = "dump/";
     }
 
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 bool is64BitZebin(OclocArgHelper *argHelper, const std::string &sectionsInfoFilepath) {
@@ -170,7 +170,7 @@ ErrorCode ZebinDecoder<numBits>::decode() {
 
     ElfT elf;
     ErrorCode retVal = decodeZebin(ArrayRef<const uint8_t>::fromAny(zebinBinary.data(), zebinBinary.size()), elf);
-    if (retVal != OclocErrorCode::SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Error while decoding zebin.\n");
         return retVal;
     }
@@ -179,11 +179,11 @@ ErrorCode ZebinDecoder<numBits>::decode() {
         auto intelGTNotes = getIntelGTNotes(elf);
         if (intelGTNotes.empty()) {
             argHelper->printf("Error missing or invalid Intel GT Notes section.\n");
-            return OclocErrorCode::INVALID_FILE;
+            return OCLOC_INVALID_FILE;
         }
 
         retVal = parseIntelGTNotesSectionForDevice(intelGTNotes, iga.get(), argHelper);
-        if (retVal != OclocErrorCode::SUCCESS) {
+        if (retVal != OCLOC_SUCCESS) {
             argHelper->printf("Error while parsing Intel GT Notes section for device.\n");
             return retVal;
         }
@@ -197,7 +197,7 @@ ErrorCode ZebinDecoder<numBits>::decode() {
     auto sectionsInfo = dumpElfSections(elf);
     dumpSectionInfo(sectionsInfo);
 
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template ErrorCode ZebinDecoder<Elf::EI_CLASS_32>::validateInput(const std::vector<std::string> &args);
@@ -321,10 +321,10 @@ ErrorCode ZebinDecoder<numBits>::decodeZebin(ArrayRef<const uint8_t> zebin, ElfT
 
     if (false == errors.empty()) {
         argHelper->printf("decodeElf error: %s\n", errors.c_str());
-        return OclocErrorCode::INVALID_FILE;
+        return OCLOC_INVALID_FILE;
     }
 
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -385,17 +385,17 @@ template ErrorCode ZebinEncoder<Elf::EI_CLASS_32>::encode();
 template ErrorCode ZebinEncoder<Elf::EI_CLASS_64>::encode();
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 ErrorCode ZebinEncoder<numBits>::encode() {
-    ErrorCode retVal = OclocErrorCode::SUCCESS;
+    ErrorCode retVal = OCLOC_SUCCESS;
 
     std::vector<SectionInfo> sectionInfos;
     retVal = loadSectionsInfo(sectionInfos);
-    if (retVal != OclocErrorCode::SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Error while loading sections file.\n");
         return retVal;
     }
 
     retVal = checkIfAllFilesExist(sectionInfos);
-    if (retVal != OclocErrorCode::SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Error: Missing one or more section files.\n");
         return retVal;
     }
@@ -403,7 +403,7 @@ ErrorCode ZebinEncoder<numBits>::encode() {
     auto intelGTNotesSectionData = getIntelGTNotesSection(sectionInfos);
     auto intelGTNotes = getIntelGTNotes(intelGTNotesSectionData);
     retVal = parseIntelGTNotesSectionForDevice(intelGTNotes, iga.get(), argHelper);
-    if (retVal != OclocErrorCode::SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Error while parsing Intel GT Notes section for device.\n");
         return retVal;
     }
@@ -413,7 +413,7 @@ ErrorCode ZebinEncoder<numBits>::encode() {
     elfEncoder.getElfFileHeader().type = Zebin::Elf::ELF_TYPE_ZEBIN::ET_ZEBIN_EXE;
 
     retVal = appendSections(elfEncoder, sectionInfos);
-    if (retVal != OclocErrorCode::SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Error while appending elf sections.\n");
         return retVal;
     }
@@ -421,7 +421,7 @@ ErrorCode ZebinEncoder<numBits>::encode() {
     auto zebin = elfEncoder.encode();
     argHelper->saveOutput(getFilePath(arguments.binaryFile), zebin.data(), zebin.size());
 
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template ErrorCode ZebinEncoder<Elf::EI_CLASS_32>::validateInput(const std::vector<std::string> &args);
@@ -487,7 +487,7 @@ ErrorCode ZebinEncoder<numBits>::loadSectionsInfo(std::vector<SectionInfo> &sect
     std::vector<std::string> sectionsInfoLines;
     argHelper->readFileToVectorOfStrings(getFilePath(sectionsInfoFilename.data()), sectionsInfoLines);
     if (sectionsInfoLines.size() <= 2) {
-        return OclocErrorCode::INVALID_FILE;
+        return OCLOC_INVALID_FILE;
     }
 
     sectionInfos.resize(sectionsInfoLines.size() - 2);
@@ -498,7 +498,7 @@ ErrorCode ZebinEncoder<numBits>::loadSectionsInfo(std::vector<SectionInfo> &sect
         sectionInfo.name = elements[0];
         sectionInfo.type = static_cast<uint32_t>(std::stoull(elements[1]));
     }
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -511,10 +511,10 @@ ErrorCode ZebinEncoder<numBits>::checkIfAllFilesExist(const std::vector<SectionI
 
         if (false == fileExists) {
             argHelper->printf("Error: Could not find the file \"%s\"\n", sectionInfo.name.c_str());
-            return OclocErrorCode::INVALID_FILE;
+            return OCLOC_INVALID_FILE;
         }
     }
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -528,7 +528,7 @@ ErrorCode ZebinEncoder<numBits>::appendSections(ElfEncoderT &encoder, const std:
         }
     }
 
-    ErrorCode retVal = OclocErrorCode::SUCCESS;
+    ErrorCode retVal = OCLOC_SUCCESS;
     for (const auto &section : sectionInfos) {
         if (section.type == Elf::SHT_SYMTAB) {
             retVal |= appendSymtab(encoder, section, sectionInfos.size() + 1, secNameToId);
@@ -551,13 +551,13 @@ ErrorCode ZebinEncoder<numBits>::appendRel(ElfEncoderT &encoder, const SectionIn
     argHelper->readFileToVectorOfStrings(getFilePath(section.name), relocationLines);
     if (relocationLines.empty()) {
         argHelper->printf("Error: Empty relocations file: %s\n", section.name.c_str());
-        return OclocErrorCode::INVALID_FILE;
+        return OCLOC_INVALID_FILE;
     }
     auto relocs = parseRel(relocationLines);
     auto &sec = encoder.appendSection(Elf::SHT_REL, section.name, ArrayRef<const uint8_t>::fromAny(relocs.data(), relocs.size()));
     sec.info = static_cast<uint32_t>(targetSecId);
     sec.link = static_cast<uint32_t>(symtabSecId);
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -566,13 +566,13 @@ ErrorCode ZebinEncoder<numBits>::appendRela(ElfEncoderT &encoder, const SectionI
     argHelper->readFileToVectorOfStrings(getFilePath(section.name), relocationLines);
     if (relocationLines.empty()) {
         argHelper->printf("Error: Empty relocations file: %s\n", section.name.c_str());
-        return OclocErrorCode::INVALID_FILE;
+        return OCLOC_INVALID_FILE;
     }
     auto relocs = parseRela(relocationLines);
     auto &sec = encoder.appendSection(Elf::SHT_RELA, section.name, ArrayRef<const uint8_t>::fromAny(relocs.data(), relocs.size()));
     sec.info = static_cast<uint32_t>(targetSecId);
     sec.link = static_cast<uint32_t>(symtabSecId);
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -601,7 +601,7 @@ ErrorCode ZebinEncoder<numBits>::appendKernel(ElfEncoderT &encoder, const Sectio
         auto data = argHelper->readBinaryFile(getFilePath(section.name));
         encoder.appendSection(Elf::SHT_PROGBITS, section.name, ArrayRef<const uint8_t>::fromAny(data.data(), data.size()));
     }
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -610,7 +610,7 @@ ErrorCode ZebinEncoder<numBits>::appendSymtab(ElfEncoderT &encoder, const Sectio
     argHelper->readFileToVectorOfStrings(getFilePath(section.name), symTabLines);
     if (symTabLines.empty()) {
         argHelper->printf("Error: Empty symtab file: %s\n", section.name.c_str());
-        return OclocErrorCode::INVALID_FILE;
+        return OCLOC_INVALID_FILE;
     }
 
     size_t numLocalSymbols = 0;
@@ -619,14 +619,14 @@ ErrorCode ZebinEncoder<numBits>::appendSymtab(ElfEncoderT &encoder, const Sectio
     auto &symtabSection = encoder.appendSection(section.type, section.name, ArrayRef<const uint8_t>::fromAny(symbols.data(), symbols.size()));
     symtabSection.info = static_cast<uint32_t>(numLocalSymbols);
     symtabSection.link = static_cast<uint32_t>(strtabSecId);
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 ErrorCode ZebinEncoder<numBits>::appendOther(ElfEncoderT &encoder, const SectionInfo &section) {
     auto sectionData = argHelper->readBinaryFile(getFilePath(section.name));
     encoder.appendSection(section.type, section.name, ArrayRef<const uint8_t>::fromAny(sectionData.data(), sectionData.size()));
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>

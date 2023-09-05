@@ -52,7 +52,7 @@ struct MockZebinDecoder : public NEO::Zebin::Manipulator::ZebinDecoder<numBits> 
 
     bool callBaseGetIntelGTNotes = false;
     bool callBaseDecodeZebin = false;
-    ErrorCode returnValueDecodeZebin = NEO::OclocErrorCode::SUCCESS;
+    ErrorCode returnValueDecodeZebin = OCLOC_SUCCESS;
     std::vector<NEO::Zebin::Manipulator::SectionInfo> returnValueDumpElfSections;
     std::vector<NEO::Zebin::Elf::IntelGTNote> returnValueGetIntelGTNotes;
     bool getIntelGTNotesCalled = false;

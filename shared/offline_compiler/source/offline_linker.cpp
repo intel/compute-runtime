@@ -7,8 +7,8 @@
 
 #include "offline_linker.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
@@ -42,43 +42,43 @@ OfflineLinker::~OfflineLinker() = default;
 
 int OfflineLinker::initialize(size_t argsCount, const std::vector<std::string> &args) {
     const auto parsingResult{parseCommand(argsCount, args)};
-    if (parsingResult != OclocErrorCode::SUCCESS) {
+    if (parsingResult != OCLOC_SUCCESS) {
         return parsingResult;
     }
 
     // If a user requested help, then stop here.
     if (operationMode == OperationMode::SHOW_HELP) {
-        return OclocErrorCode::SUCCESS;
+        return OCLOC_SUCCESS;
     }
 
     const auto verificationResult{verifyLinkerCommand()};
-    if (verificationResult != OclocErrorCode::SUCCESS) {
+    if (verificationResult != OCLOC_SUCCESS) {
         return verificationResult;
     }
 
     const auto loadingResult{loadInputFilesContent()};
-    if (loadingResult != OclocErrorCode::SUCCESS) {
+    if (loadingResult != OCLOC_SUCCESS) {
         return loadingResult;
     }
 
     const auto hwInfoInitializationResult{initHardwareInfo()};
-    if (hwInfoInitializationResult != OclocErrorCode::SUCCESS) {
+    if (hwInfoInitializationResult != OCLOC_SUCCESS) {
         return hwInfoInitializationResult;
     }
 
     const auto igcPreparationResult{igcFacade->initialize(hwInfo)};
-    if (igcPreparationResult != OclocErrorCode::SUCCESS) {
+    if (igcPreparationResult != OCLOC_SUCCESS) {
         return igcPreparationResult;
     }
 
     operationMode = OperationMode::LINK_FILES;
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 int OfflineLinker::parseCommand(size_t argsCount, const std::vector<std::string> &args) {
     if (argsCount < 2u) {
         operationMode = OperationMode::SHOW_HELP;
-        return OclocErrorCode::INVALID_COMMAND_LINE;
+        return OCLOC_INVALID_COMMAND_LINE;
     }
 
     for (size_t argIndex = 1u; argIndex < argsCount; ++argIndex) {
@@ -104,14 +104,14 @@ int OfflineLinker::parseCommand(size_t argsCount, const std::vector<std::string>
             ++argIndex;
         } else if (currentArg == "--help") {
             operationMode = OperationMode::SHOW_HELP;
-            return OclocErrorCode::SUCCESS;
+            return OCLOC_SUCCESS;
         } else {
             argHelper->printf("Invalid option (arg %zd): %s\n", argIndex, currentArg.c_str());
-            return OclocErrorCode::INVALID_COMMAND_LINE;
+            return OCLOC_INVALID_COMMAND_LINE;
         }
     }
 
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 IGC::CodeType::CodeType_t OfflineLinker::parseOutputFormat(const std::string &outputFormatName) {
@@ -131,27 +131,27 @@ IGC::CodeType::CodeType_t OfflineLinker::parseOutputFormat(const std::string &ou
 int OfflineLinker::verifyLinkerCommand() {
     if (inputFilenames.empty()) {
         argHelper->printf("Error: Input name is missing! At least one input file is required!\n");
-        return OclocErrorCode::INVALID_COMMAND_LINE;
+        return OCLOC_INVALID_COMMAND_LINE;
     }
 
     for (const auto &filename : inputFilenames) {
         if (filename.empty()) {
             argHelper->printf("Error: Empty filename cannot be used!\n");
-            return OclocErrorCode::INVALID_COMMAND_LINE;
+            return OCLOC_INVALID_COMMAND_LINE;
         }
 
         if (!argHelper->fileExists(filename)) {
             argHelper->printf("Error: Input file %s missing.\n", filename.c_str());
-            return OclocErrorCode::INVALID_FILE;
+            return OCLOC_INVALID_FILE;
         }
     }
 
     if (outputFormat == IGC::CodeType::invalid) {
         argHelper->printf("Error: Invalid output type!\n");
-        return OclocErrorCode::INVALID_COMMAND_LINE;
+        return OCLOC_INVALID_COMMAND_LINE;
     }
 
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 int OfflineLinker::loadInputFilesContent() {
@@ -166,19 +166,19 @@ int OfflineLinker::loadInputFilesContent() {
         bytes = argHelper->loadDataFromFile(filename, size);
         if (size == 0) {
             argHelper->printf("Error: Cannot read input file: %s\n", filename.c_str());
-            return OclocErrorCode::INVALID_FILE;
+            return OCLOC_INVALID_FILE;
         }
 
         codeType = detectCodeType(bytes.get(), size);
         if (codeType == IGC::CodeType::invalid) {
             argHelper->printf("Error: Unsupported format of input file: %s\n", filename.c_str());
-            return OclocErrorCode::INVALID_PROGRAM;
+            return OCLOC_INVALID_PROGRAM;
         }
 
         inputFilesContent.emplace_back(std::move(bytes), size, codeType);
     }
 
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 IGC::CodeType::CodeType_t OfflineLinker::detectCodeType(char *bytes, size_t size) const {
@@ -208,12 +208,12 @@ int OfflineLinker::initHardwareInfo() {
             setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
             hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig, *compilerProductHelper);
 
-            return OclocErrorCode::SUCCESS;
+            return OCLOC_SUCCESS;
         }
     }
 
     argHelper->printf("Error! Cannot retrieve any valid hardware information!\n");
-    return OclocErrorCode::INVALID_DEVICE;
+    return OCLOC_INVALID_DEVICE;
 }
 
 ArrayRef<const HardwareInfo *> OfflineLinker::getHardwareInfoTable() const {
@@ -230,7 +230,7 @@ int OfflineLinker::execute() {
         [[fallthrough]];
     default:
         argHelper->printf("Error: Linker cannot be executed due to unsuccessful initialization!\n");
-        return OclocErrorCode::INVALID_COMMAND_LINE;
+        return OCLOC_INVALID_COMMAND_LINE;
     }
 }
 
@@ -271,18 +271,18 @@ Examples:
 
     argHelper->printf(help);
 
-    return OclocErrorCode::SUCCESS;
+    return OCLOC_SUCCESS;
 }
 
 int OfflineLinker::link() {
     const auto encodedElfFile{createSingleInputFile()};
     if (outputFormat == IGC::CodeType::elf) {
         argHelper->saveOutput(outputFilename, encodedElfFile.data(), encodedElfFile.size());
-        return OclocErrorCode::SUCCESS;
+        return OCLOC_SUCCESS;
     }
 
     const auto [translationResult, translatedBitcode] = translateToOutputFormat(encodedElfFile);
-    if (translationResult == OclocErrorCode::SUCCESS) {
+    if (translationResult == OCLOC_SUCCESS) {
         argHelper->saveOutput(outputFilename, translatedBitcode.data(), translatedBitcode.size());
     }
 
@@ -318,7 +318,7 @@ std::pair<int, std::vector<uint8_t>> OfflineLinker::translateToOutputFormat(cons
     std::vector<uint8_t> outputFileContent{};
     if (!igcOutput) {
         argHelper->printf("Error: Translation has failed! IGC output is nullptr!\n");
-        return {OclocErrorCode::OUT_OF_HOST_MEMORY, std::move(outputFileContent)};
+        return {OCLOC_OUT_OF_HOST_MEMORY, std::move(outputFileContent)};
     }
 
     if (igcOutput->GetOutput()->GetSizeRaw() != 0) {
@@ -328,8 +328,8 @@ std::pair<int, std::vector<uint8_t>> OfflineLinker::translateToOutputFormat(cons
 
     tryToStoreBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
 
-    const auto errorCode{igcOutput->Successful() && !outputFileContent.empty() ? OclocErrorCode::SUCCESS : OclocErrorCode::BUILD_PROGRAM_FAILURE};
-    if (errorCode != OclocErrorCode::SUCCESS) {
+    const auto errorCode{igcOutput->Successful() && !outputFileContent.empty() ? OCLOC_SUCCESS : OCLOC_BUILD_PROGRAM_FAILURE};
+    if (errorCode != OCLOC_SUCCESS) {
         argHelper->printf("Error: Translation has failed! IGC returned empty output.\n");
     }
 

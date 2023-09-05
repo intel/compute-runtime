@@ -98,7 +98,6 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/ocloc_concat.h
     ${OCLOC_DIRECTORY}/source/ocloc_dll_options.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_dll_options.h
-    ${OCLOC_DIRECTORY}/source/ocloc_error_code.h
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.h
     ${OCLOC_DIRECTORY}/source/ocloc_fcl_facade.cpp

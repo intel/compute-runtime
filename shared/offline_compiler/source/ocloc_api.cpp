@@ -7,8 +7,8 @@
 
 #include "ocloc_api.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/ocloc_interface.h"
 
 #include <iostream>
@@ -29,7 +29,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
     try {
         if (numArgs <= 1 || NEO::ConstStringRef("-h") == args[1] || NEO::ConstStringRef("--help") == args[1]) {
             printHelp(*helper);
-            return NEO::OclocErrorCode::SUCCESS;
+            return OCLOC_SUCCESS;
         }
         auto &command = args[1];
         if (command == CommandNames::disassemble) {

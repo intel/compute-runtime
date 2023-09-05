@@ -7,8 +7,8 @@
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_product_config_tests.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_library.h"
 
@@ -40,7 +40,7 @@ TEST_P(OclocProductConfigTests, givenProductConfigAsDeviceNameWhenInitHwInfoThen
     config << aotConfig.value;
     mockOfflineCompiler.deviceName = config.str();
 
-    EXPECT_EQ(OclocErrorCode::SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
+    EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
     EXPECT_EQ(aotConfig.value, mockOfflineCompiler.deviceConfig);
 }
 
