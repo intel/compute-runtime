@@ -472,6 +472,29 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     return ret;
 }
 
+uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
+    struct drm_xe_gem_create create = {};
+    create.size = size;
+    auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
+    auto memoryInfo = drm.getMemoryInfo();
+    std::bitset<32> memoryInstances{};
+    auto banks = std::bitset<4>(memoryBanks);
+    size_t currentBank = 0;
+    size_t i = 0;
+    while (i < banks.count()) {
+        if (banks.test(currentBank)) {
+            auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(1u << currentBank, *pHwInfo);
+            memoryInstances.set(regionClassAndInstance.memoryInstance);
+            i++;
+        }
+        currentBank++;
+    }
+    create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
+    [[maybe_unused]] auto ret = ioctl(DrmIoctl::GemCreate, &create);
+    DEBUG_BREAK_IF(ret != 0);
+    return create.handle;
+}
+
 CacheRegion IoctlHelperXe::closAlloc() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return CacheRegion::None;
@@ -1132,10 +1155,10 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
               prime->handle, prime->flags, prime->fileDescriptor, ret);
     } break;
     case DrmIoctl::GemCreate: {
-        GemCreate *gemCreate = static_cast<GemCreate *>(arg);
+        drm_xe_gem_create *gemCreate = static_cast<drm_xe_gem_create *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
-        xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%llx r=%d\n",
-              gemCreate->handle, gemCreate->size, ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%llx f=0x%x r=%d\n",
+              gemCreate->handle, gemCreate->size, gemCreate->flags, ret);
     } break;
     default:
         xeLog("Not handled 0x%x\n", request);

@@ -69,9 +69,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsThen
     ASSERT_NE(nullptr, xeIoctlHelper);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].region = {0, 0};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].region = {1, 0};
     regionInfo[1].probedSize = 16 * GB;
     MemRegionsVec memRegions = {regionInfo[0].region, regionInfo[1].region};
 
@@ -87,9 +87,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndV
     ASSERT_NE(nullptr, xeIoctlHelper);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].region = {0, 0};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].region = {1, 0};
     regionInfo[1].probedSize = 16 * GB;
     MemRegionsVec memRegions = {regionInfo[0].region, regionInfo[1].region};
 
@@ -97,6 +97,280 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndV
     uint32_t numOfChunks = 0;
     GemVmControl test = {};
     EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, test.vmId, -1, false, numOfChunks));
+}
+
+inline constexpr int testValueVmId = 0x5764;
+inline constexpr int testValueMapOff = 0x7788;
+inline constexpr int testValuePrime = 0x4321;
+inline constexpr uint32_t testValueGemCreate = 0x8273;
+class DrmMockXe : public DrmMockCustom {
+  public:
+    DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
+        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_usage *>(queryMemUsage);
+        xeQueryMemUsage->num_regions = 3;
+        xeQueryMemUsage->regions[0] = {
+            XE_MEM_REGION_CLASS_VRAM,      // class
+            1,                             // instance
+            0,                             // padding
+            MemoryConstants::pageSize,     // min page size
+            MemoryConstants::pageSize,     // max page size
+            2 * MemoryConstants::gigaByte, // total size
+            MemoryConstants::megaByte      // used size
+        };
+        xeQueryMemUsage->regions[1] = {
+            XE_MEM_REGION_CLASS_SYSMEM, // class
+            0,                          // instance
+            0,                          // padding
+            MemoryConstants::pageSize,  // min page size
+            MemoryConstants::pageSize,  // max page size
+            MemoryConstants::gigaByte,  // total size
+            MemoryConstants::kiloByte   // used size
+        };
+        xeQueryMemUsage->regions[2] = {
+            XE_MEM_REGION_CLASS_VRAM,      // class
+            2,                             // instance
+            0,                             // padding
+            MemoryConstants::pageSize,     // min page size
+            MemoryConstants::pageSize,     // max page size
+            4 * MemoryConstants::gigaByte, // total size
+            MemoryConstants::gigaByte      // used size
+        };
+
+        auto xeQueryGts = reinterpret_cast<drm_xe_query_gts *>(queryGts);
+        xeQueryGts->num_gt = 2;
+        xeQueryGts->gts[0] = {
+            XE_QUERY_GT_TYPE_MAIN, // type
+            0,                     // instance
+            12500000,              // clock freq
+            0,                     // features
+            0b100,                 // native mem regions
+            0x011,                 // slow mem regions
+            0                      // inaccessible mem regions
+        };
+        xeQueryGts->gts[1] = {
+            XE_QUERY_GT_TYPE_REMOTE, // type
+            1,                       // instance
+            12500000,                // clock freq
+            0,                       // features
+            0b010,                   // native mem regions
+            0x101,                   // slow mem regions
+            0                        // inaccessible mem regions
+        };
+    }
+
+    void testMode(int f, int a = 0) {
+        forceIoctlAnswer = f;
+        setIoctlAnswer = a;
+    }
+    int ioctl(DrmIoctl request, void *arg) override {
+        int ret = -1;
+        if (forceIoctlAnswer) {
+            return setIoctlAnswer;
+        }
+        switch (request) {
+        case DrmIoctl::RegRead: {
+            struct drm_xe_mmio *reg = static_cast<struct drm_xe_mmio *>(arg);
+            reg->value = reg->addr;
+            ret = 0;
+        } break;
+        case DrmIoctl::GemVmCreate: {
+            struct drm_xe_vm_create *v = static_cast<struct drm_xe_vm_create *>(arg);
+            v->vm_id = testValueVmId;
+            ret = 0;
+        } break;
+        case DrmIoctl::GemUserptr:
+        case DrmIoctl::GemClose:
+            ret = 0;
+            break;
+        case DrmIoctl::GemVmDestroy: {
+            struct drm_xe_vm_destroy *v = static_cast<struct drm_xe_vm_destroy *>(arg);
+            if (v->vm_id == testValueVmId)
+                ret = 0;
+        } break;
+        case DrmIoctl::GemMmapOffset: {
+            struct drm_xe_gem_mmap_offset *v = static_cast<struct drm_xe_gem_mmap_offset *>(arg);
+            if (v->handle == testValueMapOff) {
+                v->offset = v->handle;
+                ret = 0;
+            }
+        } break;
+        case DrmIoctl::PrimeFdToHandle: {
+            PrimeHandle *v = static_cast<PrimeHandle *>(arg);
+            if (v->fileDescriptor == testValuePrime) {
+                v->handle = testValuePrime;
+                ret = 0;
+            }
+        } break;
+        case DrmIoctl::PrimeHandleToFd: {
+            PrimeHandle *v = static_cast<PrimeHandle *>(arg);
+            if (v->handle == testValuePrime) {
+                v->fileDescriptor = testValuePrime;
+                ret = 0;
+            }
+        } break;
+        case DrmIoctl::GemCreate: {
+            ioctlCnt.gemCreate++;
+            auto createParams = static_cast<drm_xe_gem_create *>(arg);
+            this->createParamsSize = createParams->size;
+            this->createParamsFlags = createParams->flags;
+            this->createParamsHandle = createParams->handle = testValueGemCreate;
+            if (0 == this->createParamsSize || 0 == this->createParamsFlags) {
+                return EINVAL;
+            }
+            ret = 0;
+        } break;
+        case DrmIoctl::Getparam:
+        case DrmIoctl::GetResetStats:
+            ret = -2;
+            break;
+        case DrmIoctl::Query: {
+            struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
+            switch (deviceQuery->query) {
+            case DRM_XE_DEVICE_QUERY_ENGINES:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryEngines, sizeof(queryEngines));
+                }
+                deviceQuery->size = sizeof(queryEngines);
+                break;
+            case DRM_XE_DEVICE_QUERY_MEM_USAGE:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryMemUsage, sizeof(queryMemUsage));
+                }
+                deviceQuery->size = sizeof(queryMemUsage);
+                break;
+            case DRM_XE_DEVICE_QUERY_GTS:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryGts, sizeof(queryGts));
+                }
+                deviceQuery->size = sizeof(queryGts);
+                break;
+            case DRM_XE_DEVICE_QUERY_GT_TOPOLOGY:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryTopology.data(), queryTopology.size());
+                }
+                deviceQuery->size = static_cast<unsigned int>(queryTopology.size());
+                break;
+            };
+            ret = 0;
+        } break;
+        case DrmIoctl::GemVmBind: {
+            ret = gemVmBindReturn;
+            auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
+            vmBindInputs.push_back(*vmBindInput);
+
+            EXPECT_EQ(1u, vmBindInput->num_syncs);
+
+            auto &syncInput = reinterpret_cast<drm_xe_sync *>(vmBindInput->syncs)[0];
+            syncInputs.push_back(syncInput);
+        } break;
+
+        case DrmIoctl::GemWaitUserFence: {
+            ret = waitUserFenceReturn;
+            auto waitUserFenceInput = static_cast<drm_xe_wait_user_fence *>(arg);
+            waitUserFenceInputs.push_back(*waitUserFenceInput);
+        } break;
+
+        case DrmIoctl::GemContextSetparam:
+        case DrmIoctl::GemContextGetparam:
+
+        default:
+            break;
+        }
+        return ret;
+    }
+
+    void addMockedQueryTopologyData(uint16_t tileId, uint16_t maskType, uint32_t nBytes, const std::vector<uint8_t> &mask) {
+
+        ASSERT_EQ(nBytes, mask.size());
+
+        auto additionalSize = 8u + nBytes;
+        auto oldSize = queryTopology.size();
+        auto newSize = oldSize + additionalSize;
+        queryTopology.resize(newSize, 0u);
+
+        uint8_t *dataPtr = queryTopology.data() + oldSize;
+
+        drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
+        topo->gt_id = tileId;
+        topo->type = maskType;
+        topo->num_bytes = nBytes;
+
+        memcpy_s(reinterpret_cast<void *>(topo->mask), nBytes, mask.data(), nBytes);
+    }
+
+    int forceIoctlAnswer = 0;
+    int setIoctlAnswer = 0;
+    int gemVmBindReturn = 0;
+    const drm_xe_engine_class_instance queryEngines[9] = {
+        {DRM_XE_ENGINE_CLASS_RENDER, 0, 0},
+        {DRM_XE_ENGINE_CLASS_COPY, 1, 0},
+        {DRM_XE_ENGINE_CLASS_COPY, 2, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1},
+        {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 7, 1},
+        {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 8, 0}};
+
+    uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
+    uint64_t queryGts[27]{};      // 1 qword for num gts and 13 qwords per gt
+    std::vector<uint8_t> queryTopology;
+
+    StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
+    StackVec<drm_xe_vm_bind, 1> vmBindInputs;
+    StackVec<drm_xe_sync, 1> syncInputs;
+    int waitUserFenceReturn = 0;
+    uint32_t createParamsFlags = 0u;
+};
+
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenProperValuesSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(0);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    uint64_t size = 1234;
+    uint32_t memoryBanks = 3u;
+
+    EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
+    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
+    EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
+
+    EXPECT_EQ(size, drm.createParamsSize);
+    EXPECT_EQ(1u, drm.createParamsFlags);
+
+    // dummy mock handle
+    EXPECT_EQ(handle, drm.createParamsHandle);
+    EXPECT_EQ(handle, testValueGemCreate);
+}
+
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenProperValuesSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    uint64_t size = 1234;
+    uint32_t memoryBanks = 3u;
+
+    EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
+    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
+    EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
+
+    EXPECT_EQ(size, drm.createParamsSize);
+    EXPECT_EQ(6u, drm.createParamsFlags);
+
+    // dummy mock handle
+    EXPECT_EQ(handle, drm.createParamsHandle);
+    EXPECT_EQ(handle, testValueGemCreate);
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsReturned) {
@@ -413,225 +687,6 @@ TEST(IoctlHelperXeTest, whenGettingFileNamesForFrequencyThenProperStringIsReturn
     EXPECT_STREQ("/device/gt1/freq_rp0", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
 }
 
-inline constexpr int testValueVmId = 0x5764;
-inline constexpr int testValueMapOff = 0x7788;
-inline constexpr int testValuePrime = 0x4321;
-inline constexpr int testValueGemCreate = 0x8273;
-
-class DrmMockXe : public DrmMockCustom {
-  public:
-    DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
-        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_usage *>(queryMemUsage);
-        xeQueryMemUsage->num_regions = 3;
-        xeQueryMemUsage->regions[0] = {
-            XE_MEM_REGION_CLASS_VRAM,      // class
-            1,                             // instance
-            0,                             // padding
-            MemoryConstants::pageSize,     // min page size
-            MemoryConstants::pageSize,     // max page size
-            2 * MemoryConstants::gigaByte, // total size
-            MemoryConstants::megaByte      // used size
-        };
-        xeQueryMemUsage->regions[1] = {
-            XE_MEM_REGION_CLASS_SYSMEM, // class
-            0,                          // instance
-            0,                          // padding
-            MemoryConstants::pageSize,  // min page size
-            MemoryConstants::pageSize,  // max page size
-            MemoryConstants::gigaByte,  // total size
-            MemoryConstants::kiloByte   // used size
-        };
-        xeQueryMemUsage->regions[2] = {
-            XE_MEM_REGION_CLASS_VRAM,      // class
-            2,                             // instance
-            0,                             // padding
-            MemoryConstants::pageSize,     // min page size
-            MemoryConstants::pageSize,     // max page size
-            4 * MemoryConstants::gigaByte, // total size
-            MemoryConstants::gigaByte      // used size
-        };
-
-        auto xeQueryGts = reinterpret_cast<drm_xe_query_gts *>(queryGts);
-        xeQueryGts->num_gt = 2;
-        xeQueryGts->gts[0] = {
-            XE_QUERY_GT_TYPE_MAIN, // type
-            0,                     // instance
-            12500000,              // clock freq
-            0,                     // features
-            0b100,                 // native mem regions
-            0x011,                 // slow mem regions
-            0                      // inaccessible mem regions
-        };
-        xeQueryGts->gts[1] = {
-            XE_QUERY_GT_TYPE_REMOTE, // type
-            1,                       // instance
-            12500000,                // clock freq
-            0,                       // features
-            0b010,                   // native mem regions
-            0x101,                   // slow mem regions
-            0                        // inaccessible mem regions
-        };
-    }
-
-    void testMode(int f, int a = 0) {
-        forceIoctlAnswer = f;
-        setIoctlAnswer = a;
-    }
-    int ioctl(DrmIoctl request, void *arg) override {
-        int ret = -1;
-        if (forceIoctlAnswer) {
-            return setIoctlAnswer;
-        }
-        switch (request) {
-        case DrmIoctl::RegRead: {
-            struct drm_xe_mmio *reg = static_cast<struct drm_xe_mmio *>(arg);
-            reg->value = reg->addr;
-            ret = 0;
-        } break;
-        case DrmIoctl::GemVmCreate: {
-            struct drm_xe_vm_create *v = static_cast<struct drm_xe_vm_create *>(arg);
-            v->vm_id = testValueVmId;
-            ret = 0;
-        } break;
-        case DrmIoctl::GemUserptr:
-        case DrmIoctl::GemClose:
-            ret = 0;
-            break;
-        case DrmIoctl::GemVmDestroy: {
-            struct drm_xe_vm_destroy *v = static_cast<struct drm_xe_vm_destroy *>(arg);
-            if (v->vm_id == testValueVmId)
-                ret = 0;
-        } break;
-        case DrmIoctl::GemMmapOffset: {
-            struct drm_xe_gem_mmap_offset *v = static_cast<struct drm_xe_gem_mmap_offset *>(arg);
-            if (v->handle == testValueMapOff) {
-                v->offset = v->handle;
-                ret = 0;
-            }
-        } break;
-        case DrmIoctl::PrimeFdToHandle: {
-            PrimeHandle *v = static_cast<PrimeHandle *>(arg);
-            if (v->fileDescriptor == testValuePrime) {
-                v->handle = testValuePrime;
-                ret = 0;
-            }
-        } break;
-        case DrmIoctl::PrimeHandleToFd: {
-            PrimeHandle *v = static_cast<PrimeHandle *>(arg);
-            if (v->handle == testValuePrime) {
-                v->fileDescriptor = testValuePrime;
-                ret = 0;
-            }
-        } break;
-        case DrmIoctl::GemCreate: {
-            GemCreate *v = static_cast<GemCreate *>(arg);
-            if (v->handle == testValueGemCreate) {
-                ret = 0;
-            }
-        } break;
-        case DrmIoctl::Getparam:
-        case DrmIoctl::GetResetStats:
-            ret = -2;
-            break;
-        case DrmIoctl::Query: {
-            struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
-            switch (deviceQuery->query) {
-            case DRM_XE_DEVICE_QUERY_ENGINES:
-                if (deviceQuery->data) {
-                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryEngines, sizeof(queryEngines));
-                }
-                deviceQuery->size = sizeof(queryEngines);
-                break;
-            case DRM_XE_DEVICE_QUERY_MEM_USAGE:
-                if (deviceQuery->data) {
-                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryMemUsage, sizeof(queryMemUsage));
-                }
-                deviceQuery->size = sizeof(queryMemUsage);
-                break;
-            case DRM_XE_DEVICE_QUERY_GTS:
-                if (deviceQuery->data) {
-                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryGts, sizeof(queryGts));
-                }
-                deviceQuery->size = sizeof(queryGts);
-                break;
-            case DRM_XE_DEVICE_QUERY_GT_TOPOLOGY:
-                if (deviceQuery->data) {
-                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryTopology.data(), queryTopology.size());
-                }
-                deviceQuery->size = static_cast<unsigned int>(queryTopology.size());
-                break;
-            };
-            ret = 0;
-        } break;
-        case DrmIoctl::GemVmBind: {
-            ret = gemVmBindReturn;
-            auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
-            vmBindInputs.push_back(*vmBindInput);
-
-            EXPECT_EQ(1u, vmBindInput->num_syncs);
-
-            auto &syncInput = reinterpret_cast<drm_xe_sync *>(vmBindInput->syncs)[0];
-            syncInputs.push_back(syncInput);
-        } break;
-
-        case DrmIoctl::GemWaitUserFence: {
-            ret = waitUserFenceReturn;
-            auto waitUserFenceInput = static_cast<drm_xe_wait_user_fence *>(arg);
-            waitUserFenceInputs.push_back(*waitUserFenceInput);
-        } break;
-
-        case DrmIoctl::GemContextSetparam:
-        case DrmIoctl::GemContextGetparam:
-
-        default:
-            break;
-        }
-        return ret;
-    }
-
-    void addMockedQueryTopologyData(uint16_t tileId, uint16_t maskType, uint32_t nBytes, const std::vector<uint8_t> &mask) {
-
-        ASSERT_EQ(nBytes, mask.size());
-
-        auto additionalSize = 8u + nBytes;
-        auto oldSize = queryTopology.size();
-        auto newSize = oldSize + additionalSize;
-        queryTopology.resize(newSize, 0u);
-
-        uint8_t *dataPtr = queryTopology.data() + oldSize;
-
-        drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
-        topo->gt_id = tileId;
-        topo->type = maskType;
-        topo->num_bytes = nBytes;
-
-        memcpy_s(reinterpret_cast<void *>(topo->mask), nBytes, mask.data(), nBytes);
-    }
-
-    int forceIoctlAnswer = 0;
-    int setIoctlAnswer = 0;
-    int gemVmBindReturn = 0;
-    const drm_xe_engine_class_instance queryEngines[9] = {
-        {DRM_XE_ENGINE_CLASS_RENDER, 0, 0},
-        {DRM_XE_ENGINE_CLASS_COPY, 1, 0},
-        {DRM_XE_ENGINE_CLASS_COPY, 2, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1},
-        {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 7, 1},
-        {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 8, 0}};
-
-    uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
-    uint64_t queryGts[27]{};      // 1 qword for num gts and 13 qwords per gt
-    std::vector<uint8_t> queryTopology;
-
-    StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
-    StackVec<drm_xe_vm_bind, 1> vmBindInputs;
-    StackVec<drm_xe_sync, 1> syncInputs;
-    int waitUserFenceReturn = 0;
-};
-
 TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     int ret;
     DebugManagerStateRestore restorer;
@@ -711,8 +766,10 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(static_cast<int>(test.fileDescriptor), testValuePrime);
     }
     {
-        GemCreate test = {};
-        test.handle = testValueGemCreate;
+        drm_xe_gem_create test = {};
+        test.handle = 0;
+        test.flags = 1;
+        test.size = 123;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemCreate, &test);
         EXPECT_EQ(0, ret);
     }

@@ -1563,6 +1563,27 @@ TEST(IoctlHelperTest, whenGettingFileNameForFrequencyFilesThenProperStringIsRetu
     EXPECT_STREQ("/gt/gt1/mem_RP0_freq_mhz", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
 }
 
+TEST(IoctlHelperTest, givenIoctlHelperWhenCallCreateGemThenProperValuesSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto ioctlHelper = drm.getIoctlHelper();
+    ASSERT_NE(nullptr, ioctlHelper);
+
+    uint64_t size = 1234;
+    uint32_t memoryBanks = 3u;
+
+    EXPECT_EQ(0, drm.ioctlCount.gemCreate);
+    uint32_t handle = ioctlHelper->createGem(size, memoryBanks);
+    EXPECT_EQ(1, drm.ioctlCount.gemCreate);
+
+    EXPECT_EQ(size, drm.createParamsSize);
+
+    // dummy mock handle
+    EXPECT_EQ(1u, drm.createParamsHandle);
+    EXPECT_EQ(handle, drm.createParamsHandle);
+}
+
 TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorrectRegionsSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

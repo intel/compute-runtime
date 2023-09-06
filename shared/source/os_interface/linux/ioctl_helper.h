@@ -81,6 +81,7 @@ class IoctlHelper {
     virtual bool isChunkingAvailable() = 0;
     virtual bool isVmBindAvailable() = 0;
     virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) = 0;
+    virtual uint32_t createGem(uint64_t size, uint32_t memoryBanks);
     virtual CacheRegion closAlloc() = 0;
     virtual uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(CacheRegion closIndex) = 0;

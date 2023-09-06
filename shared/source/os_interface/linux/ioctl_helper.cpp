@@ -556,4 +556,12 @@ std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) 
 
     return std::make_unique<EngineInfo>(&drm, tileCount, distanceInfos, queryItems, engines);
 }
+
+uint32_t IoctlHelper::createGem(uint64_t size, uint32_t memoryBanks) {
+    GemCreate gemCreate = {};
+    gemCreate.size = size;
+    [[maybe_unused]] auto ret = ioctl(DrmIoctl::GemCreate, &gemCreate);
+    DEBUG_BREAK_IF(ret != 0);
+    return gemCreate.handle;
+}
 } // namespace NEO

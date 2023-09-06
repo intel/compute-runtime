@@ -591,18 +591,14 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
                                      allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
     size_t bufferSize = allocationData.size;
 
-    GemCreate create{};
-    create.size = bufferSize;
-
     auto &drm = getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    [[maybe_unused]] auto ret = ioctlHelper->ioctl(DrmIoctl::GemCreate, &create);
-    DEBUG_BREAK_IF(ret != 0);
+    uint32_t handle = ioctlHelper->createGem(bufferSize, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()));
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
 
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, create.handle, bufferSize, maxOsContextCount));
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, bufferSize, maxOsContextCount));
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), nullptr, 0u, bufferSize, MemoryPool::SystemCpuInaccessible);
     allocation->setDefaultGmm(gmm.release());
@@ -621,18 +617,14 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     size_t bufferSize = allocationData.size;
     uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB, allocationData.alignment);
 
-    GemCreate create{};
-    create.size = bufferSize;
-
     auto &drm = getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    [[maybe_unused]] auto ret = ioctlHelper->ioctl(DrmIoctl::GemCreate, &create);
-    DEBUG_BREAK_IF(ret != 0);
+    uint32_t handle = ioctlHelper->createGem(bufferSize, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()));
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
 
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, create.handle, bufferSize, maxOsContextCount));
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, bufferSize, maxOsContextCount));
     bo->setAddress(gpuRange);
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), nullptr, gpuRange, bufferSize, MemoryPool::SystemCpuInaccessible);
@@ -655,18 +647,13 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
     uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
 
-    GemCreate create{};
-    create.size = allocationData.imgInfo->size;
-
     auto &drm = this->getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
-
-    [[maybe_unused]] auto ret = ioctlHelper->ioctl(DrmIoctl::GemCreate, &create);
-    DEBUG_BREAK_IF(ret != 0);
+    uint32_t handle = ioctlHelper->createGem(allocationData.imgInfo->size, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()));
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
 
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new (std::nothrow) BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, create.handle, allocationData.imgInfo->size, maxOsContextCount));
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new (std::nothrow) BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, allocationData.imgInfo->size, maxOsContextCount));
     if (!bo) {
         return nullptr;
     }
