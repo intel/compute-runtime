@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -30,15 +31,13 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
-    GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description, AllocationType::SHARED_IMAGE);
+    GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description, &imgInfo, AllocationType::SHARED_IMAGE);
     if (!graphicsAllocation) {
         errorCode.set(CL_INVALID_MEM_OBJECT);
         return nullptr;
     }
 
     swapGmm(graphicsAllocation, context, &imgInfo);
-
-    graphicsAllocation->getDefaultGmm()->updateOffsetsInImgInfo(imgInfo, 0u);
 
     auto &memoryManager = *context->getMemoryManager();
     if (graphicsAllocation->getDefaultGmm()->unifiedAuxTranslationCapable()) {

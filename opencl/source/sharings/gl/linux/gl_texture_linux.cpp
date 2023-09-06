@@ -102,7 +102,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     imgInfo.surfaceFormat = &surfaceFormatInfo.surfaceFormat;
     AllocationProperties allocProperties(context->getDevice(0)->getRootDeviceIndex(),
                                          false, // allocateMemory
-                                         imgInfo,
+                                         &imgInfo,
                                          AllocationType::SHARED_IMAGE,
                                          context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false, false, false, nullptr);

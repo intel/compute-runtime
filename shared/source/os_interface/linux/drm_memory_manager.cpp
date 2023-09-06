@@ -1023,12 +1023,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     if (properties.imgInfo) {
         GemGetTiling getTiling{};
         getTiling.handle = boHandle;
-        auto ioctlHelper = drm.getIoctlHelper();
-
         ret = ioctlHelper->getGemTiling(&getTiling);
 
         if (ret) {
-            auto ioctlHelper = drm.getIoctlHelper();
             if (getTiling.tilingMode == static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::TilingNone))) {
                 properties.imgInfo->linearStorage = true;
             }
@@ -1037,6 +1034,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo,
                            createStorageInfoFromProperties(properties), properties.flags.preferCompressed);
 
+        gmm->updateImgInfoAndDesc(*properties.imgInfo, 0, NEO::ImagePlane::NO_PLANE);
         drmAllocation->setDefaultGmm(gmm);
 
         bo->setPatIndex(drm.getPatIndex(gmm, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false));

@@ -14,7 +14,6 @@
 namespace NEO {
 class Image;
 class Context;
-struct ImageInfo;
 
 class UnifiedImage : public UnifiedSharing {
     using UnifiedSharing::UnifiedSharing;

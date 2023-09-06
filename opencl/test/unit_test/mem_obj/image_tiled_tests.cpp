@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -138,6 +139,7 @@ TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
 
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
+    info.linearStorage = true;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);
 
@@ -158,6 +160,7 @@ TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
     ASSERT_NE(nullptr, image);
 
     EXPECT_FALSE(image->isTiledAllocation());
+    EXPECT_EQ(info.linearStorage, image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.Linear);
 
     delete image;
 }

@@ -80,6 +80,10 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenValidContextAndMemoryMana
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
                                                                                &format, &imageDesc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto renderSize = image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
+    size_t expectedSize = imageDesc.image_row_pitch * imageDesc.image_height;
+    EXPECT_GE(renderSize, expectedSize);
 }
 
 TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenPassedFormatWhenCreatingUnifiedImageThenFormatIsCorrectlySetInImageObject) {

@@ -11,6 +11,7 @@
 #include "opencl/source/sharings/unified/unified_sharing_types.h"
 
 namespace NEO {
+struct ImageInfo;
 
 class UnifiedSharingFunctions : public SharingFunctions {
   public:
@@ -32,6 +33,7 @@ class UnifiedSharing : public SharingHandler {
     void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
 
     static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, AllocationType allocationType);
+    static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType);
 
   private:
     UnifiedSharingFunctions *sharingFunctions;

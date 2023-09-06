@@ -767,7 +767,7 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShar
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
@@ -810,7 +810,7 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedH
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
@@ -852,7 +852,7 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSharedHandleFa
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);

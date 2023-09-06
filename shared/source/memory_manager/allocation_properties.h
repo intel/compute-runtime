@@ -56,11 +56,11 @@ struct AllocationProperties {
         : AllocationProperties(rootDeviceIndex, true, size, allocationType, false, subDevicesBitfieldParam) {}
 
     AllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory,
-                         ImageInfo &imgInfo,
+                         ImageInfo *imgInfo,
                          AllocationType allocationType,
                          DeviceBitfield subDevicesBitfieldParam)
         : AllocationProperties(rootDeviceIndex, allocateMemory, 0u, allocationType, false, subDevicesBitfieldParam) {
-        this->imgInfo = &imgInfo;
+        this->imgInfo = imgInfo;
     }
 
     AllocationProperties(uint32_t rootDeviceIndex,
