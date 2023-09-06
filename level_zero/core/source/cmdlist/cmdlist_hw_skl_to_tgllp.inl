@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
@@ -51,13 +52,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    const auto kernelImmutableData = kernel->getImmutableData();
+    auto kernelInfo = kernelImmutableData->getKernelInfo();
+
     NEO::IndirectHeap *ssh = nullptr;
     NEO::IndirectHeap *dsh = nullptr;
 
-    const auto kernelImmutableData = kernel->getImmutableData();
-    if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
-        auto kernelInfo = kernelImmutableData->getKernelInfo();
+    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
+            ", Group size: ", kernel->getGroupSize()[0], ", ", kernel->getGroupSize()[1], ", ", kernel->getGroupSize()[2],
+            ", Group count: ", threadGroupDimensions->groupCountX, ", ", threadGroupDimensions->groupCountY, ", ", threadGroupDimensions->groupCountZ,
+            ", SIMD: ", kernelInfo->getMaxSimdSize());
 
+    if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
         auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
         NEO::HeapReserveArguments sshReserveArgs = {
             sshReserveConfig.indirectHeapReservation,

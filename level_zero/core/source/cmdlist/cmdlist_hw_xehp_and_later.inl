@@ -18,6 +18,7 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
@@ -109,8 +110,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
+    auto kernelInfo = kernelImmutableData->getKernelInfo();
+
     NEO::IndirectHeap *ssh = nullptr;
     NEO::IndirectHeap *dsh = nullptr;
+
+    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
+            ", Group size: ", kernel->getGroupSize()[0], ", ", kernel->getGroupSize()[1], ", ", kernel->getGroupSize()[2],
+            ", Group count: ", threadGroupDimensions->groupCountX, ", ", threadGroupDimensions->groupCountY, ", ", threadGroupDimensions->groupCountZ,
+            ", SIMD: ", kernelInfo->getMaxSimdSize());
 
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
@@ -121,7 +129,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if ((this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) &&
         (this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps)) {
-        auto kernelInfo = kernelImmutableData->getKernelInfo();
 
         auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
         NEO::HeapReserveArguments sshReserveArgs = {sshReserveConfig.indirectHeapReservation,

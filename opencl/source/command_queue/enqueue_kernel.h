@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,13 +119,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     }
 
     DBG_LOG(PrintDispatchParameters, "Kernel: ", kernelInfo.kernelDescriptor.kernelMetadata.kernelName,
-            ",LWS:, ", localWorkSizeIn ? localWorkSizeIn[0] : 0,
-            ",", localWorkSizeIn ? localWorkSizeIn[1] : 0,
-            ",", localWorkSizeIn ? localWorkSizeIn[2] : 0,
-            ",GWS:,", globalWorkSizeIn[0],
-            ",", globalWorkSizeIn[1],
-            ",", globalWorkSizeIn[2],
-            ",SIMD:, ", kernelInfo.getMaxSimdSize());
+            ", LWS: ", localWorkSizeIn ? localWorkSizeIn[0] : 0, ", ", localWorkSizeIn ? localWorkSizeIn[1] : 0, ", ", localWorkSizeIn ? localWorkSizeIn[2] : 0,
+            ", GWS: ", globalWorkSizeIn[0], ", ", globalWorkSizeIn[1], ", ", globalWorkSizeIn[2],
+            ", SIMD: ", kernelInfo.getMaxSimdSize());
 
     if (totalWorkItems > kernel.getMaxKernelWorkGroupSize()) {
         return CL_INVALID_WORK_GROUP_SIZE;
