@@ -368,6 +368,28 @@ TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuV
     EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(gmmHelper->getClientContext())->freeGpuVirtualAddressCalled, 0u);
 }
 
+TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWhenCreatingHostAllocationThenCpuAddressIsAligned) {
+    NEO::AllocationData allocData{};
+    allocData.type = NEO::AllocationType::BUFFER_HOST_MEMORY;
+    allocData.size = 1;
+    allocData.makeGPUVaDifferentThanCPUPtr = true;
+    allocData.allocationMethod = GfxMemoryAllocationMethod::AllocateByKmd;
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+
+    size_t alignment = 8 * MemoryConstants::megaByte;
+    do {
+        alignment >>= 1;
+        allocData.alignment = alignment;
+        auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, true);
+        void *ptr = graphicsAllocation->getUnderlyingBuffer();
+        EXPECT_NE(nullptr, ptr);
+        if (alignment != 0) {
+            EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
+        }
+        memoryManager->freeGraphicsMemory(graphicsAllocation);
+    } while (alignment != 0);
+}
+
 TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWhen32bitThenProperAddressSet) {
     if constexpr (is64bit) {
         GTEST_SKIP();
@@ -1487,6 +1509,30 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAlignmentRequirementExceedsPageSizeThenA
         EXPECT_EQ(1, memoryManager.callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt);
         EXPECT_EQ(0, memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA);
     }
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAlignmentWhenAllocatingGraphicsAllocationInDevicePoolThenAllocationIsAligned) {
+    const bool enable64kbPages = false;
+    const bool localMemoryEnabled = true;
+    memoryManager = std::make_unique<MockWddmMemoryManager>(enable64kbPages, localMemoryEnabled, executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData{};
+    allocData.allFlags = 0;
+    allocData.size = 1;
+    allocData.flags.allocateMemory = true;
+
+    size_t alignment = 8 * MemoryConstants::megaByte;
+    do {
+        alignment >>= 1;
+        allocData.alignment = alignment;
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+        EXPECT_NE(nullptr, allocation);
+        EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+        EXPECT_LE(alignment, allocation->getUnderlyingBufferSize());
+        memoryManager->freeGraphicsMemory(allocation);
+    } while (alignment != 0);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenUseSystemMemorySetToTrueWhenAllocateInDevicePoolIsCalledThenNullptrIsReturned) {
