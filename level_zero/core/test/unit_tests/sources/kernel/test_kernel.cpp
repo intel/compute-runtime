@@ -2609,6 +2609,121 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     EXPECT_TRUE(kernel->isBindlessOffsetSet[3]);
 }
 
+HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperAndImageViewWhenAllocatingBindlessSlotThenViewHasDifferentSlotThanParentImage, ImageSupport) {
+    createKernel();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlot());
+
+    ze_image_handle_t imageViewHandle;
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
+    ret = imageHW->createView(device, &desc, &imageViewHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto imageView = Image::fromHandle(imageViewHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, imageView->allocateBindlessSlot());
+    auto ssInHeap = imageHW->getBindlessSlot();
+    auto ssInHeapView = imageView->getBindlessSlot();
+
+    ASSERT_NE(nullptr, ssInHeap);
+    ASSERT_NE(nullptr, ssInHeapView);
+
+    EXPECT_NE(ssInHeap->surfaceStateOffset, ssInHeapView->surfaceStateOffset);
+
+    // calling allocateBindlessSlot again should not change slot
+    EXPECT_EQ(ZE_RESULT_SUCCESS, imageView->allocateBindlessSlot());
+    auto ssInHeapView2 = imageView->getBindlessSlot();
+    EXPECT_EQ(ssInHeapView->surfaceStateOffset, ssInHeapView2->surfaceStateOffset);
+
+    imageView->destroy();
+}
+
+HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperImageViewAndNoAvailableSpaceOnSshWhenAllocatingBindlessSlotThenOutOfMemoryErrorReturned, ImageSupport) {
+    createKernel();
+    auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    auto bindlessHelper = new MockBindlesHeapsHelper(mockMemManager,
+                                                     neoDevice->getNumGenericSubDevices() > 1,
+                                                     neoDevice->getRootDeviceIndex(),
+                                                     neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    mockMemManager->failInDevicePool = true;
+    mockMemManager->failAllocateSystemMemory = true;
+    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
+
+    ze_image_handle_t imageViewHandle;
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
+    ret = imageHW->createView(device, &desc, &imageViewHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto imageView = Image::fromHandle(imageViewHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, imageView->allocateBindlessSlot());
+    auto ssInHeap = imageHW->getBindlessSlot();
+    auto ssInHeapView = imageView->getBindlessSlot();
+
+    EXPECT_EQ(nullptr, ssInHeap);
+    EXPECT_EQ(nullptr, ssInHeapView);
+    imageView->destroy();
+}
+
+HWTEST2_F(SetKernelArg, givenNoGlobalBindlessHelperAndImageViewWhenAllocatingBindlessSlotThenSlotIsNotAllocated, ImageSupport) {
+    createKernel();
+
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlot());
+
+    ze_image_handle_t imageViewHandle;
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
+    ret = imageHW->createView(device, &desc, &imageViewHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto imageView = Image::fromHandle(imageViewHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, imageView->allocateBindlessSlot());
+    auto ssInHeap = imageHW->getBindlessSlot();
+    auto ssInHeapView = imageView->getBindlessSlot();
+
+    ASSERT_EQ(nullptr, ssInHeap);
+    ASSERT_EQ(nullptr, ssInHeapView);
+
+    imageView->destroy();
+}
+
 HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCalledThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;

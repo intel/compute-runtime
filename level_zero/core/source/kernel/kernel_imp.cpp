@@ -557,20 +557,20 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
         const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
         if (bindlessHeapsHelper) {
 
-            if (!this->module->getDevice()->getNEODevice()->getMemoryManager()->allocateBindlessSlot(image->getAllocation())) {
+            if (image->allocateBindlessSlot() != ZE_RESULT_SUCCESS) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
 
-            auto ssInHeap = image->getAllocation()->getBindlessInfo();
+            auto ssInHeap = image->getBindlessSlot();
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
             // redescribed image's surface state is after image's state
-            auto bindlessSlotOffset = ssInHeap.surfaceStateOffset + surfaceStateSize;
+            auto bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize;
             auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
 
-            image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap.ssPtr, surfaceStateSize), 0u);
+            image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u);
             isBindlessOffsetSet[argIndex] = true;
-            this->residencyContainer.push_back(ssInHeap.heapAllocation);
+            this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {
 
             auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
@@ -758,18 +758,24 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     if (kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode == NEO::KernelDescriptor::Bindless) {
 
         NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
+        auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
+        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
         if (bindlessHeapsHelper) {
 
-            if (!this->module->getDevice()->getNEODevice()->getMemoryManager()->allocateBindlessSlot(image->getAllocation())) {
+            if (image->allocateBindlessSlot() != ZE_RESULT_SUCCESS) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
 
-            auto ssPtr = patchBindlessSurfaceState(image->getAllocation(), arg.bindless);
+            auto ssInHeap = image->getBindlessSlot();
+            auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
+            auto bindlessSlotOffset = ssInHeap->surfaceStateOffset;
+            auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
+            patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+
+            image->copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, isMediaBlockImage);
             isBindlessOffsetSet[argIndex] = true;
-            image->copySurfaceStateToSSH(ssPtr, 0u, isMediaBlockImage);
+            this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {
-            auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
-            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
             auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
             image->copySurfaceStateToSSH(ssPtr, 0u, isMediaBlockImage);
         }

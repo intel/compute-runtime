@@ -106,10 +106,6 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
                                            0,
                                            0};
     ze_image_handle_t planeYImageView;
-
-    SUCCESS_OR_TERMINATE(
-        zeImageViewCreateExp(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
-
     planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExt(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
@@ -132,10 +128,6 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
                                             0,
                                             0};
     ze_image_handle_t planeUVImageView;
-
-    SUCCESS_OR_TERMINATE(
-        zeImageViewCreateExp(context, device, &imageViewDescPlaneUV, srcImg, &planeUVImageView));
-
     planeUVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExt(context, device, &imageViewDescPlaneUV, srcImg, &planeUVImageView));
@@ -289,9 +281,11 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
     }
 
     // cleanup
-    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
     SUCCESS_OR_TERMINATE(zeImageDestroy(planeYImageView));
     SUCCESS_OR_TERMINATE(zeImageDestroy(planeUVImageView));
+
+    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
+
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));

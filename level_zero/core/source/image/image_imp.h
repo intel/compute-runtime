@@ -11,6 +11,7 @@
 
 #include "level_zero/core/source/image/image.h"
 
+#include <memory>
 #include <optional>
 
 namespace L0 {
@@ -43,11 +44,15 @@ struct ImageImp : public Image {
         return sourceImageFormatDesc.has_value();
     }
 
+    ze_result_t allocateBindlessSlot() override;
+    NEO::SurfaceStateInHeapInfo *getBindlessSlot() override;
+
   protected:
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
     ze_image_desc_t imageFormatDesc = {};
     std::optional<ze_image_desc_t> sourceImageFormatDesc = {};
+    std::unique_ptr<NEO::SurfaceStateInHeapInfo> bindlessInfo;
 };
 } // namespace L0
