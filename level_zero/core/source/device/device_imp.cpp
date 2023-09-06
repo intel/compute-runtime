@@ -49,7 +49,6 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
-#include "level_zero/core/source/rtas/rtas.h"
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
@@ -785,7 +784,6 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
-    const auto &l0GfxCoreHelper = this->getL0GfxCoreHelper();
 
     pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
 
@@ -899,29 +897,6 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_PROPERTIES) {
                 ze_event_query_kernel_timestamps_ext_properties_t *kernelTimestampExtProperties = reinterpret_cast<ze_event_query_kernel_timestamps_ext_properties_t *>(extendedProperties);
                 kernelTimestampExtProperties->flags = ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_FLAG_KERNEL | ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_FLAG_SYNCHRONIZED;
-            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXP_PROPERTIES) {
-                ze_rtas_device_exp_properties_t *rtasProperties = reinterpret_cast<ze_rtas_device_exp_properties_t *>(extendedProperties);
-                rtasProperties->flags = 0;
-                rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXP_INVALID;
-                rtasProperties->rtasBufferAlignment = 128;
-
-                if (l0GfxCoreHelper.platformSupportsRayTracing()) {
-                    auto driverHandle = this->getDriverHandle();
-                    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
-
-                    if (driverHandleImp->rtasLibraryHandle == nullptr) {
-                        std::lock_guard<std::mutex> lock(driverHandleImp->rtasLock);
-
-                        driverHandleImp->rtasLibraryHandle = RTASBuilder::osLibraryLoadFunction(RTASBuilder::rtasLibraryName);
-                    }
-
-                    if (driverHandleImp->rtasLibraryHandle != nullptr) {
-                        bool result = RTASBuilder::loadEntryPoints(driverHandleImp->rtasLibraryHandle);
-                        if (result != false) {
-                            rtasProperties->rtasFormat = (ze_rtas_format_exp_t)1u;
-                        }
-                    }
-                }
             }
             extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);
         }

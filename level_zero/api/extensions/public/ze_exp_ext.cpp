@@ -14,7 +14,6 @@
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/kernel/kernel.h"
-#include "level_zero/core/source/rtas/rtas.h"
 
 namespace L0 {
 ze_result_t zeKernelSetGlobalOffsetExp(
@@ -113,67 +112,6 @@ ze_result_t zeFabricEdgeGetVerticesExp(ze_fabric_edge_handle_t hEdge, ze_fabric_
 ze_result_t zeFabricEdgeGetPropertiesExp(ze_fabric_edge_handle_t hEdge,
                                          ze_fabric_edge_exp_properties_t *pEdgeProperties) {
     return L0::FabricEdge::fromHandle(hEdge)->getProperties(pEdgeProperties);
-}
-
-ze_result_t zeRTASBuilderCreateExp(ze_driver_handle_t hDriver,
-                                   const ze_rtas_builder_exp_desc_t *pDescriptor,
-                                   ze_rtas_builder_exp_handle_t *phBuilder) {
-    return L0::DriverHandle::fromHandle(hDriver)->createRTASBuilder(pDescriptor, phBuilder);
-}
-
-ze_result_t zeRTASBuilderGetBuildPropertiesExp(ze_rtas_builder_exp_handle_t hBuilder,
-                                               const ze_rtas_builder_build_op_exp_desc_t *pBuildOpDescriptor,
-                                               ze_rtas_builder_exp_properties_t *pProperties) {
-    return L0::RTASBuilder::fromHandle(hBuilder)->getProperties(pBuildOpDescriptor, pProperties);
-}
-
-ze_result_t zeDriverRTASFormatCompatibilityCheckExp(ze_driver_handle_t hDriver,
-                                                    ze_rtas_format_exp_t rtasFormatA,
-                                                    ze_rtas_format_exp_t rtasFormatB) {
-    return L0::DriverHandle::fromHandle(hDriver)->formatRTASCompatibilityCheck(rtasFormatA, rtasFormatB);
-}
-
-ze_result_t zeRTASBuilderBuildExp(ze_rtas_builder_exp_handle_t hBuilder,
-                                  const ze_rtas_builder_build_op_exp_desc_t *pBuildOpDescriptor,
-                                  void *pScratchBuffer,
-                                  size_t scratchBufferSizeBytes,
-                                  void *pRtasBuffer,
-                                  size_t rtasBufferSizeBytes,
-                                  ze_rtas_parallel_operation_exp_handle_t hParallelOperation,
-                                  void *pBuildUserPtr,
-                                  ze_rtas_aabb_exp_t *pBounds,
-                                  size_t *pRtasBufferSizeBytes) {
-    return L0::RTASBuilder::fromHandle(hBuilder)->build(pBuildOpDescriptor,
-                                                        pScratchBuffer,
-                                                        scratchBufferSizeBytes,
-                                                        pRtasBuffer,
-                                                        rtasBufferSizeBytes,
-                                                        hParallelOperation,
-                                                        pBuildUserPtr,
-                                                        pBounds,
-                                                        pRtasBufferSizeBytes);
-}
-
-ze_result_t zeRTASBuilderDestroyExp(ze_rtas_builder_exp_handle_t hBuilder) {
-    return L0::RTASBuilder::fromHandle(hBuilder)->destroy();
-}
-
-ze_result_t zeRTASParallelOperationCreateExp(ze_driver_handle_t hDriver,
-                                             ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) {
-    return L0::DriverHandle::fromHandle(hDriver)->createRTASParallelOperation(phParallelOperation);
-}
-
-ze_result_t zeRTASParallelOperationGetPropertiesExp(ze_rtas_parallel_operation_exp_handle_t hParallelOperation,
-                                                    ze_rtas_parallel_operation_exp_properties_t *pProperties) {
-    return L0::RTASParallelOperation::fromHandle(hParallelOperation)->getProperties(pProperties);
-}
-
-ze_result_t zeRTASParallelOperationJoinExp(ze_rtas_parallel_operation_exp_handle_t hParallelOperation) {
-    return L0::RTASParallelOperation::fromHandle(hParallelOperation)->join();
-}
-
-ze_result_t zeRTASParallelOperationDestroyExp(ze_rtas_parallel_operation_exp_handle_t hParallelOperation) {
-    return L0::RTASParallelOperation::fromHandle(hParallelOperation)->destroy();
 }
 
 } // namespace L0
@@ -292,79 +230,6 @@ zeFabricEdgeGetPropertiesExp(
     ze_fabric_edge_handle_t hEdge,
     ze_fabric_edge_exp_properties_t *pEdgeProperties) {
     return L0::zeFabricEdgeGetPropertiesExp(hEdge, pEdgeProperties);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeRTASBuilderCreateExp(
-    ze_driver_handle_t hDriver,
-    const ze_rtas_builder_exp_desc_t *pDescriptor,
-    ze_rtas_builder_exp_handle_t *phBuilder) {
-    return L0::zeRTASBuilderCreateExp(hDriver, pDescriptor, phBuilder);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeRTASBuilderGetBuildPropertiesExp(
-    ze_rtas_builder_exp_handle_t hBuilder,
-    const ze_rtas_builder_build_op_exp_desc_t *pBuildOpDescriptor,
-    ze_rtas_builder_exp_properties_t *pProperties) {
-    return L0::zeRTASBuilderGetBuildPropertiesExp(hBuilder, pBuildOpDescriptor, pProperties);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverRTASFormatCompatibilityCheckExp(
-    ze_driver_handle_t hDriver,
-    ze_rtas_format_exp_t rtasFormatA,
-    ze_rtas_format_exp_t rtasFormatB) {
-    return L0::zeDriverRTASFormatCompatibilityCheckExp(hDriver, rtasFormatA, rtasFormatB);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeRTASBuilderBuildExp(
-    ze_rtas_builder_exp_handle_t hBuilder,
-    const ze_rtas_builder_build_op_exp_desc_t *pBuildOpDescriptor,
-    void *pScratchBuffer,
-    size_t scratchBufferSizeBytes,
-    void *pRtasBuffer,
-    size_t rtasBufferSizeBytes,
-    ze_rtas_parallel_operation_exp_handle_t hParallelOperation,
-    void *pBuildUserPtr,
-    ze_rtas_aabb_exp_t *pBounds,
-    size_t *pRtasBufferSizeBytes) {
-    return L0::zeRTASBuilderBuildExp(hBuilder, pBuildOpDescriptor, pScratchBuffer,
-                                     scratchBufferSizeBytes, pRtasBuffer, rtasBufferSizeBytes,
-                                     hParallelOperation, pBuildUserPtr, pBounds, pRtasBufferSizeBytes);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeRTASBuilderDestroyExp(
-    ze_rtas_builder_exp_handle_t hBuilder) {
-    return L0::zeRTASBuilderDestroyExp(hBuilder);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeRTASParallelOperationCreateExp(
-    ze_driver_handle_t hDriver,
-    ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) {
-    return L0::zeRTASParallelOperationCreateExp(hDriver, phParallelOperation);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeRTASParallelOperationGetPropertiesExp(
-    ze_rtas_parallel_operation_exp_handle_t hParallelOperation,
-    ze_rtas_parallel_operation_exp_properties_t *pProperties) {
-    return L0::zeRTASParallelOperationGetPropertiesExp(hParallelOperation, pProperties);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeRTASParallelOperationJoinExp(
-    ze_rtas_parallel_operation_exp_handle_t hParallelOperation) {
-    return L0::zeRTASParallelOperationJoinExp(hParallelOperation);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeRTASParallelOperationDestroyExp(
-    ze_rtas_parallel_operation_exp_handle_t hParallelOperation) {
-    return L0::zeRTASParallelOperationDestroyExp(hParallelOperation);
 }
 
 } // extern "C"
