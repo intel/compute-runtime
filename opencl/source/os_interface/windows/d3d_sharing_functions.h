@@ -69,6 +69,11 @@ enum D3DResourceFlags {
     MISC_SHARED_NTHANDLE = 2048
 };
 
+enum D3DBindFLags {
+    D3D11_BIND_RENDER_TARGET = 0x20L,
+    D3D11_BIND_UNORDERED_ACCESS = 0x80L,
+};
+
 template <typename D3D>
 class D3DSharingFunctions : public SharingFunctions {
     typedef typename D3D::D3DDevice D3DDevice;

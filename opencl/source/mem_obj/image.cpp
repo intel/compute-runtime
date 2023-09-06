@@ -1664,4 +1664,9 @@ void Image::fillImageRegion(size_t *region) const {
         region[2] = 1u;
     }
 }
+
+void Image::setAs3DUavOrRtvImage(bool isUavOrRtv) {
+    is3DUAVOrRTV = isUavOrRtv;
+}
+
 } // namespace NEO

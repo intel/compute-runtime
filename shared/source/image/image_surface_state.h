@@ -16,7 +16,7 @@
 
 namespace NEO {
 template <typename GfxFamily>
-inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, Gmm *gmm, GmmHelper &gmmHelper, uint32_t cubeFaceIndex, uint64_t gpuAddress, const SurfaceOffsets &surfaceOffsets, bool isNV12Format) {
+inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, Gmm *gmm, GmmHelper &gmmHelper, uint32_t cubeFaceIndex, uint64_t gpuAddress, const SurfaceOffsets &surfaceOffsets, bool isNV12Format, uint32_t &minimumArrayElement, uint32_t &renderTargetViewExtent) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -32,8 +32,8 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
 
     isImageArray |= (imageInfo.imgDesc.imageType == ImageType::Image2D || imageInfo.imgDesc.imageType == ImageType::Image2DArray) && DebugManager.flags.Force2dImageAsArray.get() == 1;
 
-    uint32_t renderTargetViewExtent = static_cast<uint32_t>(imageCount);
-    uint32_t minimumArrayElement = 0;
+    renderTargetViewExtent = static_cast<uint32_t>(imageCount);
+    minimumArrayElement = 0;
     auto hAlign = RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT;
     auto vAlign = RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4;
 
@@ -92,7 +92,7 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
 }
 
 template <typename GfxFamily>
-inline void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, uint32_t cubeFaceIndex, typename GfxFamily::RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType) {
+inline void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, uint32_t cubeFaceIndex, typename GfxFamily::RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType, uint32_t &depth) {
     auto imageCount = std::max(imageInfo.imgDesc.imageDepth, imageInfo.imgDesc.imageArraySize);
     if (imageCount == 0) {
         imageCount = 1;
@@ -112,9 +112,10 @@ inline void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_ST
         imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
     }
 
+    depth = static_cast<uint32_t>(imageCount);
     surfaceState->setWidth(static_cast<uint32_t>(imageWidth));
     surfaceState->setHeight(static_cast<uint32_t>(imageHeight));
-    surfaceState->setDepth(static_cast<uint32_t>(imageCount));
+    surfaceState->setDepth(depth);
     surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
     surfaceState->setSurfaceType(surfaceType);
 }

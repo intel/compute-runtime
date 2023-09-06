@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ namespace NEO {
 struct MockImageBase : public Image {
     using Image::imageDesc;
     using Image::imageFormat;
+    using Image::is3DUAVOrRTV;
     MockGraphicsAllocation *graphicsAllocation = nullptr;
 
     MockImageBase(uint32_t rootDeviceIndex)

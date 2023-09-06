@@ -121,12 +121,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     {
         surfaceState = GfxFamily::cmdInitRenderSurfaceState;
-
+        uint32_t minArrayElement, renderTargetViewExtent, depth;
         NEO::setImageSurfaceState<GfxFamily>(&surfaceState, imgInfo, gmm, *gmmHelper, __GMM_NO_CUBE_MAP,
                                              this->allocation->getGpuAddress(), surfaceOffsets,
-                                             isMediaFormatLayout);
+                                             isMediaFormatLayout, minArrayElement, renderTargetViewExtent);
 
-        NEO::setImageSurfaceStateDimensions<GfxFamily>(&surfaceState, imgInfo, __GMM_NO_CUBE_MAP, surfaceType);
+        NEO::setImageSurfaceStateDimensions<GfxFamily>(&surfaceState, imgInfo, __GMM_NO_CUBE_MAP, surfaceType, depth);
         surfaceState.setSurfaceMinLod(0u);
         surfaceState.setMipCountLod(0u);
         NEO::setMipTailStartLod<GfxFamily>(&surfaceState, gmm);
@@ -167,11 +167,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         imgInfoRedescirebed.qPitch = imgInfo.qPitch;
         redescribedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
+        uint32_t minArrayElement, renderTargetViewExtent, depth;
         NEO::setImageSurfaceState<GfxFamily>(&redescribedSurfaceState, imgInfoRedescirebed, gmm, *gmmHelper,
                                              __GMM_NO_CUBE_MAP, this->allocation->getGpuAddress(), surfaceOffsets,
-                                             desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12);
+                                             desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12, minArrayElement, renderTargetViewExtent);
 
-        NEO::setImageSurfaceStateDimensions<GfxFamily>(&redescribedSurfaceState, imgInfoRedescirebed, __GMM_NO_CUBE_MAP, surfaceType);
+        NEO::setImageSurfaceStateDimensions<GfxFamily>(&redescribedSurfaceState, imgInfoRedescirebed, __GMM_NO_CUBE_MAP, surfaceType, depth);
         redescribedSurfaceState.setSurfaceMinLod(0u);
         redescribedSurfaceState.setMipCountLod(0u);
         NEO::setMipTailStartLod<GfxFamily>(&redescribedSurfaceState, gmm);

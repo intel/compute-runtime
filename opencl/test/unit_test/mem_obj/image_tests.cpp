@@ -32,6 +32,7 @@
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mem_obj/image_compression_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_image.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
@@ -1881,4 +1882,16 @@ HWTEST2_F(MultiRootDeviceImageTest, givenHostPtrToCopyWhenImageIsCreatedWithMult
         EXPECT_EQ(2u, context.getRootDeviceIndices().size());
         EXPECT_EQ(1u, image->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     }
+}
+
+TEST(ImageTest, givenImageWhenTruePassedToSet3DUavOrRtvThenValueInImageIsSetToTrue) {
+    MockImageBase img;
+    img.setAs3DUavOrRtvImage(true);
+    EXPECT_TRUE(img.is3DUAVOrRTV);
+}
+
+TEST(ImageTest, givenImageWhenFalsePassedToSet3DUavOrRtvThenValueInImageIsSetToFalse) {
+    MockImageBase img;
+    img.setAs3DUavOrRtvImage(false);
+    EXPECT_FALSE(img.is3DUAVOrRTV);
 }

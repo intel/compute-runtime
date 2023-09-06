@@ -538,6 +538,10 @@ void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE 
 }
 
 template <typename Family>
+void EncodeSurfaceState<Family>::adjustDepthLimitations(R_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv) {
+}
+
+template <typename Family>
 void EncodeSurfaceState<Family>::encodeImplicitScalingParams(const EncodeSurfaceStateArgs &args) {}
 
 template <typename Family>

@@ -205,6 +205,7 @@ class Image : public MemObj {
     void fillImageRegion(size_t *region) const;
 
     static bool validateHandleType(MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
+    void setAs3DUavOrRtvImage(bool isUavOrRtv);
 
   protected:
     Image(Context *context,
@@ -244,6 +245,7 @@ class Image : public MemObj {
     uint32_t baseMipLevel = 0;
     uint32_t mipCount = 1;
     GMM_YUV_PLANE_ENUM plane = GMM_NO_PLANE;
+    bool is3DUAVOrRTV = false;
 
     static bool isValidSingleChannelFormat(const cl_image_format *imageFormat);
     static bool isValidIntensityFormat(const cl_image_format *imageFormat);

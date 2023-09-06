@@ -47,7 +47,12 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     imgInfo.qPitch = qPitch;
     imgInfo.surfaceFormat = &getSurfaceFormatInfo().surfaceFormat;
 
-    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, isNV12Image(&this->getImageFormat()));
+    uint32_t renderTargetViewExtent = 0;
+    uint32_t minArrayElement = 0;
+
+    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, isNV12Image(&this->getImageFormat()), minArrayElement, renderTargetViewExtent);
+
+    uint32_t depth = 0;
 
     if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
         // image1d_buffer is image1d created from buffer. The length of buffer could be larger
@@ -55,20 +60,22 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         SURFACE_STATE_BUFFER_LENGTH length = {0};
         length.length = static_cast<uint32_t>(getImageDesc().image_width - 1);
 
+        depth = static_cast<uint32_t>(length.surfaceState.depth + 1);
         surfaceState->setWidth(static_cast<uint32_t>(length.surfaceState.width + 1));
         surfaceState->setHeight(static_cast<uint32_t>(length.surfaceState.height + 1));
-        surfaceState->setDepth(static_cast<uint32_t>(length.surfaceState.depth + 1));
+        surfaceState->setDepth(depth);
         surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes));
         surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
     } else {
-        setImageSurfaceStateDimensions<GfxFamily>(surfaceState, imgInfo, cubeFaceIndex, surfaceType);
+        setImageSurfaceStateDimensions<GfxFamily>(surfaceState, imgInfo, cubeFaceIndex, surfaceType, depth);
         if (setAsMediaBlockImage) {
             setWidthForMediaBlockSurfaceState<GfxFamily>(surfaceState, imgInfo);
         }
     }
 
+    uint32_t mipCount = this->mipCount > 0 ? this->mipCount - 1 : 0;
     surfaceState->setSurfaceMinLod(this->baseMipLevel + mipLevel);
-    surfaceState->setMipCountLod((this->mipCount > 0) ? (this->mipCount - 1) : 0);
+    surfaceState->setMipCountLod(mipCount);
     setMipTailStartLod<GfxFamily>(surfaceState, gmm);
 
     cl_channel_order imgChannelOrder = getSurfaceFormatInfo().oclImageFormat.image_channel_order;
@@ -101,6 +108,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     appendSurfaceStateDepthParams(surfaceState, gmm);
     EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer(),
                                                                 this->plane);
+    EncodeSurfaceState<GfxFamily>::adjustDepthLimitations(surfaceState, minArrayElement, renderTargetViewExtent, depth, mipCount, is3DUAVOrRTV);
     appendSurfaceStateParams(surfaceState, rootDeviceIndex, useGlobalAtomics);
     appendSurfaceStateExt(surfaceState);
 }

@@ -194,6 +194,10 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
             return nullptr;
         }
     }
+    bool is3DUavOrRtv = false;
+    if (textureDesc.BindFlags & D3DBindFLags::D3D11_BIND_RENDER_TARGET || textureDesc.BindFlags & D3DBindFLags::D3D11_BIND_UNORDERED_ACCESS) {
+        is3DUavOrRtv = true;
+    }
     if (alloc == nullptr) {
         err.set(CL_OUT_OF_HOST_MEMORY);
         return nullptr;
@@ -219,7 +223,9 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);
 
-    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    auto image = Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    image->setAs3DUavOrRtvImage(is3DUavOrRtv);
+    return image;
 }
 
 template <typename D3D>

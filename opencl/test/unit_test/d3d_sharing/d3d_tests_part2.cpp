@@ -19,6 +19,7 @@
 #include "opencl/source/sharings/d3d/d3d_surface.h"
 #include "opencl/source/sharings/d3d/d3d_texture.h"
 #include "opencl/test/unit_test/fixtures/d3d_test_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_image.h"
 
 #include "gtest/gtest.h"
 
@@ -351,6 +352,33 @@ TYPED_TEST_P(D3DTests, givenSharedNtHandleFlagWhenCreate3dTextureThenGetNtHandle
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
     EXPECT_EQ(0u, this->mockSharingFcns->getSharedHandleCalled);
     EXPECT_EQ(1u, this->mockSharingFcns->getSharedNTHandleCalled);
+}
+
+TYPED_TEST_P(D3DTests, givenTextureDescWhenUnorderedAccessViewEnabledThenIsUavOrRtvIsSet) {
+    this->mockSharingFcns->mockTexture3dDesc.BindFlags |= D3DBindFLags::D3D11_BIND_UNORDERED_ACCESS;
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
+
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
+    EXPECT_TRUE(reinterpret_cast<MockImageBase *>(image.get())->is3DUAVOrRTV);
+}
+
+TYPED_TEST_P(D3DTests, givenTextureDescWhenRenderTargetViewEnabledThenIsUavOrRtvIsSet) {
+    this->mockSharingFcns->mockTexture3dDesc.BindFlags |= D3DBindFLags::D3D11_BIND_RENDER_TARGET;
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
+
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
+    EXPECT_TRUE(reinterpret_cast<MockImageBase *>(image.get())->is3DUAVOrRTV);
+}
+
+TYPED_TEST_P(D3DTests, givenTextureDescWhenBindFlagsEqZeroThenIsUavOrRtvIsNotSet) {
+    this->mockSharingFcns->mockTexture3dDesc.BindFlags = 0;
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
+
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
+    EXPECT_FALSE(reinterpret_cast<MockImageBase *>(image.get())->is3DUAVOrRTV);
 }
 
 TYPED_TEST_P(D3DTests, WhenFillingBufferDescThenBufferContentIsCorrect) {
@@ -702,7 +730,10 @@ REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode,
                            givenFormatNotSupportedByDxWhenGettingSupportedFormatsThenOnlySupportedFormatsAreReturned,
                            givenUnsupportedFormatWhenCreatingTexture2dThenInvalidImageFormatDescriptorIsReturned,
-                           givenUnsupportedFormatWhenCreatingTexture3dThenInvalidImageFormatDescriptorIsReturned);
+                           givenUnsupportedFormatWhenCreatingTexture3dThenInvalidImageFormatDescriptorIsReturned,
+                           givenTextureDescWhenUnorderedAccessViewEnabledThenIsUavOrRtvIsSet,
+                           givenTextureDescWhenRenderTargetViewEnabledThenIsUavOrRtvIsSet,
+                           givenTextureDescWhenBindFlagsEqZeroThenIsUavOrRtvIsNotSet);
 
 INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DTests, D3DTypes);
 

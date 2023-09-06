@@ -39,7 +39,8 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true);
+    uint32_t minArrayElement, renderTargetViewExtent;
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true, minArrayElement, renderTargetViewExtent);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
@@ -73,7 +74,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     surfaceState = std::make_unique<char[]>(size);
     castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, nullptr, *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, false);
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, nullptr, *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, false, minArrayElement, renderTargetViewExtent);
 
     EXPECT_EQ(castSurfaceState->getSurfaceHorizontalAlignment(), RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT);
     EXPECT_EQ(castSurfaceState->getSurfaceVerticalAlignment(), RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
@@ -91,7 +92,8 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
     typename FamilyType::RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D;
 
-    setImageSurfaceStateDimensions<FamilyType>(castSurfaceState, imageInfo, cubeFaceIndex, surfaceType);
+    uint32_t depth;
+    setImageSurfaceStateDimensions<FamilyType>(castSurfaceState, imageInfo, cubeFaceIndex, surfaceType, depth);
 
     EXPECT_EQ(castSurfaceState->getWidth(), static_cast<uint32_t>(imageInfo.imgDesc.imageWidth));
     EXPECT_EQ(castSurfaceState->getHeight(), static_cast<uint32_t>(imageInfo.imgDesc.imageHeight));
@@ -129,7 +131,8 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsEnabledThenArrayFlag
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true);
+    uint32_t minArrayElement, renderTargetViewExtent;
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true, minArrayElement, renderTargetViewExtent);
     EXPECT_TRUE(castSurfaceState->getSurfaceArray());
 }
 
@@ -151,8 +154,9 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsDisabledThenArrayFla
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
+    uint32_t minArrayElement, renderTargetViewExtent;
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true);
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true, minArrayElement, renderTargetViewExtent);
     EXPECT_FALSE(castSurfaceState->getSurfaceArray());
 }
 
@@ -174,8 +178,9 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsEnabledT
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
+    uint32_t minArrayElement, renderTargetViewExtent;
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true);
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true, minArrayElement, renderTargetViewExtent);
     EXPECT_TRUE(castSurfaceState->getSurfaceArray());
 }
 
@@ -197,8 +202,9 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsDisabled
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
+    uint32_t minArrayElement, renderTargetViewExtent;
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true);
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true, minArrayElement, renderTargetViewExtent);
     EXPECT_FALSE(castSurfaceState->getSurfaceArray());
 }
 
@@ -220,8 +226,9 @@ HWTEST_F(ImageSurfaceStateTests, givenImage1DWhen2dImageWAIsEnabledThenArrayFlag
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
+    uint32_t minArrayElement, renderTargetViewExtent;
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true);
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true, minArrayElement, renderTargetViewExtent);
     EXPECT_FALSE(castSurfaceState->getSurfaceArray());
 }
 
