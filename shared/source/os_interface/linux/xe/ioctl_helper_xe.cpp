@@ -351,7 +351,7 @@ void IoctlHelperXe::getTopologyData(uint32_t nTiles, std::vector<std::bitset<8>>
 
         // pick max config
         topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, subSliceCountPerTile);
-        topologyData.maxEuCount = std::max(topologyData.maxEuCount, euPerDssPerTile * subSliceCountPerTile);
+        topologyData.maxEuPerSubSlice = std::max(topologyData.maxEuPerSubSlice, euPerDssPerTile);
     }
 
     topologyData.sliceCount = 1;

@@ -28,7 +28,7 @@ TEST(DrmQueryTopologyTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSe
 
     EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
     EXPECT_EQ(drm.storedSSVal / drm.storedSVal, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drm.storedEUVal / drm.storedSSVal, topologyData.maxEuCount);
+    EXPECT_EQ(drm.storedEUVal / drm.storedSSVal, topologyData.maxEuPerSubSlice);
 }
 
 TEST(DrmQueryTopologyTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingReturned) {

@@ -137,7 +137,7 @@ TEST_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology
 
     EXPECT_EQ(drmMock->storedSVal, topologyData.maxSliceCount);
     EXPECT_EQ(drmMock->storedSSVal / drmMock->storedSVal, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuCount);
+    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuPerSubSlice);
 }
 
 TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQueryTopology) {
@@ -156,7 +156,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQ
 
     EXPECT_EQ(drmMock->storedSVal, topologyData.maxSliceCount);
     EXPECT_EQ(drmMock->storedSSVal / drmMock->storedSVal, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuCount);
+    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuPerSubSlice);
 }
 
 TEST_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl) {
@@ -174,7 +174,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl) {
 
     EXPECT_EQ(drmMock->queryComputeSlicesSCount, topologyData.maxSliceCount);
     EXPECT_EQ(drmMock->queryComputeSlicesSSCount / drmMock->queryComputeSlicesSCount, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEuCount);
+    EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEuPerSubSlice);
 }
 
 TEST_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback) {
@@ -193,7 +193,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback) {
 
     EXPECT_EQ(drmMock->storedSVal, topologyData.maxSliceCount);
     EXPECT_EQ(drmMock->storedSSVal / drmMock->storedSVal, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuCount);
+    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuPerSubSlice);
 }
 
 TEST_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback) {
@@ -212,7 +212,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback) {
 
     EXPECT_EQ(drmMock->storedSVal, topologyData.maxSliceCount);
     EXPECT_EQ(drmMock->storedSSVal / drmMock->storedSVal, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuCount);
+    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuPerSubSlice);
 }
 
 TEST_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallback) {
@@ -231,7 +231,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallba
 
     EXPECT_EQ(drmMock->storedSVal, topologyData.maxSliceCount);
     EXPECT_EQ(drmMock->storedSSVal / drmMock->storedSVal, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuCount);
+    EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEuPerSubSlice);
 }
 
 TEST_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue) {
@@ -248,7 +248,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue) 
 
     EXPECT_EQ(drmMock->queryComputeSlicesSCount, topologyData.maxSliceCount);
     EXPECT_EQ(drmMock->queryComputeSlicesSSCount / drmMock->queryComputeSlicesSCount, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEuCount);
+    EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEuPerSubSlice);
 }
 
 TEST_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrectMappingsReturnedForBothDeviceIndexes) {

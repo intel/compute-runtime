@@ -412,7 +412,7 @@ bool IoctlHelper::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopo
 
     TopologyMapping mapping;
     auto retVal = this->translateTopologyInfo(topologyInfo, topologyData, mapping);
-    topologyData.maxEuCount = topologyInfo->maxEusPerSubslice;
+    topologyData.maxEuPerSubSlice = topologyInfo->maxEusPerSubslice;
 
     topologyMap.clear();
     topologyMap[0] = mapping;

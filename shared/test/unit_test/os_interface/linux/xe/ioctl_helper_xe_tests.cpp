@@ -885,7 +885,7 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
     EXPECT_EQ(6, topologyData.maxSubSliceCount);
 
     EXPECT_EQ(96, topologyData.euCount);
-    EXPECT_EQ(96, topologyData.maxEuCount);
+    EXPECT_EQ(16, topologyData.maxEuPerSubSlice);
 
     // verify topology map
     std::vector<int> expectedSliceIndices{0};
@@ -931,7 +931,7 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     EXPECT_EQ(64, topologyData.maxSubSliceCount);
 
     EXPECT_EQ(512, topologyData.euCount);
-    EXPECT_EQ(512, topologyData.maxEuCount);
+    EXPECT_EQ(8, topologyData.maxEuPerSubSlice);
 
     // verify topology map
     std::vector<int> expectedSliceIndices = {0};
@@ -984,7 +984,7 @@ TEST(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResu
     EXPECT_EQ(64, topologyData.maxSubSliceCount);
 
     EXPECT_EQ(512, topologyData.euCount);
-    EXPECT_EQ(512, topologyData.maxEuCount);
+    EXPECT_EQ(8, topologyData.maxEuPerSubSlice);
 
     // verify topology map
     for (auto tileId : {0u, 1u}) {
@@ -1043,7 +1043,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTopo
     EXPECT_EQ(64, topologyData.maxSubSliceCount);
 
     EXPECT_EQ(256, topologyData.euCount);
-    EXPECT_EQ(512, topologyData.maxEuCount);
+    EXPECT_EQ(8, topologyData.maxEuPerSubSlice);
 
     // verify topology map
     constexpr uint32_t nTiles = 2;
@@ -1107,7 +1107,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopolog
     EXPECT_EQ(32, topologyData.maxSubSliceCount);
 
     EXPECT_EQ(256, topologyData.euCount);
-    EXPECT_EQ(256, topologyData.maxEuCount);
+    EXPECT_EQ(8, topologyData.maxEuPerSubSlice);
 
     // verify topology map
 
