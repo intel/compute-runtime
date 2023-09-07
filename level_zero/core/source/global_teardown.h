@@ -12,8 +12,7 @@
 
 namespace L0 {
 using zelSetDriverTeardown_fn = ze_result_t (*)();
-static const std::string loaderLibraryFilename = "ze_loader";
 
 void globalDriverTeardown();
-ze_result_t setDriverTeardownHandleInLoader(std::string loaderLibraryName);
+ze_result_t setDriverTeardownHandleInLoader(const char *);
 } // namespace L0

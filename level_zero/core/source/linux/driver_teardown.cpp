@@ -14,10 +14,10 @@
 
 namespace L0 {
 
-ze_result_t setDriverTeardownHandleInLoader(std::string loaderLibraryName) {
+ze_result_t setDriverTeardownHandleInLoader(const char *loaderLibraryName) {
     if (L0::LevelZeroDriverInitialized) {
         ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-        std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(loaderLibraryName.c_str())};
+        std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(loaderLibraryName)};
         if (loaderLibrary) {
             zelSetDriverTeardown_fn setDriverTeardown = reinterpret_cast<zelSetDriverTeardown_fn>(loaderLibrary->getProcAddress("zelSetDriverTeardown"));
             if (setDriverTeardown) {
@@ -33,7 +33,6 @@ ze_result_t setDriverTeardownHandleInLoader(std::string loaderLibraryName) {
 } // namespace L0
 
 void __attribute__((destructor)) driverHandleDestructor() {
-    std::string loaderLibraryName = "lib" + L0::loaderLibraryFilename + ".so.1";
-    L0::setDriverTeardownHandleInLoader(loaderLibraryName);
+    L0::setDriverTeardownHandleInLoader("libze_loader.so.1");
     L0::globalDriverTeardown();
 }

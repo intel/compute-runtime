@@ -14,11 +14,11 @@
 
 namespace L0 {
 
-ze_result_t setDriverTeardownHandleInLoader(std::string loaderLibraryName) {
+ze_result_t setDriverTeardownHandleInLoader(const char *loaderLibraryName) {
     if (L0::LevelZeroDriverInitialized) {
         HMODULE handle = nullptr;
         ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-        handle = GetModuleHandleA(loaderLibraryName.c_str());
+        handle = GetModuleHandleA(loaderLibraryName);
         if (handle) {
             zelSetDriverTeardown_fn setDriverTeardown = reinterpret_cast<zelSetDriverTeardown_fn>(GetProcAddress(handle, "zelSetDriverTeardown"));
             if (setDriverTeardown) {
@@ -35,8 +35,7 @@ ze_result_t setDriverTeardownHandleInLoader(std::string loaderLibraryName) {
 
 BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     if (fdwReason == DLL_PROCESS_DETACH) {
-        std::string loaderLibraryName = L0::loaderLibraryFilename + ".dll";
-        L0::setDriverTeardownHandleInLoader(loaderLibraryName);
+        L0::setDriverTeardownHandleInLoader("ze_loader.dll");
         L0::globalDriverTeardown();
         if (L0::GlobalOsSysmanDriver != nullptr) {
             delete L0::GlobalOsSysmanDriver;
