@@ -36,6 +36,5 @@ class SettingsReader {
     virtual const char *appSpecificLocation(const std::string &name) = 0;
     static const char *settingsFileName;
     static const char *neoSettingsFileName;
-    MOCKABLE_VIRTUAL char *getenv(const char *settingName);
 };
 }; // namespace NEO

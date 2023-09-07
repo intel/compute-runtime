@@ -40,13 +40,12 @@ int64_t EnvironmentVariableReader::getSetting(const char *settingName, int64_t d
 
     const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
     const std::vector<NEO::DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
-    char neoFinal[MAX_NEO_KEY_LENGTH];
     uint32_t i = 0;
 
     for (const auto &prefix : prefixString) {
-        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);
-        strcpy_s(neoFinal + strlen(prefix), strlen(settingName) + 1, settingName);
-        envValue = IoFunctions::getenvPtr(neoFinal);
+        std::string neoKey = prefix;
+        neoKey += settingName;
+        envValue = IoFunctions::getenvPtr(neoKey.c_str());
         if (envValue) {
             value = atoll(envValue);
             type = prefixType[i];
@@ -77,12 +76,11 @@ std::string EnvironmentVariableReader::getSetting(const char *settingName, const
     const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
     const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
 
-    char neoFinal[MAX_NEO_KEY_LENGTH];
     uint32_t i = 0;
     for (const auto &prefix : prefixString) {
-        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);
-        strcpy_s(neoFinal + strlen(prefix), strlen(settingName) + 1, settingName);
-        envValue = IoFunctions::getenvPtr(neoFinal);
+        std::string neoKey = prefix;
+        neoKey += settingName;
+        envValue = IoFunctions::getenvPtr(neoKey.c_str());
         if (envValue) {
             keyValue.assign(envValue);
             type = prefixType[i];

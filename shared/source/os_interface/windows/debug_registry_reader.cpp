@@ -21,10 +21,6 @@ SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string
     return new RegistryReader(userScope, regKey);
 }
 
-char *SettingsReader::getenv(const char *settingName) {
-    return IoFunctions::getenvPtr(settingName);
-}
-
 RegistryReader::RegistryReader(bool userScope, const std::string &regKey) : registryReadRootKey(regKey) {
     hkeyType = userScope ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
     setUpProcessName();
@@ -99,12 +95,11 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
         const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
         const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
 
-        char neoFinal[MAX_NEO_KEY_LENGTH];
         uint32_t i = 0;
         for (const auto &prefix : prefixString) {
-            strcpy_s(neoFinal, strlen(prefix) + 1, prefix);
-            strcpy_s(neoFinal + strlen(prefix), strlen(settingName) + 1, settingName);
-            envValue = getenv(neoFinal);
+            std::string neoKey = prefix;
+            neoKey += settingName;
+            envValue = IoFunctions::getenvPtr(neoKey.c_str());
             if (envValue) {
                 value = atoll(envValue);
                 type = prefixType[i];
@@ -121,7 +116,7 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
     int64_t value = defaultValue;
 
     if (!(getSettingIntCommon(settingName, value))) {
-        const char *envValue = getenv(settingName);
+        const char *envValue = IoFunctions::getenvPtr(settingName);
         if (envValue) {
             value = atoll(envValue);
         }
@@ -198,12 +193,11 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
         const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
         const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
 
-        char neoFinal[MAX_NEO_KEY_LENGTH];
         uint32_t i = 0;
         for (const auto &prefix : prefixString) {
-            strcpy_s(neoFinal, strlen(prefix) + 1, prefix);
-            strcpy_s(neoFinal + strlen(prefix), strlen(settingName) + 1, settingName);
-            envValue = strcmp(processName.c_str(), neoFinal) ? getenv(neoFinal) : getenv("cl_cache_dir");
+            std::string neoKey = prefix;
+            neoKey += settingName;
+            envValue = strcmp(processName.c_str(), neoKey.c_str()) ? IoFunctions::getenvPtr(neoKey.c_str()) : IoFunctions::getenvPtr("cl_cache_dir");
             if (envValue) {
                 keyValue.assign(envValue);
                 type = prefixType[i];
@@ -220,7 +214,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     std::string keyValue = value;
 
     if (!(getSettingStringCommon(settingName, keyValue))) {
-        const char *envValue = strcmp(processName.c_str(), settingName) ? getenv(settingName) : getenv("cl_cache_dir");
+        const char *envValue = strcmp(processName.c_str(), settingName) ? IoFunctions::getenvPtr(settingName) : IoFunctions::getenvPtr("cl_cache_dir");
         if (envValue) {
             keyValue.assign(envValue);
         }

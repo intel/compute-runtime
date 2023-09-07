@@ -172,8 +172,6 @@ class DebugSettingsManager {
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
 
-#define MAX_NEO_KEY_LENGTH 256
-
 #define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
     NEO::DebugManager.logLazyEvaluateArgs([&] {                    \
         char temp[4000];                                           \

@@ -89,30 +89,24 @@ void DebugSettingsManager<DebugLevel>::getStringWithFlags(std::string &allFlags,
     std::ostringstream changedFlagsStream;
     changedFlagsStream.str("");
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                               \
-    {                                                                                                                           \
-        char neoFinal[MAX_NEO_KEY_LENGTH];                                                                                      \
-        const char *prefix = convPrefixToString(flags.variableName.getPrefixType());                                            \
-        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);                                                                         \
-        strcpy_s(neoFinal + strlen(prefix), strlen(#variableName) + 1, #variableName);                                          \
-        const char *neoKey = neoFinal;                                                                                          \
-        allFlagsStream << getNonReleaseKeyName(neoKey) << " = " << flags.variableName.get() << '\n';                            \
-        dumpNonDefaultFlag<dataType>(getNonReleaseKeyName(neoKey), flags.variableName.get(), defaultValue, changedFlagsStream); \
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                 \
+    {                                                                                                             \
+        std::string neoKey = convPrefixToString(flags.variableName.getPrefixType());                              \
+        neoKey += getNonReleaseKeyName(#variableName);                                                            \
+        allFlagsStream << neoKey.c_str() << " = " << flags.variableName.get() << '\n';                            \
+        dumpNonDefaultFlag<dataType>(neoKey.c_str(), flags.variableName.get(), defaultValue, changedFlagsStream); \
     }
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
 #undef DECLARE_DEBUG_VARIABLE
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                         \
-    {                                                                                                     \
-        char neoFinal[MAX_NEO_KEY_LENGTH];                                                                \
-        const char *prefix = convPrefixToString(flags.variableName.getPrefixType());                      \
-        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);                                                   \
-        strcpy_s(neoFinal + strlen(prefix), strlen(#variableName) + 1, #variableName);                    \
-        const char *neoKey = neoFinal;                                                                    \
-        allFlagsStream << neoKey << " = " << flags.variableName.get() << '\n';                            \
-        dumpNonDefaultFlag<dataType>(neoKey, flags.variableName.get(), defaultValue, changedFlagsStream); \
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                 \
+    {                                                                                                             \
+        std::string neoKey = convPrefixToString(flags.variableName.getPrefixType());                              \
+        neoKey += #variableName;                                                                                  \
+        allFlagsStream << neoKey.c_str() << " = " << flags.variableName.get() << '\n';                            \
+        dumpNonDefaultFlag<dataType>(neoKey.c_str(), flags.variableName.get(), defaultValue, changedFlagsStream); \
     }
 #include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE

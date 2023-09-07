@@ -45,12 +45,11 @@ int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultV
     const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
     const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
 
-    char neoFinal[MAX_NEO_KEY_LENGTH];
     uint32_t i = 0;
     for (const auto &prefix : prefixString) {
-        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);
-        strcpy_s(neoFinal + strlen(prefix), strlen(settingName) + 1, settingName);
-        std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(neoFinal));
+        std::string neoKey = prefix;
+        neoKey += settingName;
+        std::map<std::string, std::string>::iterator it = settingStringMap.find(neoKey);
         if (it != settingStringMap.end()) {
             value = strtoll(it->second.c_str(), nullptr, 0);
             type = prefixType[i];
@@ -87,12 +86,11 @@ std::string SettingsFileReader::getSetting(const char *settingName, const std::s
     const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
     const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
 
-    char neoFinal[MAX_NEO_KEY_LENGTH];
     uint32_t i = 0;
     for (const auto &prefix : prefixString) {
-        strcpy_s(neoFinal, strlen(prefix) + 1, prefix);
-        strcpy_s(neoFinal + strlen(prefix), strlen(settingName) + 1, settingName);
-        std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(neoFinal));
+        std::string neoKey = prefix;
+        neoKey += settingName;
+        std::map<std::string, std::string>::iterator it = settingStringMap.find(neoKey);
         if (it != settingStringMap.end()) {
             returnValue = it->second;
             type = prefixType[i];

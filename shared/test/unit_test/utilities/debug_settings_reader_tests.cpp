@@ -114,9 +114,3 @@ TEST(SettingsReader, GivenFalseWhenPrintingDebugStringThenNoOutput) {
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
 }
-
-TEST(SettingsReader, givenNonExistingEnvVarWhenGettingEnvThenNullptrIsReturned) {
-    MockSettingsReader reader;
-    auto value = reader.getenv("ThisEnvVarDoesNotExist");
-    EXPECT_EQ(nullptr, value);
-}
