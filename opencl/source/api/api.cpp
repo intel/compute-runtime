@@ -5737,30 +5737,31 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
                                     cl_int *errcodeRet) {
     TRACING_ENTER(ClCloneKernel, &sourceKernel, &errcodeRet);
     MultiDeviceKernel *pSourceMultiDeviceKernel = nullptr;
-    MultiDeviceKernel *pClonedMultiDeviceKernel = nullptr;
+    cl_kernel clonedMultiDeviceKernel = nullptr;
 
     auto retVal = validateObjects(withCastToInternal(sourceKernel, &pSourceMultiDeviceKernel));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("sourceKernel", sourceKernel);
 
     if (CL_SUCCESS == retVal) {
-        pClonedMultiDeviceKernel = MultiDeviceKernel::create(pSourceMultiDeviceKernel->getProgram(),
-                                                             pSourceMultiDeviceKernel->getKernelInfos(),
-                                                             retVal);
-        UNRECOVERABLE_IF((pClonedMultiDeviceKernel == nullptr) || (retVal != CL_SUCCESS));
+        clonedMultiDeviceKernel = MultiDeviceKernel::create(pSourceMultiDeviceKernel->getProgram(),
+                                                            pSourceMultiDeviceKernel->getKernelInfos(),
+                                                            retVal);
+        UNRECOVERABLE_IF((clonedMultiDeviceKernel == nullptr) || (retVal != CL_SUCCESS));
 
+        auto pClonedMultiDeviceKernel = castToObject<MultiDeviceKernel>(clonedMultiDeviceKernel);
         retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel);
     }
 
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    if (pClonedMultiDeviceKernel != nullptr) {
-        gtpinNotifyKernelCreate(pClonedMultiDeviceKernel);
+    if (clonedMultiDeviceKernel != nullptr) {
+        gtpinNotifyKernelCreate(clonedMultiDeviceKernel);
     }
 
-    TRACING_EXIT(ClCloneKernel, (cl_kernel *)&pClonedMultiDeviceKernel);
-    return pClonedMultiDeviceKernel;
+    TRACING_EXIT(ClCloneKernel, &clonedMultiDeviceKernel);
+    return clonedMultiDeviceKernel;
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(cl_command_queue commandQueue,
