@@ -4291,7 +4291,7 @@ TEST(OclocCompile, givenFormatFlagWithKnownFormatPassedThenEnforceSpecifiedForma
     EXPECT_TRUE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
 }
 
-TEST(OclocCompile, givenNoFormatFlagSpecifiedWhenOclocInitializeThenZebinFormatIsEnforcedByDefault) {
+HWTEST2_F(MockOfflineCompilerTests, givenNoFormatFlagSpecifiedWhenOclocInitializeThenZebinFormatIsEnforcedByDefault, HasOclocZebinFormatEnforced) {
     MockOfflineCompiler ocloc;
 
     std::vector<std::string> argvNoFormatFlag = {
@@ -4299,7 +4299,9 @@ TEST(OclocCompile, givenNoFormatFlagSpecifiedWhenOclocInitializeThenZebinFormatI
         "-q",
         "-file",
         clFiles + "copybuffer.cl",
-        "-spv_only"};
+        "-spv_only",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
 
     int retVal = ocloc.initialize(argvNoFormatFlag.size(), argvNoFormatFlag);
     ASSERT_EQ(0, retVal);

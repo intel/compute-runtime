@@ -85,6 +85,10 @@ RKLTEST_F(RklProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCo
     EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::RKL);
 }
 
+RKLTEST_F(RklProductHelper, givenCompilerProductHelperWhenGettingOclocEnforceZebinFormatThenExpectTrue) {
+    EXPECT_TRUE(compilerProductHelper->oclocEnforceZebinFormat());
+}
+
 RKLTEST_F(RklProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }

@@ -28,6 +28,11 @@ uint32_t CompilerProductHelperHw<IGFX_TIGERLAKE_LP>::getDefaultHwIpVersion() con
     return AOT::TGL;
 }
 
+template <>
+bool CompilerProductHelperHw<IGFX_TIGERLAKE_LP>::oclocEnforceZebinFormat() const {
+    return true;
+}
+
 static EnableCompilerProductHelper<IGFX_TIGERLAKE_LP> enableCompilerProductHelperTGLLP;
 
 } // namespace NEO

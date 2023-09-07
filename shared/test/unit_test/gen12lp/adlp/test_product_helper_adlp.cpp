@@ -80,6 +80,11 @@ ADLPTEST_F(AdlpProductHelper, givenCompilerProductHelperWhenGetProductConfigThen
     EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::ADL_P);
 }
 
+ADLPTEST_F(AdlpProductHelper, givenCompilerProductHelperWhenGettingOclocEnforceZebinFormatThenExpectTrue) {
+
+    EXPECT_TRUE(compilerProductHelper->oclocEnforceZebinFormat());
+}
+
 ADLPTEST_F(AdlpProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
 
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());

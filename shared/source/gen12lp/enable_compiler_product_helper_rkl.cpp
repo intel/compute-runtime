@@ -33,6 +33,11 @@ uint32_t CompilerProductHelperHw<IGFX_ROCKETLAKE>::getDefaultHwIpVersion() const
     return AOT::RKL;
 }
 
+template <>
+bool CompilerProductHelperHw<IGFX_ROCKETLAKE>::oclocEnforceZebinFormat() const {
+    return true;
+}
+
 static EnableCompilerProductHelper<IGFX_ROCKETLAKE> enableCompilerProductHelperRKL;
 
 } // namespace NEO

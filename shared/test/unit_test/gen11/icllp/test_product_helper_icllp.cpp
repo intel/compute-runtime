@@ -102,6 +102,10 @@ ICLLPTEST_F(IcllpProductHelper, givenCompilerProductHelperWhenGetProductConfigTh
     EXPECT_EQ(compilerProductHelper->getHwIpVersion(*defaultHwInfo), AOT::ICL);
 }
 
+ICLLPTEST_F(IcllpProductHelper, givenCompilerProductHelperWhenGettingOclocEnforceZebinFormatThenExpectTrue) {
+    EXPECT_TRUE(compilerProductHelper->oclocEnforceZebinFormat());
+}
+
 ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
 
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());

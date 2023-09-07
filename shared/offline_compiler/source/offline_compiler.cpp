@@ -619,6 +619,12 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         return retVal;
     }
 
+    if (formatToEnforce.empty() &&
+        compilerProductHelper &&
+        compilerProductHelper->oclocEnforceZebinFormat()) {
+        formatToEnforce = "zebin";
+    }
+
     if (!formatToEnforce.empty()) {
         enforceFormat(formatToEnforce);
     }
@@ -1096,7 +1102,6 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   --format                                  Enforce given binary format. The possible values are:
                                             --format zebin - Enforce generating zebin binary
                                             --format patchtokens - Enforce generating patchtokens (legacy) binary.
-                                            Zebin format is enforced by default.
 
   -config                                   Target hardware info config for a single device,
                                             e.g 1x4x8.

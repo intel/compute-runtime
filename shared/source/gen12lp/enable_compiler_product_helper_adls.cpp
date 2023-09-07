@@ -28,6 +28,11 @@ uint32_t CompilerProductHelperHw<IGFX_ALDERLAKE_S>::getDefaultHwIpVersion() cons
     return AOT::ADL_S;
 }
 
+template <>
+bool CompilerProductHelperHw<IGFX_ALDERLAKE_S>::oclocEnforceZebinFormat() const {
+    return true;
+}
+
 static EnableCompilerProductHelper<IGFX_ALDERLAKE_S> enableCompilerProductHelperADLS;
 
 } // namespace NEO

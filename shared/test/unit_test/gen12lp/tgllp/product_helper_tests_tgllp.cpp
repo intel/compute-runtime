@@ -239,3 +239,7 @@ TGLLPTEST_F(TgllpProductHelper, givenTgllpWhenObtainingBlitterPreferenceThenRetu
 TGLLPTEST_F(TgllpProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
     EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::TGL);
 }
+
+TGLLPTEST_F(TgllpProductHelper, givenCompilerProductHelperWhenGettingOclocEnforceZebinFormatThenExpectTrue) {
+    EXPECT_TRUE(compilerProductHelper->oclocEnforceZebinFormat());
+}

@@ -87,6 +87,13 @@ using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 using HasNoStatefulSupport = IsAnyGfxCores<IGFX_XE_HPC_CORE>;
 
+using HasOclocZebinFormatEnforced = IsAnyProducts<IGFX_ICELAKE_LP,
+                                                  IGFX_TIGERLAKE_LP,
+                                                  IGFX_ROCKETLAKE,
+                                                  IGFX_ALDERLAKE_S,
+                                                  IGFX_ALDERLAKE_P,
+                                                  IGFX_ALDERLAKE_N>;
+
 struct IsXeLpg {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {

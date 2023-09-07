@@ -28,6 +28,11 @@ uint32_t CompilerProductHelperHw<IGFX_ICELAKE_LP>::getDefaultHwIpVersion() const
     return AOT::ICL;
 }
 
+template <>
+bool CompilerProductHelperHw<IGFX_ICELAKE_LP>::oclocEnforceZebinFormat() const {
+    return true;
+}
+
 static EnableCompilerProductHelper<IGFX_ICELAKE_LP> enableCompilerProductHelperICLLP;
 
 } // namespace NEO
