@@ -415,6 +415,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupported
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->blitEnqueueAllowed());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned) {
 
     EXPECT_TRUE(productHelper->isTile64With3DSurfaceOnBCSSupported(pInHwInfo));

@@ -197,6 +197,10 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGettingEvictIfNecessary
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnFalse, IsXeLpg) {
+    EXPECT_FALSE(productHelper->blitEnqueueAllowed());
+}
+
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues, IsXeLpg) {
 
     EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());

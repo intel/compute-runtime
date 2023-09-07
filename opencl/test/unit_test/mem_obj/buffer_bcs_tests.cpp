@@ -162,6 +162,10 @@ HWTEST_F(NoBcsBufferTests, givenProductWithNoFullyBlitterSupportWhenCreatingBuff
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIsCalledThenUseBcsCsr) {
+    if (!device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed()) {
+        GTEST_SKIP();
+    }
+
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     auto mockCmdQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     auto bcsEngine = mockCmdQueue->bcsEngines[0];
