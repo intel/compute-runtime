@@ -368,6 +368,11 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::blitEnqueueAllowed() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
     return false;
 }

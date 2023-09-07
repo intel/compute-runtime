@@ -33,7 +33,7 @@ struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture 
             MockExecutionEnvironment mockExecutionEnvironment{};
             auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
 
-            if (!productHelper.isBlitterForImagesSupported()) {
+            if (!productHelper.isBlitterForImagesSupported() || !productHelper.blitEnqueueAllowed()) {
                 GTEST_SKIP();
             }
 
