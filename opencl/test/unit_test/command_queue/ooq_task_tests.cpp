@@ -388,29 +388,6 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisableddWhenEnquei
     EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
 }
 
-HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsAndMultiTileContextWhenEnqueuingBarrierWithWaitlistThenDcFlushSet) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        GTEST_SKIP();
-    }
-    commandStreamReceiver.setActivePartitions(2u);
-    commandStreamReceiver.staticWorkPartitioningEnabled = true;
-    EXPECT_TRUE(commandStreamReceiver.isMultiTileOperationEnabled());
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
-
-    const cl_uint numEventsInWaitList = 0;
-    const cl_event *eventWaitList = nullptr;
-    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
-        numEventsInWaitList,
-        eventWaitList,
-        nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
-    EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
-}
-
 HWTEST_F(OOQTaskTests, givenEnqueueMarkerWithWaitListWhenIsMarkerWithPostSyncWriteThenBcsTimestapLastBarrierToWaitForIsNotEmpty) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
