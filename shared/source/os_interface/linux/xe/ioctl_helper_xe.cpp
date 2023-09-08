@@ -489,6 +489,10 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
         }
         currentBank++;
     }
+    if (memoryBanks == 0) {
+        auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
+        memoryInstances.set(regionClassAndInstance.memoryInstance);
+    }
     create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::GemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);

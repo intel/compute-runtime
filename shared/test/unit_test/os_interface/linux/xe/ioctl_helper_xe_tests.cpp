@@ -348,6 +348,31 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenP
     EXPECT_EQ(handle, testValueGemCreate);
 }
 
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroThenProperValuesSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(0);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    uint64_t size = 1234;
+    uint32_t memoryBanks = 0u;
+
+    EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
+    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
+    EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
+
+    EXPECT_EQ(size, drm.createParamsSize);
+    EXPECT_EQ(1u, drm.createParamsFlags);
+
+    // dummy mock handle
+    EXPECT_EQ(handle, drm.createParamsHandle);
+    EXPECT_EQ(handle, testValueGemCreate);
+}
+
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenProperValuesSet) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
