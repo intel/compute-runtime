@@ -9,10 +9,9 @@
 
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/debug_settings_reader.h"
-
-#include "opencl/source/os_interface/ocl_reg_path.h"
 
 #include "config.h"
 #include "os_inc.h"
@@ -27,18 +26,15 @@ std::string ClCacheDir = "cl_cache_dir";
 
 CompilerCacheConfig getDefaultCompilerCacheConfig() {
     CompilerCacheConfig ret;
+    NEO::EnvironmentVariableReader envReader;
 
-    std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(false, oclRegPath));
-
-    auto cachePersistentKey = oclRegPath + NeoCachePersistent;
-
-    if (settingsReader->getSetting(settingsReader->appSpecificLocation(cachePersistentKey), defaultCacheEnabled()) != 0) {
+    if (envReader.getSetting(NeoCachePersistent.c_str(), defaultCacheEnabled()) != 0) {
         ret.enabled = true;
         std::string emptyString = "";
-        ret.cacheDir = settingsReader->getSetting(settingsReader->appSpecificLocation(NeoCacheDir), emptyString);
+        ret.cacheDir = envReader.getSetting(NeoCacheDir.c_str(), emptyString);
 
         if (ret.cacheDir.empty()) {
-            if (!checkDefaultCacheDirSettings(ret.cacheDir, settingsReader.get())) {
+            if (!checkDefaultCacheDirSettings(ret.cacheDir, envReader)) {
                 ret.enabled = false;
                 return ret;
             }
@@ -51,7 +47,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         }
 
         ret.cacheFileExtension = ".cl_cache";
-        ret.cacheSize = static_cast<size_t>(settingsReader->getSetting(settingsReader->appSpecificLocation(NeoCacheMaxSize), static_cast<int64_t>(MemoryConstants::gigaByte)));
+        ret.cacheSize = static_cast<size_t>(envReader.getSetting(NeoCacheMaxSize.c_str(), static_cast<int64_t>(MemoryConstants::gigaByte)));
 
         if (ret.cacheSize == 0u) {
             ret.cacheSize = std::numeric_limits<size_t>::max();
@@ -60,7 +56,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         return ret;
     }
 
-    ret.cacheDir = settingsReader->getSetting(settingsReader->appSpecificLocation(ClCacheDir), static_cast<std::string>(CL_CACHE_LOCATION));
+    ret.cacheDir = envReader.getSetting(ClCacheDir.c_str(), static_cast<std::string>(CL_CACHE_LOCATION));
 
     if (NEO::SysCalls::pathExists(ret.cacheDir)) {
         ret.enabled = true;

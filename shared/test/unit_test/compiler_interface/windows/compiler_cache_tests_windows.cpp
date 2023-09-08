@@ -9,8 +9,8 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
-#include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -83,10 +83,9 @@ class CompilerCacheMockWindows : public CompilerCache {
 };
 
 TEST(CompilerCacheHelper, GivenHomeEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperDirectoryIsReturned) {
-    std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(false, ""));
-
+    NEO::EnvironmentVariableReader envReader;
     std::string cacheDir = "";
-    EXPECT_FALSE(checkDefaultCacheDirSettings(cacheDir, settingsReader.get()));
+    EXPECT_FALSE(checkDefaultCacheDirSettings(cacheDir, envReader));
 }
 
 namespace SysCalls {

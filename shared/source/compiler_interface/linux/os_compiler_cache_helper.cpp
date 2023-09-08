@@ -8,8 +8,8 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 
 #include "shared/source/helpers/path.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
-#include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include "os_inc.h"
@@ -44,12 +44,12 @@ bool createCompilerCachePath(std::string &cacheDir) {
     return false;
 }
 
-bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader) {
+bool checkDefaultCacheDirSettings(std::string &cacheDir, NEO::EnvironmentVariableReader &reader) {
     std::string emptyString = "";
-    cacheDir = reader->getSetting(reader->appSpecificLocation("XDG_CACHE_HOME"), emptyString);
+    cacheDir = reader.getSetting("XDG_CACHE_HOME", emptyString);
 
     if (cacheDir.empty()) {
-        cacheDir = reader->getSetting(reader->appSpecificLocation("HOME"), emptyString);
+        cacheDir = reader.getSetting("HOME", emptyString);
         if (cacheDir.empty()) {
             return false;
         }
@@ -73,7 +73,7 @@ bool checkDefaultCacheDirSettings(std::string &cacheDir, SettingsReader *reader)
 time_t getFileModificationTime(const std::string &path) {
     struct stat st;
     if (NEO::SysCalls::stat(path, &st) == 0) {
-        return st.st_mtim.tv_sec;
+        return st.st_mtime;
     }
     return 0;
 }

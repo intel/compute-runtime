@@ -88,12 +88,20 @@ BOOL getOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumb
     return GetOverlappedResult(hFile, lpOverlapped, lpNumberOfBytesTransferred, bWait);
 }
 
+BOOL createDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) {
+    return CreateDirectoryA(lpPathName, lpSecurityAttributes);
+}
+
 HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
     return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
 BOOL deleteFileA(LPCSTR lpFileName) {
     return DeleteFileA(lpFileName);
+}
+
+HRESULT shGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD dwFlags, HANDLE hToken, PWSTR *ppszPat) {
+    return SHGetKnownFolderPath(rfid, dwFlags, hToken, ppszPat);
 }
 
 BOOL readFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
@@ -118,6 +126,10 @@ BOOL findClose(HANDLE hFindFile) {
 
 DWORD getFileAttributesA(LPCSTR lpFileName) {
     return GetFileAttributesA(lpFileName);
+}
+
+void coTaskMemFree(LPVOID pv) {
+    CoTaskMemFree(pv);
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {

@@ -54,7 +54,7 @@ which improves performance.
 
 #### Official instructions
 
-##### Environment flags (Linux only)
+##### Environment flags
 
 NEO_CACHE_PERSISTENT - integer value to enable (1)/disable (0) on-disk binary cache. When enabled 
                        Neo will try to cache and reuse compiled binaries. Default is on.
@@ -68,7 +68,7 @@ NEO_CACHE_MAX_SIZE   - Cache eviction is triggered once total size of cached bin
 
 ##### How cl_cache works (Linux implementation)
 
-When persistent cache is enabled at first occurance driver create config.file which contains amount directory
+When persistent cache is enabled at first occurance driver create config.file which contains the directory
 size and is also entry point to caching mechanism.
 
 Each write to disk has following steps:
@@ -116,31 +116,51 @@ reuse previously cached kernel binaries instead of compiling kernels from source
 
 #### Official instructions (implementation pending)
 
+##### Environment flags
+
+NEO_CACHE_PERSISTENT - integer value to enable (1)/disable (0) on-disk binary cache. When enabled 
+                       Neo will try to cache and reuse compiled binaries. Default is off.
+
+NEO_CACHE_DIR        - path to persistent cache directory. Default values are %LocalAppData%\NEO\neo_compiler_cache
+                       if %LocalAppData% is found. If none of environment
+                       variables are set then on-disk cache is disabled.
+
+NEO_CACHE_MAX_SIZE   - Cache eviction is triggered once total size of cached binaries exceeds the value in
+                       bytes (default is 1GB). Set to 0 to disable size-based cache eviction.
+
+##### How cl_cache works (Windows implementation)
+
+When persistent cache is enabled at first occurance driver create config.file which contains the directory
+size and is also entry point to caching mechanism.
+
+Each write to disk has following steps:
+1. lock config.file (advisor lock)
+2. create temporary file
+3. write content to file
+4. rename temporary file to proper hash name
+
+Reads are unblocked
+
+Eviction mechanism is working as follow:
+1. lock config.file (advisor lock)
+2. windows system calls will gather all entries created by the driver
+3. check last usage time
+4. sort files
+5. remove least recently used files with 1/3 amount size
+
 #### Legacy approach
 
 ##### Windows configuration
 
-To set the new location of cl_cache directory - in the registry `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL`:
-1. add key `cl_cache_dir`
-1. add string value named <path_to_app> to `cl_cache_dir` key
-1. set data of added value to desired location of cl_cache
+To set the new location of cl_cache directory - add new environment variable:
+1. variable name: `cl_cache_dir`
+1. variable value: <destination_directory_for_cl_cache>
 
 ##### Example:
 
 If application is located in `C:\Program Files\application\app.exe`,
 by default cl_cache will be stored in `C:\Program Files\application\cl_cache`.
-If the new path should be `C:\Users\USER\Documents\application\cl_cache`,
-to subkey `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL\cl_cache_dir`
-add string value named `C:\Program Files\application\app.exe`
-with data `C:\Users\USER\Documents\application\cl_cache`.
-
-e.g.
-string value : `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL\cl_cache_dir\C:\Program Files\application\app.exe`
-data : `C:\Users\USER\Documents\application\cl_cache`
-
-Neo will look for string value (REG_SZ) `C:\Program Files\application\app.exe`
-in key `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL\cl_cache_dir`.
-Data of this string value will be used as new cl_cache dump directory for this specific application.
+If the new path should be `C:\Users\USER\Documents\application\cl_cache`, create a new environment variable named `cl_cache_dir` with the value `C:\Users\USER\Documents\application\cl_cache`.
 
 ##### What are the known limitations of cl_cache for Windows?
 

@@ -9,6 +9,8 @@
 
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 
+#include "os_inc.h"
+
 #include <cstdint>
 #include <vector>
 
@@ -36,6 +38,8 @@ const HKEY validHkey = reinterpret_cast<HKEY>(0);
 bool getNumThreadsCalled = false;
 bool mmapAllowExtendedPointers = false;
 bool pathExistsMock = false;
+extern const size_t pathExistsPathsSize = 5;
+std::string pathExistsPaths[pathExistsPathsSize];
 const char *driverStorePath = nullptr;
 
 size_t closeHandleCalled = 0u;
@@ -49,6 +53,9 @@ BOOL lockFileExResult = TRUE;
 size_t unlockFileExCalled = 0u;
 BOOL unlockFileExResult = TRUE;
 
+size_t createDirectoryACalled = 0u;
+BOOL createDirectoryAResult = TRUE;
+
 size_t createFileACalled = 0u;
 extern const size_t createFileAResultsCount = 4;
 HANDLE createFileAResults[createFileAResultsCount] = {nullptr, nullptr, nullptr, nullptr};
@@ -56,6 +63,10 @@ HANDLE createFileAResults[createFileAResultsCount] = {nullptr, nullptr, nullptr,
 size_t deleteFileACalled = 0u;
 const size_t deleteFilesCount = 4;
 std::string deleteFiles[deleteFilesCount];
+
+HRESULT shGetKnownFolderPathResult = 0;
+extern const size_t shGetKnownFolderSetPathSize = 50;
+wchar_t shGetKnownFolderSetPath[shGetKnownFolderSetPathSize];
 
 bool callBaseReadFileEx = true;
 BOOL readFileExResult = TRUE;
@@ -78,6 +89,25 @@ size_t getFileAttributesCalled = 0u;
 DWORD getFileAttributesResult = TRUE;
 
 bool pathExists(const std::string &path) {
+    std::string tempP1 = path;
+    if (!path.empty() && path.back() == PATH_SEPARATOR) {
+        tempP1.pop_back();
+    }
+
+    for (const auto &p : pathExistsPaths) {
+        if (p.empty())
+            continue;
+
+        std::string tempP2 = p;
+        if (tempP2.back() == PATH_SEPARATOR) {
+            tempP2.pop_back();
+        }
+
+        if (tempP1 == tempP2) {
+            return true;
+        }
+    }
+
     return pathExistsMock;
 }
 
@@ -145,6 +175,19 @@ BOOL getOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumb
     return TRUE;
 }
 
+BOOL createDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) {
+    createDirectoryACalled++;
+    if (createDirectoryAResult) {
+        for (size_t i = 0; i < pathExistsPathsSize; i++) {
+            if (pathExistsPaths[i].empty()) {
+                pathExistsPaths[i] = lpPathName;
+                break;
+            }
+        }
+    }
+    return createDirectoryAResult;
+}
+
 HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
     HANDLE retVal = nullptr;
 
@@ -162,6 +205,11 @@ BOOL deleteFileA(LPCSTR lpFileName) {
     }
     deleteFileACalled++;
     return TRUE;
+}
+
+HRESULT shGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD dwFlags, HANDLE hToken, PWSTR *ppszPat) {
+    *ppszPat = shGetKnownFolderSetPath;
+    return shGetKnownFolderPathResult;
 }
 
 BOOL readFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
@@ -208,6 +256,10 @@ BOOL findClose(HANDLE hFindFile) {
 DWORD getFileAttributesA(LPCSTR lpFileName) {
     getFileAttributesCalled++;
     return getFileAttributesResult;
+}
+
+void coTaskMemFree(LPVOID pv) {
+    return;
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
