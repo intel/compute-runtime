@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
@@ -965,6 +966,71 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenS
     zes_device_state_t deviceState;
     ze_result_t result = zesDeviceGetState(pSysmanDevice, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
+
+  public:
+    L0::Sysman::GlobalOperationsImp *pGlobalOperationsImp;
+    L0::Sysman::SysmanDeviceImp *device = nullptr;
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+        pGlobalOperationsImp = static_cast<L0::Sysman::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
+        device = pSysmanDeviceImp;
+    }
+
+    void TearDown() override {
+        SysmanDeviceFixture::TearDown();
+    }
+
+    void initGlobalOps() {
+        zes_device_state_t deviceState;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
+    }
+};
+
+HWTEST2_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceFDWhenRetrievingUuidThenDeviceFDIsVerifiedSuccessfully, IsXEHP) {
+    initGlobalOps();
+
+    static bool receivedValidDeviceFd = false;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsGetDevicePath)> mockGetDevicePath(&NEO::SysCalls::sysCallsGetDevicePath, [](int deviceFd, char *buf, size_t &bufSize) -> int {
+        if (deviceFd >= 0) {
+            receivedValidDeviceFd = true;
+        }
+        return 1;
+    });
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
+    EXPECT_EQ(true, receivedValidDeviceFd);
+    receivedValidDeviceFd = false;
+}
+
+struct MockGlobalOperationsProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
+    MockGlobalOperationsProductHelper() = default;
+    bool getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {
+        auto pDrm = driverModel->as<Drm>();
+        if (pDrm->getFileDescriptor() >= 0) {
+            return true;
+        }
+        return false;
+    }
+};
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceFDWhenRetrievingUuidThenValidFDIsVerifiedInProductHelper) {
+    initGlobalOps();
+
+    std::unique_ptr<ProductHelper> mockProductHelper = std::make_unique<MockGlobalOperationsProductHelper>();
+
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironmentRef();
+
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    bool result = pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
+    EXPECT_EQ(true, result);
+
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
 }
 
 } // namespace ult

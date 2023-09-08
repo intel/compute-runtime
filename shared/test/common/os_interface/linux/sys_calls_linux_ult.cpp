@@ -99,6 +99,7 @@ bool (*sysCallsPathExists)(const std::string &path) = nullptr;
 DIR *(*sysCallsOpendir)(const char *name) = nullptr;
 struct dirent *(*sysCallsReaddir)(DIR *dir) = nullptr;
 int (*sysCallsClosedir)(DIR *dir) = nullptr;
+int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize) = nullptr;
 
 int mkdir(const std::string &path) {
     if (sysCallsMkdir != nullptr) {
@@ -241,6 +242,10 @@ int readlink(const char *path, char *buf, size_t bufsize) {
 }
 
 int getDevicePath(int deviceFd, char *buf, size_t &bufSize) {
+    if (sysCallsGetDevicePath != nullptr) {
+        return sysCallsGetDevicePath(deviceFd, buf, bufSize);
+    }
+
     if (deviceFd <= 0) {
         return -1;
     }
