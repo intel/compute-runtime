@@ -259,7 +259,10 @@ bool LinuxGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::u
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     if (NEO::DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
         if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
+            auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
+            hwDeviceId->openFileDescriptor();
             this->uuid.isValid = productHelper.getUuid(driverModel, subDeviceCount, 0u, this->uuid.id);
+            hwDeviceId->closeFileDescriptor();
         }
     }
 
