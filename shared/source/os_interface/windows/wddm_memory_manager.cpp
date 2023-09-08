@@ -734,7 +734,7 @@ void WddmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
         if (lastFenceValue != 0u) {
             const auto &monitoredFence = static_cast<OsContextWin *>(engine.osContext)->getResidencyController().getMonitoredFence();
             const auto wddm = static_cast<OsContextWin *>(engine.osContext)->getWddm();
-            wddm->waitFromCpu(lastFenceValue, monitoredFence);
+            wddm->waitFromCpu(lastFenceValue, monitoredFence, engine.commandStreamReceiver->isAnyDirectSubmissionEnabled());
         }
     }
 }

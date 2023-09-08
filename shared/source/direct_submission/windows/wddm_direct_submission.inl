@@ -173,7 +173,7 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValueImpl() {
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionFence(uint64_t completionValue, MonitoredFence &fence) {
-    wddm->waitFromCpu(completionValue, fence);
+    wddm->waitFromCpu(completionValue, fence, false);
 }
 
 template <typename GfxFamily, typename Dispatcher>

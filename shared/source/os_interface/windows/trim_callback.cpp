@@ -133,7 +133,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
         uint64_t sizeToTrim = 0;
 
         if (lastFence > *monitoredFence.cpuAddress) {
-            this->wddm.waitFromCpu(lastFence, this->getMonitoredFence());
+            this->wddm.waitFromCpu(lastFence, this->getMonitoredFence(), false);
         }
 
         if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {

@@ -597,7 +597,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     EXPECT_TRUE(wddm->skipResourceCleanup());
     wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
     MonitoredFence monitoredFence = {};
-    EXPECT_TRUE(wddm->waitFromCpu(0, monitoredFence));
+    EXPECT_TRUE(wddm->waitFromCpu(0, monitoredFence, true));
     EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
 }
 
@@ -613,7 +613,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     monitoredFence.lastSubmittedFence = 1u;
     monitoredFence.cpuAddress = &fenceValue;
     monitoredFence.fenceHandle = fenceHandle;
-    EXPECT_TRUE(wddm->waitFromCpu(1u, monitoredFence));
+    EXPECT_TRUE(wddm->waitFromCpu(1u, monitoredFence, true));
     EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
 }
 
@@ -627,7 +627,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     MonitoredFence monitoredFence = {};
     monitoredFence.lastSubmittedFence = 0u;
     monitoredFence.cpuAddress = &fenceValue;
-    EXPECT_TRUE(wddm->waitFromCpu(1u, monitoredFence));
+    EXPECT_TRUE(wddm->waitFromCpu(1u, monitoredFence, true));
     EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
 }
 

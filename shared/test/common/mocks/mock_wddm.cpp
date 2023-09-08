@@ -249,12 +249,12 @@ GMM_GFX_PARTITIONING *WddmMock::getGfxPartitionPtr() {
     return &gfxPartition;
 }
 
-bool WddmMock::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) {
+bool WddmMock::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait) {
     waitFromCpuResult.called++;
     waitFromCpuResult.uint64ParamPassed = lastFenceValue;
     waitFromCpuResult.monitoredFence = &monitoredFence;
     if (callBaseWaitFromCpu) {
-        return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence);
+        return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence, busyWait);
     }
     return waitFromCpuResult.success = true;
 }

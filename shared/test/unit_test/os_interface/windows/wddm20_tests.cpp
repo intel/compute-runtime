@@ -877,7 +877,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(10, osContext->getResidencyController().getMonitoredFence());
+    auto status = wddm->waitFromCpu(10, osContext->getResidencyController().getMonitoredFence(), true);
 
     EXPECT_TRUE(status);
 
@@ -900,7 +900,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(20, osContext->getResidencyController().getMonitoredFence());
+    auto status = wddm->waitFromCpu(20, osContext->getResidencyController().getMonitoredFence(), true);
 
     EXPECT_TRUE(status);
 

@@ -1068,7 +1068,7 @@ bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) {
+bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait) {
     NTSTATUS status = STATUS_SUCCESS;
 
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
@@ -1079,14 +1079,26 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
             });
         }
 
-        D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
-        waitFromCpu.ObjectCount = 1;
-        waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
-        waitFromCpu.FenceValueArray = &lastFenceValue;
-        waitFromCpu.hDevice = device;
-        waitFromCpu.hAsyncEvent = NULL_HANDLE;
-        status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
-        DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+        if (busyWait) {
+            constexpr int64_t timeout = 20;
+            int64_t timeDiff = 0u;
+            auto waitStartTime = std::chrono::high_resolution_clock::now();
+            while (lastFenceValue > *monitoredFence.cpuAddress && timeDiff < timeout) {
+                auto currentTime = std::chrono::high_resolution_clock::now();
+                timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime).count();
+            }
+        }
+
+        if (lastFenceValue > *monitoredFence.cpuAddress) {
+            D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
+            waitFromCpu.ObjectCount = 1;
+            waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
+            waitFromCpu.FenceValueArray = &lastFenceValue;
+            waitFromCpu.hDevice = device;
+            waitFromCpu.hAsyncEvent = NULL_HANDLE;
+            status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
+            DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+        }
     }
 
     return status == STATUS_SUCCESS;

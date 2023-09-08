@@ -1173,7 +1173,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
     uint64_t value = 0u;
     NEO::MonitoredFence monitorFence = {};
     monitorFence.cpuAddress = &value;
-    wddm->waitFromCpu(1, monitorFence);
+    wddm->waitFromCpu(1, monitorFence, false);
 
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
 }
