@@ -350,6 +350,23 @@ zesGetRasProcAddrTable(
 }
 
 ZE_DLLEXPORT ze_result_t ZE_APICALL
+zesGetRasExpProcAddrTable(
+    ze_api_version_t version,
+    zes_ras_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    pDdiTable->pfnGetStateExp = L0::zesRasGetStateExp;
+    pDdiTable->pfnClearStateExp = L0::zesRasClearStateExp;
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zesGetSchedulerProcAddrTable(
     ze_api_version_t version,
     zes_scheduler_dditable_t *pDdiTable) {

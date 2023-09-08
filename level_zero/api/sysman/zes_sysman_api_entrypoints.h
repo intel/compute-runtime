@@ -1115,6 +1115,19 @@ ze_result_t zesRasGetState(
     }
 }
 
+ze_result_t zesRasGetStateExp(
+    zes_ras_handle_t hRas,
+    uint32_t *pCount,
+    zes_ras_state_exp_t *pState) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesRasClearStateExp(
+    zes_ras_handle_t hRas,
+    zes_ras_error_category_exp_t category) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t zesDeviceEventRegister(
     zes_device_handle_t hDevice,
     zes_event_type_flags_t events) {
@@ -2246,6 +2259,24 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesRasGetState(
         hRas,
         clear,
         pState);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesRasGetStateExp(
+    zes_ras_handle_t hRas,
+    uint32_t *pCount,
+    zes_ras_state_exp_t *pState) {
+    return L0::zesRasGetStateExp(
+        hRas,
+        pCount,
+        pState);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesRasClearStateExp(
+    zes_ras_handle_t hRas,
+    zes_ras_error_category_exp_t category) {
+    return L0::zesRasClearStateExp(
+        hRas,
+        category);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumSchedulers(
