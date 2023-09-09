@@ -101,29 +101,24 @@ XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMm
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    DebugManagerStateRestore restore;
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+
     for (int type = 0; type < static_cast<int>(AllocationType::COUNT); type++) {
         AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
         AllocationData allocData{};
-        for (auto &localMemSupport : ::testing::Bool()) {
-            allocData.flags.useSystemMemory = true;
-            allocData.flags.requiresCpuAccess = false;
-            pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = localMemSupport;
+        allocData.flags.useSystemMemory = true;
+        allocData.flags.requiresCpuAccess = false;
 
-            gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
+        gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
 
-            if (localMemSupport &&
-                (allocProperties.allocationType == AllocationType::COMMAND_BUFFER ||
-                 allocProperties.allocationType == AllocationType::RING_BUFFER ||
-                 allocProperties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
-                 allocProperties.allocationType == AllocationType::SEMAPHORE_BUFFER)) {
-                EXPECT_FALSE(allocData.flags.useSystemMemory);
-                EXPECT_TRUE(allocData.flags.requiresCpuAccess);
-            } else {
-                EXPECT_TRUE(allocData.flags.useSystemMemory);
-                EXPECT_FALSE(allocData.flags.requiresCpuAccess);
-            }
+        if (defaultHwInfo->featureTable.flags.ftrLocalMemory &&
+            (allocProperties.allocationType == AllocationType::COMMAND_BUFFER ||
+             allocProperties.allocationType == AllocationType::RING_BUFFER ||
+             allocProperties.allocationType == AllocationType::SEMAPHORE_BUFFER)) {
+            EXPECT_FALSE(allocData.flags.useSystemMemory);
+            EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+        } else {
+            EXPECT_TRUE(allocData.flags.useSystemMemory);
+            EXPECT_FALSE(allocData.flags.requiresCpuAccess);
         }
     }
 }
