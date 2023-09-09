@@ -1026,7 +1026,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
-    bool blitEnqueueAllowed = device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed() && (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly);
+    bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
     if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
         blitEnqueueAllowed = DebugManager.flags.EnableBlitterForEnqueueOperations.get();
     }

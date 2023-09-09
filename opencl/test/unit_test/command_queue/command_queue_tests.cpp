@@ -1604,11 +1604,11 @@ TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue
     CsrSelectionArgs selectionArgs{CL_COMMAND_READ_BUFFER, &multiAlloc, &multiAlloc, 0u, nullptr};
 
     queue.isCopyOnly = false;
-    EXPECT_EQ(queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && context.getDevice(0)->getProductHelper().blitEnqueueAllowed(),
+    EXPECT_EQ(queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled(),
               queue.blitEnqueueAllowed(selectionArgs));
 
     queue.isCopyOnly = true;
-    EXPECT_EQ(context.getDevice(0)->getProductHelper().blitEnqueueAllowed(), queue.blitEnqueueAllowed(selectionArgs));
+    EXPECT_TRUE(queue.blitEnqueueAllowed(selectionArgs));
 }
 
 TEST(CommandQueue, givenSimpleClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
@@ -1631,7 +1631,7 @@ TEST(CommandQueue, givenSimpleClCommandWhenCallingBlitEnqueueAllowedThenReturnCo
                                     CL_COMMAND_SVM_MEMCPY}) {
         CsrSelectionArgs args{cmdType, &multiAlloc, &multiAlloc, 0u, nullptr};
 
-        bool expectedValue = queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && context.getDevice(0)->getProductHelper().blitEnqueueAllowed();
+        bool expectedValue = queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled();
         if (cmdType == CL_COMMAND_COPY_IMAGE_TO_BUFFER) {
             expectedValue = false;
         }
