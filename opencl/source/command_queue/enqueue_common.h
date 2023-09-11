@@ -796,10 +796,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     bool anyUncacheableArgs = false;
-    auto requiresCoherency = false;
     for (auto surface : createRange(surfaces, surfaceCount)) {
         surface->makeResident(getGpgpuCommandStreamReceiver());
-        requiresCoherency |= surface->isCoherent;
         if (!surface->allowsL3Caching()) {
             anyUncacheableArgs = true;
         }
@@ -819,7 +817,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
             continue;
         }
         kernel->makeResident(getGpgpuCommandStreamReceiver());
-        requiresCoherency |= kernel->requiresCoherency();
         mediaSamplerRequired |= kernel->isVmeKernel();
         auto numGrfRequiredByKernel = static_cast<uint32_t>(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.numGrfRequired);
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
@@ -886,7 +883,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         multiDispatchInfo.usesSlm(),                                                                            // useSLM
         !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled() || commandType == CL_COMMAND_FILL_BUFFER, // guardCommandBufferWithPipeControl
         commandType == CL_COMMAND_NDRANGE_KERNEL,                                                               // GSBA32BitRequired
-        requiresCoherency,                                                                                      // requiresCoherency
+        false,                                                                                                  // requiresCoherency
         (QueuePriority::LOW == priority),                                                                       // lowPriority
         implicitFlush,                                                                                          // implicitFlush
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),             // outOfOrderExecutionAllowed

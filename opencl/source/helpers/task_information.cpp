@@ -154,12 +154,10 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
     IndirectHeap *ioh = kernelOperation->ioh.get();
     IndirectHeap *ssh = kernelOperation->ssh.get();
 
-    auto requiresCoherency = false;
     auto anyUncacheableArgs = false;
     for (auto &surface : surfaces) {
         DEBUG_BREAK_IF(!surface);
         surface->makeResident(commandStreamReceiver);
-        requiresCoherency |= surface->isCoherent;
         if (!surface->allowsL3Caching()) {
             anyUncacheableArgs = true;
         }
@@ -211,7 +209,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         slmUsed,                                                                          // useSLM
         !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       // guardCommandBufferWithPipeControl
         commandType == CL_COMMAND_NDRANGE_KERNEL,                                         // GSBA32BitRequired
-        requiresCoherency,                                                                // requiresCoherency
+        false,                                                                            // requiresCoherency
         commandQueue.getPriority() == QueuePriority::LOW,                                 // lowPriority
         false,                                                                            // implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed

@@ -813,42 +813,6 @@ TEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueK
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
-TEST_F(PerformanceHintEnqueueTest, GivenKernelWithCoherentPtrWhenEnqueueKernelIsCalledWithWorkDim2ThenContextProvidesProperHint) {
-    size_t preferredWorkGroupSize[3];
-    size_t globalWorkGroupSize[3] = {1, 1, 1};
-    auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
-    MockKernelWithInternals mockKernel(*pPlatform->getClDevice(0), context);
-    Kernel::SimpleKernelArgInfo kernelArgInfo;
-
-    if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
-        auto &rootDeviceEnvironment = pPlatform->getClDevice(0)->getRootDeviceEnvironment();
-        WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, 32u, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
-        computeWorkgroupSizeND(wsInfo, preferredWorkGroupSize, globalWorkGroupSize, 2);
-    } else
-        computeWorkgroupSize2D(maxWorkGroupSize, preferredWorkGroupSize, globalWorkGroupSize, 32);
-
-    auto buffer = new MockBuffer();
-    buffer->getGraphicsAllocation(mockRootDeviceIndex)->setCoherent(true);
-    auto clBuffer = (cl_mem)buffer;
-
-    kernelArgInfo.object = clBuffer;
-    kernelArgInfo.type = Kernel::kernelArgType::BUFFER_OBJ;
-
-    std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
-    kernelArguments.resize(1);
-    kernelArguments[0] = kernelArgInfo;
-    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
-    mockKernel.mockKernel->setKernelArguments(kernelArguments);
-
-    retVal = pCmdQ->enqueueKernel(mockKernel.mockKernel, 2, nullptr, globalWorkGroupSize, preferredWorkGroupSize, 0, nullptr, nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_REQUIRES_COHERENCY], mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
-    EXPECT_TRUE(containsHint(expectedHint, userData));
-    delete buffer;
-}
-
 const int validDimensions[] = {0, 1, 2};
 
 INSTANTIATE_TEST_CASE_P(

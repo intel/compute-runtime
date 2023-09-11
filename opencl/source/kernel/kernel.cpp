@@ -1398,29 +1398,6 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
     gtpinNotifyUpdateResidencyList(this, &dst);
 }
 
-bool Kernel::requiresCoherency() {
-    auto numArgs = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.size();
-    for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
-        if (kernelArguments[argIndex].object) {
-            if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
-                auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
-                if (pSVMAlloc->isCoherent()) {
-                    return true;
-                }
-            }
-
-            if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
-                auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
-                auto memObj = castToObjectOrAbort<MemObj>(clMem);
-                if (memObj->getMultiGraphicsAllocation().isCoherent()) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
 cl_int Kernel::setArgLocal(uint32_t argIndexIn,
                            size_t argSize,
                            const void *argVal) {

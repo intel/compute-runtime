@@ -289,7 +289,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     // residency for kernel surfaces
     MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
     MOCKABLE_VIRTUAL void getResidency(std::vector<Surface *> &dst);
-    bool requiresCoherency();
     void resetSharedObjectsPatchAddresses();
     bool isUsingSharedObjArgs() const { return usingSharedObjArgs; }
     bool hasUncacheableStatelessArgs() const { return statelessUncacheableArgsCount > 0; }

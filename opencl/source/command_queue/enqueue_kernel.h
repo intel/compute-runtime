@@ -107,9 +107,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
         if (kernel.hasPrintfOutput()) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PRINTF_DETECTED_IN_KERNEL, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str());
         }
-        if (kernel.requiresCoherency()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, KERNEL_REQUIRES_COHERENCY, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str());
-        }
     }
 
     if (kernelInfo.builtinDispatchBuilder != nullptr) {
