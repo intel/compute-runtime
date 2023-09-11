@@ -15,6 +15,9 @@
 #include <string_view>
 
 namespace NEO {
+
+const char legacyPlatformName[] = "Intel(R) OpenCL";
+
 bool AILConfiguration::isKernelHashCorrect(const std::string &kernelsSources, uint64_t expectedHash) const {
     const auto hash = Hash::hash(kernelsSources.c_str(), kernelsSources.length());
     return hash == expectedHash;

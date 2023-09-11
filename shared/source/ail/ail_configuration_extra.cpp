@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,9 @@ namespace NEO {
  *
  */
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blender", {AILEnumeration::ENABLE_FP64}}};
+std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blender", {AILEnumeration::ENABLE_FP64}},
+                                                                          // Modify reported platform name to ensure older versions of Premiere Pro are able to recognize the GPU device
+                                                                          {"premiere pro", {AILEnumeration::ENABLE_LEGACY_PLATFORM_NAME}}};
 
 AILConfiguration *ailConfigurationTable[IGFX_MAX_PRODUCT] = {};
 
@@ -36,6 +38,9 @@ void AILConfiguration::apply(RuntimeCapabilityTable &runtimeCapabilityTable) {
             switch (search->second[i]) {
             case AILEnumeration::ENABLE_FP64:
                 runtimeCapabilityTable.ftrSupportsFP64 = true;
+                break;
+            case AILEnumeration::ENABLE_LEGACY_PLATFORM_NAME:
+                runtimeCapabilityTable.preferredPlatformName = legacyPlatformName;
                 break;
             default:
                 break;

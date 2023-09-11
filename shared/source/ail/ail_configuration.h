@@ -28,6 +28,8 @@
 
 namespace NEO {
 
+extern const char legacyPlatformName[];
+
 struct RuntimeCapabilityTable;
 
 enum class AILEnumeration : uint32_t {

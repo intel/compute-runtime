@@ -49,6 +49,25 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64S
     EXPECT_EQ(rtTable.ftrSupportsFP64, true);
 }
 
+HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithPremiereProIsCalledThenPreferredPlatformNameIsSet, IsAtLeastGen9) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "premiere pro";
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    auto ailConfiguration = AILConfiguration::get(productFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
+    NEO::RuntimeCapabilityTable rtTable = {};
+    rtTable.preferredPlatformName = nullptr;
+
+    ailConfiguration->apply(rtTable);
+
+    EXPECT_NE(nullptr, rtTable.preferredPlatformName);
+    EXPECT_STREQ("Intel(R) OpenCL", rtTable.preferredPlatformName);
+}
+
 HWTEST2_F(AILTests, whenCheckingIfSourcesContainKernelThenCorrectResultIsReturned, IsAtLeastGen12lp) {
     VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
     AILMock<productFamily> ail;
