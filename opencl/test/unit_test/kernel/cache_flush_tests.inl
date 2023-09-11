@@ -246,7 +246,7 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenAllocationRequi
 
         mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP));
         mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-        mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation, 0u);
+        mockKernel.mockKernel->kernelArgRequiresCacheFlush[0] = svmAllocation;
 
         cmdQ->getUltCommandStreamReceiver().timestampPacketWriteEnabled = false;
 

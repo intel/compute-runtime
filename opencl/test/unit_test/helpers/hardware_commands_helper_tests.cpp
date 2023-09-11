@@ -1232,34 +1232,6 @@ TEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSup
 
 using KernelCacheFlushTests = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
-HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocationsForFlushThenEmptyVectorIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    auto context = std::make_unique<MockContext>();
-    auto kernel = std::unique_ptr<Kernel>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("CopyBuffer"), *context->getDevice(0), retVal));
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    cl_mem_properties_intel bufferPropertiesUncachedResource[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0};
-    auto bufferLocallyUncached = clCreateBufferWithPropertiesINTEL(context.get(), bufferPropertiesUncachedResource, 0, 1, nullptr, nullptr);
-    kernel->setArg(0, sizeof(bufferLocallyUncached), &bufferLocallyUncached);
-
-    using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
-    CacheFlushAllocationsVec cacheFlushVec;
-    kernel->getAllocationsForCacheFlush(cacheFlushVec);
-    EXPECT_EQ(0u, cacheFlushVec.size());
-
-    auto bufferRegular = clCreateBufferWithPropertiesINTEL(context.get(), nullptr, 0, 1, nullptr, nullptr);
-    kernel->setArg(1, sizeof(bufferRegular), &bufferRegular);
-
-    kernel->getAllocationsForCacheFlush(cacheFlushVec);
-    size_t expectedCacheFlushVecSize = (hardwareInfo.capabilityTable.supportCacheFlushAfterWalker ? 1u : 0u);
-    EXPECT_EQ(expectedCacheFlushVecSize, cacheFlushVec.size());
-
-    clReleaseMemObject(bufferLocallyUncached);
-    clReleaseMemObject(bufferRegular);
-}
-
 struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
 
     void SetUp() override {

@@ -330,18 +330,6 @@ TEST_F(KernelImageArgTest, givenWritableImageWhenSettingAsArgThenDoNotExpectAllo
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
-TEST_F(KernelImageArgTest, givenCacheFlushImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
-    MockImageBase image;
-    image.graphicsAllocation->setMemObjectsAllocationWithWritableFlags(false);
-    image.graphicsAllocation->setFlushL3Required(true);
-
-    cl_mem imageObj = &image;
-
-    pKernel->setArg(0, sizeof(imageObj), &imageObj);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(image.graphicsAllocation, pKernel->kernelArgRequiresCacheFlush[0]);
-}
-
 TEST_F(KernelImageArgTest, givenNoCacheFlushImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
     MockImageBase image;
     image.graphicsAllocation->setMemObjectsAllocationWithWritableFlags(false);

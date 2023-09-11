@@ -488,46 +488,6 @@ TEST_F(KernelArgSvmTest, givenWritableSvmAllocationWhenSettingAsArgThenDoNotExpe
     alignedFree(svmPtr);
 }
 
-TEST_F(KernelArgSvmTest, givenCacheFlushSvmAllocationWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
-    if (devInfo.svmCapabilities == 0) {
-        GTEST_SKIP();
-    }
-
-    size_t svmSize = 4096;
-    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
-    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
-
-    svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
-    svmAlloc.setFlushL3Required(true);
-
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc, 0u);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(&svmAlloc, pKernel->kernelArgRequiresCacheFlush[0]);
-
-    alignedFree(svmPtr);
-}
-
-TEST_F(KernelArgSvmTest, givenNoCacheFlushSvmAllocationWhenSettingAsArgThenNotExpectAllocationInCacheFlushVector) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
-    if (devInfo.svmCapabilities == 0) {
-        GTEST_SKIP();
-    }
-
-    size_t svmSize = 4096;
-    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
-    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
-
-    svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
-    svmAlloc.setFlushL3Required(false);
-
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc, 0u);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
-
-    alignedFree(svmPtr);
-}
-
 TEST_F(KernelArgSvmTest, givenWritableSvmAllocationWhenSettingKernelExecInfoThenDoNotExpectSvmFlushFlagTrue) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {

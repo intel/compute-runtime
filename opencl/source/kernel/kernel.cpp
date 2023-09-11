@@ -938,7 +938,6 @@ cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, G
     if (svmPtr != nullptr && isBuiltIn == false) {
         this->anyKernelArgumentUsingSystemMemory |= true;
     }
-    addAllocationToCacheFlushVector(argIndex, svmAlloc);
     return CL_SUCCESS;
 }
 
@@ -1001,7 +1000,6 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             this->anyKernelArgumentUsingSystemMemory |= true;
         }
     }
-    addAllocationToCacheFlushVector(argIndex, svmAlloc);
     return CL_SUCCESS;
 }
 
@@ -1546,14 +1544,6 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         kernelArguments[argIndex].isStatelessUncacheable = argAsPtr.isPureStateful() ? false : buffer->isMemObjUncacheable();
 
-        auto allocationForCacheFlush = graphicsAllocation;
-
-        // if we make object uncacheable for surface state and there are only stateful accesses, then don't flush caches
-        if (buffer->isMemObjUncacheableForSurfaceState() && argAsPtr.isPureStateful()) {
-            allocationForCacheFlush = nullptr;
-        }
-
-        addAllocationToCacheFlushVector(argIndex, allocationForCacheFlush);
         return CL_SUCCESS;
     } else {
         storeKernelArg(argIndex, BUFFER_OBJ, nullptr, argVal, argSize);
@@ -1693,7 +1683,6 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         patch<uint32_t, uint64_t>((imageDesc.image_height * pixelSize) - 1, crossThreadData, argAsImg.metadataPayload.flatHeight);
         patch<uint32_t, uint64_t>(imageDesc.image_row_pitch - 1, crossThreadData, argAsImg.metadataPayload.flatPitch);
 
-        addAllocationToCacheFlushVector(argIndex, graphicsAllocation);
         retVal = CL_SUCCESS;
     }
 

@@ -349,40 +349,4 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUn
     EXPECT_EQ(mocsUncacheable, cmdQueueMocs<FamilyType>(pCmdQ));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateAndAreNotUsedInStatelessFashionThenThoseResourcesAreNotRegistredAsResourcesForCacheFlush) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    auto context = std::make_unique<MockContext>();
-    cl_int retVal = CL_SUCCESS;
-    MockKernelWithInternals mockKernel(*context->getDevice(0), context.get(), true);
-    auto kernel = mockKernel.mockKernel;
-    auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;
-    mockKernel.kernelInfo.setBufferStateful(0);
-    mockKernel.kernelInfo.setBufferStateful(1);
-
-    auto bufferCacheable = clCreateBufferWithPropertiesINTEL(context.get(), propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
-
-    auto bufferUncacheableInSurfaceState = clCreateBufferWithPropertiesINTEL(context.get(), propertiesUncacheableInSurfaceState, 0, n * sizeof(float), nullptr, nullptr);
-    auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context.get(), propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
-
-    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &bufferUncacheableInSurfaceState);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
-
-    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &bufferCacheable);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_NE(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
-
-    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &bufferUncacheable);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
-
-    clReleaseMemObject(bufferUncacheableInSurfaceState);
-    clReleaseMemObject(bufferUncacheable);
-    clReleaseMemObject(bufferCacheable);
-}
-
 } // namespace clMemLocallyUncachedResourceTests
