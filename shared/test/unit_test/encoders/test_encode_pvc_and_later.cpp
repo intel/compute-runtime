@@ -96,7 +96,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataM
                                     EncodeAluHelper<FamilyType, 4>::getCmdsSize() + sizeof(typename FamilyType::MI_LOAD_REGISTER_REG) +
                                     (2 * EncodeMiPredicate<FamilyType>::getCmdSize()) + sizeof(MI_BATCH_BUFFER_START);
 
-    EXPECT_EQ(expectedSize, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart());
+    EXPECT_EQ(expectedSize, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false));
 
     constexpr uint64_t startAddress = 0x12340000;
     constexpr uint64_t compareAddress = 0x56780000;
@@ -107,7 +107,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataM
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
 
-            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareAddress, compareData, compareOperation, indirect);
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareAddress, compareData, compareOperation, indirect, false);
 
             EXPECT_EQ(expectedSize, cmdStream.getUsed());
 
@@ -132,6 +132,51 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataM
     }
 }
 
+HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDataMemBatchBufferStartThenProgramCorrectMathOperations, IsAtLeastXeHpcCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    constexpr size_t expectedSize = (2 * sizeof(MI_LOAD_REGISTER_MEM)) + (2 * sizeof(MI_LOAD_REGISTER_IMM)) +
+                                    EncodeAluHelper<FamilyType, 4>::getCmdsSize() + sizeof(typename FamilyType::MI_LOAD_REGISTER_REG) +
+                                    (2 * EncodeMiPredicate<FamilyType>::getCmdSize()) + sizeof(MI_BATCH_BUFFER_START);
+
+    EXPECT_EQ(expectedSize, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(true));
+
+    constexpr uint64_t startAddress = 0x12340000;
+    constexpr uint64_t compareAddress = 0x56780000;
+    constexpr uint64_t compareData = 0x12345678'12345678;
+
+    for (auto compareOperation : {CompareOperation::Equal, CompareOperation::NotEqual, CompareOperation::GreaterOrEqual}) {
+        for (bool indirect : {false, true}) {
+            uint8_t buffer[expectedSize] = {};
+            LinearStream cmdStream(buffer, expectedSize);
+
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareAddress, compareData, compareOperation, indirect, true);
+
+            EXPECT_EQ(expectedSize, cmdStream.getUsed());
+
+            auto lrmCmd = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(buffer);
+            EXPECT_EQ(CS_GPR_R7, lrmCmd->getRegisterAddress());
+            EXPECT_EQ(compareAddress, lrmCmd->getMemoryAddress());
+
+            lrmCmd++;
+            EXPECT_EQ(CS_GPR_R7 + 4, lrmCmd->getRegisterAddress());
+            EXPECT_EQ(compareAddress + 4, lrmCmd->getMemoryAddress());
+
+            auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
+            EXPECT_EQ(CS_GPR_R8, lriCmd->getRegisterOffset());
+            EXPECT_EQ(static_cast<uint32_t>(compareData & std::numeric_limits<uint32_t>::max()), lriCmd->getDataDword());
+
+            lriCmd++;
+            EXPECT_EQ(CS_GPR_R8 + 4, lriCmd->getRegisterOffset());
+            EXPECT_EQ(static_cast<uint32_t>(compareData >> 32), lriCmd->getDataDword());
+
+            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+        }
+    }
+}
+
 HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataRegBatchBufferStartThenProgramCorrectMathOperations, IsAtLeastXeHpcCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
@@ -141,7 +186,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataR
                                     EncodeAluHelper<FamilyType, 4>::getCmdsSize() + sizeof(typename FamilyType::MI_LOAD_REGISTER_REG) +
                                     (2 * EncodeMiPredicate<FamilyType>::getCmdSize()) + sizeof(MI_BATCH_BUFFER_START);
 
-    EXPECT_EQ(expectedSize, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart());
+    EXPECT_EQ(expectedSize, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false));
 
     constexpr uint64_t startAddress = 0x12340000;
     constexpr uint32_t compareReg = CS_GPR_R1;
@@ -152,7 +197,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataR
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
 
-            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg, compareData, compareOperation, indirect);
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg, compareData, compareOperation, indirect, false);
 
             EXPECT_EQ(expectedSize, cmdStream.getUsed());
 
@@ -171,6 +216,51 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataR
             lriCmd++;
             EXPECT_EQ(CS_GPR_R8 + 4, lriCmd->getRegisterOffset());
             EXPECT_EQ(0u, lriCmd->getDataDword());
+
+            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+        }
+    }
+}
+
+HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDataRegBatchBufferStartThenProgramCorrectMathOperations, IsAtLeastXeHpcCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    constexpr size_t expectedSize = (2 * sizeof(MI_LOAD_REGISTER_REG)) + (2 * sizeof(MI_LOAD_REGISTER_IMM)) +
+                                    EncodeAluHelper<FamilyType, 4>::getCmdsSize() + sizeof(typename FamilyType::MI_LOAD_REGISTER_REG) +
+                                    (2 * EncodeMiPredicate<FamilyType>::getCmdSize()) + sizeof(MI_BATCH_BUFFER_START);
+
+    EXPECT_EQ(expectedSize, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(true));
+
+    constexpr uint64_t startAddress = 0x12340000;
+    constexpr uint32_t compareReg = CS_GPR_R1;
+    constexpr uint64_t compareData = 0x12345678'12345678;
+
+    for (auto compareOperation : {CompareOperation::Equal, CompareOperation::NotEqual, CompareOperation::GreaterOrEqual}) {
+        for (bool indirect : {false, true}) {
+            uint8_t buffer[expectedSize] = {};
+            LinearStream cmdStream(buffer, expectedSize);
+
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg, compareData, compareOperation, indirect, true);
+
+            EXPECT_EQ(expectedSize, cmdStream.getUsed());
+
+            auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(buffer);
+            EXPECT_EQ(CS_GPR_R7, lrrCmd->getDestinationRegisterAddress());
+            EXPECT_EQ(compareReg, lrrCmd->getSourceRegisterAddress());
+
+            lrrCmd++;
+            EXPECT_EQ(CS_GPR_R7 + 4, lrrCmd->getDestinationRegisterAddress());
+            EXPECT_EQ(compareReg + 4, lrrCmd->getSourceRegisterAddress());
+
+            auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrrCmd);
+            EXPECT_EQ(CS_GPR_R8, lriCmd->getRegisterOffset());
+            EXPECT_EQ(static_cast<uint32_t>(compareData & std::numeric_limits<uint32_t>::max()), lriCmd->getDataDword());
+
+            lriCmd++;
+            EXPECT_EQ(CS_GPR_R8 + 4, lriCmd->getRegisterOffset());
+            EXPECT_EQ(static_cast<uint32_t>(compareData >> 32), lriCmd->getDataDword());
 
             validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
         }

@@ -439,17 +439,23 @@ struct EncodeBatchBufferStartOrEnd {
     static void programBatchBufferEnd(CommandContainer &container);
     static void programBatchBufferEnd(LinearStream &commandStream);
 
-    static void programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint32_t compareData, CompareOperation compareOperation, bool indirect);
-    static void programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg, uint32_t compareData, CompareOperation compareOperation, bool indirect);
+    static void programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData);
+    static void programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg, uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData);
     static void programConditionalRegRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, AluRegisters compareReg0, AluRegisters compareReg1, CompareOperation compareOperation, bool indirect);
     static void programConditionalRegMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint32_t compareReg, CompareOperation compareOperation, bool indirect);
 
-    static size_t constexpr getCmdSizeConditionalDataMemBatchBufferStart() {
-        return (getCmdSizeConditionalBufferStartBase() + sizeof(typename GfxFamily::MI_LOAD_REGISTER_MEM) + (3 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));
+    static size_t constexpr getCmdSizeConditionalDataMemBatchBufferStart(bool useQwordData) {
+        size_t size = (getCmdSizeConditionalBufferStartBase() + sizeof(typename GfxFamily::MI_LOAD_REGISTER_MEM) + (2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));
+        size += useQwordData ? sizeof(typename GfxFamily::MI_LOAD_REGISTER_MEM) : sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+
+        return size;
     }
 
-    static size_t constexpr getCmdSizeConditionalDataRegBatchBufferStart() {
-        return (getCmdSizeConditionalBufferStartBase() + sizeof(typename GfxFamily::MI_LOAD_REGISTER_REG) + (3 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));
+    static size_t constexpr getCmdSizeConditionalDataRegBatchBufferStart(bool useQwordData) {
+        size_t size = (getCmdSizeConditionalBufferStartBase() + sizeof(typename GfxFamily::MI_LOAD_REGISTER_REG) + (2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));
+        size += useQwordData ? sizeof(typename GfxFamily::MI_LOAD_REGISTER_REG) : sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+
+        return size;
     }
 
     static size_t constexpr getCmdSizeConditionalRegMemBatchBufferStart() {

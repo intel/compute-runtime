@@ -116,7 +116,7 @@ struct TimestampPacketHelper {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
 
             EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(cmdStream, 0, compareAddress + compareOffset, TimestampPacketConstants::initValue,
-                                                                                              NEO::CompareOperation::Equal, true);
+                                                                                              NEO::CompareOperation::Equal, true, false);
         }
     }
 
@@ -197,7 +197,7 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForRelaxedOrderingNodeDependency(TagNodeBase &timestampPacketNode) {
-        return (timestampPacketNode.getPacketsUsed() * EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataMemBatchBufferStart());
+        return (timestampPacketNode.getPacketsUsed() * EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataMemBatchBufferStart(false));
     }
 
     template <typename GfxFamily>

@@ -859,24 +859,39 @@ void EncodeAtomic<Family>::programMiAtomic(LinearStream &commandStream,
 
 template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress,
-                                                                                    uint32_t compareData, CompareOperation compareOperation, bool indirect) {
+                                                                                    uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData) {
     EncodeSetMMIO<Family>::encodeMEM(commandStream, CS_GPR_R7, compareAddress);
-    LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
 
-    LriHelper<Family>::program(&commandStream, CS_GPR_R8, compareData, true);
-    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, 0, true);
+    if (useQwordData) {
+        EncodeSetMMIO<Family>::encodeMEM(commandStream, CS_GPR_R7 + 4, compareAddress + 4);
+    } else {
+        LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
+    }
+
+    uint32_t compareDataLow = static_cast<uint32_t>(compareData & std::numeric_limits<uint32_t>::max());
+    uint32_t compareDataHigh = useQwordData ? static_cast<uint32_t>(compareData >> 32) : 0;
+
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8, compareDataLow, true);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, compareDataHigh, true);
 
     programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
 }
 
 template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg,
-                                                                                    uint32_t compareData, CompareOperation compareOperation, bool indirect) {
+                                                                                    uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData) {
     EncodeSetMMIO<Family>::encodeREG(commandStream, CS_GPR_R7, compareReg);
-    LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
+    if (useQwordData) {
+        EncodeSetMMIO<Family>::encodeREG(commandStream, CS_GPR_R7 + 4, compareReg + 4);
+    } else {
+        LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
+    }
 
-    LriHelper<Family>::program(&commandStream, CS_GPR_R8, compareData, true);
-    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, 0, true);
+    uint32_t compareDataLow = static_cast<uint32_t>(compareData & std::numeric_limits<uint32_t>::max());
+    uint32_t compareDataHigh = useQwordData ? static_cast<uint32_t>(compareData >> 32) : 0;
+
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8, compareDataLow, true);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, compareDataHigh, true);
 
     programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
 }

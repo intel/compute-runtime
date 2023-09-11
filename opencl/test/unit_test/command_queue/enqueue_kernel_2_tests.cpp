@@ -1130,7 +1130,7 @@ HWTEST_F(EnqueueKernelTest, givenRelaxedOrderingEnabledWhenCheckingSizeForCsThen
     auto newCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, csrDeps, false, false, false, *pCmdQ, multiDispatchInfo, false, false, false, nullptr);
 
     auto semaphoresSize = numberOfDependencyContainers * numberNodesPerContainer * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT);
-    auto conditionalBbsSize = numberOfDependencyContainers * numberNodesPerContainer * EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart();
+    auto conditionalBbsSize = numberOfDependencyContainers * numberNodesPerContainer * EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false);
     auto registersSize = 2 * EncodeSetMMIO<FamilyType>::sizeREG;
 
     auto expectedSize = baseCommandStreamSize - semaphoresSize + conditionalBbsSize + registersSize;
@@ -1296,10 +1296,10 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlu
 
     EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true));
 
-    auto conditionalBbStart2 = reinterpret_cast<void *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart()));
+    auto conditionalBbStart2 = reinterpret_cast<void *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
     EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(conditionalBbStart2, 0, compareAddress, 1, CompareOperation::Equal, true));
 
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(conditionalBbStart2, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart()));
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(conditionalBbStart2, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
     EXPECT_NE(nullptr, sdiCmd);
 
     clReleaseEvent(outEvent);
