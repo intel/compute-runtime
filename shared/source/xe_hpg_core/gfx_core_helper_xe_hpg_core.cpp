@@ -13,13 +13,13 @@ using Family = NEO::XeHpgCoreFamily;
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/extra_allocation_data_xehp_and_later.inl"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
 #include "shared/source/helpers/gfx_core_helper_bdw_to_dg2.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
@@ -138,6 +138,49 @@ uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareIn
         return hwInfo.gtSystemInfo.ThreadCount / 2u;
     }
     return hwInfo.gtSystemInfo.ThreadCount;
+}
+
+template <>
+void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
+    if (LocalMemoryAccessMode::CpuAccessDisallowed == productHelper.getLocalMemoryAccessMode(hwInfo)) {
+        if (properties.allocationType == AllocationType::LINEAR_STREAM ||
+            properties.allocationType == AllocationType::INTERNAL_HEAP ||
+            properties.allocationType == AllocationType::PRINTF_SURFACE ||
+            properties.allocationType == AllocationType::ASSERT_BUFFER ||
+            properties.allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
+            properties.allocationType == AllocationType::RING_BUFFER ||
+            properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
+            allocationData.flags.useSystemMemory = true;
+        }
+        if (!allocationData.flags.useSystemMemory) {
+            allocationData.flags.requiresCpuAccess = false;
+            allocationData.storageInfo.isLockable = false;
+        }
+    } else if (hwInfo.featureTable.flags.ftrLocalMemory &&
+               (properties.allocationType == AllocationType::COMMAND_BUFFER ||
+                properties.allocationType == AllocationType::RING_BUFFER ||
+                properties.allocationType == AllocationType::SEMAPHORE_BUFFER)) {
+        allocationData.flags.useSystemMemory = false;
+        allocationData.flags.requiresCpuAccess = true;
+    }
+
+    if (CompressionSelector::allowStatelessCompression()) {
+        if (properties.allocationType == AllocationType::GLOBAL_SURFACE ||
+            properties.allocationType == AllocationType::CONSTANT_SURFACE ||
+            properties.allocationType == AllocationType::PRINTF_SURFACE) {
+            allocationData.flags.requiresCpuAccess = false;
+            allocationData.storageInfo.isLockable = false;
+        }
+    }
+
+    if (productHelper.isStorageInfoAdjustmentRequired()) {
+        if (properties.allocationType == AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
+            allocationData.storageInfo.isLockable = true;
+        }
+    }
 }
 
 template class GfxCoreHelperHw<Family>;

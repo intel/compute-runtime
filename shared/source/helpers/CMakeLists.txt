@@ -169,7 +169,6 @@ if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_and_later.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/extra_allocation_data_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_xehp_and_later.inl
