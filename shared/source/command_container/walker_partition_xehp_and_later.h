@@ -219,7 +219,7 @@ void programRegisterWithValue(void *&inputAddress, uint32_t registerOffset, uint
 template <typename GfxFamily>
 void programWaitForSemaphore(void *&inputAddress, uint32_t &totalBytesProgrammed, uint64_t gpuAddress, uint32_t semaphoreCompareValue, typename MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION compareOperation) {
     auto semaphoreWait = putCommand<MI_SEMAPHORE_WAIT<GfxFamily>>(inputAddress, totalBytesProgrammed);
-    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreWait, gpuAddress, semaphoreCompareValue, compareOperation, false, true);
+    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreWait, gpuAddress, semaphoreCompareValue, compareOperation, false, true, false);
 }
 
 template <typename GfxFamily>

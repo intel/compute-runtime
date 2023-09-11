@@ -369,7 +369,7 @@ void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &co
                                                               globalInvalidationRegister,
                                                               0u,
                                                               COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                              true);
+                                                              true, false);
     }
 }
 
