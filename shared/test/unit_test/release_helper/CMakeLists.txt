@@ -6,6 +6,8 @@
 
 target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tests_base.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tests_base.h
 )
 if(TESTS_XE_HPG_CORE)
   target_sources(neo_shared_tests PRIVATE

@@ -5,21 +5,23 @@
  *
  */
 
-#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
+#include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
 
-using namespace NEO;
+struct ReleaseHelper1270Tests : public ReleaseHelperTests<12, 70> {
 
-TEST(ReleaseHelperTest, givenReleaseHelper1270ThenCorrectPropertiesAreReturned) {
-    HardwareIpVersion ipVersion{};
-    ipVersion.architecture = 12;
-    ipVersion.release = 70;
-    for (auto &revision : {0, 4}) {
+    std::vector<uint32_t> getRevisions() override {
+        return {0, 4};
+    }
+};
+
+TEST_F(ReleaseHelper1270Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+    for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
-        auto releaseHelper = ReleaseHelper::create(ipVersion);
+        releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
 
         EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
@@ -33,13 +35,10 @@ TEST(ReleaseHelperTest, givenReleaseHelper1270ThenCorrectPropertiesAreReturned) 
     }
 }
 
-TEST(ReleaseHelperTest, givenReleaseHelper1270ThenMaxPreferredSlmSizeIsLimitedBy96K) {
-    HardwareIpVersion ipVersion{};
-    ipVersion.architecture = 12;
-    ipVersion.release = 70;
-    for (auto &revision : {0, 4}) {
+TEST_F(ReleaseHelper1270Tests, whenGettingMaxPreferredSlmSizeThenSizeSizeIsLimitedBy96K) {
+    for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
-        auto releaseHelper = ReleaseHelper::create(ipVersion);
+        releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
         using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
         for (auto &preferredSlmSize : {PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K,
@@ -58,40 +57,10 @@ TEST(ReleaseHelperTest, givenReleaseHelper1270ThenMaxPreferredSlmSizeIsLimitedBy
     }
 }
 
-TEST(ReleaseHelperTest, givenReleaseHelper1270ThenCorrectMediaFrequencyTileIndexIsReturned) {
-    HardwareIpVersion ipVersion{};
-    ipVersion.architecture = 12;
-    ipVersion.release = 70;
-    for (auto &revision : {0, 4}) {
-        ipVersion.revision = revision;
-        auto releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        auto tileIndex = 0u;
-        auto expectedTileIndex = 1u;
-        EXPECT_TRUE(releaseHelper->getMediaFrequencyTileIndex(tileIndex));
-        EXPECT_EQ(expectedTileIndex, tileIndex);
-    }
+TEST_F(ReleaseHelper1270Tests, whenGettingMediaFrequencyTileIndexThenOneIsReturned) {
+    whenGettingMediaFrequencyTileIndexThenOneIsReturned();
 }
 
-TEST(ReleaseHelperTest, givenReleaseHelper1270WhenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer) {
-    HardwareIpVersion ipVersion{};
-    ipVersion.architecture = 12;
-    ipVersion.release = 70;
-    for (auto &revision : {0, 4}) {
-        ipVersion.revision = revision;
-        auto releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
-            auto allocationType = static_cast<AllocationType>(i);
-            auto preferredAllocationMethod = releaseHelper->getPreferredAllocationMethod(allocationType);
-            if (allocationType == AllocationType::TAG_BUFFER ||
-                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
-                EXPECT_FALSE(preferredAllocationMethod.has_value());
-            } else {
-                EXPECT_TRUE(preferredAllocationMethod.has_value());
-                EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
-            }
-        }
-    }
+TEST_F(ReleaseHelper1270Tests, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer) {
+    whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer();
 }
