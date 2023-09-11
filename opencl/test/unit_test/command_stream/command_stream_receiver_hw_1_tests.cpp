@@ -1755,7 +1755,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenBarrierNodeSetWhe
     size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
     EXPECT_EQ(expectedCmdSize, estimatedCmdSize);
 
-    commandStreamReceiver->programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags.barrierTimestampPacketNodes, false);
+    commandStreamReceiver->programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
     EXPECT_EQ(estimatedCmdSize, commandStreamCSR.getUsed());
 
     parseCommands<FamilyType>(commandStreamCSR, 0);

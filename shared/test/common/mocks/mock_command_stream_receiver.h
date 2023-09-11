@@ -166,9 +166,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     size_t getCmdsSizeForComputeBarrierCommand() const override {
         return 0;
     }
-    void programStallingCommandsForBarrier(LinearStream &cmdStream, TimestampPacketContainer *barrierTimestampPacketNodes, const bool isDcFlushRequired) override {
-        programStallingCommandsForBarrierCalled = true;
-    }
 
     bool createPreemptionAllocation() override {
         if (createPreemptionAllocationParentCall) {
@@ -217,7 +214,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;
     bool programComputeBarrierCommandCalled = false;
-    bool programStallingCommandsForBarrierCalled = false;
     std::optional<bool> isGpuHangDetectedReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
     WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::Ready};

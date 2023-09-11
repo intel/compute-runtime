@@ -162,7 +162,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdsSizeForComputeBarrierCommand() const override {
         return getCmdSizeForStallingNoPostSyncCommands();
     }
-    void programStallingCommandsForBarrier(LinearStream &cmdStream, TimestampPacketContainer *barrierTimestampPacketNodes, const bool isDcFlushRequired) override;
     SubmissionStatus initializeDeviceWithFirstSubmission() override;
 
     HeapDirtyState &getDshState() {
@@ -188,6 +187,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programPerDssBackedBuffer(LinearStream &scr, Device &device, DispatchFlags &dispatchFlags);
     void programStateSip(LinearStream &cmdStream, Device &device);
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
+    void programStallingCommandsForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags);
     void programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream);
     void programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode, bool dcFlushRequired);
     void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);

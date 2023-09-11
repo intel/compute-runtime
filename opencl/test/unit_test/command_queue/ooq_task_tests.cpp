@@ -5,9 +5,7 @@
  *
  */
 
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -370,7 +368,7 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBar
     outEvent->release();
 }
 
-HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisabledWhenEnqueingBarrierWithWaitListThenDcFlushSet) {
+HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisableddWhenEnqueingBarrierWithWaitListThenDcFlushSet) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         GTEST_SKIP();
@@ -390,7 +388,7 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisabledWhenEnquein
     EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
 }
 
-HWTEST_F(OOQTaskTests, givenEnqueueMarkerWithWaitListWhenIsMarkerWithPostSyncWriteThenBcsTimestampLastBarrierToWaitForIsNotEmpty) {
+HWTEST_F(OOQTaskTests, givenEnqueueMarkerWithWaitListWhenIsMarkerWithPostSyncWriteThenBcsTimestapLastBarrierToWaitForIsNotEmpty) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         GTEST_SKIP();

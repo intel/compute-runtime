@@ -26,9 +26,7 @@ using BarrierTest = Test<CommandEnqueueFixture>;
 HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierIsCalledThenCommandQueueAlignsToCsrWithoutSendingAnyCommands) {
     auto pCmdQ = this->pCmdQ;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        GTEST_SKIP();
-    }
+
     // Set task levels to known values.
     uint32_t originalCSRLevel = 2;
     commandStreamReceiver.taskLevel = originalCSRLevel;
@@ -71,9 +69,7 @@ HWTEST_F(BarrierTest, GivenCsrTaskLevelGreaterThenCmdqTaskLevelWhenEnqueingBarri
     auto pCmdQ = this->pCmdQ;
     auto pCmdBuffer = this->pCmdBuffer;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        GTEST_SKIP();
-    }
+
     commandStreamReceiver.setMediaVFEStateDirty(false);
 
     // Set task levels to known values.
@@ -206,7 +202,7 @@ HWTEST_F(BarrierTest, WhenEnqueingBarrierWithWaitListThenDependenciesShouldSync)
     auto pEvent = castToObject<Event>(event);
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
-    // in this case only cmdQ raises the taskLevel while csr stays intact
+    // in this case only cmdQ raises the taskLevel why csr stay intact
     EXPECT_EQ(8u, pCmdQ->taskLevel);
     if (csr.peekTimestampPacketWriteEnabled()) {
         EXPECT_EQ(pCmdQ->taskLevel + 1, commandStreamReceiver.peekTaskLevel());
