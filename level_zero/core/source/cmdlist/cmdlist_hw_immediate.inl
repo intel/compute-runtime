@@ -408,21 +408,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::waitForEventsFromHost() {
-    bool waitForEventsFromHostEnabled = this->isWaitForEventsFromHostEnabled();
-    if (!waitForEventsFromHostEnabled) {
-        return false;
-    }
-
-    auto numClients = static_cast<CommandQueueImp *>(this->cmdQImmediate)->getCsr()->getNumClients();
-    auto numClientsLimit = 2u;
-    if (NEO::DebugManager.flags.EventWaitOnHostNumClients.get() != -1) {
-        numClientsLimit = NEO::DebugManager.flags.EventWaitOnHostNumClients.get();
-    }
-    if (numClients < numClientsLimit) {
-        return false;
-    };
-
-    return true;
+    return this->isWaitForEventsFromHostEnabled();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
