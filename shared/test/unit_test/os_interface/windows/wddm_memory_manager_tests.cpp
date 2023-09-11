@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
@@ -516,11 +517,11 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
 }
 
 TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGettingPreferredAllocationMethodThenValueFlagIsReturned) {
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    auto releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->releaseHelper.get();
     for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
         AllocationProperties allocationProperties{0u, 0u, static_cast<AllocationType>(i), {}};
-        if (productHelper.getPreferredAllocationMethod(allocationProperties.allocationType)) {
-            EXPECT_EQ(*productHelper.getPreferredAllocationMethod(allocationProperties.allocationType), memoryManager->getPreferredAllocationMethod(allocationProperties));
+        if (releaseHelper && releaseHelper->getPreferredAllocationMethod(allocationProperties.allocationType)) {
+            EXPECT_EQ(*releaseHelper->getPreferredAllocationMethod(allocationProperties.allocationType), memoryManager->getPreferredAllocationMethod(allocationProperties));
         } else {
             EXPECT_EQ(preferredAllocationMethod, memoryManager->getPreferredAllocationMethod(allocationProperties));
         }

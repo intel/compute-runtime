@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
@@ -71,5 +72,27 @@ TEST(ReleaseHelperTest, givenReleaseHelper1271ThenCorrectMediaFrequencyTileIndex
         auto expectedTileIndex = 1u;
         EXPECT_TRUE(releaseHelper->getMediaFrequencyTileIndex(tileIndex));
         EXPECT_EQ(expectedTileIndex, tileIndex);
+    }
+}
+
+TEST(ReleaseHelperTest, givenReleaseHelper1271WhenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer) {
+    HardwareIpVersion ipVersion{};
+    ipVersion.architecture = 12;
+    ipVersion.release = 71;
+    for (auto &revision : {0, 4}) {
+        ipVersion.revision = revision;
+        auto releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
+            auto allocationType = static_cast<AllocationType>(i);
+            auto preferredAllocationMethod = releaseHelper->getPreferredAllocationMethod(allocationType);
+            if (allocationType == AllocationType::TAG_BUFFER ||
+                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
+                EXPECT_FALSE(preferredAllocationMethod.has_value());
+            } else {
+                EXPECT_TRUE(preferredAllocationMethod.has_value());
+                EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
+            }
+        }
     }
 }

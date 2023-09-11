@@ -160,7 +160,6 @@ class ProductHelperHw : public ProductHelper {
     bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const override;
     bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const override;
     bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const override;
-    std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
     uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const override;
 
     ~ProductHelperHw() override = default;

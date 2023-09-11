@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helper/release_helper.h"
 
 #include "gtest/gtest.h"
@@ -61,5 +62,21 @@ TEST(ReleaseHelperTest, givenReleaseHelper1257ThenMediaFrequencyTileIndexIsNotRe
         auto expectedTileIndex = 0u;
         EXPECT_FALSE(releaseHelper->getMediaFrequencyTileIndex(tileIndex));
         EXPECT_EQ(expectedTileIndex, tileIndex);
+    }
+}
+
+TEST(ReleaseHelperTest, givenReleaseHelper1257WhenCheckPreferredAllocationMethodThenNoPreferenceIsReturned) {
+    HardwareIpVersion ipVersion{};
+    ipVersion.architecture = 12;
+    ipVersion.release = 57;
+    for (auto &revision : {0}) {
+        ipVersion.revision = revision;
+        auto releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
+            auto allocationType = static_cast<AllocationType>(i);
+            auto preferredAllocationMethod = releaseHelper->getPreferredAllocationMethod(allocationType);
+            EXPECT_FALSE(preferredAllocationMethod.has_value());
+        }
     }
 }

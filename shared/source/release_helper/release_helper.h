@@ -10,10 +10,13 @@
 #include "shared/source/helpers/hw_ip_version.h"
 
 #include <memory>
+#include <optional>
 namespace NEO {
 
 class ReleaseHelper;
 enum class ReleaseType;
+enum class GfxMemoryAllocationMethod : uint32_t;
+enum class AllocationType;
 
 inline constexpr uint32_t maxArchitecture = 64;
 using createReleaseHelperFunctionType = std::unique_ptr<ReleaseHelper> (*)(HardwareIpVersion hardwareIpVersion);
@@ -34,6 +37,7 @@ class ReleaseHelper {
     virtual int getProductMaxPreferredSlmSize(int preferredEnumValue) const = 0;
     virtual bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
+    virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -57,6 +61,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     int getProductMaxPreferredSlmSize(int preferredEnumValue) const override;
     bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const override;
     bool isResolvingSubDeviceIDNeeded() const override;
+    std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
 
   private:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

@@ -40,6 +40,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <algorithm>
 #include <emmintrin.h>
@@ -78,8 +79,8 @@ GfxMemoryAllocationMethod WddmMemoryManager::getPreferredAllocationMethod(const 
     }
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[allocationProperties.rootDeviceIndex].get();
     UNRECOVERABLE_IF(!rootDeviceEnvironment);
-    auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
-    auto preference = productHelper.getPreferredAllocationMethod(allocationProperties.allocationType);
+    auto releaseHelper = rootDeviceEnvironment->releaseHelper.get();
+    auto preference = releaseHelper ? releaseHelper->getPreferredAllocationMethod(allocationProperties.allocationType) : std::nullopt;
     if (preference) {
         return *preference;
     }

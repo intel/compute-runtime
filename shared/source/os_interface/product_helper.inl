@@ -804,11 +804,6 @@ bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const Ke
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
-    return {};
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
         return releaseHelper->isResolvingSubDeviceIDNeeded();

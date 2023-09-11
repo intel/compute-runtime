@@ -43,9 +43,6 @@ enum class DriverModelType;
 using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
 extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
 
-enum class GfxMemoryAllocationMethod : uint32_t;
-enum class AllocationType;
-
 enum class UsmAccessCapabilities {
     Host = 0,
     Device,
@@ -210,7 +207,6 @@ class ProductHelper {
     virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
     virtual bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const = 0;
     virtual bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const = 0;
-    virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
     virtual uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const = 0;
 
     virtual ~ProductHelper() = default;

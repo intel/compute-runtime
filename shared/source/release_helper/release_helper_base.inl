@@ -57,4 +57,9 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }
+
+template <ReleaseType releaseType>
+std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<releaseType>::getPreferredAllocationMethod(AllocationType allocationType) const {
+    return {};
+}
 } // namespace NEO
