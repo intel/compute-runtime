@@ -60,6 +60,8 @@ class IoctlHelperXe : public IoctlHelper {
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
     bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
+    bool setGemTiling(void *setTiling) override;
+    bool getGemTiling(void *setTiling) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;

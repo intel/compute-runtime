@@ -159,10 +159,9 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     setTiling.stride = stride;
     auto ioctlHelper = this->drm->getIoctlHelper();
 
-    if (ioctlHelper->ioctl(DrmIoctl::GemSetTiling, &setTiling) != 0) {
+    if (!ioctlHelper->setGemTiling(&setTiling)) {
         return false;
     }
-
     this->tilingMode = setTiling.tilingMode;
 
     return setTiling.tilingMode == mode;

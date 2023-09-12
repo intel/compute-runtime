@@ -564,4 +564,12 @@ uint32_t IoctlHelper::createGem(uint64_t size, uint32_t memoryBanks) {
     DEBUG_BREAK_IF(ret != 0);
     return gemCreate.handle;
 }
+
+bool IoctlHelper::setGemTiling(void *setTiling) {
+    return this->ioctl(DrmIoctl::GemSetTiling, setTiling) == 0;
+}
+
+bool IoctlHelper::getGemTiling(void *setTiling) {
+    return this->ioctl(DrmIoctl::GemGetTiling, setTiling) == 0;
+}
 } // namespace NEO

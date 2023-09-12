@@ -170,6 +170,7 @@ class DrmMockXe : public DrmMockCustom {
     }
     int ioctl(DrmIoctl request, void *arg) override {
         int ret = -1;
+        ioctlCalled = true;
         if (forceIoctlAnswer) {
             return setIoctlAnswer;
         }
@@ -327,6 +328,7 @@ class DrmMockXe : public DrmMockCustom {
     StackVec<drm_xe_sync, 1> syncInputs;
     int waitUserFenceReturn = 0;
     uint32_t createParamsFlags = 0u;
+    bool ioctlCalled = false;
 };
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenProperValuesSet) {
@@ -408,6 +410,31 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenPro
     // dummy mock handle
     EXPECT_EQ(handle, drm.createParamsHandle);
     EXPECT_EQ(handle, testValueGemCreate);
+}
+
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallSetGemTilingThenAlwaysTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+
+    ASSERT_NE(nullptr, xeIoctlHelper);
+    GemSetTiling setTiling{};
+    uint32_t ret = xeIoctlHelper->setGemTiling(&setTiling);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(drm.ioctlCalled);
+}
+
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGetGemTilingThenAlwaysTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+
+    ASSERT_NE(nullptr, xeIoctlHelper);
+    GemGetTiling getTiling{};
+    uint32_t ret = xeIoctlHelper->getGemTiling(&getTiling);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(drm.ioctlCalled);
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsReturned) {

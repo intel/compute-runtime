@@ -93,6 +93,8 @@ class IoctlHelper {
     virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
     virtual bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) = 0;
+    virtual bool setGemTiling(void *setTiling);
+    virtual bool getGemTiling(void *setTiling);
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;

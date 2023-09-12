@@ -1472,4 +1472,12 @@ bool IoctlHelperXe::isWaitBeforeBindRequired(bool bind) const {
     return true;
 }
 
+bool IoctlHelperXe::setGemTiling(void *setTiling) {
+    return true;
+}
+
+bool IoctlHelperXe::getGemTiling(void *setTiling) {
+    return true;
+}
+
 } // namespace NEO

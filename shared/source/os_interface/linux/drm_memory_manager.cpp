@@ -1021,9 +1021,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         GemGetTiling getTiling{};
         getTiling.handle = boHandle;
         auto ioctlHelper = drm.getIoctlHelper();
-        ret = ioctlHelper->ioctl(DrmIoctl::GemGetTiling, &getTiling);
 
-        if (ret == 0) {
+        ret = ioctlHelper->getGemTiling(&getTiling);
+
+        if (ret) {
             auto ioctlHelper = drm.getIoctlHelper();
             if (getTiling.tilingMode == static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::TilingNone))) {
                 properties.imgInfo->linearStorage = true;
