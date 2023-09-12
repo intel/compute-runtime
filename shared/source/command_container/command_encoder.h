@@ -376,14 +376,16 @@ struct EncodeSemaphore {
                                        COMPARE_OPERATION compareMode,
                                        bool registerPollMode,
                                        bool waitMode,
-                                       bool useQwordData);
+                                       bool useQwordData,
+                                       bool indirect);
 
     static void addMiSemaphoreWaitCommand(LinearStream &commandStream,
                                           uint64_t compareAddress,
                                           uint64_t compareData,
                                           COMPARE_OPERATION compareMode,
                                           bool registerPollMode,
-                                          bool useQwordData);
+                                          bool useQwordData,
+                                          bool indirect);
 
     static void applyMiSemaphoreWaitCommand(LinearStream &commandStream,
                                             std::list<void *> &commandsList);
@@ -391,7 +393,7 @@ struct EncodeSemaphore {
     static constexpr size_t getSizeMiSemaphoreWait() { return sizeof(MI_SEMAPHORE_WAIT); }
 
   protected:
-    static void appendSemaphoreCommand(MI_SEMAPHORE_WAIT &cmd, uint64_t compareData, bool registerPollMode, bool useQwordData);
+    static void appendSemaphoreCommand(MI_SEMAPHORE_WAIT &cmd, uint64_t compareData, bool indirect, bool useQwordData);
 };
 
 template <typename GfxFamily>

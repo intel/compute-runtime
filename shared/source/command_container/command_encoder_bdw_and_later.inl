@@ -546,9 +546,11 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      COMPARE_OPERATION compareMode,
                                                      bool registerPollMode,
                                                      bool waitMode,
-                                                     bool useQwordData) {
+                                                     bool useQwordData,
+                                                     bool indirect) {
     constexpr uint64_t upper32b = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) << 32;
     UNRECOVERABLE_IF(useQwordData || (compareData & upper32b));
+    UNRECOVERABLE_IF(indirect);
 
     MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
     localCmd.setCompareOperation(compareMode);

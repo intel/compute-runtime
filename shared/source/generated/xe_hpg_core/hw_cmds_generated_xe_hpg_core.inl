@@ -6162,7 +6162,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
             uint32_t CompareOperation : BITFIELD_RANGE(12, 14);
             uint32_t WaitMode : BITFIELD_RANGE(15, 15);
             uint32_t RegisterPollMode : BITFIELD_RANGE(16, 16);
-            uint32_t Reserved_17 : BITFIELD_RANGE(17, 17);
+            uint32_t IndirectSemaphoreDataDword : BITFIELD_RANGE(17, 17);
             uint32_t WorkloadPartitionIdOffsetEnable : BITFIELD_RANGE(18, 18);
             uint32_t Reserved_19 : BITFIELD_RANGE(19, 21);
             uint32_t MemoryType : BITFIELD_RANGE(22, 22);
@@ -6244,6 +6244,12 @@ typedef struct tagMI_SEMAPHORE_WAIT {
     inline REGISTER_POLL_MODE getRegisterPollMode() const {
         return static_cast<REGISTER_POLL_MODE>(
             TheStructure.Common.RegisterPollMode);
+    }
+    inline void setIndirectSemaphoreDataDword(const bool value) {
+        TheStructure.Common.IndirectSemaphoreDataDword = value;
+    }
+    inline bool getIndirectSemaphoreDataDword() const {
+        return TheStructure.Common.IndirectSemaphoreDataDword;
     }
     inline void setWorkloadPartitionIdOffsetEnable(const bool value) {
         TheStructure.Common.WorkloadPartitionIdOffsetEnable = value;

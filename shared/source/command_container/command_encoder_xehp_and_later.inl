@@ -745,15 +745,17 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      COMPARE_OPERATION compareMode,
                                                      bool registerPollMode,
                                                      bool waitMode,
-                                                     bool useQwordData) {
+                                                     bool useQwordData,
+                                                     bool indirect) {
     MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
     localCmd.setCompareOperation(compareMode);
     localCmd.setSemaphoreDataDword(static_cast<uint32_t>(compareData));
     localCmd.setSemaphoreGraphicsAddress(compareAddress);
     localCmd.setWaitMode(waitMode ? MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE : MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE);
     localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
+    localCmd.setIndirectSemaphoreDataDword(indirect);
 
-    EncodeSemaphore<Family>::appendSemaphoreCommand(localCmd, compareData, registerPollMode, useQwordData);
+    EncodeSemaphore<Family>::appendSemaphoreCommand(localCmd, compareData, indirect, useQwordData);
 
     *cmd = localCmd;
 }

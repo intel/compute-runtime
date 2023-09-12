@@ -130,6 +130,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
                                                                     MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
                                                                     false,
                                                                     true,
+                                                                    false,
                                                                     false);
                 auto pMiSemaphoreWait = genCmdCast<MI_SEMAPHORE_WAIT *>(*(++it));
                 ASSERT_NE(nullptr, pMiSemaphoreWait);

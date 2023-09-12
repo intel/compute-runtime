@@ -187,7 +187,7 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
                                                         gpuAddress,
                                                         EncodeSemaphore<Family>::invalidHardwareTag,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                        false, true, false);
+                                                        false, true, false, false);
         commandsBuffer = ptrOffset(commandsBuffer, EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
     }
 }

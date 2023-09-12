@@ -99,7 +99,7 @@ void ExperimentalCommandBuffer::addExperimentalCommands() {
                                                        gpuAddr,
                                                        *semaphoreData,
                                                        MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                       false, false, false);
+                                                       false, false, false, false);
 }
 
 template <typename GfxFamily>
