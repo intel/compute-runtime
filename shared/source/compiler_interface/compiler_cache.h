@@ -9,6 +9,8 @@
 
 #include "shared/source/utilities/arrayref.h"
 
+#include "os_handle.h"
+
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -16,12 +18,6 @@
 #include <unordered_map>
 
 namespace NEO {
-#ifdef _WIN32
-using HandleType = void *;
-#else
-using HandleType = int;
-#endif // _WIN32
-
 struct HardwareInfo;
 
 struct CompilerCacheConfig {

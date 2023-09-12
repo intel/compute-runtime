@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/io_functions.h"
 
+#include "os_handle.h"
 #include "os_inc.h"
 
 #include <algorithm>

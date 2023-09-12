@@ -391,6 +391,16 @@ if(BUILD_WITH_L0)
       target_include_directories(${LIB_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
     endif()
 
+    if(WIN32)
+      target_include_directories(${LIB_NAME} PUBLIC
+                                 ${NEO_SHARED_DIRECTORY}/os_interface/windows
+      )
+    else()
+      target_include_directories(${LIB_NAME} PUBLIC
+                                 ${NEO_SHARED_DIRECTORY}/os_interface/linux
+      )
+    endif()
+
     create_project_source_tree(${LIB_NAME})
   endfunction()
 

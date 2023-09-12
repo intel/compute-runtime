@@ -146,6 +146,7 @@ append_sources_from_properties(CORE_SOURCES
 
 if(WIN32)
   append_sources_from_properties(CORE_SOURCES
+                                 NEO_CORE_COMPILER_INTERFACE_WINDOWS
                                  NEO_CORE_GMM_HELPER_WINDOWS
                                  NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
                                  NEO_CORE_DIRECT_SUBMISSION_WINDOWS
@@ -161,6 +162,7 @@ if(WIN32)
   )
 else()
   append_sources_from_properties(CORE_SOURCES
+                                 NEO_CORE_COMPILER_INTERFACE_LINUX
                                  NEO_CORE_DIRECT_SUBMISSION_LINUX
                                  NEO_CORE_OS_INTERFACE_LINUX
                                  NEO_CORE_PAGE_FAULT_MANAGER_LINUX

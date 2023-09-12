@@ -27,17 +27,5 @@ set(NEO_CORE_COMPILER_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/tokenized_string.h
 )
 
-if(WIN32)
-  list(APPEND NEO_CORE_COMPILER_INTERFACE
-       ${CMAKE_CURRENT_SOURCE_DIR}/windows/compiler_cache_windows.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_compiler_cache_helper.cpp
-  )
-else()
-  list(APPEND NEO_CORE_COMPILER_INTERFACE
-       ${CMAKE_CURRENT_SOURCE_DIR}/linux/compiler_cache_linux.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_compiler_cache_helper.cpp
-  )
-endif()
-
 set_property(GLOBAL PROPERTY NEO_CORE_COMPILER_INTERFACE ${NEO_CORE_COMPILER_INTERFACE})
 add_subdirectories()
