@@ -2665,6 +2665,33 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushFlagSetWhenGettingCsrFlagValue
     EXPECT_EQ(helperValue, csrValue);
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenBarrierTimestampPacketNodesWhenGetCmdSizeForStallingCommandsCalledThenReturnCorrectSize) {
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    const auto expectedCmdSizeNoPostSync = commandStreamReceiver.getCmdSizeForStallingNoPostSyncCommands();
+    {
+        DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+        dispatchFlags.barrierTimestampPacketNodes = nullptr;
+        EXPECT_EQ(expectedCmdSizeNoPostSync, commandStreamReceiver.getCmdSizeForStallingCommands(dispatchFlags));
+    }
+    {
+        DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+        TimestampPacketContainer emptyContainer;
+        dispatchFlags.barrierTimestampPacketNodes = &emptyContainer;
+        EXPECT_EQ(expectedCmdSizeNoPostSync, commandStreamReceiver.getCmdSizeForStallingCommands(dispatchFlags));
+    }
+
+    const auto expectedCmdSizePostSync = commandStreamReceiver.getCmdSizeForStallingPostSyncCommands();
+    {
+        DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+        TimestampPacketContainer barrierNodes;
+        barrierNodes.add(commandStreamReceiver.getTimestampPacketAllocator()->getTag());
+        dispatchFlags.barrierTimestampPacketNodes = &barrierNodes;
+        EXPECT_EQ(expectedCmdSizePostSync, commandStreamReceiver.getCmdSizeForStallingCommands(dispatchFlags));
+    }
+}
+
 struct MockRequiredScratchSpaceController : public ScratchSpaceControllerBase {
     MockRequiredScratchSpaceController(uint32_t rootDeviceIndex,
                                        ExecutionEnvironment &environment,
@@ -4424,39 +4451,6 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredFalseWhenProgramStalli
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_FALSE(pipeControl->getDcFlushEnable());
-}
-
-HWTEST_F(CommandStreamReceiverHwTest, givenFlagProgramBarrierInCommandStreamTaskWhenFlushTaskThenPipeControlProgrammedInTaskCommandStream) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.ProgramBarrierInCommandStreamTask.set(1);
-    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    GraphicsAllocation *allocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({ultCsr.getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
-    LinearStream commandStream{allocation};
-    ASSERT_NE(nullptr, commandStream.getGraphicsAllocation());
-    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    dispatchFlags.isStallingCommandsOnNextFlushRequired = true;
-    ultCsr.flushTask(commandStream,
-                     MemoryConstants::pageSize,
-                     &dsh,
-                     &ioh,
-                     &ssh,
-                     0,
-                     dispatchFlags,
-                     *pDevice);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList,
-        commandStream.getCpuBase(),
-        commandStream.getUsed()));
-    auto pipeControlIteratorVector = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(pipeControlIteratorVector.size(), 1u);
-    auto pipeControlIterator = pipeControlIteratorVector[0];
-    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
-    ASSERT_NE(nullptr, pipeControl);
-    pDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
 HWTEST2_F(CommandStreamReceiverHwTest,

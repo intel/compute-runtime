@@ -202,7 +202,7 @@ HWTEST_F(BarrierTest, WhenEnqueingBarrierWithWaitListThenDependenciesShouldSync)
     auto pEvent = castToObject<Event>(event);
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
-    // in this case only cmdQ raises the taskLevel why csr stay intact
+    // in this case only cmdQ raises the taskLevel while csr stays intact
     EXPECT_EQ(8u, pCmdQ->taskLevel);
     if (csr.peekTimestampPacketWriteEnabled()) {
         EXPECT_EQ(pCmdQ->taskLevel + 1, commandStreamReceiver.peekTaskLevel());

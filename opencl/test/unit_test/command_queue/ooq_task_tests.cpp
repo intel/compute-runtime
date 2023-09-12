@@ -368,7 +368,7 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBar
     outEvent->release();
 }
 
-HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisableddWhenEnqueingBarrierWithWaitListThenDcFlushSet) {
+HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisabledWhenEnqueingBarrierWithWaitListThenDcFlushSet) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         GTEST_SKIP();
@@ -388,7 +388,7 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisableddWhenEnquei
     EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
 }
 
-HWTEST_F(OOQTaskTests, givenEnqueueMarkerWithWaitListWhenIsMarkerWithPostSyncWriteThenBcsTimestapLastBarrierToWaitForIsNotEmpty) {
+HWTEST_F(OOQTaskTests, givenEnqueueMarkerWithWaitListWhenIsMarkerWithPostSyncWriteThenBcsTimestampLastBarrierToWaitForIsNotEmpty) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         GTEST_SKIP();

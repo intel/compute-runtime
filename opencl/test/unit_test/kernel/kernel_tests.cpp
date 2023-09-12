@@ -590,6 +590,8 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     size_t getCmdsSizeForComputeBarrierCommand() const override {
         return 0;
     }
+    void programStallingCommandsForBarrier(LinearStream &cmdStream, TimestampPacketContainer *barrierTimestampPacketNodes, const bool isDcFlushRequired) override {
+    }
     GraphicsAllocation *getClearColorAllocation() override { return nullptr; }
 
     bool createPreemptionAllocation() override {

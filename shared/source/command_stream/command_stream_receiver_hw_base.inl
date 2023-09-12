@@ -498,11 +498,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programPreemption(commandStreamCSR, dispatchFlags);
 
     if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
-        if (DebugManager.flags.ProgramBarrierInCommandStreamTask.get() == 1) {
-            programStallingCommandsForBarrier(commandStreamTask, dispatchFlags);
-        } else {
-            programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
-        }
+        programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags.barrierTimestampPacketNodes, dispatchFlags.isDcFlushRequiredOnStallingCommandsOnNextFlush);
     }
 
     programStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, stateBaseAddressDirty);
@@ -727,12 +723,9 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programStallingCommandsForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags) {
-
-    auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
-
+inline void CommandStreamReceiverHw<GfxFamily>::programStallingCommandsForBarrier(LinearStream &cmdStream, TimestampPacketContainer *barrierTimestampPacketNodes, const bool isDcFlushRequired) {
     if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() != 0) {
-        programStallingPostSyncCommandsForBarrier(cmdStream, *barrierTimestampPacketNodes->peekNodes()[0], dispatchFlags.isDcFlushRequiredOnStallingCommandsOnNextFlush);
+        programStallingPostSyncCommandsForBarrier(cmdStream, *barrierTimestampPacketNodes->peekNodes()[0], isDcFlushRequired);
         barrierTimestampPacketNodes->makeResident(*this);
     } else {
         programStallingNoPostSyncCommandsForBarrier(cmdStream);

@@ -1171,6 +1171,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using COMPUTE_WALKER = typename FamilyType::WALKER_TYPE;
 
     if (pCmdQ->getTimestampPacketContainer() == nullptr) {
         GTEST_SKIP();
@@ -1192,30 +1193,50 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
     EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
     uint64_t lastBlitNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*pCmdQ->getTimestampPacketContainer()->peekNodes()[0]);
     EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
-    auto ccsStart = pCmdQ->getGpgpuCommandStreamReceiver().getCS().getUsed();
+
     auto bcsStart = pCmdQ->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS)->getCS(0).getUsed();
     EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr));
     EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
 
     uint64_t barrierNodeAddress = 0u;
     {
-        HardwareParse ccsHwParser;
-        ccsHwParser.parseCommands<FamilyType>(pCmdQ->getGpgpuCommandStreamReceiver().getCS(0), ccsStart);
+        HardwareParse queueHwParser;
+        queueHwParser.parseCommands<FamilyType>(*pDevice->getUltCommandStreamReceiver<FamilyType>().lastFlushedCommandStream, 0);
 
-        const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+        const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(queueHwParser.cmdList.begin(), queueHwParser.cmdList.end());
         const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         EXPECT_EQ(lastBlitNodeAddress, semaphore->getSemaphoreGraphicsAddress());
 
-        const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, ccsHwParser.cmdList.end());
+        const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, queueHwParser.cmdList.end());
         const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
         EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
         barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
 
         // There shouldn't be any more semaphores before the barrier
         EXPECT_EQ(pipeControlItor, find<MI_SEMAPHORE_WAIT *>(std::next(semaphoreItor), pipeControlItor));
+
+        // Make sure the gpgpu semaphore is programmed before the second compute walker
+        auto itor = queueHwParser.cmdList.begin();
+        auto semaphoreIndex = 0u;
+        auto lastComputeWalkerIndex = 0u;
+        auto index = 0u;
+        while (itor != queueHwParser.cmdList.end()) {
+            const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+            if (semaphore) {
+                semaphoreIndex = index;
+            }
+            const auto computeWalker = genCmdCast<COMPUTE_WALKER *>(*itor);
+            if (computeWalker) {
+                lastComputeWalkerIndex = index;
+            }
+            ++itor;
+            ++index;
+        }
+        EXPECT_LT(semaphoreIndex, lastComputeWalkerIndex);
     }
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
 
     {
         HardwareParse bcsHwParser;

@@ -22,8 +22,8 @@ struct EnqueueProperties {
     };
 
     EnqueueProperties() = delete;
-    EnqueueProperties(bool blitEnqueue, bool hasKernels, bool isCacheFlushCmd, bool flushDependenciesOnly, bool isMarkerWithEvent,
-                      const BlitPropertiesContainer *blitPropertiesContainer) {
+    EnqueueProperties(bool blitEnqueue, bool hasKernels, bool isCacheFlushCmd, bool flushDependenciesOnly, bool isMarkerWithEvent, bool hasStallingCmds,
+                      const BlitPropertiesContainer *blitPropertiesContainer) : hasStallingCmds(hasStallingCmds) {
         if (blitEnqueue) {
             operation = Operation::Blit;
             this->blitPropertiesContainer = blitPropertiesContainer;
@@ -61,5 +61,6 @@ struct EnqueueProperties {
 
     const BlitPropertiesContainer *blitPropertiesContainer = nullptr;
     Operation operation = Operation::EnqueueWithoutSubmission;
+    const bool hasStallingCmds;
 };
 } // namespace NEO

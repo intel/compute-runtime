@@ -260,10 +260,21 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     bool flushDependenciesForNonKernelCommand = false;
     bool relaxedOrderingEnabled = false;
-
+    bool programBarrierInTaskStream = false;
     if (multiDispatchInfo.empty() == false) {
         relaxedOrderingEnabled = relaxedOrderingForGpgpuAllowed(static_cast<uint32_t>(csrDeps.timestampPacketContainer.size()));
+        programBarrierInTaskStream = !relaxedOrderingEnabled && !getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled() && isStallingCommandsOnNextFlushRequired() && !isBlitAuxTranslationRequired(multiDispatchInfo);
+        if (programBarrierInTaskStream) {
+            CsrDependencies csrDeps{};
+            fillCsrDependenciesWithLastBcsPackets(csrDeps);
+            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, false);
 
+            setupBarrierTimestampForBcsEngines(getGpgpuCommandStreamReceiver().getOsContext().getEngineType(), timestampPacketDependencies);
+            getGpgpuCommandStreamReceiver().programStallingCommandsForBarrier(commandStream, &timestampPacketDependencies.barrierNodes, isDcFlushRequiredOnStallingCommandsOnNextFlush());
+
+            clearLastBcsPackets();
+            setStallingCommandsOnNextFlush(false);
+        }
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, blockQueue, csrDeps, blockedCommandsData.get(),
                                                timestampPacketDependencies, relaxedOrderingEnabled);
@@ -272,11 +283,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType && !isNonStallingIoqBarrier) {
             setStallingCommandsOnNextFlush(true);
-            if (NEO::DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.get() == 0 || event) {
-                setDcFlushRequiredOnStallingCommandsOnNextFlush(true);
-            }
-            this->splitBarrierRequired = true;
+            const bool isDcFlushRequiredOnBarrier = NEO::DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.get() == 0 || event;
+            setDcFlushRequiredOnStallingCommandsOnNextFlush(isDcFlushRequiredOnBarrier);
         }
+        this->splitBarrierRequired = true;
 
         for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
             auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
@@ -339,7 +349,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
     const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
-                                              flushDependenciesForNonKernelCommand, isMarkerWithPostSyncWrite, &blitPropertiesContainer);
+                                              flushDependenciesForNonKernelCommand, isMarkerWithPostSyncWrite, programBarrierInTaskStream, &blitPropertiesContainer);
 
     if (!blockQueue && isOOQEnabled()) {
         setupBarrierTimestampForBcsEngines(computeCommandStreamReceiver.getOsContext().getEngineType(), timestampPacketDependencies);
@@ -862,7 +872,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     auto memoryCompressionState = getGpgpuCommandStreamReceiver().getMemoryCompressionState(auxTranslationRequired);
-    bool hasStallingCmds = !relaxedOrderingEnabled && (eventsRequest.numEventsInWaitList > 0 || timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0);
+    bool hasStallingCmds = enqueueProperties.hasStallingCmds || (!relaxedOrderingEnabled && (eventsRequest.numEventsInWaitList > 0 || timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0));
 
     DispatchFlags dispatchFlags(
         {},                                                                                                     // csrDependencies
@@ -960,7 +970,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (isHandlingBarrier) {
         clearLastBcsPackets();
         setStallingCommandsOnNextFlush(false);
-        setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
     }
 
     if (gtpinIsGTPinInitialized()) {
@@ -1180,7 +1189,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         if (isHandlingBarrier) {
             clearLastBcsPackets();
             setStallingCommandsOnNextFlush(false);
-            setDcFlushRequiredOnStallingCommandsOnNextFlush(false);
         }
     }
 
@@ -1418,7 +1426,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
 
-    const EnqueueProperties enqueueProperties(true, false, false, false, false, &blitPropertiesContainer);
+    const EnqueueProperties enqueueProperties(true, false, false, false, false, false, &blitPropertiesContainer);
 
     LinearStream *gpgpuCommandStream = {};
     size_t gpgpuCommandStreamStart = {};

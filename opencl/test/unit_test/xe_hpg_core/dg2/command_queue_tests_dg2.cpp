@@ -69,7 +69,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndOddWorkGroupWhenenqueueNonBl
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(mockDevice.get(), pKernel);
     BlitPropertiesContainer blitPropertiesContainer;
-    const EnqueueProperties enqueueProperties(false, true, false, false, false, &blitPropertiesContainer);
+    const EnqueueProperties enqueueProperties(false, true, false, false, false, false, &blitPropertiesContainer);
     TimestampPacketDependencies timestampPacketDependencies;
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
@@ -100,7 +100,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndNotOddWorkGroupWhenenqueueNo
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(mockDevice.get(), pKernel);
     BlitPropertiesContainer blitPropertiesContainer;
-    const EnqueueProperties enqueueProperties(false, true, false, false, false, &blitPropertiesContainer);
+    const EnqueueProperties enqueueProperties(false, true, false, false, false, false, &blitPropertiesContainer);
     TimestampPacketDependencies timestampPacketDependencies;
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
@@ -136,7 +136,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithRequiredDisableEuFusionWhenenqueueN
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(mockDevice.get(), pKernel);
     BlitPropertiesContainer blitPropertiesContainer;
-    const EnqueueProperties enqueueProperties(false, true, false, false, false, &blitPropertiesContainer);
+    const EnqueueProperties enqueueProperties(false, true, false, false, false, false, &blitPropertiesContainer);
     TimestampPacketDependencies timestampPacketDependencies;
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
@@ -163,7 +163,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithoutRequiredDisableEuFusionWhenenque
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(mockDevice.get(), pKernel);
     BlitPropertiesContainer blitPropertiesContainer;
-    const EnqueueProperties enqueueProperties(false, true, false, false, false, &blitPropertiesContainer);
+    const EnqueueProperties enqueueProperties(false, true, false, false, false, false, &blitPropertiesContainer);
     TimestampPacketDependencies timestampPacketDependencies;
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
