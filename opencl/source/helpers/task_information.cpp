@@ -71,7 +71,6 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
         false,                                                                       // useSLM
         !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),  // guardCommandBufferWithPipeControl
         false,                                                                       // GSBA32BitRequired
-        false,                                                                       // requiresCoherency
         commandQueue.getPriority() == QueuePriority::LOW,                            // lowPriority
         false,                                                                       // implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), // outOfOrderExecutionAllowed
@@ -209,7 +208,6 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         slmUsed,                                                                          // useSLM
         !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       // guardCommandBufferWithPipeControl
         commandType == CL_COMMAND_NDRANGE_KERNEL,                                         // GSBA32BitRequired
-        false,                                                                            // requiresCoherency
         commandQueue.getPriority() == QueuePriority::LOW,                                 // lowPriority
         false,                                                                            // implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
@@ -388,7 +386,6 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         false,                                                                 // useSLM
         !commandStreamReceiver.isUpdateTagFromWaitEnabled(),                   // guardCommandBufferWithPipeControl
         false,                                                                 // GSBA32BitRequired
-        false,                                                                 // requiresCoherency
         commandQueue.getPriority() == QueuePriority::LOW,                      // lowPriority
         false,                                                                 // implicitFlush
         commandStreamReceiver.isNTo1SubmissionModelEnabled(),                  // outOfOrderExecutionAllowed

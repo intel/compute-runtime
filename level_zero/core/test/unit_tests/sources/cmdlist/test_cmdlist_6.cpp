@@ -67,7 +67,6 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseImmediateFlushTask.set(0);
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &productHelper = device->getProductHelper();
 
     std::unique_ptr<L0::CommandList> commandList;
@@ -81,7 +80,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value = 1;
     commandListImmediate.requiredStreamState.frontEndState.disableEUFusion.value = 1;
     commandListImmediate.requiredStreamState.frontEndState.disableOverdispatch.value = 1;
-    commandListImmediate.requiredStreamState.stateComputeMode.isCoherencyRequired.value = 1;
+    commandListImmediate.requiredStreamState.stateComputeMode.isCoherencyRequired.value = 0;
     commandListImmediate.requiredStreamState.stateComputeMode.largeGrfMode.value = 1;
     commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::RoundRobin;
     commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, true);
@@ -92,7 +91,6 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     productHelper.fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, device->getHwInfo());
 
     int expectedDisableOverdispatch = frontEndPropertiesSupport.disableOverdispatch;
-    int32_t expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? gfxCoreHelper.forceNonGpuCoherencyWA(true) : -1;
     int expectedLargeGrfMode = scmPropertiesSupport.largeGrfMode ? 1 : -1;
     int expectedThreadArbitrationPolicy = scmPropertiesSupport.threadArbitrationPolicy ? NEO::ThreadArbitrationPolicy::RoundRobin : -1;
 
@@ -103,7 +101,6 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(expectedDisableEuFusion, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
     EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
-    EXPECT_EQ(expectedIsCoherencyRequired, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
     EXPECT_EQ(expectedLargeGrfMode, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(expectedThreadArbitrationPolicy, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
@@ -116,7 +113,6 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, true);
 
     expectedLargeGrfMode = scmPropertiesSupport.largeGrfMode ? 0 : -1;
-    expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? 0 : -1;
     expectedThreadArbitrationPolicy = scmPropertiesSupport.threadArbitrationPolicy ? NEO::ThreadArbitrationPolicy::AgeBased : -1;
 
     expectedComputeDispatchAllWalkerEnable = frontEndPropertiesSupport.computeDispatchAllWalker ? 0 : -1;
@@ -126,7 +122,6 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(expectedDisableEuFusion, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
     EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
-    EXPECT_EQ(expectedIsCoherencyRequired, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
     EXPECT_EQ(expectedLargeGrfMode, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(expectedThreadArbitrationPolicy, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }

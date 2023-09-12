@@ -606,10 +606,6 @@ void GfxCoreHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
-    return requiresCoherency;
-}
-template <typename GfxFamily>
 size_t GfxCoreHelperHw<GfxFamily>::getBatchBufferEndSize() const {
     return EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize();
 }

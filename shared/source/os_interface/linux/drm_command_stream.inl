@@ -244,7 +244,7 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 
     int ret = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
                        batchBuffer.startOffset, execFlags,
-                       batchBuffer.requiresCoherency,
+                       false,
                        this->osContext,
                        vmHandleId,
                        drmContextId,

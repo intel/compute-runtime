@@ -188,7 +188,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutShare
         EXPECT_EQ(expectToBeProgrammed, foundOne);
     };
 
-    getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setPropertiesAll(flags.requiresCoherency, flags.numGrfRequired,
+    getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setPropertiesAll(false, flags.numGrfRequired,
                                                                                flags.threadArbitrationPolicy, PreemptionMode::Disabled);
 
     flushTask(true);

@@ -83,7 +83,6 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
                                                  : NEO::AdditionalKernelExecInfo::NotSet;
 
     const auto &requiredStateComputeMode = this->requiredStreamState.stateComputeMode;
-    dispatchFlags.requiresCoherency = (requiredStateComputeMode.isCoherencyRequired.value == 1);
     dispatchFlags.numGrfRequired = (requiredStateComputeMode.largeGrfMode.value == 1) ? GrfConfig::LargeGrfNumber
                                                                                       : GrfConfig::DefaultGrfNumber;
     dispatchFlags.threadArbitrationPolicy = requiredStateComputeMode.threadArbitrationPolicy.value;
@@ -231,7 +230,6 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         this->getCommandListSLMEnable(),                             // useSLM
         this->isSyncModeQueue,                                       // guardCommandBufferWithPipeControl
         false,                                                       // gsba32BitRequired
-        false,                                                       // requiresCoherency
         false,                                                       // lowPriority
         true,                                                        // implicitFlush
         this->csr->isNTo1SubmissionModelEnabled(),                   // outOfOrderExecutionAllowed

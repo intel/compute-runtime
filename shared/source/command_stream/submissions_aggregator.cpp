@@ -40,11 +40,6 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
         return;
     }
 
-    // check if next cmd buffer is compatible
-    if (primaryCommandBuffer->next->batchBuffer.requiresCoherency != primaryCommandBuffer->batchBuffer.requiresCoherency) {
-        return;
-    }
-
     if (primaryCommandBuffer->next->batchBuffer.lowPriority != primaryCommandBuffer->batchBuffer.lowPriority) {
         return;
     }
@@ -100,12 +95,12 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
 
 NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_t startOffset,
                               size_t chainedBatchBufferStartOffset, uint64_t taskStartAddress, GraphicsAllocation *chainedBatchBuffer,
-                              bool requiresCoherency, bool lowPriority, QueueThrottle throttle, uint64_t sliceCount,
+                              bool lowPriority, QueueThrottle throttle, uint64_t sliceCount,
                               size_t usedSize, LinearStream *stream, void *endCmdPtr, uint32_t numCsrClients, bool hasStallingCmds,
                               bool hasRelaxedOrderingDependencies)
     : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset),
       chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), taskStartAddress(taskStartAddress), chainedBatchBuffer(chainedBatchBuffer),
-      requiresCoherency(requiresCoherency), lowPriority(lowPriority),
+      lowPriority(lowPriority),
       throttle(throttle), sliceCount(sliceCount),
       usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), numCsrClients(numCsrClients), hasStallingCmds(hasStallingCmds),
       hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies) {}

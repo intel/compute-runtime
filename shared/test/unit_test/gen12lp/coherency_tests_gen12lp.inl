@@ -34,7 +34,6 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
 
     void overrideCoherencyRequest(bool reqestChanged, bool requireCoherency, bool hasSharedHandles) {
         csr->getCsrRequestFlags()->hasSharedHandles = hasSharedHandles;
-        flags.requiresCoherency = requireCoherency;
         csr->streamProperties.stateComputeMode.isCoherencyRequired.value = requireCoherency;
         csr->streamProperties.stateComputeMode.isCoherencyRequired.isDirty = reqestChanged;
         if (hasSharedHandles) {
@@ -210,7 +209,6 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
     IndirectHeap stream(graphicAlloc);
 
     auto flushTask = [&](bool coherencyRequired) {
-        flags.requiresCoherency = coherencyRequired;
         startOffset = csr->commandStream.getUsed();
         csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     };
@@ -254,7 +252,6 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenSharedHandlesWhenFlushTaskCalle
     IndirectHeap stream(graphicsAlloc);
 
     auto flushTask = [&](bool coherencyRequired) {
-        flags.requiresCoherency = coherencyRequired;
         makeResidentSharedAlloc();
 
         startOffset = csr->commandStream.getUsed();

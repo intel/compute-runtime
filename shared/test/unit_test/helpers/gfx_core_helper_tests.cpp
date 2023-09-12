@@ -1291,11 +1291,6 @@ struct CoherentWANotNeeded {
         return !TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceGpuNonCoherent;
     }
 };
-HWTEST2_F(GfxCoreHelperTest, givenProductHelperWhenCheckingForceNonGpuCoherencyWAThenPassedValueReturned, CoherentWANotNeeded) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.forceNonGpuCoherencyWA(true));
-    EXPECT_FALSE(gfxCoreHelper.forceNonGpuCoherencyWA(false));
-}
 
 struct ForceNonCoherentMode {
     template <PRODUCT_FAMILY productFamily>
@@ -1305,12 +1300,6 @@ struct ForceNonCoherentMode {
         return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceGpuNonCoherent;
     }
 };
-
-HWTEST2_F(GfxCoreHelperTest, givenProductHelperWhenCheckingForceNonGpuCoherencyWAThenFalseIsReturned, ForceNonCoherentMode) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.forceNonGpuCoherencyWA(true));
-    EXPECT_FALSE(gfxCoreHelper.forceNonGpuCoherencyWA(false));
-}
 
 HWTEST_F(GfxCoreHelperTest, GivenHwInfoWhenGetBatchBufferEndSizeCalledThenCorrectSizeReturned) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();

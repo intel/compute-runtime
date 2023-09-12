@@ -25,7 +25,6 @@ struct BatchBuffer {
                 size_t chainedBatchBufferStartOffset,
                 uint64_t taskStartAddress,
                 GraphicsAllocation *chainedBatchBuffer,
-                bool requiresCoherency,
                 bool lowPriority,
                 QueueThrottle throttle,
                 uint64_t sliceCount,
@@ -42,7 +41,6 @@ struct BatchBuffer {
     uint64_t taskStartAddress = 0; // if task not available, use CSR stream
 
     GraphicsAllocation *chainedBatchBuffer = nullptr;
-    bool requiresCoherency = false;
     bool lowPriority = false;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;

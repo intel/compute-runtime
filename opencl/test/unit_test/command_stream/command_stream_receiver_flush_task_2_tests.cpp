@@ -1049,7 +1049,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenPreambleSe
     auto expectedUsed = csrCS.getUsed() + sizeNeeded;
     expectedUsed = alignUp(expectedUsed, MemoryConstants::cacheLineSize);
 
-    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
+    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(false, flushTaskFlags.numGrfRequired,
                                                                              flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled);
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
 

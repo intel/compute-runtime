@@ -923,7 +923,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
     dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.requiresCoherency = true;
 
     mockCsr->flushTask(cs, 0u, &dsh, &ioh, &ssh, 0u, dispatchFlags, *device);
 
@@ -942,7 +941,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
     EXPECT_EQ(1u, wddm->submitResult.called);
     auto csrCommandStream = mockCsr->commandStream.getGraphicsAllocation();
     EXPECT_EQ(csrCommandStream->getGpuAddress(), wddm->submitResult.commandBufferSubmitted);
-    EXPECT_TRUE(((COMMAND_BUFFER_HEADER *)wddm->submitResult.commandHeaderSubmitted)->RequiresCoherency);
+    EXPECT_FALSE(((COMMAND_BUFFER_HEADER *)wddm->submitResult.commandHeaderSubmitted)->RequiresCoherency);
     EXPECT_EQ(6u + csrSurfaceCount, wddm->makeResidentResult.handleCount);
 
     std::vector<D3DKMT_HANDLE> expectedHandles;

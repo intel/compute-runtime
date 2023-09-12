@@ -100,7 +100,7 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
     }
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
-    pHeader->RequiresCoherency = batchBuffer.requiresCoherency;
+    pHeader->RequiresCoherency = false;
 
     pHeader->UmdRequestedSliceState = 0;
     pHeader->UmdRequestedEUCount = wddm->getRequestedEUCount();

@@ -259,7 +259,6 @@ HWTEST_F(DispatchFlagsTests, givenCommandMapUnmapWhenSubmitThenPassCorrectDispat
     EXPECT_FALSE(mockCsr->passedDispatchFlags.useSLM);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.gsba32BitRequired);
-    EXPECT_FALSE(mockCsr->passedDispatchFlags.requiresCoherency);
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::LOW, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
@@ -288,10 +287,6 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     bool flushDC = false;
     bool slmUsed = false;
     bool ndRangeKernel = false;
-    bool requiresCoherency = false;
-    for (auto &surface : surfaces) {
-        requiresCoherency |= surface->isCoherent;
-    }
     std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1, nullptr));
     command->submit(20, false);
 
@@ -307,7 +302,6 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     EXPECT_EQ(slmUsed, mockCsr->passedDispatchFlags.useSLM);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
     EXPECT_EQ(ndRangeKernel, mockCsr->passedDispatchFlags.gsba32BitRequired);
-    EXPECT_EQ(requiresCoherency, mockCsr->passedDispatchFlags.requiresCoherency);
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::LOW, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
@@ -336,10 +330,6 @@ HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCa
     bool flushDC = false;
     bool slmUsed = false;
     uint32_t commandType = CL_COMMAND_COPY_IMAGE;
-    bool requiresCoherency = false;
-    for (auto &surface : surfaces) {
-        requiresCoherency |= surface->isCoherent;
-    }
     std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, commandType, nullptr, preemptionMode, kernel, 1, nullptr));
     command->submit(20, false);
 
@@ -356,7 +346,6 @@ HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCa
     EXPECT_EQ(slmUsed, mockCsr->passedDispatchFlags.useSLM);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.gsba32BitRequired);
-    EXPECT_EQ(requiresCoherency, mockCsr->passedDispatchFlags.requiresCoherency);
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::LOW, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
@@ -396,7 +385,6 @@ HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectD
     EXPECT_FALSE(mockCsr->passedDispatchFlags.useSLM);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.gsba32BitRequired);
-    EXPECT_FALSE(mockCsr->passedDispatchFlags.requiresCoherency);
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::LOW, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);

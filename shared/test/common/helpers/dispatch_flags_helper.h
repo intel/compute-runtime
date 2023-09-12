@@ -32,7 +32,6 @@ struct DispatchFlagsHelper {
             false,                                   // useSLM
             false,                                   // guardCommandBufferWithPipeControl
             false,                                   // gsba32BitRequired
-            false,                                   // requiresCoherency
             false,                                   // lowPriority
             false,                                   // implicitFlush
             false,                                   // outOfOrderExecutionAllowed

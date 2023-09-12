@@ -893,7 +893,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble);
 
-    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
+    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(false, flushTaskFlags.numGrfRequired,
                                                                              flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled);
     flushTask(commandStreamReceiver);
 
@@ -927,7 +927,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble - sizeNeededForStateBaseAddress);
 
-    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
+    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(false, flushTaskFlags.numGrfRequired,
                                                                              flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled);
     flushTask(commandStreamReceiver);
 
@@ -965,7 +965,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 
     flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
 
-    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
+    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(false, flushTaskFlags.numGrfRequired,
                                                                              flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled);
     commandStreamReceiver.flushTask(
         commandStream,

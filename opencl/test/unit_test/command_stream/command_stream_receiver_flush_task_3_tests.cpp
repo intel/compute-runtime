@@ -87,7 +87,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     // we should be submitting via csr
     EXPECT_EQ(cmdBuffer->batchBuffer.commandBufferAllocation, mockCsr->commandStream.getGraphicsAllocation());
     EXPECT_EQ(cmdBuffer->batchBuffer.startOffset, 0u);
-    EXPECT_FALSE(cmdBuffer->batchBuffer.requiresCoherency);
     EXPECT_FALSE(cmdBuffer->batchBuffer.lowPriority);
 
     // find BB END
@@ -365,7 +364,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     auto baseAfterFirstFlushTask = commandStream.getCpuBase();
     auto usedAfterFirstFlushTask = commandStream.getUsed();
 
-    dispatchFlags.requiresCoherency = true;
     dispatchFlags.lowPriority = true;
 
     mockCsr->flushTask(commandStream,
@@ -399,9 +397,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
 
     EXPECT_GT(cmdBuffer2->batchBufferEndLocation, cmdBuffer1->batchBufferEndLocation);
 
-    EXPECT_FALSE(cmdBuffer1->batchBuffer.requiresCoherency);
-    EXPECT_TRUE(cmdBuffer2->batchBuffer.requiresCoherency);
-
     EXPECT_FALSE(cmdBuffer1->batchBuffer.lowPriority);
     EXPECT_TRUE(cmdBuffer2->batchBuffer.lowPriority);
 
@@ -425,7 +420,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
     dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.requiresCoherency = false;
 
     mockCsr->streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
 
@@ -466,7 +460,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
     mockCsr->flushBatchedSubmissions();
 
     EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.lowPriority);
-    EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.requiresCoherency);
     EXPECT_EQ(mockCsr->recordedCommandBuffer->batchBuffer.commandBufferAllocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(4u, mockCsr->recordedCommandBuffer->batchBuffer.startOffset);
     EXPECT_EQ(1, mockCsr->flushCalledCount);

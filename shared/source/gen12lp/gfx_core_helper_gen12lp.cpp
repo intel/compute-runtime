@@ -204,11 +204,6 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     }
 }
 
-template <>
-bool GfxCoreHelperHw<Family>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
-    return false;
-}
-
 template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

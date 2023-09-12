@@ -18,7 +18,6 @@ struct BatchBufferHelper {
             chainedBatchBufferStartOffset,      // chainedBatchBufferStartOffset
             0,                                  // taskStartAddress
             nullptr,                            // chainedBatchBuffer
-            false,                              // requiresCoherency
             false,                              // lowPriority
             QueueThrottle::MEDIUM,              // throttle
             QueueSliceCount::defaultSliceCount, // sliceCount

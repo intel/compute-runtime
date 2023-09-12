@@ -56,7 +56,7 @@ struct DispatchFlags {
                   uint32_t l3CacheSettingsP, int32_t threadArbitrationPolicyP, uint32_t additionalKernelExecInfoP,
                   KernelExecutionType kernelExecutionTypeP, MemoryCompressionState memoryCompressionStateP,
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
-                  bool requiresCoherencyP, bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
+                  bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
                   bool usePerDSSbackedBufferP, bool useGlobalAtomicsP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
                   bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool stateCacheInvalidation, bool isStallingCommandsOnNextFlushRequired, bool isDcFlushRequiredOnStallingCommandsOnNextFlush) : csrDependencies(csrDependenciesP),
                                                                                                                                                                                                              barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
@@ -76,7 +76,6 @@ struct DispatchFlags {
                                                                                                                                                                                                              useSLM(useSLMP),
                                                                                                                                                                                                              guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControlP),
                                                                                                                                                                                                              gsba32BitRequired(gsba32BitRequiredP),
-                                                                                                                                                                                                             requiresCoherency(requiresCoherencyP),
                                                                                                                                                                                                              lowPriority(lowPriorityP),
                                                                                                                                                                                                              implicitFlush(implicitFlushP),
                                                                                                                                                                                                              outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
@@ -111,7 +110,6 @@ struct DispatchFlags {
     bool useSLM = false;
     bool guardCommandBufferWithPipeControl = false;
     bool gsba32BitRequired = false;
-    bool requiresCoherency = false;
     bool lowPriority = false;
     bool implicitFlush = false;
     bool outOfOrderExecutionAllowed = false;

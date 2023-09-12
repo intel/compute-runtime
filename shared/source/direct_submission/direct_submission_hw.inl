@@ -930,9 +930,6 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::copyCommandBufferIntoRing(BatchB
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
-    // for now workloads requiring cache coherency are not supported
-    UNRECOVERABLE_IF(batchBuffer.requiresCoherency);
-
     if (batchBuffer.ringBufferRestartRequest) {
         this->stopRingBuffer(false);
     }

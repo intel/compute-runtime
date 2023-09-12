@@ -598,9 +598,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
     dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.requiresCoherency = true;
 
-    mockCsr->streamProperties.stateComputeMode.isCoherencyRequired.value = 1;
+    mockCsr->streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
 
     commandStream.getSpace(4);
 
@@ -642,7 +641,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     mockCsr->flushBatchedSubmissions();
 
     EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.lowPriority);
-    EXPECT_TRUE(mockCsr->recordedCommandBuffer->batchBuffer.requiresCoherency);
     EXPECT_EQ(mockCsr->recordedCommandBuffer->batchBuffer.commandBufferAllocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(4u, mockCsr->recordedCommandBuffer->batchBuffer.startOffset);
     EXPECT_EQ(1, mockCsr->flushCalledCount);

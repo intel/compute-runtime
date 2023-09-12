@@ -155,7 +155,6 @@ class GfxCoreHelper {
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual bool isStatelessToStatefulWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
-    virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
     virtual bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getBatchBufferEndSize() const = 0;
     virtual const void *getBatchBufferEndReference() const = 0;
@@ -368,7 +367,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     bool isStatelessToStatefulWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
-    bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;
     bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     size_t getBatchBufferEndSize() const override;
     const void *getBatchBufferEndReference() const override;
