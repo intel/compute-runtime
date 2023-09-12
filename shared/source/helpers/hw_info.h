@@ -15,6 +15,7 @@
 #include "sku_info.h"
 
 namespace NEO {
+
 enum PreemptionMode : uint32_t;
 class CompilerProductHelper;
 
@@ -26,6 +27,7 @@ struct RuntimeCapabilityTable {
     double defaultProfilingTimerResolution;
     size_t requiredPreemptionSurfaceSize;
     const char *deviceName;
+    const char *preferredPlatformName;
     PreemptionMode defaultPreemptionMode;
     aub_stream::EngineType defaultEngineType;
     uint32_t maxRenderFrequency;

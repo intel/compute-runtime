@@ -6,10 +6,13 @@
  */
 
 #pragma once
+
 #include "CL/cl.h"
 
 #include <string>
 #include <vector>
+
+namespace NEO {
 
 struct PlatformInfo {
     std::vector<cl_name_version> extensionsWithVersion;
@@ -21,3 +24,5 @@ struct PlatformInfo {
     std::string icdSuffixKhr = "INTEL";
     cl_version numericVersion = 0;
 };
+
+} // namespace NEO

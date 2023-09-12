@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/platform/platform_info.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -436,6 +437,16 @@ TEST(PlatformInitTest, GivenDebuggingEnabledWhenPlatformIsInitializedThenL0Debug
     auto status = platform()->initialize(std::move(devices));
     EXPECT_TRUE(status);
     EXPECT_NE(nullptr, platform()->getClDevice(0)->getDevice().getL0Debugger());
+}
+
+TEST(PlatformInitTest, GivenPreferredPlatformNameWhenPlatformIsInitializedThenOverridePlatformName) {
+    std::vector<std::unique_ptr<Device>> devices;
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.preferredPlatformName = "Overridden Platform Name";
+    devices.push_back(std::make_unique<MockDevice>(executionEnvironment, 0));
+    auto status = platform()->initialize(std::move(devices));
+    EXPECT_TRUE(status);
+    EXPECT_STREQ("Overridden Platform Name", platform()->getPlatformInfo().name.c_str());
 }
 
 TEST(PlatformGroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamily) {

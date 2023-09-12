@@ -161,6 +161,11 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
 
     this->platformInfo->extensions = this->clDevices[0]->getDeviceInfo().deviceExtensions;
 
+    auto preferredPlatformName = this->clDevices[0]->getHardwareInfo().capabilityTable.preferredPlatformName;
+    if (preferredPlatformName != nullptr) {
+        this->platformInfo->name = preferredPlatformName;
+    }
+
     if (DebugManager.flags.OverridePlatformName.get() != "unk") {
         this->platformInfo->name.assign(DebugManager.flags.OverridePlatformName.get().c_str());
     }

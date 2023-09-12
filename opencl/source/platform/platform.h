@@ -15,8 +15,6 @@
 #include <mutex>
 #include <vector>
 
-struct PlatformInfo;
-
 namespace NEO {
 
 class CompilerInterface;
@@ -24,6 +22,7 @@ class Device;
 class ExecutionEnvironment;
 class GmmHelper;
 class GmmClientContext;
+struct PlatformInfo;
 struct HardwareInfo;
 
 template <>

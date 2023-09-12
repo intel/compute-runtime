@@ -44,6 +44,7 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
     "",                                                        // deviceName
+    nullptr,                                                   // preferredPlatformName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency

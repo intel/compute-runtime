@@ -1050,3 +1050,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenRequestedV
     EXPECT_FALSE(defaultHwInfo->capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(defaultHwInfo->capabilityTable.ftrSupportsVmeAvcPreemption);
 }
+
+TEST_F(DeviceTests, whenCheckingPreferredPlatformNameThenNullIsReturned) {
+    EXPECT_EQ(nullptr, defaultHwInfo->capabilityTable.preferredPlatformName);
+}
