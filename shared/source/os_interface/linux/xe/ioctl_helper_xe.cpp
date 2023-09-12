@@ -435,6 +435,12 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     return true;
 }
 
+void IoctlHelperXe::updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size) {
+    std::unique_lock<std::mutex> lock(xeLock);
+    BindInfo b = {handle, userPtr, 0, size};
+    bindInfo.push_back(b);
+}
+
 int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
     struct drm_xe_gem_create create = {};
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
@@ -462,13 +468,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x h=0x%x r=%d\n", __FUNCTION__,
           mem.memoryClass, mem.memoryInstance,
           create.vm_id, create.size, create.flags, handle, ret);
-
-    {
-        std::unique_lock<std::mutex> lock(xeLock);
-        BindInfo b = {create.handle, 0, 0, create.size};
-        bindInfo.push_back(b);
-    }
-
+    updateBindInfo(create.handle, 0u, create.size);
     return ret;
 }
 
@@ -496,6 +496,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
     create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::GemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
+    updateBindInfo(create.handle, 0u, create.size);
     return create.handle;
 }
 
@@ -984,11 +985,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::GemUserptr: {
         GemUserPtr *d = static_cast<GemUserPtr *>(arg);
         d->handle = userPtrHandle++ | XE_USERPTR_FAKE_FLAG;
-        {
-            std::unique_lock<std::mutex> lock(xeLock);
-            BindInfo b = {d->handle, d->userPtr, 0, d->userSize};
-            bindInfo.push_back(b);
-        }
+        updateBindInfo(d->handle, d->userPtr, d->userSize);
         ret = 0;
         xeLog(" -> IoctlHelperXe::ioctl GemUserptrGemUserptr p=0x%llx s=0x%llx f=0x%x h=0x%x r=%d\n", d->userPtr,
               d->userSize, d->flags, d->handle, ret);

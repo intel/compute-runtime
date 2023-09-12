@@ -65,7 +65,7 @@ TEST(IoctlHelperXeTest, whenChangingBufferBindingThenWaitIsNeededAlways) {
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsThenDummyValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     ASSERT_NE(nullptr, xeIoctlHelper);
 
     std::vector<MemoryRegion> regionInfo(2);
@@ -77,13 +77,16 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsThen
 
     uint32_t handle = 0u;
     uint32_t numOfChunks = 0;
+
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks));
+    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndVmIdThenDummyValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     ASSERT_NE(nullptr, xeIoctlHelper);
 
     std::vector<MemoryRegion> regionInfo(2);
@@ -95,8 +98,11 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndV
 
     uint32_t handle = 0u;
     uint32_t numOfChunks = 0;
+
     GemVmControl test = {};
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, test.vmId, -1, false, numOfChunks));
+    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 }
 
 inline constexpr int testValueVmId = 0x5764;
@@ -329,7 +335,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenP
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
@@ -337,8 +343,10 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenP
     uint32_t memoryBanks = 3u;
 
     EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
     EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
+    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm.createParamsSize);
     EXPECT_EQ(1u, drm.createParamsFlags);
@@ -354,7 +362,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroTh
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
@@ -362,8 +370,10 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroTh
     uint32_t memoryBanks = 0u;
 
     EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
     EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
+    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm.createParamsSize);
     EXPECT_EQ(1u, drm.createParamsFlags);
@@ -379,7 +389,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenPro
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
@@ -387,8 +397,10 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenPro
     uint32_t memoryBanks = 3u;
 
     EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
     EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
+    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm.createParamsSize);
     EXPECT_EQ(6u, drm.createParamsFlags);
