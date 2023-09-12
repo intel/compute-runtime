@@ -306,7 +306,6 @@ cl_int Kernel::initialize() {
     bool usingBuffers = false;
     kernelArguments.resize(numArgs);
     kernelArgHandlers.resize(numArgs);
-    kernelArgRequiresCacheFlush.resize(numArgs);
 
     for (uint32_t i = 0; i < numArgs; ++i) {
         storeKernelArg(i, NONE_OBJ, nullptr, nullptr, 0);
@@ -2040,13 +2039,6 @@ void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
     if (false == GfxCoreHelper::cacheFlushAfterWalkerSupported(getHardwareInfo())) {
         return;
     }
-    for (GraphicsAllocation *alloc : this->kernelArgRequiresCacheFlush) {
-        if (nullptr == alloc) {
-            continue;
-        }
-
-        out.push_back(alloc);
-    }
 
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
     auto global = getProgram()->getGlobalSurface(rootDeviceIndex);
@@ -2065,18 +2057,6 @@ void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
 
 bool Kernel::allocationForCacheFlush(GraphicsAllocation *argAllocation) const {
     return argAllocation->isFlushL3Required();
-}
-
-void Kernel::addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation) {
-    if (argAllocation == nullptr) {
-        kernelArgRequiresCacheFlush[argIndex] = nullptr;
-    } else {
-        if (allocationForCacheFlush(argAllocation)) {
-            kernelArgRequiresCacheFlush[argIndex] = argAllocation;
-        } else {
-            kernelArgRequiresCacheFlush[argIndex] = nullptr;
-        }
-    }
 }
 
 uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const {
@@ -2274,12 +2254,6 @@ bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     }
     if (svmAllocationsRequireCacheFlush) {
         return true;
-    }
-    size_t args = kernelArgRequiresCacheFlush.size();
-    for (size_t i = 0; i < args; i++) {
-        if (kernelArgRequiresCacheFlush[i] != nullptr) {
-            return true;
-        }
     }
     return false;
 }

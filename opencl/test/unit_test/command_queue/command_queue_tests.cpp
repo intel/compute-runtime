@@ -560,41 +560,6 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenGetCSIsCalledThenComm
     EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandStreamAllocation->getAllocationType());
 }
 
-HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWithFlushAllocationsDisabledWhenEstimatingNodesCountThenItEqualsMultiDispatchInfoSize) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
-
-    MockCommandQueueHw<FamilyType> cmdQ(context.get(), pClDevice, nullptr);
-    pDevice->getUltCommandStreamReceiver<FamilyType>().multiOsContextCapable = true;
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice, context.get());
-
-    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-    MockGraphicsAllocation cacheRequiringAllocation;
-    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
-
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({mockKernelWithInternals.mockKernel}));
-
-    size_t estimatedNodesCount = cmdQ.estimateTimestampPacketNodesCount(multiDispatchInfo);
-    EXPECT_EQ(estimatedNodesCount, multiDispatchInfo.size());
-}
-
-HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWithFlushAllocationsEnabledWhenEstimatingNodesCountThenItEqualsMultiDispatchInfoSizePlusOne) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
-
-    MockCommandQueueHw<FamilyType> cmdQ(context.get(), pClDevice, nullptr);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice, context.get());
-
-    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-    MockGraphicsAllocation cacheRequiringAllocation;
-    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
-
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({mockKernelWithInternals.mockKernel}));
-
-    size_t estimatedNodesCount = cmdQ.estimateTimestampPacketNodesCount(multiDispatchInfo);
-    EXPECT_EQ(estimatedNodesCount, multiDispatchInfo.size() + 1);
-}
-
 struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
                                       public ::testing::TestWithParam<IndirectHeap::Type> {
     void SetUp() override {

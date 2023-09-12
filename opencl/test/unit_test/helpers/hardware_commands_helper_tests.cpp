@@ -57,7 +57,6 @@ void HardwareCommandsTest::addSpaceForSingleKernelArg() {
     kernelArguments[0] = kernelArgInfo;
     mockKernelWithInternal->kernelInfo.addArgBuffer(0, 0, sizeof(uintptr_t));
     mockKernelWithInternal->mockKernel->setKernelArguments(kernelArguments);
-    mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush.resize(1);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptorDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
@@ -1158,40 +1157,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
     EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &svmAllocation1));
     EXPECT_EQ(allocs.end(), std::find(allocs.begin(), allocs.end(), &svmAllocation2));
-
-    size_t expectedSize = sizeof(PIPE_CONTROL);
-    size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, mockKernelWithInternal->mockKernel, 0U);
-    EXPECT_EQ(expectedSize, actualSize);
-
-    HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, mockKernelWithInternal->mockKernel, 0U);
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(commandStream);
-    PIPE_CONTROL *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
-    ASSERT_NE(nullptr, pipeControl);
-    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControl->getDcFlushEnable());
-}
-
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenKernelArgIsSetAsCacheFlushRequiredThenExpectCacheFlushCommand) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
-    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
-
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    auto &commandStream = cmdQ.getCS(1024);
-
-    addSpaceForSingleKernelArg();
-    MockGraphicsAllocation cacheRequiringAllocation;
-    mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush.resize(2);
-    mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
-
-    Kernel::CacheFlushAllocationsVec allocs;
-    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
-    EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &cacheRequiringAllocation));
 
     size_t expectedSize = sizeof(PIPE_CONTROL);
     size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, mockKernelWithInternal->mockKernel, 0U);

@@ -466,7 +466,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool hasDirectStatelessAccessToHostMemory() const;
     bool hasIndirectStatelessAccessToHostMemory() const;
 
-    void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
 
     const ClDevice &getDevice() const {
@@ -491,7 +490,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     std::vector<GraphicsAllocation *> kernelSvmGfxAllocations;
     std::vector<GraphicsAllocation *> kernelUnifiedMemoryGfxAllocations;
     std::vector<PatchInfoData> patchInfoDataList;
-    std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
     std::vector<size_t> slmSizes;
 
     std::unique_ptr<ImageTransformer> imageTransformer;

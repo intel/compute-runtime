@@ -94,7 +94,6 @@ class MockMultiDeviceKernel : public MultiDeviceKernel {
 ////////////////////////////////////////////////////////////////////////////////
 class MockKernel : public Kernel {
   public:
-    using Kernel::addAllocationToCacheFlushVector;
     using Kernel::allBufferArgsStateful;
     using Kernel::anyKernelArgumentUsingSystemMemory;
     using Kernel::auxTranslationRequired;
@@ -109,7 +108,6 @@ class MockKernel : public Kernel {
     using Kernel::hasIndirectStatelessAccessToHostMemory;
     using Kernel::isUnifiedMemorySyncRequired;
     using Kernel::kernelArgHandlers;
-    using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;
     using Kernel::KernelConfig;
     using Kernel::kernelHasIndirectAccess;
@@ -335,7 +333,6 @@ class MockKernelWithInternals {
             kernelInfo.setAccessQualifier(1, KernelArgMetadata::AccessReadWrite);
 
             mockKernel->setKernelArguments(defaultKernelArguments);
-            mockKernel->kernelArgRequiresCacheFlush.resize(2);
             mockKernel->kernelArgHandlers.resize(2);
             mockKernel->kernelArgHandlers[0] = &Kernel::setArgBuffer;
             mockKernel->kernelArgHandlers[1] = &Kernel::setArgBuffer;

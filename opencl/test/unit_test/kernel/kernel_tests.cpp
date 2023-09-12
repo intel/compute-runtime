@@ -2093,7 +2093,6 @@ HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenExecEnvDoesNotHavePageFaultMa
     mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
     mockKernel.mockKernel->setKernelArguments(kernelArguments);
-    mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
     EXPECT_EQ(mockPageFaultManager->transferToGpuCalled, 0);
     svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
     static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset();
@@ -2120,7 +2119,6 @@ HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenIsUnifiedMemorySyncRequiredIs
     mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
     mockKernel.mockKernel->setKernelArguments(kernelArguments);
-    mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
     mockKernel.mockKernel->isUnifiedMemorySyncRequired = false;
     EXPECT_EQ(mockPageFaultManager->transferToGpuCalled, 0);
     svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
@@ -2774,16 +2772,6 @@ TEST(KernelTest, givenKernelWithPairArgumentWhenItIsInitializedThenPatchImmediat
     EXPECT_EQ(&Kernel::setArgImmediate, kernel.mockKernel->kernelArgHandlers[0]);
 }
 
-TEST(KernelTest, whenNullAllocationThenAssignNullPointerToCacheFlushVector) {
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-    kernel.mockKernel->kernelArgRequiresCacheFlush[0] = reinterpret_cast<GraphicsAllocation *>(0x1);
-
-    kernel.mockKernel->addAllocationToCacheFlushVector(0, nullptr);
-    EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
-}
-
 TEST(KernelTest, givenKernelCompiledWithSimdSizeLowerThanExpectedWhenInitializingThenReturnError) {
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
@@ -2810,19 +2798,6 @@ TEST(KernelTest, givenKernelCompiledWithSimdOneWhenInitializingThenReturnError) 
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(KernelTest, whenAllocationRequiringCacheFlushThenAssignAllocationPointerToCacheFlushVector) {
-    MockGraphicsAllocation mockAllocation;
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-
-    mockAllocation.setMemObjectsAllocationWithWritableFlags(false);
-    mockAllocation.setFlushL3Required(true);
-
-    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
-    EXPECT_EQ(&mockAllocation, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
-}
-
 TEST(KernelTest, whenKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfterWalker) {
     MockGraphicsAllocation mockAllocation;
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
@@ -2839,33 +2814,6 @@ TEST(KernelTest, whenKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfte
 
     queue.requiresCacheFlushAfterWalker = false;
     EXPECT_TRUE(kernel.mockKernel->requiresCacheFlushCommand(queue));
-}
-
-TEST(KernelTest, whenAllocationWriteableThenDoNotAssignAllocationPointerToCacheFlushVector) {
-    MockGraphicsAllocation mockAllocation;
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-
-    mockAllocation.setMemObjectsAllocationWithWritableFlags(true);
-    mockAllocation.setFlushL3Required(false);
-
-    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
-    EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
-}
-
-TEST(KernelTest, whenAllocationReadOnlyNonFlushRequiredThenAssignNullPointerToCacheFlushVector) {
-    MockGraphicsAllocation mockAllocation;
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-    kernel.mockKernel->kernelArgRequiresCacheFlush[0] = reinterpret_cast<GraphicsAllocation *>(0x1);
-
-    mockAllocation.setMemObjectsAllocationWithWritableFlags(false);
-    mockAllocation.setFlushL3Required(false);
-
-    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
-    EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 TEST(KernelTest, givenKernelUsesPrivateMemoryWhenDeviceReleasedBeforeKernelThenKernelUsesMemoryManagerFromEnvironment) {
