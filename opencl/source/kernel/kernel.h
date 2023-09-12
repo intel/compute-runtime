@@ -466,8 +466,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool hasDirectStatelessAccessToHostMemory() const;
     bool hasIndirectStatelessAccessToHostMemory() const;
 
-    bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
-
     const ClDevice &getDevice() const {
         return clDevice;
     }
@@ -532,7 +530,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool usingImagesOnly = false;
     bool auxTranslationRequired = false;
     bool systolicPipelineSelectMode = false;
-    bool svmAllocationsRequireCacheFlush = false;
     bool isUnifiedMemorySyncRequired = true;
     bool singleSubdevicePreferredInCurrentEnqueue = false;
     bool kernelHasIndirectAccess = true;

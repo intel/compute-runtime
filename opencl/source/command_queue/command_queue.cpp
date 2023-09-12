@@ -953,12 +953,7 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
 }
 
 size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &dispatchInfo) const {
-    size_t nodesCount = dispatchInfo.size();
-    auto mainKernel = dispatchInfo.peekMainKernel();
-    if (obtainTimestampPacketForCacheFlush(mainKernel->requiresCacheFlushCommand(*this))) {
-        ++nodesCount;
-    }
-    return nodesCount;
+    return dispatchInfo.size();
 }
 
 bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandType, cl_bool blocking, size_t size, void *ptr,

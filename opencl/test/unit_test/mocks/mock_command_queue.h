@@ -217,8 +217,6 @@ class MockCommandQueue : public CommandQueue {
 
     cl_int flush() override { return CL_SUCCESS; }
 
-    bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override { return isCacheFlushRequired; }
-
     bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
         waitForTimestampsCalled = true;
         return false;

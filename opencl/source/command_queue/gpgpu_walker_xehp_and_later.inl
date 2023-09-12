@@ -167,25 +167,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(TagNodeBase &hwT
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(const Kernel &kernel, const CommandQueue &commandQueue) {
-    size_t size = 0;
-
-    if (kernel.requiresCacheFlushCommand(commandQueue)) {
-        size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
-
-        if constexpr (GfxFamily::isUsingL3Control) {
-            StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;
-            kernel.getAllocationsForCacheFlush(allocationsForCacheFlush);
-
-            StackVec<L3Range, 128> subranges;
-            for (auto &allocation : allocationsForCacheFlush) {
-                coverRangeExact(allocation->getGpuAddress(), allocation->getUnderlyingBufferSize(), subranges, GfxFamily::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION);
-            }
-
-            size += getSizeNeededToFlushGpuCache<GfxFamily>(subranges, true);
-        }
-    }
-
-    return size;
+    return 0;
 }
 
 } // namespace NEO

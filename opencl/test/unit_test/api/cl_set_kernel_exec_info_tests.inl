@@ -202,60 +202,6 @@ TEST_F(clSetKernelExecInfoTests, GivenValidPointerListWithOnePointerWhenSettingA
     }
 }
 
-TEST_F(clSetKernelExecInfoTests, GivenValidPointerListWithMultiplePointersWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
-    if (svmCapabilities != 0) {
-        void *ptrSvm1 = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
-        EXPECT_NE(nullptr, ptrSvm1);
-
-        void *ptrSvm2 = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
-        EXPECT_NE(nullptr, ptrSvm2);
-
-        void *pSvmPtrList[] = {ptrSvm, ptrSvm1, ptrSvm2};
-        size_t svmPtrListSizeInBytes = 3 * sizeof(void *);
-
-        retVal = clSetKernelExecInfo(
-            pMockMultiDeviceKernel,       // cl_kernel kernel
-            CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-            svmPtrListSizeInBytes,        // size_t param_value_size
-            pSvmPtrList                   // const void *param_value
-        );
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_EQ(3u, pMockKernel->kernelSvmGfxAllocations.size());
-        EXPECT_TRUE(pMockKernel->svmAllocationsRequireCacheFlush);
-
-        clSVMFree(pContext, ptrSvm1);
-        clSVMFree(pContext, ptrSvm2);
-    }
-}
-
-TEST_F(clSetKernelExecInfoTests, givenReadOnlySvmPtrListWhenUsedAsKernelPointersThenCacheFlushIsNotRequired) {
-    if (svmCapabilities != 0) {
-        void *ptrSvm1 = clSVMAlloc(pContext, CL_MEM_READ_ONLY, 256, 4);
-        EXPECT_NE(nullptr, ptrSvm1);
-
-        void *ptrSvm2 = clSVMAlloc(pContext, CL_MEM_READ_ONLY, 256, 4);
-        EXPECT_NE(nullptr, ptrSvm2);
-
-        void *pSvmPtrList[] = {ptrSvm1, ptrSvm2};
-        size_t svmPtrListSizeInBytes = 2 * sizeof(void *);
-
-        retVal = clSetKernelExecInfo(
-            pMockMultiDeviceKernel,       // cl_kernel kernel
-            CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-            svmPtrListSizeInBytes,        // size_t param_value_size
-            pSvmPtrList                   // const void *param_value
-        );
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_EQ(2u, pMockKernel->kernelSvmGfxAllocations.size());
-        EXPECT_FALSE(pMockKernel->svmAllocationsRequireCacheFlush);
-
-        clSVMFree(pContext, ptrSvm1);
-        clSVMFree(pContext, ptrSvm2);
-    }
-}
-
 TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
     if (svmCapabilities != 0) {
         void *pSvmPtrList[] = {ptrSvm};

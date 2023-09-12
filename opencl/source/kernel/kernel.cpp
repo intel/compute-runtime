@@ -1031,14 +1031,10 @@ bool Kernel::getAllowNonUniform() const {
 
 void Kernel::setSvmKernelExecInfo(GraphicsAllocation *argValue) {
     kernelSvmGfxAllocations.push_back(argValue);
-    if (allocationForCacheFlush(argValue)) {
-        svmAllocationsRequireCacheFlush = true;
-    }
 }
 
 void Kernel::clearSvmKernelExecInfo() {
     kernelSvmGfxAllocations.clear();
-    svmAllocationsRequireCacheFlush = false;
 }
 
 void Kernel::setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue) {
@@ -2045,18 +2041,6 @@ void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
     if (global != nullptr) {
         out.push_back(global);
     }
-
-    if (svmAllocationsRequireCacheFlush) {
-        for (GraphicsAllocation *alloc : kernelSvmGfxAllocations) {
-            if (allocationForCacheFlush(alloc)) {
-                out.push_back(alloc);
-            }
-        }
-    }
-}
-
-bool Kernel::allocationForCacheFlush(GraphicsAllocation *argAllocation) const {
-    return argAllocation->isFlushL3Required();
 }
 
 uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const {
@@ -2250,9 +2234,6 @@ bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     }
 
     if (getProgram()->getGlobalSurface(commandQueue.getDevice().getRootDeviceIndex()) != nullptr) {
-        return true;
-    }
-    if (svmAllocationsRequireCacheFlush) {
         return true;
     }
     return false;

@@ -468,63 +468,6 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
     alignedFree(svmPtr);
 }
 
-TEST_F(KernelArgSvmTest, givenWritableSvmAllocationWhenSettingKernelExecInfoThenDoNotExpectSvmFlushFlagTrue) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
-    if (devInfo.svmCapabilities == 0) {
-        GTEST_SKIP();
-    }
-
-    size_t svmSize = 4096;
-    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
-    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
-
-    svmAlloc.setMemObjectsAllocationWithWritableFlags(true);
-    svmAlloc.setFlushL3Required(false);
-
-    pKernel->setSvmKernelExecInfo(&svmAlloc);
-    EXPECT_FALSE(pKernel->svmAllocationsRequireCacheFlush);
-
-    alignedFree(svmPtr);
-}
-
-TEST_F(KernelArgSvmTest, givenCacheFlushSvmAllocationWhenSettingKernelExecInfoThenExpectSvmFlushFlagTrue) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
-    if (devInfo.svmCapabilities == 0) {
-        GTEST_SKIP();
-    }
-
-    size_t svmSize = 4096;
-    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
-    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
-
-    svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
-    svmAlloc.setFlushL3Required(true);
-
-    pKernel->setSvmKernelExecInfo(&svmAlloc);
-    EXPECT_TRUE(pKernel->svmAllocationsRequireCacheFlush);
-
-    alignedFree(svmPtr);
-}
-
-TEST_F(KernelArgSvmTest, givenNoCacheFlushReadOnlySvmAllocationWhenSettingKernelExecInfoThenExpectSvmFlushFlagFalse) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
-    if (devInfo.svmCapabilities == 0) {
-        GTEST_SKIP();
-    }
-
-    size_t svmSize = 4096;
-    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
-    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
-
-    svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
-    svmAlloc.setFlushL3Required(false);
-
-    pKernel->setSvmKernelExecInfo(&svmAlloc);
-    EXPECT_FALSE(pKernel->svmAllocationsRequireCacheFlush);
-
-    alignedFree(svmPtr);
-}
-
 TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenExpectSvmArgUseGpuAddress) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {

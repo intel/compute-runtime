@@ -491,8 +491,6 @@ class CommandQueueHw : public CommandQueue {
                                               TimestampPacketDependencies &timestampPacketDependencies, const EventsRequest &eventsRequest,
                                               bool queueBlocked);
 
-    bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override;
-
     bool isTaskLevelUpdateRequired(const TaskCountType &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
     void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
     static void computeOffsetsValueForRectCommands(size_t *bufferOffset,

@@ -49,42 +49,6 @@ struct L3ControlPolicy : CmdValidator {
 };
 
 template <typename FamilyType>
-class GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCacheFlushCommand : public HardwareCommandsTest {
-  public:
-    void testBodyImpl() {
-        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-        using L3_CONTROL_WITHOUT_POST_SYNC = typename FamilyType::L3_CONTROL;
-
-        DebugManagerStateRestore dbgRestore;
-        DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
-
-        CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-        auto &commandStream = cmdQ.getCS(1024);
-
-        void *allocPtr = reinterpret_cast<void *>(static_cast<uintptr_t>(6 * MemoryConstants::pageSize));
-        MockGraphicsAllocation svmAllocation{allocPtr, MemoryConstants::pageSize * 2};
-        svmAllocation.setFlushL3Required(true);
-        this->mockKernelWithInternal->mockKernel->kernelSvmGfxAllocations.push_back(&svmAllocation);
-        this->mockKernelWithInternal->mockKernel->svmAllocationsRequireCacheFlush = true;
-
-        size_t expectedSize = sizeof(PIPE_CONTROL) + sizeof(L3_CONTROL_WITHOUT_POST_SYNC);
-        size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, this->mockKernelWithInternal->mockKernel, 0U);
-        EXPECT_EQ(expectedSize, actualSize);
-
-        HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, this->mockKernelWithInternal->mockKernel, 0U);
-
-        std::string err;
-        auto cmdBuffOk = expectCmdBuff<FamilyType>(cmdQ.getCS(0), 0,
-                                                   std::vector<MatchCmd *>({
-                                                       new MatchHwCmd<FamilyType, PIPE_CONTROL>(1, Expects{EXPECT_MEMBER(PIPE_CONTROL, getCommandStreamerStallEnable, true), EXPECT_MEMBER(PIPE_CONTROL, getDcFlushEnable, false)}),
-                                                       new MatchHwCmd<FamilyType, L3_CONTROL_WITHOUT_POST_SYNC>(AtLeastOne),
-                                                   }),
-                                                   &err);
-        EXPECT_TRUE(cmdBuffOk) << err;
-    }
-};
-
-template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentThenExpectCacheFlushCommand : public HardwareCommandsTest {
   public:
     void testBodyImpl() {

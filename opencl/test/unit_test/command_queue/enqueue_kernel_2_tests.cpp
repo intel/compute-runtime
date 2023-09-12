@@ -1058,33 +1058,6 @@ HWTEST_F(BlitAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDi
     EXPECT_EQ(0u, cmdQ.dispatchAuxTranslationInputs.size());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker) {
-    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
-
-    MockKernelWithInternals mockKernel(*pClDevice, context);
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr, false);
-
-    size_t gws[3] = {1, 0, 0};
-
-    mockKernel.mockKernel->svmAllocationsRequireCacheFlush = true;
-
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(cmdQ.getCS(0), 0);
-    auto itorCmd = find<GPGPU_WALKER *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
-    ASSERT_NE(hwParse.cmdList.end(), itorCmd);
-    itorCmd = find<PIPE_CONTROL *>(itorCmd, hwParse.cmdList.end());
-    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorCmd);
-    ASSERT_NE(nullptr, pipeControl);
-    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControl->getDcFlushEnable());
-}
-
 HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithoutWaitListThenSizeHasFourMMIOStoresAndPipeControll) {
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     MockKernelWithInternals mockKernel(*pClDevice);

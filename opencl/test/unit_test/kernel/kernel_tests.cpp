@@ -2798,24 +2798,6 @@ TEST(KernelTest, givenKernelCompiledWithSimdOneWhenInitializingThenReturnError) 
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(KernelTest, whenKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfterWalker) {
-    MockGraphicsAllocation mockAllocation;
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->svmAllocationsRequireCacheFlush = true;
-
-    MockCommandQueue queue;
-
-    DebugManagerStateRestore debugRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(true);
-
-    queue.requiresCacheFlushAfterWalker = true;
-    EXPECT_TRUE(kernel.mockKernel->requiresCacheFlushCommand(queue));
-
-    queue.requiresCacheFlushAfterWalker = false;
-    EXPECT_TRUE(kernel.mockKernel->requiresCacheFlushCommand(queue));
-}
-
 TEST(KernelTest, givenKernelUsesPrivateMemoryWhenDeviceReleasedBeforeKernelThenKernelUsesMemoryManagerFromEnvironment) {
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
     auto executionEnvironment = device->getExecutionEnvironment();

@@ -149,16 +149,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
-    if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
-        uint64_t postSyncAddress = 0;
-        if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            auto timestampPacketNodeForPostSync = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
-            timestampPacketNodeForPostSync->setProfilingCapable(false);
-            postSyncAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNodeForPostSync);
-        }
-        HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress);
-    }
-
     if (PauseOnGpuProperties::gpuScratchRegWriteAllowed(DebugManager.flags.GpuScratchRegWriteAfterWalker.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount())) {
         uint32_t registerOffset = DebugManager.flags.GpuScratchRegWriteRegisterOffset.get();
         uint32_t registerData = DebugManager.flags.GpuScratchRegWriteRegisterData.get();
