@@ -20,7 +20,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr, nullptr);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -44,7 +44,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr, nullptr);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -69,7 +69,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr, nullptr);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);

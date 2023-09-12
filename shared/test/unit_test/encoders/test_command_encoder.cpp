@@ -185,7 +185,7 @@ HWTEST_F(CommandEncoderTest, givenPlatformSupportingMiMemFenceWhenEncodingThenPr
 
     size_t size = EncodeMemoryFence<FamilyType>::getSystemMemoryFenceSize();
 
-    EncodeMemoryFence<FamilyType>::encodeSystemMemoryFence(cmdStream, &allocation, nullptr);
+    EncodeMemoryFence<FamilyType>::encodeSystemMemoryFence(cmdStream, &allocation);
 
     if constexpr (FamilyType::isUsingMiMemFence) {
         using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;

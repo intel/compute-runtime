@@ -456,7 +456,7 @@ HWTEST2_F(CommandEncodeStatesTest, whenProgramComputeModeCommandModeIsCalledThen
     streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
-                                                                  streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
+                                                                  streamProperties.stateComputeMode, rootDeviceEnvironment);
 
     if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsThreadArbitrationPolicy) {
         GenCmdList commands;
@@ -482,7 +482,7 @@ HWTEST2_F(CommandEncodeStatesTest, whenProgramComputeModeCommandModeIsCalledThen
     streamProperties.stateComputeMode.isCoherencyRequired.isDirty = true;
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
-                                                                  streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
+                                                                  streamProperties.stateComputeMode, rootDeviceEnvironment);
 
     if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsNonCoherent) {
         GenCmdList commands;

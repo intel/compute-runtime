@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,7 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
                                                 uint32_t scratchSize,
                                                 uint64_t scratchAddress,
                                                 uint32_t maxFrontEndThreads,
-                                                const StreamProperties &streamProperties,
-                                                LogicalStateHelper *logicalStateHelper) {
+                                                const StreamProperties &streamProperties) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
     auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(pVfeState);

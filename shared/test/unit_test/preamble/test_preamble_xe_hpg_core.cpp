@@ -31,7 +31,7 @@ HWTEST2_F(PreambleTest, givenDisableEUFusionWhenProgramVFEStateThenFusedEUDispat
     StreamProperties props;
     props.frontEndState.disableEUFusion.set(true);
     MockExecutionEnvironment executionEnvironment{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 0, 0, 0, props, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 0, 0, 0, props);
 
     auto cfeCmd = reinterpret_cast<CFE_STATE *>(pVfeCmd);
     EXPECT_EQ(1u, cfeCmd->getFusedEuDispatch());

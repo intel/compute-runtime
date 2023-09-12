@@ -291,7 +291,6 @@ using CommandQueueCommandsMultiTile = CommandQueueCommands<true>;
 
 HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandListsThenHardwareContextIsProgrammedAndGlobalAllocationResident) {
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr.createKernelArgsBufferAllocation();
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
@@ -321,37 +320,6 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
     commandQueue->destroy();
 }
 
-HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandListsThenKernelArgBufferAllocationIsResident) {
-    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr.createKernelArgsBufferAllocation();
-    csr.initializeTagAllocation();
-    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
-
-    ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
-                                                          &csr,
-                                                          &desc,
-                                                          true,
-                                                          false,
-                                                          false,
-                                                          returnValue);
-    ASSERT_NE(nullptr, commandQueue);
-
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
-    auto commandListHandle = commandList->toHandle();
-    commandList->close();
-
-    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-
-    auto kernelArgsBufferAllocation = csr.getKernelArgsBufferAllocation();
-    if (kernelArgsBufferAllocation) {
-        EXPECT_TRUE(isAllocationInResidencyContainer(csr, kernelArgsBufferAllocation));
-    }
-    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
-    commandQueue->destroy();
-}
-
 HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableWalkerPartition.set(1);
@@ -371,7 +339,6 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
     MyCsrMock csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     EXPECT_EQ(2u, csr.activePartitions);
     csr.initializeTagAllocation();
-    csr.createKernelArgsBufferAllocation();
     csr.createWorkPartitionAllocation(*neoDevice);
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
@@ -433,7 +400,6 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
 
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
-    csr.createKernelArgsBufferAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
     if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread) {
         csr.createPreemptionAllocation();
@@ -498,7 +464,6 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
-    csr.createKernelArgsBufferAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
     if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread) {
         csr.createPreemptionAllocation();

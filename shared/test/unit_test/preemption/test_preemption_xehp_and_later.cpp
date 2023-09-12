@@ -27,7 +27,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, whenProgramStateSipIsC
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
@@ -120,7 +120,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenP
     uint64_t buffer[bufferSize];
 
     LinearStream cmdStream{buffer, bufferSize * sizeof(uint64_t)};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
     EXPECT_EQ(sizeof(STATE_SIP), cmdStream.getUsed());
 
     auto sipAllocation = SipKernel::getSipKernel(*device, nullptr).getSipAllocation();
@@ -153,7 +153,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     uint64_t buffer[bufferSize];
 
     LinearStream cmdStream{buffer, bufferSize * sizeof(uint64_t)};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, osContext.get());
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, osContext.get());
     EXPECT_EQ(sizeof(STATE_SIP), cmdStream.getUsed());
 
     auto contextSipKernel = builtIns->perContextSipKernels[contextId].first.get();

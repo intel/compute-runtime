@@ -93,10 +93,7 @@ void DrmMemoryManagerFixture::tearDown() {
         mock->ioctlExpected.gemClose += enginesCount;
         mock->ioctlExpected.gemWait += enginesCount;
     }
-    if (csr->getKernelArgsBufferAllocation()) {
-        mock->ioctlExpected.gemClose += enginesCount;
-        mock->ioctlExpected.gemWait += enginesCount;
-    }
+
     mock->ioctlExpected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
     mock->ioctlExpected.gemClose += additionalDestroyDeviceIoctls.gemClose.load();
     delete device;

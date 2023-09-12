@@ -22,7 +22,6 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_base_address_model.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
@@ -149,7 +148,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->makeRayTracingBufferResident(neoDevice->getRTMemoryBackedBuffer());
     this->makeSbaTrackingBufferResidentIfL0DebuggerEnabled(ctx.isDebugEnabled);
     this->makeCsrTagAllocationResident();
-    this->encodeKernelArgsBufferAndMakeItResident();
 
     if (ctx.globalInit) {
         this->getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
@@ -175,7 +173,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programCsrBaseAddressIfPreemptionModeInitial(ctx.isPreemptionModeInitial, child);
         this->programStateSip(ctx.stateSipRequired, child);
         this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
-        bool shouldProgramVfe = (this->csr->getLogicalStateHelper() || !frontEndTrackingEnabled()) && ctx.frontEndStateDirty;
+        bool shouldProgramVfe = !frontEndTrackingEnabled() && ctx.frontEndStateDirty;
         this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, child, csr->getStreamProperties());
 
         if (ctx.rtDispatchRequired) {
@@ -183,8 +181,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             csrHw->dispatchRayTracingStateCommand(child, *neoDevice);
         }
     }
-
-    this->writeCsrStreamInlineIfLogicalStateHelperAvailable(child);
 
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(commandListHandles[i]);
@@ -207,7 +203,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
-        this->mergeOneCmdListPipelinedState(commandList);
 
         this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
         if (commandList->hasKernelWithAssert()) {
@@ -279,16 +274,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     this->getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
     this->csr->programHardwareContext(child);
 
-    this->encodeKernelArgsBufferAndMakeItResident();
-
-    this->writeCsrStreamInlineIfLogicalStateHelperAvailable(child);
-
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         ctx.childGpuAddressPositionBeforeDynamicPreamble = child.getCurrentGpuAddressPosition();
 
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
-        this->mergeOneCmdListPipelinedState(commandList);
         this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
     }
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
@@ -401,8 +391,7 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
                                                     perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
-                                                    streamProperties,
-                                                    csr->getLogicalStateHelper());
+                                                    streamProperties);
     csr->setMediaVFEStateDirty(false);
 }
 
@@ -669,9 +658,6 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
         ctx.globalInit = true;
     }
 
-    linearStreamSizeEstimate += NEO::EncodeKernelArgsBuffer<GfxFamily>::getKernelArgsBufferCmdsSize(this->csr->getKernelArgsBufferAllocation(),
-                                                                                                    this->csr->getLogicalStateHelper());
-
     return linearStreamSizeEstimate;
 }
 
@@ -704,7 +690,7 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
     if (!frontEndTrackingEnabled()) {
         streamProperties.frontEndState.setPropertiesAll(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
                                                         true, isEngineInstanced);
-        ctx.frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !this->csr->getLogicalStateHelper());
+        ctx.frontEndStateDirty |= streamProperties.frontEndState.isDirty();
     } else {
         ctx.engineInstanced = isEngineInstanced;
     }
@@ -902,8 +888,7 @@ void CommandQueueHw<gfxCoreFamily>::programCsrBaseAddressIfPreemptionModeInitial
     NEO::Device *neoDevice = this->device->getNEODevice();
     NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(cmdStream,
                                                             *neoDevice,
-                                                            this->csr->getPreemptionAllocation(),
-                                                            this->csr->getLogicalStateHelper());
+                                                            this->csr->getPreemptionAllocation());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -912,7 +897,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateSip(bool isStateSipRequired, NEO
         return;
     }
     NEO::Device *neoDevice = this->device->getNEODevice();
-    NEO::PreemptionHelper::programStateSip<GfxFamily>(cmdStream, *neoDevice, this->csr->getLogicalStateHelper(), &this->csr->getOsContext());
+    NEO::PreemptionHelper::programStateSip<GfxFamily>(cmdStream, *neoDevice, &this->csr->getOsContext());
     this->csr->setSipSentFlag(true);
 }
 
@@ -985,22 +970,6 @@ void CommandQueueHw<gfxCoreFamily>::programActivePartitionConfig(
     }
     auto csrHw = reinterpret_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
     csrHw->programActivePartitionConfig(cmdStream);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::encodeKernelArgsBufferAndMakeItResident() {
-    NEO::EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(this->csr->getKernelArgsBufferAllocation(),
-                                                                       this->csr->getLogicalStateHelper());
-    if (this->csr->getKernelArgsBufferAllocation()) {
-        this->csr->makeResident(*this->csr->getKernelArgsBufferAllocation());
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::writeCsrStreamInlineIfLogicalStateHelperAvailable(NEO::LinearStream &cmdStream) {
-    if (this->csr->getLogicalStateHelper()) {
-        this->csr->getLogicalStateHelper()->writeStreamInline(cmdStream, false);
-    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1109,16 +1078,6 @@ void CommandQueueHw<gfxCoreFamily>::programLastCommandListReturnBbStart(
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(bbStartCmd,
                                                                              finalReturnPosition,
                                                                              false, false, false);
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::mergeOneCmdListPipelinedState(CommandList *commandList) {
-
-    bool isCommandListImmediate = (commandList->getCmdListType() == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
-    auto commandListImp = static_cast<CommandListImp *>(commandList);
-    if (!isCommandListImmediate && commandListImp->getLogicalStateHelper()) {
-        this->csr->getLogicalStateHelper()->mergePipelinedState(*commandListImp->getLogicalStateHelper());
     }
 }
 
@@ -1240,7 +1199,7 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
         *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    if (ctx.isNEODebuggerActive(this->device) || NEO::DebugManager.flags.EnableSWTags.get() || csr->getLogicalStateHelper()) {
+    if (ctx.isNEODebuggerActive(this->device) || NEO::DebugManager.flags.EnableSWTags.get()) {
         cleanLeftoverMemory(outerCommandStream, innerCommandStream);
     } else if (this->alignedChildStreamPadding) {
         void *paddingPtr = innerCommandStream.getSpace(this->alignedChildStreamPadding);
@@ -1436,7 +1395,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
 
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(commandStream, cmdListRequired.requiredState.stateComputeMode, pipelineSelectArgs,
                                                                                         false, device->getNEODevice()->getRootDeviceEnvironment(), this->csr->isRcs(),
-                                                                                        this->csr->getDcFlushSupport(), nullptr);
+                                                                                        this->csr->getDcFlushSupport());
         this->csr->setStateComputeModeDirty(false);
     }
 }

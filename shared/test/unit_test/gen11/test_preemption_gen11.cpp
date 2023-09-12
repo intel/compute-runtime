@@ -57,7 +57,7 @@ GEN11TEST_F(Gen11PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSip
     ASSERT_LE(requiredCmdStreamSize, streamStorage.size());
 
     LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
 
     HardwareParse hwParsePreamble;
     hwParsePreamble.parseCommands<FamilyType>(cmdStream);

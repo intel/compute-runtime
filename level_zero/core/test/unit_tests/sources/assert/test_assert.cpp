@@ -12,7 +12,6 @@
 #include "shared/test/common/mocks/mock_assert_handler.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_logical_state_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -260,9 +259,6 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
     auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
 
-    auto mockCsrLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
-    csr.logicalStateHelper.reset(mockCsrLogicalStateHelper);
-
     ze_group_count_t groupCount{1, 1, 1};
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
 
@@ -295,9 +291,6 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
-
-    auto mockCsrLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
-    csr.logicalStateHelper.reset(mockCsrLogicalStateHelper);
 
     ze_group_count_t groupCount{1, 1, 1};
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;

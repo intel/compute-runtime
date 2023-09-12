@@ -16,7 +16,6 @@ using Family = NEO::Gen12LpFamily;
 #include "shared/source/helpers/gfx_core_helper_bdw_to_dg2.inl"
 #include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
 
@@ -208,6 +207,4 @@ template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
-
-template LogicalStateHelper *LogicalStateHelper::create<Family>();
 } // namespace NEO

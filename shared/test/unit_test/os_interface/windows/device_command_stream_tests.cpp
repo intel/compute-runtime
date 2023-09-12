@@ -899,7 +899,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
         csrSurfaceCount = 2;
     }
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
-    csrSurfaceCount += mockCsr->getKernelArgsBufferAllocation() ? 1 : 0;
 
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
@@ -953,9 +952,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
     expectedHandles.push_back(static_cast<WddmAllocation *>(csrCommandStream)->getDefaultHandle());
     if (csr->getGlobalFenceAllocation()) {
         expectedHandles.push_back(static_cast<WddmAllocation *>(csr->getGlobalFenceAllocation())->getDefaultHandle());
-    }
-    if (csr->getKernelArgsBufferAllocation()) {
-        expectedHandles.push_back(static_cast<WddmAllocation *>(csr->getKernelArgsBufferAllocation())->getDefaultHandle());
     }
 
     for (auto i = 0u; i < wddm->makeResidentResult.handleCount; i++) {

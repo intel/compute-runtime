@@ -28,7 +28,6 @@
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string.h"
@@ -378,11 +377,6 @@ void CommandStreamReceiver::cleanupResources() {
     if (workPartitionAllocation) {
         getMemoryManager()->freeGraphicsMemory(workPartitionAllocation);
         workPartitionAllocation = nullptr;
-    }
-
-    if (kernelArgsBufferAllocation) {
-        getMemoryManager()->freeGraphicsMemory(kernelArgsBufferAllocation);
-        kernelArgsBufferAllocation = nullptr;
     }
 
     if (globalStatelessHeapAllocation) {
@@ -1024,10 +1018,6 @@ void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait
         postSyncAddress = ptrOffset(postSyncAddress, this->immWritePostSyncWriteOffset);
     }
     PRINT_DEBUG_STRING(true, stdout, "%s", "\n");
-}
-
-LogicalStateHelper *CommandStreamReceiver::getLogicalStateHelper() const {
-    return logicalStateHelper.get();
 }
 
 bool CommandStreamReceiver::isTbxMode() const {

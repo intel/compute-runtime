@@ -39,8 +39,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
 }
 
 template <typename Family>
-void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
-                                                          const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper) {
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
 template <>
@@ -76,7 +75,6 @@ template struct EncodeEnableRayTracing<Family>;
 template struct EncodeNoop<Family>;
 template struct EncodeStoreMemory<Family>;
 template struct EncodeMemoryFence<Family>;
-template struct EncodeKernelArgsBuffer<Family>;
 template struct EnodeUserInterrupt<Family>;
 
 } // namespace NEO

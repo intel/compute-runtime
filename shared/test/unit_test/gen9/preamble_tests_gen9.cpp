@@ -60,8 +60,7 @@ GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbit
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
-    PreambleHelper<Gen9Family>::programPreamble(&linearStream, mockDevice, l3Config,
-                                                nullptr, nullptr);
+    PreambleHelper<Gen9Family>::programPreamble(&linearStream, mockDevice, l3Config, nullptr);
 
     parseCommands<Gen9Family>(cs);
 
@@ -88,7 +87,7 @@ GEN9TEST_F(ThreadArbitrationGen9, whenThreadArbitrationPolicyIsProgrammedThenCor
     MockDevice mockDevice;
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.threadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
-    EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, mockDevice.getRootDeviceEnvironment(), nullptr);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, mockDevice.getRootDeviceEnvironment());
 
     parseCommands<Gen9Family>(cs);
 

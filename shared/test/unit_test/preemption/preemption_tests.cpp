@@ -401,7 +401,7 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenStateSipIsNotProgrammed) {
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *mockDevice, nullptr, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *mockDevice, nullptr);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
@@ -423,7 +423,7 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenCsrBaseAddressIsNotProgrammed
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
-    PreemptionHelper::programCsrBaseAddress<FamilyType>(cmdStream, *mockDevice, nullptr, nullptr);
+    PreemptionHelper::programCsrBaseAddress<FamilyType>(cmdStream, *mockDevice, nullptr);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 

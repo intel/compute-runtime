@@ -82,20 +82,6 @@ TEST_F(ContextCommandListCreate, givenInvalidDescWhenCreatingCommandListImmediat
     EXPECT_EQ(CommandList::fromHandle(hCommandList), nullptr);
 }
 
-HWTEST2_F(ContextCommandListCreate, givenImmediateCmdListWhenGettingLogicalStateHelperThenReturnFromCsr, MatchAny) {
-    ze_command_queue_desc_t desc = {};
-    ze_command_list_handle_t hCommandList = {};
-
-    ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto commandList = static_cast<CommandListCoreFamily<gfxCoreFamily> *>(L0::CommandList::fromHandle(hCommandList));
-
-    EXPECT_EQ(whiteboxCast(commandList)->csr->getLogicalStateHelper(), commandList->getLogicalStateHelper());
-
-    commandList->destroy();
-}
-
 using CommandListCreate = Test<DeviceFixture>;
 
 TEST_F(CommandListCreate, whenCommandListIsCreatedWithInvalidProductFamilyThenFailureIsReturned) {

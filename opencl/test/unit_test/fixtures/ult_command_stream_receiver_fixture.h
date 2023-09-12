@@ -13,7 +13,6 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
@@ -158,16 +157,6 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(0, GrfConfig::DefaultGrfNumber,
                                                                                  gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode());
         commandStreamReceiver.streamProperties.frontEndState.setPropertiesAll(false, false, false, -1);
-
-        auto logicalStateHelper = commandStreamReceiver.getLogicalStateHelper();
-
-        if (logicalStateHelper) {
-            uint8_t buffer[512] = {};
-            LinearStream tempStream(buffer, sizeof(buffer));
-
-            EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(commandStreamReceiver.getKernelArgsBufferAllocation(), logicalStateHelper);
-            logicalStateHelper->writeStreamInline(tempStream, false);
-        }
     }
 
     template <typename GfxFamily>

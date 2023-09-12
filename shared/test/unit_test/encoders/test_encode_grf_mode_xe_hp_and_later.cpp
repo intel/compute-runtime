@@ -26,7 +26,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenN
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::DefaultGrfNumber, 0u, PreemptionMode::Disabled);
-    EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -64,7 +64,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeProgrammedThenExpectedComman
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.stateComputeMode.setPropertiesAll(false, 256u, 0u, PreemptionMode::Disabled);
-    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
+    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
 
     auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -86,7 +86,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeDisabledThenExpectedCommands
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.largeGrfMode.set(0);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
+    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
 
     auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -192,7 +192,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledThenExpectedCommandsA
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.largeGrfMode.set(1);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
+    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
 
     auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -236,7 +236,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledAndDisabledThenExpect
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.largeGrfMode.set(1);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
+    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
 
     auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -270,7 +270,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledAndDisabledThenExpect
     usedSpaceBefore = cmdContainer->getCommandStream()->getUsed();
     NEO::EncodeComputeMode<GfxFamily>::adjustPipelineSelect(*cmdContainer, descriptor);
     streamProperties.stateComputeMode.largeGrfMode.set(0);
-    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
+    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
 
     usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

@@ -329,7 +329,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndDisabledFusedEuWhenCfeStateProgrammedThe
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.frontEndState.setPropertiesAll(false, false, false, false);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
@@ -352,7 +352,7 @@ HWTEST2_F(PreambleCfeState, givenXehpEnabledFusedEuAndDisableFusedDispatchFromKe
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.frontEndState.setPropertiesAll(false, true, false, false);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
@@ -372,7 +372,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndEnabledFusedEuWhenCfeStateProgrammedThen
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.frontEndState.setPropertiesAll(false, false, false, false);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);

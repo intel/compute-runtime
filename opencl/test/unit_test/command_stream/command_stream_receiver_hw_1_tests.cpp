@@ -11,7 +11,6 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -472,11 +471,6 @@ HWTEST_F(UltCommandStreamReceiverTest, givenMultiplePartitionsWhenCallingWaitKmd
 
     commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
-}
-
-HWTEST_F(UltCommandStreamReceiverTest, whenCreatingThenDontCreateLogicalStateHelper) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(nullptr, commandStreamReceiver.logicalStateHelper.get());
 }
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTests;

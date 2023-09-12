@@ -92,7 +92,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThen
             EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
             dispatchArgs.preemptionMode = NEO::PreemptionMode::Initial;
 
-            EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+            EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
             EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequiredRef());
         }
     }
@@ -195,7 +195,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenDefaultSettingForFenceAsPostSyncOperationInC
     dispatchArgs.isKernelUsingSystemAllocation = true;
     dispatchArgs.isHostScopeSignalEvent = true;
 
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

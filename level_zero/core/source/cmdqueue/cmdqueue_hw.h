@@ -158,8 +158,6 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void makeRayTracingBufferResident(NEO::GraphicsAllocation *rtBuffer);
 
     inline void programActivePartitionConfig(bool isProgramActivePartitionConfigRequired, NEO::LinearStream &commandStream);
-    inline void encodeKernelArgsBufferAndMakeItResident();
-    inline void writeCsrStreamInlineIfLogicalStateHelperAvailable(NEO::LinearStream &commandStream);
     inline void programOneCmdListFrontEndIfDirty(CommandListExecutionContext &ctx,
                                                  NEO::LinearStream &commandStream,
                                                  CommandListRequiredStateChange &cmdListRequiredState);
@@ -169,7 +167,6 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void programLastCommandListReturnBbStart(
         NEO::LinearStream &commandStream,
         CommandListExecutionContext &ctx);
-    inline void mergeOneCmdListPipelinedState(CommandList *commandList);
     inline void programFrontEndAndClearDirtyFlag(bool shouldFrontEndBeProgrammed,
                                                  CommandListExecutionContext &ctx,
                                                  NEO::LinearStream &commandStream,

@@ -642,7 +642,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,
         false,
         commandList->getDcFlushRequired(true)};
-    EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs, nullptr), std::exception);
+    EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs), std::exception);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenReturnErrorInvalidArgument) {

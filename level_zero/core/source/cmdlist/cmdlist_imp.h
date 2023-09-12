@@ -12,10 +12,6 @@
 
 #include <memory>
 
-namespace NEO {
-class LogicalStateHelper;
-}
-
 namespace L0 {
 
 struct CommandListImp : CommandList {
@@ -32,7 +28,6 @@ struct CommandListImp : CommandList {
     virtual void appendMultiPartitionPrologue(uint32_t partitionDataSize) = 0;
     virtual void appendMultiPartitionEpilogue() = 0;
 
-    virtual NEO::LogicalStateHelper *getLogicalStateHelper() const { return nonImmediateLogicalStateHelper.get(); }
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
     void enableInOrderExecution();
     bool isInOrderExecutionEnabled() const { return inOrderExecutionEnabled; }
@@ -41,7 +36,6 @@ struct CommandListImp : CommandList {
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
 
   protected:
-    std::unique_ptr<NEO::LogicalStateHelper> nonImmediateLogicalStateHelper;
     NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;
     uint32_t inOrderDependencyCounter = 0;
     uint32_t inOrderAllocationOffset = 0;

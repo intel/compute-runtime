@@ -17,7 +17,6 @@ struct RootDeviceEnvironment;
 class Device;
 class GraphicsAllocation;
 struct KernelDescriptor;
-class LogicalStateHelper;
 struct RuntimeCapabilityTable;
 class OsContext;
 
@@ -56,10 +55,10 @@ class PreemptionHelper {
     static size_t getRequiredStateSipCmdSize(Device &device, bool isRcs);
 
     template <typename GfxFamily>
-    static void programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
+    static void programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);
 
     template <typename GfxFamily>
-    static void programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper, OsContext *context);
+    static void programStateSip(LinearStream &preambleCmdStream, Device &device, OsContext *context);
 
     template <typename GfxFamily>
     static void programStateSipEndWa(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment);
@@ -87,10 +86,10 @@ class PreemptionHelper {
 
   protected:
     template <typename GfxFamily>
-    static void programCsrBaseAddressCmd(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
+    static void programCsrBaseAddressCmd(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr);
 
     template <typename GfxFamily>
-    static void programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper);
+    static void programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation);
 };
 
 template <typename GfxFamily>

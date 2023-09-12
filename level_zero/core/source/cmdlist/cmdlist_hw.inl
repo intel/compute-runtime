@@ -21,7 +21,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -245,13 +244,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         enableInOrderExecution();
     }
 
-    createLogicalStateHelper();
     return returnType;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::createLogicalStateHelper() {
-    this->nonImmediateLogicalStateHelper.reset(NEO::LogicalStateHelper::create<GfxFamily>());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2799,10 +2792,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         containsAnyKernel = true;
     }
 
-    auto logicalStateHelperBlock = !getLogicalStateHelper();
-
     finalStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode);
-    if (this->pipelineSelectStateTracking && finalStreamState.pipelineSelect.isDirty() && logicalStateHelperBlock) {
+    if (this->pipelineSelectStateTracking && finalStreamState.pipelineSelect.isDirty()) {
         NEO::PipelineSelectArgs pipelineSelectArgs;
         pipelineSelectArgs.systolicPipelineSelectMode = kernelAttributes.flags.usesSystolicPipelineSelectMode;
         pipelineSelectArgs.systolicPipelineSelectSupport = this->systolicModeSupport;
@@ -2814,11 +2805,11 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
 
     finalStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled);
     bool isPatchingVfeStateAllowed = (NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get() || (this->frontEndStateTracking && this->dispatchCmdListBatchBufferAsPrimary));
-    if (logicalStateHelperBlock && finalStreamState.frontEndState.isDirty()) {
+    if (finalStreamState.frontEndState.isDirty()) {
         if (isPatchingVfeStateAllowed) {
             auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType);
             auto frontEndStateCmd = new VFE_STATE_TYPE;
-            NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
+            NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
             commandsToPatch.push_back({frontEndStateAddress, frontEndStateCmd, CommandToPatch::FrontEndState});
         }
         if (this->frontEndStateTracking && !this->dispatchCmdListBatchBufferAsPrimary) {
@@ -2839,14 +2830,14 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     } else {
         finalStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode());
     }
-    if (finalStreamState.stateComputeMode.isDirty() && logicalStateHelperBlock) {
+    if (finalStreamState.stateComputeMode.isDirty()) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
         NEO::PipelineSelectArgs pipelineSelectArgs;
         pipelineSelectArgs.systolicPipelineSelectMode = kernelAttributes.flags.usesSystolicPipelineSelectMode;
         pipelineSelectArgs.systolicPipelineSelectSupport = this->systolicModeSupport;
 
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
-            *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs, this->dcFlushSupport, nullptr);
+            *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs, this->dcFlushSupport);
     }
 
     finalStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
@@ -2861,7 +2852,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         finalStreamState.stateBaseAddress.setPropertiesIndirectState(currentIndirectObjectBaseAddress, currentIndirectObjectSize);
     }
 
-    if (logicalStateHelperBlock && this->stateBaseAddressTracking && finalStreamState.stateBaseAddress.isDirty()) {
+    if (this->stateBaseAddressTracking && finalStreamState.stateBaseAddress.isDirty()) {
         commandContainer.setDirtyStateForAllHeaps(false);
         programStateBaseAddress(commandContainer, true);
         finalStreamState.stateBaseAddress.clearIsDirty();

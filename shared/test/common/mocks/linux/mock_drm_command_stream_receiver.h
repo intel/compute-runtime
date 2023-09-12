@@ -35,7 +35,6 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::latestSentTaskCount;
-    using CommandStreamReceiver::logicalStateHelper;
     using CommandStreamReceiver::makeResident;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::taskCount;

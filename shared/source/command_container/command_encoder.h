@@ -25,7 +25,6 @@ class BindlessHeapsHelper;
 class Gmm;
 class GmmHelper;
 class IndirectHeap;
-class LogicalStateHelper;
 class ProductHelper;
 
 struct DeviceInfo;
@@ -94,7 +93,7 @@ struct EncodeDispatchKernel {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
-    static void encode(CommandContainer &container, EncodeDispatchKernelArgs &args, LogicalStateHelper *logicalStateHelper);
+    static void encode(CommandContainer &container, EncodeDispatchKernelArgs &args);
 
     static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
@@ -357,8 +356,8 @@ struct EncodeComputeMode {
     static size_t getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs);
     static void programComputeModeCommandWithSynchronization(LinearStream &csr, StateComputeModeProperties &properties,
                                                              const PipelineSelectArgs &args, bool hasSharedHandles,
-                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper);
-    static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper);
+                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush);
+    static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
 };
@@ -564,14 +563,7 @@ template <typename GfxFamily>
 struct EncodeMemoryFence {
     static size_t getSystemMemoryFenceSize();
 
-    static void encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation, LogicalStateHelper *logicalStateHelper);
-};
-
-template <typename GfxFamily>
-struct EncodeKernelArgsBuffer {
-    static size_t getKernelArgsBufferCmdsSize(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper);
-
-    static void encodeKernelArgsBufferCmds(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper);
+    static void encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation);
 };
 
 template <typename GfxFamily>

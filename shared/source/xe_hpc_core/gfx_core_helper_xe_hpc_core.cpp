@@ -20,7 +20,6 @@ using Family = NEO::XeHpcCoreFamily;
 #include "shared/source/helpers/gfx_core_helper_pvc_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
-#include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
 
@@ -430,6 +429,4 @@ template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
-
-template LogicalStateHelper *LogicalStateHelper::create<Family>();
 } // namespace NEO

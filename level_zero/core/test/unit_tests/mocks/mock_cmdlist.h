@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
@@ -243,7 +242,6 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::minimalSizeForBcsSplit;
-    using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;

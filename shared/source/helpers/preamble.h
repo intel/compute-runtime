@@ -19,7 +19,6 @@ class Device;
 struct DispatchFlags;
 class GraphicsAllocation;
 class LinearStream;
-class LogicalStateHelper;
 struct PipelineSelectArgs;
 struct StreamProperties;
 struct RootDeviceEnvironment;
@@ -34,7 +33,7 @@ struct PreambleHelper {
     static void programPipelineSelect(LinearStream *pCommandStream,
                                       const PipelineSelectArgs &pipelineSelectArgs,
                                       const RootDeviceEnvironment &rootDeviceEnvironment);
-    static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
+    static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType);
     static void appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd);
     static void *getSpaceForVfeState(LinearStream *pCommandStream,
@@ -45,11 +44,10 @@ struct PreambleHelper {
                                 uint32_t scratchSize,
                                 uint64_t scratchAddress,
                                 uint32_t maxFrontEndThreads,
-                                const StreamProperties &streamProperties,
-                                LogicalStateHelper *logicalStateHelper);
+                                const StreamProperties &streamProperties);
     static uint64_t getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
+                                GraphicsAllocation *preemptionCsr);
     static void programSemaphoreDelay(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static bool isSystolicModeConfigurable(const RootDeviceEnvironment &rootDeviceEnvironment);

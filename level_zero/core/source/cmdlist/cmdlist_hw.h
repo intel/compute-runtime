@@ -20,7 +20,6 @@
 namespace NEO {
 enum class MemoryPool;
 enum class ImageType;
-class LogicalStateHelper;
 } // namespace NEO
 
 namespace L0 {
@@ -296,7 +295,6 @@ struct CommandListCoreFamily : CommandListImp {
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent);
     void handlePostSubmissionState();
 
-    virtual void createLogicalStateHelper();
     void setupFillKernelArguments(size_t baseOffset,
                                   size_t patternSize,
                                   size_t dstSize,

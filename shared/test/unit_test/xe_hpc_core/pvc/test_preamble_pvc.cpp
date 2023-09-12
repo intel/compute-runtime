@@ -34,7 +34,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(revision, *hwInfo);
         streamProperties.frontEndState.setPropertiesAll(kernelExecutionType, false, false, false);
 
-        PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties, nullptr);
+        PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
         parseCommands<FamilyType>(linearStream);
         auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), cfeStateIt);

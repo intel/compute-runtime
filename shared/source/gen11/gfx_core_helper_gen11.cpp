@@ -12,7 +12,6 @@
 #include "shared/source/helpers/gfx_core_helper_bdw_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_bdw_to_dg2.inl"
 #include "shared/source/helpers/gfx_core_helper_bdw_to_icllp.inl"
-#include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
 typedef Gen11Family Family;
@@ -38,5 +37,4 @@ template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
 
-template LogicalStateHelper *LogicalStateHelper::create<Family>();
 } // namespace NEO

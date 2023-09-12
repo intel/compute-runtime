@@ -45,7 +45,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
     properties.initSupport(rootDeviceEnvironment);
     properties.stateComputeMode.setPropertiesAll(false, GrfConfig::DefaultGrfNumber, 0, PreemptionMode::Disabled);
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer.getCommandStream(),
-                                                                  properties.stateComputeMode, rootDeviceEnvironment, nullptr);
+                                                                  properties.stateComputeMode, rootDeviceEnvironment);
 
     auto usedSpaceAfter = cmdContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

@@ -33,7 +33,6 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -81,8 +80,6 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     if (DebugManager.flags.EnableTimestampPacket.get() != -1) {
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
-
-    logicalStateHelper.reset(LogicalStateHelper::create<GfxFamily>());
 
     createScratchSpaceController();
     configurePostSyncWriteOffset();
@@ -469,9 +466,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*perDssBackedBuffer);
     }
 
-    if (!logicalStateHelper) {
-        handleFrontEndStateTransition(dispatchFlags);
-    }
+    handleFrontEndStateTransition(dispatchFlags);
 
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
@@ -501,8 +496,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
 
     programPreemption(commandStreamCSR, dispatchFlags);
-
-    EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(kernelArgsBufferAllocation, logicalStateHelper.get());
 
     if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
         if (DebugManager.flags.ProgramBarrierInCommandStreamTask.get() == 1) {
@@ -580,17 +573,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*workPartitionAllocation);
     }
 
-    if (kernelArgsBufferAllocation) {
-        makeResident(*kernelArgsBufferAllocation);
-    }
-
     auto rtBuffer = device.getRTMemoryBackedBuffer();
     if (rtBuffer) {
         makeResident(*rtBuffer);
-    }
-
-    if (logicalStateHelper) {
-        logicalStateHelper->writeStreamInline(commandStreamCSR, false);
     }
 
     // If the CSR has work in its CS, flush it before the task
@@ -735,7 +720,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
     if (this->streamProperties.stateComputeMode.isDirty()) {
         EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
             stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
-            hasSharedHandles(), this->peekRootDeviceEnvironment(), isRcs(), this->dcFlushSupport, logicalStateHelper.get());
+            hasSharedHandles(), this->peekRootDeviceEnvironment(), isRcs(), this->dcFlushSupport);
         this->setStateComputeModeDirty(false);
         this->streamProperties.stateComputeMode.clearIsDirty();
     }
@@ -937,8 +922,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.csrDependencies, false);
     size += TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(dispatchFlags.csrDependencies);
 
-    size += EncodeKernelArgsBuffer<GfxFamily>::getKernelArgsBufferCmdsSize(kernelArgsBufferAllocation, logicalStateHelper.get());
-
     if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
         size += getCmdSizeForStallingCommands(dispatchFlags);
     }
@@ -1007,7 +990,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPreemption(const 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cmdStream, Device &device) {
     if (!this->isStateSipSent) {
-        PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device, logicalStateHelper.get(), this->osContext);
+        PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device, this->osContext);
         setSipSentFlag(true);
     }
 }
@@ -1015,7 +998,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->preemptionAllocation, logicalStateHelper.get());
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->preemptionAllocation);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
     }
@@ -1041,7 +1024,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, peekRootDeviceEnvironment(), requiredScratchSize, getScratchPatchAddress(),
-            maxFrontEndThreads, streamProperties, logicalStateHelper.get());
+            maxFrontEndThreads, streamProperties);
         auto commandOffset = PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(&csr, pVfeState);
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
@@ -1167,10 +1150,6 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     if (pageTableManager.get() && !pageTableManagerInitialized) {
         pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
-    }
-
-    if (logicalStateHelper) {
-        logicalStateHelper->writeStreamInline(commandStream, false);
     }
 
     if (isRelaxedOrderingDispatch) {
@@ -1584,10 +1563,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::createKernelArgsBufferAllocation() {
-}
-
-template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
     return flushTagUpdate();
 }
@@ -1960,8 +1935,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushFrontEndCommand(I
                                                    requiredScratchSize,
                                                    getScratchPatchAddress(),
                                                    device.getDeviceInfo().maxFrontEndThreads,
-                                                   this->streamProperties,
-                                                   getLogicalStateHelper());
+                                                   this->streamProperties);
         this->streamProperties.frontEndState.clearIsDirty();
     }
 }
@@ -1988,7 +1962,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushStateComputeModeC
         EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(csrStream, this->streamProperties.stateComputeMode,
                                                                                    flushData.pipelineSelectArgs,
                                                                                    false, peekRootDeviceEnvironment(), isRcs(),
-                                                                                   getDcFlushSupport(), nullptr);
+                                                                                   getDcFlushSupport());
         this->streamProperties.stateComputeMode.clearIsDirty();
     }
 }
@@ -2080,8 +2054,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
             PreemptionHelper::programCmdStream<GfxFamily>(csrStream, device.getPreemptionMode(), this->getPreemptionMode(), this->getPreemptionAllocation());
             PreemptionHelper::programCsrBaseAddress<GfxFamily>(csrStream,
                                                                device,
-                                                               getPreemptionAllocation(),
-                                                               getLogicalStateHelper());
+                                                               getPreemptionAllocation());
             this->setPreemptionMode(device.getPreemptionMode());
         }
 

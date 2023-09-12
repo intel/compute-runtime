@@ -106,8 +106,7 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
                                                 uint32_t scratchSize,
                                                 uint64_t scratchAddress,
                                                 uint32_t maxFrontEndThreads,
-                                                const StreamProperties &streamProperties,
-                                                LogicalStateHelper *logicalStateHelper) {
+                                                const StreamProperties &streamProperties) {
     using CFE_STATE = typename Family::CFE_STATE;
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(pVfeState);

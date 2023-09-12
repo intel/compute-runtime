@@ -1094,16 +1094,8 @@ size_t EncodeMemoryFence<Family>::getSystemMemoryFenceSize() {
 }
 
 template <typename Family>
-void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation, LogicalStateHelper *logicalStateHelper) {
+void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation) {
 }
-
-template <typename Family>
-size_t EncodeKernelArgsBuffer<Family>::getKernelArgsBufferCmdsSize(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper) {
-    return 0;
-}
-
-template <typename Family>
-void EncodeKernelArgsBuffer<Family>::encodeKernelArgsBufferCmds(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper) {}
 
 template <typename Family>
 void EncodeMiPredicate<Family>::encode(LinearStream &cmdStream, [[maybe_unused]] MiPredicateType predicateType) {

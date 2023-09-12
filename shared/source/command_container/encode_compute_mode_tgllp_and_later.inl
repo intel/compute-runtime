@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/helpers/logical_state_helper.h"
 
 namespace NEO {
 
@@ -37,7 +36,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
 template <typename Family>
 inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
-    bool hasSharedHandles, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper) {
+    bool hasSharedHandles, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, rootDeviceEnvironment, isRcs);
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
@@ -50,7 +49,7 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
         NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(csr, args, rootDeviceEnvironment, isRcs);
     }
 
-    EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, rootDeviceEnvironment, logicalStateHelper);
+    EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, rootDeviceEnvironment);
 
     if (hasSharedHandles) {
         PipeControlArgs args;

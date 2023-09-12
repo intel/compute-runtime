@@ -50,7 +50,6 @@ class HwPerfCounter;
 class HwTimeStamps;
 class GmmHelper;
 class TagAllocatorBase;
-class LogicalStateHelper;
 class KmdNotifyHelper;
 class GfxCoreHelper;
 class ProductHelper;
@@ -185,7 +184,6 @@ class CommandStreamReceiver {
     GraphicsAllocation *getGlobalFenceAllocation() const { return globalFenceAllocation; }
     GraphicsAllocation *getWorkPartitionAllocation() const { return workPartitionAllocation; }
     GraphicsAllocation *getGlobalStatelessHeapAllocation() const { return globalStatelessHeapAllocation; }
-    GraphicsAllocation *getKernelArgsBufferAllocation() const { return kernelArgsBufferAllocation; }
 
     virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
     virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
@@ -216,7 +214,6 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL bool createGlobalFenceAllocation();
     MOCKABLE_VIRTUAL bool createPreemptionAllocation();
     MOCKABLE_VIRTUAL bool createPerDssBackedBuffer(Device &device);
-    virtual void createKernelArgsBufferAllocation() = 0;
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
@@ -376,8 +373,6 @@ class CommandStreamReceiver {
         return this->dispatchMode;
     }
 
-    LogicalStateHelper *getLogicalStateHelper() const;
-
     bool getPreambleSetFlag() const {
         return isPreambleSent;
     }
@@ -457,7 +452,6 @@ class CommandStreamReceiver {
     std::unique_ptr<TagAllocatorBase> perfCounterAllocator;
     std::unique_ptr<TagAllocatorBase> timestampPacketAllocator;
     std::unique_ptr<Thread> userPauseConfirmation;
-    std::unique_ptr<LogicalStateHelper> logicalStateHelper;
     std::unique_ptr<IndirectHeap> globalStatelessHeap;
 
     ResidencyContainer residencyAllocations;
@@ -492,7 +486,6 @@ class CommandStreamReceiver {
     GraphicsAllocation *perDssBackedBuffer = nullptr;
     GraphicsAllocation *clearColorAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
-    GraphicsAllocation *kernelArgsBufferAllocation = nullptr;
     GraphicsAllocation *globalStatelessHeapAllocation = nullptr;
 
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;

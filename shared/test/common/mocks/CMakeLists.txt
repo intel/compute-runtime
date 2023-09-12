@@ -70,7 +70,6 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_l0_debugger.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_logical_state_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_migration_sync_data.h

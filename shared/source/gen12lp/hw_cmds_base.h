@@ -17,7 +17,6 @@ template <class T>
 struct CmdParse;
 
 namespace NEO {
-class LogicalStateHelper;
 struct Gen12Lp {
 #include "shared/source/generated/gen12lp/hw_cmds_generated_gen12lp.inl"
 
@@ -96,7 +95,6 @@ struct Gen12LpFamily : public Gen12Lp {
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint32_t;
-    using LogicalStateHelperHw = LogicalStateHelper;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;

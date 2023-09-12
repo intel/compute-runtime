@@ -19,7 +19,6 @@ template <class T>
 struct CmdParse;
 
 namespace NEO {
-class LogicalStateHelper;
 struct Gen9 {
 #include "shared/source/generated/gen9/hw_cmds_generated_gen9.inl"
 
@@ -98,7 +97,6 @@ struct Gen9Family : public Gen9 {
     using XY_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint32_t;
-    using LogicalStateHelperHw = LogicalStateHelper;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;

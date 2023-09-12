@@ -1002,7 +1002,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenFlu
     CommandStreamReceiverHwLog<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver.setupContext(*pDevice->getDefaultEngine().osContext);
     commandStreamReceiver.initializeTagAllocation();
-    commandStreamReceiver.createKernelArgsBufferAllocation();
     commandStreamReceiver.createPreemptionAllocation();
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
 

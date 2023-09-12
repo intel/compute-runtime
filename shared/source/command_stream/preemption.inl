@@ -19,16 +19,16 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
+void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr) {
     if (device.getPreemptionMode() == PreemptionMode::MidThread) {
         UNRECOVERABLE_IF(nullptr == preemptionCsr);
 
-        programCsrBaseAddressCmd<GfxFamily>(preambleCmdStream, preemptionCsr, logicalStateHelper);
+        programCsrBaseAddressCmd<GfxFamily>(preambleCmdStream, preemptionCsr);
     }
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programCsrBaseAddressCmd(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
+void PreemptionHelper::programCsrBaseAddressCmd(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr) {
     using GPGPU_CSR_BASE_ADDRESS = typename GfxFamily::GPGPU_CSR_BASE_ADDRESS;
 
     auto csr = reinterpret_cast<GPGPU_CSR_BASE_ADDRESS *>(preambleCmdStream.getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS)));
@@ -38,19 +38,19 @@ void PreemptionHelper::programCsrBaseAddressCmd(LinearStream &preambleCmdStream,
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper, OsContext *context) {
+void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device, OsContext *context) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     bool debuggingEnabled = device.getDebugger() != nullptr;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
     if (isMidThreadPreemption || debuggingEnabled) {
         GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, context).getSipAllocation();
-        programStateSipCmd<GfxFamily>(preambleCmdStream, sipAllocation, logicalStateHelper);
+        programStateSipCmd<GfxFamily>(preambleCmdStream, sipAllocation);
     }
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper) {
+void PreemptionHelper::programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
 
     auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
