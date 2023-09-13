@@ -41,6 +41,7 @@
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/rtas/rtas.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -4932,6 +4933,161 @@ TEST_F(DeviceTest, GivenValidDeviceWhenQueryingKernelTimestampsProptertiesThenCo
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_NE(0u, tsProps.flags & ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_FLAG_KERNEL);
     EXPECT_NE(0u, tsProps.flags & ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_FLAG_SYNCHRONIZED);
+}
+
+struct RTASDeviceTest : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
+        execEnv = neoDevice->getExecutionEnvironment();
+        execEnv->incRefInternal();
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    void TearDown() override {
+        driverHandle.reset(nullptr);
+        execEnv->decRefInternal();
+    }
+
+    struct MockOsLibrary : public OsLibrary {
+      public:
+        MockOsLibrary(const std::string &name, std::string *errorValue) {
+        }
+        MockOsLibrary() {}
+        ~MockOsLibrary() override = default;
+        void *getProcAddress(const std::string &procName) override {
+            if (failGetProcAddress) {
+                return nullptr;
+            }
+            return reinterpret_cast<void *>(0x1234);
+        }
+        bool isLoaded() override {
+            return libraryLoaded;
+        }
+        std::string getFullPath() override {
+            return std::string();
+        }
+        static OsLibrary *load(const std::string &name) {
+            if (failLibraryLoad) {
+                return nullptr;
+            }
+            auto ptr = new (std::nothrow) MockOsLibrary();
+            return ptr;
+        }
+
+        static bool libraryLoaded;
+        static bool failLibraryLoad;
+        static bool failGetProcAddress;
+    };
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::ExecutionEnvironment *execEnv;
+    NEO::Device *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 2u;
+};
+
+bool RTASDeviceTest::MockOsLibrary::libraryLoaded = false;
+bool RTASDeviceTest::MockOsLibrary::failLibraryLoad = false;
+bool RTASDeviceTest::MockOsLibrary::failGetProcAddress = false;
+
+HWTEST2_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned, MatchAny) {
+    MockOsLibrary::libraryLoaded = false;
+    MockOsLibrary::failLibraryLoad = false;
+    MockOsLibrary::failGetProcAddress = false;
+
+    ze_device_properties_t devProps = {};
+    ze_rtas_device_exp_properties_t rtasProperties = {};
+    L0::RTASBuilder::osLibraryLoadFunction = MockOsLibrary::load;
+    driverHandle->rtasLibraryHandle.reset();
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &rtasProperties;
+
+    rtasProperties.stype = ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXP_PROPERTIES;
+    rtasProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
+
+    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    if (l0GfxCoreHelper.platformSupportsRayTracing()) {
+        EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
+    }
+}
+
+HWTEST2_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned, MatchAny) {
+    MockOsLibrary::libraryLoaded = false;
+    MockOsLibrary::failLibraryLoad = false;
+    MockOsLibrary::failGetProcAddress = false;
+
+    ze_device_properties_t devProps = {};
+    ze_rtas_device_exp_properties_t rtasProperties = {};
+    driverHandle->rtasLibraryHandle = std::make_unique<MockOsLibrary>();
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &rtasProperties;
+
+    rtasProperties.stype = ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXP_PROPERTIES;
+    rtasProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
+
+    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    if (l0GfxCoreHelper.platformSupportsRayTracing()) {
+        EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
+    }
+}
+
+HWTEST2_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned, MatchAny) {
+    MockOsLibrary::libraryLoaded = false;
+    MockOsLibrary::failLibraryLoad = true;
+    MockOsLibrary::failGetProcAddress = true;
+
+    ze_device_properties_t devProps = {};
+    ze_rtas_device_exp_properties_t rtasProperties = {};
+    L0::RTASBuilder::osLibraryLoadFunction = MockOsLibrary::load;
+    driverHandle->rtasLibraryHandle.reset();
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &rtasProperties;
+
+    rtasProperties.stype = ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXP_PROPERTIES;
+    rtasProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
+    EXPECT_EQ(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
+}
+
+HWTEST2_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned, MatchAny) {
+    MockOsLibrary::libraryLoaded = false;
+    MockOsLibrary::failLibraryLoad = false;
+    MockOsLibrary::failGetProcAddress = true;
+
+    ze_device_properties_t devProps = {};
+    ze_rtas_device_exp_properties_t rtasProperties = {};
+    L0::RTASBuilder::osLibraryLoadFunction = MockOsLibrary::load;
+    driverHandle->rtasLibraryHandle.reset();
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &rtasProperties;
+
+    rtasProperties.stype = ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXP_PROPERTIES;
+    rtasProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
+    EXPECT_EQ(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
 }
 
 } // namespace ult

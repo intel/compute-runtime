@@ -99,4 +99,48 @@ ze_result_t zeFabricEdgeGetPropertiesExp(
     ze_fabric_edge_handle_t hEdge,
     ze_fabric_edge_exp_properties_t *pEdgeProperties);
 
+ze_result_t zeRTASBuilderCreateExp(
+    ze_driver_handle_t hDriver,
+    const ze_rtas_builder_exp_desc_t *pDescriptor,
+    ze_rtas_builder_exp_handle_t *phBuilder);
+
+ze_result_t zeRTASBuilderGetBuildPropertiesExp(
+    ze_rtas_builder_exp_handle_t hBuilder,
+    const ze_rtas_builder_build_op_exp_desc_t *pBuildOpDescriptor,
+    ze_rtas_builder_exp_properties_t *pProperties);
+
+ze_result_t zeDriverRTASFormatCompatibilityCheckExp(
+    ze_driver_handle_t hDriver,
+    ze_rtas_format_exp_t rtasFormatA,
+    ze_rtas_format_exp_t rtasFormatB);
+
+ze_result_t zeRTASBuilderBuildExp(
+    ze_rtas_builder_exp_handle_t hBuilder,
+    const ze_rtas_builder_build_op_exp_desc_t *pBuildOpDescriptor,
+    void *pScratchBuffer,
+    size_t scratchBufferSizeBytes,
+    void *pRtasBuffer,
+    size_t rtasBufferSizeBytes,
+    ze_rtas_parallel_operation_exp_handle_t hParallelOperation,
+    void *pBuildUserPtr,
+    ze_rtas_aabb_exp_t *pBounds,
+    size_t *pRtasBufferSizeBytes);
+
+ze_result_t zeRTASBuilderDestroyExp(
+    ze_rtas_builder_exp_handle_t hBuilder);
+
+ze_result_t zeRTASParallelOperationCreateExp(
+    ze_driver_handle_t hDriver,
+    ze_rtas_parallel_operation_exp_handle_t *phParallelOperation);
+
+ze_result_t zeRTASParallelOperationGetPropertiesExp(
+    ze_rtas_parallel_operation_exp_handle_t hParallelOperation,
+    ze_rtas_parallel_operation_exp_properties_t *pProperties);
+
+ze_result_t zeRTASParallelOperationJoinExp(
+    ze_rtas_parallel_operation_exp_handle_t hParallelOperation);
+
+ze_result_t zeRTASParallelOperationDestroyExp(
+    ze_rtas_parallel_operation_exp_handle_t hParallelOperation);
+
 } // namespace L0
