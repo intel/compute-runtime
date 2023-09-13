@@ -42,14 +42,6 @@
 
 namespace NEO {
 
-static_assert(DRM_XE_ENGINE_CLASS_RENDER == I915_ENGINE_CLASS_RENDER);
-static_assert(DRM_XE_ENGINE_CLASS_COPY == I915_ENGINE_CLASS_COPY);
-static_assert(DRM_XE_ENGINE_CLASS_VIDEO_DECODE == I915_ENGINE_CLASS_VIDEO);
-static_assert(DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE == I915_ENGINE_CLASS_VIDEO_ENHANCE);
-static_assert(DRM_XE_ENGINE_CLASS_COMPUTE == I915_ENGINE_CLASS_COMPUTE);
-static_assert(XE_MEM_REGION_CLASS_VRAM == I915_MEMORY_CLASS_DEVICE);
-static_assert(XE_MEM_REGION_CLASS_SYSMEM == I915_MEMORY_CLASS_SYSTEM);
-
 int IoctlHelperXe::xeGetQuery(Query *data) {
     if (data->numItems == 1) {
         QueryItem *queryItem = (QueryItem *)data->itemsPtr;
@@ -165,13 +157,8 @@ bool IoctlHelperXe::initialize() {
                   XE_QUERY_CONFIG_FLAGS_HAS_VRAM
               ? "ON"
               : "OFF");
-    xeLog("  XE_QUERY_CONFIG_FLAGS_USE_GUC\t\t%s\n",
-          config->info[XE_QUERY_CONFIG_FLAGS] &
-                  XE_QUERY_CONFIG_FLAGS_USE_GUC
-              ? "ON"
-              : "OFF");
-    xeLog("XE_QUERY_CONFIG_MIN_ALIGNEMENT\t\t%#llx\n",
-          config->info[XE_QUERY_CONFIG_MIN_ALIGNEMENT]);
+    xeLog("XE_QUERY_CONFIG_MIN_ALIGNMENT\t\t%#llx\n",
+          config->info[XE_QUERY_CONFIG_MIN_ALIGNMENT]);
     xeLog("XE_QUERY_CONFIG_VA_BITS\t\t%#llx\n",
           config->info[XE_QUERY_CONFIG_VA_BITS]);
     xeLog("XE_QUERY_CONFIG_GT_COUNT\t\t%llu\n",
@@ -275,7 +262,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
     return std::make_unique<EngineInfo>(&drm, enginesPerTile);
 }
 
-inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_query_mem_usage::drm_xe_query_mem_region &xeMemRegion) {
+inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_query_mem_region &xeMemRegion) {
     MemoryRegion memoryRegion{};
     memoryRegion.region.memoryInstance = xeMemRegion.instance;
     memoryRegion.region.memoryClass = xeMemRegion.mem_class;
@@ -296,7 +283,7 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     auto xeMemUsageData = reinterpret_cast<drm_xe_query_mem_usage *>(memUsageData.data());
     auto xeGtsData = reinterpret_cast<drm_xe_query_gts *>(gtsData.data());
 
-    std::array<drm_xe_query_mem_usage::drm_xe_query_mem_region *, 64> memoryRegionInstances{};
+    std::array<drm_xe_query_mem_region *, 64> memoryRegionInstances{};
 
     for (auto i = 0u; i < xeMemUsageData->num_regions; i++) {
         auto &region = xeMemUsageData->regions[i];
@@ -622,7 +609,7 @@ int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddr
                 sync[0].timeline_value = counterValue;
                 struct drm_xe_exec exec = {};
 
-                exec.engine_id = engine;
+                exec.exec_queue_id = engine;
                 exec.num_syncs = 1;
                 exec.syncs = reinterpret_cast<uintptr_t>(&sync);
                 exec.address = obj->offset + d->batch_start_offset;
@@ -801,9 +788,9 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     case DrmIoctl::Query:
         RETURN_ME(DRM_IOCTL_XE_DEVICE_QUERY);
     case DrmIoctl::GemContextCreateExt:
-        RETURN_ME(DRM_IOCTL_XE_ENGINE_CREATE);
+        RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_CREATE);
     case DrmIoctl::GemContextDestroy:
-        RETURN_ME(DRM_IOCTL_XE_ENGINE_DESTROY);
+        RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY);
     case DrmIoctl::GemWaitUserFence:
         RETURN_ME(DRM_IOCTL_XE_WAIT_USER_FENCE);
     case DrmIoctl::PrimeFdToHandle:
@@ -823,22 +810,21 @@ int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {
 
     switch (drmParam) {
     case DrmParam::MemoryClassDevice:
-        return I915_MEMORY_CLASS_DEVICE;
+        return XE_MEM_REGION_CLASS_VRAM;
     case DrmParam::MemoryClassSystem:
-        return I915_MEMORY_CLASS_SYSTEM;
-
+        return XE_MEM_REGION_CLASS_SYSMEM;
     case DrmParam::EngineClassRender:
-        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
+        return DRM_XE_ENGINE_CLASS_RENDER;
     case DrmParam::EngineClassCopy:
-        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY;
+        return DRM_XE_ENGINE_CLASS_COPY;
     case DrmParam::EngineClassVideo:
-        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO;
+        return DRM_XE_ENGINE_CLASS_VIDEO_DECODE;
     case DrmParam::EngineClassVideoEnhance:
-        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE;
+        return DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE;
     case DrmParam::EngineClassCompute:
-        return prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE;
+        return DRM_XE_ENGINE_CLASS_COMPUTE;
     case DrmParam::EngineClassInvalid:
-        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID;
+        return -1;
 
     default:
         return getDrmParamValueBase(drmParam);
@@ -873,9 +859,9 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
     case DrmIoctl::Query:
         STRINGIFY_ME(DRM_IOCTL_XE_DEVICE_QUERY);
     case DrmIoctl::GemContextCreateExt:
-        STRINGIFY_ME(DRM_IOCTL_XE_ENGINE_CREATE);
+        STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_CREATE);
     case DrmIoctl::GemContextDestroy:
-        STRINGIFY_ME(DRM_IOCTL_XE_ENGINE_DESTROY);
+        STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY);
     case DrmIoctl::GemWaitUserFence:
         STRINGIFY_ME(DRM_IOCTL_XE_WAIT_USER_FENCE);
     case DrmIoctl::PrimeFdToHandle:
@@ -948,8 +934,8 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::GemContextDestroy: {
         GemContextDestroy *d = static_cast<GemContextDestroy *>(arg);
-        struct drm_xe_engine_destroy destroy = {};
-        destroy.engine_id = d->contextId;
+        struct drm_xe_exec_queue_destroy destroy = {};
+        destroy.exec_queue_id = d->contextId;
         if (d->contextId != 0xffffffff)
             ret = IoctlHelper::ioctl(request, &destroy);
         else
@@ -1136,7 +1122,7 @@ void IoctlHelperXe::xeShowBindTable() {
 }
 
 int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
-    struct drm_xe_engine_create create = {};
+    struct drm_xe_exec_queue_create create = {};
     uint32_t drmContextId = 0;
     struct drm_xe_engine_class_instance *currentEngine = nullptr;
     std::vector<struct drm_xe_engine_class_instance> engine;
@@ -1190,14 +1176,14 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     }
     create.instances = castToUint64(engine.data());
     create.num_placements = engine.size();
-    struct drm_xe_ext_engine_set_property ext = {};
+    struct drm_xe_ext_exec_queue_set_property ext = {};
 
-    ext.base.name = XE_ENGINE_EXTENSION_SET_PROPERTY;
-    ext.property = XE_ENGINE_PROPERTY_COMPUTE_MODE;
+    ext.base.name = XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
+    ext.property = XE_EXEC_QUEUE_SET_PROPERTY_COMPUTE_MODE;
     ext.value = 1;
     create.extensions = castToUint64(&ext);
     int ret = IoctlHelper::ioctl(DrmIoctl::GemContextCreateExt, &create);
-    drmContextId = create.engine_id;
+    drmContextId = create.exec_queue_id;
     xeLog("%s:%d (%d) vmid=0x%x ctx=0x%x r=0x%x\n", xeGetClassName(engine[0].engine_class),
           engine[0].engine_instance, create.num_placements, drmVmId, drmContextId, ret);
     if (ret != 0) {

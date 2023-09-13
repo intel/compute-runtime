@@ -116,7 +116,6 @@ class DrmMockXe : public DrmMockCustom {
             1,                             // instance
             0,                             // padding
             MemoryConstants::pageSize,     // min page size
-            MemoryConstants::pageSize,     // max page size
             2 * MemoryConstants::gigaByte, // total size
             MemoryConstants::megaByte      // used size
         };
@@ -125,7 +124,6 @@ class DrmMockXe : public DrmMockCustom {
             0,                          // instance
             0,                          // padding
             MemoryConstants::pageSize,  // min page size
-            MemoryConstants::pageSize,  // max page size
             MemoryConstants::gigaByte,  // total size
             MemoryConstants::kiloByte   // used size
         };
@@ -134,7 +132,6 @@ class DrmMockXe : public DrmMockCustom {
             2,                             // instance
             0,                             // padding
             MemoryConstants::pageSize,     // min page size
-            MemoryConstants::pageSize,     // max page size
             4 * MemoryConstants::gigaByte, // total size
             MemoryConstants::gigaByte      // used size
         };
@@ -316,7 +313,7 @@ class DrmMockXe : public DrmMockCustom {
         {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 7, 1},
         {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 8, 0}};
 
-    static_assert(sizeof(drm_xe_query_mem_usage::drm_xe_query_mem_region) == 12 * sizeof(uint64_t), "");
+    static_assert(sizeof(drm_xe_query_mem_region) == 12 * sizeof(uint64_t), "");
     uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
     static_assert(sizeof(drm_xe_query_gts::drm_xe_query_gt) == 13 * sizeof(uint64_t), "");
     uint64_t queryGts[27]{}; // 1 qword for num gts and 13 qwords per gt
@@ -555,14 +552,14 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     // Default no translation:
     verifyDrmGetParamValue(static_cast<int>(DrmParam::ExecRender), DrmParam::ExecRender);
     // test exception:
-    verifyDrmGetParamValue(NEO::PrelimI915::I915_MEMORY_CLASS_DEVICE, DrmParam::MemoryClassDevice);
-    verifyDrmGetParamValue(NEO::PrelimI915::I915_MEMORY_CLASS_SYSTEM, DrmParam::MemoryClassSystem);
-    verifyDrmGetParamValue(NEO::PrelimI915::I915_ENGINE_CLASS_RENDER, DrmParam::EngineClassRender);
-    verifyDrmGetParamValue(NEO::PrelimI915::I915_ENGINE_CLASS_COPY, DrmParam::EngineClassCopy);
-    verifyDrmGetParamValue(NEO::PrelimI915::I915_ENGINE_CLASS_VIDEO, DrmParam::EngineClassVideo);
-    verifyDrmGetParamValue(NEO::PrelimI915::I915_ENGINE_CLASS_VIDEO_ENHANCE, DrmParam::EngineClassVideoEnhance);
-    verifyDrmGetParamValue(NEO::PrelimI915::I915_ENGINE_CLASS_COMPUTE, DrmParam::EngineClassCompute);
-    verifyDrmGetParamValue(NEO::PrelimI915::I915_ENGINE_CLASS_INVALID, DrmParam::EngineClassInvalid);
+    verifyDrmGetParamValue(XE_MEM_REGION_CLASS_VRAM, DrmParam::MemoryClassDevice);
+    verifyDrmGetParamValue(XE_MEM_REGION_CLASS_SYSMEM, DrmParam::MemoryClassSystem);
+    verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_RENDER, DrmParam::EngineClassRender);
+    verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_COPY, DrmParam::EngineClassCopy);
+    verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_VIDEO_DECODE, DrmParam::EngineClassVideo);
+    verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, DrmParam::EngineClassVideoEnhance);
+    verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_COMPUTE, DrmParam::EngineClassCompute);
+    verifyDrmGetParamValue(-1, DrmParam::EngineClassInvalid);
 
     // Expect stringify
     verifyDrmParamString("ContextCreateExtSetparam", DrmParam::ContextCreateExtSetparam);
@@ -620,8 +617,8 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyIoctlString(DrmIoctl::GemExecbuffer2, "DRM_IOCTL_XE_EXEC");
     verifyIoctlString(DrmIoctl::GemVmBind, "DRM_IOCTL_XE_VM_BIND");
     verifyIoctlString(DrmIoctl::Query, "DRM_IOCTL_XE_DEVICE_QUERY");
-    verifyIoctlString(DrmIoctl::GemContextCreateExt, "DRM_IOCTL_XE_ENGINE_CREATE");
-    verifyIoctlString(DrmIoctl::GemContextDestroy, "DRM_IOCTL_XE_ENGINE_DESTROY");
+    verifyIoctlString(DrmIoctl::GemContextCreateExt, "DRM_IOCTL_XE_EXEC_QUEUE_CREATE");
+    verifyIoctlString(DrmIoctl::GemContextDestroy, "DRM_IOCTL_XE_EXEC_QUEUE_DESTROY");
     verifyIoctlString(DrmIoctl::GemWaitUserFence, "DRM_IOCTL_XE_WAIT_USER_FENCE");
     verifyIoctlString(DrmIoctl::PrimeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE");
     verifyIoctlString(DrmIoctl::PrimeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD");
@@ -662,8 +659,8 @@ TEST(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) 
     verifyIoctlRequestValue(DRM_IOCTL_XE_VM_DESTROY, DrmIoctl::GemVmDestroy);
     verifyIoctlRequestValue(DRM_IOCTL_XE_GEM_MMAP_OFFSET, DrmIoctl::GemMmapOffset);
     verifyIoctlRequestValue(DRM_IOCTL_XE_DEVICE_QUERY, DrmIoctl::Query);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_ENGINE_CREATE, DrmIoctl::GemContextCreateExt);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_ENGINE_DESTROY, DrmIoctl::GemContextDestroy);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC_QUEUE_CREATE, DrmIoctl::GemContextCreateExt);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY, DrmIoctl::GemContextDestroy);
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_FD_TO_HANDLE, DrmIoctl::PrimeFdToHandle);
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_HANDLE_TO_FD, DrmIoctl::PrimeHandleToFd);
     verifyIoctlRequestValue(DRM_IOCTL_XE_MMIO, DrmIoctl::RegRead);
