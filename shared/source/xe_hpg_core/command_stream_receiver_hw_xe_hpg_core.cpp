@@ -72,6 +72,82 @@ void BlitCommandsHelper<Family>::adjustControlSurfaceType(const BlitProperties &
     }
 }
 
+template <>
+void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
+
+    appendClearColor(blitProperties, blitCmd);
+
+    uint32_t compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
+    if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
+        compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
+    }
+
+    auto compressionEnabledField = XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE;
+    if (DebugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get() != -1) {
+        compressionEnabledField = static_cast<typename XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE>(DebugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get());
+    }
+
+    if (blitProperties.dstAllocation->isCompressionEnabled()) {
+        blitCmd.setDestinationCompressionEnable(compressionEnabledField);
+        blitCmd.setDestinationAuxiliarysurfacemode(XY_BLOCK_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        blitCmd.setDestinationCompressionFormat(compressionFormat);
+    }
+    if (blitProperties.srcAllocation->isCompressionEnabled()) {
+        blitCmd.setSourceCompressionEnable(compressionEnabledField);
+        blitCmd.setSourceAuxiliarysurfacemode(XY_BLOCK_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        blitCmd.setSourceCompressionFormat(compressionFormat);
+    }
+
+    blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
+    blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
+
+    appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
+
+    blitCmd.setSourceSurfaceWidth(blitCmd.getDestinationX2CoordinateRight());
+    blitCmd.setSourceSurfaceHeight(blitCmd.getDestinationY2CoordinateBottom());
+
+    blitCmd.setDestinationSurfaceWidth(blitCmd.getDestinationX2CoordinateRight());
+    blitCmd.setDestinationSurfaceHeight(blitCmd.getDestinationY2CoordinateBottom());
+
+    if (blitCmd.getDestinationY2CoordinateBottom() > 1) {
+        blitCmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
+        blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
+    } else {
+        blitCmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
+        blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
+    }
+
+    if (AuxTranslationDirection::AuxToNonAux == blitProperties.auxTranslationDirection) {
+        blitCmd.setSpecialModeofOperation(XY_BLOCK_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE);
+        UNRECOVERABLE_IF(blitCmd.getSourceTiling() != blitCmd.getDestinationTiling());
+    } else if (AuxTranslationDirection::NonAuxToAux == blitProperties.auxTranslationDirection) {
+        blitCmd.setSourceCompressionEnable(XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+    }
+
+    DEBUG_BREAK_IF((AuxTranslationDirection::None != blitProperties.auxTranslationDirection) &&
+                   (blitProperties.dstAllocation != blitProperties.srcAllocation || !blitProperties.dstAllocation->isCompressionEnabled()));
+
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+
+    if (DebugManager.flags.OverrideBlitterMocs.get() == 1) {
+        mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    }
+
+    blitCmd.setDestinationMOCS(mocs);
+    blitCmd.setSourceMOCS(mocs);
+
+    if (DebugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
+        if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
+            blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
+            blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
+        } else if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 1u) {
+            blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
+            blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
+        }
+    }
+}
+
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
 template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd);
