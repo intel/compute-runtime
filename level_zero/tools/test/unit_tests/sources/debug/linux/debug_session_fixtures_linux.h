@@ -643,7 +643,13 @@ struct MockDebugSessionLinuxHelper {
         DebugSessionLinux::UuidData isaUuidData = {
             .handle = isaUUID,
             .classHandle = isaClassHandle,
-            .classIndex = NEO::DrmResourceClass::Isa};
+            .classIndex = NEO::DrmResourceClass::Isa,
+            .data = std::make_unique<char[]>(4),
+            .dataSize = 4};
+        DeviceBitfield bitfield;
+        auto deviceBitfield = static_cast<uint32_t>(bitfield.to_ulong());
+        memcpy(isaUuidData.data.get(), &deviceBitfield, sizeof(deviceBitfield));
+
         DebugSessionLinux::UuidData elfUuidData = {
             .handle = elfUUID,
             .classHandle = elfClassHandle,
