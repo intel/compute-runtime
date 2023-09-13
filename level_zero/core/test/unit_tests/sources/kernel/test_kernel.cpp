@@ -12,7 +12,6 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args.h"
@@ -296,36 +295,19 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
 
 using KernelImpSetGroupSizeTest = Test<DeviceFixture>;
 
-TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeEnabledWhenSettingGroupSizeThenProperlyGenerateLocalIds) {
+TEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFromCapabilityTable) {
     Mock<KernelImp> mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
     mockKernel.descriptor.kernelAttributes.simdSize = 1;
-    mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime = true; // although it is enabled for SIMD 1, make sure it is enforced
     mockKernel.descriptor.kernelAttributes.numLocalIdChannels = 3;
     mockKernel.module = &mockModule;
     auto grfSize = mockModule.getDevice()->getHwInfo().capabilityTable.grfSize;
     uint32_t groupSize[3] = {2, 3, 5};
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-    const auto &gfxHelper = mockModule.getDevice()->getGfxCoreHelper();
-    auto numThreadsPerTG = gfxHelper.calculateNumThreadsPerThreadGroup(
-        mockKernel.descriptor.kernelAttributes.simdSize,
-        groupSize[0] * groupSize[1] * groupSize[2],
-        grfSize,
-        mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime);
-    auto perThreadDataSizeForWholeTGNeeded =
-        static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-            mockKernel.descriptor.kernelAttributes.simdSize,
-            grfSize,
-            mockKernel.descriptor.kernelAttributes.numLocalIdChannels,
-            groupSize[0] * groupSize[1] * groupSize[2],
-            !mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime,
-            gfxHelper));
-
-    EXPECT_EQ(numThreadsPerTG, mockKernel.getNumThreadsPerThreadGroup());
-    EXPECT_EQ((perThreadDataSizeForWholeTGNeeded / numThreadsPerTG), mockKernel.perThreadDataSize);
-
+    EXPECT_EQ(groupSize[0] * groupSize[1] * groupSize[2], mockKernel.numThreadsPerThreadGroup);
+    EXPECT_EQ(grfSize * groupSize[0] * groupSize[1] * groupSize[2], mockKernel.perThreadDataSizeForWholeThreadGroup);
+    ASSERT_LE(grfSize * groupSize[0] * groupSize[1] * groupSize[2], mockKernel.perThreadDataSizeForWholeThreadGroup);
     using LocalIdT = unsigned short;
     auto threadOffsetInLocalIds = grfSize / sizeof(LocalIdT);
     auto generatedLocalIds = reinterpret_cast<LocalIdT *>(mockKernel.perThreadDataForWholeThreadGroup);
@@ -353,6 +335,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeDisabledWhenSet
     uint32_t groupSize[3] = {2, 3, 5};
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(groupSize[0] * groupSize[1] * groupSize[2], mockKernel.numThreadsPerThreadGroup);
     EXPECT_EQ(0u, mockKernel.perThreadDataSizeForWholeThreadGroup);
     EXPECT_EQ(0u, mockKernel.perThreadDataSize);
     EXPECT_EQ(nullptr, mockKernel.perThreadDataForWholeThreadGroup);

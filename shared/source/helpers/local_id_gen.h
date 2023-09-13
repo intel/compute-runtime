@@ -7,21 +7,17 @@
 
 #pragma once
 
-#include "shared/source/helpers/simd_helper.h"
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
 
 namespace NEO {
 class GfxCoreHelper;
-inline uint32_t getNumGrfsPerLocalIdCoordinate(uint32_t simd, uint32_t grfSize) {
+inline uint32_t getGRFsPerThread(uint32_t simd, uint32_t grfSize) {
     return (simd == 32 && grfSize == 32) ? 2 : 1;
 }
 
 inline uint32_t getThreadsPerWG(uint32_t simd, uint32_t lws) {
-    if (isSimd1(simd))
-        simd = 32;
     auto result = lws + simd - 1;
 
     // Original logic:
@@ -31,17 +27,17 @@ inline uint32_t getThreadsPerWG(uint32_t simd, uint32_t lws) {
                    ? 5
                : simd == 16
                    ? 4
-                   : 3; // for SIMD 8
+               : simd == 8
+                   ? 3
+                   : 0;
 
     return result;
 }
 
 inline uint32_t getPerThreadSizeLocalIDs(uint32_t simd, uint32_t grfSize, uint32_t numChannels = 3) {
-    if (isSimd1(simd)) {
-        return grfSize;
-    }
-    auto numGRFSPerLocalIdCoord = getNumGrfsPerLocalIdCoordinate(simd, grfSize);
-    uint32_t returnSize = numGRFSPerLocalIdCoord * grfSize * numChannels;
+    auto numGRFSPerThread = getGRFsPerThread(simd, grfSize);
+    uint32_t returnSize = numGRFSPerThread * grfSize * (simd == 1 ? 1u : numChannels);
+    returnSize = std::max(returnSize, grfSize);
     return returnSize;
 }
 
