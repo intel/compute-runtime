@@ -1601,3 +1601,15 @@ TEST(IoctlHelperXeTest, whenXeShowBindTableIsCalledThenBindLogsArePrinted) {
 )";
     EXPECT_STREQ(expectedOutput.c_str(), output.c_str());
 }
+
+TEST(IoctlHelperXeTest, whenFillBindInfoForIpcHandleIsCalledThenBindInfoIsCorrect) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    uint32_t handle = 100;
+    size_t size = 1024u;
+    xeIoctlHelper->fillBindInfoForIpcHandle(handle, size);
+    auto bindInfo = xeIoctlHelper->bindInfo[0];
+    EXPECT_EQ(bindInfo.handle, handle);
+    EXPECT_EQ(bindInfo.size, size);
+}

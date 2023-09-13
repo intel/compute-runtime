@@ -1480,4 +1480,9 @@ bool IoctlHelperXe::getGemTiling(void *setTiling) {
     return true;
 }
 
+void IoctlHelperXe::fillBindInfoForIpcHandle(uint32_t handle, size_t size) {
+    xeLog(" -> IoctlHelperXe::%s s=0x%lx h=0x%x\n", __FUNCTION__, size, handle);
+    updateBindInfo(handle, 0, size);
+}
+
 } // namespace NEO

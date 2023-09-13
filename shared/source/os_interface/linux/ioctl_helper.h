@@ -158,6 +158,7 @@ class IoctlHelper {
     virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled);
     virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap);
     bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping);
+    virtual void fillBindInfoForIpcHandle(uint32_t handle, size_t size);
 
   protected:
     Drm &drm;

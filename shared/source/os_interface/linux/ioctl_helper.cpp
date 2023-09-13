@@ -557,6 +557,8 @@ std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) 
     return std::make_unique<EngineInfo>(&drm, tileCount, distanceInfos, queryItems, engines);
 }
 
+void IoctlHelper::fillBindInfoForIpcHandle(uint32_t handle, size_t size) {}
+
 uint32_t IoctlHelper::createGem(uint64_t size, uint32_t memoryBanks) {
     GemCreate gemCreate = {};
     gemCreate.size = size;
