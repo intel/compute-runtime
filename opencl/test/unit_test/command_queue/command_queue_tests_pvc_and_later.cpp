@@ -408,7 +408,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQu
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, queue2->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS1)->getOsContext().getEngineType());
 }
 
-HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhenCreatingCommandQueueThenCreateQueueWithCooperativeEngine, IsAtLeastXeHpcCore) {
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhenCreatingCommandQueueThenCreateQueueWithCooperativeEngine, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::Cooperative));
@@ -424,8 +424,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
     for (auto &revision : revisions) {
         auto hwRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
         hwInfo.platform.usRevId = hwRevId;
-        if (hwRevId == CommonConstants::invalidStepping ||
-            !productHelper.isCooperativeEngineSupported(hwInfo)) {
+        if (!productHelper.isCooperativeEngineSupported(hwInfo)) {
             continue;
         }
 

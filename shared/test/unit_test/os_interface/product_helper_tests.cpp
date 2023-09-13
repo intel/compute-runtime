@@ -263,6 +263,22 @@ HWTEST_F(ProductHelperTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingTh
     }
 }
 
+struct PlatformsWithReleaseHelper {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastMtl::isMatched<productFamily>() && !IsXeHpcCore::isMatched<productFamily>();
+    }
+};
+
+HWTEST2_F(ProductHelperTest, whenPlatformsSupportsReleaseHelperThenRevIdFromSteppingsAreNotAvailable, PlatformsWithReleaseHelper) {
+    ASSERT_NE(nullptr, releaseHelper);
+    for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
+        EXPECT_EQ(CommonConstants::invalidStepping, productHelper->getHwRevIdFromStepping(testValue, pInHwInfo));
+        pInHwInfo.platform.usRevId = testValue;
+        EXPECT_EQ(CommonConstants::invalidStepping, productHelper->getSteppingFromHwRevId(pInHwInfo));
+    }
+}
+
 HWTEST_F(ProductHelperTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwRevIdThenReturnValuesAreCorrect) {
     MockProductHelperHw<IGFX_UNKNOWN> mockProductHelper;
     mockProductHelper.returnedStepping = REVISION_A0;
