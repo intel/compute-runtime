@@ -37,11 +37,6 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() {
 }
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
-    return kernel->requiresCacheFlushCommand(commandQueue) ? sizeof(typename GfxFamily::PIPE_CONTROL) : 0;
-}
-
-template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::sendMediaStateFlush(
     LinearStream &commandStream,
     size_t offsetInterfaceDescriptorData) {
@@ -118,14 +113,6 @@ void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
     uint32_t &interfaceDescriptorIndex) {
 
     walkerCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex++);
-}
-
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
-
-    PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, commandQueue.getDevice().getRootDeviceEnvironment());
-    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
 }
 
 } // namespace NEO

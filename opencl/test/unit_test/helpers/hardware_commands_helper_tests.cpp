@@ -1100,53 +1100,6 @@ HWTEST_F(HardwareCommandsTest, whenNumLocalIdsIsZeroThenExpectLocalIdsInUseIsFal
     EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentThenExpectCacheFlushCommand) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
-    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
-
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    auto &commandStream = cmdQ.getCS(1024);
-
-    MockGraphicsAllocation globalAllocation;
-    mockKernelWithInternal->mockProgram->setGlobalSurface(&globalAllocation);
-
-    Kernel::CacheFlushAllocationsVec allocs;
-    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
-    EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &globalAllocation));
-
-    size_t expectedSize = sizeof(PIPE_CONTROL);
-    size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, mockKernelWithInternal->mockKernel, 0U);
-    EXPECT_EQ(expectedSize, actualSize);
-
-    HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, mockKernelWithInternal->mockKernel, 0U);
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(commandStream);
-    PIPE_CONTROL *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
-    ASSERT_NE(nullptr, pipeControl);
-    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControl->getDcFlushEnable());
-
-    mockKernelWithInternal->mockProgram->setGlobalSurface(nullptr);
-}
-
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerDisabledWhenGettingRequiredCacheFlushSizeThenReturnZero) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
-
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-
-    size_t expectedSize = 0U;
-    size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, mockKernelWithInternal->mockKernel, 0U);
-    EXPECT_EQ(expectedSize, actualSize);
-}
-
 TEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSupportFlushThenExpectNoCacheAllocationForFlush) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
@@ -1431,10 +1384,4 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
     EXPECT_NE(0u, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
     EXPECT_EQ(expectedOffsetRelativeToIohBase, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
     EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, whenGetSizeRequiredForCacheFlushIsCalledThenExceptionIsThrown) {
-    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
-
-    EXPECT_ANY_THROW(HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, nullptr, 0));
 }

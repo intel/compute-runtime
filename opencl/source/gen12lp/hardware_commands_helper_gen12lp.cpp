@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#include "hardware_commands_helper_gen12lp.inl"
 
 #include "shared/source/gen12lp/hw_cmds.h"
 

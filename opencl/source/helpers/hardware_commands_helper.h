@@ -98,7 +98,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const size_t localWorkSize[3]);
 
     static size_t getSizeRequiredCS();
-    static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
 
     static size_t getSizeRequiredDSH(
         const Kernel &kernel);
@@ -118,8 +117,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static void setInterfaceDescriptorOffset(
         WALKER_TYPE *walkerCmd,
         uint32_t &interfaceDescriptorIndex);
-
-    static void programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
 
     static bool inlineDataProgrammingRequired(const Kernel &kernel);
     static bool kernelUsesLocalIds(const Kernel &kernel);

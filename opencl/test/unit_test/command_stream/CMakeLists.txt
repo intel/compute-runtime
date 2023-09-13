@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -39,7 +39,6 @@ endif()
 
 if(TESTS_DG2_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_command_stream
-       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_tests_dg2_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_dg2_and_later.cpp
   )
 endif()

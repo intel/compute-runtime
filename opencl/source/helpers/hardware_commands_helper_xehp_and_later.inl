@@ -39,12 +39,6 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() {
 }
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
-    UNRECOVERABLE_IF(true);
-    return 0;
-}
-
-template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::sendMediaStateFlush(
     LinearStream &commandStream,
     size_t offsetInterfaceDescriptorData) {
@@ -133,33 +127,4 @@ void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
     uint32_t &interfaceDescriptorIndex) {
 }
 
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, [[maybe_unused]] uint64_t postSyncAddress) {
-    // 1. make sure previous kernel finished
-    PipeControlArgs args;
-    args.unTypedDataPortCacheFlush = commandQueue.getDevice().getGfxCoreHelper().unTypedDataPortCacheFlushRequired();
-
-    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
-
-    // 2. flush all affected L3 lines
-    if constexpr (GfxFamily::isUsingL3Control) {
-        StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;
-        kernel->getAllocationsForCacheFlush(allocationsForCacheFlush);
-        StackVec<L3Range, 128> subranges;
-        for (GraphicsAllocation *alloc : allocationsForCacheFlush) {
-            coverRangeExact(alloc->getGpuAddress(), alloc->getUnderlyingBufferSize(), subranges, GfxFamily::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION);
-        }
-        for (size_t subrangeNumber = 0; subrangeNumber < subranges.size(); subrangeNumber += maxFlushSubrangeCount) {
-            size_t rangeCount = subranges.size() <= subrangeNumber + maxFlushSubrangeCount ? subranges.size() - subrangeNumber : maxFlushSubrangeCount;
-            Range<L3Range> range = createRange(subranges.begin() + subrangeNumber, rangeCount);
-            uint64_t postSyncAddressToFlush = 0;
-            if (rangeCount < maxFlushSubrangeCount || subranges.size() - subrangeNumber - maxFlushSubrangeCount == 0) {
-                postSyncAddressToFlush = postSyncAddress;
-            }
-
-            auto &hardwareInfo = commandQueue.getDevice().getHardwareInfo();
-            flushGpuCache<GfxFamily>(commandStream, range, postSyncAddressToFlush, hardwareInfo);
-        }
-    }
-}
 } // namespace NEO

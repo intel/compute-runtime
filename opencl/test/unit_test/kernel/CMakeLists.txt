@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,12 +28,6 @@ set(IGDRCL_SRCS_tests_kernel
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_kernel_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/substitute_kernel_heap_tests.cpp
 )
-
-if(TESTS_XEHP_AND_LATER)
-  list(APPEND IGDRCL_SRCS_tests_kernel
-       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_and_later_tests.inl
-  )
-endif()
 
 if(TESTS_PVC_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_kernel
