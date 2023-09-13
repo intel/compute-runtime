@@ -1807,6 +1807,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
 
     uint8_t ptr[64] = {};
 
+    uint64_t inOrderSyncVa = regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
     regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
     auto verifyPc = [](const GenCmdList::iterator &iterator) {
@@ -1815,9 +1817,21 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
         ASSERT_NE(nullptr, pcCmd);
     };
 
-    auto verifySdi = [](GenCmdList::reverse_iterator rIterator) {
+    auto verifySdi = [&inOrderSyncVa](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint32_t signalValue) {
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rIterator);
-        EXPECT_EQ(nullptr, sdiCmd);
+        while (sdiCmd == nullptr) {
+            sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++rIterator));
+            if (rIterator == rEnd) {
+                break;
+            }
+        }
+
+        ASSERT_NE(nullptr, sdiCmd);
+
+        EXPECT_EQ(inOrderSyncVa, sdiCmd->getAddress());
+        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(signalValue, sdiCmd->getDataDword0());
+        EXPECT_EQ(0u, sdiCmd->getDataDword1());
     };
 
     {
@@ -1831,7 +1845,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           (cmdStream->getUsed() - offset)));
 
         verifyPc(cmdList.begin());
-        verifySdi(cmdList.rbegin());
+        verifySdi(cmdList.rbegin(), cmdList.rend(), 2);
     }
 
     {
@@ -1847,7 +1861,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           (cmdStream->getUsed() - offset)));
 
         verifyPc(cmdList.begin());
-        verifySdi(cmdList.rbegin());
+        verifySdi(cmdList.rbegin(), cmdList.rend(), 3);
     }
 
     {
@@ -1861,7 +1875,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           (cmdStream->getUsed() - offset)));
 
         verifyPc(cmdList.begin());
-        verifySdi(cmdList.rbegin());
+        verifySdi(cmdList.rbegin(), cmdList.rend(), 4);
     }
 
     {
@@ -1877,7 +1891,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           (cmdStream->getUsed() - offset)));
 
         verifyPc(cmdList.begin());
-        verifySdi(cmdList.rbegin());
+        verifySdi(cmdList.rbegin(), cmdList.rend(), 5);
     }
 
     {
@@ -1893,7 +1907,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           (cmdStream->getUsed() - offset)));
 
         verifyPc(cmdList.begin());
-        verifySdi(cmdList.rbegin());
+        verifySdi(cmdList.rbegin(), cmdList.rend(), 6);
     }
 }
 
@@ -2275,7 +2289,17 @@ HWTEST2_F(InOrderCmdListTests, givenRegularInOrderCmdListWhenProgrammingAppendWa
     ASSERT_NE(nullptr, pcCmd);
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), sdiItor);
+    EXPECT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    ASSERT_NE(nullptr, sdiCmd);
+
+    uint64_t syncVa = regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
+    EXPECT_EQ(syncVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(3u, sdiCmd->getDataDword0());
+    EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflowThenHandleItCorrectly, IsAtLeastXeHpCore) {
@@ -3171,7 +3195,9 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
-        EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
+        EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+        EXPECT_EQ(1u, postSync.getImmediateData());
+        EXPECT_EQ(regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), postSync.getDestinationAddress());
 
         auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(cmdList.end(), sdiItor);
@@ -3180,7 +3206,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     offset = cmdStream->getUsed();
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(1u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(2u, regularCmdList->inOrderDependencyCounter);
 
     {
         GenCmdList cmdList;
@@ -3195,20 +3221,25 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
-        EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
+        EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+        EXPECT_EQ(2u, postSync.getImmediateData());
+        EXPECT_EQ(regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), postSync.getDestinationAddress());
 
         auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(cmdList.end(), sdiItor);
     }
 
     regularCmdList->inOrderAllocationOffset = 123;
+    auto hostAddr = static_cast<uint32_t *>(regularCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    *hostAddr = 0x1234;
 
     regularCmdList->reset();
     EXPECT_EQ(0u, regularCmdList->inOrderDependencyCounter);
     EXPECT_EQ(0u, regularCmdList->inOrderAllocationOffset);
+    EXPECT_EQ(0u, *hostAddr);
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenDontUpdateCounterAllocation, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenUpdateCounterAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto eventPool = createEvents<FamilyType>(1, true);
@@ -3224,7 +3255,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     size_t offset = cmdStream->getUsed();
 
     EXPECT_EQ(0u, regularCmdList->inOrderDependencyCounter);
-    EXPECT_EQ(nullptr, regularCmdList->inOrderDependencyCounterAllocation);
+    EXPECT_NE(nullptr, regularCmdList->inOrderDependencyCounterAllocation);
 
     constexpr size_t size = 128 * sizeof(uint32_t);
     auto data = allocHostMem(size);
@@ -3245,8 +3276,8 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(cmdList.end(), sdiItor);
+        auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(2u, sdiCmds.size());
     }
 
     offset = copyOnlyCmdStream->getUsed();
@@ -3259,7 +3290,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
                                                           (copyOnlyCmdStream->getUsed() - offset)));
 
         auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(cmdList.end(), sdiItor);
+        EXPECT_NE(cmdList.end(), sdiItor);
     }
 
     context->freeMem(data);
@@ -3288,7 +3319,18 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
                                                           (cmdStream->getUsed() - offset)));
 
         auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(cmdList.end(), sdiItor);
+        EXPECT_NE(cmdList.end(), sdiItor);
+
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+        ASSERT_NE(nullptr, sdiCmd);
+
+        auto gpuAddress = regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
+        EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
+        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(1u, sdiCmd->getDataDword0());
+        EXPECT_EQ(0u, sdiCmd->getDataDword1());
     }
 
     offset = cmdStream->getUsed();
@@ -3301,12 +3343,23 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(cmdList.end(), sdiItor);
-
         auto copyCmd = genCmdCast<XY_COPY_BLT *>(*cmdList.begin());
 
         EXPECT_NE(nullptr, copyCmd);
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), sdiItor);
+
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+        ASSERT_NE(nullptr, sdiCmd);
+
+        auto gpuAddress = regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
+
+        EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
+        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(2u, sdiCmd->getDataDword0());
+        EXPECT_EQ(0u, sdiCmd->getDataDword1());
     }
 
     alignedFree(alignedPtr);
