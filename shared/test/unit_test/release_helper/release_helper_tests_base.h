@@ -26,6 +26,8 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
     void whenGettingMediaFrequencyTileIndexThenOneIsReturned();
     void whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer();
+    void whenShouldAdjustCalledThenTrueReturned();
+    void whenShouldAdjustCalledThenFalseReturned();
 
     virtual std::vector<uint32_t> getRevisions() = 0;
 

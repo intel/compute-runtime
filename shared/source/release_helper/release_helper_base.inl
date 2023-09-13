@@ -67,4 +67,9 @@ template <ReleaseType releaseType>
 std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<releaseType>::getPreferredAllocationMethod(AllocationType allocationType) const {
     return {};
 }
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::shouldAdjustDepth() const {
+    return false;
+}
 } // namespace NEO

@@ -108,7 +108,9 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     appendSurfaceStateDepthParams(surfaceState, gmm);
     EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer(),
                                                                 this->plane);
-    EncodeSurfaceState<GfxFamily>::adjustDepthLimitations(surfaceState, minArrayElement, renderTargetViewExtent, depth, mipCount, is3DUAVOrRTV);
+    auto releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
+
+    EncodeSurfaceState<GfxFamily>::adjustDepthLimitations(surfaceState, minArrayElement, renderTargetViewExtent, depth, mipCount, is3DUAVOrRTV, releaseHelper);
     appendSurfaceStateParams(surfaceState, rootDeviceIndex, useGlobalAtomics);
     appendSurfaceStateExt(surfaceState);
 }

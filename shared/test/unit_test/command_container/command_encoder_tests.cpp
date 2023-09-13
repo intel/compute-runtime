@@ -303,8 +303,12 @@ HWTEST_F(CommandEncoderTests, givenSurfaceStateWhenAdjustDepthLimitationsCalledT
     uint32_t renderTargetViewExtent = 1;
     uint32_t originalDepth = 10;
     uint32_t mipCount = 1;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto releaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+
     ss.setDepth(originalDepth);
     auto origSS = ss;
-    EncodeSurfaceState<FamilyType>::adjustDepthLimitations(&ss, minArrayElement, renderTargetViewExtent, originalDepth, mipCount, true);
+    EncodeSurfaceState<FamilyType>::adjustDepthLimitations(&ss, minArrayElement, renderTargetViewExtent, originalDepth, mipCount, true, releaseHelper);
     EXPECT_EQ(memcmp(&ss, &origSS, sizeof(typename FamilyType::RENDER_SURFACE_STATE)), 0);
 }

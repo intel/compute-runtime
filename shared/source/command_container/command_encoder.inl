@@ -538,7 +538,7 @@ void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE 
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::adjustDepthLimitations(R_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv) {
+void EncodeSurfaceState<Family>::adjustDepthLimitations(R_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv, ReleaseHelper *releaseHelper) {
 }
 
 template <typename Family>

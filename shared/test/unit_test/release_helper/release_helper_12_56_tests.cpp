@@ -46,3 +46,7 @@ TEST_F(ReleaseHelper1256Tests, whenGettingMediaFrequencyTileIndexThenFalseIsRetu
 TEST_F(ReleaseHelper1256Tests, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned) {
     whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned();
 }
+
+TEST_F(ReleaseHelper1256Tests, whenShouldAdjustCalledThenFalseReturned) {
+    whenShouldAdjustCalledThenFalseReturned();
+}

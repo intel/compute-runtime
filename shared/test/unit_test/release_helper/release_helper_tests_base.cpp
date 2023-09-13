@@ -86,3 +86,22 @@ void ReleaseHelperTestsBase::whenCheckPreferredAllocationMethodThenAllocateByKmd
         }
     }
 }
+
+void ReleaseHelperTestsBase::whenShouldAdjustCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        EXPECT_TRUE(releaseHelper->shouldAdjustDepth());
+    }
+}
+void ReleaseHelperTestsBase::whenShouldAdjustCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        EXPECT_FALSE(releaseHelper->shouldAdjustDepth());
+    }
+}
