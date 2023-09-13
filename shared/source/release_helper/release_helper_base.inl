@@ -59,6 +59,11 @@ bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isCachingOnCpuAvailable() const {
+    return true;
+}
+
+template <ReleaseType releaseType>
 std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<releaseType>::getPreferredAllocationMethod(AllocationType allocationType) const {
     return {};
 }

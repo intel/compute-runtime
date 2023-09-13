@@ -26,4 +26,9 @@ std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<release>::getPreferredA
     }
 }
 
+template <>
+bool ReleaseHelperHw<release>::isCachingOnCpuAvailable() const {
+    return false;
+}
+
 } // namespace NEO

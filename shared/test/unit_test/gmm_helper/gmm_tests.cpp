@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -34,14 +35,15 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCpuCacheForResources.set(0);
     StorageInfo storageInfo{};
-    auto &productHelper = getGmmHelper()->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto releaseHelper = getGmmHelper()->getRootDeviceEnvironment().getReleaseHelper();
     for (auto resourceUsageType : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                    GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, false, storageInfo, false);
-        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), !CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
-        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), !gmm->getPreferNoCpuAccess());
+        bool noCpuAccessPreference = releaseHelper ? !releaseHelper->isCachingOnCpuAvailable() : false;
+        EXPECT_EQ(noCpuAccessPreference, CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
+        EXPECT_EQ(noCpuAccessPreference, gmm->getPreferNoCpuAccess());
     }
 }
 
@@ -77,14 +79,18 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCpuCacheForResources.set(false);
     StorageInfo storageInfo{};
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    auto releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
 
     for (auto regularResourceUsageType : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                           GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
                                           GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                           GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, regularResourceUsageType, false, storageInfo, false);
-        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmm->resourceParams.Flags.Info.Cacheable);
+        if (!releaseHelper) {
+            EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
+        } else {
+            EXPECT_EQ(releaseHelper->isCachingOnCpuAvailable(), gmm->resourceParams.Flags.Info.Cacheable);
+        }
     }
 
     for (auto cpuAccessibleResourceUsageType : {GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER}) {

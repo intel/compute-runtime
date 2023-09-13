@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -37,7 +38,8 @@ bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmReso
     if (rootDeviceEnvironment.isWddmOnLinux()) {
         return false;
     }
-    if (rootDeviceEnvironment.getProductHelper().isCachingOnCpuAvailable()) {
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    if (!releaseHelper || releaseHelper->isCachingOnCpuAvailable()) {
         return false;
     }
     return (gmmResourceUsageType != GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER);

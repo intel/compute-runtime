@@ -25,7 +25,3 @@ MTLTEST_F(MtlProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionT
 MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported(*defaultHwInfo));
 }
-
-MTLTEST_F(MtlProductHelper, whenCheckIsCachingOnCpuAvailableThenAlwaysFalse) {
-    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
-}

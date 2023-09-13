@@ -37,6 +37,7 @@ class ReleaseHelper {
     virtual int getProductMaxPreferredSlmSize(int preferredEnumValue) const = 0;
     virtual bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
+    virtual bool isCachingOnCpuAvailable() const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
 
   protected:
@@ -61,6 +62,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     int getProductMaxPreferredSlmSize(int preferredEnumValue) const override;
     bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const override;
     bool isResolvingSubDeviceIDNeeded() const override;
+    bool isCachingOnCpuAvailable() const override;
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
 
   private:

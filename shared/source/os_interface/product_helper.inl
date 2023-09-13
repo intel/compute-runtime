@@ -799,11 +799,6 @@ bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &) c
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const {
     return false;
 }

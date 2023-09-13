@@ -17,11 +17,6 @@ template <>
 bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
     return true;
 }
-
-template <>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return false;
-}
 } // namespace NEO
 
 template class NEO::ProductHelperHw<gfxProduct>;
