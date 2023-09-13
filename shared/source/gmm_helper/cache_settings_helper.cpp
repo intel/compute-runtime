@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -29,14 +30,14 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType
     }
 }
 
-bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const ProductHelper &productHelper, bool isWsl) {
+bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (DebugManager.flags.EnableCpuCacheForResources.get()) {
         return false;
     }
-    if (isWsl) {
+    if (rootDeviceEnvironment.isWddmOnLinux()) {
         return false;
     }
-    if (productHelper.isCachingOnCpuAvailable()) {
+    if (rootDeviceEnvironment.getProductHelper().isCachingOnCpuAvailable()) {
         return false;
     }
     return (gmmResourceUsageType != GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER);

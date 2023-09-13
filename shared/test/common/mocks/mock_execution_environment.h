@@ -15,6 +15,7 @@ namespace NEO {
 struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
     using RootDeviceEnvironment::hwInfo;
     using RootDeviceEnvironment::isDummyAllocationInitialized;
+    using RootDeviceEnvironment::isWddmOnLinuxEnable;
     using RootDeviceEnvironment::RootDeviceEnvironment;
     ~MockRootDeviceEnvironment() override = default;
 

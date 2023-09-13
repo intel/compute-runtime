@@ -20,13 +20,12 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCpuCacheForResources.set(1);
     StorageInfo storageInfo{};
-    auto &productHelper = getGmmHelper()->getRootDeviceEnvironment().getHelper<ProductHelper>();
     for (auto resourceUsageType : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                    GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, false, storageInfo, false);
-        EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, productHelper, false));
+        EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
         EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
     }
 }
@@ -41,7 +40,7 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, false, storageInfo, false);
-        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), !CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, productHelper, false));
+        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), !CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
         EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), !gmm->getPreferNoCpuAccess());
     }
 }
@@ -60,17 +59,17 @@ HWTEST_F(GmmTests, givenIsResourceCacheableOnCpuWhenWslFlagThenReturnProperValue
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCpuCacheForResources.set(false);
     StorageInfo storageInfo{};
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
-    bool isWsl = true;
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment->rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->isWddmOnLinuxEnable = true;
 
     GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, false, storageInfo, false);
-    EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, productHelper, isWsl));
+    EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
     EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
 
     gmmResourceUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, false, storageInfo, false);
-    EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, productHelper, isWsl));
+    EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
     EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,8 @@ class MockExecutionEnvironmentGmmFixture {
     void setUp();
     void tearDown();
 
-    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
-
   public:
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     GmmHelper *getGmmHelper();
     GmmClientContext *getGmmClientContext();
 };

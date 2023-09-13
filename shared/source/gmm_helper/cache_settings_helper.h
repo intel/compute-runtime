@@ -16,6 +16,7 @@ namespace NEO {
 enum class AllocationType;
 struct HardwareInfo;
 class ProductHelper;
+struct RootDeviceEnvironment;
 
 struct CacheSettingsHelper {
     static GMM_RESOURCE_USAGE_TYPE_ENUM getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper);
@@ -26,7 +27,7 @@ struct CacheSettingsHelper {
                 (gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
-    static bool preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const ProductHelper &productHelper, bool isWsl);
+    static bool preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment);
 
   protected:
     static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper);
