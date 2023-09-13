@@ -1200,6 +1200,42 @@ TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoa
     }
 }
 
+TEST_F(TileAttachTest, GivenZebinModuleVmBindForModuleFromDifferentTileThenVmBindIsAutoacked) {
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    auto &isaUuidData = rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.find(isaUUID)->second;
+    DeviceBitfield bitfield;
+    bitfield.set(1);
+    auto deviceBitfield = static_cast<uint32_t>(bitfield.to_ulong());
+    memcpy(isaUuidData.data.get(), &deviceBitfield, sizeof(deviceBitfield));
+
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+    uint64_t vmHandle = vm0;
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 10;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vmHandle;
+    vmBindIsa->num_uuids = 4;
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidsTemp[4];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
+    uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
+    uuidsTemp[3] = static_cast<typeOfUUID>(zebinModuleUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+    EXPECT_EQ(handler->ackCount, 0u);
+    rootSession->handleEvent(&vmBindIsa->base);
+    EXPECT_EQ(handler->ackCount, 1u);
+}
+
 TEST_F(TileAttachTest, GivenZebinModuleDestroyedBeforeAttachWhenAttachingThenModuleLoadEventIsNotReported) {
     uint64_t isaGpuVa2 = 0x340000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
@@ -1231,7 +1267,7 @@ TEST_F(TileAttachTest, GivenZebinModuleDestroyedBeforeAttachWhenAttachingThenMod
     rootSession->handleEvent(&vmBindIsa->base);
 
     EXPECT_EQ(1u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, tileSessions[1]->modules.size());
+    ASSERT_EQ(1u, tileSessions[1]->modules.size());
     EXPECT_EQ(isaGpuVa2, tileSessions[1]->modules.begin()->second.load);
 
     vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;

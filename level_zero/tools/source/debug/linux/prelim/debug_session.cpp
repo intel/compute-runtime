@@ -1055,138 +1055,140 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
                     uint64_t loadAddress = 0;
                     auto &module = connection->uuidToModule[vmBind->uuids[uuidIter]];
+                    auto moduleUsedOnTile = module.deviceBitfield.test(tileIndex) || module.deviceBitfield.count() == 0;
+                    if (moduleUsedOnTile) {
+                        if (createEvent) {
+                            module.segmentVmBindCounter[tileIndex]++;
 
-                    if (createEvent) {
-                        module.segmentVmBindCounter[tileIndex]++;
+                            DEBUG_BREAK_IF(module.loadAddresses[tileIndex].size() > module.segmentCount);
+                            bool canTriggerEvent = module.loadAddresses[tileIndex].size() == (module.segmentCount - 1);
+                            module.loadAddresses[tileIndex].insert(vmBind->va_start);
 
-                        DEBUG_BREAK_IF(module.loadAddresses[tileIndex].size() > module.segmentCount);
-                        bool canTriggerEvent = module.loadAddresses[tileIndex].size() == (module.segmentCount - 1);
-                        module.loadAddresses[tileIndex].insert(vmBind->va_start);
+                            if (!blockOnFenceMode) {
+                                if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
+                                    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                                    loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
+                                    PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
 
-                        if (!blockOnFenceMode) {
-                            if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
-                                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                                loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
-                                PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
+                                    zet_debug_event_t debugEvent = {};
+                                    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+                                    debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                                    debugEvent.info.module.load = loadAddress;
+                                    debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
+                                    debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
 
-                                zet_debug_event_t debugEvent = {};
-                                debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
-                                debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                                debugEvent.info.module.load = loadAddress;
-                                debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
-                                debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
-
-                                if (!tileSessionsEnabled) {
-                                    bool allInstancesEventsReceived = true;
-                                    if (module.deviceBitfield.count() > 1) {
-                                        allInstancesEventsReceived = checkAllOtherTileModuleSegmentsPresent(tileIndex, module);
-                                    }
-                                    if (allInstancesEventsReceived) {
-                                        if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
-                                            debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
-                                            module.ackEvents[tileIndex].push_back(vmBind->base);
+                                    if (!tileSessionsEnabled) {
+                                        bool allInstancesEventsReceived = true;
+                                        if (module.deviceBitfield.count() > 1) {
+                                            allInstancesEventsReceived = checkAllOtherTileModuleSegmentsPresent(tileIndex, module);
                                         }
-                                        pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
-                                        shouldAckEvent = false;
-                                    }
-                                } else {
-                                    auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
-
-                                    if (tileAttached) {
-                                        if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
-                                            debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
-                                            module.ackEvents[tileIndex].push_back(vmBind->base);
+                                        if (allInstancesEventsReceived) {
+                                            if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
+                                                debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+                                                module.ackEvents[tileIndex].push_back(vmBind->base);
+                                            }
+                                            pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                            shouldAckEvent = false;
                                         }
-                                        static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
-                                        shouldAckEvent = false;
+                                    } else {
+                                        auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
+
+                                        if (tileAttached) {
+                                            if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
+                                                debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+                                                module.ackEvents[tileIndex].push_back(vmBind->base);
+                                            }
+                                            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                            shouldAckEvent = false;
+                                        }
                                     }
                                 }
-                            }
-                        } else {
-                            PRINT_DEBUGGER_INFO_LOG("Zebin module = %ull has load addresses = %d", static_cast<uint64_t>(vmBind->uuids[uuidIter]), static_cast<int>(module.loadAddresses[tileIndex].size()));
-
-                            if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
-                                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                                loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
-                                PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
-
-                                zet_debug_event_t debugEvent = {};
-                                debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
-                                debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                                debugEvent.info.module.load = loadAddress;
-                                debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
-                                debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
-                                if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
-                                    debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
-                                }
-
-                                if (!tileSessionsEnabled) {
-                                    bool allInstancesEventsReceived = true;
-                                    if (module.deviceBitfield.count() > 1) {
-                                        allInstancesEventsReceived = checkAllOtherTileModuleSegmentsPresent(tileIndex, module);
-                                    }
-                                    if (allInstancesEventsReceived) {
-                                        pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
-                                        shouldAckEvent = false;
-                                    }
-                                } else {
-                                    auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
-                                    if (tileAttached) {
-                                        static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
-                                        shouldAckEvent = false;
-                                    }
-                                }
-                            }
-                            {
-                                std::lock_guard<std::mutex> lock(asyncThreadMutex);
-                                if (!module.moduleLoadEventAcked[tileIndex]) {
-                                    shouldAckEvent = false;
-                                }
-
-                                if (tileSessionsEnabled && !static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->isAttached) {
-                                    shouldAckEvent = true;
-                                }
-                                if (!shouldAckEvent && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
-                                    module.ackEvents[tileIndex].push_back(vmBind->base);
-                                }
-                            }
-                        }
-
-                    } else { // destroyEvent
-
-                        module.segmentVmBindCounter[tileIndex]--;
-
-                        if (module.segmentVmBindCounter[tileIndex] == 0) {
-
-                            zet_debug_event_t debugEvent = {};
-
-                            auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                            auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
-                            debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
-                            debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                            debugEvent.info.module.load = loadAddress;
-                            debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
-                            debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
-
-                            if (tileSessionsEnabled) {
-
-                                auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->removeModule(debugEvent.info.module);
-
-                                if (tileAttached) {
-                                    static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
-                                }
-
                             } else {
-                                bool notifyEvent = true;
-                                if (module.deviceBitfield.count() > 1) {
-                                    notifyEvent = checkAllOtherTileModuleSegmentsRemoved(tileIndex, module);
+                                PRINT_DEBUGGER_INFO_LOG("Zebin module = %ull has load addresses = %d", static_cast<uint64_t>(vmBind->uuids[uuidIter]), static_cast<int>(module.loadAddresses[tileIndex].size()));
+
+                                if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
+                                    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                                    loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
+                                    PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
+
+                                    zet_debug_event_t debugEvent = {};
+                                    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+                                    debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                                    debugEvent.info.module.load = loadAddress;
+                                    debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
+                                    debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+                                    if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
+                                        debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+                                    }
+
+                                    if (!tileSessionsEnabled) {
+                                        bool allInstancesEventsReceived = true;
+                                        if (module.deviceBitfield.count() > 1) {
+                                            allInstancesEventsReceived = checkAllOtherTileModuleSegmentsPresent(tileIndex, module);
+                                        }
+                                        if (allInstancesEventsReceived) {
+                                            pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                            shouldAckEvent = false;
+                                        }
+                                    } else {
+                                        auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
+                                        if (tileAttached) {
+                                            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                            shouldAckEvent = false;
+                                        }
+                                    }
                                 }
-                                if (notifyEvent) {
-                                    pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                {
+                                    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+                                    if (!module.moduleLoadEventAcked[tileIndex]) {
+                                        shouldAckEvent = false;
+                                    }
+
+                                    if (tileSessionsEnabled && !static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->isAttached) {
+                                        shouldAckEvent = true;
+                                    }
+                                    if (!shouldAckEvent && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
+                                        module.ackEvents[tileIndex].push_back(vmBind->base);
+                                    }
                                 }
                             }
-                            module.loadAddresses[tileIndex].clear();
-                            module.moduleLoadEventAcked[tileIndex] = false;
+
+                        } else { // destroyEvent
+
+                            module.segmentVmBindCounter[tileIndex]--;
+
+                            if (module.segmentVmBindCounter[tileIndex] == 0) {
+
+                                zet_debug_event_t debugEvent = {};
+
+                                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                                auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
+                                debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
+                                debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                                debugEvent.info.module.load = loadAddress;
+                                debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
+                                debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+
+                                if (tileSessionsEnabled) {
+
+                                    auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->removeModule(debugEvent.info.module);
+
+                                    if (tileAttached) {
+                                        static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                    }
+
+                                } else {
+                                    bool notifyEvent = true;
+                                    if (module.deviceBitfield.count() > 1) {
+                                        notifyEvent = checkAllOtherTileModuleSegmentsRemoved(tileIndex, module);
+                                    }
+                                    if (notifyEvent) {
+                                        pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                    }
+                                }
+                                module.loadAddresses[tileIndex].clear();
+                                module.moduleLoadEventAcked[tileIndex] = false;
+                            }
                         }
                     }
                     break;
