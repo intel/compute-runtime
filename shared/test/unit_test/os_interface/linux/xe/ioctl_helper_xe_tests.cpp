@@ -316,10 +316,11 @@ class DrmMockXe : public DrmMockCustom {
         {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 7, 1},
         {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 8, 0}};
 
+    static_assert(sizeof(drm_xe_query_mem_usage::drm_xe_query_mem_region) == 12 * sizeof(uint64_t), "");
     uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
-    uint64_t queryGts[27]{};      // 1 qword for num gts and 13 qwords per gt
+    static_assert(sizeof(drm_xe_query_gts::drm_xe_query_gt) == 13 * sizeof(uint64_t), "");
+    uint64_t queryGts[27]{}; // 1 qword for num gts and 13 qwords per gt
     std::vector<uint8_t> queryTopology;
-
     StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
     StackVec<drm_xe_vm_bind, 1> vmBindInputs;
     StackVec<drm_xe_sync, 1> syncInputs;
