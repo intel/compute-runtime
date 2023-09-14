@@ -650,6 +650,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
     cmdQHw->setStallingCommandsOnNextFlush(true);
     cmdQHw->splitBarrierRequired = true;
+    cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
@@ -700,6 +701,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBarrierNonSplitC
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
+    cmdQHw->bcsEngineCount = bcsInfoMaskSize;
     cmdQHw->setStallingCommandsOnNextFlush(true);
     cmdQHw->splitBarrierRequired = true;
 
@@ -763,6 +765,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenDoNotEnq
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
+    cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
@@ -816,6 +819,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
     cmdQHw->setStallingCommandsOnNextFlush(true);
     cmdQHw->splitBarrierRequired = true;
+    cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
@@ -869,6 +873,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithNoReques
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
     cmdQHw->setStallingCommandsOnNextFlush(false);
     cmdQHw->splitBarrierRequired = true;
+    cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
@@ -920,6 +925,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBlockingReadThen
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
+    cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},

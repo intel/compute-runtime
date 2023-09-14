@@ -1269,7 +1269,8 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
     }
 
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
-    for (CopyEngineState &state : this->bcsStates) {
+    for (auto currentBcsIndex = 0u; currentBcsIndex < bcsEngineCount; currentBcsIndex++) {
+        CopyEngineState &state = this->bcsStates[currentBcsIndex];
         if (state.isValid()) {
             activeBcsStates.push_back(state);
         }
@@ -1315,7 +1316,7 @@ void CommandQueue::setupBarrierTimestampForBcsEngines(aub_stream::EngineType eng
 
     if (isOOQEnabled()) {
         // Barrier node will be signalled on gpgpuCsr. Save it for later use on blitters.
-        for (auto currentBcsIndex = 0u; currentBcsIndex < bcsTimestampPacketContainers.size(); currentBcsIndex++) {
+        for (auto currentBcsIndex = 0u; currentBcsIndex < bcsEngineCount; currentBcsIndex++) {
             const auto currentBcsEngineType = EngineHelpers::mapBcsIndexToEngineType(currentBcsIndex, true);
             if (currentBcsEngineType == engineType) {
                 // Node is already added to barrierNodes for this engine, no need to save it.
@@ -1351,7 +1352,8 @@ void CommandQueue::setLastBcsPacket(aub_stream::EngineType bcsEngineType) {
 }
 
 void CommandQueue::fillCsrDependenciesWithLastBcsPackets(CsrDependencies &csrDeps) {
-    for (BcsTimestampPacketContainers &bcsContainers : bcsTimestampPacketContainers) {
+    for (auto currentBcsIndex = 0u; currentBcsIndex < bcsEngineCount; currentBcsIndex++) {
+        BcsTimestampPacketContainers &bcsContainers = bcsTimestampPacketContainers[currentBcsIndex];
         if (bcsContainers.lastSignalledPacket.peekNodes().empty()) {
             continue;
         }
@@ -1360,7 +1362,8 @@ void CommandQueue::fillCsrDependenciesWithLastBcsPackets(CsrDependencies &csrDep
 }
 
 void CommandQueue::clearLastBcsPackets() {
-    for (BcsTimestampPacketContainers &bcsContainers : bcsTimestampPacketContainers) {
+    for (auto currentBcsIndex = 0u; currentBcsIndex < bcsEngineCount; currentBcsIndex++) {
+        BcsTimestampPacketContainers &bcsContainers = bcsTimestampPacketContainers[currentBcsIndex];
         bcsContainers.lastSignalledPacket.moveNodesToNewContainer(*deferredTimestampPackets);
     }
 }

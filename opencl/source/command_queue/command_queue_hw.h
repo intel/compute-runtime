@@ -93,6 +93,8 @@ class CommandQueueHw : public CommandQueue {
                 engine->commandStreamReceiver->initDirectSubmission();
             }
         }
+
+        bcsEngineCount = GfxFamily::bcsEngineCount;
     }
 
     static CommandQueue *create(Context *context,

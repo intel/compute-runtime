@@ -26,6 +26,7 @@ struct Gen12Lp {
     static constexpr bool isUsingMiMemFence = false;
     static constexpr bool isUsingMiSetPredicate = false;
     static constexpr bool isUsingMiMathMocs = false;
+    static constexpr uint32_t bcsEngineCount = 1u;
 
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;

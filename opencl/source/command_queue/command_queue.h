@@ -426,6 +426,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     mutable EngineControl *gpgpuEngine = nullptr;
     std::array<EngineControl *, bcsInfoMaskSize> bcsEngines = {};
     std::optional<aub_stream::EngineType> bcsQueueEngineType{};
+    size_t bcsEngineCount = bcsInfoMaskSize;
 
     cl_command_queue_properties commandQueueProperties = 0;
     std::vector<uint64_t> propertiesVector;

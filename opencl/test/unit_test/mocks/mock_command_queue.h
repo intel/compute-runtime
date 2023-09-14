@@ -22,6 +22,7 @@
 namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
+    using CommandQueue::bcsEngineCount;
     using CommandQueue::bcsEngines;
     using CommandQueue::bcsInitialized;
     using CommandQueue::bcsQueueEngineType;
@@ -253,6 +254,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass = CommandQueueHw<GfxFamily>;
 
   public:
+    using BaseClass::bcsEngineCount;
     using BaseClass::bcsEngines;
     using BaseClass::bcsQueueEngineType;
     using BaseClass::bcsStates;
