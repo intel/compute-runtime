@@ -49,11 +49,11 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64S
     EXPECT_EQ(rtTable.ftrSupportsFP64, true);
 }
 
-HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithPremiereProIsCalledThenPreferredPlatformNameIsSet, IsAtLeastGen9) {
+HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalledThenPreferredPlatformNameIsSet, IsAtLeastGen9) {
     VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
 
     AILMock<productFamily> ailTemp;
-    ailTemp.processName = "premiere pro";
+    ailTemp.processName = "Adobe Premiere Pro";
     ailConfigurationTable[productFamily] = &ailTemp;
 
     auto ailConfiguration = AILConfiguration::get(productFamily);

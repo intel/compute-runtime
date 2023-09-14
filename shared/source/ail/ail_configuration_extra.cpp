@@ -21,8 +21,8 @@ namespace NEO {
  */
 
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blender", {AILEnumeration::ENABLE_FP64}},
-                                                                          // Modify reported platform name to ensure older versions of Premiere Pro are able to recognize the GPU device
-                                                                          {"premiere pro", {AILEnumeration::ENABLE_LEGACY_PLATFORM_NAME}}};
+                                                                          // Modify reported platform name to ensure older versions of Adobe Premiere Pro are able to recognize the GPU device
+                                                                          {"Adobe Premiere Pro", {AILEnumeration::ENABLE_LEGACY_PLATFORM_NAME}}};
 
 AILConfiguration *ailConfigurationTable[IGFX_MAX_PRODUCT] = {};
 
