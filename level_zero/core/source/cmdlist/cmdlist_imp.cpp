@@ -228,15 +228,17 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
 void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(inOrderExecutionEnabled);
 
-    auto device = this->device->getNEODevice();
+    if (this->cmdListType == TYPE_IMMEDIATE) {
+        auto device = this->device->getNEODevice();
 
-    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, device->getDeviceBitfield()};
+        NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, device->getDeviceBitfield()};
 
-    inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+        inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
 
-    UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
+        UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
 
-    memset(inOrderDependencyCounterAllocation->getUnderlyingBuffer(), 0, inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
+        memset(inOrderDependencyCounterAllocation->getUnderlyingBuffer(), 0, inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
+    }
 
     inOrderExecutionEnabled = true;
 }

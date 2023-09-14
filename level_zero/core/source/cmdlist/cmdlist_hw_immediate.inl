@@ -876,6 +876,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
     if (inputRet == ZE_RESULT_SUCCESS) {
+        if (isInOrderExecutionEnabled()) {
+            handleInOrderDependencyCounter();
+        }
+
         if (this->isFlushTaskSubmissionEnabled) {
             if (signalEvent && (NEO::DebugManager.flags.TrackNumCsrClientsOnSyncPoints.get() != 0)) {
                 signalEvent->setLatestUsedCmdQueue(this->cmdQImmediate);
@@ -898,6 +902,28 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     }
 
     return inputRet;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderDependencyCounter() {
+    if ((inOrderDependencyCounter + 1) == std::numeric_limits<uint32_t>::max()) {
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderDependencyCounterAllocation, inOrderDependencyCounter + 1, inOrderAllocationOffset, false);
+
+        inOrderDependencyCounter = 0;
+
+        // multitile immediate writes are uint64_t aligned
+        uint32_t offset = this->partitionCount * static_cast<uint32_t>(sizeof(uint64_t));
+
+        inOrderAllocationOffset += offset;
+
+        UNRECOVERABLE_IF(inOrderAllocationOffset + offset >= inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
+
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(); // write 1 on new offset
+    }
+
+    inOrderDependencyCounter++;
+
+    this->commandContainer.addToResidencyContainer(this->inOrderDependencyCounterAllocation);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
