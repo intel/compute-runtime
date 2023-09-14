@@ -63,10 +63,10 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupC
     bool requiresLimitation = productHelper.isCooperativeEngineSupported(hwInfo) &&
                               (engineGroupType != EngineGroupType::CooperativeCompute) &&
                               (!isEngineInstanced);
-    auto numberOfpartsInTileForConcurrentKernels = productHelper.getNumberOfPartsInTileForConcurrentKernel();
-    if (requiresLimitation) {
 
-        auto ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+    auto ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+    auto numberOfpartsInTileForConcurrentKernels = productHelper.getNumberOfPartsInTileForConcurrentKernel(ccsCount);
+    if (requiresLimitation) {
         UNRECOVERABLE_IF(ccsCount == 0);
         numberOfpartsInTileForConcurrentKernels = std::max(numberOfpartsInTileForConcurrentKernels, ccsCount);
     }
