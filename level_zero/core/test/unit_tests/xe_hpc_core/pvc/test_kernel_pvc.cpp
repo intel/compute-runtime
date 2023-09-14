@@ -22,19 +22,19 @@ using KernelImpSuggestMaxCooperativeGroupCountTestsPvc = KernelImpSuggestMaxCoop
 
 PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenNoBarriersOrSlmUsedWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithSimd) {
     auto workGroupSize = lws[0] * lws[1] * lws[2];
-    auto expected = (availableThreadCount / Math::divideAndRoundUp(workGroupSize, simd)) / PVC::numberOfpartsInTileForConcurrentKernels;
+    auto expected = availableThreadCount / Math::divideAndRoundUp(workGroupSize, simd);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
 PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenBarriersWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToBarriersCount) {
     usesBarriers = 1;
-    auto expected = (dssCount * (maxBarrierCount / usesBarriers)) / PVC::numberOfpartsInTileForConcurrentKernels;
+    auto expected = dssCount * (maxBarrierCount / usesBarriers);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
 PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize) {
     usedSlm = 64 * KB;
-    auto expected = (availableSlm / usedSlm) / PVC::numberOfpartsInTileForConcurrentKernels;
+    auto expected = availableSlm / usedSlm;
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 

@@ -562,7 +562,7 @@ bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
     return true;
 }
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getNumberOfPartsInTileForConcurrentKernel() const {
+uint32_t ProductHelperHw<gfxProduct>::getNumberOfPartsInTileForConcurrentKernel(uint32_t ccsCount) const {
     return 1u;
 }
 

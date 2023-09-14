@@ -209,7 +209,12 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 };
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getNumberOfPartsInTileForConcurrentKernel() const {
+uint32_t ProductHelperHw<gfxProduct>::getNumberOfPartsInTileForConcurrentKernel(uint32_t ccsCount) const {
+    if (ccsCount == 1) {
+        return 1;
+    } else if (ccsCount == 2) {
+        return 4;
+    }
     return PVC::numberOfpartsInTileForConcurrentKernels;
 }
 

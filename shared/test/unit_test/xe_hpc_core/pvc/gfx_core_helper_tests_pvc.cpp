@@ -172,35 +172,27 @@ PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAd
     auto tilePartsForConcurrentKernels = PVC::numberOfpartsInTileForConcurrentKernels;
     auto passedMaxWorkGroupCount = 1024;
 
-    uint32_t revisions[] = {REVISION_A0, REVISION_B};
+    uint32_t revisions[] = {REVISION_A0, REVISION_B, REVISION_C};
     for (auto &revision : revisions) {
         auto hwRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
-        if (hwRevId == CommonConstants::invalidStepping) {
-            continue;
-        }
         hwInfo.platform.usRevId = hwRevId;
-
-        for (auto isEngineInstanced : ::testing::Bool()) {
+        for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute, EngineGroupType::CooperativeCompute}) {
             for (auto isRcsEnabled : ::testing::Bool()) {
                 hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
-                for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute, EngineGroupType::CooperativeCompute}) {
-                    if (productHelper.isCooperativeEngineSupported(hwInfo)) {
-                        bool disallowDispatch = (engineGroupType == EngineGroupType::RenderCompute) ||
-                                                ((engineGroupType == EngineGroupType::Compute) && isRcsEnabled);
-                        bool applyLimitation = !isEngineInstanced &&
-                                               (engineGroupType != EngineGroupType::CooperativeCompute);
-                        if (disallowDispatch) {
-                            EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                        } else if (applyLimitation) {
-                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-                            EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 16;
-                            EXPECT_EQ(passedMaxWorkGroupCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                        } else {
+                bool disallowDispatch = (engineGroupType == EngineGroupType::RenderCompute ||
+                                         (engineGroupType == EngineGroupType::Compute && isRcsEnabled)) &&
+                                        productHelper.isCooperativeEngineSupported(hwInfo);
+                for (auto isEngineInstanced : ::testing::Bool()) {
+                    if (disallowDispatch) {
+                        EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
+                    } else {
+                        for (uint32_t ccsCount : {1, 2, 4}) {
+                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = ccsCount;
+                            tilePartsForConcurrentKernels = ccsCount == 1   ? 1
+                                                            : ccsCount == 2 ? 4
+                                                                            : 8;
                             EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
                         }
-                    } else {
-                        EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
                     }
                 }
             }
