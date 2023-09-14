@@ -334,24 +334,6 @@ TEST_F(DebugApiTest, givenSIPHeaderHasZeroSizeMMEThenNotExposedAsRegset) {
     }
 }
 
-TEST_F(DebugApiTest, givenSIPHeaderGRFCountNotEqualTo128ThenGetRegisterSetPropertiesReturns128) {
-    static_cast<MockBuiltins *>(neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.get())->stateSaveAreaHeader =
-        MockSipData::createStateSaveAreaHeader(2, 256);
-    uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
-
-    std::vector<zet_debug_regset_properties_t> regsetProps(count);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
-    ASSERT_EQ(13u, count);
-
-    for (uint32_t i = 0; i < count; i++) {
-        if (regsetProps[i].type == ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU) {
-            EXPECT_EQ(128u, regsetProps[i].count);
-            break;
-        }
-    }
-}
-
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturned) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
