@@ -784,12 +784,6 @@ bool IoctlHelperXe::isDebugAttachAvailable() {
 unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     xeLog(" -> IoctlHelperXe::%s 0x%x\n", __FUNCTION__, ioctlRequest);
     switch (ioctlRequest) {
-    case DrmIoctl::SyncobjCreate:
-        RETURN_ME(DRM_IOCTL_SYNCOBJ_CREATE);
-    case DrmIoctl::SyncobjWait:
-        RETURN_ME(DRM_IOCTL_SYNCOBJ_WAIT);
-    case DrmIoctl::SyncobjDestroy:
-        RETURN_ME(DRM_IOCTL_SYNCOBJ_DESTROY);
     case DrmIoctl::GemClose:
         RETURN_ME(DRM_IOCTL_GEM_CLOSE);
     case DrmIoctl::GemVmCreate:
@@ -862,12 +856,6 @@ void IoctlHelperXe::xeLog(XeLogArgs &&...args) const {
 
 std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::SyncobjCreate:
-        STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_CREATE);
-    case DrmIoctl::SyncobjWait:
-        STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_WAIT);
-    case DrmIoctl::SyncobjDestroy:
-        STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_DESTROY);
     case DrmIoctl::GemClose:
         STRINGIFY_ME(DRM_IOCTL_GEM_CLOSE);
     case DrmIoctl::GemVmCreate:
@@ -899,42 +887,6 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
     default:
         return "???";
     }
-}
-
-uint32_t IoctlHelperXe::xeSyncObjCreate(uint32_t flags) {
-    int ret;
-    struct drm_syncobj_create create = {};
-    create.flags = flags;
-    ret = IoctlHelper::ioctl(DrmIoctl::SyncobjCreate, &create);
-    UNRECOVERABLE_IF(ret);
-    return create.handle;
-}
-
-bool IoctlHelperXe::xeSyncObjWait(uint32_t *handles, uint32_t count,
-                                  uint64_t absTimeoutNsec, uint32_t flags,
-                                  uint32_t *firstSignaled) {
-    int ret;
-    struct drm_syncobj_wait wait = {};
-    wait.handles = castToUint64(handles);
-    wait.timeout_nsec = absTimeoutNsec;
-    wait.count_handles = count;
-    wait.flags = flags;
-    ret = IoctlHelper::ioctl(DrmIoctl::SyncobjWait, &wait);
-    if (ret && errno == ETIME) {
-        return false;
-    }
-    UNRECOVERABLE_IF(ret);
-    if (firstSignaled)
-        *firstSignaled = wait.first_signaled;
-    return true;
-}
-
-void IoctlHelperXe::xeSyncObjDestroy(uint32_t handle) {
-    int ret;
-    struct drm_syncobj_destroy destroy = {};
-    destroy.handle = handle;
-    ret = IoctlHelper::ioctl(DrmIoctl::SyncobjDestroy, &destroy);
-    UNRECOVERABLE_IF(ret);
 }
 
 int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {

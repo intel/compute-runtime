@@ -22,9 +22,6 @@
 #include "drm/xe_drm.h"
 
 using namespace NEO;
-using NEO::PrelimI915::drm_syncobj_create;
-using NEO::PrelimI915::drm_syncobj_destroy;
-using NEO::PrelimI915::drm_syncobj_wait;
 
 struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
@@ -613,9 +610,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyDrmParamString("TilingNone", DrmParam::TilingNone);
     verifyDrmParamString("TilingY", DrmParam::TilingY);
 
-    verifyIoctlString(DrmIoctl::SyncobjCreate, "DRM_IOCTL_SYNCOBJ_CREATE");
-    verifyIoctlString(DrmIoctl::SyncobjWait, "DRM_IOCTL_SYNCOBJ_WAIT");
-    verifyIoctlString(DrmIoctl::SyncobjDestroy, "DRM_IOCTL_SYNCOBJ_DESTROY");
     verifyIoctlString(DrmIoctl::GemClose, "DRM_IOCTL_GEM_CLOSE");
     verifyIoctlString(DrmIoctl::GemCreate, "DRM_IOCTL_XE_GEM_CREATE");
     verifyIoctlString(DrmIoctl::GemVmCreate, "DRM_IOCTL_XE_VM_CREATE");
@@ -663,9 +657,6 @@ TEST(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) 
     verifyIoctlRequestValue(DRM_IOCTL_XE_GEM_CREATE, DrmIoctl::GemCreate);
     verifyIoctlRequestValue(DRM_IOCTL_XE_VM_BIND, DrmIoctl::GemVmBind);
     verifyIoctlRequestValue(DRM_IOCTL_XE_VM_CREATE, DrmIoctl::GemVmCreate);
-    verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_CREATE, DrmIoctl::SyncobjCreate);
-    verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_WAIT, DrmIoctl::SyncobjWait);
-    verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_DESTROY, DrmIoctl::SyncobjDestroy);
     verifyIoctlRequestValue(DRM_IOCTL_GEM_CLOSE, DrmIoctl::GemClose);
     verifyIoctlRequestValue(DRM_IOCTL_XE_VM_DESTROY, DrmIoctl::GemVmDestroy);
     verifyIoctlRequestValue(DRM_IOCTL_XE_GEM_MMAP_OFFSET, DrmIoctl::GemMmapOffset);

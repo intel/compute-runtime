@@ -111,9 +111,6 @@ class IoctlHelperXe : public IoctlHelper {
   private:
     template <typename... XeLogArgs>
     void xeLog(XeLogArgs &&...args) const;
-    uint32_t xeSyncObjCreate(uint32_t flags);
-    bool xeSyncObjWait(uint32_t *handles, uint32_t count, uint64_t absTimeoutNsec, uint32_t flags, uint32_t *firstSignaled);
-    void xeSyncObjDestroy(uint32_t handle);
     int xeGetQuery(Query *data);
     struct drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance);
 
