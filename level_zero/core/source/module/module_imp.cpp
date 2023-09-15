@@ -585,7 +585,7 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         if (desc->format != ZE_MODULE_FORMAT_IL_SPIRV) {
-            return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         this->builtFromSPIRv = true;
         const ze_module_program_exp_desc_t *programExpDesc =

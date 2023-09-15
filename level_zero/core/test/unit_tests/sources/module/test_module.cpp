@@ -923,7 +923,7 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
         module->translationUnit.reset(mockTranslationUnit);
         ze_result_t result = ZE_RESULT_SUCCESS;
         result = module->initialize(&combinedModuleDesc, neoDevice);
-        EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ENUMERATION);
+        EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
         module->destroy();
     }
     void runExpDescFailureTest() {
