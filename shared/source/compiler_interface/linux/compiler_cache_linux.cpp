@@ -12,9 +12,9 @@
 #include "shared/source/helpers/path.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/os_handle.h"
 #include "shared/source/utilities/io_functions.h"
 
-#include "os_handle.h"
 #include "os_inc.h"
 
 #include <algorithm>
@@ -127,16 +127,16 @@ void unlockFileAndClose(int fd) {
     NEO::SysCalls::close(fd);
 }
 
-void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, HandleType &fd, size_t &directorySize) {
+void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) {
     bool countDirectorySize = false;
     errno = 0;
-    fd = NEO::SysCalls::open(configFilePath.c_str(), O_RDWR);
+    std::get<int>(fd) = NEO::SysCalls::open(configFilePath.c_str(), O_RDWR);
 
-    if (fd < 0) {
+    if (std::get<int>(fd) < 0) {
         if (errno == ENOENT) {
-            fd = NEO::SysCalls::openWithMode(configFilePath.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
-            if (fd < 0) {
-                fd = NEO::SysCalls::open(configFilePath.c_str(), O_RDWR);
+            std::get<int>(fd) = NEO::SysCalls::openWithMode(configFilePath.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+            if (std::get<int>(fd) < 0) {
+                std::get<int>(fd) = NEO::SysCalls::open(configFilePath.c_str(), O_RDWR);
             } else {
                 countDirectorySize = true;
             }
@@ -146,12 +146,12 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
         }
     }
 
-    int lockErr = NEO::SysCalls::flock(fd, LOCK_EX);
+    int lockErr = NEO::SysCalls::flock(std::get<int>(fd), LOCK_EX);
 
     if (lockErr < 0) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Lock config file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
-        NEO::SysCalls::close(fd);
-        fd = -1;
+        NEO::SysCalls::close(std::get<int>(fd));
+        std::get<int>(fd) = -1;
 
         return;
     }
@@ -162,9 +162,9 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
         int filesCount = NEO::SysCalls::scandir(config.cacheDir.c_str(), &files, filterFunction, NULL);
 
         if (filesCount == -1) {
-            unlockFileAndClose(fd);
+            unlockFileAndClose(std::get<int>(fd));
             NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Scandir failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
-            fd = -1;
+            std::get<int>(fd) = -1;
             return;
         }
 
@@ -191,13 +191,13 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
         }
 
     } else {
-        ssize_t readErr = NEO::SysCalls::pread(fd, &directorySize, sizeof(directorySize), 0);
+        ssize_t readErr = NEO::SysCalls::pread(std::get<int>(fd), &directorySize, sizeof(directorySize), 0);
 
         if (readErr < 0) {
             directorySize = 0;
             NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Read config failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
-            unlockFileAndClose(fd);
-            fd = -1;
+            unlockFileAndClose(std::get<int>(fd));
+            std::get<int>(fd) = -1;
         }
     }
 }
@@ -213,18 +213,18 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     std::string configFilePath = joinPath(config.cacheDir, configFileName.data());
     std::string filePath = joinPath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
 
-    int fd = -1;
+    UnifiedHandle fd{-1};
     size_t directorySize = 0u;
 
     lockConfigFileAndReadSize(configFilePath, fd, directorySize);
 
-    if (fd < 0) {
+    if (std::get<int>(fd) < 0) {
         return false;
     }
 
     struct stat statbuf = {};
     if (NEO::SysCalls::stat(filePath, &statbuf) == 0) {
-        unlockFileAndClose(fd);
+        unlockFileAndClose(std::get<int>(fd));
         return true;
     }
 
@@ -232,7 +232,7 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
 
     if (maxSize < directorySize + binarySize) {
         if (!evictCache()) {
-            unlockFileAndClose(fd);
+            unlockFileAndClose(std::get<int>(fd));
             return false;
         }
     }
@@ -242,20 +242,20 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     std::string tmpFilePath = joinPath(config.cacheDir, tmpFileName);
 
     if (!createUniqueTempFileAndWriteData(tmpFilePath.data(), pBinary, binarySize)) {
-        unlockFileAndClose(fd);
+        unlockFileAndClose(std::get<int>(fd));
         return false;
     }
 
     if (!renameTempFileBinaryToProperName(tmpFilePath, filePath)) {
-        unlockFileAndClose(fd);
+        unlockFileAndClose(std::get<int>(fd));
         return false;
     }
 
     directorySize += binarySize;
 
-    NEO::SysCalls::pwrite(fd, &directorySize, sizeof(directorySize), 0);
+    NEO::SysCalls::pwrite(std::get<int>(fd), &directorySize, sizeof(directorySize), 0);
 
-    unlockFileAndClose(fd);
+    unlockFileAndClose(std::get<int>(fd));
 
     return true;
 }

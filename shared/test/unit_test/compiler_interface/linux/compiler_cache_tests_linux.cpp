@@ -236,12 +236,12 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenConfigFileIsInacessibleThenFdIsSe
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int { errno = EACCES;  return -1; });
 
-    int configFileDescriptor = 0;
+    UnifiedHandle configFileDescriptor{0};
     size_t directory = 0;
 
     cache.lockConfigFileAndReadSize("config.file", configFileDescriptor, directory);
 
-    EXPECT_EQ(configFileDescriptor, -1);
+    EXPECT_EQ(std::get<int>(configFileDescriptor), -1);
 }
 
 TEST(CompilerCacheTests, GivenCompilerCacheWhenCannotLockConfigFileThenFdIsSetToNegativeNumber) {
@@ -250,12 +250,12 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenCannotLockConfigFileThenFdIsSetTo
 
     VariableBackup<decltype(NEO::SysCalls::flockRetVal)> flockBackup(&NEO::SysCalls::flockRetVal, flockRetVal);
 
-    int configFileDescriptor = 0;
+    UnifiedHandle configFileDescriptor{0};
     size_t directory = 0;
 
     cache.lockConfigFileAndReadSize("config.file", configFileDescriptor, directory);
 
-    EXPECT_EQ(configFileDescriptor, -1);
+    EXPECT_EQ(std::get<int>(configFileDescriptor), -1);
 }
 
 #include <fcntl.h>
@@ -284,12 +284,12 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenScandirFailInLockConfigFileThenFd
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpenWithMode)> openWithModeBackup(&NEO::SysCalls::sysCallsOpenWithMode, LockConfigFileAndReadSize::openWithMode);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, LockConfigFileAndReadSize::open);
 
-    int configFileDescriptor = 0;
+    UnifiedHandle configFileDescriptor{0};
     size_t directory = 0;
 
     cache.lockConfigFileAndReadSize("config.file", configFileDescriptor, directory);
 
-    EXPECT_EQ(configFileDescriptor, -1);
+    EXPECT_EQ(std::get<int>(configFileDescriptor), -1);
 }
 
 namespace lockConfigFileAndReadSizeMocks {
@@ -350,12 +350,12 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenLockConfigFileWithFileCreationThe
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpenWithMode)> openWithModeBackup(&NEO::SysCalls::sysCallsOpenWithMode, LockConfigFileAndReadSize::openWithMode);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, LockConfigFileAndReadSize::open);
 
-    int configFileDescriptor = 0;
+    UnifiedHandle configFileDescriptor{0};
     size_t directory = 0;
 
     cache.lockConfigFileAndReadSize("config.file", configFileDescriptor, directory);
 
-    EXPECT_EQ(configFileDescriptor, 1);
+    EXPECT_EQ(std::get<int>(configFileDescriptor), 1);
     EXPECT_EQ(NEO::SysCalls::scandirCalled, 1);
     EXPECT_EQ(directory, MemoryConstants::megaByte);
 }
@@ -399,12 +399,12 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenLockConfigFileAndOtherProcessCrea
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpenWithMode)> openWithModeBackup(&NEO::SysCalls::sysCallsOpenWithMode, LockConfigFileAndConfigFileIsCreatedInMeantime::openWithMode);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, LockConfigFileAndConfigFileIsCreatedInMeantime::open);
 
-    int configFileDescriptor = 0;
+    UnifiedHandle configFileDescriptor{0};
     size_t directory = 0;
 
     cache.lockConfigFileAndReadSize("config.file", configFileDescriptor, directory);
 
-    EXPECT_EQ(configFileDescriptor, 1);
+    EXPECT_EQ(std::get<int>(configFileDescriptor), 1);
     EXPECT_EQ(NEO::SysCalls::scandirCalled, 0);
     EXPECT_EQ(directory, LockConfigFileAndConfigFileIsCreatedInMeantime::configSize);
 }
@@ -416,12 +416,12 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenLockConfigFileThenFdIsSetProperSi
     VariableBackup<decltype(NEO::SysCalls::scandirCalled)> scandirCalledBackup(&NEO::SysCalls::scandirCalled, scandirCalledTimes);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> preadBackup(&NEO::SysCalls::sysCallsPread, LockConfigFileAndConfigFileIsCreatedInMeantime::pread);
 
-    int configFileDescriptor = 0;
+    UnifiedHandle configFileDescriptor{0};
     size_t directory = 0;
 
     cache.lockConfigFileAndReadSize("config.file", configFileDescriptor, directory);
 
-    EXPECT_EQ(configFileDescriptor, NEO::SysCalls::fakeFileDescriptor);
+    EXPECT_EQ(std::get<int>(configFileDescriptor), NEO::SysCalls::fakeFileDescriptor);
     EXPECT_EQ(NEO::SysCalls::scandirCalled, 0);
     EXPECT_EQ(directory, LockConfigFileAndConfigFileIsCreatedInMeantime::configSize);
 }
@@ -434,8 +434,8 @@ class CompilerCacheFailingLokcConfigFileAndReadSizeLinux : public CompilerCache 
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::renameTempFileBinaryToProperName;
 
-    void lockConfigFileAndReadSize(const std::string &configFilePath, int &fd, size_t &directorySize) override {
-        fd = -1;
+    void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
+        std::get<int>(fd) = -1;
         return;
     }
 };
@@ -454,8 +454,8 @@ class CompilerCacheLinuxReturnTrueIfAnotherProcessCreateCacheFile : public Compi
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::renameTempFileBinaryToProperName;
 
-    void lockConfigFileAndReadSize(const std::string &configFilePath, int &fd, size_t &directorySize) override {
-        fd = 1;
+    void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
+        std::get<int>(fd) = 1;
         return;
     }
 };
@@ -476,9 +476,9 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfEvictFailed : public CompilerC
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::renameTempFileBinaryToProperName;
 
-    void lockConfigFileAndReadSize(const std::string &configFilePath, int &fd, size_t &directorySize) override {
+    void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
         directorySize = MemoryConstants::megaByte;
-        fd = 1;
+        std::get<int>(fd) = 1;
         return;
     }
 
@@ -503,9 +503,9 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfCreateUniqueFileFailed : publi
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::renameTempFileBinaryToProperName;
 
-    void lockConfigFileAndReadSize(const std::string &configFilePath, int &fd, size_t &directorySize) override {
+    void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
         directorySize = MemoryConstants::megaByte;
-        fd = 1;
+        std::get<int>(fd) = 1;
         return;
     }
 
@@ -534,9 +534,9 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfRenameFileFailed : public Comp
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::renameTempFileBinaryToProperName;
 
-    void lockConfigFileAndReadSize(const std::string &configFilePath, int &fd, size_t &directorySize) override {
+    void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
         directorySize = MemoryConstants::megaByte;
-        fd = 1;
+        std::get<int>(fd) = 1;
         return;
     }
 
@@ -569,9 +569,9 @@ class CompilerCacheLinuxReturnTrueOnCacheBinary : public CompilerCache {
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::renameTempFileBinaryToProperName;
 
-    void lockConfigFileAndReadSize(const std::string &configFilePath, int &fd, size_t &directorySize) override {
+    void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
         directorySize = MemoryConstants::megaByte;
-        fd = 1;
+        std::get<int>(fd) = 1;
         return;
     }
 

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <variant>
+
 namespace NEO {
-using HandleType = void *;
+using UnifiedHandle = std::variant<int, void *>;
 }; // namespace NEO

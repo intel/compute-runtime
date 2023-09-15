@@ -63,15 +63,15 @@ std::vector<ElementsStruct> getFiles(const std::string &path) {
     return files;
 }
 
-void unlockFileAndClose(HandleType handle) {
+void unlockFileAndClose(UnifiedHandle handle) {
     OVERLAPPED overlapped = {0};
-    auto result = NEO::SysCalls::unlockFileEx(handle, 0, MAXDWORD, MAXDWORD, &overlapped);
+    auto result = NEO::SysCalls::unlockFileEx(std::get<void *>(handle), 0, MAXDWORD, MAXDWORD, &overlapped);
 
     if (!result) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Unlock file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
     }
 
-    NEO::SysCalls::closeHandle(handle);
+    NEO::SysCalls::closeHandle(std::get<void *>(handle));
 }
 
 bool CompilerCache::evictCache() {
@@ -91,41 +91,41 @@ bool CompilerCache::evictCache() {
     return true;
 }
 
-void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, HandleType &handle, size_t &directorySize) {
+void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &handle, size_t &directorySize) {
     bool countDirectorySize = false;
 
-    handle = NEO::SysCalls::createFileA(configFilePath.c_str(),
-                                        GENERIC_READ | GENERIC_WRITE,
-                                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                        NULL,
-                                        OPEN_EXISTING,
-                                        FILE_ATTRIBUTE_NORMAL,
-                                        NULL);
+    std::get<void *>(handle) = NEO::SysCalls::createFileA(configFilePath.c_str(),
+                                                          GENERIC_READ | GENERIC_WRITE,
+                                                          FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                                          NULL,
+                                                          OPEN_EXISTING,
+                                                          FILE_ATTRIBUTE_NORMAL,
+                                                          NULL);
 
-    if (handle == INVALID_HANDLE_VALUE) {
-        handle = NEO::SysCalls::createFileA(configFilePath.c_str(),
-                                            GENERIC_READ | GENERIC_WRITE,
-                                            FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                            NULL,
-                                            CREATE_NEW,
-                                            FILE_ATTRIBUTE_NORMAL,
-                                            NULL);
+    if (std::get<void *>(handle) == INVALID_HANDLE_VALUE) {
+        std::get<void *>(handle) = NEO::SysCalls::createFileA(configFilePath.c_str(),
+                                                              GENERIC_READ | GENERIC_WRITE,
+                                                              FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                                              NULL,
+                                                              CREATE_NEW,
+                                                              FILE_ATTRIBUTE_NORMAL,
+                                                              NULL);
 
-        if (handle == INVALID_HANDLE_VALUE) {
-            handle = NEO::SysCalls::createFileA(configFilePath.c_str(),
-                                                GENERIC_READ | GENERIC_WRITE,
-                                                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                                NULL,
-                                                OPEN_EXISTING,
-                                                FILE_ATTRIBUTE_NORMAL,
-                                                NULL);
+        if (std::get<void *>(handle) == INVALID_HANDLE_VALUE) {
+            std::get<void *>(handle) = NEO::SysCalls::createFileA(configFilePath.c_str(),
+                                                                  GENERIC_READ | GENERIC_WRITE,
+                                                                  FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                                                  NULL,
+                                                                  OPEN_EXISTING,
+                                                                  FILE_ATTRIBUTE_NORMAL,
+                                                                  NULL);
         } else {
             countDirectorySize = true;
         }
     }
 
     OVERLAPPED overlapped = {0};
-    auto result = NEO::SysCalls::lockFileEx(handle,
+    auto result = NEO::SysCalls::lockFileEx(std::get<void *>(handle),
                                             LOCKFILE_EXCLUSIVE_LOCK,
                                             0,
                                             MAXDWORD,
@@ -134,11 +134,11 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
 
     if (result == FALSE && SysCalls::getLastError() == ERROR_IO_PENDING) { // if file is already locked by somebody else
         DWORD numberOfBytesTransmitted = 0;
-        result = NEO::SysCalls::getOverlappedResult(handle, &overlapped, &numberOfBytesTransmitted, TRUE);
+        result = NEO::SysCalls::getOverlappedResult(std::get<void *>(handle), &overlapped, &numberOfBytesTransmitted, TRUE);
     }
 
     if (!result) {
-        handle = INVALID_HANDLE_VALUE;
+        std::get<void *>(handle) = INVALID_HANDLE_VALUE;
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Lock config file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
         return;
     }
@@ -151,12 +151,12 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
         }
     } else {
         memset(&overlapped, 0, sizeof(overlapped));
-        result = NEO::SysCalls::readFileEx(handle, &directorySize, sizeof(directorySize), &overlapped, NULL);
+        result = NEO::SysCalls::readFileEx(std::get<void *>(handle), &directorySize, sizeof(directorySize), &overlapped, NULL);
 
         if (!result) {
             directorySize = 0;
-            unlockFileAndClose(handle);
-            handle = INVALID_HANDLE_VALUE;
+            unlockFileAndClose(std::get<void *>(handle));
+            std::get<void *>(handle) = INVALID_HANDLE_VALUE;
             NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Read config failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
         }
     }
@@ -207,7 +207,7 @@ bool CompilerCache::renameTempFileBinaryToProperName(const std::string &oldName,
 class HandleGuard {
   public:
     HandleGuard() = delete;
-    explicit HandleGuard(HandleType &h) : handle(h) {}
+    explicit HandleGuard(void *&h) : handle(h) {}
     ~HandleGuard() {
         if (handle) {
             unlockFileAndClose(handle);
@@ -215,7 +215,7 @@ class HandleGuard {
     }
 
   private:
-    HandleType handle = nullptr;
+    void *handle = nullptr;
 };
 
 bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize) {
@@ -229,16 +229,16 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     std::string configFilePath = joinPath(config.cacheDir, configFileName.data());
     std::string cacheFilePath = joinPath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
 
-    HandleType hConfigFile = INVALID_HANDLE_VALUE;
+    UnifiedHandle hConfigFile{INVALID_HANDLE_VALUE};
     size_t directorySize = 0u;
 
     lockConfigFileAndReadSize(configFilePath, hConfigFile, directorySize);
 
-    if (hConfigFile == INVALID_HANDLE_VALUE) {
+    if (std::get<void *>(hConfigFile) == INVALID_HANDLE_VALUE) {
         return false;
     }
 
-    HandleGuard configGuard(hConfigFile);
+    HandleGuard configGuard(std::get<void *>(hConfigFile));
 
     DWORD cacheFileAttr = 0;
     cacheFileAttr = NEO::SysCalls::getFileAttributesA(cacheFilePath.c_str());
@@ -270,7 +270,7 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     directorySize += binarySize;
 
     DWORD sizeWritten = 0;
-    auto result = NEO::SysCalls::writeFile(hConfigFile,
+    auto result = NEO::SysCalls::writeFile(std::get<void *>(hConfigFile),
                                            &directorySize,
                                            (DWORD)sizeof(directorySize),
                                            &sizeWritten,

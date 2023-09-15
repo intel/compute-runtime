@@ -69,17 +69,17 @@ class CompilerCacheMockWindows : public CompilerCache {
     size_t evictCacheCalled = 0u;
     bool evictCacheResult = true;
 
-    void lockConfigFileAndReadSize(const std::string &configFilePath, HandleType &handle, size_t &directorySize) override {
+    void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &handle, size_t &directorySize) override {
         lockConfigFileAndReadSizeCalled++;
         if (callBaseLockConfigFileAndReadSize) {
             return CompilerCache::lockConfigFileAndReadSize(configFilePath, handle, directorySize);
         }
-        handle = lockConfigFileAndReadSizeHandle;
+        std::get<void *>(handle) = lockConfigFileAndReadSizeHandle;
     }
 
     bool callBaseLockConfigFileAndReadSize = true;
     size_t lockConfigFileAndReadSizeCalled = 0u;
-    HandleType lockConfigFileAndReadSizeHandle = INVALID_HANDLE_VALUE;
+    void *lockConfigFileAndReadSizeHandle = INVALID_HANDLE_VALUE;
 };
 
 TEST(CompilerCacheHelper, GivenHomeEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperDirectoryIsReturned) {
@@ -264,7 +264,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
-    HANDLE configFileHandle = nullptr;
+    UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
     cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
 
@@ -291,7 +291,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
-    HANDLE configFileHandle = nullptr;
+    UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
 
     ::testing::internal::CaptureStderr();
@@ -323,7 +323,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
-    HANDLE configFileHandle = nullptr;
+    UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
 
     ::testing::internal::CaptureStderr();
@@ -373,7 +373,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
-    HANDLE configFileHandle = nullptr;
+    UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
     cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
 

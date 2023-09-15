@@ -7,9 +7,8 @@
 
 #pragma once
 
+#include "shared/source/os_interface/os_handle.h"
 #include "shared/source/utilities/arrayref.h"
-
-#include "os_handle.h"
 
 #include <cstdint>
 #include <memory>
@@ -52,7 +51,7 @@ class CompilerCache {
     MOCKABLE_VIRTUAL bool evictCache();
     MOCKABLE_VIRTUAL bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash);
     MOCKABLE_VIRTUAL bool createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, const char *pBinary, size_t binarySize);
-    MOCKABLE_VIRTUAL void lockConfigFileAndReadSize(const std::string &configFilePath, HandleType &fd, size_t &directorySize);
+    MOCKABLE_VIRTUAL void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize);
 
     static std::mutex cacheAccessMtx;
     CompilerCacheConfig config;
