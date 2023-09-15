@@ -200,8 +200,8 @@ void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->L3BankCount = 1;
 
         gtSysInfo->CCSInfo.IsValid = true;
-        gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
-        gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
+        gtSysInfo->CCSInfo.NumberOfCCSEnabled = 2;
+        gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b11;
 
         hwInfo->featureTable.ftrBcsInfo = 1;
         gtSysInfo->IsDynamicallyPopulated = true;
