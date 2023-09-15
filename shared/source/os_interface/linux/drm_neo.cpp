@@ -476,6 +476,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     status = querySystemInfo();
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+    rootDeviceEnvironment.setRcsExposure();
 
     if (status) {
         systemInfo->checkSysInfoMismatch(hwInfo);

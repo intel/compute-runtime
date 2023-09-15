@@ -27,6 +27,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isCachingOnCpuAvailable, bool, false, ());
     ADDMETHOD_CONST_NOBASE(shouldAdjustDepth, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDirectSubmissionSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isRcsExposureDisabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getPreferredAllocationMethod, std::optional<GfxMemoryAllocationMethod>, std::nullopt, (AllocationType allocationType));
 };
 } // namespace NEO

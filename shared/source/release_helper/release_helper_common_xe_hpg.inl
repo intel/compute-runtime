@@ -29,4 +29,8 @@ bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
     return true;
 }
 
+template <>
+bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
+    return true;
+}
 } // namespace NEO

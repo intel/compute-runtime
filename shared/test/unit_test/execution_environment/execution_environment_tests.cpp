@@ -22,6 +22,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -157,6 +158,47 @@ TEST(RootDeviceEnvironment, givenRootExecutionEnvironmentWhenGetAssertHandlerIsC
 
     EXPECT_NE(nullptr, assertHandler);
     EXPECT_EQ(assertHandler, rootDeviceEnvironment->getAssertHandler(device.get()));
+}
+
+TEST(RootDeviceEnvironment, givenDefaultHardwareInfoWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsCorrectSet) {
+    MockExecutionEnvironment executionEnvironment;
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    rootDeviceEnvironment->setRcsExposure();
+    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+    auto releaseHelper = rootDeviceEnvironment->getReleaseHelper();
+
+    if (releaseHelper) {
+        bool shouldRcsBeDisabled = releaseHelper->isRcsExposureDisabled();
+        bool isRcsDisabled = hwInfo->featureTable.flags.ftrRcsNode;
+        EXPECT_NE(shouldRcsBeDisabled, isRcsDisabled);
+    }
+}
+
+TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->setRcsExposure();
+    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+
+    EXPECT_TRUE(hwInfo->featureTable.flags.ftrRcsNode);
+}
+
+TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsCccsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->setRcsExposure();
+    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+
+    EXPECT_TRUE(hwInfo->featureTable.flags.ftrRcsNode);
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenLocalMemorySupportedInMemoryManagerHasCorrectValue) {

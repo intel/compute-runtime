@@ -205,21 +205,6 @@ PVCTEST_F(PvcProductHelper, givenProductHelperAndProgramExtendedPipeControlPrior
     EXPECT_FALSE(isBasicWARequired);
 }
 
-PVCTEST_F(PvcProductHelper, givenPvcWhenConfiguringThenDisableCccs) {
-    productHelper->configureHardwareCustom(&pInHwInfo, nullptr);
-    EXPECT_FALSE(pInHwInfo.featureTable.flags.ftrRcsNode);
-}
-
-PVCTEST_F(PvcProductHelper, givenDebugVariableSetWhenConfiguringThenEnableCccs) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    productHelper->configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
-}
-
 PVCTEST_F(PvcProductHelper, givenDeviceIdThenProperMaxThreadsForWorkgroupIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
 

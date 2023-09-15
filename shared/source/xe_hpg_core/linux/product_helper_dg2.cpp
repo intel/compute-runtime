@@ -35,7 +35,6 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     DG2::adjustHardwareInfo(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
-    disableRcsExposure(hwInfo);
     hwInfo->workaroundTable.flags.wa_15010089951 = true;
 
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;

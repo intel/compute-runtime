@@ -115,6 +115,7 @@ bool Wddm::init() {
 
     populateIpVersion(*hardwareInfo);
     rootDeviceEnvironment.initReleaseHelper();
+    rootDeviceEnvironment.setRcsExposure();
 
     if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {
         return false;

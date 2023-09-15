@@ -78,6 +78,7 @@ struct RootDeviceEnvironment {
     void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     void limitNumberOfCcs(uint32_t numberOfCcs);
     bool isNumberOfCcsLimited() const;
+    void setRcsExposure();
     void initProductHelper();
     void initHelpers();
     void initGfxCoreHelper();

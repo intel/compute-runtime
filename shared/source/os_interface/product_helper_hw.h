@@ -22,7 +22,6 @@ class ProductHelperHw : public ProductHelper {
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
     void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
     void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const override;
-    void disableRcsExposure(HardwareInfo *hwInfo) const override;
     uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override;
     uint64_t getDeviceMemCapabilities() const override;
     uint64_t getSingleDeviceSharedMemCapabilities() const override;

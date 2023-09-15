@@ -13,6 +13,10 @@
 namespace NEO {
 constexpr auto release = ReleaseType::release1260;
 
+template <>
+bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
+    return true;
+}
 } // namespace NEO
 
 template class NEO::ReleaseHelperHw<NEO::release>;

@@ -41,7 +41,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, whenPrepareDeviceEnvironmentsIsCalledTh
     EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
 }
 
-HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializingThenReturnFalse) {
+HWTEST_F(PrepareDeviceEnvironmentsTests, givenCcsNotSupportedWhenInitializingThenReturnFalse) {
     REQUIRE_64BIT_OR_SKIP();
 
     NEO::ExecutionEnvironment executionEnvironment;
@@ -53,7 +53,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializ
     productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
     bool expectedValue = false;
-    if (hwInfo.featureTable.flags.ftrRcsNode || hwInfo.featureTable.flags.ftrCCSNode) {
+    if (hwInfo.featureTable.flags.ftrCCSNode) {
         expectedValue = true;
     }
 

@@ -85,14 +85,6 @@ void ProductHelperHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *h
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::disableRcsExposure(HardwareInfo *hwInfo) const {
-    hwInfo->featureTable.flags.ftrRcsNode = false;
-    if ((DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) || (DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS))) {
-        hwInfo->featureTable.flags.ftrRcsNode = true;
-    }
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getDeviceMemCapabilities() const {
     uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
 

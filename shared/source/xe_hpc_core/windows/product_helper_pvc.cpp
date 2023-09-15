@@ -23,7 +23,6 @@ template <>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     enableCompression(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
-    disableRcsExposure(hwInfo);
 
     return 0;
 }

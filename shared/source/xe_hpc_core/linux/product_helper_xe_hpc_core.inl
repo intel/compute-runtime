@@ -18,8 +18,6 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
     enableBlitterOperationsSupport(hwInfo);
 
-    disableRcsExposure(hwInfo);
-
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
     kmdNotifyProperties.enableKmdNotify = true;
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 150;

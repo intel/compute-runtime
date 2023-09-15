@@ -40,14 +40,12 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDon
     HardwareInfo hwInfo = *defaultHwInfo;
     MockExecutionEnvironment mockExecutionEnvironment{};
 
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.flags.ftrRcsNode = true;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-    productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     auto &gfxCoreHelper = device->getGfxCoreHelper();

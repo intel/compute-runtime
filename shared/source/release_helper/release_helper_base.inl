@@ -82,4 +82,9 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isDirectSubmissionSupported() const {
     return false;
 }
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isRcsExposureDisabled() const {
+    return false;
+}
 } // namespace NEO
