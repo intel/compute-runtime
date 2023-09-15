@@ -43,39 +43,11 @@ HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseIternalAllocatorThen
     auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::LINEAR_STREAM, true, *defaultHwInfo.get(), false);
     EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY);
 }
-struct MockMemoryManagerAllocationHelper : public MemoryManagerMock {
-    MockMemoryManagerAllocationHelper(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
-    GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override {
-        passedUseLocalMem = useLocalMemory;
-        return nullptr;
-    }
-    bool passedUseLocalMem = false;
-};
-TEST_F(AlocationHelperTests, GivenLinearStreamAllocTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUseLocalMemEqualGfxCoreHelperValue) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-    AllocationData allocationData;
-    allocationData.type = AllocationType::LINEAR_STREAM;
-    std::unique_ptr<MockMemoryManagerAllocationHelper> mockMemoryManager(new MockMemoryManagerAllocationHelper(*device->getNEODevice()->getExecutionEnvironment()));
-    mockMemoryManager->allocateGraphicsMemory(allocationData);
-    auto &productHelper = device->getProductHelper();
-    EXPECT_EQ(mockMemoryManager->passedUseLocalMem, productHelper.heapInLocalMem(device->getHwInfo()));
-}
-
-TEST_F(AlocationHelperTests, GivenInternalAllocTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUseLocalMemEqualFalse) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
-    AllocationData allocationData;
-    allocationData.type = AllocationType::KERNEL_ISA;
-    std::unique_ptr<MockMemoryManagerAllocationHelper> mockMemoryManager(new MockMemoryManagerAllocationHelper(*device->getNEODevice()->getExecutionEnvironment()));
-    mockMemoryManager->allocateGraphicsMemory(allocationData);
-    EXPECT_FALSE(mockMemoryManager->passedUseLocalMem);
-}
 
 TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUseExternalAllocatorForSshAndDshEnabledThenExternalHeapIsUsed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-    std::unique_ptr<MockMemoryManagerAllocationHelper> mockMemoryManager(new MockMemoryManagerAllocationHelper(*device->getNEODevice()->getExecutionEnvironment()));
+    std::unique_ptr<MemoryManagerMock> mockMemoryManager(new MemoryManagerMock(*device->getNEODevice()->getExecutionEnvironment()));
     GraphicsAllocation allocation{0, AllocationType::LINEAR_STREAM, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
 
     allocation.set32BitAllocation(false);

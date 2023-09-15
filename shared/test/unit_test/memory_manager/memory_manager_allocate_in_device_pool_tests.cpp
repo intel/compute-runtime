@@ -230,26 +230,6 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryAndAllowed32BitWhen32BitIsNotForc
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocate32BitFailsThenGraphicsAllocationInDevicePoolReturnsError) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(false, true, executionEnvironment);
-
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
-    AllocationData allocData;
-    allocData.type = AllocationType::KERNEL_ISA; // HEAP_INTERNAL will be used
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.allocateMemory = true;
-
-    memoryManager.failAllocate32Bit = true;
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
 HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MemoryManagerCreate<OsAgnosticMemoryManager> osAgnosticMemoryManager(false, true, executionEnvironment);
@@ -589,18 +569,6 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
                                 0x1000, 0, MemoryPool::System4KBPages, false, false, MemoryManager::maxOsContextCount);
     allocation.overrideMemoryPool(MemoryPool::System64KBPages);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation.getMemoryPool());
-}
-
-HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocateInternalAllocationInDevicePoolThen32BitAllocationIsCreated) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(false, true, executionEnvironment);
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP, mockDeviceBitfield}, nullptr);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_TRUE(allocation->is32BitAllocation());
-    EXPECT_TRUE(memoryManager.allocationInDevicePoolCreated);
-
-    memoryManager.freeGraphicsMemory(allocation);
 }
 
 TEST(MemoryManagerTest, givenDisabledLocalMemoryWhenAllocateInternalAllocationInDevicePoolThen32BitAllocationIsCreatedInNonDevicePool) {

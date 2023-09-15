@@ -181,16 +181,15 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(uint32_t root
     AllocationData allocationData{};
     MockAllocationProperties properties(rootDeviceIndex, allocateMemory, size, allocationType);
     getAllocationData(allocationData, properties, ptr, createStorageInfoFromProperties(properties));
-    bool useLocalMemory = !allocationData.flags.useSystemMemory && this->localMemorySupported[rootDeviceIndex];
-    return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMemory);
+    return allocate32BitGraphicsMemoryImpl(allocationData);
 }
 
-GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) {
+GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
     allocate32BitGraphicsMemoryImplCalled = true;
     if (failAllocate32Bit) {
         return nullptr;
     }
-    return OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(allocationData, useLocalMemory);
+    return OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(allocationData);
 }
 
 void MockMemoryManager::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) {

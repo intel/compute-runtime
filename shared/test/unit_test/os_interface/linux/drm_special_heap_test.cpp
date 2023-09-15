@@ -47,7 +47,7 @@ TEST_F(DrmFrontWindowPoolAllocatorTests, givenAllocateInSpecialPoolFlagWhenDrmAl
     AllocationData allocData = {};
     allocData.flags.use32BitFrontWindow = true;
     allocData.size = MemoryConstants::kiloByte;
-    auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData, false);
+    auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData);
     EXPECT_EQ(allocation->getGpuBaseAddress(), allocation->getGpuAddress());
     memManager->freeGraphicsMemory(allocation);
 }

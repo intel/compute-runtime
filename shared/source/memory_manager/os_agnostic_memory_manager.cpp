@@ -182,9 +182,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
     return memoryAllocation;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) {
+GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-    auto heap = heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo, allocationData.flags.use32BitFrontWindow);
+    auto heap = heapAssigner.get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow);
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
 
@@ -572,12 +572,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         return nullptr;
     }
     bool use32Allocator = heapAssigner.use32BitHeap(allocationData.type);
-    if (use32Allocator) {
-        auto adjustedAllocationData(allocationData);
-        adjustedAllocationData.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-        adjustedAllocationData.alignment = MemoryConstants::pageSize64k;
-        allocation = static_cast<MemoryAllocation *>(allocate32BitGraphicsMemoryImpl(adjustedAllocationData, true));
-    } else if (allocationData.type == AllocationType::SVM_GPU) {
+    if (allocationData.type == AllocationType::SVM_GPU) {
         auto storage = allocateSystemMemory(allocationData.size, MemoryConstants::pageSize2M);
         auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(allocationData.hostPtr));
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, storage, storage, canonizedGpuAddress,
@@ -612,7 +607,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
         auto heapIndex = HeapIndex::HEAP_STANDARD64KB;
 
-        if ((gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0) && !allocationData.flags.resource48Bit) {
+        if (use32Allocator) {
+            auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+            heapIndex = heapAssigner.get32BitHeapIndex(allocationData.type, true, *hwInfo, allocationData.flags.use32BitFrontWindow);
+        } else if ((gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0) && !allocationData.flags.resource48Bit) {
             heapIndex = HeapIndex::HEAP_EXTENDED;
         }
 
@@ -629,6 +627,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         counter++;
         allocation->setDefaultGmm(gmm.release());
         allocation->sizeToFree = sizeOfHeapChunk;
+        if (use32Allocator) {
+            allocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heapIndex)));
+        }
     }
 
     if (allocation) {

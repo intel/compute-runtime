@@ -60,7 +60,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenW
     allocData.allocationMethod = memManager->getPreferredAllocationMethod(allocationProperties);
     EXPECT_FALSE(GraphicsAllocation::isLockable(allocData.type));
     allocData.flags.use32BitFrontWindow = true;
-    auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData, false);
+    auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData);
     auto gmmHelper = memManager->getGmmHelper(allocData.rootDeviceIndex);
     EXPECT_EQ(allocation->getGpuBaseAddress(), gmmHelper->canonize(allocation->getGpuAddress()));
 
@@ -83,7 +83,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
     auto allocation = memManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     ASSERT_NE(nullptr, allocation);
     auto gmmHelper = memManager->getGmmHelper(0);
-    EXPECT_EQ(gmmHelper->canonize(memManager->getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), true)), allocation->getGpuBaseAddress());
+    EXPECT_EQ(gmmHelper->canonize(memManager->getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), allocation->isAllocatedInLocalMemoryPool())), allocation->getGpuBaseAddress());
 
     ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper());
     EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase(), allocation->getGpuBaseAddress());
@@ -93,6 +93,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
 }
 
 TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToCorrectBaseAddress) {
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
     allocData.type = AllocationType::LINEAR_STREAM;
     allocData.size = MemoryConstants::pageSize64k;
@@ -106,6 +107,29 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
     ASSERT_NE(nullptr, allocation);
     auto gmmHelper = memManager->getGmmHelper(0);
     EXPECT_EQ(gmmHelper->canonize(memManager->getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), true)), allocation->getGpuBaseAddress());
+
+    ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper());
+    EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase(), allocation->getGpuBaseAddress());
+
+    memManager->freeGraphicsMemory(allocation);
+    executionEnvironment->rootDeviceEnvironments[0]->bindlessHeapsHelper.reset();
+}
+
+TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInPreferredPoolThenGpuBaseAddressIsSetToCorrectBaseAddress) {
+    AllocationData allocData = {};
+    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.size = MemoryConstants::pageSize64k;
+
+    memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
+
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
+
+    AllocationProperties properties = {0, MemoryConstants::pageSize64k, AllocationType::LINEAR_STREAM, {}};
+    auto allocation = memManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
+    ASSERT_NE(nullptr, allocation);
+    auto gmmHelper = memManager->getGmmHelper(0);
+    bool deviceMemory = allocation->isAllocatedInLocalMemoryPool();
+    EXPECT_EQ(gmmHelper->canonize(memManager->getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), deviceMemory)), allocation->getGpuBaseAddress());
 
     ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper());
     EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase(), allocation->getGpuBaseAddress());

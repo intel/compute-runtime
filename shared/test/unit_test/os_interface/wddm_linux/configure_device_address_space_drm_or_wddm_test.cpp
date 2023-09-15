@@ -638,7 +638,7 @@ TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhe
     NEO::AllocationData allocData = {};
     allocData.size = 64U;
 
-    auto alloc = memoryManager.allocate32BitGraphicsMemoryImpl(allocData, false);
+    auto alloc = memoryManager.allocate32BitGraphicsMemoryImpl(allocData);
     EXPECT_NE(nullptr, alloc);
     memoryManager.freeGraphicsMemoryImpl(alloc);
 
@@ -660,7 +660,7 @@ TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhe
     NEO::AllocationData allocData = {};
     allocData.size = 3U;
 
-    auto alloc = memoryManager.allocate32BitGraphicsMemoryImpl(allocData, false);
+    auto alloc = memoryManager.allocate32BitGraphicsMemoryImpl(allocData);
     ASSERT_NE(nullptr, alloc);
     EXPECT_TRUE(isAligned<MemoryConstants::allocationAlignment>(alloc->getUnderlyingBufferSize()));
     memoryManager.freeGraphicsMemoryImpl(alloc);

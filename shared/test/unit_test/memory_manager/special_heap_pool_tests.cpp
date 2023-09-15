@@ -21,7 +21,7 @@ TEST_F(FrontWindowAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenAllocate
     AllocationData allocData = {};
     allocData.flags.use32BitFrontWindow = true;
     allocData.size = MemoryConstants::kiloByte;
-    auto allocation(memManager->allocate32BitGraphicsMemoryImpl(allocData, false));
+    auto allocation(memManager->allocate32BitGraphicsMemoryImpl(allocData));
     EXPECT_EQ(allocation->getGpuBaseAddress(), allocation->getGpuAddress());
     memManager->freeGraphicsMemory(allocation);
 }
@@ -30,7 +30,7 @@ TEST_F(FrontWindowAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenAllocate
     AllocationData allocData = {};
     allocData.flags.use32BitFrontWindow = true;
     allocData.size = MemoryConstants::kiloByte;
-    auto allocation(memManager->allocate32BitGraphicsMemoryImpl(allocData, false));
+    auto allocation(memManager->allocate32BitGraphicsMemoryImpl(allocData));
     auto heap = memManager->heapAssigner.get32BitHeapIndex(allocData.type, false, *defaultHwInfo, true);
     auto gmmHelper = memManager->getGmmHelper(allocData.rootDeviceIndex);
 

@@ -72,8 +72,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         AllocationData allocationData;
         MockAllocationProperties properties(rootDeviceIndex, allocateMemory, size, allocationType);
         getAllocationData(allocationData, properties, ptr, createStorageInfoFromProperties(properties));
-        bool useLocalMemory = !allocationData.flags.useSystemMemory && this->localMemorySupported[rootDeviceIndex];
-        return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMemory);
+        return allocate32BitGraphicsMemoryImpl(allocationData);
     }
 
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {

@@ -87,8 +87,7 @@ DrmAllocation *TestedDrmMemoryManager::allocate32BitGraphicsMemory(uint32_t root
     AllocationData allocationData;
     MockAllocationProperties properties(rootDeviceIndex, allocateMemory, size, allocationType);
     getAllocationData(allocationData, properties, ptr, createStorageInfoFromProperties(properties));
-    bool useLocalMemory = !allocationData.flags.useSystemMemory && this->localMemorySupported[rootDeviceIndex];
-    return static_cast<DrmAllocation *>(allocate32BitGraphicsMemoryImpl(allocationData, useLocalMemory));
+    return static_cast<DrmAllocation *>(allocate32BitGraphicsMemoryImpl(allocationData));
 }
 
 void TestedDrmMemoryManager::closeSharedHandle(GraphicsAllocation *gfxAllocation) {

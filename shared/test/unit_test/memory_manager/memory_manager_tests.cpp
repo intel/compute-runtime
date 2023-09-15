@@ -1411,7 +1411,7 @@ TEST(OsAgnosticMemoryManager, givenDebugModuleAreaTypeWhenCreatingAllocationThen
     memoryManager.freeGraphicsMemory(moduleDebugArea);
 }
 
-TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreatingAllocationThen32BitAllocationWithFrontWindowGpuVaIsReturned) {
+TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreatingAllocationThenAllocationWithFrontWindowGpuVaIsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     DebugManagerStateRestore dbgRestore;
@@ -1436,10 +1436,6 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreating
     EXPECT_NE(nullptr, moduleDebugArea);
     EXPECT_NE(nullptr, moduleDebugArea->getUnderlyingBuffer());
     EXPECT_GE(moduleDebugArea->getUnderlyingBufferSize(), size);
-
-    auto address64bit = moduleDebugArea->getGpuAddressToPatch();
-    EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
-    EXPECT_TRUE(moduleDebugArea->is32BitAllocation());
 
     auto gmmHelper = memoryManager.getGmmHelper(moduleDebugArea->getRootDeviceIndex());
     auto frontWindowBase = gmmHelper->canonize(memoryManager.getGfxPartition(moduleDebugArea->getRootDeviceIndex())->getHeapBase(memoryManager.selectInternalHeap(moduleDebugArea->isAllocatedInLocalMemoryPool())));

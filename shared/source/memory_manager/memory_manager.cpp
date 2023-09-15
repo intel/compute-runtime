@@ -642,10 +642,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     bool isAllocationOnLimitedGPU = isLimitedGPUOnType(allocationData.rootDeviceIndex, allocationData.type);
     if (use32Allocator || isAllocationOnLimitedGPU ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-        auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
-        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? productHelper.heapInLocalMem(*hwInfo) : false;
-        return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMem);
+        return allocate32BitGraphicsMemoryImpl(allocationData);
     }
     if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {
         return allocateUSMHostGraphicsMemory(allocationData);
