@@ -65,11 +65,6 @@ std::vector<uint32_t> L0GfxCoreHelperHw<Family>::getSupportedNumGrfs() const {
 }
 
 template <typename Family>
-ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormat() const {
-    return ZE_RTAS_FORMAT_EXP_INVALID;
-}
-
-template <typename Family>
 bool L0GfxCoreHelperHw<Family>::platformSupportsPrimaryBatchBufferCmdList() const {
     return true;
 }

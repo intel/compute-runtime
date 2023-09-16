@@ -29,13 +29,6 @@ class Debugger;
 
 namespace L0 {
 
-typedef enum _ze_rtas_device_format_internal_t {
-    ZE_RTAS_DEVICE_FORMAT_EXP_INVALID = 0,   // invalid acceleration structure format
-    ZE_RTAS_DEVICE_FORMAT_EXP_VERSION_1 = 1, // acceleration structure format version 1
-    ZE_RTAS_DEVICE_FORMAT_EXP_VERSION_2 = 2, // acceleration structure format version 2
-    ZE_RTAS_DEVICE_FORMAT_EXP_VERSION_MAX = 2
-} ze_rtas_device_format_internal_t;
-
 struct Event;
 struct Device;
 struct EventPool;
@@ -85,7 +78,6 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual NEO::HeapAddressModel getPlatformHeapAddressModel() const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
-    virtual ze_rtas_format_exp_t getSupportedRTASFormat() const = 0;
     virtual bool platformSupportsImmediateComputeFlushTask() const = 0;
     virtual zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const = 0;
 
@@ -124,7 +116,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     NEO::HeapAddressModel getPlatformHeapAddressModel() const override;
     std::vector<uint32_t> getSupportedNumGrfs() const override;
-    ze_rtas_format_exp_t getSupportedRTASFormat() const override;
     bool platformSupportsImmediateComputeFlushTask() const override;
     zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const override;
 

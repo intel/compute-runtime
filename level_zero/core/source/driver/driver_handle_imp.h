@@ -9,7 +9,6 @@
 
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -99,11 +98,6 @@ struct DriverHandleImp : public DriverHandle {
     uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const override;
     uint32_t getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const override;
 
-    ze_result_t loadRTASLibrary() override;
-    ze_result_t createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc, ze_rtas_builder_exp_handle_t *phBuilder) override;
-    ze_result_t createRTASParallelOperation(ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) override;
-    ze_result_t formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA, ze_rtas_format_exp_t rtasFormatB) override;
-
     ze_result_t parseAffinityMaskCombined(uint32_t *pCount, ze_device_handle_t *phDevices);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
@@ -116,9 +110,6 @@ struct DriverHandleImp : public DriverHandle {
     std::vector<Device *> devices;
     std::vector<FabricVertex *> fabricVertices;
     std::vector<FabricEdge *> fabricEdges;
-
-    std::mutex rtasLock;
-
     // Spec extensions
     const std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
         {ZE_FLOAT_ATOMICS_EXT_NAME, ZE_FLOAT_ATOMICS_EXT_VERSION_CURRENT},
@@ -137,16 +128,12 @@ struct DriverHandleImp : public DriverHandle {
         {ZE_CACHE_RESERVATION_EXT_NAME, ZE_CACHE_RESERVATION_EXT_VERSION_CURRENT},
         {ZE_IMAGE_VIEW_EXT_NAME, ZE_IMAGE_VIEW_EXP_VERSION_CURRENT},
         {ZE_IMAGE_VIEW_PLANAR_EXT_NAME, ZE_IMAGE_VIEW_PLANAR_EXP_VERSION_CURRENT},
-        {ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_NAME, ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_VERSION_CURRENT},
-        {ZE_RTAS_BUILDER_EXP_NAME, ZE_RTAS_BUILDER_EXP_VERSION_CURRENT}};
+        {ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_NAME, ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_VERSION_CURRENT}};
 
     uint64_t uuidTimestamp = 0u;
 
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
-
-    std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
-    bool rtasLibraryUnavailable = false;
 
     uint32_t numDevices = 0;
 

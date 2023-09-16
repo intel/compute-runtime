@@ -73,11 +73,6 @@ struct DriverHandle : BaseDriver {
     virtual uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const = 0;
     virtual uint32_t getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const = 0;
 
-    virtual ze_result_t loadRTASLibrary() = 0;
-    virtual ze_result_t createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc, ze_rtas_builder_exp_handle_t *phBuilder) = 0;
-    virtual ze_result_t createRTASParallelOperation(ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) = 0;
-    virtual ze_result_t formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA, ze_rtas_format_exp_t rtasFormatB) = 0;
-
     virtual int setErrorDescription(const char *fmt, ...) = 0;
     virtual ze_result_t getErrorDescription(const char **ppString) = 0;
     virtual ze_result_t clearErrorDescription() = 0;

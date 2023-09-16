@@ -81,10 +81,5 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForPla
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
 }
 
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingSupportedRTASFormatThenExpectedFormatIsReturned) {
-    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(ZE_RTAS_DEVICE_FORMAT_EXP_VERSION_1, static_cast<ze_rtas_device_format_internal_t>(l0GfxCoreHelper.getSupportedRTASFormat()));
-}
-
 } // namespace ult
 } // namespace L0
