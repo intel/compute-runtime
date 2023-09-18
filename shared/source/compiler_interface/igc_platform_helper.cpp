@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/igc_platform_helper.h"
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "ocl_igc_interface/gt_system_info.h"
@@ -21,7 +22,12 @@ void populateIgcPlatform<>(IGC::Platform<1> &igcPlatform, const HardwareInfo &hw
 }
 
 template <>
-void populateIgcPlatform<>(IGC::Platform<2> &igcPlatform, const HardwareInfo &hwInfo) {
+void populateIgcPlatform<>(IGC::Platform<2> &igcPlatform, const HardwareInfo &inputHwInfo) {
+    auto hwInfo = inputHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    if (compilerProductHelper) {
+        compilerProductHelper->adjustHwInfoForIgc(hwInfo);
+    }
     igcPlatform.SetProductFamily(hwInfo.platform.eProductFamily);
     igcPlatform.SetPCHProductFamily(hwInfo.platform.ePCHProductFamily);
     igcPlatform.SetDisplayCoreFamily(hwInfo.platform.eDisplayCoreFamily);
