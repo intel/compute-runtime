@@ -90,8 +90,6 @@ struct KernelImp : Kernel {
 
     void setInlineSamplers();
 
-    void patchAndMoveToResidencyContainerPrivateSurface(NEO::GraphicsAllocation *alloc);
-
     ze_result_t initialize(const ze_kernel_desc_t *desc);
 
     const uint8_t *getPerThreadData() const override { return perThreadDataForWholeThreadGroup; }

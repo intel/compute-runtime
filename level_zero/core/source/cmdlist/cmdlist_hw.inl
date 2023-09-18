@@ -3222,8 +3222,9 @@ void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Ke
     if (!allocToReuseFound) {
         privateAlloc = kernelImp->allocatePrivateMemoryGraphicsAllocation();
         privateAllocsToReuse.push_back({sizePerHwThread, privateAlloc});
+        this->commandContainer.addToResidencyContainer(privateAlloc);
     }
-    kernelImp->patchAndMoveToResidencyContainerPrivateSurface(privateAlloc);
+    kernel->patchCrossthreadDataWithPrivateAllocation(privateAlloc);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

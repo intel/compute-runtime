@@ -3263,8 +3263,9 @@ HWTEST2_F(CommandListCreate, givenCmdListWhenAllocateOrReuseCalledForSizeThatIsS
     MockGraphicsAllocation mockGA(mockMem.get(), 2 * sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
     PrivateAllocsToReuseContainer mapForReuse;
     mapForReuse.push_back({sizePerHwThread, &mockGA});
+    auto sizeBefore = mapForReuse.size();
     commandList->allocateOrReuseKernelPrivateMemory(&mockKernel, sizePerHwThread, mapForReuse);
-    EXPECT_EQ(mockKernel.residencyContainer[0], &mockGA);
+    EXPECT_EQ(sizeBefore, mapForReuse.size());
 }
 
 HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPrivateMemoryThenNewAllocationIsCreated, IsAtLeastSkl) {
@@ -3275,14 +3276,34 @@ HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPr
     auto mockMem = std::make_unique<uint8_t[]>(0x1000);
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
+    const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
     mockKernel.module = &mockModule;
     MockGraphicsAllocation mockGA(mockMem.get(), sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch / 2);
     PrivateAllocsToReuseContainer mapForReuse;
     mapForReuse.push_back({sizePerHwThread, &mockGA});
+    auto sizeBefore = mapForReuse.size();
     commandList->allocateOrReuseKernelPrivateMemory(&mockKernel, sizePerHwThread / 2, mapForReuse);
-    EXPECT_NE(mockKernel.residencyContainer[0], &mockGA);
-    neoDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.residencyContainer[0]);
+    EXPECT_NE(sizeBefore, mapForReuse.size());
+    neoDevice->getMemoryManager()->freeGraphicsMemory(commandList->commandContainer.getResidencyContainer()[0]);
+}
+
+HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPrivateMemoryThenNewAllocationIsAddedToCommandContainerResidencyList, IsAtLeastSkl) {
+    auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
+    commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
+    commandList->device = this->device;
+    uint32_t sizePerHwThread = 0x1000;
+    auto mockMem = std::make_unique<uint8_t[]>(0x1000);
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<KernelImp> mockKernel;
+    const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
+    mockKernel.module = &mockModule;
+    MockGraphicsAllocation mockGA(mockMem.get(), sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch / 2);
+    PrivateAllocsToReuseContainer mapForReuse;
+    mapForReuse.push_back({sizePerHwThread, &mockGA});
+    auto sizeBefore = commandList->commandContainer.getResidencyContainer().size();
+    commandList->allocateOrReuseKernelPrivateMemory(&mockKernel, sizePerHwThread / 2, mapForReuse);
+    EXPECT_NE(sizeBefore, commandList->commandContainer.getResidencyContainer().size());
+    neoDevice->getMemoryManager()->freeGraphicsMemory(commandList->commandContainer.getResidencyContainer()[0]);
 }
 
 } // namespace ult

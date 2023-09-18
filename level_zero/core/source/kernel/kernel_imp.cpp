@@ -927,11 +927,6 @@ void KernelImp::setInlineSamplers() {
     }
 }
 
-void KernelImp::patchAndMoveToResidencyContainerPrivateSurface(NEO::GraphicsAllocation *alloc) {
-    this->patchCrossthreadDataWithPrivateAllocation(alloc);
-    this->residencyContainer.push_back(alloc);
-}
-
 ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     this->kernelImmData = module->getKernelImmutableData(desc->pKernelName);
     if (this->kernelImmData == nullptr) {
@@ -1042,7 +1037,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto &kernelAttributes = kernelDescriptor.kernelAttributes;
     if ((kernelAttributes.perHwThreadPrivateMemorySize != 0U) && (false == module->shouldAllocatePrivateMemoryPerDispatch())) {
         this->privateMemoryGraphicsAllocation = allocatePrivateMemoryGraphicsAllocation();
-        this->patchAndMoveToResidencyContainerPrivateSurface(this->privateMemoryGraphicsAllocation);
+        this->patchCrossthreadDataWithPrivateAllocation(this->privateMemoryGraphicsAllocation);
+        this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation);
     }
 
     this->createPrintfBuffer();
