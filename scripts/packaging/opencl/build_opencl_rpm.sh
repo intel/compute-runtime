@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -20,7 +20,7 @@ fi
 BUILD_SRPM="${BUILD_SRPM:-1}"
 BUILD_RPM="${BUILD_RPM:-1}"
 SPEC_FILE="${SPEC_FILE:-${OS_TYPE}}"
-if [[ ${SPEC_FILE} == rhel* ]]; then
+if [[ ${SPEC_FILE} == rhel* || ${SPEC_FILE} == sles* ]]; then
     SPEC_FILE=${SPEC_FILE%.*}
 fi
 
