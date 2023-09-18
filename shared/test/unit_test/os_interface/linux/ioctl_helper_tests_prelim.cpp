@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -25,6 +26,12 @@ using namespace NEO;
 
 extern std::vector<uint64_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions);
 extern std::vector<uint64_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
+
+namespace NEO {
+bool getGpuTimeSplitted(Drm &drm, uint64_t *timestamp);
+bool getGpuTime32(Drm &drm, uint64_t *timestamp);
+bool getGpuTime36(Drm &drm, uint64_t *timestamp);
+} // namespace NEO
 
 struct IoctlPrelimHelperTests : ::testing::Test {
     MockExecutionEnvironment executionEnvironment{};
@@ -594,4 +601,91 @@ TEST_F(IoctlPrelimHelperTests, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect)
 
     ioctlHelper.setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
+}
+
+TEST_F(IoctlPrelimHelperTests, whenGettingGpuTimeThenSucceeds) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto drm = std::make_unique<DrmMockTime>(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+    ASSERT_EQ(true, ioctlHelper.initialize());
+
+    uint64_t time = 0;
+    auto success = getGpuTime32(*drm.get(), &time);
+    EXPECT_TRUE(success);
+    EXPECT_NE(0ULL, time);
+    success = getGpuTime36(*drm.get(), &time);
+    EXPECT_TRUE(success);
+    EXPECT_NE(0ULL, time);
+    success = getGpuTimeSplitted(*drm.get(), &time);
+    EXPECT_TRUE(success);
+    EXPECT_NE(0ULL, time);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenInvalidDrmWhenGettingGpuTimeThenFails) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto drm = std::make_unique<DrmMockFail>(*executionEnvironment.rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+    ASSERT_EQ(true, ioctlHelper.initialize());
+
+    uint64_t time = 0;
+    auto success = getGpuTime32(*drm.get(), &time);
+    EXPECT_FALSE(success);
+    success = getGpuTime36(*drm.get(), &time);
+    EXPECT_FALSE(success);
+    success = getGpuTimeSplitted(*drm.get(), &time);
+    EXPECT_FALSE(success);
+}
+
+TEST_F(IoctlPrelimHelperTests, whenGettingTimeThenTimeIsCorrect) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto drm = std::make_unique<DrmMockCustom>(*executionEnvironment.rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+    ASSERT_EQ(true, ioctlHelper.initialize());
+
+    {
+        auto p = ioctlHelper.getGpuTime;
+        bool (*const *ptr)(Drm &, uint64_t *) = p.target<bool (*)(Drm &, uint64_t *)>();
+        EXPECT_EQ(*ptr, &::NEO::getGpuTime36);
+    }
+
+    {
+        drm->ioctlRes = -1;
+        ioctlHelper.initializeGetGpuTimeFunction();
+        auto p = ioctlHelper.getGpuTime;
+        bool (*const *ptr)(Drm &, uint64_t *) = p.target<bool (*)(Drm &, uint64_t *)>();
+        EXPECT_EQ(*ptr, &::NEO::getGpuTime32);
+    }
+
+    DrmMockCustom::IoctlResExt ioctlToPass = {1, 0};
+    {
+        drm->reset();
+        drm->ioctlRes = -1;
+        drm->ioctlResExt = &ioctlToPass; // 2nd ioctl is successful
+        ioctlHelper.initializeGetGpuTimeFunction();
+        auto p = ioctlHelper.getGpuTime;
+        bool (*const *ptr)(Drm &, uint64_t *) = p.target<bool (*)(Drm &, uint64_t *)>();
+        EXPECT_EQ(*ptr, &::NEO::getGpuTimeSplitted);
+        drm->ioctlResExt = &drm->none;
+    }
+}
+
+TEST_F(IoctlPrelimHelperTests, givenInitializeGetGpuTimeFunctionNotCalledWhenSetGpuCpuTimesIsCalledThenFalseIsReturned) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
+    auto drm = std::make_unique<DrmMockCustom>(rootDeviceEnvironment);
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    drm->ioctlRes = -1;
+    TimeStampData pGpuCpuTime{};
+    std::unique_ptr<MockOSTimeLinux> osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
+    auto ret = ioctlHelper.setGpuCpuTimes(&pGpuCpuTime, osTime.get());
+    EXPECT_EQ(false, ret);
 }

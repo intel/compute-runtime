@@ -28,6 +28,8 @@ struct drm_xe_engine_class_instance;
 
 namespace NEO {
 
+enum class EngineClass : uint16_t;
+
 struct BindInfo {
     uint32_t handle;
     uint64_t userptr;
@@ -107,6 +109,11 @@ class IoctlHelperXe : public IoctlHelper {
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
     void getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss, std::vector<std::bitset<8>> *euDss, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
     void getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap);
+
+    bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
+    void initializeGetGpuTimeFunction() override{};
+    bool getTimestampFrequency(uint64_t &frequency);
+
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
     bool isImmediateVmBindRequired() const override;
 
@@ -114,11 +121,13 @@ class IoctlHelperXe : public IoctlHelper {
     template <typename... XeLogArgs>
     void xeLog(XeLogArgs &&...args) const;
     int xeGetQuery(Query *data);
-    struct drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance);
+    drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance);
 
   protected:
     const char *xeGetClassName(int className);
-    const char *xeGetBindOpName(int bindOp);
+    const char *xeGetBindOperationName(int bindOperation);
+    const char *xeGetBindFlagsName(int bindFlags);
+
     const char *xeGetengineClassName(uint32_t engineClass);
     template <typename DataType>
     std::vector<DataType> queryData(uint32_t queryId);
@@ -133,6 +142,8 @@ class IoctlHelperXe : public IoctlHelper {
         uint64_t addr;
         uint64_t value;
     };
+
+    void setDefaultEngine();
 
   protected:
     int chipsetId = 0;
@@ -149,6 +160,8 @@ class IoctlHelperXe : public IoctlHelper {
     std::vector<uint32_t> hwconfigFakei915;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
     std::vector<drm_xe_engine_class_instance> allEngines;
+
+    drm_xe_engine_class_instance *defaultEngine = nullptr;
 };
 
 } // namespace NEO

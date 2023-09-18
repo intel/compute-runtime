@@ -920,6 +920,7 @@ bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, Hard
 }
 
 bool IoctlHelperPrelim20::initialize() {
+    initializeGetGpuTimeFunction();
     return true;
 }
 

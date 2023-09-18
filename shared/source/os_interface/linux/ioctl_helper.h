@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -24,6 +25,7 @@ namespace NEO {
 class Drm;
 class OsContextLinux;
 class IoctlHelper;
+class OSTime;
 enum class CacheRegion : uint16_t;
 enum class PreferredLocation : int16_t;
 enum class AtomicAccessMode : uint32_t;
@@ -31,6 +33,7 @@ struct HardwareInfo;
 struct HardwareIpVersion;
 struct EngineInfo;
 struct DrmQueryTopologyData;
+struct TimeStampData;
 
 class MemoryInfo;
 
@@ -162,6 +165,10 @@ class IoctlHelper {
     virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap);
     bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping);
     virtual void fillBindInfoForIpcHandle(uint32_t handle, size_t size);
+
+    virtual void initializeGetGpuTimeFunction();
+    virtual bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime);
+    std::function<bool(::NEO::Drm &, uint64_t *)> getGpuTime;
 
   protected:
     Drm &drm;

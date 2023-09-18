@@ -14,12 +14,14 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/os_time.h"
 
 #include <fcntl.h>
 #include <sstream>
@@ -574,4 +576,89 @@ bool IoctlHelper::setGemTiling(void *setTiling) {
 bool IoctlHelper::getGemTiling(void *setTiling) {
     return this->ioctl(DrmIoctl::GemGetTiling, setTiling) == 0;
 }
+
+bool getGpuTime32(::NEO::Drm &drm, uint64_t *timestamp) {
+    RegisterRead reg = {};
+    reg.offset = REG_GLOBAL_TIMESTAMP_LDW;
+
+    if (drm.ioctl(DrmIoctl::RegRead, &reg)) {
+        return false;
+    }
+    *timestamp = reg.value >> 32;
+    return true;
+}
+
+bool getGpuTime36(::NEO::Drm &drm, uint64_t *timestamp) {
+    RegisterRead reg = {};
+    reg.offset = REG_GLOBAL_TIMESTAMP_LDW | 1;
+
+    if (drm.ioctl(DrmIoctl::RegRead, &reg)) {
+        return false;
+    }
+    *timestamp = reg.value;
+    return true;
+}
+
+bool getGpuTimeSplitted(::NEO::Drm &drm, uint64_t *timestamp) {
+    RegisterRead regHi = {};
+    RegisterRead regLo = {};
+    uint64_t tmpHi;
+    int err = 0, loop = 3;
+
+    regHi.offset = REG_GLOBAL_TIMESTAMP_UN;
+    regLo.offset = REG_GLOBAL_TIMESTAMP_LDW;
+
+    err += drm.ioctl(DrmIoctl::RegRead, &regHi);
+    do {
+        tmpHi = regHi.value;
+        err += drm.ioctl(DrmIoctl::RegRead, &regLo);
+        err += drm.ioctl(DrmIoctl::RegRead, &regHi);
+    } while (err == 0 && regHi.value != tmpHi && --loop);
+
+    if (err) {
+        return false;
+    }
+
+    *timestamp = regLo.value | (regHi.value << 32);
+    return true;
+}
+
+void IoctlHelper::initializeGetGpuTimeFunction() {
+    RegisterRead reg = {};
+    int err;
+
+    reg.offset = (REG_GLOBAL_TIMESTAMP_LDW | 1);
+    err = this->ioctl(DrmIoctl::RegRead, &reg);
+    if (err) {
+        reg.offset = REG_GLOBAL_TIMESTAMP_UN;
+        err = this->ioctl(DrmIoctl::RegRead, &reg);
+        if (err) {
+            this->getGpuTime = getGpuTime32;
+        } else {
+            this->getGpuTime = getGpuTimeSplitted;
+        }
+    } else {
+        this->getGpuTime = getGpuTime36;
+    }
+}
+
+bool IoctlHelper::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
+    if (pGpuCpuTime == nullptr || osTime == nullptr) {
+        return false;
+    }
+
+    if (!this->getGpuTime) {
+        return false;
+    }
+
+    if (!this->getGpuTime(drm, &pGpuCpuTime->gpuTimeStamp)) {
+        return false;
+    }
+    if (!osTime->getCpuTime(&pGpuCpuTime->cpuTimeinNS)) {
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace NEO

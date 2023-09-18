@@ -17,6 +17,7 @@ namespace NEO {
 
 bool IoctlHelperUpstream::initialize() {
     detectExtSetPatSupport();
+    initializeGetGpuTimeFunction();
     return true;
 }
 

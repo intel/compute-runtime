@@ -44,7 +44,6 @@ class MockOSTimeLinux : public OSTimeLinux {
     void updateDrm(Drm *drm) {
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         static_cast<MockDeviceTimeDrm *>(this->deviceTime.get())->pDrm = drm;
-        static_cast<MockDeviceTimeDrm *>(this->deviceTime.get())->timestampTypeDetect();
     }
     static std::unique_ptr<MockOSTimeLinux> create(OSInterface &osInterface) {
         return std::unique_ptr<MockOSTimeLinux>(new MockOSTimeLinux(osInterface));
