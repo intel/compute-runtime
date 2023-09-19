@@ -38,6 +38,15 @@ TEST(PtrMath, WhenConvertingAddressToPtrThenPtrIsCorrect) {
     EXPECT_EQ(ptr64BitAddr, addrToPtr(addr64Bit));
 }
 
+TEST(PtrMath, given64bValueWhenConvertingToHighAndLowThenReturnCorrectValues) {
+    const uint32_t low = 0x98765432;
+    const uint32_t high = 0x12345678;
+    const uint64_t value = (static_cast<uint64_t>(high) << 32) | low;
+
+    EXPECT_EQ(low, getLowPart(value));
+    EXPECT_EQ(high, getHighPart(value));
+}
+
 TEST(PtrMath, givenCastToUint64FunctionWhenItIsCalledThenProperValueIsReturned) {
     uintptr_t address = 0xf0000000;
     void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);

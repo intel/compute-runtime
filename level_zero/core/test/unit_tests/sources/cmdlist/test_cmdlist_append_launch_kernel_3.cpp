@@ -796,6 +796,12 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     CmdListKernelLaunchParams launchParams = {};
 };
 
+HWTEST2_F(InOrderCmdListTests, givenCmdListWhenAskingForQwordDataSizeThenReturnFalse, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    EXPECT_FALSE(immCmdList->isQwordInOrderCounter());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxedOrdering, IsAtLeastXeHpCore) {
     NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.set(-1);
 
@@ -1410,7 +1416,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + counterOffset, postSync.getDestinationAddress());
     }
 
-    auto hostAddress = static_cast<uint32_t *>(ptrOffset(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), counterOffset));
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), counterOffset));
 
     *hostAddress = 1;
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(1));
@@ -1473,7 +1479,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     ASSERT_NE(nullptr, sdiCmd);
 
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
 }
 
@@ -1529,7 +1535,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenCl
     ASSERT_NE(nullptr, sdiCmd);
 
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
 }
 
@@ -1645,7 +1651,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenPro
     uint64_t expectedAddress = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress() + immCmdList->inOrderAllocationOffset;
 
     EXPECT_EQ(expectedAddress, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(immCmdList->inOrderDependencyCounter, sdiCmd->getDataDword0());
 
     context->freeMem(hostAlloc);
@@ -1699,7 +1705,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendSignalEventT
         ASSERT_NE(nullptr, sdiCmd);
 
         EXPECT_EQ(inOrderSyncVa, sdiCmd->getAddress());
-        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
         EXPECT_EQ(2u, sdiCmd->getDataDword0());
         EXPECT_EQ(0u, sdiCmd->getDataDword1());
     }
@@ -1723,17 +1729,17 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
 
     uint32_t inOrderCounter = 1;
 
-    auto verifySemaphore = [&inOrderSyncVa](const GenCmdList::iterator &iterator, uint32_t waitValue) {
+    auto verifySemaphore = [&inOrderSyncVa](const GenCmdList::iterator &iterator, uint64_t waitValue) {
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
 
         ASSERT_NE(nullptr, semaphoreCmd);
 
-        EXPECT_EQ(waitValue, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(getLowPart(waitValue), semaphoreCmd->getSemaphoreDataDword());
         EXPECT_EQ(inOrderSyncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
     };
 
-    auto verifySdi = [&inOrderSyncVa](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint32_t signalValue) {
+    auto verifySdi = [&inOrderSyncVa, &immCmdList](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint64_t signalValue) {
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rIterator);
         while (sdiCmd == nullptr) {
             sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++rIterator));
@@ -1745,9 +1751,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
         ASSERT_NE(nullptr, sdiCmd);
 
         EXPECT_EQ(inOrderSyncVa, sdiCmd->getAddress());
-        EXPECT_EQ(0u, sdiCmd->getStoreQword());
-        EXPECT_EQ(signalValue, sdiCmd->getDataDword0());
-        EXPECT_EQ(0u, sdiCmd->getDataDword1());
+        EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+        EXPECT_EQ(getLowPart(signalValue), sdiCmd->getDataDword0());
+        EXPECT_EQ(getHighPart(signalValue), sdiCmd->getDataDword1());
     };
 
     {
@@ -1817,7 +1823,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
         ASSERT_NE(nullptr, pcCmd);
     };
 
-    auto verifySdi = [&inOrderSyncVa](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint32_t signalValue) {
+    auto verifySdi = [&inOrderSyncVa, &regularCmdList](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint64_t signalValue) {
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rIterator);
         while (sdiCmd == nullptr) {
             sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++rIterator));
@@ -1829,9 +1835,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
         ASSERT_NE(nullptr, sdiCmd);
 
         EXPECT_EQ(inOrderSyncVa, sdiCmd->getAddress());
-        EXPECT_EQ(0u, sdiCmd->getStoreQword());
-        EXPECT_EQ(signalValue, sdiCmd->getDataDword0());
-        EXPECT_EQ(0u, sdiCmd->getDataDword1());
+        EXPECT_EQ(regularCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+        EXPECT_EQ(getLowPart(signalValue), sdiCmd->getDataDword0());
+        EXPECT_EQ(getHighPart(signalValue), sdiCmd->getDataDword1());
     };
 
     {
@@ -1979,7 +1985,7 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyThenSi
     uint64_t syncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -2044,7 +2050,7 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingFillThenSi
     uint64_t syncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 
@@ -2095,7 +2101,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndOu
     uint64_t syncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 
@@ -2136,7 +2142,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndWi
     uint64_t syncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 
@@ -2209,7 +2215,7 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyRegion
     uint64_t syncVa = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -2253,7 +2259,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEvents
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(3u, sdiCmd->getDataDword0());
 }
 
@@ -2297,7 +2303,7 @@ HWTEST2_F(InOrderCmdListTests, givenRegularInOrderCmdListWhenProgrammingAppendWa
     uint64_t syncVa = regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(regularCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(3u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -2306,6 +2312,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->inOrderDependencyCounter = std::numeric_limits<uint32_t>::max() - 1;
@@ -2333,26 +2340,43 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), postSync.getDestinationAddress());
 
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
-    ASSERT_NE(cmdList.end(), semaphoreItor);
 
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-    ASSERT_NE(nullptr, semaphoreCmd);
+    uint64_t expectedCounter = 1;
+    uint32_t offset = 0;
 
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(baseGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    if (immCmdList->isQwordInOrderCounter()) {
+        expectedCounter = std::numeric_limits<uint32_t>::max();
 
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
-    ASSERT_NE(nullptr, sdiCmd);
+        EXPECT_EQ(cmdList.end(), semaphoreItor);
 
-    uint32_t offset = static_cast<uint32_t>(sizeof(uint64_t));
+        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto &postSync = walkerCmd->getPostSync();
 
-    EXPECT_EQ(baseGpuVa + offset, sdiCmd->getAddress());
-    EXPECT_EQ(1u, sdiCmd->getDataDword0());
+        EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+        EXPECT_EQ(expectedCounter, postSync.getImmediateData());
+        EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), postSync.getDestinationAddress());
+    } else {
+        ASSERT_NE(cmdList.end(), semaphoreItor);
 
-    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(baseGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+        ASSERT_NE(nullptr, sdiCmd);
+
+        offset = static_cast<uint32_t>(sizeof(uint64_t));
+
+        EXPECT_EQ(baseGpuVa + offset, sdiCmd->getAddress());
+        EXPECT_EQ(1u, sdiCmd->getDataDword0());
+    }
+
+    EXPECT_EQ(expectedCounter, immCmdList->inOrderDependencyCounter);
     EXPECT_EQ(offset, immCmdList->inOrderAllocationOffset);
 
-    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    EXPECT_EQ(expectedCounter, events[0]->inOrderExecSignalValue);
     EXPECT_EQ(offset, events[0]->inOrderAllocationOffset);
 }
 
@@ -2387,7 +2411,7 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingBarrierThe
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     EXPECT_EQ(immCmdList2->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList2->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -2425,7 +2449,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithW
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     EXPECT_EQ(immCmdList2->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList2->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -2522,7 +2546,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -2559,7 +2583,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -2576,7 +2600,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
-    auto hostAddress = static_cast<uint32_t *>(ptrOffset(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), counterOffset));
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), counterOffset));
     *hostAddress = 0;
 
     const uint32_t failCounter = 3;
@@ -2650,7 +2674,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, 
 
     auto eventHandle = events[0]->toHandle();
 
-    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
     *hostAddress = 0;
 
     const uint32_t failCounter = 3;
@@ -2695,7 +2719,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathT
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    auto hostAddress = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
     *hostAddress = 0;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
@@ -2751,7 +2775,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithout
     ASSERT_NE(nullptr, sdiCmd);
 
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
 
     alignedFree(alignedPtr);
@@ -2801,7 +2825,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithEve
     ASSERT_NE(nullptr, sdiCmd);
 
     EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
 
     alignedFree(alignedPtr);
@@ -2892,7 +2916,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
-    auto hostAddress0 = static_cast<uint32_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    auto hostAddress0 = static_cast<uint64_t *>(immCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
     auto hostAddress1 = ptrOffset(hostAddress0, sizeof(uint64_t));
 
     *hostAddress0 = 0;
@@ -3107,7 +3131,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
     auto gpuAddress = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
     EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -3147,7 +3171,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
     auto gpuAddress = immCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
     EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
-    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
@@ -3230,7 +3254,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     }
 
     regularCmdList->inOrderAllocationOffset = 123;
-    auto hostAddr = static_cast<uint32_t *>(regularCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
+    auto hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderDependencyCounterAllocation->getUnderlyingBuffer());
     *hostAddr = 0x1234;
 
     regularCmdList->reset();
@@ -3328,7 +3352,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
         auto gpuAddress = regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
         EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
-        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(regularCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
         EXPECT_EQ(1u, sdiCmd->getDataDword0());
         EXPECT_EQ(0u, sdiCmd->getDataDword1());
     }
@@ -3357,7 +3381,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
         auto gpuAddress = regularCmdList->inOrderDependencyCounterAllocation->getGpuAddress();
 
         EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
-        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(regularCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
         EXPECT_EQ(2u, sdiCmd->getDataDword0());
         EXPECT_EQ(0u, sdiCmd->getDataDword1());
     }

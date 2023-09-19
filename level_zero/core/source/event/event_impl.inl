@@ -148,11 +148,11 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
-    auto hostAddress = static_cast<uint32_t *>(ptrOffset(this->inOrderExecDataAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(this->inOrderExecDataAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
     bool signaled = true;
 
     for (uint32_t i = 0; i < this->getPacketsInUse(); i++) {
-        if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint32_t>(hostAddress, this->inOrderExecSignalValue, std::greater_equal<uint32_t>())) {
+        if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, this->inOrderExecSignalValue, std::greater_equal<uint64_t>())) {
             signaled = false;
             break;
         }

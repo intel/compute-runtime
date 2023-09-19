@@ -130,6 +130,7 @@ struct Gen12LpFamily : public Gen12Lp {
     static const XY_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
     static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;
+    static constexpr bool isQwordInOrderCounter = false;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;

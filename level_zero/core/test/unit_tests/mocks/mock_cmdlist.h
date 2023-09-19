@@ -80,6 +80,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::inOrderDependencyCounter;
     using BaseClass::inOrderDependencyCounterAllocation;
     using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::isQwordInOrderCounter;
     using BaseClass::isRelaxedOrderingDispatchAllowed;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
@@ -172,6 +173,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::inOrderDependencyCounterAllocation;
     using BaseClass::isBcsSplitNeeded;
     using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::isQwordInOrderCounter;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::latestFlushIsHostVisible;

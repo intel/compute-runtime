@@ -140,6 +140,7 @@ struct XeHpFamily : public XeHpCore {
     static const _3DSTATE_BTD cmd3dStateBtd;
     static const _3DSTATE_BTD_BODY cmd3dStateBtdBody;
     static const STATE_SIP cmdInitStateSip;
+    static constexpr bool isQwordInOrderCounter = false;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_XE_HP_CORE;

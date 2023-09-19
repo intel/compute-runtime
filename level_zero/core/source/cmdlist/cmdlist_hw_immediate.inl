@@ -1238,10 +1238,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
         bool signaled = true;
 
-        auto hostAddress = static_cast<uint32_t *>(ptrOffset(this->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
+        auto hostAddress = static_cast<uint64_t *>(ptrOffset(this->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
 
         for (uint32_t i = 0; i < this->partitionCount; i++) {
-            if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint32_t>(hostAddress, waitValue, std::greater_equal<uint32_t>())) {
+            if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
                 signaled = false;
                 break;
             }

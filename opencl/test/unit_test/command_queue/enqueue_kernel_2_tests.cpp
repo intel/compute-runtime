@@ -1170,7 +1170,7 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
     auto eventNode = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes()[0];
     auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true, false));
 
     mockCmdQueueHw.enqueueBarrierWithWaitList(1, &outEvent, nullptr);
 
@@ -1267,10 +1267,10 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlu
     auto eventNode = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes()[0];
     auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true, false));
 
     auto conditionalBbStart2 = reinterpret_cast<void *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(conditionalBbStart2, 0, compareAddress, 1, CompareOperation::Equal, true));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(conditionalBbStart2, 0, compareAddress, 1, CompareOperation::Equal, true, false));
 
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(conditionalBbStart2, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
     EXPECT_NE(nullptr, sdiCmd);

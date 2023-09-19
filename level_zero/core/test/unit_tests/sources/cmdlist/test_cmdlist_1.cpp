@@ -1697,7 +1697,8 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     lrrCmd++;
     lrrCmd++;
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, cmdList->inOrderDependencyCounterAllocation->getGpuAddress(), 2, NEO::CompareOperation::Less, true));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, cmdList->inOrderDependencyCounterAllocation->getGpuAddress(), 2,
+                                                                                           NEO::CompareOperation::Less, true, cmdList->isQwordInOrderCounter()));
 }
 
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {

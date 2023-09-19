@@ -215,10 +215,10 @@ struct Event : _ze_event_handle_t {
     void setMetricStreamer(MetricStreamer *metricStreamer) {
         this->metricStreamer = metricStreamer;
     }
-    void updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint32_t signalValue, uint32_t allocationOffset);
+    void updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue, uint32_t allocationOffset);
     bool isInOrderExecEvent() const { return inOrderExecEvent; }
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const { return inOrderExecDataAllocation; }
-    uint32_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
+    uint64_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
     NEO::TimeStampData *peekReferenceTs() {
@@ -238,7 +238,7 @@ struct Event : _ze_event_handle_t {
     uint64_t contextEndTS = 1;
     NEO::TimeStampData referenceTs{};
 
-    uint32_t inOrderExecSignalValue = 0;
+    uint64_t inOrderExecSignalValue = 0;
     uint32_t inOrderAllocationOffset = 0;
 
     std::chrono::microseconds gpuHangCheckPeriod{500'000};

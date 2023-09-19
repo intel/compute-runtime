@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 inline const int ptrGarbageContent[16] = {
     0x0131, 0x133, 0xA, 0xEF,
@@ -70,4 +71,12 @@ inline void patchWithRequiredSize(void *memoryToBePatched, uint32_t patchSize, u
 
 inline uint64_t castToUint64(const void *address) {
     return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(const_cast<void *>(address)));
+}
+
+inline uint32_t getLowPart(uint64_t value) {
+    return static_cast<uint32_t>(value & std::numeric_limits<uint32_t>::max());
+}
+
+inline uint32_t getHighPart(uint64_t value) {
+    return static_cast<uint32_t>(value >> 32);
 }

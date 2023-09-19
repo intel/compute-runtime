@@ -150,7 +150,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter() {
-    if ((inOrderDependencyCounter + 1) == std::numeric_limits<uint32_t>::max()) {
+    if (!isQwordInOrderCounter() && ((inOrderDependencyCounter + 1) == std::numeric_limits<uint32_t>::max())) {
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderDependencyCounterAllocation, inOrderDependencyCounter + 1, inOrderAllocationOffset, false);
 
         inOrderDependencyCounter = 0;
@@ -2297,7 +2297,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint32_t waitValue, uint32_t offset, bool relaxedOrderingAllowed) {
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     UNRECOVERABLE_IF(waitValue > std::numeric_limits<uint32_t>::max());
@@ -2309,12 +2309,12 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
 
     for (uint32_t i = 0; i < this->partitionCount; i++) {
         if (relaxedOrderingAllowed) {
-            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue, NEO::CompareOperation::Less, true, false);
+            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue, NEO::CompareOperation::Less, true, isQwordInOrderCounter());
 
         } else {
             NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
                                                                        gpuAddress, waitValue,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false);
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, isQwordInOrderCounter(), false);
         }
 
         gpuAddress += sizeof(uint64_t);
@@ -2415,12 +2415,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter() {
-    uint32_t signalValue = this->inOrderDependencyCounter + 1;
+    uint64_t signalValue = this->inOrderDependencyCounter + 1;
 
     uint64_t gpuVa = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
 
     NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(*commandContainer.getCommandStream(), gpuVa,
-                                                           signalValue, 0, false, (this->partitionCount > 1));
+                                                           getLowPart(signalValue), getHighPart(signalValue), isQwordInOrderCounter(), (this->partitionCount > 1));
 
     if (NEO::EncodeUserInterruptHelper::isOperationAllowed(NEO::EncodeUserInterruptHelper::onSignalingFenceMask)) {
         NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());

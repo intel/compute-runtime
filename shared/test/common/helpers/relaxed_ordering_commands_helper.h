@@ -29,7 +29,7 @@ template <typename FamilyType>
 bool verifyConditionalDataRegBbStart(void *cmd, uint64_t startAddress, uint32_t compareReg, uint32_t compareData, CompareOperation compareOperation, bool indirect);
 
 template <typename FamilyType>
-bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t compareAddress, uint32_t compareData, CompareOperation compareOperation, bool indirect);
+bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t compareAddress, uint64_t compareData, CompareOperation compareOperation, bool indirect, bool qwordData);
 
 template <typename FamilyType>
 bool verifyConditionalRegRegBbStart(void *cmd, uint64_t startAddress, AluRegisters compareReg0, AluRegisters compareReg1, CompareOperation compareOperation, bool indirect);
@@ -224,7 +224,7 @@ bool verifyConditionalRegRegBbStart(void *cmd, uint64_t startAddress, AluRegiste
 }
 
 template <typename FamilyType>
-bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t compareAddress, uint32_t compareData, CompareOperation compareOperation, bool indirect) {
+bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t compareAddress, uint64_t compareData, CompareOperation compareOperation, bool indirect, bool qwordData) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -233,16 +233,29 @@ bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t 
         return false;
     }
 
-    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7 + 4, 0)) {
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+
+    if (qwordData) {
+        lrmCmd++;
+        if ((lrmCmd->getRegisterAddress() != CS_GPR_R7 + 4) || (lrmCmd->getMemoryAddress() != compareAddress + 4)) {
+            return false;
+        }
+
+        lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
+    } else {
+        auto lriCmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
+        if (!verifyLri<FamilyType>(lriCmd2, CS_GPR_R7 + 4, 0)) {
+            return false;
+        }
+
+        lriCmd = ++lriCmd2;
+    }
+
+    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R8, getLowPart(compareData))) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, compareData)) {
-        return false;
-    }
-
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, 0)) {
+    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, qwordData ? getHighPart(compareData) : 0)) {
         return false;
     }
 

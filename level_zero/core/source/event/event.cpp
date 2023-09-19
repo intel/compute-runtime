@@ -391,7 +391,7 @@ void Event::setIsCompleted() {
     unsetCmdQueue();
 }
 
-void Event::updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint32_t signalValue, uint32_t allocationOffset) {
+void Event::updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue, uint32_t allocationOffset) {
     inOrderExecSignalValue = signalValue;
     inOrderExecDataAllocation = &inOrderDependenciesAllocation;
     inOrderAllocationOffset = allocationOffset;

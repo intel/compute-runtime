@@ -37,7 +37,7 @@ struct CommandListImp : CommandList {
 
   protected:
     NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;
-    uint32_t inOrderDependencyCounter = 0;
+    uint64_t inOrderDependencyCounter = 0;
     uint32_t inOrderAllocationOffset = 0;
     bool inOrderExecutionEnabled = false;
 
