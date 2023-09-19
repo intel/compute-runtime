@@ -816,6 +816,31 @@ HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
+HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListThenReturnError, IsAtLeastSkl) {
+    DebugManager.flags.ForceInOrderEvents.set(1);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    eventDesc.index = 0;
+    auto event = std::unique_ptr<MockEvent>(static_cast<MockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
+    EXPECT_TRUE(event->inOrderExecEvent);
+
+    auto handle = event->toHandle();
+
+    returnValue = immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, &handle, launchParams, false);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCountForWaits, IsAtLeastSkl) {
     auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
     auto immCmdList1 = createImmCmdList<gfxCoreFamily>();

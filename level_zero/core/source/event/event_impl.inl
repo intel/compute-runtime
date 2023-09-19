@@ -81,6 +81,10 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->timestampRefreshIntervalInNanoSec = refreshTime * milliSecondsToNanoSeconds;
     }
 
+    if (NEO::DebugManager.flags.ForceInOrderEvents.get() == 1) {
+        event->enableInOrderMode();
+    }
+
     return event;
 }
 

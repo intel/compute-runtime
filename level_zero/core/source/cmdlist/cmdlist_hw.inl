@@ -2242,7 +2242,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 
     if (numWaitEvents > 0) {
         if (phWaitEvents) {
-            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents, relaxedOrderingAllowed, trackDependencies, false);
+            return CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents, relaxedOrderingAllowed, trackDependencies, false);
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -2372,6 +2372,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
         if (event->isInOrderExecEvent()) {
             UNRECOVERABLE_IF(this->cmdListType != TYPE_IMMEDIATE);
+            if (!event->getInOrderExecDataAllocation()) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
+            }
             if (isInOrderEventWaitRequired(*event)) {
                 CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), event->getInOrderAllocationOffset(), relaxedOrderingAllowed);
             }

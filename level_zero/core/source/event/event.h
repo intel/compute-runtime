@@ -217,6 +217,7 @@ struct Event : _ze_event_handle_t {
     }
     void updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue, uint32_t allocationOffset);
     bool isInOrderExecEvent() const { return inOrderExecEvent; }
+    void enableInOrderMode() { this->inOrderExecEvent = true; }
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const { return inOrderExecDataAllocation; }
     uint64_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
