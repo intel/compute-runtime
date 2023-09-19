@@ -98,10 +98,15 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     }
     auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
 
-    populateIgcPlatform(*igcPlatform, hwInfo);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
+    auto copyHwInfo = hwInfo;
+    if (compilerProductHelper) {
+        compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+    }
 
-    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper.get());
+    populateIgcPlatform(*igcPlatform, copyHwInfo);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), copyHwInfo.gtSystemInfo);
+
+    populateWithFeatures(igcFtrWa.get(), copyHwInfo, compilerProductHelper.get());
 
     initialized = true;
     return OCLOC_SUCCESS;
