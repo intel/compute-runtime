@@ -141,7 +141,6 @@ struct KernelImp : Kernel {
     }
 
     NEO::GraphicsAllocation *getIsaAllocation() const override;
-    uint64_t getIsaOffsetInParentAllocation() const override;
 
     uint32_t getRequiredWorkgroupOrder() const override { return requiredWorkgroupOrder; }
     bool requiresGenerationOfLocalIdsByRuntime() const override { return kernelRequiresGenerationOfLocalIdsByRuntime; }

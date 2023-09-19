@@ -53,7 +53,6 @@ class GfxCoreHelper {
     static std::unique_ptr<GfxCoreHelper> create(const GFXCORE_FAMILY gfxCoreFamily);
     virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
     virtual size_t getPaddingForISAAllocation() const = 0;
-    virtual size_t getKernelIsaPointerAlignment() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) = 0;
@@ -215,10 +214,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     size_t getMaxBarrierRegisterPerSlice() const override;
 
     size_t getPaddingForISAAllocation() const override;
-
-    size_t getKernelIsaPointerAlignment() const override {
-        return static_cast<size_t>(GfxFamily::cmdInitInterfaceDescriptorData.KERNELSTARTPOINTER_ALIGN_SIZE);
-    }
 
     uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 

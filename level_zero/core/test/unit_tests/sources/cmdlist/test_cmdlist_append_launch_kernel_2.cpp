@@ -1382,7 +1382,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogethe
     auto overAllocMinSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) + margin1KB;
     auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
 
-    auto &kernelImmDatas = this->module->kernelImmDatas;
+    auto proxyModuleImpl = static_cast<ModuleFixture::ProxyModuleImp *>(this->module.get());
+    auto &kernelImmDatas = proxyModuleImpl->getKernelImmDatas();
     for (size_t i = 0; i < kernelsNb; i++) {
         auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
         kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = overAllocMinSize + static_cast<uint32_t>(i * MemoryConstants::cacheLineSize);
@@ -1418,7 +1419,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExc
     auto underAllocSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) - margin128KB;
     auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
 
-    auto &kernelImmDatas = this->module->kernelImmDatas;
+    auto proxyModuleImpl = static_cast<ModuleFixture::ProxyModuleImp *>(this->module.get());
+    auto &kernelImmDatas = proxyModuleImpl->getKernelImmDatas();
     for (size_t i = 0; i < kernelsNb; i++) {
         auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
         kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = underAllocSize;

@@ -997,45 +997,6 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThen
     EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST2_F(EncodeDispatchKernelTest, givenKernelsSharingISAParentAllocationsWhenProgrammingWalkerThenKernelStartPointerHasProperOffset, IsBeforeXeHpCore) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
-    auto dispatchInterface = std::make_unique<MockDispatchKernelEncoder>();
-    dispatchInterface->getIsaOffsetInParentAllocationResult = 8 << INTERFACE_DESCRIPTOR_DATA::KERNELSTARTPOINTER_BIT_SHIFT;
-    uint32_t dims[] = {2, 1, 1};
-    bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
-
-    auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
-    EXPECT_EQ(idd->getKernelStartPointer(), dispatchInterface->getIsaAllocation()->getGpuAddressToPatch() + dispatchInterface->getIsaOffsetInParentAllocation());
-}
-
-HWTEST_F(EncodeDispatchKernelTest, givenKernelStartPointerAlignmentInInterfaceDescriptorWhenHelperGetterUsedThenCorrectValueReturned) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::KERNELSTARTPOINTER_ALIGN_SIZE, pDevice->getGfxCoreHelper().getKernelIsaPointerAlignment());
-}
-
-HWTEST2_F(EncodeDispatchKernelTest, givenKernelsSharingISAParentAllocationsWhenProgrammingWalkerThenKernelStartPointerHasProperOffset, IsAtLeastXeHpCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
-    auto dispatchInterface = std::make_unique<MockDispatchKernelEncoder>();
-    dispatchInterface->getIsaOffsetInParentAllocationResult = 8 << INTERFACE_DESCRIPTOR_DATA::KERNELSTARTPOINTER_BIT_SHIFT;
-    uint32_t dims[] = {2, 1, 1};
-    bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
-
-    GenCmdList commands;
-    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
-    ASSERT_NE(itor, commands.end());
-
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(walkerCmd->getInterfaceDescriptor().getKernelStartPointer(), dispatchInterface->getIsaAllocation()->getGpuAddressToPatch() + dispatchInterface->getIsaOffsetInParentAllocation());
-}
-
 HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsNotPatched) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;

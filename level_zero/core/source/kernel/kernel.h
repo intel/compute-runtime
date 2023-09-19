@@ -35,9 +35,9 @@ struct KernelImmutableData {
     KernelImmutableData(L0::Device *l0device = nullptr);
     virtual ~KernelImmutableData();
 
-    MOCKABLE_VIRTUAL ze_result_t initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForSratch,
-                                            NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer,
-                                            bool internalKernel);
+    ze_result_t initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForSratch,
+                           NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer,
+                           bool internalKernel);
 
     const std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() const {
         return residencyContainer;
@@ -48,14 +48,7 @@ struct KernelImmutableData {
     }
 
     uint32_t getIsaSize() const;
-    NEO::GraphicsAllocation *getIsaGraphicsAllocation() const;
-    void setIsaPerKernelAllocation(NEO::GraphicsAllocation *allocation);
-    inline NEO::GraphicsAllocation *getIsaParentAllocation() const { return isaParentAllocation; }
-    inline void setIsaParentAllocation(NEO::GraphicsAllocation *allocation) { isaParentAllocation = allocation; };
-    inline size_t getIsaOffsetInParentAllocation() const { return isaSubAllocationOffset; }
-    inline void setIsaSubAllocationOffset(size_t offset) { isaSubAllocationOffset = offset; }
-    inline void setIsaSubAllocationSize(size_t size) { isaSubAllocationSize = size; }
-    inline size_t getIsaSubAllocationSize() const { return isaSubAllocationSize; }
+    NEO::GraphicsAllocation *getIsaGraphicsAllocation() const { return isaGraphicsAllocation.get(); }
 
     const uint8_t *getCrossThreadDataTemplate() const { return crossThreadDataTemplate.get(); }
 
@@ -87,9 +80,6 @@ struct KernelImmutableData {
     NEO::KernelInfo *kernelInfo = nullptr;
     NEO::KernelDescriptor *kernelDescriptor = nullptr;
     std::unique_ptr<NEO::GraphicsAllocation> isaGraphicsAllocation = nullptr;
-    NEO::GraphicsAllocation *isaParentAllocation = nullptr;
-    size_t isaSubAllocationOffset = 0lu;
-    size_t isaSubAllocationSize = 0lu;
 
     uint32_t crossThreadDataSize = 0;
     std::unique_ptr<uint8_t[]> crossThreadDataTemplate = nullptr;

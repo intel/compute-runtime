@@ -124,13 +124,24 @@ void ModuleImmutableDataFixture::tearDown() {
     DeviceFixture::tearDown();
 }
 
-void ModuleFixture::setUp(bool skipCreatingModules) {
+ModuleFixture::ProxyModuleImp *ModuleFixture::ProxyModuleImp::create(L0::Device *device, const ze_module_desc_t *desc,
+                                                                     ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
+    auto module = new ProxyModuleImp(device, moduleBuildLog, type);
+
+    *result = module->initialize(desc, device->getNEODevice());
+    if (*result != ZE_RESULT_SUCCESS) {
+        module->destroy();
+        return nullptr;
+    }
+
+    return module;
+}
+
+void ModuleFixture::setUp() {
     DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
     DeviceFixture::setUp();
-    if (skipCreatingModules == false) {
-        createModuleFromMockBinary();
-    }
+    createModuleFromMockBinary();
 }
 
 void ModuleFixture::createModuleFromMockBinary(ModuleType type) {
@@ -144,13 +155,7 @@ void ModuleFixture::createModuleFromMockBinary(ModuleType type) {
 
     ModuleBuildLog *moduleBuildLog = nullptr;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    if (!module) {
-        module.reset(new WhiteBox<::L0::Module>{device, moduleBuildLog, type});
-    }
-    result = module->initialize(&moduleDesc, device->getNEODevice());
-    if (result != ZE_RESULT_SUCCESS) {
-        module->destroy();
-    }
+    module.reset(ProxyModuleImp::create(device, &moduleDesc, moduleBuildLog, type, &result));
 }
 
 void ModuleFixture::createKernel() {

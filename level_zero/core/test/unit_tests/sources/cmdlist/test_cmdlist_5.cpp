@@ -457,15 +457,9 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAllEventData, IsAtLeastSkl) {
     class MockQueryKernelTimestampsKernel : public L0::KernelImp {
       public:
-        MockQueryKernelTimestampsKernel(MockModule *module) : KernelImp{module}, module{module} {
+        MockQueryKernelTimestampsKernel(L0::Module *module) : KernelImp(module) {
             mockKernelImmutableData.kernelDescriptor = &mockKernelDescriptor;
-            size_t stubKernelHeapSize = 42;
-            mockKernelImmutableData.setIsaPerKernelAllocation(module->allocateKernelsIsaMemory(stubKernelHeapSize));
             this->kernelImmData = &mockKernelImmutableData;
-        }
-
-        ~MockQueryKernelTimestampsKernel() override {
-            this->module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(mockKernelImmutableData.isaGraphicsAllocation.release());
         }
 
         ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {
@@ -486,13 +480,12 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetA
         NEO::GraphicsAllocation *index0Allocation = nullptr;
         KernelDescriptor mockKernelDescriptor = {};
         WhiteBox<::L0::KernelImmutableData> mockKernelImmutableData = {};
-        MockModule *module = nullptr;
     };
 
     struct MockBuiltinFunctionsForQueryKernelTimestamps : BuiltinFunctionsLibImpl {
         MockBuiltinFunctionsForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
             tmpModule = std::make_unique<MockModule>(device, nullptr, ModuleType::Builtin);
-            tmpMockKernel = std::make_unique<MockQueryKernelTimestampsKernel>(tmpModule.get());
+            tmpMockKernel = std::make_unique<MockQueryKernelTimestampsKernel>(static_cast<L0::ModuleImp *>(tmpModule.get()));
         }
         MockQueryKernelTimestampsKernel *getFunction(Builtin func) override {
             return tmpMockKernel.get();

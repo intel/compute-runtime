@@ -40,7 +40,6 @@ struct DispatchKernelEncoderI {
     virtual uint32_t getSurfaceStateHeapDataSize() const = 0;
 
     virtual GraphicsAllocation *getIsaAllocation() const = 0;
-    virtual uint64_t getIsaOffsetInParentAllocation() const = 0;
     virtual const uint8_t *getDynamicStateHeapData() const = 0;
 
     virtual uint32_t getRequiredWorkgroupOrder() const = 0;

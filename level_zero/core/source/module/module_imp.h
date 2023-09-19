@@ -124,7 +124,6 @@ struct ModuleImp : public Module {
     const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override;
 
     const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const override { return kernelImmDatas; }
-    NEO::GraphicsAllocation *getKernelsIsaParentAllocation() const { return kernelsIsaParentRegion.get(); }
 
     uint32_t getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const override;
 
@@ -156,9 +155,8 @@ struct ModuleImp : public Module {
     }
 
   protected:
-    MOCKABLE_VIRTUAL ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);
+    ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);
     ze_result_t checkIfBuildShouldBeFailed(NEO::Device *neoDevice);
-    ze_result_t allocateKernelImmutableDatas(size_t kernelsCount);
     ze_result_t initializeKernelImmutableDatas();
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();
@@ -169,9 +167,6 @@ struct ModuleImp : public Module {
     void notifyModuleCreate();
     void notifyModuleDestroy();
     bool populateHostGlobalSymbolsMap(std::unordered_map<std::string, std::string> &devToHostNameMapping);
-    ze_result_t setIsaGraphicsAllocations();
-    MOCKABLE_VIRTUAL size_t computeKernelIsaAllocationAlignedSizeWithPadding(size_t isaSize);
-    MOCKABLE_VIRTUAL NEO::GraphicsAllocation *allocateKernelsIsaMemory(size_t size);
     StackVec<NEO::GraphicsAllocation *, 32> getModuleAllocations();
 
     Device *device = nullptr;
@@ -179,7 +174,6 @@ struct ModuleImp : public Module {
     std::unique_ptr<ModuleTranslationUnit> translationUnit;
     ModuleBuildLog *moduleBuildLog = nullptr;
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;
-    std::unique_ptr<NEO::GraphicsAllocation> kernelsIsaParentRegion;
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;
 
@@ -204,7 +198,6 @@ struct ModuleImp : public Module {
     uint32_t debugElfHandle = 0;
     uint32_t profileFlags = 0;
     uint64_t moduleLoadAddress = std::numeric_limits<uint64_t>::max();
-    size_t isaAllocationPageSize = 0;
 
     NEO::Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;
