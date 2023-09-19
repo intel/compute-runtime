@@ -555,62 +555,6 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
     }
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNonCooperativeKernelsWhenExecuteCommandListsIsCalledThenErrorIsReturned, IsAtLeastSkl) {
-    ze_command_queue_desc_t desc = {};
-    NEO::CommandStreamReceiver *csr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
-
-    auto pCommandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
-    pCommandQueue->initialize(false, false, false);
-
-    Mock<::L0::KernelImp> kernel;
-    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-    kernel.module = pMockModule.get();
-
-    ze_group_count_t threadGroupDimensions{1, 1, 1};
-    auto pCommandListWithCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandListWithCooperativeKernels->initialize(device, NEO::EngineGroupType::Compute, 0u);
-
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.isCooperative = true;
-    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, launchParams);
-
-    auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandListWithNonCooperativeKernels->initialize(device, NEO::EngineGroupType::Compute, 0u);
-
-    launchParams.isCooperative = false;
-    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, launchParams);
-
-    {
-        ze_command_list_handle_t commandLists[] = {pCommandListWithCooperativeKernels->toHandle(),
-                                                   pCommandListWithNonCooperativeKernels->toHandle()};
-        auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
-        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, result);
-    }
-    {
-        ze_command_list_handle_t commandLists[] = {pCommandListWithNonCooperativeKernels->toHandle(),
-                                                   pCommandListWithCooperativeKernels->toHandle()};
-        auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
-        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, result);
-    }
-
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
-    {
-        ze_command_list_handle_t commandLists[] = {pCommandListWithCooperativeKernels->toHandle(),
-                                                   pCommandListWithNonCooperativeKernels->toHandle()};
-        auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    }
-    {
-        ze_command_list_handle_t commandLists[] = {pCommandListWithNonCooperativeKernels->toHandle(),
-                                                   pCommandListWithCooperativeKernels->toHandle()};
-        auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    }
-    pCommandQueue->destroy();
-}
-
 struct CommandQueueExecuteCommandListsImplicitScalingDisabled : CommandQueueExecuteCommandLists {
     void SetUp() override {
         DebugManager.flags.EnableImplicitScaling.set(0);

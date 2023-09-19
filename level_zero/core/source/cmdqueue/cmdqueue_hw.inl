@@ -59,10 +59,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     ze_fence_handle_t hFence,
     bool performMigration) {
 
-    auto ret = validateCommandListsParams(phCommandLists, numCommandLists);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
+    auto ret = ZE_RESULT_SUCCESS;
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
 
@@ -295,40 +292,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     this->csr->getResidencyAllocations().clear();
 
     return retVal;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandQueueHw<gfxCoreFamily>::validateCommandListsParams(
-    ze_command_list_handle_t *phCommandLists,
-    uint32_t numCommandLists) {
-
-    bool anyCommandListWithCooperativeKernels = false;
-    bool anyCommandListWithoutCooperativeKernels = false;
-
-    for (auto i = 0u; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        if (this->peekIsCopyOnlyCommandQueue() != commandList->isCopyOnly()) {
-            return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
-        }
-
-        if (this->activeSubDevices < commandList->getPartitionCount()) {
-            return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
-        }
-
-        if (commandList->containsCooperativeKernels()) {
-            anyCommandListWithCooperativeKernels = true;
-        } else {
-            anyCommandListWithoutCooperativeKernels = true;
-        }
-    }
-
-    if (anyCommandListWithCooperativeKernels &&
-        anyCommandListWithoutCooperativeKernels &&
-        (!NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get())) {
-        return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
-    }
-
-    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

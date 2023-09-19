@@ -109,8 +109,6 @@ struct CommandQueueHw : public CommandQueueImp {
         bool globalInit = false;
     };
 
-    ze_result_t validateCommandListsParams(ze_command_list_handle_t *phCommandLists,
-                                           uint32_t numCommandLists);
     ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
                                            uint32_t numCommandLists,
                                            ze_command_list_handle_t *commandListHandles,

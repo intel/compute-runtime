@@ -736,33 +736,6 @@ HWTEST_F(CommandQueueCreate, givenQueueInSyncModeAndRugularCmdListWithAppendBarr
     commandQueue->destroy();
 }
 
-TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitCommandListThenWrongCommandListStatusReturned) {
-    const ze_command_queue_desc_t desc = {};
-    ze_result_t returnValue;
-    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
-                                                          csr.get(),
-                                                          &desc,
-                                                          true,
-                                                          false,
-                                                          false,
-                                                          returnValue);
-    ASSERT_NE(nullptr, commandQueue);
-
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    ASSERT_NE(nullptr, commandList);
-    commandList->close();
-
-    auto commandListHandle = commandList->toHandle();
-    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-
-    EXPECT_EQ(status, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
-
-    commandQueue->destroy();
-}
-
 TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommandListThenSuccessReturned) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;

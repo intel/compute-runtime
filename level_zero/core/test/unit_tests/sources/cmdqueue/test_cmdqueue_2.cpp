@@ -378,35 +378,6 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-HWTEST_F(CommandQueueSynchronizeTest, givenSingleTileCsrWhenExecutingMultiTileCommandListThenExpectErrorOnExecute) {
-    const ze_command_queue_desc_t desc{};
-    ze_result_t returnValue;
-
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
-                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                          &desc,
-                                                          false,
-                                                          false,
-                                                          false,
-                                                          returnValue));
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    ASSERT_NE(nullptr, commandQueue);
-    EXPECT_EQ(1u, commandQueue->activeSubDevices);
-
-    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-    ASSERT_NE(nullptr, commandList);
-    commandList->partitionCount = 2;
-
-    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    commandList->close();
-
-    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
-    EXPECT_EQ(returnValue, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
-
-    L0::CommandQueue::fromHandle(commandQueue)->destroy();
-}
-
 template <typename GfxFamily>
 struct TestCmdQueueCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     TestCmdQueueCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
