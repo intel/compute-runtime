@@ -112,7 +112,7 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
 
     ASSERT_NE(nullptr, whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
     EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCsr());
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getSynchronousMode());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCommandQueueMode());
 }
 
 TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
@@ -134,7 +134,7 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCm
 
     ASSERT_NE(nullptr, whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
     EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCsr());
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getSynchronousMode());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCommandQueueMode());
     EXPECT_EQ(whiteboxCast(deviceImp->pageFaultCommandList)->device, deviceImp->subDevices[0]);
 }
 

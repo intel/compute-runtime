@@ -259,10 +259,6 @@ void CommandQueueImp::unregisterCsrClient() {
     }
 }
 
-ze_command_queue_mode_t CommandQueueImp::getSynchronousMode() const {
-    return desc.mode;
-}
-
 ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
     size_t alignedSize = alignUp<size_t>(sizeRequested, MemoryConstants::pageSize64k);
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, alignedSize,

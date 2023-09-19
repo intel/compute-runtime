@@ -1995,7 +1995,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToDefaultWhenCommandQueu
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getSynchronousMode();
+    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getCommandQueueMode();
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_DEFAULT, cmdQueueSynchronousMode);
 
     commandQueue->destroy();
@@ -2018,7 +2018,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToAsynchronousWhenComman
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getSynchronousMode();
+    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getCommandQueueMode();
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdQueueSynchronousMode);
 
     commandQueue->destroy();
@@ -2041,7 +2041,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getSynchronousMode();
+    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getCommandQueueMode();
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, cmdQueueSynchronousMode);
 
     commandQueue->destroy();

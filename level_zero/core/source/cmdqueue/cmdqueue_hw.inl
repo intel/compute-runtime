@@ -464,7 +464,7 @@ void CommandQueueHw<gfxCoreFamily>::programPipelineSelectIfGpgpuDisabled(NEO::Li
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const {
-    return containsAnyRegularCmdList || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    return containsAnyRegularCmdList || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || isSynchronousMode();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1234,7 +1234,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::waitForCommandQueueCompletionAndClean
 
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
-    if (this->getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) {
+    if (this->isSynchronousMode()) {
         if (const auto syncRet = this->synchronize(std::numeric_limits<uint64_t>::max()); syncRet == ZE_RESULT_ERROR_DEVICE_LOST) {
             ret = syncRet;
         }
