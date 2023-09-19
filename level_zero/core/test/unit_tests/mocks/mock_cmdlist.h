@@ -89,6 +89,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::patternAllocations;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::regularCmdListSubmissionCounter;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::setupTimestampEventForMultiTile;

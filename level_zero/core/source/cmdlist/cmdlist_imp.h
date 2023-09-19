@@ -34,9 +34,11 @@ struct CommandListImp : CommandList {
     void storeReferenceTsToMappedEvents(bool clear);
     void addToMappedEventList(Event *event);
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
+    void incRegularCmdListSubmissionCounter() { regularCmdListSubmissionCounter++; }
 
   protected:
     NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;
+    uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t inOrderDependencyCounter = 0;
     uint32_t inOrderAllocationOffset = 0;
     bool inOrderExecutionEnabled = false;

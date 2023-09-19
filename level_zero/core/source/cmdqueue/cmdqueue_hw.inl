@@ -573,8 +573,9 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     ctx.containsAnyRegularCmdList = ctx.firstCommandList->getCmdListType() == CommandList::CommandListType::TYPE_REGULAR;
 
     for (auto i = 0u; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        auto commandList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
         commandList->setCsr(this->csr);
+        commandList->incRegularCmdListSubmissionCounter();
 
         auto &commandContainer = commandList->getCmdContainer();
 

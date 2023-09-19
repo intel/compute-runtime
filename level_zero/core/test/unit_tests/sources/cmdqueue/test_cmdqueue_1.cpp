@@ -24,6 +24,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
 namespace ult {
@@ -1107,6 +1108,7 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
 
     using BaseClass::csr;
     using BaseClass::heapContainer;
+    using BaseClass::isCopyOnlyCommandQueue;
 
     NEO::HeapContainer mockHeapContainer;
     void handleScratchSpace(NEO::HeapContainer &heapContainer,
@@ -1150,6 +1152,41 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     commandQueue->destroy();
     commandList->destroy();
     alignedFree(alloc);
+}
+
+HWTEST2_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenIncSubmissionCounter, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = makeZeUniquePtr<MockCommandQueue<gfxCoreFamily>>(device, csr, &desc);
+    commandQueue->initialize(false, false, false);
+
+    {
+        auto computeCmdList = makeZeUniquePtr<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        computeCmdList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+        auto commandListHandle = computeCmdList->toHandle();
+        computeCmdList->close();
+
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+        EXPECT_EQ(1u, computeCmdList->regularCmdListSubmissionCounter);
+
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+        EXPECT_EQ(2u, computeCmdList->regularCmdListSubmissionCounter);
+    }
+
+    {
+        auto copyCmdList = makeZeUniquePtr<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        copyCmdList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+        auto commandListHandle = copyCmdList->toHandle();
+        copyCmdList->close();
+
+        commandQueue->isCopyOnlyCommandQueue = true;
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+        EXPECT_EQ(1u, copyCmdList->regularCmdListSubmissionCounter);
+
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+        EXPECT_EQ(2u, copyCmdList->regularCmdListSubmissionCounter);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
