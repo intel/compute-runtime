@@ -7,12 +7,11 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-
-#include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 

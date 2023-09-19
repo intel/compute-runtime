@@ -6,13 +6,12 @@
  */
 
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
-
-#include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 

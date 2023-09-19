@@ -13,6 +13,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -21,8 +22,6 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
-
-#include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 

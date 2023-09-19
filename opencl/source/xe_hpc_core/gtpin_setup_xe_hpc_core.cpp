@@ -7,12 +7,12 @@
 
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.inl"
 #include "opencl/source/gtpin/gtpin_gfx_core_helper_xehp_and_later.inl"
 
-#include "hw_cmds_xe_hpc_core_base.h"
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 namespace NEO {

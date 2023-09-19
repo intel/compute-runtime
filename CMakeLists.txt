@@ -795,7 +795,6 @@ include_directories(${NEO_SHARED_DIRECTORY}/helpers/definitions${BRANCH_DIR_SUFF
 include_directories(${NEO_SHARED_DIRECTORY}/memory_properties${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/release_helper/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SHARED_DIRECTORY}/xe_hpc_core${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/xe_hpg_core${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_platform)

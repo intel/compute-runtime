@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/memory_manager/prefetch_manager.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
@@ -16,7 +17,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xehp_and_later.inl"
 
 #include "cmdlist_extended.inl"
-#include "hw_cmds_xe_hpc_core_base.h"
 
 namespace L0 {
 

@@ -6,11 +6,10 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
-
-#include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 

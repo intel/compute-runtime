@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
@@ -21,7 +22,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
-#include "hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
 

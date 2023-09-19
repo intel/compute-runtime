@@ -10,6 +10,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -24,8 +25,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-
-#include "hw_cmds_xe_hpc_core_base.h"
 
 using ClGfxCoreHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 

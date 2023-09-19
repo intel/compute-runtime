@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -15,8 +16,6 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-
-#include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 
