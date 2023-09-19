@@ -36,6 +36,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -4488,4 +4489,82 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCleanUpResourcesThenOwnedPrivate
     mapForReuse->push_back({0x100, mockGA.release()});
     csr.cleanupResources();
     EXPECT_EQ(mapForReuse->size(), 0u);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperWhenFlushTaskCalledThenStateCacheInvalidateIsSent) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
+
+    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandStreamReceiver.getOsContext().getContextId());
+
+    flushTaskFlags.implicitFlush = true;
+    auto usedSpaceBefore = commandStreamReceiver.commandStream.getUsed();
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    auto usedSpaceAfter = commandStreamReceiver.commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandStreamReceiver.commandStream.getCpuBase(), 0), usedSpaceAfter));
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControls.size());
+
+    bool pcFound = false;
+    for (size_t i = 0; i < pipeControls.size(); i++) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
+        bool csStall = pipeControl->getCommandStreamerStallEnable();
+        bool stateCache = pipeControl->getStateCacheInvalidationEnable();
+        bool texCache = pipeControl->getTextureCacheInvalidationEnable();
+        bool renderTargetCache = pipeControl->getRenderTargetCacheFlushEnable();
+
+        if (csStall && stateCache && texCache && renderTargetCache) {
+            pcFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(pcFound);
+    EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperWhenFlushImmediateTaskCalledThenStateCacheInvalidateIsSent) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
+
+    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandStreamReceiver.getOsContext().getContextId());
+
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::DefaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto pcCmd = hwParserCsr.getCommand<PIPE_CONTROL>();
+    ASSERT_NE(nullptr, pcCmd);
+
+    EXPECT_TRUE(pcCmd->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pcCmd->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pcCmd->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pcCmd->getRenderTargetCacheFlushEnable());
+
+    EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
 }

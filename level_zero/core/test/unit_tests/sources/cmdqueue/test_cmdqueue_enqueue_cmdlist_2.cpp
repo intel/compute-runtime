@@ -9,6 +9,7 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -778,6 +779,60 @@ struct LargeGrfSupport {
 HWTEST2_F(CmdListLargeGrfTest,
           givenAppendLargeGrfKernelToCommandListWhenExecutingCommandListThenStateComputeModeStateIsTrackedCorrectly, LargeGrfSupport) {
     testBody<FamilyType>();
+}
+
+HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenDirtyFlagForContextInBindlessHelperWhenExecutingCmdListsThenStateCacheInvalidateIsSent) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
+
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandQueue->getCsr()->getOsContext().getContextId());
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle(),
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    CommandList::fromHandle(commandLists[0])->close();
+    CommandList::fromHandle(commandLists[1])->close();
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControls.size());
+
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[0]);
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+
+    EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandQueue->getCsr()->getOsContext().getContextId()));
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(commandLists[i]);
+        commandList->destroy();
+    }
+
+    commandQueue->destroy();
 }
 
 } // namespace ult

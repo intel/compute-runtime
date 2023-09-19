@@ -513,6 +513,20 @@ void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &c
 }
 
 template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+    PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    cmd.setRenderTargetCacheFlushEnable(true);
+    cmd.setStateCacheInvalidationEnable(true);
+    cmd.setTextureCacheInvalidationEnable(true);
+
+    auto commandsBuffer = commandStream.getSpace(sizeof(PIPE_CONTROL));
+    *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
+}
+
+template <typename GfxFamily>
 const StackVec<size_t, 3> GfxCoreHelperHw<GfxFamily>::getDeviceSubGroupSizes() const {
     return {8, 16, 32};
 }

@@ -302,8 +302,18 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
 
     handleImmediateFlushJumpToImmediate(flushData);
 
+    bool stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
+    if (stateCacheFlushRequired) {
+        flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+    }
+
     auto &csrCommandStream = getCS(flushData.estimatedSize);
     flushData.csrStartOffset = csrCommandStream.getUsed();
+
+    if (stateCacheFlushRequired) {
+        device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
+        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(csrCommandStream, device.getRootDeviceEnvironment());
+    }
 
     dispatchImmediateFlushPipelineSelectCommand(flushData, csrCommandStream);
     dispatchImmediateFlushFrontEndCommand(flushData, device, csrCommandStream);
@@ -468,7 +478,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     handleFrontEndStateTransition(dispatchFlags);
 
-    auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
+    auto estimatedSize = getRequiredCmdStreamSizeAligned(dispatchFlags, device);
+
+    bool stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
+    if (stateCacheFlushRequired) {
+        estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+    }
+    auto &commandStreamCSR = this->getCS(estimatedSize);
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false);
@@ -515,6 +531,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (experimentalCmdBuffer.get() != nullptr) {
         size_t startingOffset = experimentalCmdBuffer->programExperimentalCommandBuffer<GfxFamily>();
         experimentalCmdBuffer->injectBufferStart<GfxFamily>(commandStreamCSR, startingOffset);
+    }
+
+    if (stateCacheFlushRequired) {
+        device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
+        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment());
     }
 
     if (requiresInstructionCacheFlush) {

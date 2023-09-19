@@ -125,6 +125,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     auto neoDevice = this->device->getNEODevice();
 
+    bool stateCacheFlushRequired = neoDevice->getBindlessHeapsHelper() ? neoDevice->getBindlessHeapsHelper()->getStateDirtyForContext(this->csr->getOsContext().getContextId()) : false;
+    if (stateCacheFlushRequired) {
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+        neoDevice->getBindlessHeapsHelper()->clearStateDirtyForContext(this->csr->getOsContext().getContextId());
+    }
+
     if (ctx.isDispatchTaskCountPostSyncRequired) {
         linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment(), false);
     }
@@ -145,6 +151,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->makeRayTracingBufferResident(neoDevice->getRTMemoryBackedBuffer());
     this->makeSbaTrackingBufferResidentIfL0DebuggerEnabled(ctx.isDebugEnabled);
     this->makeCsrTagAllocationResident();
+
+    if (stateCacheFlushRequired) {
+        NEO::MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(child, neoDevice->getRootDeviceEnvironment());
+    }
 
     if (ctx.globalInit) {
         this->getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
