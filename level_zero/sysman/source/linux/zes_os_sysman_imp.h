@@ -24,6 +24,8 @@ class Drm;
 
 namespace L0 {
 namespace Sysman {
+
+class SysmanProductHelper;
 class PlatformMonitoringTech;
 class PmuInterface;
 class FsAccess;
@@ -45,6 +47,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     ProcfsAccess &getProcfsAccess();
     SysfsAccess &getSysfsAccess();
     SysmanDeviceImp *getSysmanDeviceImp();
+    SysmanProductHelper *getSysmanProductHelper();
     uint32_t getSubDeviceCount() override;
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
@@ -77,6 +80,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanKmdInterface *getSysmanKmdInterface() { return pSysmanKmdInterface.get(); }
 
   protected:
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;

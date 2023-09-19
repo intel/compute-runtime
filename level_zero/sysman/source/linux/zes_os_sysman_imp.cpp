@@ -22,6 +22,7 @@
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/pci/linux/sysman_os_pci_imp.h"
 #include "level_zero/sysman/source/pci/sysman_pci_utils.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
 namespace L0 {
@@ -66,6 +67,7 @@ ze_result_t LinuxSysmanImp::init() {
     pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
 
     pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm());
+    pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
 
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     // Close Drm handles
@@ -182,6 +184,10 @@ SysmanDeviceImp *LinuxSysmanImp::getSysmanDeviceImp() {
 
 uint32_t LinuxSysmanImp::getSubDeviceCount() {
     return subDeviceCount;
+}
+
+SysmanProductHelper *LinuxSysmanImp::getSysmanProductHelper() {
+    return pSysmanProductHelper.get();
 }
 
 LinuxSysmanImp::LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) {

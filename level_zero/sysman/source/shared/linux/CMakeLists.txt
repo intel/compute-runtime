@@ -12,4 +12,8 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_fs_access_interface.h
   )
+
+  add_subdirectories()
+
 endif()
+
