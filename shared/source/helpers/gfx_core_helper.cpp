@@ -96,7 +96,7 @@ uint32_t GfxCoreHelper::getHighestEnabledDualSubSlice(const HardwareInfo &hwInfo
         return highestDualSubSlice;
     }
 
-    uint32_t numDssPerSlice = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    uint32_t numDssPerSlice = highestDualSubSlice / hwInfo.gtSystemInfo.MaxSlicesSupported;
     uint32_t highestEnabledSliceIdx = getHighestEnabledSlice(hwInfo) - 1;
 
     for (uint32_t dssID = 0; dssID < GT_MAX_DUALSUBSLICE_PER_SLICE; dssID++) {
