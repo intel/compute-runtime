@@ -41,6 +41,10 @@
 
 #include "gtest/gtest.h"
 
+namespace NEO {
+enum class AtomicAccessMode : uint32_t;
+}
+
 using namespace NEO;
 
 TEST(MemoryManagerTest, WhenCallingHasPageFaultsEnabledThenReturnFalse) {
@@ -55,6 +59,12 @@ TEST(MemoryManagerTest, WhenCallingCloseInternalHandleWithOsAgnosticThenNoChange
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     uint64_t handle = 0u;
     memoryManager.closeInternalHandle(handle, 0u, nullptr);
+}
+
+TEST(MemoryManagerTest, WhenCallingSetAtomicAccessWithOsAgnosticThenNoChanges) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    EXPECT_TRUE(memoryManager.setAtomicAccess(nullptr, 16, AtomicAccessMode::None, 1));
 }
 
 TEST(MemoryManagerTest, givenDefaultMemoryManagerWhenGraphicsAllocationContainsExtendedSizeThenExtendedSizeObtainedIsTheNewSize) {

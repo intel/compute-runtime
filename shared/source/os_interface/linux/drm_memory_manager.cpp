@@ -256,6 +256,12 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
     return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
 }
 
+bool DrmMemoryManager::setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) {
+    auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+
+    return drmAllocation->setAtomicAccess(&this->getDrm(rootDeviceIndex), size, mode);
+}
+
 bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
     auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
     auto osContextLinux = getDefaultOsContext(rootDeviceIndex);

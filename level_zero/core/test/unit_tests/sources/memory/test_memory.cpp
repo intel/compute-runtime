@@ -43,6 +43,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 
 namespace L0 {
 namespace ult {
@@ -952,6 +953,428 @@ TEST_F(MemoryTest, givenNoSupportForDualStorageSharedMemoryWhenAllocatingSharedM
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(nullptr, allocData);
     EXPECT_EQ(allocData->allocationFlagsProperty.hostptr, 0x1234u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithZeroInputSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = 0;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithDeviceNullptrFailureIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = 0;
+    result = context->setAtomicAccessAttribute(nullptr, ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForNonSharedMemoryAllocationFailureIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = 0;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    result = context->allocDeviceMem(device->toHandle(),
+                                     &deviceDesc,
+                                     size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    attr = 0;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithInvalidAllocationPtrErrorIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS;
+
+    void *ptr2 = reinterpret_cast<void *>(0xface);
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr2, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithNoAtomicsThenSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS;
+
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithInsufficientCapabilityThenFailureIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(false);
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getDeviceMemCapabilities() const override {
+            return 0;
+        }
+        uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return 0;
+        }
+        uint64_t getSingleDeviceSharedMemCapabilities() const override {
+            return 0;
+        }
+    };
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForDeviceAccessThenSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getDeviceMemCapabilities() const override {
+            return 3;
+        }
+    };
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForHostAccessThenSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return 3;
+        }
+    };
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForSystemAccessSharedSingleThenSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSingleDeviceSharedMemCapabilities() const override {
+            return 15;
+        }
+    };
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeThenSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *ptr2 = reinterpret_cast<void *>(0x5678);
+    result = context->allocSharedMem(device->toHandle(),
+                                     &deviceDesc,
+                                     &hostDesc,
+                                     size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr2);
+
+    attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_DEVICE_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr2, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_atomic_attr_exp_flags_t attrGet = 0;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr, size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS, attrGet);
+
+    attrGet = 0;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr2, size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_DEVICE_ATOMICS, attrGet);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    result = context->freeMem(ptr2);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeMoreThanOnceThenGetAtomicAccessAttributeReturnsLastSetting) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_atomic_attr_exp_flags_t attrGet = 0;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr, size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS, attrGet);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeWithInvalidAllocationPtrErrorIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_atomic_attr_exp_flags_t attrGet = 0;
+    void *ptr2 = reinterpret_cast<void *>(0xFACE);
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr2, size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeWithAttributeNotSetErrorIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS;
+    result = context->setAtomicAccessAttribute(nullptr, ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    ze_memory_atomic_attr_exp_flags_t attrGet = 0;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr, size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);

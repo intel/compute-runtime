@@ -20,6 +20,7 @@ class Drm;
 class DrmGemCloseWorker;
 class DrmAllocation;
 class OsContextLinux;
+enum class AtomicAccessMode : uint32_t;
 
 enum class gemCloseWorkerMode;
 
@@ -77,7 +78,7 @@ class DrmMemoryManager : public MemoryManager {
 
     bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) override;
     bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override;
-
+    bool setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) override;
     [[nodiscard]] std::unique_lock<std::mutex> acquireAllocLock();
     std::vector<GraphicsAllocation *> &getSysMemAllocs();
     std::vector<GraphicsAllocation *> &getLocalMemAllocs(uint32_t rootDeviceIndex);

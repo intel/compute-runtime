@@ -657,6 +657,8 @@ zeGetMemExpProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     pDdiTable->pfnGetIpcHandleFromFileDescriptorExp = L0::zeMemGetIpcHandleFromFileDescriptorExp;
     pDdiTable->pfnGetFileDescriptorFromIpcHandleExp = L0::zeMemGetFileDescriptorFromIpcHandleExp;
+    pDdiTable->pfnSetAtomicAccessAttributeExp = L0::zeMemSetAtomicAccessAttributeExp;
+    pDdiTable->pfnGetAtomicAccessAttributeExp = L0::zeMemGetAtomicAccessAttributeExp;
     driverDdiTable.coreDdiTable.MemExp = *pDdiTable;
     return result;
 }

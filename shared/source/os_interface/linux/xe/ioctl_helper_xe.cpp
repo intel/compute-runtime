@@ -548,6 +548,11 @@ uint32_t IoctlHelperXe::getAtomicAdvise(bool isNonAtomic) {
     return 0;
 }
 
+uint32_t IoctlHelperXe::getAtomicAccess(AtomicAccessMode mode) {
+    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    return 0;
+}
+
 uint32_t IoctlHelperXe::getPreferredLocationAdvise() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return 0;

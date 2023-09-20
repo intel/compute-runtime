@@ -103,6 +103,8 @@ struct Context : _ze_context_handle_t {
                                               ze_device_handle_t *phDevice) = 0;
     virtual ze_result_t getImageAllocProperties(Image *image,
                                                 ze_image_allocation_ext_properties_t *pAllocProperties) = 0;
+    virtual ze_result_t setAtomicAccessAttribute(ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t attr) = 0;
+    virtual ze_result_t getAtomicAccessAttribute(ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr) = 0;
     virtual ze_result_t createModule(ze_device_handle_t hDevice,
                                      const ze_module_desc_t *desc,
                                      ze_module_handle_t *phModule,

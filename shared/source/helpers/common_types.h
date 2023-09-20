@@ -80,4 +80,11 @@ enum class PostSyncMode : uint32_t {
     ImmediateData = 2,
 };
 
+enum class AtomicAccessMode : uint32_t {
+    None = 1,
+    Host = 2,
+    Device = 3,
+    System = 4
+};
+
 } // namespace NEO

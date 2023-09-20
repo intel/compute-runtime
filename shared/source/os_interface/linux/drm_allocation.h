@@ -17,6 +17,7 @@ class Drm;
 class OsContextLinux;
 enum class CachePolicy : uint32_t;
 enum class CacheRegion : uint16_t;
+enum class AtomicAccessMode : uint32_t;
 
 struct OsHandleLinux : OsHandle {
     ~OsHandleLinux() override = default;
@@ -109,6 +110,7 @@ class DrmAllocation : public GraphicsAllocation {
     bool setPreferredLocation(Drm *drm, PreferredLocation memoryLocation);
 
     bool setMemAdvise(Drm *drm, MemAdviseFlags flags);
+    bool setAtomicAccess(Drm *drm, size_t size, AtomicAccessMode mode);
     bool setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds);
 
     void *getMmapPtr() { return this->mmapPtr; }

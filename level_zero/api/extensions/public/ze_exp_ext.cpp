@@ -176,6 +176,14 @@ ze_result_t zeRTASParallelOperationDestroyExp(ze_rtas_parallel_operation_exp_han
     return L0::RTASParallelOperation::fromHandle(hParallelOperation)->destroy();
 }
 
+ze_result_t zeMemSetAtomicAccessAttributeExp(ze_context_handle_t hContext, ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t attr) {
+    return L0::Context::fromHandle(hContext)->setAtomicAccessAttribute(L0::Device::fromHandle(hDevice), ptr, size, attr);
+}
+
+ze_result_t zeMemGetAtomicAccessAttributeExp(ze_context_handle_t hContext, ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr) {
+    return L0::Context::fromHandle(hContext)->getAtomicAccessAttribute(L0::Device::fromHandle(hDevice), ptr, size, pAttr);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -365,6 +373,26 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeRTASParallelOperationDestroyExp(
     ze_rtas_parallel_operation_exp_handle_t hParallelOperation) {
     return L0::zeRTASParallelOperationDestroyExp(hParallelOperation);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemSetAtomicAccessAttributeExp(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const void *ptr,
+    size_t size,
+    ze_memory_atomic_attr_exp_flags_t attr) {
+    return L0::zeMemSetAtomicAccessAttributeExp(hContext, hDevice, ptr, size, attr);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemGetAtomicAccessAttributeExp(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const void *ptr,
+    size_t size,
+    ze_memory_atomic_attr_exp_flags_t *pAttr) {
+    return L0::zeMemGetAtomicAccessAttributeExp(hContext, hDevice, ptr, size, pAttr);
 }
 
 } // extern "C"

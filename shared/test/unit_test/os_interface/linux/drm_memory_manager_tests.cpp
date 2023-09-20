@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_banks.h"
@@ -4839,6 +4840,27 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUp
         EXPECT_TRUE(memoryManager.setMemAdvise(&drmAllocation, flags, rootDeviceIndex));
         EXPECT_EQ(isCached ? CachePolicy::WriteBack : CachePolicy::Uncached, bo.peekCachePolicy());
     }
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetAtomicAccessIsCalledThenTrueReturned) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
+
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNIFIED_SHARED_MEMORY, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    EXPECT_EQ(&bo, drmAllocation.getBO());
+
+    size_t size = 16;
+    AtomicAccessMode mode = AtomicAccessMode::None;
+    EXPECT_TRUE(memoryManager.setAtomicAccess(&drmAllocation, size, mode, rootDeviceIndex));
+
+    mode = AtomicAccessMode::Device;
+    EXPECT_TRUE(memoryManager.setAtomicAccess(&drmAllocation, size, mode, rootDeviceIndex));
+
+    mode = AtomicAccessMode::System;
+    EXPECT_TRUE(memoryManager.setAtomicAccess(&drmAllocation, size, mode, rootDeviceIndex));
+
+    mode = AtomicAccessMode::Host;
+    EXPECT_TRUE(memoryManager.setAtomicAccess(&drmAllocation, size, mode, rootDeviceIndex));
 }
 
 TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithSubDevicesThenPrefetchBOsToTheseSubDevices) {

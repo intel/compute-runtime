@@ -27,6 +27,10 @@
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
 
+namespace NEO {
+enum class AtomicAccessMode : uint32_t;
+} // namespace NEO
+
 namespace L0 {
 
 ze_result_t ContextImp::destroy() {
@@ -841,6 +845,81 @@ ze_result_t ContextImp::getImageAllocProperties(Image *image, ze_image_allocatio
     pAllocProperties->id = 0;
 
     return handleAllocationExtensions(alloc, ZE_MEMORY_TYPE_DEVICE, pAllocProperties->pNext, driverHandle);
+}
+
+ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t attr) {
+    if (nullptr == hDevice) {
+        // no support for atomics for multi-device shared allocations at the moment
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    uint32_t attrEval = 0;
+    memcpy_s(&attrEval, sizeof(uint32_t), &attr, sizeof(uint32_t));
+
+    ze_device_memory_access_properties_t memProp;
+    auto device = Device::fromHandle(hDevice);
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    if (allocData == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    ze_memory_allocation_properties_t memoryProperties = {};
+    this->getMemAllocProperties(ptr, &memoryProperties, &hDevice);
+    if (memoryProperties.type != ZE_MEMORY_TYPE_SHARED) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+
+    if (attrEval == 0) {
+        deviceImp->atomicAccessAllocations[allocData] = attr;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    deviceImp->getMemoryAccessProperties(&memProp);
+
+    NEO::AtomicAccessMode mode = NEO::AtomicAccessMode::None;
+    if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS) {
+        if (!(memProp.deviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        mode = NEO::AtomicAccessMode::Device;
+    }
+    if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS) {
+        if (!(memProp.hostAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        mode = NEO::AtomicAccessMode::Host;
+    }
+
+    if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS) {
+        if ((!(memProp.sharedSingleDeviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC)) &&
+            (!(memProp.sharedCrossDeviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC))) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        mode = NEO::AtomicAccessMode::System;
+    }
+
+    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
+    auto memoryManager = device->getDriverHandle()->getMemoryManager();
+    memoryManager->setAtomicAccess(alloc, size, mode, deviceImp->getRootDeviceIndex());
+    deviceImp->atomicAccessAllocations[allocData] = attr;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ContextImp::getAtomicAccessAttribute(ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr) {
+
+    auto device = Device::fromHandle(hDevice);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    if (allocData == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+    if (deviceImp->atomicAccessAllocations.find(allocData) != deviceImp->atomicAccessAllocations.end()) {
+        *pAttr = deviceImp->atomicAccessAllocations[allocData];
+        return ZE_RESULT_SUCCESS;
+    }
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 ze_result_t ContextImp::createModule(ze_device_handle_t hDevice,

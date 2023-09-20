@@ -462,6 +462,24 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     return success;
 }
 
+bool DrmAllocation::setAtomicAccess(Drm *drm, size_t size, AtomicAccessMode mode) {
+    bool success = true;
+
+    if (mode == AtomicAccessMode::Host) {
+        // Host mode not currently supported by KMD
+        return success;
+    }
+
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    for (auto bo : bufferObjects) {
+        if (bo != nullptr) {
+            success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getAtomicAccess(mode), nullptr);
+        }
+    }
+    return success;
+}
+
 bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
     UNRECOVERABLE_IF(subDeviceIds.size() == 0);
 

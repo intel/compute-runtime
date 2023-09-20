@@ -306,6 +306,26 @@ uint32_t IoctlHelperPrelim20::getAtomicAdvise(bool isNonAtomic) {
     return isNonAtomic ? PRELIM_I915_VM_ADVISE_ATOMIC_NONE : PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
 }
 
+uint32_t IoctlHelperPrelim20::getAtomicAccess(AtomicAccessMode mode) {
+    uint32_t retVal = 0;
+
+    switch (mode) {
+    case AtomicAccessMode::Device:
+        retVal = PRELIM_I915_VM_ADVISE_ATOMIC_DEVICE;
+        break;
+    case AtomicAccessMode::System:
+        retVal = PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
+        break;
+    case AtomicAccessMode::None:
+        retVal = PRELIM_I915_VM_ADVISE_ATOMIC_NONE;
+        break;
+    case AtomicAccessMode::Host:
+    default:
+        break;
+    }
+    return retVal;
+}
+
 uint32_t IoctlHelperPrelim20::getPreferredLocationAdvise() {
     return PRELIM_I915_VM_ADVISE_PREFERRED_LOCATION;
 }

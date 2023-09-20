@@ -34,6 +34,7 @@ struct ImageInfo;
 struct AllocationData;
 class GmmHelper;
 enum class DriverModelType;
+enum class AtomicAccessMode : uint32_t;
 struct AllocationProperties;
 class LocalMemoryUsageBankSelector;
 class DeferredDeleter;
@@ -246,6 +247,7 @@ class MemoryManager {
 
     virtual bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) { return true; }
     virtual bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) { return true; }
+    virtual bool setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) { return true; }
 
     bool isExternalAllocation(AllocationType allocationType);
     LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(AllocationType allocationType, uint32_t rootDeviceIndex);

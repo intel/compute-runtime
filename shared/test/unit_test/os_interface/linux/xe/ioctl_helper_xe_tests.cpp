@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/linux/engine_info.h"
@@ -476,6 +477,8 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     EXPECT_EQ(0, xeIoctlHelper->waitUserFence(0, 0, 0, 0, 0, 0));
 
     EXPECT_EQ(0u, xeIoctlHelper->getAtomicAdvise(false));
+
+    EXPECT_EQ(0u, xeIoctlHelper->getAtomicAccess(AtomicAccessMode::None));
 
     EXPECT_EQ(0u, xeIoctlHelper->getPreferredLocationAdvise());
 

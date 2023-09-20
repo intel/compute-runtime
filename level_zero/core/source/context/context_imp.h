@@ -101,6 +101,8 @@ struct ContextImp : Context {
                                       ze_device_handle_t *phDevice) override;
     ze_result_t getImageAllocProperties(Image *image,
                                         ze_image_allocation_ext_properties_t *pAllocProperties) override;
+    ze_result_t setAtomicAccessAttribute(ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t attr) override;
+    ze_result_t getAtomicAccessAttribute(ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr) override;
     ze_result_t createModule(ze_device_handle_t hDevice,
                              const ze_module_desc_t *desc,
                              ze_module_handle_t *phModule,

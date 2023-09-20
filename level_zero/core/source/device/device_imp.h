@@ -142,6 +142,7 @@ struct DeviceImp : public Device {
     std::unordered_map<const void *, L0::Image *> peerImageAllocations;
     NEO::SpinLock peerImageAllocationsMutex;
     std::map<NEO::SvmAllocationData *, NEO::MemAdviseFlags> memAdviseSharedAllocations;
+    std::map<NEO::SvmAllocationData *, ze_memory_atomic_attr_exp_flags_t> atomicAccessAllocations;
     std::unique_ptr<NEO::AllocationsList> allocationsForReuse;
     std::unique_ptr<NEO::DriverInfo> driverInfo;
     void createSysmanHandle(bool isSubDevice);

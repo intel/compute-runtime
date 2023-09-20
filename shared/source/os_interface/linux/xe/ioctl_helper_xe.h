@@ -55,6 +55,7 @@ class IoctlHelperXe : public IoctlHelper {
     int waitUserFence(uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
+    uint32_t getAtomicAccess(AtomicAccessMode mode) override;
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;

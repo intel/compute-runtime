@@ -2339,6 +2339,37 @@ TEST_F(MultipleDevicesTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
     EXPECT_TRUE(canAccess);
 }
 
+TEST_F(MultipleDevicesTest, whenCallingsetAtomicAccessAttributeForSystemAccessSharedCrossDeviceThenSuccessIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    L0::Device *device0 = driverHandle->devices[0];
+    auto &hwInfo = device0->getNEODevice()->getHardwareInfo();
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(true);
+    DebugManager.flags.EnableRecoverablePageFaults.set(true);
+    DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(true);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
+    result = context->setAtomicAccessAttribute(device0->toHandle(), ptr, size, attr);
+    if ((hwInfo.capabilityTable.p2pAccessSupported == true) && (hwInfo.capabilityTable.p2pAtomicAccessSupported == true)) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerSuccessfullyCompletes) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];

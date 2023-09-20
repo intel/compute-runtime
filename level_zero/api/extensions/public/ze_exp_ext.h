@@ -143,4 +143,18 @@ ze_result_t zeRTASParallelOperationJoinExp(
 ze_result_t zeRTASParallelOperationDestroyExp(
     ze_rtas_parallel_operation_exp_handle_t hParallelOperation);
 
+ze_result_t zeMemSetAtomicAccessAttributeExp(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const void *ptr,
+    size_t size,
+    ze_memory_atomic_attr_exp_flags_t attr);
+
+ze_result_t zeMemGetAtomicAccessAttributeExp(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const void *ptr,
+    size_t size,
+    ze_memory_atomic_attr_exp_flags_t *pAttr);
+
 } // namespace L0

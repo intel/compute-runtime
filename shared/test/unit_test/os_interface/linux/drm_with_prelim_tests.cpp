@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
@@ -141,6 +142,12 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenAtomicAccessModeHostWhenCallGetAtomicAccessReturnZero) {
+    auto ioctlHelper = drm->getIoctlHelper();
+    uint32_t ret = ioctlHelper->getAtomicAccess(AtomicAccessMode::Host);
+    EXPECT_EQ(0u, ret);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGetNumOfChunks) {
@@ -455,6 +462,46 @@ TEST_F(IoctlHelperPrelimFixture,
     EXPECT_FALSE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
 
     EXPECT_EQ(allocation.storageInfo.numOfChunks, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetAtomicAccessWithModeCalledThenIoctlCalled) {
+    drm->ioctlCallsCount = 0;
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x1;
+    allocation.setNumHandles(1);
+
+    size_t size = 16;
+    AtomicAccessMode mode = AtomicAccessMode::None;
+    EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+
+    mode = AtomicAccessMode::Device;
+    EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
+
+    mode = AtomicAccessMode::System;
+    EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
+    EXPECT_EQ(3u, drm->ioctlCallsCount);
+
+    mode = AtomicAccessMode::Host;
+    // No IOCTL call for Host mode
+    EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
+    EXPECT_EQ(3u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetAtomicAccessWithNullBufferObjectThenIoctlNotCalled) {
+    drm->ioctlCallsCount = 0;
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = nullptr;
+    allocation.storageInfo.memoryBanks = 0x1;
+    allocation.setNumHandles(1);
+
+    size_t size = 16;
+    AtomicAccessMode mode = AtomicAccessMode::None;
+    EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
+    EXPECT_EQ(0u, drm->ioctlCallsCount);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThenReturnTrue) {

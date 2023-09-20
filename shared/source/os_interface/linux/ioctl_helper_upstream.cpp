@@ -135,6 +135,10 @@ uint32_t IoctlHelperUpstream::getAtomicAdvise(bool isNonAtomic) {
     return 0;
 }
 
+uint32_t IoctlHelperUpstream::getAtomicAccess(AtomicAccessMode mode) {
+    return 0;
+}
+
 uint32_t IoctlHelperUpstream::getPreferredLocationAdvise() {
     return 0;
 }
