@@ -285,8 +285,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             setStallingCommandsOnNextFlush(true);
             const bool isDcFlushRequiredOnBarrier = NEO::DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.get() == 0 || event;
             setDcFlushRequiredOnStallingCommandsOnNextFlush(isDcFlushRequiredOnBarrier);
+            this->splitBarrierRequired = true;
         }
-        this->splitBarrierRequired = true;
 
         for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
             auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
