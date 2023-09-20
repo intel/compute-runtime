@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -1894,4 +1895,61 @@ TEST(ImageTest, givenImageWhenFalsePassedToSet3DUavOrRtvThenValueInImageIsSetToF
     MockImageBase img;
     img.setAs3DUavOrRtvImage(false);
     EXPECT_FALSE(img.is3DUAVOrRTV);
+}
+
+using ImageAdjustDepthTests = ::testing::Test;
+
+HWTEST_F(ImageAdjustDepthTests, givenSurfaceStateWhenImage3DRTVOrUAVThenDepthCalculationIsDone) {
+
+    typename FamilyType::RENDER_SURFACE_STATE ss;
+    uint32_t minArrayElement = 1;
+    uint32_t renderTargetViewExtent = 1;
+    uint32_t originalDepth = 10;
+    uint32_t mipCount = 1;
+    ss.setDepth(originalDepth);
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->shouldAdjustDepthResult = true;
+
+    ImageHw<FamilyType>::adjustDepthLimitations(&ss, minArrayElement, renderTargetViewExtent, originalDepth, mipCount, true, releaseHelper.get());
+    EXPECT_NE(ss.getDepth(), originalDepth);
+}
+
+HWTEST_F(ImageAdjustDepthTests, givenSurfaceStateWhenImageIsNot3DRTVOrUAVThenDepthCalculationIsDone) {
+    typename FamilyType::RENDER_SURFACE_STATE ss;
+    uint32_t minArrayElement = 1;
+    uint32_t renderTargetViewExtent = 1;
+    uint32_t originalDepth = 10;
+    uint32_t mipCount = 1;
+    ss.setDepth(originalDepth);
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->shouldAdjustDepthResult = true;
+
+    ImageHw<FamilyType>::adjustDepthLimitations(&ss, minArrayElement, renderTargetViewExtent, originalDepth, mipCount, false, releaseHelper.get());
+    EXPECT_EQ(ss.getDepth(), originalDepth);
+}
+
+HWTEST_F(ImageAdjustDepthTests, givenSurfaceStateWhenAdjustDepthReturnFalseThenOriginalDepthIsUsed) {
+    typename FamilyType::RENDER_SURFACE_STATE ss;
+    uint32_t minArrayElement = 1;
+    uint32_t renderTargetViewExtent = 1;
+    uint32_t originalDepth = 10;
+    uint32_t mipCount = 1;
+    ss.setDepth(originalDepth);
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->shouldAdjustDepthResult = false;
+
+    ImageHw<FamilyType>::adjustDepthLimitations(&ss, minArrayElement, renderTargetViewExtent, originalDepth, mipCount, true, releaseHelper.get());
+    EXPECT_EQ(ss.getDepth(), originalDepth);
+}
+
+HWTEST_F(ImageAdjustDepthTests, givenSurfaceStateWhenReeaseHelperIsNullprThenOriginalDepthIsUsed) {
+    typename FamilyType::RENDER_SURFACE_STATE ss;
+    uint32_t minArrayElement = 1;
+    uint32_t renderTargetViewExtent = 1;
+    uint32_t originalDepth = 10;
+    uint32_t mipCount = 1;
+    ss.setDepth(originalDepth);
+    ReleaseHelper *releaseHelper = nullptr;
+    ImageHw<FamilyType>::adjustDepthLimitations(&ss, minArrayElement, renderTargetViewExtent, originalDepth, mipCount, true, releaseHelper);
+    EXPECT_EQ(ss.getDepth(), originalDepth);
 }

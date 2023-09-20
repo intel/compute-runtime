@@ -296,19 +296,3 @@ HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerSta
     productHelper.adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }
-
-HWTEST_F(CommandEncoderTests, givenSurfaceStateWhenAdjustDepthLimitationsCalledThenSurfaceStateNotChanged) {
-    typename FamilyType::RENDER_SURFACE_STATE ss;
-    uint32_t minArrayElement = 1;
-    uint32_t renderTargetViewExtent = 1;
-    uint32_t originalDepth = 10;
-    uint32_t mipCount = 1;
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto releaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-
-    ss.setDepth(originalDepth);
-    auto origSS = ss;
-    EncodeSurfaceState<FamilyType>::adjustDepthLimitations(&ss, minArrayElement, renderTargetViewExtent, originalDepth, mipCount, true, releaseHelper);
-    EXPECT_EQ(memcmp(&ss, &origSS, sizeof(typename FamilyType::RENDER_SURFACE_STATE)), 0);
-}

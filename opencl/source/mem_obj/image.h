@@ -16,6 +16,7 @@ namespace NEO {
 class GfxCoreHelper;
 class Gmm;
 class Image;
+class ReleaseHelper;
 struct HardwareInfo;
 struct KernelInfo;
 struct SurfaceFormatInfo;
@@ -343,6 +344,7 @@ class ImageHw : public Image {
     void appendSurfaceStateExt(void *memory);
     void transformImage2dArrayTo3d(void *memory) override;
     void transformImage3dTo2dArray(void *memory) override;
+    static void adjustDepthLimitations(RENDER_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv, ReleaseHelper *releaseHelper);
     static Image *create(Context *context,
                          const MemoryProperties &memoryProperties,
                          cl_mem_flags flags,

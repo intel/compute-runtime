@@ -13,6 +13,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/image/image_surface_state.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
@@ -110,7 +111,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
                                                                 this->plane);
     auto releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
 
-    EncodeSurfaceState<GfxFamily>::adjustDepthLimitations(surfaceState, minArrayElement, renderTargetViewExtent, depth, mipCount, is3DUAVOrRTV, releaseHelper);
+    adjustDepthLimitations(surfaceState, minArrayElement, renderTargetViewExtent, depth, mipCount, is3DUAVOrRTV, releaseHelper);
     appendSurfaceStateParams(surfaceState, rootDeviceIndex, useGlobalAtomics);
     appendSurfaceStateExt(surfaceState);
 }
@@ -215,6 +216,14 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     surfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
     surfaceState->setSurfaceArray(true);
+}
+
+template <typename GfxFamily>
+void ImageHw<GfxFamily>::adjustDepthLimitations(RENDER_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv, ReleaseHelper *releaseHelper) {
+    if (is3DUavOrRtv && releaseHelper && releaseHelper->shouldAdjustDepth()) {
+        auto newDepth = std::min(depth, (renderTargetViewExtent + minArrayElement) << mipCount);
+        surfaceState->setDepth(newDepth);
+    }
 }
 
 template <typename GfxFamily>

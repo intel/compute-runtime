@@ -60,7 +60,6 @@ struct EncodeSurfaceState {
     static void setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void disableCompressionFlags(R_SURFACE_STATE *surfaceState);
     static void appendParamsForImageFromBuffer(R_SURFACE_STATE *surfaceState);
-    static void adjustDepthLimitations(R_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv, ReleaseHelper *releaseHelper);
 };
 
 } // namespace NEO
