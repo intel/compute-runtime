@@ -493,7 +493,10 @@ uint64_t cpuFence = 0;
 
 static bool createSynchronizationObject2FailCall = false;
 
+static D3DGPU_VIRTUAL_ADDRESS monitorFenceGpuAddress = 0x0;
+
 NTSTATUS __stdcall mockD3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *synchObject) {
+    constexpr D3DGPU_VIRTUAL_ADDRESS monitorFenceGpuNextAddressOffset = 0x2000;
     if (synchObject == nullptr) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -502,8 +505,10 @@ NTSTATUS __stdcall mockD3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESY
         return STATUS_INVALID_PARAMETER;
     }
 
+    monitorFenceGpuAddress += monitorFenceGpuNextAddressOffset;
+
     synchObject->Info.MonitoredFence.FenceValueCPUVirtualAddress = &cpuFence;
-    synchObject->Info.MonitoredFence.FenceValueGPUVirtualAddress = 3;
+    synchObject->Info.MonitoredFence.FenceValueGPUVirtualAddress = monitorFenceGpuAddress;
     synchObject->hSyncObject = 4;
     return STATUS_SUCCESS;
 }

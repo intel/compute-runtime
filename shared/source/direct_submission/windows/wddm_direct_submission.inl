@@ -142,16 +142,16 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool hasStallingCmds) {
-    if (!this->disableMonitorFence || hasStallingCmds) {
+uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requireMonitorFence) {
+    if (!this->disableMonitorFence || requireMonitorFence) {
         return this->updateTagValueImpl();
     }
     return 0ull;
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(bool hasStallingCmds) {
-    return !this->disableMonitorFence || hasStallingCmds;
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(bool requireMonitorFence) {
+    return !this->disableMonitorFence || requireMonitorFence;
 }
 
 template <typename GfxFamily, typename Dispatcher>

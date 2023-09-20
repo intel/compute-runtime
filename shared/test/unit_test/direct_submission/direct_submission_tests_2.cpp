@@ -430,7 +430,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     directSubmission.tagValueSetValue = 0x4343123ull;
     directSubmission.tagAddressSetValue = 0xBEEF00000ull;
-    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds));
+    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.dispatchMonitorFence));
     size_t expectedDispatchSize = disabledSizeDispatch - directSubmission.getSizeNewResourceHandler();
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
@@ -477,7 +477,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     size_t disabledSizeDispatch = directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false));
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - flushSize));
 
-    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds));
+    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.dispatchMonitorFence));
     size_t expectedDispatchSize = disabledSizeDispatch - directSubmission.getSizeNewResourceHandler();
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
@@ -569,7 +569,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize));
 
     directSubmission.currentQueueWorkCount = 0x40u;
-    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds));
+    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.dispatchMonitorFence));
     size_t expectedDispatchSize = debugSizeDispatch - directSubmission.getSizeNewResourceHandler();
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
@@ -2265,7 +2265,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkloadSectionTh
     auto originalBbStart = *reinterpret_cast<MI_BATCH_BUFFER_START *>(batchBuffer.endCmdPtr);
 
     batchBuffer.hasRelaxedOrderingDependencies = true;
-    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds));
+    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.dispatchMonitorFence));
 
     uint64_t returnPtr = directSubmission.ringCommandStream.getGpuBase() + offset + (4 * sizeof(MI_LOAD_REGISTER_IMM)) + directSubmission.getSizeStartSection();
 
@@ -2289,7 +2289,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithoutRelaxedOrderingDep
     auto offset = directSubmission.ringCommandStream.getUsed();
 
     batchBuffer.hasRelaxedOrderingDependencies = false;
-    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds));
+    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.dispatchMonitorFence));
 
     auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset));
     EXPECT_EQ(nullptr, lriCmd);

@@ -5,13 +5,17 @@
  *
  */
 
+#include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
+#include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -42,7 +46,8 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
     }
 
     DebugManagerStateRestore restorer;
-    WddmMockInterface20 *wddmMockInterface;
+
+    WddmMockInterface20 *wddmMockInterface = nullptr;
     OsContextWin *osContext = nullptr;
     std::unique_ptr<MockDevice> device;
 };
@@ -621,4 +626,109 @@ HWTEST_F(WddmDirectSubmissionTest, givenMiMemFenceRequiredThenGpuVaForAdditional
     } else {
         EXPECT_EQ(0u, wddmDirectSubmission.gpuVaForAdditionalSynchronizationWA);
     }
+}
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenRenderDirectSubmissionWithDisabledMonitorFenceWhenMonitrFenceExplicitlyRequiredThenDispatchPostSyncOperation) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    BatchBuffer batchBuffer;
+    GraphicsAllocation *clientCommandBuffer = nullptr;
+    std::unique_ptr<LinearStream> clientStream;
+
+    auto memoryManager = executionEnvironment->memoryManager.get();
+    const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
+                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+    clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+    ASSERT_NE(nullptr, clientCommandBuffer);
+
+    clientStream = std::make_unique<LinearStream>(clientCommandBuffer);
+    clientStream->getSpace(0x40);
+
+    memset(clientStream->getCpuBase(), 0, 0x20);
+
+    batchBuffer.endCmdPtr = ptrOffset(clientStream->getCpuBase(), 0x20);
+    batchBuffer.commandBufferAllocation = clientCommandBuffer;
+    batchBuffer.usedSize = 0x40;
+    batchBuffer.taskStartAddress = clientCommandBuffer->getGpuAddress();
+    batchBuffer.stream = clientStream.get();
+    batchBuffer.dispatchMonitorFence = true;
+
+    FlushStampTracker flushStamp(true);
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = false;
+
+    bool ret = wddmDirectSubmission.initialize(true, true);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(wddmDirectSubmission.useNotifyForPostSync);
+
+    size_t sizeUsedBefore = wddmDirectSubmission.ringCommandStream.getUsed();
+    ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, sizeUsedBefore);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    auto &monitorFence = osContext->getResidencyController().getMonitoredFence();
+
+    bool foundFenceUpdate = false;
+    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            uint64_t pipeControlPostSyncAddress = UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
+            if (pipeControlPostSyncAddress == monitorFence.gpuAddress) {
+                foundFenceUpdate = true;
+                EXPECT_TRUE(pipeControl->getNotifyEnable());
+                break;
+            }
+        }
+    }
+    EXPECT_TRUE(foundFenceUpdate);
+
+    memoryManager->freeGraphicsMemory(clientCommandBuffer);
+}
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenDisableMonitorFenceIsFalseWhenDispatchArgumentIsFalseThenDispatchMonitorFenceReturnsTrue) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = false;
+
+    EXPECT_TRUE(wddmDirectSubmission.dispatchMonitorFenceRequired(false));
+}
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenDisableMonitorFenceIsFalseWhenDispatchArgumentIsTrueThenDispatchMonitorFenceReturnsTrue) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = false;
+
+    EXPECT_TRUE(wddmDirectSubmission.dispatchMonitorFenceRequired(true));
+}
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenDisableMonitorFenceIsTrueWhenDispatchArgumentIsFalseThenDispatchMonitorFenceReturnsFalse) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = true;
+
+    EXPECT_FALSE(wddmDirectSubmission.dispatchMonitorFenceRequired(false));
+}
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenDisableMonitorFenceIsTrueWhenDispatchArgumentIsTrueThenDispatchMonitorFenceReturnsTrue) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.disableMonitorFence = true;
+
+    EXPECT_TRUE(wddmDirectSubmission.dispatchMonitorFenceRequired(true));
 }

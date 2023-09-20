@@ -147,7 +147,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
 
     void handleSwitchRingBuffers() override {}
 
-    uint64_t updateTagValue(bool hasStallingCmds) override {
+    uint64_t updateTagValue(bool requireMonitorFence) override {
         return updateTagValueReturn;
     }
 
