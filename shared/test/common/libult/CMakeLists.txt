@@ -139,18 +139,13 @@ endif()
 if(TESTS_XE_HPG_CORE OR TESTS_XE_HPC_CORE)
   list(APPEND neo_libult_common_SRCS_LIB_ULT
        ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xe_hpg_and_xe_hpc.inl
+       ${NEO_SHARED_DIRECTORY}/release_helper${BRANCH_DIR_SUFFIX}enable_release_helper_xe.cpp
   )
 endif()
 
 if(TESTS_PVC_AND_LATER)
   list(APPEND neo_libult_common_SRCS_LIB_ULT
        ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xe_hpc_and_later.inl
-  )
-endif()
-
-if(TESTS_XE_HPG_CORE)
-  list(APPEND neo_libult_common_SRCS_LIB_ULT
-       ${NEO_SHARED_DIRECTORY}/release_helper${BRANCH_DIR_SUFFIX}enable_release_helper_xe.cpp
   )
 endif()
 

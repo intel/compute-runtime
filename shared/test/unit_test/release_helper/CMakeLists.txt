@@ -9,11 +9,12 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tests_base.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tests_base.h
 )
-if(TESTS_XE_HPG_CORE)
+if(TESTS_XE_HPG_CORE OR TESTS_XE_HPC_CORE)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_55_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_56_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_57_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_60_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_70_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_71_tests.cpp
   )
