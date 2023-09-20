@@ -56,5 +56,10 @@ GEN11TEST_F(L0GfxCoreHelperTestGen11, GivenGen11WhenCheckingL0HelperForCmdlistPr
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList());
 }
 
+GEN11TEST_F(L0GfxCoreHelperTestGen11, GivenGen11WhenGettingSupportedRTASFormatThenExpectedFormatIsReturned) {
+    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(ZE_RTAS_FORMAT_EXP_INVALID, l0GfxCoreHelper.getSupportedRTASFormat());
+}
+
 } // namespace ult
 } // namespace L0
