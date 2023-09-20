@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/helpers/in_order_patch_cmds.h"
 
 #include <memory>
 
@@ -35,6 +36,7 @@ struct CommandListImp : CommandList {
     void addToMappedEventList(Event *event);
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
     void incRegularCmdListSubmissionCounter() { regularCmdListSubmissionCounter++; }
+    virtual void patchInOrderCmds() = 0;
 
   protected:
     NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;

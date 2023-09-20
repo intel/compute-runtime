@@ -2737,6 +2737,18 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, 
     context->freeMem(deviceAlloc);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenUsingImmediateCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {
+    DebugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
+    auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+    uint32_t copyData = 0;
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+
+    EXPECT_EQ(0u, immCmdList->inOrderPatchCmds.size());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathThenReportError, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->copyThroughLockedPtrEnabled = true;
@@ -3214,6 +3226,99 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEna
     EXPECT_TRUE(static_cast<CommandListCoreFamily<gfxCoreFamily> *>(cmdList)->isInOrderExecutionEnabled());
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
+}
+
+HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenAddCmdsToPatch, IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    DebugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(true);
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    size_t offset = cmdStream->getUsed();
+
+    uint32_t copyData = 0;
+
+    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+
+    EXPECT_EQ(1u, regularCmdList->inOrderPatchCmds.size()); // SDI
+
+    auto sdiFromContainer1 = reinterpret_cast<MI_STORE_DATA_IMM *>(regularCmdList->inOrderPatchCmds[0].cmd);
+    MI_STORE_DATA_IMM *sdiFromParser1 = nullptr;
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto itor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+
+        sdiFromParser1 = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
+    }
+
+    offset = cmdStream->getUsed();
+    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+    ASSERT_EQ(3u, regularCmdList->inOrderPatchCmds.size()); // SDI + Semaphore + SDI
+
+    auto semaphoreFromContainer2 = reinterpret_cast<MI_SEMAPHORE_WAIT *>(regularCmdList->inOrderPatchCmds[1].cmd);
+    MI_SEMAPHORE_WAIT *semaphoreFromParser2 = nullptr;
+
+    auto sdiFromContainer2 = reinterpret_cast<MI_STORE_DATA_IMM *>(regularCmdList->inOrderPatchCmds[2].cmd);
+    MI_STORE_DATA_IMM *sdiFromParser2 = nullptr;
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), semaphoreItor);
+
+        semaphoreFromParser2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
+        ASSERT_NE(cmdList.end(), sdiItor);
+
+        sdiFromParser2 = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    }
+
+    EXPECT_EQ(2u, regularCmdList->inOrderDependencyCounter);
+
+    auto verifyPatching = [&](uint64_t executionCounter) {
+        auto appendValue = regularCmdList->inOrderDependencyCounter * executionCounter;
+
+        EXPECT_EQ(1u + appendValue, sdiFromContainer1->getDataDword0());
+        EXPECT_EQ(1u + appendValue, sdiFromParser1->getDataDword0());
+
+        EXPECT_EQ(1u + appendValue, semaphoreFromContainer2->getSemaphoreDataDword());
+        EXPECT_EQ(1u + appendValue, semaphoreFromParser2->getSemaphoreDataDword());
+
+        EXPECT_EQ(2u + appendValue, sdiFromContainer2->getDataDword0());
+        EXPECT_EQ(2u + appendValue, sdiFromParser2->getDataDword0());
+    };
+
+    regularCmdList->close();
+
+    auto handle = regularCmdList->toHandle();
+
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    verifyPatching(0);
+
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    verifyPatching(1);
+
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    verifyPatching(2);
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeHpCore) {

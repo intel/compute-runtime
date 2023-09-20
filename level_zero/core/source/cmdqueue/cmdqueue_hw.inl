@@ -540,6 +540,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         auto commandList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
         commandList->setCsr(this->csr);
         commandList->storeReferenceTsToMappedEvents(false);
+        commandList->patchInOrderCmds();
         commandList->incRegularCmdListSubmissionCounter();
 
         auto &commandContainer = commandList->getCmdContainer();
