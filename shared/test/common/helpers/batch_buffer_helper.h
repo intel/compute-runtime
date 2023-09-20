@@ -26,7 +26,8 @@ struct BatchBufferHelper {
             nullptr,                            // endCmdPtr
             0,                                  // numCsrClients
             false,                              // hasStallingCmds
-            false                               // hasRelaxedOrderingDependencies
+            false,                              // hasRelaxedOrderingDependencies
+            false                               // dispatchMonitorFence
         );
     }
 
