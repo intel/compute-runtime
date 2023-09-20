@@ -161,7 +161,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::allowCompression(const HardwareInfo &hwInfo)
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
     return false;
 }
 

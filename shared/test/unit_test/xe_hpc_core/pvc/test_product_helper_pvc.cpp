@@ -169,8 +169,7 @@ PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskedIfPipeControlPriorToNonPi
 }
 
 PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(hwInfo));
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
 }
 
 PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckDirectSubmissionConstantCacheInvalidationNeededThenFalseIsReturned) {

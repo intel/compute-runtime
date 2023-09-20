@@ -12,7 +12,7 @@ std::string ProductHelperHw<gfxProduct>::getDeviceMemoryName() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
     return true;
 }
 

@@ -65,7 +65,7 @@ bool OsContext::ensureContextInitialized() {
 }
 
 bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit) {
-    bool enableDirectSubmission = this->isDirectSubmissionSupported(hwInfo);
+    bool enableDirectSubmission = this->isDirectSubmissionSupported();
 
     if (DebugManager.flags.SetCommandStreamReceiver.get() > 0) {
         enableDirectSubmission = false;

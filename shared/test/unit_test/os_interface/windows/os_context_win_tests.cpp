@@ -75,10 +75,9 @@ TEST_F(OsContextWinTest, givenOsContextWinWhenQueryingForOfflineDumpContextIdThe
 }
 
 TEST_F(OsContextWinTest, givenWddm20AndProductSupportDirectSubmissionThenDirectSubmissionIsSupported) {
-    auto &hwInfo = *this->rootDeviceEnvironment->getHardwareInfo();
     auto &productHelper = this->rootDeviceEnvironment->getHelper<ProductHelper>();
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_EQ(productHelper.isDirectSubmissionSupported(hwInfo), osContext->isDirectSubmissionSupported(hwInfo));
+    EXPECT_EQ(productHelper.isDirectSubmissionSupported(this->rootDeviceEnvironment->getReleaseHelper()), osContext->isDirectSubmissionSupported());
 }
 
 TEST_F(OsContextWinTest, givenWddm23ThenDirectSubmissionIsNotSupported) {
@@ -88,7 +87,7 @@ TEST_F(OsContextWinTest, givenWddm23ThenDirectSubmissionIsNotSupported) {
     auto wddm = static_cast<WddmMock *>(osInterface->getDriverModel()->as<Wddm>());
     wddm->featureTable.get()->flags.ftrWddmHwQueues = 1;
     osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_FALSE(osContext->isDirectSubmissionSupported(*this->rootDeviceEnvironment->getHardwareInfo()));
+    EXPECT_FALSE(osContext->isDirectSubmissionSupported());
 }
 
 TEST_F(OsContextWinTest, givenWddmOnLinuxThenDirectSubmissionIsNotSupported) {
@@ -97,7 +96,7 @@ TEST_F(OsContextWinTest, givenWddmOnLinuxThenDirectSubmissionIsNotSupported) {
     };
     static_cast<MockRootDeviceEnvironment *>(this->rootDeviceEnvironment)->isWddmOnLinuxEnable = true;
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_FALSE(osContext->isDirectSubmissionSupported(*this->rootDeviceEnvironment->getHardwareInfo()));
+    EXPECT_FALSE(osContext->isDirectSubmissionSupported());
 }
 
 struct OsContextWinTestNoCleanup : public WddmTestWithMockGdiDllNoCleanup {

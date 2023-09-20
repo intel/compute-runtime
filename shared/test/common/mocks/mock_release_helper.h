@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
@@ -26,6 +25,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isResolvingSubDeviceIDNeeded, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isCachingOnCpuAvailable, bool, false, ());
     ADDMETHOD_CONST_NOBASE(shouldAdjustDepth, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(getPreferredAllocationMethod, std::optional<GfxMemoryAllocationMethod>, GfxMemoryAllocationMethod::NotDefined;, (AllocationType allocationType));
+    ADDMETHOD_CONST_NOBASE(isDirectSubmissionSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(getPreferredAllocationMethod, std::optional<GfxMemoryAllocationMethod>, std::nullopt, (AllocationType allocationType));
 };
 } // namespace NEO

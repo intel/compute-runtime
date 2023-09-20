@@ -27,9 +27,12 @@ struct XeLpgProductHelperTests : public ::Test<DeviceFixture> {
         ::Test<DeviceFixture>::SetUp();
         productHelper = &pDevice->getProductHelper();
         gfxCoreHelper = &pDevice->getGfxCoreHelper();
+        ASSERT_NE(nullptr, pDevice->getReleaseHelper());
+        releaseHelper = pDevice->getReleaseHelper();
     }
-    ProductHelper const *productHelper = nullptr;
-    GfxCoreHelper const *gfxCoreHelper = nullptr;
+    ReleaseHelper *releaseHelper = nullptr;
+    const ProductHelper *productHelper = nullptr;
+    const GfxCoreHelper *gfxCoreHelper = nullptr;
 };
 
 using XeLpgHwInfoTests = ::testing::Test;
@@ -325,4 +328,8 @@ HWTEST2_F(XeLpgProductHelperTests, givenCompilerProductHelperWhenGetDefaultHwIpV
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::MTL_M_A0);
+}
+
+HWTEST2_F(XeLpgProductHelperTests, whenCheckDirectSubmissionSupportedThenValueFromReleaseHelperIsReturned, IsXeLpg) {
+    EXPECT_EQ(productHelper->isDirectSubmissionSupported(releaseHelper), releaseHelper->isDirectSubmissionSupported());
 }

@@ -79,10 +79,11 @@ bool OsContextLinux::initializeContext() {
     return true;
 }
 
-bool OsContextLinux::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    auto &productHelper = this->getDrm().getRootDeviceEnvironment().getHelper<ProductHelper>();
+bool OsContextLinux::isDirectSubmissionSupported() const {
+    auto &rootDeviceEnvironment = this->getDrm().getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-    return this->getDrm().isVmBindAvailable() && productHelper.isDirectSubmissionSupported(hwInfo);
+    return this->getDrm().isVmBindAvailable() && productHelper.isDirectSubmissionSupported(rootDeviceEnvironment.getReleaseHelper());
 }
 
 Drm &OsContextLinux::getDrm() const {

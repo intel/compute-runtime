@@ -31,4 +31,9 @@ bool ReleaseHelperHw<release>::isCachingOnCpuAvailable() const {
     return false;
 }
 
+template <>
+bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
+    return true;
+}
+
 } // namespace NEO

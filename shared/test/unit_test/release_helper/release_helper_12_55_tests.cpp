@@ -32,6 +32,7 @@ TEST_F(ReleaseHelper1255Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_TRUE(releaseHelper->isCachingOnCpuAvailable());
+        EXPECT_TRUE(releaseHelper->isDirectSubmissionSupported());
     }
 }
 

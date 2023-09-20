@@ -672,10 +672,10 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThe
 }
 
 HWTEST_F(DrmDirectSubmissionTest, whenCheckForDirectSubmissionSupportThenProperValueIsReturned) {
-    auto directSubmissionSupported = osContext->isDirectSubmissionSupported(device->getHardwareInfo());
+    auto directSubmissionSupported = osContext->isDirectSubmissionSupported();
 
     auto &productHelper = device->getProductHelper();
-    EXPECT_EQ(directSubmissionSupported, productHelper.isDirectSubmissionSupported(device->getHardwareInfo()) && executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>()->isVmBindAvailable());
+    EXPECT_EQ(directSubmissionSupported, productHelper.isDirectSubmissionSupported(device->getReleaseHelper()) && executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>()->isVmBindAvailable());
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDispatchCommandBufferThenTlbIsFlushed) {

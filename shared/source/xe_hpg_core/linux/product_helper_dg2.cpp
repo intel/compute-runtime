@@ -27,11 +27,6 @@ constexpr static auto gfxProduct = IGFX_DG2;
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (allowCompression(*hwInfo)) {
         enableCompression(hwInfo);

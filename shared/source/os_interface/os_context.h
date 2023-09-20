@@ -40,7 +40,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isCooperativeEngine() const { return engineUsage == EngineUsage::Cooperative; }
     bool isRootDevice() const { return rootDevice; }
     bool isEngineInstanced() const { return engineInstancedDevice; }
-    virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const { return false; }
+    virtual bool isDirectSubmissionSupported() const { return false; }
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContext(bool value) { defaultContext = value; }
     bool isDirectSubmissionActive() { return directSubmissionActive; }

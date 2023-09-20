@@ -25,6 +25,11 @@ constexpr static auto gfxProduct = IGFX_DG2;
 namespace NEO {
 
 template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+    return false;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, uint32_t subDeviceCount, uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
 
     if (driverModel->getDriverModelType() != DriverModelType::WDDM) {

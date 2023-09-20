@@ -91,11 +91,12 @@ uint64_t OsContextWin::getOfflineDumpContextId(uint32_t deviceIndex) const {
     return 0;
 }
 
-bool OsContextWin::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    auto &productHelper = wddm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto isWSL = wddm.getRootDeviceEnvironment().isWddmOnLinux();
+bool OsContextWin::isDirectSubmissionSupported() const {
+    auto &rootDeviceEnvironment = wddm.getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto isWSL = rootDeviceEnvironment.isWddmOnLinux();
 
-    return !isWSL && wddm.getWddmVersion() == WddmVersion::WDDM_2_0 && productHelper.isDirectSubmissionSupported(hwInfo);
+    return !isWSL && wddm.getWddmVersion() == WddmVersion::WDDM_2_0 && productHelper.isDirectSubmissionSupported(rootDeviceEnvironment.getReleaseHelper());
 }
 
 OsContextWin::~OsContextWin() {

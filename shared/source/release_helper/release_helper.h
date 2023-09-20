@@ -39,6 +39,7 @@ class ReleaseHelper {
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
     virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool shouldAdjustDepth() const = 0;
+    virtual bool isDirectSubmissionSupported() const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
 
   protected:
@@ -65,6 +66,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isResolvingSubDeviceIDNeeded() const override;
     bool isCachingOnCpuAvailable() const override;
     bool shouldAdjustDepth() const override;
+    bool isDirectSubmissionSupported() const override;
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
 
   protected:

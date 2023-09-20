@@ -839,7 +839,7 @@ const CompilerProductHelper &Device::getCompilerProductHelper() const {
     return getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 }
 
-const ReleaseHelper *Device::getReleaseHelper() const {
+ReleaseHelper *Device::getReleaseHelper() const {
     return getRootDeviceEnvironment().getReleaseHelper();
 }
 

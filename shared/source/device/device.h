@@ -159,7 +159,7 @@ class Device : public ReferenceTrackedObject<Device> {
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
-    const ReleaseHelper *getReleaseHelper() const;
+    ReleaseHelper *getReleaseHelper() const;
 
     uint32_t getNumberOfRegularContextsPerEngine() const { return numberOfRegularContextsPerEngine; }
     bool isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const;
