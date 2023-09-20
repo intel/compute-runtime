@@ -20,6 +20,7 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::completionFenceAllocation;
     using BaseClass::currentRingBuffer;
     using BaseClass::disableMonitorFence;
+    using BaseClass::dispatchMonitorFenceRequired;
     using BaseClass::getSizeDispatch;
     using BaseClass::getSizeNewResourceHandler;
     using BaseClass::getSizeSemaphoreSection;

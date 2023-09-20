@@ -32,6 +32,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::disableCpuCacheFlush;
     using BaseClass::disableMonitorFence;
     using BaseClass::dispatchDisablePrefetcher;
+    using BaseClass::dispatchMonitorFenceRequired;
     using BaseClass::dispatchPartitionRegisterConfiguration;
     using BaseClass::dispatchPrefetchMitigation;
     using BaseClass::dispatchRelaxedOrderingReturnPtrRegs;

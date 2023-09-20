@@ -48,7 +48,7 @@ enum class DirectSubmissionSfenceMode : int32_t {
 
 namespace UllsDefaults {
 inline constexpr bool defaultDisableCacheFlush = true;
-inline constexpr bool defaultDisableMonitorFence = false;
+inline constexpr bool defaultDisableMonitorFence = true;
 } // namespace UllsDefaults
 
 struct BatchBuffer;
@@ -145,8 +145,8 @@ class DirectSubmissionHw {
 
     void setReturnAddress(void *returnCmd, uint64_t returnAddress);
 
-    void *dispatchWorkloadSection(BatchBuffer &batchBuffer);
-    size_t getSizeDispatch(bool relaxedOrderingSchedulerRequired, bool returnPtrsRequired);
+    void *dispatchWorkloadSection(BatchBuffer &batchBuffer, bool dispatchMonitorFence);
+    size_t getSizeDispatch(bool relaxedOrderingSchedulerRequired, bool returnPtrsRequired, bool dispatchMonitorFence);
 
     void dispatchPrefetchMitigation();
     size_t getSizePrefetchMitigation();

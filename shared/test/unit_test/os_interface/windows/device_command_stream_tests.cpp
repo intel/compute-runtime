@@ -1238,7 +1238,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection(false) +
                           Dispatcher::getSizePreemption() +
-                          directSubmission->getSizeDispatch(false, false);
+                          directSubmission->getSizeDispatch(false, false, directSubmission->dispatchMonitorFenceRequired(false));
 
     if (directSubmission->miMemFenceRequired) {
         expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();
@@ -1286,7 +1286,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection(false) +
                           Dispatcher::getSizePreemption() +
-                          directSubmission->getSizeDispatch(false, false);
+                          directSubmission->getSizeDispatch(false, false, directSubmission->dispatchMonitorFenceRequired(false));
 
     if (directSubmission->miMemFenceRequired) {
         expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();

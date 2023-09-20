@@ -51,6 +51,9 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
+    if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
+        this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
+    }
 
     if (DebugManager.flags.DirectSubmissionMaxRingBuffers.get() != -1) {
         this->maxRingBufferCount = DebugManager.flags.DirectSubmissionMaxRingBuffers.get();
@@ -505,7 +508,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
         startSize += RelaxedOrderingHelper::getSizeRegistersInit<GfxFamily>();
     }
 
-    size_t requiredSize = startSize + getSizeDispatch(false, false) + getSizeEnd(false);
+    size_t requiredSize = startSize + getSizeDispatch(false, false, dispatchMonitorFenceRequired(true)) + getSizeEnd(false);
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
         switchRingBuffers();
     }
@@ -662,7 +665,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd(bool relaxed
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool relaxedOrderingSchedulerRequired, bool returnPtrsRequired) {
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool relaxedOrderingSchedulerRequired, bool returnPtrsRequired, bool dispatchMonitorFence) {
     size_t size = getSizeSemaphoreSection(relaxedOrderingSchedulerRequired);
     if (workloadMode == 0) {
         size += getSizeStartSection();
@@ -677,7 +680,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool re
     if (!disableCacheFlush) {
         size += Dispatcher::getSizeCacheFlush(rootDeviceEnvironment);
     }
-    if (!disableMonitorFence) {
+    if (dispatchMonitorFence) {
         size += Dispatcher::getSizeMonitorFence(rootDeviceEnvironment);
     }
 
@@ -695,7 +698,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::updateRelaxedOrderingQueueSize(u
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBuffer &batchBuffer) {
+void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBuffer &batchBuffer, bool dispatchMonitorFence) {
     void *currentPosition = ringCommandStream.getSpace(0);
 
     if (DebugManager.flags.DirectSubmissionPrintBuffers.get()) {
@@ -765,7 +768,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         Dispatcher::dispatchCacheFlush(ringCommandStream, this->rootDeviceEnvironment, gpuVaForMiFlush);
     }
 
-    if (!disableMonitorFence || this->dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds)) {
+    if (dispatchMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
         Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment,
@@ -935,8 +938,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     this->startRingBuffer();
 
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
+    bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds);
 
-    size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies);
+    size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies, dispatchMonitorFence);
 
     if (this->copyCommandBufferIntoRing(batchBuffer)) {
         dispatchSize += (batchBuffer.stream->getUsed() - batchBuffer.startOffset) - 2 * getSizeStartSection();
@@ -965,7 +969,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     handleNewResourcesSubmission();
 
-    void *currentPosition = dispatchWorkloadSection(batchBuffer);
+    void *currentPosition = dispatchWorkloadSection(batchBuffer, dispatchMonitorFence);
 
     cpuCachelineFlush(currentPosition, dispatchSize);
     handleResidency();
@@ -1084,7 +1088,7 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(bool hasStallingCmds) {
-    return false;
+    return !this->disableMonitorFence;
 }
 
 template <typename GfxFamily, typename Dispatcher>

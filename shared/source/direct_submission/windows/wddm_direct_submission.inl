@@ -41,12 +41,6 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(const DirectSu
     if (this->miMemFenceRequired) {
         this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
     }
-
-    this->disableMonitorFence = true;
-
-    if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
-        this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
-    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -157,7 +151,7 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool hasSta
 
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(bool hasStallingCmds) {
-    return hasStallingCmds;
+    return !this->disableMonitorFence || hasStallingCmds;
 }
 
 template <typename GfxFamily, typename Dispatcher>
