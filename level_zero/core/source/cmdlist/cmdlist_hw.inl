@@ -2226,11 +2226,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
             NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
         }
 
-        if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
-            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
-        } else if (!isCopyOnly()) {
-            appendComputeBarrierCommand();
-        }
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed);
     }
 }
 
@@ -2301,7 +2297,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     UNRECOVERABLE_IF(waitValue > std::numeric_limits<uint32_t>::max());
-    UNRECOVERABLE_IF(this->cmdListType == CommandListType::TYPE_REGULAR);
 
     commandContainer.addToResidencyContainer(dependencyCounterAllocation);
 

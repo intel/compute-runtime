@@ -1803,7 +1803,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKernelAppendThenWaitForDependencyAndSignalSyncAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
 
@@ -1817,10 +1817,14 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    auto verifyPc = [](const GenCmdList::iterator &iterator) {
-        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*iterator);
+    auto verifySemaphore = [&inOrderSyncVa](const GenCmdList::iterator &iterator, uint64_t waitValue) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
 
-        ASSERT_NE(nullptr, pcCmd);
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        EXPECT_EQ(getLowPart(waitValue), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(inOrderSyncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
     };
 
     auto verifySdi = [&inOrderSyncVa, &regularCmdList](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint64_t signalValue) {
@@ -1850,7 +1854,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifyPc(cmdList.begin());
+        verifySemaphore(cmdList.begin(), 1);
         verifySdi(cmdList.rbegin(), cmdList.rend(), 2);
     }
 
@@ -1866,7 +1870,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifyPc(cmdList.begin());
+        verifySemaphore(cmdList.begin(), 2);
         verifySdi(cmdList.rbegin(), cmdList.rend(), 3);
     }
 
@@ -1880,7 +1884,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifyPc(cmdList.begin());
+        verifySemaphore(cmdList.begin(), 3);
         verifySdi(cmdList.rbegin(), cmdList.rend(), 4);
     }
 
@@ -1896,7 +1900,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifyPc(cmdList.begin());
+        verifySemaphore(cmdList.begin(), 4);
         verifySdi(cmdList.rbegin(), cmdList.rend(), 5);
     }
 
@@ -1912,7 +1916,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifyPc(cmdList.begin());
+        verifySemaphore(cmdList.begin(), 5);
         verifySdi(cmdList.rbegin(), cmdList.rend(), 6);
     }
 }
@@ -2265,7 +2269,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEvents
 
 HWTEST2_F(InOrderCmdListTests, givenRegularInOrderCmdListWhenProgrammingAppendWaitOnEventsThenDontSignalSyncAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
 
@@ -2288,13 +2292,10 @@ HWTEST2_F(InOrderCmdListTests, givenRegularInOrderCmdListWhenProgrammingAppendWa
                                                       ptrOffset(cmdStream->getCpuBase(), offset),
                                                       (cmdStream->getUsed() - offset)));
 
-    auto pcItor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), pcItor);
+    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), semaphoreItor);
 
-    auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
-    ASSERT_NE(nullptr, pcCmd);
-
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
     EXPECT_NE(cmdList.end(), sdiItor);
 
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
@@ -3191,7 +3192,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEna
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeHpCore) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -3211,7 +3212,6 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
-        EXPECT_EQ(nullptr, genCmdCast<PIPE_CONTROL *>(*cmdList.begin()));
 
         auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
@@ -3237,7 +3237,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
-        EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*cmdList.begin()));
+        EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*cmdList.begin()));
 
         auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
@@ -3325,6 +3325,7 @@ using InOrderRegularCopyOnlyCmdListTests = InOrderCmdListTests;
 HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenDontProgramBarriers, IsAtLeastXeHpCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto regularCmdList = createRegularCmdList<gfxCoreFamily>(true);
 
@@ -3367,11 +3368,15 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto copyCmd = genCmdCast<XY_COPY_BLT *>(*cmdList.begin());
+        auto itor = cmdList.begin();
+        EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*itor));
+
+        itor++;
+        auto copyCmd = genCmdCast<XY_COPY_BLT *>(*itor);
 
         EXPECT_NE(nullptr, copyCmd);
 
-        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(itor, cmdList.end());
         EXPECT_NE(cmdList.end(), sdiItor);
 
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
