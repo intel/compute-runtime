@@ -126,6 +126,8 @@ extern size_t findNextFileACalled;
 extern const size_t findNextFileAFileDataCount;
 extern WIN32_FIND_DATAA findNextFileAFileData[];
 
+extern size_t findCloseCalled;
+
 extern size_t getFileAttributesCalled;
 extern DWORD getFileAttributesResult;
 } // namespace SysCalls
@@ -765,6 +767,20 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenRenameTempFileBinaryToPrope
     EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
     EXPECT_EQ(1u, SysCalls::deleteFileACalled);
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
+}
+
+TEST(CompilerCacheHelperWindowsTest, givenFindFirstFileASuccessWhenGetFileModificationTimeThenFindCloseIsCalled) {
+    VariableBackup<HANDLE> findFirstFileAResultBackup(&SysCalls::findFirstFileAResult, reinterpret_cast<HANDLE>(0x1234));
+    VariableBackup<size_t> findCloseCalledBackup(&SysCalls::findCloseCalled, 0u);
+    [[maybe_unused]] auto modificationTime = NEO::getFileModificationTime("C:\\Users\\user1\\file1.txt");
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+}
+
+TEST(CompilerCacheHelperWindowsTest, givenFindFirstFileASuccessWhenGetFileSizeThenFindCloseIsCalled) {
+    VariableBackup<HANDLE> findFirstFileAResultBackup(&SysCalls::findFirstFileAResult, reinterpret_cast<HANDLE>(0x1234));
+    VariableBackup<size_t> findCloseCalledBackup(&SysCalls::findCloseCalled, 0u);
+    [[maybe_unused]] auto fileSize = NEO::getFileSize("C:\\Users\\user1\\file1.txt");
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
 }
 
 } // namespace NEO

@@ -86,6 +86,7 @@ time_t getFileModificationTime(const std::string &path) {
     ULARGE_INTEGER uli;
     uli.LowPart = ffd.ftLastWriteTime.dwLowDateTime;
     uli.HighPart = ffd.ftLastWriteTime.dwHighDateTime;
+    SysCalls::findClose(hFind);
     return uli.QuadPart;
 }
 
@@ -96,6 +97,7 @@ size_t getFileSize(const std::string &path) {
     if (hFind == INVALID_HANDLE_VALUE) {
         return 0u;
     }
+    SysCalls::findClose(hFind);
     return static_cast<size_t>((ffd.nFileSizeHigh * (MAXDWORD + 1)) + ffd.nFileSizeLow);
 }
 

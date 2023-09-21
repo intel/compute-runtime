@@ -85,6 +85,8 @@ size_t findNextFileACalled = 0u;
 extern const size_t findNextFileAFileDataCount = 4;
 WIN32_FIND_DATAA findNextFileAFileData[findNextFileAFileDataCount];
 
+size_t findCloseCalled = 0u;
+
 size_t getFileAttributesCalled = 0u;
 DWORD getFileAttributesResult = TRUE;
 
@@ -250,6 +252,7 @@ BOOL findNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData) {
 }
 
 BOOL findClose(HANDLE hFindFile) {
+    findCloseCalled++;
     return TRUE;
 }
 
