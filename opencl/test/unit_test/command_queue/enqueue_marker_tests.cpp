@@ -41,6 +41,8 @@ HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeC
         eventWaitList,
         event);
     ASSERT_EQ(CL_SUCCESS, retVal);
+    auto mockCmdQ = static_cast<MockCommandQueue *>(pCmdQ);
+    EXPECT_FALSE(mockCmdQ->splitBarrierRequired);
 
     // Should sync CSR & CmdQ levels.
     EXPECT_EQ(commandStreamReceiver.peekTaskLevel(), pCmdQ->taskLevel);
@@ -67,6 +69,8 @@ HWTEST_F(MarkerTest, GivenCsrAndCmdqWithDifferentTaskLevelsWhenEnqueingMarkerThe
         eventWaitList,
         event);
     ASSERT_EQ(CL_SUCCESS, retVal);
+    auto mockCmdQ = static_cast<MockCommandQueue *>(pCmdQ);
+    EXPECT_FALSE(mockCmdQ->splitBarrierRequired);
 
     // Should sync CSR & CmdQ levels.
     EXPECT_EQ(1u, pCmdQ->taskLevel);

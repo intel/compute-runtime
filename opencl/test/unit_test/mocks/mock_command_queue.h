@@ -46,6 +46,7 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::queueFamilySelected;
     using CommandQueue::queueIndexWithinFamily;
     using CommandQueue::requiresCacheFlushAfterWalker;
+    using CommandQueue::splitBarrierRequired;
     using CommandQueue::throttle;
     using CommandQueue::timestampPacketContainer;
 
