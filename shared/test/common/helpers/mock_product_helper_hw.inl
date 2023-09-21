@@ -5,6 +5,8 @@
  *
  */
 
+namespace NEO {
+
 template <>
 std::vector<int32_t> MockProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() const {
     return threadArbPolicies;
@@ -69,3 +71,5 @@ template <>
 bool MockProductHelperHw<gfxProduct>::isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const {
     return this->returnedIsUnlockingLockedPtrNecessary;
 }
+
+} // namespace NEO
