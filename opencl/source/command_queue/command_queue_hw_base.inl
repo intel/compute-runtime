@@ -250,7 +250,7 @@ void CommandQueueHw<GfxFamily>::registerGpgpuCsrClient() {
     if (!gpgpuCsrClientRegistered) {
         gpgpuCsrClientRegistered = true;
 
-        getGpgpuCommandStreamReceiver().registerClient();
+        getGpgpuCommandStreamReceiver().registerClient(this);
     }
 }
 
@@ -262,19 +262,19 @@ void CommandQueueHw<GfxFamily>::registerBcsCsrClient(CommandStreamReceiver &bcsC
 
     if (!bcsState.csrClientRegistered) {
         bcsState.csrClientRegistered = true;
-        bcsCsr.registerClient();
+        bcsCsr.registerClient(this);
     }
 }
 
 template <typename Family>
 CommandQueueHw<Family>::~CommandQueueHw() {
     if (gpgpuCsrClientRegistered) {
-        gpgpuEngine->commandStreamReceiver->unregisterClient();
+        gpgpuEngine->commandStreamReceiver->unregisterClient(this);
     }
 
     for (auto &copyEngine : bcsStates) {
         if (copyEngine.isValid() && copyEngine.csrClientRegistered) {
-            bcsEngines[EngineHelpers::getBcsIndex(copyEngine.engineType)]->commandStreamReceiver->unregisterClient();
+            bcsEngines[EngineHelpers::getBcsIndex(copyEngine.engineType)]->commandStreamReceiver->unregisterClient(this);
         }
     }
 }

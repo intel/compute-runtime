@@ -251,10 +251,11 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
 }
 
 void CommandQueueImp::unregisterCsrClient() {
-    if (getClientId() != CommandQueue::clientNotRegistered) {
-        this->csr->unregisterClient();
-        setClientId(CommandQueue::clientNotRegistered);
-    }
+    this->csr->unregisterClient(this);
+}
+
+void CommandQueueImp::registerCsrClient() {
+    this->csr->registerClient(this);
 }
 
 ze_command_queue_mode_t CommandQueueImp::getSynchronousMode() const {

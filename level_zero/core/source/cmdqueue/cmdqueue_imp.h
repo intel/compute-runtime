@@ -92,6 +92,7 @@ struct CommandQueueImp : public CommandQueue {
     void printKernelsPrintfOutput(bool hangDetected);
     void checkAssert();
     void unregisterCsrClient() override;
+    void registerCsrClient() override;
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,

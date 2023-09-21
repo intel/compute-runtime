@@ -1165,8 +1165,9 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
     ultCsr.directSubmission.reset(directSubmission);
-    ultCsr.registerClient();
-    ultCsr.registerClient();
+    int client1, client2;
+    ultCsr.registerClient(&client1);
+    ultCsr.registerClient(&client2);
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
 
@@ -1215,8 +1216,9 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlu
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
     ultCsr.directSubmission.reset(directSubmission);
-    ultCsr.registerClient();
-    ultCsr.registerClient();
+    int client1, client2;
+    ultCsr.registerClient(&client1);
+    ultCsr.registerClient(&client2);
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
 
@@ -1262,8 +1264,9 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenPipeControlForIoqDependencyRes
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
     ultCsr.directSubmission.reset(directSubmission);
-    ultCsr.registerClient();
-    ultCsr.registerClient();
+    int client1, client2;
+    ultCsr.registerClient(&client1);
+    ultCsr.registerClient(&client2);
 
     MockKernelWithInternals mockKernel(*pClDevice);
 
@@ -1282,8 +1285,9 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSend
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
     ultCsr.directSubmission.reset(directSubmission);
-    ultCsr.registerClient();
-    ultCsr.registerClient();
+    int client1, client2;
+    ultCsr.registerClient(&client1);
+    ultCsr.registerClient(&client2);
 
     ultCsr.recordFlusheBatchBuffer = true;
 

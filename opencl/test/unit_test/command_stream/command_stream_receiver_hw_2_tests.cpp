@@ -709,8 +709,11 @@ HWTEST_F(BcsTests, givenTaskStreamWhenFlushingThenPassNumClients) {
                                                                           graphicsAllocation->getGpuAddress(), 0,
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
-    csr.registerClient();
-    csr.registerClient();
+    int client1, client2;
+    csr.registerClient(&client1);
+    csr.registerClient(&client2);
+
+    EXPECT_EQ(2u, csr.getNumClients());
 
     flushBcsTask(&csr, blitProperties, true, *pDevice);
 
