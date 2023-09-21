@@ -1404,7 +1404,7 @@ void CommandQueue::registerGpgpuCsrClient() {
     if (!gpgpuCsrClientRegistered) {
         gpgpuCsrClientRegistered = true;
 
-        getGpgpuCommandStreamReceiver().registerClient();
+        getGpgpuCommandStreamReceiver().registerClient(this);
     }
 }
 
@@ -1415,13 +1415,13 @@ void CommandQueue::registerBcsCsrClient(CommandStreamReceiver &bcsCsr) {
 
     if (!bcsState.csrClientRegistered) {
         bcsState.csrClientRegistered = true;
-        bcsCsr.registerClient();
+        bcsCsr.registerClient(this);
     }
 }
 
 void CommandQueue::unregisterGpgpuCsrClient() {
     if (gpgpuCsrClientRegistered) {
-        gpgpuEngine->commandStreamReceiver->unregisterClient();
+        gpgpuEngine->commandStreamReceiver->unregisterClient(this);
         gpgpuCsrClientRegistered = false;
     }
 }
@@ -1432,7 +1432,7 @@ void CommandQueue::unregisterBcsCsrClient(CommandStreamReceiver &bcsCsr) {
     auto &bcsState = bcsStates[EngineHelpers::getBcsIndex(engineType)];
 
     if (bcsState.isValid() && bcsState.csrClientRegistered) {
-        bcsCsr.unregisterClient();
+        bcsCsr.unregisterClient(this);
         bcsState.csrClientRegistered = false;
     }
 }

@@ -94,6 +94,8 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     productHelper.fillStateBaseAddressPropertiesSupportStructure(sbaSupportFlags);
     this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
     this->l1CachePolicyData.init(productHelper);
+
+    registeredClients.reserve(16);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -1068,6 +1070,25 @@ void CommandStreamReceiver::createGlobalStatelessHeap() {
 
 bool CommandStreamReceiver::isRayTracingStateProgramingNeeded(Device &device) const {
     return device.getRTMemoryBackedBuffer() && getBtdCommandDirty();
+}
+
+void CommandStreamReceiver::registerClient(void *client) {
+    std::unique_lock<MutexType> lock(registeredClientsMutex);
+    auto element = std::find(registeredClients.begin(), registeredClients.end(), client);
+    if (element == registeredClients.end()) {
+        registeredClients.push_back(client);
+        numClients++;
+    }
+}
+
+void CommandStreamReceiver::unregisterClient(void *client) {
+    std::unique_lock<MutexType> lock(registeredClientsMutex);
+
+    auto element = std::find(registeredClients.begin(), registeredClients.end(), client);
+    if (element != registeredClients.end()) {
+        registeredClients.erase(element);
+        numClients--;
+    }
 }
 
 std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };
