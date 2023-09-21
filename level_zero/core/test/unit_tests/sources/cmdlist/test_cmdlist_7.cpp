@@ -2964,7 +2964,8 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenCsrClientCountWhenCallingSyn
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
 
-    cmdList->cmdQImmediate->setClientId(csr->registerClient());
+    cmdList->cmdQImmediate->registerCsrClient();
+
     auto clientCount = csr->getNumClients();
 
     EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
@@ -2975,7 +2976,8 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenCsrClientCountWhenCallingSyn
 
     EXPECT_EQ(clientCount - 1, csr->getNumClients());
 
-    cmdList->cmdQImmediate->setClientId(csr->registerClient());
+    cmdList->cmdQImmediate->registerCsrClient();
+
     clientCount = csr->getNumClients();
 
     csr->callBaseWaitForCompletionWithTimeout = false;
