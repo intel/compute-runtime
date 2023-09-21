@@ -25,10 +25,10 @@ bool apiSupport = false;
 } // namespace ImplicitScaling
 
 const char *neoMockSettingsFileName = "neo_mock.config";
-std::vector<const char *> validUltL0Prefixes = {"NEO_L0_", "NEO_", ""};
-std::vector<NEO::DebugVarPrefix> validUltL0PrefixTypes = {DebugVarPrefix::Neo_L0, DebugVarPrefix::Neo, DebugVarPrefix::None};
-std::vector<const char *> validUltOclPrefixes = {"NEO_OCL_", "NEO_", ""};
-std::vector<NEO::DebugVarPrefix> validUltOclPrefixTypes = {DebugVarPrefix::Neo_Ocl, DebugVarPrefix::Neo, DebugVarPrefix::None};
+StackVec<const char *, 4> validUltL0Prefixes = {"NEO_L0_", "NEO_", ""};
+StackVec<NEO::DebugVarPrefix, 4> validUltL0PrefixTypes = {DebugVarPrefix::Neo_L0, DebugVarPrefix::Neo, DebugVarPrefix::None};
+StackVec<const char *, 4> validUltOclPrefixes = {"NEO_OCL_", "NEO_", ""};
+StackVec<NEO::DebugVarPrefix, 4> validUltOclPrefixTypes = {DebugVarPrefix::Neo_Ocl, DebugVarPrefix::Neo, DebugVarPrefix::None};
 
 bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties) {
     return false;
@@ -88,7 +88,7 @@ const char *ApiSpecificConfig::getRegistryPath() {
 void ApiSpecificConfig::initPrefixes() {
 }
 
-const std::vector<const char *> &ApiSpecificConfig::getPrefixStrings() {
+const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {
     if (apiTypeForUlts == ApiSpecificConfig::L0) {
         return validUltL0Prefixes;
     } else {
@@ -96,7 +96,7 @@ const std::vector<const char *> &ApiSpecificConfig::getPrefixStrings() {
     }
 }
 
-const std::vector<DebugVarPrefix> &ApiSpecificConfig::getPrefixTypes() {
+const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
     if (apiTypeForUlts == ApiSpecificConfig::L0) {
         return validUltL0PrefixTypes;
     } else {

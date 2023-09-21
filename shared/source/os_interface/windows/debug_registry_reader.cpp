@@ -92,8 +92,8 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
     if (!(getSettingIntCommon(settingName, value))) {
         char *envValue;
 
-        const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
-        const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
+        auto prefixString = ApiSpecificConfig::getPrefixStrings();
+        auto prefixType = ApiSpecificConfig::getPrefixTypes();
 
         uint32_t i = 0;
         for (const auto &prefix : prefixString) {
@@ -190,8 +190,8 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     if (!(getSettingStringCommon(settingName, keyValue))) {
         char *envValue;
 
-        const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
-        const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
+        auto prefixString = ApiSpecificConfig::getPrefixStrings();
+        auto prefixType = ApiSpecificConfig::getPrefixTypes();
 
         uint32_t i = 0;
         for (const auto &prefix : prefixString) {

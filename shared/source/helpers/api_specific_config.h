@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
 #include <string>
@@ -27,8 +28,8 @@ struct ApiSpecificConfig {
     static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);
     static const char *getRegistryPath();
     static void initPrefixes();
-    static const std::vector<const char *> &getPrefixStrings();
-    static const std::vector<DebugVarPrefix> &getPrefixTypes();
+    static const StackVec<const char *, 4> &getPrefixStrings();
+    static const StackVec<DebugVarPrefix, 4> &getPrefixTypes();
     static std::string getAubPrefixForSpecificApi() {
         return (getName() + "_");
     }

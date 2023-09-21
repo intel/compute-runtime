@@ -42,8 +42,8 @@ int32_t SettingsFileReader::getSetting(const char *settingName, int32_t defaultV
 int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) {
     int64_t value = defaultValue;
 
-    const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
-    const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
+    auto prefixString = ApiSpecificConfig::getPrefixStrings();
+    auto prefixType = ApiSpecificConfig::getPrefixTypes();
 
     uint32_t i = 0;
     for (const auto &prefix : prefixString) {
@@ -83,8 +83,8 @@ bool SettingsFileReader::getSetting(const char *settingName, bool defaultValue) 
 std::string SettingsFileReader::getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) {
     std::string returnValue = value;
 
-    const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
-    const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
+    auto prefixString = ApiSpecificConfig::getPrefixStrings();
+    auto prefixType = ApiSpecificConfig::getPrefixTypes();
 
     uint32_t i = 0;
     for (const auto &prefix : prefixString) {

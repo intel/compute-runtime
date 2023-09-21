@@ -38,8 +38,8 @@ int64_t EnvironmentVariableReader::getSetting(const char *settingName, int64_t d
     int64_t value = defaultValue;
     char *envValue;
 
-    const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
-    const std::vector<NEO::DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
+    auto prefixString = ApiSpecificConfig::getPrefixStrings();
+    auto prefixType = ApiSpecificConfig::getPrefixTypes();
     uint32_t i = 0;
 
     for (const auto &prefix : prefixString) {
@@ -73,8 +73,8 @@ std::string EnvironmentVariableReader::getSetting(const char *settingName, const
     std::string keyValue;
     keyValue.assign(value);
 
-    const std::vector<const char *> prefixString = ApiSpecificConfig::getPrefixStrings();
-    const std::vector<DebugVarPrefix> prefixType = ApiSpecificConfig::getPrefixTypes();
+    auto prefixString = ApiSpecificConfig::getPrefixStrings();
+    auto prefixType = ApiSpecificConfig::getPrefixTypes();
 
     uint32_t i = 0;
     for (const auto &prefix : prefixString) {

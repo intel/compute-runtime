@@ -14,8 +14,8 @@
 #include <vector>
 
 namespace NEO {
-std::vector<const char *> validL0Prefixes;
-std::vector<NEO::DebugVarPrefix> validL0PrefixTypes;
+StackVec<const char *, 4> validL0Prefixes;
+StackVec<NEO::DebugVarPrefix, 4> validL0PrefixTypes;
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return false;
 }
@@ -61,11 +61,11 @@ void ApiSpecificConfig::initPrefixes() {
     validL0PrefixTypes = {DebugVarPrefix::Neo_L0, DebugVarPrefix::Neo, DebugVarPrefix::None};
 }
 
-const std::vector<const char *> &ApiSpecificConfig::getPrefixStrings() {
+const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {
     return validL0Prefixes;
 }
 
-const std::vector<DebugVarPrefix> &ApiSpecificConfig::getPrefixTypes() {
+const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
     return validL0PrefixTypes;
 }
 } // namespace NEO
