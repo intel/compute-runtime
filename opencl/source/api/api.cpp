@@ -326,41 +326,50 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
                                       cl_uint numDevices,
                                       cl_device_id *outDevices,
                                       cl_uint *numDevicesRet) {
+    TRACING_ENTER(ClCreateSubDevices, &inDevice, &properties, &numDevices, &outDevices, &numDevicesRet);
+    cl_int retVal = CL_INVALID_DEVICE;
+    API_ENTER(&retVal);
+    do {
+        ClDevice *pInDevice = castToObject<ClDevice>(inDevice);
+        if (pInDevice == nullptr) {
+            break;
+        }
+        auto subDevicesCount = pInDevice->getNumSubDevices();
+        if (subDevicesCount <= 1) {
+            retVal = CL_DEVICE_PARTITION_FAILED;
+            break;
+        }
+        if ((properties == nullptr) ||
+            (properties[0] != CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN) ||
+            ((properties[1] != CL_DEVICE_AFFINITY_DOMAIN_NUMA) && (properties[1] != CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE)) ||
+            (properties[2] != 0)) {
+            retVal = CL_INVALID_VALUE;
+            break;
+        }
 
-    ClDevice *pInDevice = castToObject<ClDevice>(inDevice);
-    if (pInDevice == nullptr) {
-        return CL_INVALID_DEVICE;
-    }
-    auto subDevicesCount = pInDevice->getNumSubDevices();
-    if (subDevicesCount <= 1) {
-        return CL_DEVICE_PARTITION_FAILED;
-    }
-    if ((properties == nullptr) ||
-        (properties[0] != CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN) ||
-        ((properties[1] != CL_DEVICE_AFFINITY_DOMAIN_NUMA) && (properties[1] != CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE)) ||
-        (properties[2] != 0)) {
-        return CL_INVALID_VALUE;
-    }
+        if (numDevicesRet != nullptr) {
+            *numDevicesRet = subDevicesCount;
+        }
 
-    if (numDevicesRet != nullptr) {
-        *numDevicesRet = subDevicesCount;
-    }
+        if (outDevices == nullptr) {
+            retVal = CL_SUCCESS;
+            break;
+        }
 
-    if (outDevices == nullptr) {
-        return CL_SUCCESS;
-    }
+        if (numDevices < subDevicesCount) {
+            retVal = CL_INVALID_VALUE;
+            break;
+        }
 
-    if (numDevices < subDevicesCount) {
-        return CL_INVALID_VALUE;
-    }
-
-    for (uint32_t i = 0; i < subDevicesCount; i++) {
-        auto pClDevice = pInDevice->getSubDevice(i);
-        pClDevice->retainApi();
-        outDevices[i] = pClDevice;
-    }
-
-    return CL_SUCCESS;
+        for (uint32_t i = 0; i < subDevicesCount; i++) {
+            auto pClDevice = pInDevice->getSubDevice(i);
+            pClDevice->retainApi();
+            outDevices[i] = pClDevice;
+        }
+        retVal = CL_SUCCESS;
+    } while (false);
+    TRACING_EXIT(ClCreateSubDevices, &retVal);
+    return retVal;
 }
 
 cl_int CL_API_CALL clRetainDevice(cl_device_id device) {

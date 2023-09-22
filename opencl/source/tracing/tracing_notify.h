@@ -1001,6 +1001,75 @@ class ClCreateKernelsInProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
+class ClCreateSubDevicesTracer {
+  public:
+    ClCreateSubDevicesTracer() {}
+
+    void enter(cl_device_id *inDevice,
+               const cl_device_partition_property **properties,
+               cl_uint *numDevices,
+               cl_device_id **outDevices,
+               cl_uint **numDevicesRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.inDevice = inDevice;
+        params.properties = properties;
+        params.numDevices = numDevices;
+        params.outDevices = outDevices;
+        params.numDevicesRet = numDevicesRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreateSubDevices";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateSubDevices)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateSubDevices, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateSubDevices)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateSubDevices, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreateSubDevicesTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreateSubDevices params{};
+    cl_callback_data data{};
+    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
 class ClCreatePipeTracer {
   public:
     ClCreatePipeTracer() {}

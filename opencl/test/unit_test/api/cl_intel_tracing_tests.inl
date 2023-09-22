@@ -350,6 +350,10 @@ struct IntelAllTracingTest : public IntelTracingTest {
         clCreateSubBuffer(0, 0, 0, 0, 0);
 
         ++count;
+        functionId = CL_FUNCTION_clCreateSubDevices;
+        clCreateSubDevices(0, 0, 0, 0, 0);
+
+        ++count;
         functionId = CL_FUNCTION_clCreateUserEvent;
         clCreateUserEvent(0, 0);
 
@@ -1124,6 +1128,81 @@ TEST_F(IntelClCloneKernelTracingTest, givenCloneKernelCallTracingWhenInvokingCal
     EXPECT_NE(nullptr, obtainedClonedKernelCallback);
     EXPECT_EQ(clonedKernel, obtainedClonedKernelCallback);
     clReleaseKernel(clonedKernel);
+}
+
+struct IntelClCreateSubDevicesTracingTest : public IntelTracingTest {
+  public:
+    void SetUp() override {
+        IntelTracingTest::setUp();
+
+        DebugManager.flags.CreateMultipleSubDevices.set(deviceCount);
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+        status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle);
+        ASSERT_NE(nullptr, handle);
+        ASSERT_EQ(CL_SUCCESS, status);
+
+        status = clSetTracingPointINTEL(handle, CL_FUNCTION_clCreateSubDevices, CL_TRUE);
+        ASSERT_EQ(CL_SUCCESS, status);
+
+        status = clEnableTracingINTEL(handle);
+        ASSERT_EQ(CL_SUCCESS, status);
+    }
+    void TearDown() override {
+        status = clDisableTracingINTEL(handle);
+        ASSERT_EQ(CL_SUCCESS, status);
+
+        status = clDestroyTracingHandleINTEL(handle);
+        ASSERT_EQ(CL_SUCCESS, status);
+        IntelTracingTest::tearDown();
+    }
+
+    void call() {
+        auto retVal = clCreateSubDevices(device.get(), properties, deviceCount, outDevices, numDevicesRet);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+    }
+
+    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+        ASSERT_EQ(CL_FUNCTION_clCreateSubDevices, fid);
+        if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
+            ++enterCount;
+        } else if (callbackData->site == CL_CALLBACK_SITE_EXIT) {
+            auto funcParams = reinterpret_cast<const cl_params_clCreateSubDevices *>(callbackData->functionParams); // check at tracing exit, once api call has been executed
+            EXPECT_EQ(static_cast<cl_device_id>(device.get()), *(funcParams->inDevice));
+            EXPECT_EQ(2u, *(funcParams->numDevices));
+            EXPECT_EQ(numDevicesRet[0], *(funcParams->numDevicesRet[0]));
+
+            auto outDevicesCallback = *(funcParams->outDevices);
+            EXPECT_EQ(static_cast<cl_device_id>(device->getSubDevice(0)), outDevicesCallback[0]);
+            EXPECT_EQ(static_cast<cl_device_id>(device->getSubDevice(1)), outDevicesCallback[1]);
+
+            auto propertiesCallback = *(funcParams->properties);
+            EXPECT_EQ(CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN, propertiesCallback[0]);
+            EXPECT_EQ(CL_DEVICE_AFFINITY_DOMAIN_NUMA, propertiesCallback[1]);
+            EXPECT_EQ(0, propertiesCallback[2]);
+
+            EXPECT_STREQ("clCreateSubDevices", callbackData->functionName);
+            EXPECT_EQ(CL_SUCCESS, *reinterpret_cast<cl_int *>(callbackData->functionReturnValue));
+            ++exitCount;
+        }
+    }
+
+  protected:
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<MockClDevice> device;
+    cl_device_partition_property properties[3] = {CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN, CL_DEVICE_AFFINITY_DOMAIN_NUMA, 0};
+    cl_uint deviceCount = 2u;
+    cl_device_id outDevices[2] = {0, 0};
+    cl_uint numDevicesRet[1] = {0u};
+
+    uint16_t enterCount = 0u;
+    uint16_t exitCount = 0u;
+};
+
+TEST_F(IntelClCreateSubDevicesTracingTest, givenCreateSubDevicesCallTracingEnabledWhenInvokingThisCallThenCallIsSuccessfullyTraced) {
+    call();
+    EXPECT_EQ(1u, enterCount);
+    EXPECT_EQ(1u, exitCount);
 }
 
 } // namespace ULT
