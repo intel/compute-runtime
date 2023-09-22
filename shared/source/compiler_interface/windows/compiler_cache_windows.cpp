@@ -235,6 +235,10 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     lockConfigFileAndReadSize(configFilePath, hConfigFile, directorySize);
 
     if (std::get<void *>(hConfigFile) == INVALID_HANDLE_VALUE) {
+        if (SysCalls::getLastError() == ERROR_HANDLE_EOF) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache info]: deleting the corrupted config file\n", NEO::SysCalls::getProcessId());
+            SysCalls::deleteFileA(configFilePath.c_str());
+        }
         return false;
     }
 

@@ -578,6 +578,44 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCacheAlreadyExistsThenDoNot
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
 }
 
+TEST_F(CompilerCacheWindowsTest, givenEmptyConfigFileWhenCacheBinaryAndReadConfigFailsWithEOFErrorThenConfigIsDeletedAndErrorIsPrinted) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    SysCalls::getLastErrorResult = ERROR_HANDLE_EOF;
+
+    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+
+    SysCalls::callBaseReadFileEx = false;
+    SysCalls::readFileExResult = FALSE;
+
+    const size_t cacheSize = MemoryConstants::megaByte - 2u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    const std::string kernelFileHash = "7e3291364d8df42";
+    const char *binary = "123456";
+    const size_t binarySize = strlen(binary);
+
+    ::testing::internal::CaptureStderr();
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+
+    std::string expectedStderrSubstr1("[Cache failure]: Read config failed! error code:");
+    EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr1));
+
+    std::string expectedStderrSubstr2("[Cache info]: deleting the corrupted config file");
+    EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr2));
+
+    EXPECT_FALSE(result);
+    EXPECT_EQ(1u, SysCalls::createFileACalled);
+    EXPECT_EQ(1u, SysCalls::lockFileExCalled);
+    EXPECT_EQ(1u, SysCalls::readFileExCalled);
+    EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(1u, SysCalls::deleteFileACalled);
+}
+
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteToConfigFileFailsThenErrorIsPrinted) {
     DebugManagerStateRestore restore;
     NEO::DebugManager.flags.PrintDebugMessages.set(1);
