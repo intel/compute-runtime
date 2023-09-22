@@ -25,6 +25,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
 namespace ult {
@@ -1447,6 +1448,50 @@ HWTEST2_F(ImmediateCommandListTest, givenImmediateCommandListWhenClosingCommandL
 
     auto &commandContainer = commandListImmediate.commandContainer;
     EXPECT_EQ(0u, commandContainer.getCommandStream()->getUsed());
+}
+
+HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingCopyOperationThenDoNotRequireMonitorFence, IsAtLeastXeHpcCore) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    ze_result_t returnValue;
+    auto commandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    void *srcPtr = reinterpret_cast<void *>(0x12000);
+    void *dstPtr = reinterpret_cast<void *>(0x23000);
+
+    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
+}
+
+HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyOperationThenRequireMonitorFence, IsAtLeastXeHpcCore) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    ze_result_t returnValue;
+    auto commandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    void *srcPtr = reinterpret_cast<void *>(0x12000);
+    void *dstPtr = reinterpret_cast<void *>(0x23000);
+
+    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
 }
 
 } // namespace ult
