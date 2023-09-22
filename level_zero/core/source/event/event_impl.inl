@@ -152,6 +152,10 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
+    if (!this->inOrderExecDataAllocation) {
+        return ZE_RESULT_NOT_READY;
+    }
+
     auto hostAddress = static_cast<uint64_t *>(ptrOffset(this->inOrderExecDataAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
     bool signaled = true;
 

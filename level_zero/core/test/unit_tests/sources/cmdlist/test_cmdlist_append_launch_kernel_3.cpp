@@ -842,6 +842,13 @@ HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListTh
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderWhenWhenCallingQueryStatusThenReturnNotReady, IsAtLeastSkl) {
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = true;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->queryStatus());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCountForWaits, IsAtLeastSkl) {
     auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
     auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
