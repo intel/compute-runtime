@@ -1000,6 +1000,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
 
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(
         streamCpuPointer,
+        nullptr,
         taskStream->getGraphicsAllocation()->getGpuAddress(),
         &walkerCmd,
         totalBytesProgrammed,

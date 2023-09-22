@@ -89,6 +89,7 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool apiSelfCleanup,
 template <typename GfxFamily>
 void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandStream,
                                                           WALKER_TYPE &walkerCmd,
+                                                          void **outWalkerPtr,
                                                           const DeviceBitfield &devices,
                                                           uint32_t &partitionCount,
                                                           bool useSecondaryBatchBuffer,
@@ -122,6 +123,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
     if (staticPartitioning) {
         UNRECOVERABLE_IF(tileCount != partitionCount);
         WalkerPartition::constructStaticallyPartitionedCommandBuffer<GfxFamily>(commandBuffer,
+                                                                                outWalkerPtr,
                                                                                 cmdBufferGpuAddress,
                                                                                 &walkerCmd,
                                                                                 totalProgrammedSize,
@@ -137,6 +139,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
         }
 
         WalkerPartition::constructDynamicallyPartitionedCommandBuffer<GfxFamily>(commandBuffer,
+                                                                                 outWalkerPtr,
                                                                                  cmdBufferGpuAddress,
                                                                                  &walkerCmd,
                                                                                  totalProgrammedSize,

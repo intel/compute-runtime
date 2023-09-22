@@ -48,6 +48,7 @@ struct EncodeDispatchKernelArgs {
     IndirectHeap *surfaceStateHeap = nullptr;
     IndirectHeap *dynamicStateHeap = nullptr;
     const void *threadGroupDimensions = nullptr;
+    void *outWalkerPtr = nullptr;
     std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     uint32_t partitionCount = 0u;

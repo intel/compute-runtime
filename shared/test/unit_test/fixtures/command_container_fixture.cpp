@@ -43,6 +43,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         nullptr,                  // surfaceStateHeap
         nullptr,                  // dynamicStateHeap
         threadGroupDimensions,    // threadGroupDimensions
+        nullptr,                  // outWalkerPtr
         nullptr,                  // additionalCommands
         PreemptionMode::Disabled, // preemptionMode
         1,                        // partitionCount

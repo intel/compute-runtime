@@ -454,6 +454,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenPreWalker
 
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(
         taskStreamCpu,
+        nullptr,
         taskStreamGpu,
         &walkerCmd,
         totalBytesProgrammed,
@@ -499,6 +500,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, whenNoPreWalke
 
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(
         taskStreamCpu,
+        nullptr,
         taskStreamGpu,
         &walkerCmd,
         totalBytesProgrammed,

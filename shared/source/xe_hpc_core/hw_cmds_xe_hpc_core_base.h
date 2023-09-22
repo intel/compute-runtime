@@ -127,6 +127,7 @@ struct XeHpcCoreFamily : public XeHpcCore {
     static const STATE_SIP cmdInitStateSip;
     static const STATE_SYSTEM_MEM_FENCE_ADDRESS cmdInitStateSystemMemFenceAddress;
     static constexpr bool isQwordInOrderCounter = false;
+    static constexpr bool walkerPostSyncSupport = true;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_XE_HP_CORE;

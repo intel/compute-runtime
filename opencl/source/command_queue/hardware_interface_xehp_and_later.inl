@@ -140,6 +140,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         uint32_t partitionCount = 0u;
         ImplicitScalingDispatch<GfxFamily>::dispatchCommands(commandStream,
                                                              walkerCmd,
+                                                             nullptr,
                                                              devices,
                                                              partitionCount,
                                                              false,

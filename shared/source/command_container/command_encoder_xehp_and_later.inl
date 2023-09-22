@@ -348,6 +348,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
         ImplicitScalingDispatch<Family>::dispatchCommands(*listCmdBufferStream,
                                                           walkerCmd,
+                                                          &args.outWalkerPtr,
                                                           args.device->getDeviceBitfield(),
                                                           args.partitionCount,
                                                           !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()),
@@ -360,6 +361,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     } else {
         args.partitionCount = 1;
         auto buffer = listCmdBufferStream->getSpace(sizeof(walkerCmd));
+        args.outWalkerPtr = buffer;
         *(decltype(walkerCmd) *)buffer = walkerCmd;
     }
 

@@ -48,6 +48,7 @@ struct ImplicitScalingDispatch {
 
     static void dispatchCommands(LinearStream &commandStream,
                                  WALKER_TYPE &walkerCmd,
+                                 void **outWalkerPtr,
                                  const DeviceBitfield &devices,
                                  uint32_t &partitionCount,
                                  bool useSecondaryBatchBuffer,

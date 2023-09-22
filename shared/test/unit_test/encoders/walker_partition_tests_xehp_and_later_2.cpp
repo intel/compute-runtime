@@ -36,6 +36,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
 
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                              nullptr,
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
@@ -882,6 +883,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
 
     testArgs.tileCount = 4u;
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                              nullptr,
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
@@ -1088,6 +1090,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
 
     testArgs.tileCount = 4u;
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                              nullptr,
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
@@ -1294,6 +1297,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
     auto totalProgrammedSize = cleanupSectionOffset;
 
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                              nullptr,
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,

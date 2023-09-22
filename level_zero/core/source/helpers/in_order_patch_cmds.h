@@ -15,8 +15,10 @@
 namespace L0 {
 namespace InOrderPatchCommandTypes {
 enum class CmdType {
+    None,
     Sdi,
-    Semaphore
+    Semaphore,
+    Walker
 };
 
 template <typename GfxFamily>
@@ -24,17 +26,25 @@ struct BaseCmd {
     BaseCmd(void *cmd, uint64_t baseCounterValue, CmdType cmdType) : cmd(cmd), baseCounterValue(baseCounterValue), cmdType(cmdType) {}
 
     void patch(uint64_t appendCunterValue) {
-        if (CmdType::Sdi == cmdType) {
+        switch (cmdType) {
+        case CmdType::Sdi:
             patchSdi(appendCunterValue);
-        } else {
-            UNRECOVERABLE_IF(CmdType::Semaphore != cmdType);
+            break;
+        case CmdType::Semaphore:
             patchSemaphore(appendCunterValue);
+            break;
+        case CmdType::Walker:
+            patchComputeWalker(appendCunterValue);
+            break;
+        default:
+            UNRECOVERABLE_IF(true);
+            break;
         }
     }
 
     void *cmd = nullptr;
     const uint64_t baseCounterValue = 0;
-    const CmdType cmdType;
+    const CmdType cmdType = CmdType::None;
 
   protected:
     void patchSdi(uint64_t appendCunterValue) {
@@ -46,6 +56,16 @@ struct BaseCmd {
     void patchSemaphore(uint64_t appendCunterValue) {
         auto semaphoreCmd = reinterpret_cast<typename GfxFamily::MI_SEMAPHORE_WAIT *>(cmd);
         semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCunterValue));
+    }
+
+    void patchComputeWalker(uint64_t appendCunterValue) {
+        if constexpr (GfxFamily::walkerPostSyncSupport) {
+            auto walkerCmd = reinterpret_cast<typename GfxFamily::COMPUTE_WALKER *>(cmd);
+            auto &postSync = walkerCmd->getPostSync();
+            postSync.setImmediateData(baseCounterValue + appendCunterValue);
+        } else {
+            UNRECOVERABLE_IF(true);
+        }
     }
 
     BaseCmd() = delete;

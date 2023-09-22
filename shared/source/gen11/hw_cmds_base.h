@@ -130,6 +130,7 @@ struct Gen11Family : public Gen11 {
     static const MI_FLUSH_DW cmdInitMiFlushDw;
     static const XY_COLOR_BLT cmdInitXyColorBlt;
     static constexpr bool isQwordInOrderCounter = false;
+    static constexpr bool walkerPostSyncSupport = false;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;

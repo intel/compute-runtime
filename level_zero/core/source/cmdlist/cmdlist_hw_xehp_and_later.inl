@@ -278,6 +278,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         ssh,                                                    // surfaceStateHeap
         dsh,                                                    // dynamicStateHeap
         reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
+        nullptr,                                                // outWalkerPtr
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
         this->partitionCount,                                   // partitionCount
@@ -326,10 +327,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    if (inOrderExecSignalRequired && inOrderNonWalkerSignalling) {
-        appendWaitOnSingleEvent(event, false);
-
-        appendSignalInOrderDependencyCounter();
+    if (inOrderExecSignalRequired) {
+        if (inOrderNonWalkerSignalling) {
+            appendWaitOnSingleEvent(event, false);
+            appendSignalInOrderDependencyCounter();
+        } else {
+            UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
+            addCmdForPatching(dispatchKernelArgs.outWalkerPtr, dispatchKernelArgs.postSyncImmValue, InOrderPatchCommandTypes::CmdType::Walker);
+        }
     }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing) {

@@ -49,6 +49,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     testArgs.tileCount = 4u;
     testArgs.emitBatchBufferEnd = true;
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                              nullptr,
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
@@ -171,6 +172,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<FamilyType>(testArgs);
     const auto postWalkerSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -254,6 +256,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
     const auto postWalkerSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
     const auto preWalkerSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeBeforeWalkerCounter);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -355,6 +358,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
     uint32_t totalBytesProgrammed{};
     const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<FamilyType>(testArgs);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -444,6 +448,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     const auto postWalkerSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
     const auto finalSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, finalSyncTileCounter);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -596,6 +601,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     const auto postWalkerSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
     const auto finalSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, finalSyncTileCounter);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -748,6 +754,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     const auto postWalkerSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
     const auto finalSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, finalSyncTileCounter);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -907,6 +914,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     const auto postWalkerSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
     const auto finalSyncAddress = cmdBufferGpuAddress + controlSectionOffset + offsetof(StaticPartitioningControlSection, finalSyncTileCounter);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -1083,6 +1091,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     auto totalProgrammedSize = optionalBatchBufferEndOffset + sizeof(WalkerPartition::BATCH_BUFFER_END<FamilyType>);
 
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                              nullptr,
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
@@ -1203,6 +1212,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<FamilyType>(testArgs);
     EXPECT_EQ(expectedControlSectionOffset, controlSectionOffset);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -1242,6 +1252,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<FamilyType>(testArgs);
     EXPECT_EQ(expectedControlSectionOffset, controlSectionOffset);
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                             nullptr,
                                                                              cmdBufferGpuAddress,
                                                                              &walker,
                                                                              totalBytesProgrammed,
@@ -1307,6 +1318,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     testArgs.tileCount = 2;
     uint64_t gpuVirtualAddress = 0x8000123000;
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                              nullptr,
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,

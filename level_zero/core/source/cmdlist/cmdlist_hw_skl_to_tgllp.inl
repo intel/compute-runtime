@@ -177,6 +177,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         ssh,                                                    // surfaceStateHeap
         dsh,                                                    // dynamicStateHeap
         reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
+        nullptr,                                                // outWalkerPtr
         &additionalCommands,                                    // additionalCommands
         commandListPreemptionMode,                              // preemptionMode
         0,                                                      // partitionCount
@@ -256,13 +257,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation) {
         NEO::PipeControlArgs args;
-        uint64_t counterAddress = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
 
-        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(),
-                                                                        NEO::PostSyncMode::ImmediateData,
-                                                                        counterAddress,
-                                                                        this->inOrderDependencyCounter + 1,
-                                                                        args);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+        appendSignalInOrderDependencyCounter();
     }
 
     return ZE_RESULT_SUCCESS;
