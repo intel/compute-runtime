@@ -89,7 +89,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
              2,        // major
              0,        // minor
              0},       // patch
-            40,        // size
+            44,        // size
             {0, 0, 0}, // reserved2
         },
         {
@@ -120,17 +120,20 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
             {4640, 1, 128, 16},      // tm
             {0, 1, 32, 4},           // fc
             {4736, 1, 32, 4},        // dbg
+            {4744, 1, 64, 8},        // ctx
+            {4752, 1, 64, 8},        // dbg_reg
         },
     };
 
     char *begin = nullptr;
-
+    unsigned long sizeOfHeader = 0u;
     if (version == 1) {
         begin = reinterpret_cast<char *>(&stateSaveAreaHeader);
+        sizeOfHeader = offsetof(SIP::StateSaveAreaHeader, regHeader.dbg) + sizeof(SIP::StateSaveAreaHeader::regHeader.dbg);
     } else if (version == 2) {
         begin = reinterpret_cast<char *>(&stateSaveAreaHeader2);
+        sizeOfHeader = offsetof(SIP::StateSaveAreaHeader, regHeader.dbg_reg) + sizeof(SIP::StateSaveAreaHeader::regHeader.dbg_reg);
     }
-    auto sizeOfHeader = offsetof(SIP::StateSaveAreaHeader, regHeader.dbg) + sizeof(SIP::StateSaveAreaHeader::regHeader.dbg);
 
     return std::vector<char>(begin, begin + sizeOfHeader);
 }
