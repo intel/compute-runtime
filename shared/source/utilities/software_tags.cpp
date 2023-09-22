@@ -114,6 +114,22 @@ void KernelNameTag::bxml(std::ostream &os) {
     os << "</Instruction>\n";
 }
 
+void ArbitraryStringTag::bxml(std::ostream &os) {
+    os << "<Instruction Name=\"ArbitraryString\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
+    os << "  <Description>Name of the arbitrary string.</Description>\n";
+
+    BaseTag::bxml(os, OpCode::ArbitraryString, sizeof(ArbitraryStringTag), "ARBITRARY_STRING");
+
+    constexpr unsigned int stringDWORDSize = tagStringLength / sizeof(uint32_t);
+    os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
+    os << "    <BitField Name=\"ArbitraryString\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
+    os << "      <Description>Name of the arbitrary string.</Description>\n";
+    os << "    </BitField>\n";
+    os << "  </Dword>\n";
+
+    os << "</Instruction>\n";
+}
+
 void PipeControlReasonTag::bxml(std::ostream &os) {
     os << "<Instruction Name=\"PipeControlReason\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
     os << "  <Description>Reason for why the PIPE_CONTROL was inserted.</Description>\n";
@@ -182,6 +198,7 @@ SWTagBXML::SWTagBXML() {
     SWTagHeapInfo::bxml(ss);
 
     KernelNameTag::bxml(ss);
+    ArbitraryStringTag::bxml(ss);
     PipeControlReasonTag::bxml(ss);
     CallNameBeginTag::bxml(ss);
     CallNameEndTag::bxml(ss);

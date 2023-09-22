@@ -18,7 +18,8 @@ enum class OpCode : uint32_t {
     KernelName,
     PipeControlReason,
     CallNameBegin,
-    CallNameEnd
+    CallNameEnd,
+    ArbitraryString,
 };
 
 enum class Component : uint32_t {
@@ -95,6 +96,20 @@ struct KernelNameTag : public BaseTag {
   private:
     static constexpr unsigned int kenelNameStrLength = sizeof(uint32_t) * 16; // Dword aligned
     char kernelName[kenelNameStrLength] = {};
+};
+
+struct ArbitraryStringTag : public BaseTag {
+  public:
+    ArbitraryStringTag(const char *name)
+        : BaseTag(OpCode::ArbitraryString, sizeof(ArbitraryStringTag)) {
+        strcpy_s(arbitraryString, tagStringLength, name);
+    }
+
+    static void bxml(std::ostream &os);
+
+  protected:
+    static constexpr unsigned int tagStringLength = sizeof(uint32_t) * 16; // Dword aligned
+    char arbitraryString[tagStringLength] = {};
 };
 
 struct PipeControlReasonTag : public BaseTag {

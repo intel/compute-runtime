@@ -310,6 +310,9 @@ struct MockCommandList : public CommandList {
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
 
+    ADDMETHOD_NOBASE(appendSoftwareTag, ze_result_t, ZE_RESULT_SUCCESS,
+                     (const char *data));
+
     ADDMETHOD_NOBASE(appendEventReset, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_event_handle_t hEvent));
 

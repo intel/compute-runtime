@@ -217,6 +217,7 @@ struct SoftwareTagsParametrizedTests : public ::testing::TestWithParam<SWTags::O
     void SetUp() override {
         tagMap.emplace(OpCode::KernelName, std::make_unique<KernelNameTag>("", 0u));
         tagMap.emplace(OpCode::PipeControlReason, std::make_unique<PipeControlReasonTag>("", 0u));
+        tagMap.emplace(OpCode::ArbitraryString, std::make_unique<ArbitraryStringTag>(""));
     }
 
     std::map<OpCode, std::unique_ptr<BaseTag>> tagMap;
@@ -227,7 +228,8 @@ INSTANTIATE_TEST_CASE_P(
     SoftwareTagsParametrizedTests,
     testing::Values(
         OpCode::KernelName,
-        OpCode::PipeControlReason));
+        OpCode::PipeControlReason,
+        OpCode::ArbitraryString));
 
 TEST_P(SoftwareTagsParametrizedTests, whenGetOpCodeIsCalledThenCorrectValueIsReturned) {
     auto opcode = GetParam();
