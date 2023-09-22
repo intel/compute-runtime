@@ -31,7 +31,7 @@ namespace NEO {
 template <typename Family>
 void EncodeDispatchKernel<Family>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
-                                              const HardwareInfo &hwInfo) {
+                                              const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto grfSize = sizeof(typename Family::GRF);
     DEBUG_BREAK_IF((sizeCrossThreadData % grfSize) != 0);
     auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / grfSize);
@@ -163,7 +163,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData,
-                                             sizePerThreadData, hwInfo);
+                                             sizePerThreadData, rootDeviceEnvironment);
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     bool isHwLocalIdGeneration = false;

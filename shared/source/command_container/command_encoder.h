@@ -102,7 +102,7 @@ struct EncodeDispatchKernel {
                                           const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
 
     static void setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData,
-                           const size_t &sizePerThreadData, const HardwareInfo &hwInfo);
+                           const size_t &sizePerThreadData, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void *getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset);
 

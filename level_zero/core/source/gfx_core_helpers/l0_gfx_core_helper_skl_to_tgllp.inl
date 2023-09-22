@@ -60,11 +60,6 @@ NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel() c
 }
 
 template <typename Family>
-std::vector<uint32_t> L0GfxCoreHelperHw<Family>::getSupportedNumGrfs() const {
-    return {128u};
-}
-
-template <typename Family>
 ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormat() const {
     return ZE_RTAS_FORMAT_EXP_INVALID;
 }

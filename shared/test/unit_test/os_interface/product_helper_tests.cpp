@@ -828,3 +828,12 @@ HWTEST_F(ProductHelperTest, givenBooleanUncachedWhenCallOverridePatIndexThenProp
     isUncached = false;
     EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex));
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCorrectValueIsReturned) {
+    if (releaseHelper) {
+        EXPECT_EQ(releaseHelper->getSupportedNumGrfs(), productHelper->getSupportedNumGrfs(releaseHelper));
+    } else {
+        const std::vector<uint32_t> expectedValues{128u};
+        EXPECT_EQ(expectedValues, productHelper->getSupportedNumGrfs(releaseHelper));
+    }
+}

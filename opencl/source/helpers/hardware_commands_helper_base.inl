@@ -153,7 +153,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     auto slmTotalSize = kernel.getSlmTotalSize();
 
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
-                                                sizeCrossThreadData, sizePerThreadData, hardwareInfo);
+                                                sizeCrossThreadData, sizePerThreadData, device.getRootDeviceEnvironment());
     auto &productHelper = device.getProductHelper();
     productHelper.updateIddCommand(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                    kernelDescriptor.kernelAttributes.threadArbitrationPolicy);

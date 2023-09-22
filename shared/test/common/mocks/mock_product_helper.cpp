@@ -13,6 +13,7 @@
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -379,6 +380,14 @@ uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getL1CachePolicy(bool isDebuggerActi
 template <>
 uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getUncachedL1CachePolicy() {
     return 1u;
+}
+
+template <>
+std::vector<uint32_t> ProductHelperHw<IGFX_UNKNOWN>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->getSupportedNumGrfs();
+    }
+    return {};
 }
 
 struct UnknownProduct {

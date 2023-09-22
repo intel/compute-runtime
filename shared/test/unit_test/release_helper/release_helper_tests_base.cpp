@@ -118,12 +118,22 @@ void ReleaseHelperTestsBase::whenShouldAdjustCalledThenTrueReturned() {
         EXPECT_TRUE(releaseHelper->shouldAdjustDepth());
     }
 }
+
 void ReleaseHelperTestsBase::whenShouldAdjustCalledThenFalseReturned() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
-
         EXPECT_FALSE(releaseHelper->shouldAdjustDepth());
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValues128And256Returned() {
+    std::vector<uint32_t> expectedValues{128u, 256u};
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(expectedValues, releaseHelper->getSupportedNumGrfs());
     }
 }

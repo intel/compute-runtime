@@ -53,3 +53,7 @@ TEST_F(ReleaseHelper1256Tests, whenGettingPreferredAllocationMethodThenNoPrefere
 TEST_F(ReleaseHelper1256Tests, whenShouldAdjustCalledThenFalseReturned) {
     whenShouldAdjustCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelper1256Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
+    whenGettingSupportedNumGrfsThenValues128And256Returned();
+}

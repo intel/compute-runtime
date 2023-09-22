@@ -84,7 +84,6 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual NEO::HeapAddressModel getPlatformHeapAddressModel() const = 0;
-    virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
     virtual ze_rtas_format_exp_t getSupportedRTASFormat() const = 0;
     virtual bool platformSupportsImmediateComputeFlushTask() const = 0;
     virtual zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const = 0;
@@ -123,7 +122,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     NEO::HeapAddressModel getPlatformHeapAddressModel() const override;
-    std::vector<uint32_t> getSupportedNumGrfs() const override;
     ze_rtas_format_exp_t getSupportedRTASFormat() const override;
     bool platformSupportsImmediateComputeFlushTask() const override;
     zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const override;

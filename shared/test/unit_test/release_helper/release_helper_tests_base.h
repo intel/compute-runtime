@@ -29,6 +29,7 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBufferAndCommandBuffer();
     void whenShouldAdjustCalledThenTrueReturned();
     void whenShouldAdjustCalledThenFalseReturned();
+    void whenGettingSupportedNumGrfsThenValues128And256Returned();
 
     virtual std::vector<uint32_t> getRevisions() = 0;
 

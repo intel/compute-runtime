@@ -159,6 +159,7 @@ class ProductHelperHw : public ProductHelper {
     bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const override;
     bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const override;
     uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const override;
+    std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
 
     ~ProductHelperHw() override = default;
 

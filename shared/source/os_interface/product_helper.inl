@@ -806,4 +806,12 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint
     return patIndex;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->getSupportedNumGrfs();
+    }
+    return {128u};
+}
+
 } // namespace NEO

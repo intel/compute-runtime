@@ -39,7 +39,7 @@ constexpr size_t ImmWriteDestinationAddressAlignment = 8;
 template <typename Family>
 void EncodeDispatchKernel<Family>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
-                                              const HardwareInfo &hwInfo) {
+                                              const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
 template <typename Family>
@@ -76,7 +76,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto &idd = walkerCmd.getInterfaceDescriptor();
 
     EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData,
-                                             sizePerThreadData, hwInfo);
+                                             sizePerThreadData, rootDeviceEnvironment);
     auto &productHelper = args.device->getProductHelper();
     productHelper.updateIddCommand(&idd, kernelDescriptor.kernelAttributes.numGrfRequired,
                                    kernelDescriptor.kernelAttributes.threadArbitrationPolicy);

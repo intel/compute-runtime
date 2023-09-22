@@ -5,6 +5,9 @@
  *
  */
 
+#pragma once
+#include "shared/source/release_helper/release_helper.h"
+
 namespace NEO {
 
 template <>
@@ -72,4 +75,11 @@ bool MockProductHelperHw<gfxProduct>::isUnlockingLockedPtrNecessary(const Hardwa
     return this->returnedIsUnlockingLockedPtrNecessary;
 }
 
+template <>
+std::vector<uint32_t> MockProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->getSupportedNumGrfs();
+    }
+    return {128u};
+}
 } // namespace NEO

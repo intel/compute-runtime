@@ -11,6 +11,8 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
+
 namespace NEO {
 
 class ReleaseHelper;
@@ -43,6 +45,7 @@ class ReleaseHelper {
     virtual bool isDirectSubmissionSupported() const = 0;
     virtual bool isRcsExposureDisabled() const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
+    virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -72,6 +75,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isDirectSubmissionSupported() const override;
     bool isRcsExposureDisabled() const override;
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
+    std::vector<uint32_t> getSupportedNumGrfs() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

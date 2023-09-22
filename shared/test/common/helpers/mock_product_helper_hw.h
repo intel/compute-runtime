@@ -24,6 +24,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const override;
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
+    std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;

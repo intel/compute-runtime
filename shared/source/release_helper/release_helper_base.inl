@@ -87,4 +87,9 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isRcsExposureDisabled() const {
     return false;
 }
+
+template <ReleaseType releaseType>
+std::vector<uint32_t> ReleaseHelperHw<releaseType>::getSupportedNumGrfs() const {
+    return {128u, 256u};
+}
 } // namespace NEO
