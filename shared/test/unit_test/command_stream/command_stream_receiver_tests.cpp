@@ -176,29 +176,16 @@ HWTEST_F(CommandStreamReceiverTest, whenRegisterClientThenIncrementClientNum) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto numClients = csr.getNumClients();
 
-    int client1, client2;
-    csr.registerClient(&client1);
+    csr.registerClient();
     EXPECT_EQ(csr.getNumClients(), numClients + 1);
 
-    csr.registerClient(&client1);
-    EXPECT_EQ(csr.getNumClients(), numClients + 1);
-
-    csr.registerClient(&client2);
+    csr.registerClient();
     EXPECT_EQ(csr.getNumClients(), numClients + 2);
 
-    csr.registerClient(&client2);
-    EXPECT_EQ(csr.getNumClients(), numClients + 2);
-
-    csr.unregisterClient(&client1);
+    csr.unregisterClient();
     EXPECT_EQ(csr.getNumClients(), numClients + 1);
 
-    csr.unregisterClient(&client1);
-    EXPECT_EQ(csr.getNumClients(), numClients + 1);
-
-    csr.unregisterClient(&client2);
-    EXPECT_EQ(csr.getNumClients(), numClients);
-
-    csr.unregisterClient(&client2);
+    csr.unregisterClient();
     EXPECT_EQ(csr.getNumClients(), numClients);
 }
 
@@ -2905,9 +2892,8 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetPassNumClients) {
 
     ultCsr.recordFlusheBatchBuffer = true;
 
-    int client1, client2;
-    ultCsr.registerClient(&client1);
-    ultCsr.registerClient(&client2);
+    ultCsr.registerClient();
+    ultCsr.registerClient();
 
     EXPECT_EQ(SubmissionStatus::SUCCESS, ultCsr.flushTagUpdate());
 
@@ -2918,9 +2904,8 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTaskCalledThenSetPassNumClients) 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.recordFlusheBatchBuffer = true;
 
-    int client1, client2;
-    commandStreamReceiver.registerClient(&client1);
-    commandStreamReceiver.registerClient(&client2);
+    commandStreamReceiver.registerClient();
+    commandStreamReceiver.registerClient();
 
     commandStreamReceiver.flushTask(commandStream,
                                     0,

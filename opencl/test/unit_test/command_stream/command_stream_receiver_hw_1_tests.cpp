@@ -1085,9 +1085,8 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramCorre
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    int client1, client2;
-    csr.registerClient(&client1);
-    csr.registerClient(&client2);
+    csr.registerClient();
+    csr.registerClient();
     csr.recordFlusheBatchBuffer = true;
 
     csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);
@@ -1128,9 +1127,8 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramProgr
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    int client1, client2;
-    csr.registerClient(&client1);
-    csr.registerClient(&client1);
+    csr.registerClient();
+    csr.registerClient();
     csr.recordFlusheBatchBuffer = true;
 
     csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);
@@ -1154,12 +1152,12 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramProgr
     EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
 
     blitPropertiesContainer.push_back(blitProperties);
-    csr.unregisterClient(&client1);
-    csr.unregisterClient(&client2);
+    csr.unregisterClient();
+    csr.unregisterClient();
     EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
 
-    csr.registerClient(&client1);
-    csr.registerClient(&client2);
+    csr.registerClient();
+    csr.registerClient();
     csr.blitterDirectSubmission.reset();
     EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
 }
@@ -1170,9 +1168,8 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenTagUpdateWhenFlushingThenDisableRelaxedO
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    int client1, client2;
-    csr.registerClient(&client1);
-    csr.registerClient(&client2);
+    csr.registerClient();
+    csr.registerClient();
     csr.recordFlusheBatchBuffer = true;
 
     csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);

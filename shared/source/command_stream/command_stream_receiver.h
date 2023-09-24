@@ -404,8 +404,12 @@ class CommandStreamReceiver {
     uint32_t getNumClients() const {
         return this->numClients.load();
     }
-    void registerClient(void *client);
-    void unregisterClient(void *client);
+    uint32_t registerClient() {
+        return this->numClients.fetch_add(1u);
+    }
+    void unregisterClient() {
+        this->numClients--;
+    }
 
     bool getDcFlushSupport() const {
         return dcFlushSupport;
@@ -439,8 +443,6 @@ class CommandStreamReceiver {
     void printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start);
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
-    std::vector<void *> registeredClients;
-
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
     std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
@@ -460,7 +462,6 @@ class CommandStreamReceiver {
 
     MutexType ownershipMutex;
     MutexType hostPtrSurfaceCreationMutex;
-    MutexType registeredClientsMutex;
     ExecutionEnvironment &executionEnvironment;
 
     LinearStream commandStream;

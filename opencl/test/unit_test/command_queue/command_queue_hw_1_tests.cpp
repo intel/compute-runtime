@@ -1254,12 +1254,11 @@ HWTEST_F(CommandQueueHwTest, givenRelaxedOrderingEnabledWhenCheckingIfAllowedByC
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
 
-    int client1, client2;
-    ultCsr.registerClient(&client1);
+    ultCsr.registerClient();
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
 
-    ultCsr.registerClient(&client2);
+    ultCsr.registerClient();
 
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
     EXPECT_TRUE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));

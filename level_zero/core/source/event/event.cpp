@@ -402,10 +402,9 @@ void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {
 }
 
 void Event::unsetCmdQueue() {
-    for (auto &csr : csrs) {
-        csr->unregisterClient(latestUsedCmdQueue);
+    if (latestUsedCmdQueue) {
+        latestUsedCmdQueue->unregisterCsrClient();
     }
-
     latestUsedCmdQueue = nullptr;
 }
 

@@ -62,15 +62,19 @@ struct CommandQueue : _ze_command_queue_handle_t {
 
     bool peekIsCopyOnlyCommandQueue() const { return this->isCopyOnlyCommandQueue; }
 
+    uint32_t getClientId() const { return this->clientId; }
+    void setClientId(uint32_t value) { this->clientId = value; }
     virtual void unregisterCsrClient() = 0;
-    virtual void registerCsrClient() = 0;
 
     TaskCountType getTaskCount() const { return taskCount; }
     void setTaskCount(TaskCountType newTaskCount) { taskCount = newTaskCount; }
 
+    static constexpr uint32_t clientNotRegistered = std::numeric_limits<uint32_t>::max();
+
   protected:
     bool frontEndTrackingEnabled() const;
 
+    uint32_t clientId = clientNotRegistered;
     uint32_t partitionCount = 1;
     uint32_t activeSubDevices = 1;
     std::atomic<TaskCountType> taskCount = 0;

@@ -332,7 +332,9 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         svmAllocMgr->prefetchSVMAllocs(*this->device->getNEODevice(), *csr);
     }
 
-    cmdQ->registerCsrClient();
+    if (cmdQ->getClientId() == CommandQueue::clientNotRegistered) {
+        cmdQ->setClientId(csr->registerClient());
+    }
 
     std::unique_lock<std::mutex> lockForIndirect;
     if (this->hasIndirectAllocationsAllowed()) {
