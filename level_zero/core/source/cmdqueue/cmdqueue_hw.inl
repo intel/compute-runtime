@@ -69,9 +69,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         svmAllocMgr->prefetchSVMAllocs(*device->getNEODevice(), *csr);
     }
 
-    if (this->clientId == CommandQueue::clientNotRegistered) {
-        this->clientId = this->csr->registerClient();
-    }
+    registerCsrClient();
 
     auto neoDevice = device->getNEODevice();
     auto ctx = CommandListExecutionContext{phCommandLists,
