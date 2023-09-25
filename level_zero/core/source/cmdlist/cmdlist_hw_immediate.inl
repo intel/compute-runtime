@@ -472,6 +472,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
+    bool isStallingOperation = true;
+
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
             if (hSignalEvent) {
@@ -482,6 +484,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
         }
 
         relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
+        isStallingOperation = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
     }
 
     checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize);
@@ -491,7 +494,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
 
     this->dependenciesPresent = true;
-    return flushImmediate(ret, true, !relaxedOrderingDispatch, relaxedOrderingDispatch, false, hSignalEvent);
+    return flushImmediate(ret, true, isStallingOperation, relaxedOrderingDispatch, false, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
