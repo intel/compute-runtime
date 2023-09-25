@@ -280,9 +280,9 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t *threadGroupDimensions);
     void appendWriteKernelTimestamp(Event *event, bool beforeWalker, bool maskLsb, bool workloadPartition);
     void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition);
-    void appendEventForProfiling(Event *event, bool beforeWalker);
+    void appendEventForProfiling(Event *event, bool beforeWalker, bool skipBarrierForEndProfiling);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
-    void appendSignalEventPostWalker(Event *event);
+    void appendSignalEventPostWalker(Event *event, bool skipBarrierForEndProfiling);
     virtual void programStateBaseAddress(NEO::CommandContainer &container, bool useSbaProperties);
     void appendComputeBarrierCommand();
     NEO::PipeControlArgs createBarrierFlags();

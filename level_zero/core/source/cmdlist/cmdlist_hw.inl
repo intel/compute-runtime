@@ -423,12 +423,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
-    appendEventForProfiling(event, true);
+    appendEventForProfiling(event, true, false);
     launchParams.isIndirect = true;
     ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), pDispatchArgumentsBuffer,
                                        nullptr, launchParams);
     addToMappedEventList(event);
-    appendSignalEventPostWalker(event);
+    appendSignalEventPostWalker(event, false);
 
     if (isInOrderExecutionEnabled()) {
         handleInOrderDependencyCounter();
@@ -461,7 +461,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
-    appendEventForProfiling(event, true);
+    appendEventForProfiling(event, true, false);
     const bool haveLaunchArguments = pLaunchArgumentsBuffer != nullptr;
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pNumLaunchArguments);
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -478,7 +478,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         }
     }
     addToMappedEventList(event);
-    appendSignalEventPostWalker(event);
+    appendSignalEventPostWalker(event, false);
 
     return ret;
 }
@@ -552,9 +552,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    appendEventForProfiling(signalEvent, true);
+    appendEventForProfiling(signalEvent, true, false);
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
-    appendSignalEventPostWalker(signalEvent);
+    appendSignalEventPostWalker(signalEvent, false);
     addToMappedEventList(signalEvent);
 
     if (this->inOrderExecutionEnabled) {
@@ -1210,7 +1210,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         return ret;
     }
 
-    appendEventForProfiling(signalEvent, true);
+    appendEventForProfiling(signalEvent, true, false);
     auto &rootDeviceEnvironment = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()];
     bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, *rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
     if (copyRegionPreferred) {
@@ -1220,7 +1220,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     makeResidentDummyAllocation();
 
-    appendSignalEventPostWalker(signalEvent);
+    appendSignalEventPostWalker(signalEvent, false);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1245,11 +1245,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     commandContainer.addToResidencyContainer(src);
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
-    appendEventForProfiling(signalEvent, true);
+    appendEventForProfiling(signalEvent, true, false);
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), dummyBlitWa);
     makeResidentDummyAllocation();
 
-    appendSignalEventPostWalker(signalEvent);
+    appendSignalEventPostWalker(signalEvent, false);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2027,7 +2027,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         }
 
         auto neoDevice = device->getNEODevice();
-        appendEventForProfiling(signalEvent, true);
+        appendEventForProfiling(signalEvent, true, false);
         NEO::GraphicsAllocation *gpuAllocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr,
                                                                                                             size,
                                                                                                             neoDevice->getRootDeviceIndex(),
@@ -2055,7 +2055,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                         this->dummyBlitWa);
         makeResidentDummyAllocation();
 
-        appendSignalEventPostWalker(signalEvent);
+        appendSignalEventPostWalker(signalEvent, false);
 
         if (isInOrderExecutionEnabled()) {
             appendSignalInOrderDependencyCounter();
@@ -2066,12 +2066,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *event) {
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *event, bool skipBarrierForEndProfiling) {
     if (event == nullptr) {
         return;
     }
     if (event->isEventTimestampFlagSet()) {
-        appendEventForProfiling(event, false);
+        appendEventForProfiling(event, false, skipBarrierForEndProfiling);
     } else {
         event->resetKernelCountAndPacketUsedCount();
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
@@ -2480,7 +2480,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *eve
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event, bool beforeWalker) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event, bool beforeWalker, bool skipBarrierForEndProfiling) {
     if (!event) {
         return;
     }
@@ -2505,11 +2505,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false, true);
 
             const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = getDcFlushRequired(event->isSignalScope());
-            NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
 
-            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+            if (!skipBarrierForEndProfiling) {
+                NEO::PipeControlArgs args;
+                args.dcFlushEnable = getDcFlushRequired(event->isSignalScope());
+                NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
+
+                NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+            }
 
             uint64_t baseAddr = event->getGpuAddress(this->device);
             NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, false, rootDeviceEnvironment);
@@ -2535,7 +2538,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    appendEventForProfiling(signalEvent, true);
+    appendEventForProfiling(signalEvent, true, false);
 
     if (isCopyOnly()) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
@@ -2559,7 +2562,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
             args);
     }
 
-    appendSignalEventPostWalker(signalEvent);
+    appendSignalEventPostWalker(signalEvent, false);
 
     if (this->inOrderExecutionEnabled) {
         appendSignalInOrderDependencyCounter();
@@ -3054,7 +3057,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    appendEventForProfiling(signalEvent, true);
+    appendEventForProfiling(signalEvent, true, false);
 
     if (this->inOrderExecutionEnabled) {
         appendSignalInOrderDependencyCounter();
@@ -3076,7 +3079,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     }
 
     addToMappedEventList(signalEvent);
-    appendSignalEventPostWalker(signalEvent);
+    appendSignalEventPostWalker(signalEvent, this->inOrderExecutionEnabled);
 
     if (isInOrderExecutionEnabled()) {
         handleInOrderDependencyCounter();
@@ -3203,7 +3206,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     }
     UNRECOVERABLE_IF(srcAllocationStruct.alloc == nullptr);
 
-    appendEventForProfiling(signalEvent, true);
+    appendEventForProfiling(signalEvent, true, false);
 
     if (this->inOrderExecutionEnabled) {
         handleInOrderImplicitDependencies(false);
@@ -3222,7 +3225,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, rootDeviceEnvironment);
     }
 
-    appendSignalEventPostWalker(signalEvent);
+    appendSignalEventPostWalker(signalEvent, false);
 
     if (this->inOrderExecutionEnabled) {
         appendSignalInOrderDependencyCounter();

@@ -89,7 +89,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         dsh = dshReserveArgs.indirectHeapReservation;
     }
 
-    appendEventForProfiling(event, true);
+    appendEventForProfiling(event, true, false);
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
                                                         kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
     this->setCommandListPerThreadScratchSize(perThreadScratchSize);
@@ -221,7 +221,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
 
-    appendSignalEventPostWalker(event);
+    appendSignalEventPostWalker(event, false);
 
     commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
     auto &residencyContainer = kernel->getResidencyContainer();
@@ -303,9 +303,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent) {
     if (beforeWalker) {
-        appendEventForProfiling(event, true);
+        appendEventForProfiling(event, true, false);
     } else {
-        appendSignalEventPostWalker(event);
+        appendSignalEventPostWalker(event, false);
     }
 }
 

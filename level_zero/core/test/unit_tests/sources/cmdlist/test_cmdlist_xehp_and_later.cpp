@@ -878,7 +878,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         commandList->setupTimestampEventForMultiTile(event.get());
         size_t sizeBefore = cmdStream->getUsed();
-        commandList->appendEventForProfiling(event.get(), false);
+        commandList->appendEventForProfiling(event.get(), false, false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -963,7 +963,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         commandList->setupTimestampEventForMultiTile(event.get());
         size_t sizeBefore = cmdStream->getUsed();
-        commandList->appendSignalEventPostWalker(event.get());
+        commandList->appendSignalEventPostWalker(event.get(), false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

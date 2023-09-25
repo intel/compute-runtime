@@ -381,7 +381,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
-    commandList->appendSignalEventPostWalker(event.get());
+    commandList->appendSignalEventPostWalker(event.get(), false);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
     auto gpuAddress = event->getCompletionFieldGpuAddress(device);
@@ -441,7 +441,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
-    commandList->appendSignalEventPostWalker(event.get());
+    commandList->appendSignalEventPostWalker(event.get(), false);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
     auto gpuAddress = event->getCompletionFieldGpuAddress(device);
@@ -605,7 +605,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     event->setEventTimestampFlag(false);
 
-    commandList->appendSignalEventPostWalker(event.get());
+    commandList->appendSignalEventPostWalker(event.get(), false);
     size_t usedAfterSize = cmdStream->getUsed();
 
     GenCmdList cmdList;

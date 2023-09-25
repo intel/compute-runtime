@@ -475,9 +475,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent) {
     if (isCopyOnly() || singlePacketEvent) {
         if (beforeWalker) {
-            appendEventForProfiling(event, true);
+            appendEventForProfiling(event, true, false);
         } else {
-            appendSignalEventPostWalker(event);
+            appendSignalEventPostWalker(event, false);
         }
     } else {
         if (event) {
