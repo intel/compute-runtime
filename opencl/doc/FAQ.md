@@ -119,7 +119,7 @@ reuse previously cached kernel binaries instead of compiling kernels from source
 ##### Environment flags
 
 NEO_CACHE_PERSISTENT - integer value to enable (1)/disable (0) on-disk binary cache. When enabled 
-                       Neo will try to cache and reuse compiled binaries. Default is off.
+                       Neo will try to cache and reuse compiled binaries. Default is on.
 
 NEO_CACHE_DIR        - path to persistent cache directory. Default values are %LocalAppData%\NEO\neo_compiler_cache
                        if %LocalAppData% is found. If none of environment

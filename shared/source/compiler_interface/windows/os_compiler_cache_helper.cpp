@@ -16,7 +16,7 @@
 
 namespace NEO {
 int64_t defaultCacheEnabled() {
-    return 0l;
+    return 1l;
 }
 
 std::string getKnownFolderPath(REFKNOWNFOLDERID rfid) {
