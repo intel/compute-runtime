@@ -384,6 +384,42 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
     return ZE_RESULT_SUCCESS;
 }
 
+void MetricEnumeration::getL0MetricPropertiesFromMdapiMetric(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IMetric_1_0 *mdapiMetric) {
+    MetricsDiscovery::TMetricParams_1_0 *pSourceMetricParams = mdapiMetric->GetParams();
+    DEBUG_BREAK_IF(pSourceMetricParams == nullptr);
+
+    snprintf(l0MetricProps.name, sizeof(l0MetricProps.name), "%s",
+             pSourceMetricParams->SymbolName); // To always have a null-terminated string
+    snprintf(l0MetricProps.description, sizeof(l0MetricProps.description), "%s",
+             pSourceMetricParams->LongName);
+    snprintf(l0MetricProps.component, sizeof(l0MetricProps.component), "%s",
+             pSourceMetricParams->GroupName);
+    snprintf(l0MetricProps.resultUnits, sizeof(l0MetricProps.resultUnits), "%s",
+             pSourceMetricParams->MetricResultUnits);
+    l0MetricProps.tierNumber = getMetricTierNumber(pSourceMetricParams->UsageFlagsMask);
+    l0MetricProps.metricType = getMetricType(pSourceMetricParams->MetricType);
+    l0MetricProps.resultType = getMetricResultType(pSourceMetricParams->ResultType);
+}
+
+void MetricEnumeration::getL0MetricPropertiesFromMdapiInformation(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IInformation_1_0 *mdapiInformation) {
+    MetricsDiscovery::TInformationParams_1_0 *pSourceInformationParams = mdapiInformation->GetParams();
+    DEBUG_BREAK_IF(pSourceInformationParams == nullptr);
+
+    snprintf(l0MetricProps.name, sizeof(l0MetricProps.name), "%s",
+             pSourceInformationParams->SymbolName); // To always have a null-terminated string
+    snprintf(l0MetricProps.description, sizeof(l0MetricProps.description), "%s",
+             pSourceInformationParams->LongName);
+    snprintf(l0MetricProps.component, sizeof(l0MetricProps.component), "%s",
+             pSourceInformationParams->GroupName);
+    snprintf(l0MetricProps.resultUnits, sizeof(l0MetricProps.resultUnits), "%s",
+             pSourceInformationParams->InfoUnits);
+    l0MetricProps.tierNumber = 1;
+    l0MetricProps.metricType = getMetricType(pSourceInformationParams->InfoType);
+    l0MetricProps.resultType = l0MetricProps.metricType == ZET_METRIC_TYPE_FLAG
+                                   ? ZET_VALUE_TYPE_BOOL8
+                                   : ZET_VALUE_TYPE_UINT64;
+}
+
 ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                              std::vector<Metric *> &metrics) {
     MetricsDiscovery::TMetricSetParams_1_4 *pMetricSetParams = metricSet.GetParams();
@@ -396,23 +432,8 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
         MetricsDiscovery::IMetric_1_0 *pSourceMetric = metricSet.GetMetric(i);
         DEBUG_BREAK_IF(pSourceMetric == nullptr);
 
-        MetricsDiscovery::TMetricParams_1_0 *pSourceMetricParams = pSourceMetric->GetParams();
-        DEBUG_BREAK_IF(pSourceMetricParams == nullptr);
-
         zet_metric_properties_t properties = {};
-        properties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
-        snprintf(properties.name, sizeof(properties.name), "%s",
-                 pSourceMetricParams->SymbolName); // To always have a null-terminated string
-        snprintf(properties.description, sizeof(properties.description), "%s",
-                 pSourceMetricParams->LongName);
-        snprintf(properties.component, sizeof(properties.component), "%s",
-                 pSourceMetricParams->GroupName);
-        snprintf(properties.resultUnits, sizeof(properties.resultUnits), "%s",
-                 pSourceMetricParams->MetricResultUnits);
-        properties.tierNumber = getMetricTierNumber(pSourceMetricParams->UsageFlagsMask);
-        properties.metricType = getMetricType(pSourceMetricParams->MetricType);
-        properties.resultType = getMetricResultType(pSourceMetricParams->ResultType);
-
+        getL0MetricPropertiesFromMdapiMetric(properties, pSourceMetric);
         auto pMetric = OaMetricImp::create(properties);
         UNRECOVERABLE_IF(pMetric == nullptr);
 
@@ -424,25 +445,8 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
         MetricsDiscovery::IInformation_1_0 *pSourceInformation = metricSet.GetInformation(i);
         DEBUG_BREAK_IF(pSourceInformation == nullptr);
 
-        MetricsDiscovery::TInformationParams_1_0 *pSourceInformationParams =
-            pSourceInformation->GetParams();
-        DEBUG_BREAK_IF(pSourceInformationParams == nullptr);
-
         zet_metric_properties_t properties = {};
-        properties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
-        snprintf(properties.name, sizeof(properties.name), "%s",
-                 pSourceInformationParams->SymbolName); // To always have a null-terminated string
-        snprintf(properties.description, sizeof(properties.description), "%s",
-                 pSourceInformationParams->LongName);
-        snprintf(properties.component, sizeof(properties.component), "%s",
-                 pSourceInformationParams->GroupName);
-        snprintf(properties.resultUnits, sizeof(properties.resultUnits), "%s",
-                 pSourceInformationParams->InfoUnits);
-        properties.tierNumber = 1;
-        properties.metricType = getMetricType(pSourceInformationParams->InfoType);
-        properties.resultType = properties.metricType == ZET_METRIC_TYPE_FLAG
-                                    ? ZET_VALUE_TYPE_BOOL8
-                                    : ZET_VALUE_TYPE_UINT64;
+        getL0MetricPropertiesFromMdapiInformation(properties, pSourceInformation);
 
         auto pMetric = OaMetricImp::create(properties);
         UNRECOVERABLE_IF(pMetric == nullptr);
@@ -536,6 +540,11 @@ zet_value_type_t MetricEnumeration::getMetricResultType(
 OaMetricGroupImp ::~OaMetricGroupImp() {
 
     for (size_t i = 0; i < metrics.size(); ++i) {
+        // Destroy all immutable metrics
+        if (!static_cast<OaMetricImp *>(metrics[i])->isImmutable()) {
+            DEBUG_BREAK_IF(true);
+            continue;
+        }
         delete metrics[i];
     }
 
@@ -977,7 +986,7 @@ ze_result_t OaMetricGroupImp::initialize(const zet_metric_group_properties_t &so
 uint32_t OaMetricGroupImp::getRawReportSize() {
     auto pMetricSetParams = pReferenceMetricSet->GetParams();
 
-    return (properties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED)
+    return ((properties.samplingType & ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED)
                ? pMetricSetParams->RawReportSize
                : pMetricSetParams->QueryReportSize;
 }
@@ -1073,6 +1082,7 @@ MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
     auto pMetricGroup = new OaMetricGroupImp();
     UNRECOVERABLE_IF(pMetricGroup == nullptr);
     pMetricGroup->initialize(properties, metricSet, concurrentGroup, metrics, static_cast<OaMetricSourceImp &>(metricSource));
+    pMetricGroup->isPredefined = true;
     return pMetricGroup;
 }
 
@@ -1080,6 +1090,7 @@ Metric *OaMetricImp::create(zet_metric_properties_t &properties) {
     auto pMetric = new OaMetricImp();
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);
+    pMetric->isPredefined = true;
     return pMetric;
 }
 

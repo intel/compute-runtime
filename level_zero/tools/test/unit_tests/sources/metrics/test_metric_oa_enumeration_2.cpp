@@ -473,6 +473,7 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenValidArgumentsWhenZetMetricGetProp
     EXPECT_EQ(metricCount, 1u);
     EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &metricHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(metricHandle, nullptr);
+    EXPECT_TRUE(static_cast<OaMetricImp *>(metricHandle)->isImmutable());
 
     // Obtain metric params.
     EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);

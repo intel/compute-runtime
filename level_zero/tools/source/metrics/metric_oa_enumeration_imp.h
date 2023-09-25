@@ -70,6 +70,11 @@ struct MetricEnumeration {
         uint32_t index) {
         return metricDevice->GetConcurrentGroup(index);
     }
+    zet_metric_type_t getMetricType(const MetricsDiscovery::TMetricType sourceMetricType) const;
+    zet_value_type_t
+    getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType) const;
+    void getL0MetricPropertiesFromMdapiMetric(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IMetric_1_0 *mdapiMetric);
+    void getL0MetricPropertiesFromMdapiInformation(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IInformation_1_0 *mdapiInformation);
 
   protected:
     ze_result_t initialize();
@@ -89,11 +94,8 @@ struct MetricEnumeration {
 
     // Metrics Discovery types mapping.
     uint32_t getMetricTierNumber(const uint32_t sourceUsageFlagsMask) const;
-    zet_metric_type_t getMetricType(const MetricsDiscovery::TMetricType sourceMetricType) const;
     zet_metric_type_t
     getMetricType(const MetricsDiscovery::TInformationType sourceInformationType) const;
-    zet_value_type_t
-    getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType) const;
     virtual ze_result_t cacheExtendedMetricInformation(
         MetricsDiscovery::IConcurrentGroup_1_5 &pConcurrentGroup,
         const uint32_t domain) { return ZE_RESULT_SUCCESS; };
@@ -182,6 +184,7 @@ struct OaMetricGroupImp : MetricGroup {
     uint32_t getRawReportSize();
     const MetricEnumeration &getMetricEnumeration() const;
     void setCachedExportDataHeapSize(size_t size);
+    bool isImmutable() { return isPredefined; }
 
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,
@@ -204,8 +207,9 @@ struct OaMetricGroupImp : MetricGroup {
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
 
     std::vector<zet_metric_group_handle_t> metricGroups;
-    OaMetricSourceImp *metricSource;
+    OaMetricSourceImp *metricSource = nullptr;
     size_t cachedExportDataHeapSize = 0;
+    bool isPredefined{};
 
   private:
     ze_result_t openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,
@@ -221,12 +225,16 @@ struct OaMetricImp : Metric {
 
     static Metric *create(zet_metric_properties_t &properties);
 
+    bool isImmutable() { return isPredefined; }
+
   protected:
     void copyProperties(const zet_metric_properties_t &source,
                         zet_metric_properties_t &destination);
 
     zet_metric_properties_t properties{
         ZET_STRUCTURE_TYPE_METRIC_PROPERTIES};
+
+    bool isPredefined{};
 };
 
 } // namespace L0
