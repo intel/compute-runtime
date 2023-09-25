@@ -48,6 +48,7 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(Ppgtt64KBWalkOptimization);
         TRANSFER_FTR_TO_GMM(Unified3DMediaCompressionFormats);
         TRANSFER_FTR_TO_GMM(57bGPUAddressing);
+        TRANSFER_FTR_TO_GMM(Tile64Optimization);
 
 #undef TRANSFER_FTR_TO_GMM
     }

@@ -118,6 +118,7 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrCCSRing = true;
 
     featureTable->flags.ftrUnified3DMediaCompressionFormats = true;
+    featureTable->flags.ftrTile64Optimization = true;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };

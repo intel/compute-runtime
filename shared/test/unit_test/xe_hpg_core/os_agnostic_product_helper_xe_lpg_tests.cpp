@@ -121,6 +121,7 @@ HWTEST2_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAn
         EXPECT_EQ(setParamBool, featureTable.flags.ftrLinearCCS);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSNode);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSRing);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTile64Optimization);
 
         EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
         EXPECT_EQ(setParamBool, workaroundTable.flags.waUntypedBufferCompression);

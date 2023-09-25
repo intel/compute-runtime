@@ -109,6 +109,7 @@ void MTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrE2ECompression = false;
     featureTable->flags.ftrCCSNode = true;
     featureTable->flags.ftrCCSRing = true;
+    featureTable->flags.ftrTile64Optimization = true;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
     workaroundTable->flags.waUntypedBufferCompression = true;
