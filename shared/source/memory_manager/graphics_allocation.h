@@ -115,6 +115,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return gpuAddress + allocationOffset - gpuBaseAddress;
     }
 
+    void incNumOwners() { numOwners++; }
+    uint32_t fetchDecNumOwners() { return numOwners.fetch_sub(1); }
+
     void lock(void *ptr) { lockedPtr = ptr; }
     void unlock() { lockedPtr = nullptr; }
     bool isLocked() const { return lockedPtr != nullptr; }
@@ -380,6 +383,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     StackVec<UsageInfo, 32> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
+    std::atomic<uint32_t> numOwners{1};
     StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
     ResidencyData residency;
 };

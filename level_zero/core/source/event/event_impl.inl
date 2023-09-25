@@ -470,8 +470,8 @@ ze_result_t EventImp<TagSizeT>::reset() {
         hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
     if (inOrderExecEvent) {
-        inOrderExecEvent = false;
-        inOrderExecDataAllocation = nullptr;
+        freeInOrderExecAllocation();
+
         inOrderExecSignalValue = 0;
         inOrderAllocationOffset = 0;
     }

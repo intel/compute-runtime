@@ -232,6 +232,7 @@ struct Event : _ze_event_handle_t {
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
 
     void unsetCmdQueue();
+    void freeInOrderExecAllocation();
 
     uint64_t globalStartTS = 1;
     uint64_t globalEndTS = 1;

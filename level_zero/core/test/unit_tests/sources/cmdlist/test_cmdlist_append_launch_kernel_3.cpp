@@ -702,7 +702,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
 
         for (uint32_t i = 0; i < numEvents; i++) {
             eventDesc.index = i;
-            events.emplace_back(std::unique_ptr<MockEvent>(static_cast<MockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
+            events.emplace_back(DestroyableZeUniquePtr<MockEvent>(static_cast<MockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
             EXPECT_FALSE(events.back()->inOrderExecEvent);
             events.back()->inOrderExecEvent = true;
         }
@@ -790,7 +790,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     std::unique_ptr<NEO::MockOsContext> mockCopyOsContext;
 
     uint32_t createdCmdLists = 0;
-    std::vector<std::unique_ptr<MockEvent>> events;
+    std::vector<DestroyableZeUniquePtr<MockEvent>> events;
     std::vector<std::unique_ptr<Mock<CommandQueue>>> mockCmdQs;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount = {3, 2, 1};
@@ -954,8 +954,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEven
 
     events[0]->inOrderAllocationOffset = 123;
     events[0]->reset();
-
-    EXPECT_FALSE(events[0]->inOrderExecEvent);
 
     EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
     EXPECT_EQ(events[0]->inOrderExecDataAllocation, nullptr);
@@ -1171,35 +1169,53 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAp
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromAfterResetThenDontSkip, IsAtLeastXeHpCore) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
 
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-
     immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle, 0, nullptr, launchParams, false);
     events[0]->reset();
 
-    auto offset = cmdStream->getUsed();
+    auto retValue = immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, &eventHandle, launchParams, false);
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retValue);
+}
 
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdStream->getCpuBase(), offset),
-        cmdStream->getUsed() - offset));
+HWTEST2_F(InOrderCmdListTests, givenMultipleAllocationOwnerWhenUsingEventsThenSetCorrectOwnersCount, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
 
-    ASSERT_NE(cmdList.end(), itor); // implicit dependency
+    auto eventPool = createEvents<FamilyType>(2, false);
+    auto eventHandle0 = events[0]->toHandle();
+    auto eventHandle1 = events[1]->toHandle();
 
-    itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
+    auto inOrderAlloc0 = immCmdList0->inOrderDependencyCounterAllocation;
+    auto validateNumOwners = [&inOrderAlloc0](uint32_t expectedValue) {
+        inOrderAlloc0->incNumOwners();
+        auto fetchValue = inOrderAlloc0->fetchDecNumOwners();
 
-    EXPECT_NE(cmdList.end(), itor);
+        EXPECT_EQ(expectedValue, fetchValue - 1);
+    };
+
+    validateNumOwners(1);
+
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle0, 0, nullptr, launchParams, false);
+    validateNumOwners(2);
+
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle0, 0, nullptr, launchParams, false);
+    validateNumOwners(2);
+
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle1, 0, nullptr, launchParams, false);
+    validateNumOwners(3);
+
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), &groupCount, eventHandle0, 0, nullptr, launchParams, false);
+    validateNumOwners(2);
+
+    events[1]->reset();
+    validateNumOwners(1);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSemaphoreOnlyForExternalEvent, IsAtLeastXeHpCore) {

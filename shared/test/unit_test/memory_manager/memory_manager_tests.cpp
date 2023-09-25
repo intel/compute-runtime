@@ -72,6 +72,23 @@ TEST(MemoryManagerTest, givenDefaultMemoryManagerWhenGraphicsAllocationContainsE
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST(MemoryManagerTest, givenMultipleOwnersWhenReleasingAllocationThenFreeOnlyWhenNoActiveOwners) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
+
+    graphicsAllocation->incNumOwners();
+    graphicsAllocation->incNumOwners();
+    EXPECT_EQ(3u, graphicsAllocation->fetchDecNumOwners());
+
+    graphicsAllocation->incNumOwners();
+    memoryManager.freeGraphicsMemory(graphicsAllocation);
+    EXPECT_EQ(2u, graphicsAllocation->fetchDecNumOwners());
+
+    memoryManager.freeGraphicsMemory(graphicsAllocation);
+}
+
 TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsReturned) {
     MockMemoryManager memoryManager;
     for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {

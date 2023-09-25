@@ -335,6 +335,8 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 }
 
 ze_result_t Event::destroy() {
+    freeInOrderExecAllocation();
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }
@@ -391,7 +393,20 @@ void Event::setIsCompleted() {
     unsetCmdQueue();
 }
 
+void Event::freeInOrderExecAllocation() {
+    if (inOrderExecDataAllocation) {
+        this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(inOrderExecDataAllocation);
+
+        inOrderExecDataAllocation = nullptr;
+    }
+}
+
 void Event::updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue, uint32_t allocationOffset) {
+    if (this->inOrderExecDataAllocation != &inOrderDependenciesAllocation) {
+        freeInOrderExecAllocation();
+        inOrderDependenciesAllocation.incNumOwners();
+    }
+
     inOrderExecSignalValue = signalValue;
     inOrderExecDataAllocation = &inOrderDependenciesAllocation;
     inOrderAllocationOffset = allocationOffset;
