@@ -29,6 +29,7 @@ struct Gen8 {
     static constexpr bool isUsingMiSetPredicate = false;
     static constexpr bool isUsingMiMathMocs = false;
     static constexpr uint32_t bcsEngineCount = 1u;
+    static constexpr uint32_t timestampPacketCount = 1u;
 
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;

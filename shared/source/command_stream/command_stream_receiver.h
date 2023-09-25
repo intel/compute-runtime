@@ -57,7 +57,7 @@ class ReleaseHelper;
 enum class WaitStatus;
 struct AubSubCaptureStatus;
 
-template <typename TSize>
+template <typename TSize, uint32_t packetCount>
 class TimestampPackets;
 
 template <typename T1>

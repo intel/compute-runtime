@@ -32,7 +32,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
     if (eventPool->isEventPoolTimestampFlagSet()) {
         event->setEventTimestampFlag(true);
-        event->setSinglePacketSize(NEO::TimestampPackets<TagSizeT>::getSinglePacketSize());
+        event->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
     event->hasKerneMappedTsCapability = eventPool->isEventPoolKerneMappedTsFlagSet();
     auto &hwInfo = neoDevice->getHardwareInfo();

@@ -10,10 +10,10 @@
 
 namespace NEO {
 
-class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
+class MockTimestampPackets32 : public TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount> {
   public:
-    using typename TimestampPackets<uint32_t>::Packet;
-    using TimestampPackets<uint32_t>::packets;
+    using typename TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::Packet;
+    using TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::packets;
 
     void setTagToReadyState() {
         initialize();

@@ -25,6 +25,7 @@ struct XeHpCore {
     static constexpr uint32_t stateComputeModeForceDisableSupportMultiGpuPartialWrites = (1u << 2);
     static constexpr uint32_t stateComputeModeForceDisableSupportMultiGpuAtomics = (1u << 1);
     static constexpr uint32_t bcsEngineCount = 1u;
+    static constexpr uint32_t timestampPacketCount = 16u;
 
     static constexpr bool isUsingL3Control = true;
     static constexpr bool isUsingMediaSamplerDopClockGate = true;

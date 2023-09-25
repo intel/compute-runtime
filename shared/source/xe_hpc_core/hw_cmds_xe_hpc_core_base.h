@@ -27,6 +27,7 @@ struct XeHpcCore {
     static constexpr uint32_t stateComputeModeEuThreadSchedulingModeOverrideMask = (0b11u << 13);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
     static constexpr uint32_t bcsEngineCount = 9u;
+    static constexpr uint32_t timestampPacketCount = 16u;
 
     static constexpr bool isUsingL3Control = false;
     static constexpr bool isUsingMediaSamplerDopClockGate = false;

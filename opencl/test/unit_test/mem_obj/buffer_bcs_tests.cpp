@@ -969,10 +969,10 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCal
     cl_int retVal = CL_SUCCESS;
 
     auto memoryManager = bcsCsr->getMemoryManager();
-    bcsCsr->timestampPacketAllocator = std::make_unique<MockTagAllocator<TimestampPackets<uint32_t>>>(device->getRootDeviceIndex(), memoryManager, 1,
-                                                                                                      MemoryConstants::cacheLineSize,
-                                                                                                      sizeof(TimestampPackets<uint32_t>),
-                                                                                                      false, device->getDeviceBitfield());
+    bcsCsr->timestampPacketAllocator = std::make_unique<MockTagAllocator<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>>(device->getRootDeviceIndex(), memoryManager, 1,
+                                                                                                                                                      MemoryConstants::cacheLineSize,
+                                                                                                                                                      sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>),
+                                                                                                                                                      false, device->getDeviceBitfield());
 
     auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     buffer->forceDisallowCPUCopy = true;

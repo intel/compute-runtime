@@ -14,7 +14,7 @@
 namespace L0 {
 
 template <typename TagSizeT>
-class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT> {
+class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount> {
   public:
     uint32_t getPacketsUsed() const { return packetsUsed; }
     void setPacketsUsed(uint32_t value) { packetsUsed = value; }
@@ -28,12 +28,12 @@ struct EventImp : public Event {
 
     EventImp(EventPool *eventPool, int index, Device *device, bool downloadAllocationRequired)
         : Event(eventPool, index, device), downloadAllocationRequired(downloadAllocationRequired) {
-        contextStartOffset = NEO::TimestampPackets<TagSizeT>::getContextStartOffset();
-        contextEndOffset = NEO::TimestampPackets<TagSizeT>::getContextEndOffset();
-        globalStartOffset = NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset();
-        globalEndOffset = NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset();
+        contextStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextStartOffset();
+        contextEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextEndOffset();
+        globalStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalStartOffset();
+        globalEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalEndOffset();
         timestampSizeInDw = (sizeof(TagSizeT) / sizeof(uint32_t));
-        singlePacketSize = NEO::TimestampPackets<TagSizeT>::getSinglePacketSize();
+        singlePacketSize = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
 
         if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
             singlePacketSize = sizeof(uint64_t);

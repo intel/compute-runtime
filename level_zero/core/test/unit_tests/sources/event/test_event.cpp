@@ -183,7 +183,7 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
         maxPacketCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
     uint32_t packetsSize = maxPacketCount *
-                           static_cast<uint32_t>(NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize());
+                           static_cast<uint32_t>(NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize());
     uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
@@ -2007,7 +2007,7 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
 
     for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
         eventRoot->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventRoot->hostAddress);
-        eventRoot->hostAddress = ptrOffset(eventRoot->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+        eventRoot->hostAddress = ptrOffset(eventRoot->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     uint32_t pCount = 0;
@@ -2033,7 +2033,7 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
 
     for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
         eventSub0->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventSub0->hostAddress);
-        eventSub0->hostAddress = ptrOffset(eventSub0->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+        eventSub0->hostAddress = ptrOffset(eventSub0->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     pCount = 0;
@@ -2060,7 +2060,7 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
 
     for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
         eventSub1->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventSub1->hostAddress);
-        eventSub1->hostAddress = ptrOffset(eventSub1->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+        eventSub1->hostAddress = ptrOffset(eventSub1->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     pCount = 0;
@@ -2163,7 +2163,7 @@ TEST_F(EventqueryKernelTimestampsExt, givenEventWithMappedTimestampCapabilityWhe
 
     for (uint32_t packetId = 0; packetId < count; packetId++) {
         event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
-        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryKernelTimestampsExt(device, &count, &results));
@@ -2348,7 +2348,7 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpT
 
     for (uint32_t packetId = 0; packetId < pCount; packetId++) {
         event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
-        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     auto result = event->queryTimestampsExp(device, &pCount, results);
@@ -2968,7 +2968,7 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     }
 
     auto expectedAlignment = static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment());
-    auto singlePacketSize = TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
+    auto singlePacketSize = TimestampPackets<typename FamilyType::TimestampPacketType, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
     auto expectedSize = static_cast<uint32_t>(alignUp(packetCount * singlePacketSize, expectedAlignment));
 
     EXPECT_EQ(expectedSize, eventPool->getEventSize());
@@ -3027,7 +3027,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
         ze_result_t result = ZE_RESULT_SUCCESS;
         eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        auto singlePacketSize = TimestampPackets<uint32_t>::getSinglePacketSize();
+        auto singlePacketSize = TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
 
         auto expectedSize = static_cast<uint32_t>(alignUp(packetCount * singlePacketSize, expectedAlignment));
 
@@ -3048,7 +3048,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
         ze_result_t result = ZE_RESULT_SUCCESS;
         eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        auto singlePacketSize = TimestampPackets<uint64_t>::getSinglePacketSize();
+        auto singlePacketSize = TimestampPackets<uint64_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
 
         auto expectedSize = static_cast<uint32_t>(alignUp(packetCount * singlePacketSize, expectedAlignment));
 
@@ -3097,7 +3097,8 @@ HWTEST_F(EventTests, givenDebugFlagSetWhenCreatingNonTimestampEventsThenPacketsS
     auto timestampEvent = Event::fromHandle(timestampEventHandle);
     auto regularEvent = Event::fromHandle(regularEventHandle);
 
-    EXPECT_EQ(NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize(), timestampEvent->getSinglePacketSize());
+    auto timestampSinglePacketSize = NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
+    EXPECT_EQ(timestampSinglePacketSize, timestampEvent->getSinglePacketSize());
     EXPECT_EQ(sizeof(uint64_t), regularEvent->getSinglePacketSize());
 
     timestampEvent->destroy();
@@ -3509,7 +3510,7 @@ HWTEST_F(EventTests, givenQwordPacketSizeWhenSignalingThenCopyQword) {
     }
 
     {
-        event->setSinglePacketSize(NEO::TimestampPackets<TimestampPacketType>::getSinglePacketSize());
+        event->setSinglePacketSize(NEO::TimestampPackets<TimestampPacketType, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
 
         *completionAddress = std::numeric_limits<uint64_t>::max();
 

@@ -222,7 +222,7 @@ TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThenRequestedNum
       public:
         using MockMemoryManager::MockMemoryManager;
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
-            return new MemoryAllocation(0, TimestampPackets<uint32_t>::getAllocationType(), nullptr, nullptr, 0, MemoryConstants::pageSize,
+            return new MemoryAllocation(0, TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::getAllocationType(), nullptr, nullptr, 0, MemoryConstants::pageSize,
                                         1, MemoryPool::System4KBPages, false, false, MemoryManager::maxOsContextCount);
         }
     };
@@ -230,7 +230,7 @@ TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThenRequestedNum
     auto mockMemoryManager = std::make_unique<MyMockMemoryManager>(true, true, *executionEnvironment);
 
     const size_t tagsCount = 3;
-    MockTagAllocator<TimestampPackets<uint32_t>> tagAllocator(mockMemoryManager.get(), tagsCount, 1, deviceBitfield);
+    MockTagAllocator<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> tagAllocator(mockMemoryManager.get(), tagsCount, 1, deviceBitfield);
 
     size_t nodesFound = 0;
     auto head = tagAllocator.freeTags.peekHead();
@@ -440,7 +440,7 @@ TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDe
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
-    MockTagAllocator<TimestampPackets<uint32_t>> timestampPacketAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(TimestampPackets<uint32_t>), false, mockDeviceBitfield);
+    MockTagAllocator<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestampPacketAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>), false, mockDeviceBitfield);
     MockTagAllocator<HwTimeStamps> hwTimeStampsAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(HwTimeStamps), false, mockDeviceBitfield);
     MockTagAllocator<HwPerfCounter> hwPerfCounterAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(HwPerfCounter), false, mockDeviceBitfield);
 
@@ -468,7 +468,7 @@ TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMul
 
     const RootDeviceIndicesContainer indices = {0, 2, maxRootDeviceIndex};
 
-    MockTagAllocator<TimestampPackets<uint32_t>> timestampPacketAllocator(indices, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t>), false, mockDeviceBitfield);
+    MockTagAllocator<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestampPacketAllocator(indices, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>), false, mockDeviceBitfield);
 
     EXPECT_EQ(1u, timestampPacketAllocator.getGraphicsAllocationsCount());
 
@@ -498,7 +498,7 @@ HWTEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenCallingMakeResidentThenUs
 
     const RootDeviceIndicesContainer indicesVector = {0, 1};
 
-    MockTagAllocator<TimestampPackets<uint32_t>> timestampPacketAllocator(indicesVector, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t>), false, mockDeviceBitfield);
+    MockTagAllocator<TimestampPackets<uint32_t, FamilyType::timestampPacketCount>> timestampPacketAllocator(indicesVector, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t, FamilyType::timestampPacketCount>), false, mockDeviceBitfield);
 
     EXPECT_EQ(1u, timestampPacketAllocator.getGraphicsAllocationsCount());
 
@@ -557,7 +557,7 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
     }
 
     {
-        TagNode<TimestampPackets<uint32_t>> timestampPacketsNode = {};
+        TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestampPacketsNode = {};
 
         EXPECT_ANY_THROW(timestampPacketsNode.getContextCompleteRef());
         EXPECT_ANY_THROW(timestampPacketsNode.getGlobalEndRef());

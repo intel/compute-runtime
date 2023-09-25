@@ -21,8 +21,8 @@
 using namespace NEO;
 
 struct TimestampPacketTests : public ::testing::Test {
-    struct MockTagNode : public TagNode<TimestampPackets<uint32_t>> {
-        using TagNode<TimestampPackets<uint32_t>>::gpuAddress;
+    struct MockTagNode : public TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> {
+        using TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>::gpuAddress;
     };
 
     void SetUp() override {
@@ -51,7 +51,7 @@ struct TimestampPacketTests : public ::testing::Test {
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
 
-        uint64_t compareOffset = packetId * TimestampPackets<uint32_t>::getSinglePacketSize();
+        uint64_t compareOffset = packetId * TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
         auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode) + compareOffset;
 
         EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());

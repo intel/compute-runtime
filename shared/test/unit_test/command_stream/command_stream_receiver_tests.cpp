@@ -203,7 +203,7 @@ HWTEST_F(CommandStreamReceiverTest, whenRegisterClientThenIncrementClientNum) {
 }
 
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenTimestampTypeIs32b) {
-    using ExpectedType = TimestampPackets<typename FamilyType::TimestampPacketType>;
+    using ExpectedType = TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

@@ -27,6 +27,7 @@ struct XeHpgCore {
     static constexpr uint32_t stateComputeModePixelAsyncComputeThreadLimitMask = (0b111u << 7);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
     static constexpr uint32_t bcsEngineCount = 1u;
+    static constexpr uint32_t timestampPacketCount = 1u;
 
     static constexpr bool isUsingL3Control = true;
     static constexpr bool isUsingMediaSamplerDopClockGate = false;

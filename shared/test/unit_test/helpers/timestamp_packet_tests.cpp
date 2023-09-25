@@ -39,8 +39,8 @@ void setTagToReadyState(TagNodeBase *tagNode) {
 } // namespace
 
 struct TimestampPacketTests : public ::testing::Test {
-    struct MockTagNode : public TagNode<TimestampPackets<uint32_t>> {
-        using TagNode<TimestampPackets<uint32_t>>::gpuAddress;
+    struct MockTagNode : public TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> {
+        using TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>::gpuAddress;
     };
 
     template <typename MI_SEMAPHORE_WAIT>
@@ -49,7 +49,7 @@ struct TimestampPacketTests : public ::testing::Test {
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
 
-        uint64_t compareOffset = packetId * TimestampPackets<uint32_t>::getSinglePacketSize();
+        uint64_t compareOffset = packetId * TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
         auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode) + compareOffset;
 
         EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
@@ -59,7 +59,7 @@ struct TimestampPacketTests : public ::testing::Test {
 HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreIsProgrammedThenUseGpuAddress) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    TimestampPackets<uint32_t> tag;
+    TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount> tag;
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
@@ -77,8 +77,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreIsProgrammedThenUseGpuAd
 
 HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreIsProgrammedThenUseGpuAddress) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    TimestampPackets<uint32_t> tag;
+    TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount> tag;
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
@@ -98,7 +97,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreIsProgra
 }
 
 TEST_F(TimestampPacketTests, givenTagNodeWhatAskingForGpuAddressesThenReturnCorrectValue) {
-    TimestampPackets<uint32_t> tag;
+    TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount> tag;
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
@@ -113,11 +112,11 @@ TEST_F(TimestampPacketTests, givenTimestampPacketContainerWhenMovedThenMoveAllNo
     EXPECT_FALSE(std::is_copy_assignable<TimestampPacketContainer>::value);
     EXPECT_FALSE(std::is_copy_constructible<TimestampPacketContainer>::value);
 
-    struct MockTagNode : public TagNode<TimestampPackets<uint32_t>> {
+    struct MockTagNode : public TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> {
         void returnTag() override {
             returnCalls++;
         }
-        using TagNode<TimestampPackets<uint32_t>>::refCount;
+        using TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>::refCount;
         uint32_t returnCalls = 0;
     };
 
@@ -143,7 +142,7 @@ TEST_F(TimestampPacketTests, givenTimestampPacketContainerWhenMovedThenMoveAllNo
 }
 
 TEST_F(TimestampPacketTests, givenTagNodesWhenReleaseIsCalledThenReturnAllTagsToPool) {
-    struct MockTagNode : public TagNode<TimestampPackets<uint32_t>> {
+    struct MockTagNode : public TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> {
         void returnTag() override {
             returnCalls++;
         }
@@ -213,7 +212,7 @@ TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
 }
 
 HWTEST_F(TimestampPacketTests, whenEstimatingSizeForNodeDependencyThenReturnCorrectValue) {
-    TimestampPackets<uint32_t> tag;
+    TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount> tag;
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
@@ -329,6 +328,11 @@ HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacke
     setTagToReadyState<FamilyType>(tag);
 
     EXPECT_FALSE(tag->canBeReleased());
+}
+
+HWTEST_F(DeviceTimestampPacketTests, givenTimestampPacketTypeAndSizeWhenCheckingSizeOfTimestampPacketsThenItIsCorrect) {
+    EXPECT_EQ((4 * FamilyType::timestampPacketCount) * sizeof(typename FamilyType::TimestampPacketType),
+              sizeof(TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>));
 }
 
 using TimestampPacketHelperTests = Test<DeviceFixture>;

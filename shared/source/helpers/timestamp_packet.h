@@ -26,7 +26,7 @@ class CommandStreamReceiver;
 class LinearStream;
 
 #pragma pack(1)
-template <typename TSize>
+template <typename TSize, uint32_t packetCount>
 class TimestampPackets : public TagTypeBase {
   public:
     static constexpr AllocationType getAllocationType() {
@@ -71,11 +71,11 @@ class TimestampPackets : public TagTypeBase {
         TSize globalEnd = TimestampPacketConstants::initValue;
     };
 
-    Packet packets[TimestampPacketConstants::preferredPacketCount];
+    Packet packets[packetCount];
 };
 #pragma pack()
 
-static_assert(((4 * TimestampPacketConstants::preferredPacketCount) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
+static_assert(((4 * TimestampPacketConstants::preferredPacketCount) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 struct TimestampPacketHelper {

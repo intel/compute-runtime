@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-template <typename TagType = TimestampPackets<uint32_t>>
+template <typename TagType = TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>
 class MockTagAllocator : public TagAllocator<TagType> {
   public:
     using BaseClass = TagAllocator<TagType>;

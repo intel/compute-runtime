@@ -1620,7 +1620,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, NonDefaultPlatformGpuWalkerTest, givenNonDefaultPla
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     auto &cmdStream = cmdQ->getCS(0);
-    TagNode<TimestampPackets<uint32_t>> timestamp;
+    TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestamp;
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);

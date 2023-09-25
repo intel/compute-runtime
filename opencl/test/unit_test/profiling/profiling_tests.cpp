@@ -1142,7 +1142,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommandQue
 struct MockTimestampContainer : public TimestampPacketContainer {
     ~MockTimestampContainer() override {
         for (const auto &node : timestampPacketNodes) {
-            auto mockNode = static_cast<MockTagNode<TimestampPackets<uint32_t>> *>(node);
+            auto mockNode = static_cast<MockTagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> *>(node);
             delete mockNode->tagForCpuAccess;
             delete node;
         }
@@ -1158,8 +1158,8 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
     }
 
     void addTimestampNode(uint32_t contextStart, uint32_t contextEnd, uint32_t globalStart, uint32_t globalEnd) {
-        auto node = new MockTagNode<TimestampPackets<uint32_t>>();
-        auto timestampPacketStorage = new TimestampPackets<uint32_t>();
+        auto node = new MockTagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>();
+        auto timestampPacketStorage = new TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>();
         node->tagForCpuAccess = timestampPacketStorage;
 
         uint32_t values[4] = {contextStart, globalStart, contextEnd, globalEnd};
@@ -1169,8 +1169,8 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
     }
 
     void addTimestampNodeMultiOsContext(uint32_t globalStart[16], uint32_t globalEnd[16], uint32_t contextStart[16], uint32_t contextEnd[16], uint32_t size) {
-        auto node = new MockTagNode<TimestampPackets<uint32_t>>();
-        auto timestampPacketStorage = new TimestampPackets<uint32_t>();
+        auto node = new MockTagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>();
+        auto timestampPacketStorage = new TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>();
         node->setPacketsUsed(size);
 
         for (uint32_t i = 0u; i < node->getPacketsUsed(); ++i) {

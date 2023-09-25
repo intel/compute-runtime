@@ -451,10 +451,10 @@ std::unique_ptr<TagAllocatorBase> GfxCoreHelperHw<GfxFamily>::createTimestampPac
 
     if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
         if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
-            using TimestampPackets32T = TimestampPackets<uint32_t>;
+            using TimestampPackets32T = TimestampPackets<uint32_t, GfxFamily::timestampPacketCount>;
             return std::make_unique<TagAllocator<TimestampPackets32T>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, sizeof(TimestampPackets32T), doNotReleaseNodes, deviceBitfield);
         } else if (DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
-            using TimestampPackets64T = TimestampPackets<uint64_t>;
+            using TimestampPackets64T = TimestampPackets<uint64_t, GfxFamily::timestampPacketCount>;
             return std::make_unique<TagAllocator<TimestampPackets64T>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, sizeof(TimestampPackets64T), doNotReleaseNodes, deviceBitfield);
         } else {
             UNRECOVERABLE_IF(true);
@@ -462,7 +462,7 @@ std::unique_ptr<TagAllocatorBase> GfxCoreHelperHw<GfxFamily>::createTimestampPac
     }
 
     using TimestampPacketType = typename GfxFamily::TimestampPacketType;
-    using TimestampPacketsT = TimestampPackets<TimestampPacketType>;
+    using TimestampPacketsT = TimestampPackets<TimestampPacketType, GfxFamily::timestampPacketCount>;
 
     return std::make_unique<TagAllocator<TimestampPacketsT>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, sizeof(TimestampPacketsT), doNotReleaseNodes, deviceBitfield);
 }
@@ -481,15 +481,15 @@ template <typename GfxFamily>
 size_t GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw() {
     if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
         if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
-            return TimestampPackets<uint32_t>::getSinglePacketSize();
+            return TimestampPackets<uint32_t, GfxFamily::timestampPacketCount>::getSinglePacketSize();
         } else if (DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
-            return TimestampPackets<uint64_t>::getSinglePacketSize();
+            return TimestampPackets<uint64_t, GfxFamily::timestampPacketCount>::getSinglePacketSize();
         } else {
             UNRECOVERABLE_IF(true);
         }
     }
 
-    return TimestampPackets<typename GfxFamily::TimestampPacketType>::getSinglePacketSize();
+    return TimestampPackets<typename GfxFamily::TimestampPacketType, GfxFamily::timestampPacketCount>::getSinglePacketSize();
 }
 
 template <typename GfxFamily>
