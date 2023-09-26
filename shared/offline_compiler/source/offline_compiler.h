@@ -50,7 +50,8 @@ class OfflineCompiler {
         "Usage: ocloc query <query_option>\n\n"
         "Supported query options:\n"
         "  OCL_DRIVER_VERSION  ; returns driver version\n"
-        "  NEO_REVISION        ; returns NEO revision hash\n\n"
+        "  NEO_REVISION        ; returns NEO revision hash\n"
+        "  IGC_REVISION        ; returns IGC revision hash\n\n"
         "Examples:\n"
         "  Extract driver version\n"
         "    ocloc query OCL_DRIVER_VERSION\n";

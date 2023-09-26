@@ -549,6 +549,10 @@ bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutine
     return true;
 }
 
+const char *MockIgcOclDeviceCtx::GetIGCRevision() {
+    return "mockigcrevision";
+}
+
 MockIgcOclTranslationCtx::MockIgcOclTranslationCtx() = default;
 MockIgcOclTranslationCtx::~MockIgcOclTranslationCtx() = default;
 

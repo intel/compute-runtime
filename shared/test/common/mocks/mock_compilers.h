@@ -231,6 +231,8 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<3>> {
                           CIF::Builtins::BufferSimple *outSystemRoutineBuffer,
                           CIF::Builtins::BufferSimple *stateSaveAreaHeaderInit) override;
 
+    const char *GetIGCRevision() override;
+
     void SetDebugVars(MockCompilerDebugVars &debugVars) { // NOLINT(readability-identifier-naming)
         this->debugVars = debugVars;
     }

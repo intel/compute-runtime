@@ -116,6 +116,37 @@ TEST(OclocApiTests, GivenNeoRevisionQueryWhenQueryingThenNeoRevisionIsReturned) 
     oclocFreeOutput(&numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
 }
 
+TEST(OclocApiTests, GivenIgcRevisionQueryWhenQueryingThenIgcRevisionIsReturned) {
+    uint32_t numOutputs;
+    uint64_t *lenOutputs;
+    uint8_t **dataOutputs;
+    char **nameOutputs;
+    const char *argv[] = {
+        "ocloc",
+        "query",
+        NEO::Queries::queryIgcRevision.data()};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_EQ(numOutputs, 2u);
+
+    int queryOutputIndex = -1;
+    for (uint32_t i = 0; i < numOutputs; ++i) {
+        if (strcmp(NEO::Queries::queryIgcRevision.data(), nameOutputs[i]) == 0) {
+            queryOutputIndex = i;
+        }
+    }
+    ASSERT_NE(-1, queryOutputIndex);
+    NEO::ConstStringRef queryOutput(reinterpret_cast<const char *>(dataOutputs[queryOutputIndex]),
+                                    static_cast<size_t>(lenOutputs[queryOutputIndex]));
+    EXPECT_STREQ("mockigcrevision", queryOutput.data());
+
+    oclocFreeOutput(&numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
+}
+
 TEST(OclocApiTests, GivenOclDriverVersionQueryWhenQueryingThenNeoRevisionIsReturned) {
     uint32_t numOutputs;
     uint64_t *lenOutputs;

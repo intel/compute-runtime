@@ -124,6 +124,12 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
     } else if (Queries::queryOCLDriverVersion == arg) {
         auto driverVersion = NEO::getOclDriverVersion();
         helper->saveOutput(Queries::queryOCLDriverVersion.data(), driverVersion.c_str(), driverVersion.size() + 1);
+    } else if (Queries::queryIgcRevision == arg) {
+        auto igcFacade = std::make_unique<OclocIgcFacade>(nullptr);
+        NEO::HardwareInfo hwInfo{};
+        igcFacade->initialize(hwInfo);
+        auto igcRev = igcFacade->getIgcRevision();
+        helper->saveOutput(Queries::queryIgcRevision.data(), igcRev, strlen(igcRev) + 1);
     } else if ("--help" == arg) {
         printQueryHelp(helper);
     } else {
