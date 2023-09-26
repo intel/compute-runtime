@@ -32,6 +32,10 @@ struct IoctlPrelimHelperTests : ::testing::Test {
     IoctlHelperPrelim20 ioctlHelper{*drm};
 };
 
+TEST_F(IoctlPrelimHelperTests, whenGettingIfImmediateVmBindIsRequiredThenFalseIsReturned) {
+    EXPECT_FALSE(ioctlHelper.isImmediateVmBindRequired());
+}
+
 TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::Getparam), static_cast<unsigned int>(DRM_IOCTL_I915_GETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::GemExecbuffer2), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_EXECBUFFER2));

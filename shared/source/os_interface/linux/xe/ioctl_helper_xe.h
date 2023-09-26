@@ -107,6 +107,7 @@ class IoctlHelperXe : public IoctlHelper {
     void getTopologyData(uint32_t nTiles, std::vector<std::bitset<8>> geomDss[2], std::vector<std::bitset<8>> computeDss[2], std::vector<std::bitset<8>> euDss[2], DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
     void getTopologyMap(uint32_t nTiles, std::vector<std::bitset<8>> dssInfo[2], TopologyMap &topologyMap);
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
+    bool isImmediateVmBindRequired() const override;
 
   private:
     template <typename... XeLogArgs>

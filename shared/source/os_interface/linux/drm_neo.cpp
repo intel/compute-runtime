@@ -850,7 +850,7 @@ bool Drm::getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physical
 }
 
 bool Drm::useVMBindImmediate() const {
-    bool useBindImmediate = isDirectSubmissionActive() || hasPageFaultSupport();
+    bool useBindImmediate = isDirectSubmissionActive() || hasPageFaultSupport() || ioctlHelper->isImmediateVmBindRequired();
 
     if (DebugManager.flags.EnableImmediateVmBindExt.get() != -1) {
         useBindImmediate = DebugManager.flags.EnableImmediateVmBindExt.get();

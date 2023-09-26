@@ -9,6 +9,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "drm/i915_drm.h"
 
@@ -26,6 +27,7 @@ constexpr uint64_t unallocatedSizeRegionFour = 4 * GB;
 class MockIoctlHelper : public IoctlHelperPrelim20 {
   public:
     using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    ADDMETHOD_CONST_NOBASE(isImmediateVmBindRequired, bool, false, ());
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override {
         return ioctlRequestValue;
     };

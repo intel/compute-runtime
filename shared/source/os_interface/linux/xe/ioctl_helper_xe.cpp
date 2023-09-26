@@ -128,10 +128,6 @@ IoctlHelperXe::IoctlHelperXe(Drm &drmArg) : IoctlHelper(drmArg) {
 
 bool IoctlHelperXe::initialize() {
     xeLog("IoctlHelperXe::initialize\n", "");
-    DebugManager.flags.ForceUserptrAlignment.set(64);
-    DebugManager.flags.UseVmBind.set(1);
-    DebugManager.flags.EnableImmediateVmBindExt.set(1);
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
 
     struct drm_xe_device_query queryConfig = {};
     queryConfig.query = DRM_XE_DEVICE_QUERY_CONFIG;
@@ -1423,4 +1419,7 @@ void IoctlHelperXe::fillBindInfoForIpcHandle(uint32_t handle, size_t size) {
     updateBindInfo(handle, 0, size);
 }
 
+bool IoctlHelperXe::isImmediateVmBindRequired() const {
+    return true;
+}
 } // namespace NEO

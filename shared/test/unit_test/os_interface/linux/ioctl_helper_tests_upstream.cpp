@@ -93,6 +93,7 @@ TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) 
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_FALSE(ioctlHelper.isVmBindAvailable());
+    EXPECT_FALSE(ioctlHelper.isImmediateVmBindRequired());
 }
 
 TEST(IoctlHelperUpstreamTest, whenChangingBufferBindingThenWaitIsNeverNeeded) {

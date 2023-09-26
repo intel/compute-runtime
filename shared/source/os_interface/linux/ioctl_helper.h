@@ -152,6 +152,7 @@ class IoctlHelper {
     virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
     virtual void setupIpVersion();
+    virtual bool isImmediateVmBindRequired() const { return false; }
 
     uint32_t getFlagsForPrimeHandleToFd() const;
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo();

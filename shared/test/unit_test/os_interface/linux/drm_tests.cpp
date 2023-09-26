@@ -946,6 +946,17 @@ TEST(DrmTest, givenProgramDebuggingWhenCreatingContextThenUnrecoverableContextIs
     EXPECT_EQ(2u, drm.receivedContextParamRequestCount);
 }
 
+TEST(DrmTest, whenImmediateVmBindIsRequiredThenUseVmBindImmediate) {
+    for (auto requireImmediateVmBind : ::testing::Bool()) {
+        MockExecutionEnvironment executionEnvironment{};
+        DrmMock drm(*executionEnvironment.rootDeviceEnvironments[0]);
+        auto ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+        ioctlHelper->isImmediateVmBindRequiredResult = requireImmediateVmBind;
+        drm.ioctlHelper = std::move(ioctlHelper);
+        EXPECT_EQ(requireImmediateVmBind, drm.useVMBindImmediate());
+    }
+}
+
 TEST(DrmTest, whenPageFaultIsSupportedThenUseVmBindImmediate) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
