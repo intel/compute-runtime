@@ -3457,7 +3457,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(void *cmd, uint64_t counterValue, InOrderPatchCommandTypes::CmdType cmdType) {
-    if ((NEO::DebugManager.flags.EnableInOrderRegularCmdListPatching.get() == 1) && (this->cmdListType == TYPE_REGULAR)) {
+    if ((NEO::DebugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && (this->cmdListType == TYPE_REGULAR)) {
         this->inOrderPatchCmds.emplace_back(cmd, counterValue, cmdType);
     }
 }

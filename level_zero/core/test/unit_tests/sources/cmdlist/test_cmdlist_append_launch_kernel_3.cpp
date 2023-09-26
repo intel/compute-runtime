@@ -2805,9 +2805,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, 
     context->freeMem(deviceAlloc);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenUsingImmediateCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {
-    DebugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
-
+HWTEST2_F(InOrderCmdListTests, wWhenUsingImmediateCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {
     auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
 
     uint32_t copyData = 0;
@@ -3162,10 +3160,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
     EXPECT_EQ(eventEndGpuVa + offset, semaphoreCmd->getSemaphoreGraphicsAddress());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-
-    DebugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
 
     ze_command_queue_desc_t desc = {};
 
@@ -3367,11 +3363,9 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEna
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenAddCmdsToPatch, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-
-    DebugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
 
     ze_command_queue_desc_t desc = {};
 
@@ -3463,10 +3457,24 @@ HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListTh
     verifyPatching(2);
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {
+    DebugManager.flags.EnableInOrderRegularCmdListPatching.set(0);
 
-    DebugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(true);
+
+    uint32_t copyData = 0;
+
+    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+
+    EXPECT_EQ(0u, regularCmdList->inOrderPatchCmds.size());
+}
+
+HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     ze_command_queue_desc_t desc = {};
 
