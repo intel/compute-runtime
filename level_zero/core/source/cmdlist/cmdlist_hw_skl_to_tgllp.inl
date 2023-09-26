@@ -41,11 +41,17 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel,
                                                                                const ze_group_count_t *threadGroupDimensions,
                                                                                Event *event,
                                                                                const CmdListKernelLaunchParams &launchParams) {
     UNRECOVERABLE_IF(kernel == nullptr);
+    UNRECOVERABLE_IF(launchParams.skipInOrderNonWalkerSignaling);
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     const auto &kernelDescriptor = kernel->getKernelDescriptor();
     if (kernelDescriptor.kernelAttributes.flags.isInvalid) {

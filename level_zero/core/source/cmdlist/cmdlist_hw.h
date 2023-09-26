@@ -68,6 +68,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamily : CommandListImp {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
+    using CommandListImp::skipInOrderNonWalkerSignalingAllowed;
+
     using CommandListImp::CommandListImp;
     ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) override;
     void programL3(bool isSLMused);
@@ -331,6 +333,7 @@ struct CommandListCoreFamily : CommandListImp {
     void handleInOrderImplicitDependencies(bool relaxedOrderingAllowed);
     virtual void handleInOrderDependencyCounter();
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
+    bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
 
     void addCmdForPatching(void *cmd, uint64_t counterValue, InOrderPatchCommandTypes::CmdType cmdType);
 

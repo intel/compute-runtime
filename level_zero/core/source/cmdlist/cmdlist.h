@@ -42,6 +42,7 @@ struct CmdListKernelLaunchParams {
     bool isBuiltInKernel = false;
     bool isDestinationAllocationInSystemMemory = false;
     bool isHostSignalScopeEvent = false;
+    bool skipInOrderNonWalkerSignaling = false;
 };
 
 struct CmdListReturnPoint {
@@ -344,6 +345,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool hasKernelWithAssert() {
         return kernelWithAssertAppended;
     }
+
+    virtual bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const { return false; }
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);

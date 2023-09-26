@@ -77,9 +77,12 @@ void programEventL3Flush(Event *event,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel,
-                                                                               const ze_group_count_t *threadGroupDimensions,
-                                                                               Event *event,
+bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
+    return (event && (event->isUsingContextEndOffset() || !event->isInOrderExecEvent()));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t *threadGroupDimensions, Event *event,
                                                                                const CmdListKernelLaunchParams &launchParams) {
 
     if (NEO::DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
@@ -173,7 +176,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;
-    bool isInOrderExecEvent = false;
     bool l3FlushEnable = false;
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
     Event *compactEvent = nullptr;
@@ -182,7 +184,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             event->setKernelForPrintf(kernel);
         }
         isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
-        isInOrderExecEvent = event->isInOrderExecEvent();
         if (compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
             compactEvent = event;
             event = nullptr;
@@ -298,7 +299,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     };
 
     bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
-    bool inOrderNonWalkerSignalling = event && (isTimestampEvent || !isInOrderExecEvent);
+    bool inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(event);
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
@@ -329,8 +330,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
-            appendWaitOnSingleEvent(event, false);
-            appendSignalInOrderDependencyCounter();
+            if (!launchParams.skipInOrderNonWalkerSignaling) {
+                appendWaitOnSingleEvent(event, false);
+                appendSignalInOrderDependencyCounter();
+            }
         } else {
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
             addCmdForPatching(dispatchKernelArgs.outWalkerPtr, dispatchKernelArgs.postSyncImmValue, InOrderPatchCommandTypes::CmdType::Walker);

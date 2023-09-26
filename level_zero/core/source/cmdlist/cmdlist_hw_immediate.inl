@@ -408,12 +408,18 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasStallingCmdsForRelaxedOrd
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const {
+    return this->isInOrderNonWalkerSignalingRequired(Event::fromHandle(signalEvent));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     ze_kernel_handle_t kernelHandle, const ze_group_count_t *threadGroupDimensions,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
     const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) {
 
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
+    bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
 
     checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
     bool hostWait = waitForEventsFromHost();
@@ -429,7 +435,32 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
                                                                         launchParams, relaxedOrderingDispatch);
 
-    return flushImmediate(ret, true, hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch), relaxedOrderingDispatch, true, hSignalEvent);
+    if (isInOrderExecutionEnabled() && launchParams.skipInOrderNonWalkerSignaling) {
+        // skip only in base appendLaunchKernel()
+        handleInOrderNonWalkerSignaling(Event::fromHandle(hSignalEvent), stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
+        CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter();
+    }
+
+    return flushImmediate(ret, true, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, true, hSignalEvent);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result) {
+    bool nonWalkerSignalingHasRelaxedOrdering = false;
+
+    if (NEO::DebugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.get() == 1) {
+        nonWalkerSignalingHasRelaxedOrdering = isRelaxedOrderingDispatchAllowed(1);
+    }
+
+    if (nonWalkerSignalingHasRelaxedOrdering) {
+        result = flushImmediate(result, true, hasStallingCmds, relaxedOrderingDispatch, true, nullptr);
+        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*this->commandContainer.getCommandStream());
+        relaxedOrderingDispatch = true;
+        hasStallingCmds = hasStallingCmdsForRelaxedOrdering(1, relaxedOrderingDispatch);
+    }
+
+    CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nonWalkerSignalingHasRelaxedOrdering);
+    CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

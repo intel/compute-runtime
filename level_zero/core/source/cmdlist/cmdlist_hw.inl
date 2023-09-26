@@ -354,7 +354,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     auto res = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), threadGroupDimensions,
                                             event, launchParams);
 
-    if (isInOrderExecutionEnabled()) {
+    if (isInOrderExecutionEnabled() && !launchParams.skipInOrderNonWalkerSignaling) {
         handleInOrderDependencyCounter();
     }
 
