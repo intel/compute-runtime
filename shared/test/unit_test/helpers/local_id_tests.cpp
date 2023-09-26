@@ -23,22 +23,27 @@ using LocalIdTests = ::testing::Test;
 
 HWTEST_F(LocalIdTests, GivenSimd8WhenGettingGrfsPerThreadThenOneIsReturned) {
     uint32_t simd = 8;
-    EXPECT_EQ(1u, getGRFsPerThread(simd, 32));
+    EXPECT_EQ(1u, getNumGrfsPerLocalIdCoordinate(simd, 32));
 }
 
 HWTEST_F(LocalIdTests, GivenSimd16WhenGettingGrfsPerThreadThenOneIsReturned) {
     uint32_t simd = 16;
-    EXPECT_EQ(1u, getGRFsPerThread(simd, 32));
+    EXPECT_EQ(1u, getNumGrfsPerLocalIdCoordinate(simd, 32));
 }
 
 HWTEST_F(LocalIdTests, GivenSimd32WhenGettingGrfsPerThreadThenTwoIsReturned) {
     uint32_t simd = 32;
-    EXPECT_EQ(2u, getGRFsPerThread(simd, 32));
+    EXPECT_EQ(2u, getNumGrfsPerLocalIdCoordinate(simd, 32));
+}
+
+HWTEST_F(LocalIdTests, GivenSimd1WhenGettingGrfsPerThreadThenOneIsReturned) {
+    uint32_t simd = 1;
+    EXPECT_EQ(1u, getNumGrfsPerLocalIdCoordinate(simd, 32));
 }
 
 HWTEST_F(LocalIdTests, GivenSimd32AndNon32GrfSizeWhenGettingGrfsPerThreadThenTwoIsReturned) {
     uint32_t simd = 32;
-    EXPECT_EQ(1u, getGRFsPerThread(simd, 33));
+    EXPECT_EQ(1u, getNumGrfsPerLocalIdCoordinate(simd, 33));
 }
 
 TEST(LocalID, GivenSimd32AndLws33WhenGettingThreadsPerWorkgroupThenTwoIsReturned) {
@@ -76,6 +81,28 @@ TEST(LocalID, GivenSimd1WhenGettingPerThreadSizeLocalIdsThenValueIsEqualGrfSize)
     uint32_t grfSize = 32;
 
     EXPECT_EQ(grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
+}
+
+TEST(LocalID, WhenThreadsPerWgAreGeneratedThenCalculationsAreCorrect) {
+    const auto lws = 33u;
+    for (const auto &simd : {1u, 8u, 16u, 32u}) {
+        switch (simd) {
+        case 1u:
+            EXPECT_EQ(lws, getThreadsPerWG(simd, lws));
+            break;
+        case 32u:
+            EXPECT_EQ((lws + std::max(32u, simd) - 1) >> 5, getThreadsPerWG(simd, lws));
+            break;
+        case 8u:
+            EXPECT_EQ((lws + simd - 1) >> 3, getThreadsPerWG(simd, lws));
+            break;
+        case 16u:
+            EXPECT_EQ((lws + simd - 1) >> 4, getThreadsPerWG(simd, lws));
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 TEST(LocalIdTest, givenVariadicGrfSizeWhenLocalSizesAreEmittedThenUseFullRowSize) {

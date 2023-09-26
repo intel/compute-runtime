@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/simd_helper.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -23,7 +24,11 @@ struct PerThreadDataHelper {
         size_t localWorkSize,
         bool isHwLocalIdGeneration,
         const GfxCoreHelper &gfxCoreHelper) {
-        return gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkSize), grfSize, isHwLocalIdGeneration) * getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
+        auto perThreadSizeLocalIDs = static_cast<size_t>(getPerThreadSizeLocalIDs(simd, grfSize, numChannels));
+        if (isSimd1(simd)) {
+            return perThreadSizeLocalIDs * localWorkSize;
+        }
+        return perThreadSizeLocalIDs * gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkSize), grfSize, isHwLocalIdGeneration);
     }
 }; // namespace PerThreadDataHelper
 } // namespace NEO
