@@ -93,5 +93,4 @@ HWTEST_F(ProductHelperTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoT
     productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
-
 } // namespace NEO

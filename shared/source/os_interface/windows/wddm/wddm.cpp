@@ -260,6 +260,10 @@ bool Wddm::queryAdapterInfo() {
     if (status == STATUS_SUCCESS) {
         memcpy_s(gtSystemInfo.get(), sizeof(GT_SYSTEM_INFO), &adapterInfo.SystemInfo, sizeof(GT_SYSTEM_INFO));
         memcpy_s(gfxPlatform.get(), sizeof(PLATFORM_KMD), &adapterInfo.GfxPlatform, sizeof(PLATFORM_KMD));
+        if (gtSystemInfo->MaxDualSubSlicesSupported == 0) {
+            gtSystemInfo->MaxDualSubSlicesSupported = gtSystemInfo->MaxSubSlicesSupported / 2;
+        }
+
         if (DebugManager.flags.ForceDeviceId.get() != "unk") {
             gfxPlatform->usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }

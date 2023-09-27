@@ -1702,3 +1702,28 @@ TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenQueryAdapterInfoThenProperD
     uint16_t expectedDeviceId = 0x1234u;
     EXPECT_EQ(expectedDeviceId, wddm->gfxPlatform->usDeviceID);
 }
+
+TEST_F(WddmTestWithMockGdiDll, givenNoMaxDualSubSlicesSupportedWhenQueryAdapterInfoThenMaxDualSubSliceIsEqualHalfOfMaxSubSlice) {
+    HardwareInfo hwInfo = *defaultHwInfo.get();
+    uint32_t maxSS = 8u;
+    uint32_t expectedMaxDSS = maxSS / 2;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = maxSS;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 0u;
+
+    mockGdiDll.reset(setAdapterInfo(&hwInfo.platform, &hwInfo.gtSystemInfo, hwInfo.capabilityTable.gpuAddressSpace));
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    EXPECT_EQ(expectedMaxDSS, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenNonZeroMaxDualSubSlicesSupportedWhenQueryAdapterInfoThenNothingChanged) {
+    HardwareInfo hwInfo = *defaultHwInfo.get();
+    uint32_t maxSS = 8u;
+    uint32_t expectedMaxDSS = 6u;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = maxSS;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = expectedMaxDSS;
+
+    mockGdiDll.reset(setAdapterInfo(&hwInfo.platform, &hwInfo.gtSystemInfo, hwInfo.capabilityTable.gpuAddressSpace));
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    EXPECT_EQ(expectedMaxDSS, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
+    EXPECT_NE(maxSS / 2, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
+}
