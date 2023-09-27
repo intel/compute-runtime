@@ -392,10 +392,6 @@ inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerC
 }
 
 template <typename Family>
-inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
-}
-
-template <typename Family>
 bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                                        const size_t *lws,
                                                                        std::array<uint8_t, 3> walkOrder,
@@ -630,38 +626,6 @@ size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device
     }
 
     return size;
-}
-
-template <typename Family>
-void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
-    using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
-
-    STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
-    auto maskBits = stateComputeMode.getMaskBits();
-
-    FORCE_NON_COHERENT coherencyValue = (properties.isCoherencyRequired.value == 1) ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED
-                                                                                    : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
-    stateComputeMode.setForceNonCoherent(coherencyValue);
-    maskBits |= Family::stateComputeModeForceNonCoherentMask;
-
-    stateComputeMode.setLargeGrfMode(properties.largeGrfMode.value == 1);
-    maskBits |= Family::stateComputeModeLargeGrfModeMask;
-
-    if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
-        stateComputeMode.setForceDisableSupportForMultiGpuAtomics(!!DebugManager.flags.ForceMultiGpuAtomics.get());
-        maskBits |= Family::stateComputeModeForceDisableSupportMultiGpuAtomics;
-    }
-
-    if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
-        stateComputeMode.setForceDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
-        maskBits |= Family::stateComputeModeForceDisableSupportMultiGpuPartialWrites;
-    }
-
-    stateComputeMode.setMaskBits(maskBits);
-
-    auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();
-    *buffer = stateComputeMode;
 }
 
 template <typename Family>

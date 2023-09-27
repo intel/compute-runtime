@@ -20,13 +20,6 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) {
-    if (!pHwInfo->featureTable.flags.ftrCCSNode) {
-        pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
-    }
-}
-
-template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
@@ -61,11 +54,6 @@ bool GfxCoreHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
-    return false;
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
     return false;
 }
 
