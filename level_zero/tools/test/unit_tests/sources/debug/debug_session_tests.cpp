@@ -769,7 +769,7 @@ TEST(DebugSessionTest, givenThreadsStoppedWithPageFaultWhenCallingfillResumeAndS
     EuThread::ThreadId thread = {0, 0, 0, 0, 1};
 
     sessionMock->newlyStoppedThreads.push_back(thread);
-    sessionMock->onlyForceException = true;
+    sessionMock->onlyForceException = false;
 
     std::vector<EuThread::ThreadId> resumeThreads;
     std::vector<EuThread::ThreadId> stoppedThreads;
