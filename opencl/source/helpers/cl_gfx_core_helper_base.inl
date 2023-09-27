@@ -34,11 +34,6 @@ inline bool ClGfxCoreHelperHw<GfxFamily>::hasStatelessAccessToBuffer(const Kerne
 }
 
 template <typename GfxFamily>
-inline bool ClGfxCoreHelperHw<GfxFamily>::allowCompressionForContext(const ClDevice &clDevice, const Context &context) const {
-    return true;
-}
-
-template <typename GfxFamily>
 inline bool ClGfxCoreHelperHw<GfxFamily>::getQueueFamilyName(std::string &name, EngineGroupType type) const {
     return false;
 }

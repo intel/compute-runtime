@@ -114,11 +114,6 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
     }
     for (auto &pClDevice : context.getDevices()) {
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
-        auto &clGfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-        if (!clGfxCoreHelper.allowCompressionForContext(*pClDevice, context)) {
-            return false;
-        }
-
         if (context.containsMultipleSubDevices(rootDeviceIndex)) {
             if (DebugManager.flags.EnableMultiTileCompression.get() <= 0) {
                 return false;

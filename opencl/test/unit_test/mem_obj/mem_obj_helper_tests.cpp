@@ -387,8 +387,6 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
 
             MockSpecializedContext context;
             auto &device = context.getDevice(0)->getDevice();
-            auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-
             MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &device);
 
             bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
@@ -397,7 +395,7 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
                 memoryProperties, compressionEnabled, false);
 
             bool expectBufferCompressed = ftrRenderCompressedBuffers && (enableMultiTileCompressionValue == 1);
-            if (expectBufferCompressed && clGfxCoreHelper.allowCompressionForContext(*context.getDevice(0), context)) {
+            if (expectBufferCompressed) {
                 EXPECT_TRUE(compressionEnabled);
             } else {
                 EXPECT_FALSE(compressionEnabled);
@@ -441,8 +439,6 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                 for (auto flagsIntel : flagsIntelValues) {
 
                     auto &device = context.getDevice(0)->getDevice();
-                    auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-
                     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel,
                                                                                                          0, &device);
 
@@ -457,8 +453,7 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                     bool isMultiTile = (numSubDevices > 1);
                     if (expectBufferCompressed && isMultiTile) {
                         bool isBufferReadOnly = isValueSet(flags, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
-                        expectBufferCompressed = clGfxCoreHelper.allowCompressionForContext(*context.getDevice(0), context) &&
-                                                 ((contextType == ContextType::CONTEXT_TYPE_SPECIALIZED) || isBufferReadOnly);
+                        expectBufferCompressed = (contextType == ContextType::CONTEXT_TYPE_SPECIALIZED) || isBufferReadOnly;
                     }
 
                     if (expectBufferCompressed) {

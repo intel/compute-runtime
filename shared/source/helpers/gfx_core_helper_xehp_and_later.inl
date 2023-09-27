@@ -181,12 +181,6 @@ bool MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(const RootDev
 
 template <typename GfxFamily>
 inline bool GfxCoreHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    if (productHelper.getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
-        return false;
-    }
-
     auto defaultThreshold = 2048u;
     if (DebugManager.flags.OverrideKernelSizeLimitForSmallDispatch.get() != -1) {
         defaultThreshold = DebugManager.flags.OverrideKernelSizeLimitForSmallDispatch.get();
