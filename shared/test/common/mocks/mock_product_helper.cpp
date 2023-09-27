@@ -230,11 +230,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isReturnedCmdSizeForMediaSamplerAdjustmentRe
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }

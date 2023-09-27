@@ -386,11 +386,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfReturnedCmdSizeForMedia
     EXPECT_FALSE(productHelper->isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfExtraParametersAreInvalidThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->extraParametersInvalid(pInHwInfo));
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlWAIsRequiredThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->pipeControlWARequired(pInHwInfo));

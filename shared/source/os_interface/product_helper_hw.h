@@ -63,7 +63,6 @@ class ProductHelperHw : public ProductHelper {
     bool isAdditionalMediaSamplerProgrammingRequired() const override;
     bool isInitialFlagsProgrammingRequired() const override;
     bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const override;
-    bool extraParametersInvalid(const HardwareInfo &hwInfo) const override;
     bool pipeControlWARequired(const HardwareInfo &hwInfo) const override;
     bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const override;
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const override;

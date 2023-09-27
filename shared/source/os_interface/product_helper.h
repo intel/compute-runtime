@@ -110,7 +110,6 @@ class ProductHelper {
     virtual bool isAdditionalMediaSamplerProgrammingRequired() const = 0;
     virtual bool isInitialFlagsProgrammingRequired() const = 0;
     virtual bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const = 0;
-    virtual bool extraParametersInvalid(const HardwareInfo &hwInfo) const = 0;
     virtual bool pipeControlWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const = 0;
