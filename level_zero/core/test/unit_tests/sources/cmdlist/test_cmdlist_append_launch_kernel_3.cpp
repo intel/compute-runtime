@@ -2014,6 +2014,45 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
     }
 }
 
+HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListThenDontPatch, IsAtLeastSkl) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, &eventHandle, launchParams, false);
+
+    ASSERT_EQ(1u, regularCmdList->inOrderPatchCmds.size());
+
+    if (NonPostSyncWalkerMatcher::isMatched<productFamily>()) {
+        EXPECT_EQ(InOrderPatchCommandTypes::CmdType::Sdi, regularCmdList->inOrderPatchCmds[0].cmdType);
+    } else {
+        EXPECT_EQ(InOrderPatchCommandTypes::CmdType::Walker, regularCmdList->inOrderPatchCmds[0].cmdType);
+    }
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphoreItor);
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+    ASSERT_NE(nullptr, semaphoreCmd);
+
+    EXPECT_EQ(immCmdList->inOrderDependencyCounterAllocation->getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
+
+    auto walkerItor = find<WALKER_TYPE *>(semaphoreItor, cmdList.end());
+    EXPECT_NE(cmdList.end(), walkerItor);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker, IsAtLeastXeHpCore) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
