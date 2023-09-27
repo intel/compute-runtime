@@ -118,6 +118,10 @@ void DrmMemoryManagerWithLocalMemoryFixture::tearDown() {
     DrmMemoryManagerFixture::tearDown();
 }
 
+DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::DrmMemoryManagerFixtureWithoutQuietIoctlExpectation() {}
+
+DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::DrmMemoryManagerFixtureWithoutQuietIoctlExpectation(uint32_t numRootDevices, uint32_t rootIndex) : rootDeviceIndex(0), numRootDevices(numRootDevices) {}
+
 void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp() {
     setUp(false);
 }

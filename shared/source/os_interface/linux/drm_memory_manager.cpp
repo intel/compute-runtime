@@ -1578,6 +1578,12 @@ AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapA
         sizeAllocated = 0;
         break;
     default:
+        if (heapAssigner.useExternal32BitHeap(allocType)) {
+            auto heapIndex = allocationData.flags.use32BitFrontWindow ? HeapAssigner::mapExternalWindowIndex(HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY) : HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY;
+            gpuAddress = gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, sizeAllocated, std::max(allocationData.alignment, MemoryConstants::pageSize64k)));
+            break;
+        }
+
         AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(sizeAllocated);
         if (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !allocationData.flags.resource48Bit) {
             auto alignSize = sizeAllocated >= 8 * MemoryConstants::gigaByte && Math::isPow2(sizeAllocated);
@@ -1774,7 +1780,10 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     }
     if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
         allocation->setGpuBaseAddress(gmmHelper->canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
+    } else if (heapAssigner.useExternal32BitHeap(allocationData.type)) {
+        allocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
     }
+
     if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
         cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, graphicsAllocation, gpuAddress, sizeAllocated);
         status = AllocationStatus::Error;
