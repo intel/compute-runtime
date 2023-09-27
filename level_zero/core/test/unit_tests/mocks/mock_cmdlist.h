@@ -78,7 +78,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::initialize;
     using BaseClass::inOrderAllocationOffset;
     using BaseClass::inOrderDependencyCounter;
-    using BaseClass::inOrderDependencyCounterAllocation;
+    using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isQwordInOrderCounter;
@@ -90,7 +90,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::patternAllocations;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
-    using BaseClass::regularCmdListSubmissionCounter;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::setupTimestampEventForMultiTile;
@@ -172,7 +171,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::inOrderDependencyCounter;
-    using BaseClass::inOrderDependencyCounterAllocation;
+    using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
     using BaseClass::isBcsSplitNeeded;
     using BaseClass::isFlushTaskSubmissionEnabled;

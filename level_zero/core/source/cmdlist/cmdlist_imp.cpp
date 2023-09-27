@@ -74,8 +74,6 @@ ze_result_t CommandListImp::destroy() {
         }
     }
 
-    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(inOrderDependencyCounterAllocation);
-
     delete this;
     return ZE_RESULT_SUCCESS;
 }
@@ -226,19 +224,19 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
 }
 
 void CommandListImp::enableInOrderExecution() {
-    UNRECOVERABLE_IF(inOrderExecutionEnabled);
+    UNRECOVERABLE_IF(inOrderExecInfo.get());
 
     auto device = this->device->getNEODevice();
 
     NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, device->getDeviceBitfield()};
 
-    inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+    auto inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
 
     UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
 
     memset(inOrderDependencyCounterAllocation->getUnderlyingBuffer(), 0, inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
 
-    inOrderExecutionEnabled = true;
+    inOrderExecInfo = std::make_shared<InOrderExecInfo>(*inOrderDependencyCounterAllocation, *device->getMemoryManager(), (this->cmdListType == TYPE_REGULAR));
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {
@@ -260,6 +258,12 @@ void CommandListImp::addToMappedEventList(Event *event) {
         if (std::find(mappedTsEventList.begin(), mappedTsEventList.end(), event) == mappedTsEventList.end()) {
             mappedTsEventList.push_back(event);
         }
+    }
+}
+
+void CommandListImp::incRegularCmdListSubmissionCounter() {
+    if (isInOrderExecutionEnabled()) {
+        inOrderExecInfo->regularCmdListSubmissionCounter++;
     }
 }
 

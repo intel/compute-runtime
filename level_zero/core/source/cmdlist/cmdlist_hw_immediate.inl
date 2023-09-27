@@ -26,6 +26,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
+#include "level_zero/core/source/helpers/in_order_cmd_helpers.h"
 
 #include "encode_surface_state_args.h"
 
@@ -508,7 +509,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
             if (hSignalEvent) {
-                Event::fromHandle(hSignalEvent)->updateInOrderExecState(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
+                Event::fromHandle(hSignalEvent)->updateInOrderExecState(inOrderExecInfo, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
             }
 
             return ZE_RESULT_SUCCESS;
@@ -923,7 +924,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
         this->latestFlushIsHostVisible = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
 
         if (isInOrderExecutionEnabled() && signalEvent->isInOrderExecEvent()) {
-            signalEvent->updateInOrderExecState(*this->inOrderDependencyCounterAllocation, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
+            signalEvent->updateInOrderExecState(inOrderExecInfo, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
         }
     } else {
         this->latestFlushIsHostVisible = false;
@@ -1266,11 +1267,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     waitStartTime = lastHangCheckTime;
 
     do {
-        this->csr->downloadAllocation(*this->inOrderDependencyCounterAllocation);
+        this->csr->downloadAllocation(inOrderExecInfo->inOrderDependencyCounterAllocation);
 
         bool signaled = true;
 
-        auto hostAddress = static_cast<uint64_t *>(ptrOffset(this->inOrderDependencyCounterAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
+        auto hostAddress = static_cast<uint64_t *>(ptrOffset(inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer(), this->inOrderAllocationOffset));
 
         for (uint32_t i = 0; i < this->partitionCount; i++) {
             if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {

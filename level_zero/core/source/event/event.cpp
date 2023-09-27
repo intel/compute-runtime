@@ -335,8 +335,6 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 }
 
 ze_result_t Event::destroy() {
-    freeInOrderExecAllocation();
-
     delete this;
     return ZE_RESULT_SUCCESS;
 }
@@ -394,21 +392,15 @@ void Event::setIsCompleted() {
 }
 
 void Event::freeInOrderExecAllocation() {
-    if (inOrderExecDataAllocation) {
-        this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(inOrderExecDataAllocation);
-
-        inOrderExecDataAllocation = nullptr;
-    }
+    inOrderExecInfo.reset();
 }
 
-void Event::updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue, uint32_t allocationOffset) {
-    if (this->inOrderExecDataAllocation != &inOrderDependenciesAllocation) {
-        freeInOrderExecAllocation();
-        inOrderDependenciesAllocation.incNumOwners();
+void Event::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset) {
+    if (this->inOrderExecInfo.get() != newInOrderExecInfo.get()) {
+        inOrderExecInfo = newInOrderExecInfo;
     }
 
     inOrderExecSignalValue = signalValue;
-    inOrderExecDataAllocation = &inOrderDependenciesAllocation;
     inOrderAllocationOffset = allocationOffset;
 }
 
@@ -431,5 +423,7 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
         device->getNEODevice()->getOSTime()->getCpuGpuTime(&referenceTs);
     }
 }
+
+NEO::GraphicsAllocation *Event::getInOrderExecDataAllocation() const { return inOrderExecInfo.get() ? &inOrderExecInfo->inOrderDependencyCounterAllocation : nullptr; }
 
 } // namespace L0

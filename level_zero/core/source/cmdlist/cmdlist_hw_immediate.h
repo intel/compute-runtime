@@ -183,7 +183,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
   protected:
     using BaseClass::inOrderDependencyCounter;
-    using BaseClass::inOrderDependencyCounterAllocation;
+    using BaseClass::inOrderExecInfo;
 
     void printKernelsPrintfOutput(bool hangDetected);
     MOCKABLE_VIRTUAL ze_result_t synchronizeInOrderExecution(uint64_t timeout) const;

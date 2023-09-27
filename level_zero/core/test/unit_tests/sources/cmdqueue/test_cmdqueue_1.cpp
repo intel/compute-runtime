@@ -1137,28 +1137,32 @@ HWTEST2_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenIncSubmis
     {
         auto computeCmdList = makeZeUniquePtr<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         computeCmdList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+        computeCmdList->enableInOrderExecution();
+
         auto commandListHandle = computeCmdList->toHandle();
         computeCmdList->close();
 
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(1u, computeCmdList->regularCmdListSubmissionCounter);
+        EXPECT_EQ(1u, computeCmdList->inOrderExecInfo->regularCmdListSubmissionCounter);
 
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(2u, computeCmdList->regularCmdListSubmissionCounter);
+        EXPECT_EQ(2u, computeCmdList->inOrderExecInfo->regularCmdListSubmissionCounter);
     }
 
     {
         auto copyCmdList = makeZeUniquePtr<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         copyCmdList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+        copyCmdList->enableInOrderExecution();
+
         auto commandListHandle = copyCmdList->toHandle();
         copyCmdList->close();
 
         commandQueue->isCopyOnlyCommandQueue = true;
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(1u, copyCmdList->regularCmdListSubmissionCounter);
+        EXPECT_EQ(1u, copyCmdList->inOrderExecInfo->regularCmdListSubmissionCounter);
 
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(2u, copyCmdList->regularCmdListSubmissionCounter);
+        EXPECT_EQ(2u, copyCmdList->inOrderExecInfo->regularCmdListSubmissionCounter);
     }
 }
 

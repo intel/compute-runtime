@@ -261,7 +261,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         event->setKernelForPrintf(kernel);
     }
 
-    if (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation) {
+    if (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation) {
         NEO::PipeControlArgs args;
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

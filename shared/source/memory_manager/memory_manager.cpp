@@ -245,10 +245,6 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
         return;
     }
 
-    if (gfxAllocation->fetchDecNumOwners() > 1) {
-        return;
-    }
-
     if (ApiSpecificConfig::getGlobalBindlessHeapConfiguration() && executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr) {
         executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper()->releaseSSToReusePool(gfxAllocation->getBindlessInfo());
     }

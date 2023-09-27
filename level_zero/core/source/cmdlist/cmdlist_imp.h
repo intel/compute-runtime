@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/helpers/in_order_patch_cmds.h"
+#include "level_zero/core/source/helpers/in_order_cmd_helpers.h"
 
 #include <memory>
 
@@ -31,19 +31,17 @@ struct CommandListImp : CommandList {
 
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
     void enableInOrderExecution();
-    bool isInOrderExecutionEnabled() const { return inOrderExecutionEnabled; }
+    bool isInOrderExecutionEnabled() const { return inOrderExecInfo.get(); }
     void storeReferenceTsToMappedEvents(bool clear);
     void addToMappedEventList(Event *event);
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
-    void incRegularCmdListSubmissionCounter() { regularCmdListSubmissionCounter++; }
+    void incRegularCmdListSubmissionCounter();
     virtual void patchInOrderCmds() = 0;
 
   protected:
-    NEO::GraphicsAllocation *inOrderDependencyCounterAllocation = nullptr;
-    uint64_t regularCmdListSubmissionCounter = 0;
+    std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
     uint64_t inOrderDependencyCounter = 0;
     uint32_t inOrderAllocationOffset = 0;
-    bool inOrderExecutionEnabled = false;
 
     ~CommandListImp() override = default;
 

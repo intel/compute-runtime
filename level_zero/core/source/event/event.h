@@ -42,6 +42,7 @@ struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
 struct Kernel;
+struct InOrderExecInfo;
 
 #pragma pack(1)
 struct IpcEventPoolData {
@@ -215,10 +216,10 @@ struct Event : _ze_event_handle_t {
     void setMetricStreamer(MetricStreamer *metricStreamer) {
         this->metricStreamer = metricStreamer;
     }
-    void updateInOrderExecState(NEO::GraphicsAllocation &inOrderDependenciesAllocation, uint64_t signalValue, uint32_t allocationOffset);
+    void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
     bool isInOrderExecEvent() const { return inOrderExecEvent; }
     void enableInOrderMode() { this->inOrderExecEvent = true; }
-    NEO::GraphicsAllocation *getInOrderExecDataAllocation() const { return inOrderExecDataAllocation; }
+    NEO::GraphicsAllocation *getInOrderExecDataAllocation() const;
     uint64_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
@@ -265,7 +266,7 @@ struct Event : _ze_event_handle_t {
     Device *device = nullptr;
     EventPool *eventPool = nullptr;
     Kernel *kernelWithPrintf = nullptr;
-    NEO::GraphicsAllocation *inOrderExecDataAllocation = nullptr;
+    std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
     CommandQueue *latestUsedCmdQueue = nullptr;
 
     uint32_t maxKernelCount = 0;

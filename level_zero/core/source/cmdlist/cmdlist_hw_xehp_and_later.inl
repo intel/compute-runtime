@@ -296,14 +296,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->dcFlushSupport                                    // dcFlushEnable
     };
 
-    bool inOrderExecSignalRequired = (this->inOrderExecutionEnabled && !launchParams.isKernelSplitOperation);
+    bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation);
     bool inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(event);
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, false, false, false);
         } else {
-            dispatchKernelArgs.eventAddress = this->inOrderDependencyCounterAllocation->getGpuAddress() + this->inOrderAllocationOffset;
+            dispatchKernelArgs.eventAddress = inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + this->inOrderAllocationOffset;
             dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
         }
     }

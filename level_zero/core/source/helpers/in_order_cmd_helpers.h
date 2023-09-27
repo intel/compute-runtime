@@ -7,12 +7,32 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include <cstdint>
 #include <vector>
 
+namespace NEO {
+class GraphicsAllocation;
+class MemoryManager;
+} // namespace NEO
+
 namespace L0 {
+
+struct InOrderExecInfo : public NEO::NonCopyableClass {
+    ~InOrderExecInfo();
+
+    InOrderExecInfo() = delete;
+
+    InOrderExecInfo(NEO::GraphicsAllocation &inOrderDependencyCounterAllocation, NEO::MemoryManager &memoryManager, bool isRegularCmdList);
+
+    NEO::GraphicsAllocation &inOrderDependencyCounterAllocation;
+    NEO::MemoryManager &memoryManager;
+    uint64_t regularCmdListSubmissionCounter = 0;
+    bool isRegularCmdList = false;
+};
+
 namespace InOrderPatchCommandTypes {
 enum class CmdType {
     None,

@@ -1769,7 +1769,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     lrrCmd++;
     lrrCmd++;
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, cmdList->inOrderDependencyCounterAllocation->getGpuAddress(), 2,
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, cmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), 2,
                                                                                            NEO::CompareOperation::Less, true, cmdList->isQwordInOrderCounter()));
 }
 

@@ -152,11 +152,11 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
-    if (!this->inOrderExecDataAllocation) {
+    if (!this->inOrderExecInfo.get()) {
         return ZE_RESULT_NOT_READY;
     }
 
-    auto hostAddress = static_cast<uint64_t *>(ptrOffset(this->inOrderExecDataAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer(), this->inOrderAllocationOffset));
     bool signaled = true;
 
     for (uint32_t i = 0; i < this->getPacketsInUse(); i++) {
@@ -247,8 +247,8 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
                 csr->downloadAllocation(alloc);
             }
 
-            if (inOrderExecEvent) {
-                if (auto &alloc = *this->inOrderExecDataAllocation; alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
+            if (inOrderExecInfo) {
+                if (auto &alloc = inOrderExecInfo->inOrderDependencyCounterAllocation; alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
                     csr->downloadAllocation(alloc);
                 }
             }
@@ -385,7 +385,11 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
         return ZE_RESULT_SUCCESS;
     }
 
-    uint64_t waitAddress = castToUint64(ptrOffset(this->inOrderExecDataAllocation->getUnderlyingBuffer(), this->inOrderAllocationOffset));
+    if (!inOrderExecInfo) {
+        return ZE_RESULT_NOT_READY;
+    }
+
+    uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer(), this->inOrderAllocationOffset));
 
     if (!csrs[0]->waitUserFence(this->inOrderExecSignalValue, waitAddress, timeout)) {
         return ZE_RESULT_NOT_READY;
