@@ -21,8 +21,6 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
-#include "shared/source/xe_hp_core/hw_cmds.h"
-#include "shared/source/xe_hp_core/hw_info.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"

@@ -706,30 +706,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenOsCont
     EXPECT_EQ(1u, commandStreamReceiverSingle.deviceBitfield.count());
 }
 
-HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenXE_HP_COREDefaultSupportEnabledWhenOsSupportsNewResourceImplicitFlushThenReturnOsSupportValue, IsXeHpCore) {
-    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    commandStreamReceiver.setupContext(*osContext);
-
-    EXPECT_TRUE(ImplicitFlushSettings<FamilyType>::getSettingForNewResource());
-
-    VariableBackup<bool> defaultSettingForNewResourceBackup(&ImplicitFlushSettings<FamilyType>::getSettingForNewResource(), true);
-
-    if (commandStreamReceiver.getOSInterface()->newResourceImplicitFlush) {
-        EXPECT_TRUE(commandStreamReceiver.checkPlatformSupportsNewResourceImplicitFlush());
-    } else {
-        EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsNewResourceImplicitFlush());
-    }
-}
-
-HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenXE_HP_COREDefaultSupportDisabledWhenOsSupportsNewResourceImplicitFlushThenReturnOsSupportValue, IsXeHpCore) {
-    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    commandStreamReceiver.setupContext(*osContext);
-
-    VariableBackup<bool> defaultSettingForNewResourceBackup(&ImplicitFlushSettings<FamilyType>::getSettingForNewResource(), false);
-
-    EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsNewResourceImplicitFlush());
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPlatformSupportsImplicitFlushForNewResourceWhenCsrIsMultiContextThenExpectNoSupport) {
     VariableBackup<bool> defaultSettingForNewResourceBackup(&ImplicitFlushSettings<FamilyType>::getSettingForNewResource(), true);
 
@@ -739,30 +715,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPlatf
 
     EXPECT_TRUE(ImplicitFlushSettings<FamilyType>::getSettingForNewResource());
     EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsNewResourceImplicitFlush());
-}
-
-HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenXE_HP_COREDefaultSupportEnabledWhenOsSupportsGpuIdleImplicitFlushThenReturnOsSupportValue, IsXeHpCore) {
-    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    commandStreamReceiver.setupContext(*osContext);
-
-    EXPECT_TRUE(ImplicitFlushSettings<FamilyType>::getSettingForGpuIdle());
-
-    VariableBackup<bool> defaultSettingForGpuIdleBackup(&ImplicitFlushSettings<FamilyType>::getSettingForGpuIdle(), true);
-
-    if (commandStreamReceiver.getOSInterface()->newResourceImplicitFlush) {
-        EXPECT_TRUE(commandStreamReceiver.checkPlatformSupportsGpuIdleImplicitFlush());
-    } else {
-        EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsGpuIdleImplicitFlush());
-    }
-}
-
-HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenXE_HP_COREDefaultSupportDisabledWhenOsSupportsGpuIdleImplicitFlushThenReturnOsSupportValue, IsXeHpCore) {
-    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    commandStreamReceiver.setupContext(*osContext);
-
-    VariableBackup<bool> defaultSettingForGpuIdleBackup(&ImplicitFlushSettings<FamilyType>::getSettingForGpuIdle(), false);
-
-    EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsGpuIdleImplicitFlush());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPlatformSupportsImplicitFlushForIdleGpuWhenCsrIsMultiContextThenExpectNoSupport) {
@@ -806,20 +758,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenCreati
     EXPECT_EQ(rootDevice.getDeviceBitfield(), workPartitionAllocationStorageInfo.pageTablesVisibility);
     EXPECT_FALSE(workPartitionAllocationStorageInfo.cloningOfPageTables);
     EXPECT_TRUE(workPartitionAllocationStorageInfo.tileInstanced);
-}
-
-HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenXeHpWhenRayTracingEnabledThenDoNotAddCommandBatchBuffer, IsXEHP) {
-    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    auto cmdSize = commandStreamReceiver.getCmdSizeForPerDssBackedBuffer(pDevice->getHardwareInfo());
-    EXPECT_EQ(0u, cmdSize);
-    std::unique_ptr<char[]> buffer(new char[cmdSize]);
-
-    LinearStream cs(buffer.get(), cmdSize);
-    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    dispatchFlags.usePerDssBackedBuffer = true;
-
-    commandStreamReceiver.programPerDssBackedBuffer(cs, *pDevice, dispatchFlags);
-    EXPECT_EQ(0u, cs.getUsed());
 }
 
 HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWhenOnlySinglePartitionUsedThenExpectSinglePipeControlAsBarrier, IsAtLeastXeHpCore) {

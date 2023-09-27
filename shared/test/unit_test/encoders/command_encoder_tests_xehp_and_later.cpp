@@ -103,37 +103,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenPartitionArg
     EXPECT_TRUE(storeDataImm->getWorkloadPartitionIdOffsetEnable());
 }
 
-HWTEST2_F(XeHPAndLaterCommandEncoderTest,
-          GivenImplicitAndAtomicsFlagsTrueWhenProgrammingSurfaceStateThenExpectMultiTileCorrectlySet, IsXeHpCore) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
-    auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-    size_t allocationSize = MemoryConstants::pageSize;
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
-
-    auto outSurfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    NEO::EncodeSurfaceStateArgs args;
-    args.outMemory = &outSurfaceState;
-    args.graphicsAddress = allocation->getGpuAddress();
-    args.size = allocation->getUnderlyingBufferSize();
-    args.mocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    args.numAvailableDevices = pDevice->getNumGenericSubDevices();
-    args.allocation = allocation;
-    args.gmmHelper = pDevice->getGmmHelper();
-    args.areMultipleSubDevicesInContext = true;
-    args.implicitScaling = true;
-    args.useGlobalAtomics = true;
-
-    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
-
-    EXPECT_FALSE(outSurfaceState.getDisableSupportForMultiGpuAtomics());
-    EXPECT_FALSE(outSurfaceState.getDisableSupportForMultiGpuPartialWrites());
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenWorkloadPartitionArgumentTrueWhenAddingStoreRegisterMemThenExpectCommandFlagTrue) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 

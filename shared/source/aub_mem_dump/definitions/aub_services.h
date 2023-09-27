@@ -103,7 +103,6 @@ struct CmdServicesMemTraceVersion {
             Ehl = 28,
             Dg1 = 30,
             Adls = 37,
-            XeHP_SDV = 29,
             Adlp = 34,
             Adln = 34,
             Dg2 = 36,

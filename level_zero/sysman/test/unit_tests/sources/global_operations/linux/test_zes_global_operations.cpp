@@ -989,23 +989,6 @@ class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
     }
 };
 
-HWTEST2_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceFDWhenRetrievingUuidThenDeviceFDIsVerifiedSuccessfully, IsXEHP) {
-    initGlobalOps();
-
-    static bool receivedValidDeviceFd = false;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsGetDevicePath)> mockGetDevicePath(&NEO::SysCalls::sysCallsGetDevicePath, [](int deviceFd, char *buf, size_t &bufSize) -> int {
-        if (deviceFd >= 0) {
-            receivedValidDeviceFd = true;
-        }
-        return 1;
-    });
-
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
-    pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
-    EXPECT_EQ(true, receivedValidDeviceFd);
-    receivedValidDeviceFd = false;
-}
-
 struct MockGlobalOperationsProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
     MockGlobalOperationsProductHelper() = default;
     bool getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {

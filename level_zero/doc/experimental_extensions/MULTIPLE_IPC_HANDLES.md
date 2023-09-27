@@ -103,4 +103,4 @@ None.
 # Known Issues and Limitations
 
 * Currently supported only on Linux.
-* Mainly implemented for and validated on Xe HPC (PVC) and XeHP_SDV platforms.
+* Mainly implemented for and validated on Xe HPC (PVC) platforms.

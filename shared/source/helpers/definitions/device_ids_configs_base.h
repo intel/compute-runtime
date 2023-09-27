@@ -22,12 +22,6 @@
 #endif
 #endif
 
-#ifdef SUPPORT_XE_HP_CORE
-#ifdef SUPPORT_XE_HP_SDV
-#include "shared/source/xe_hp_core/xe_hp_sdv/device_ids_configs_xe_hp_sdv.h"
-#endif
-#endif
-
 #ifdef SUPPORT_GEN12LP
 #ifdef SUPPORT_TGLLP
 #include "shared/source/gen12lp/tgllp/device_ids_configs_tgllp.h"

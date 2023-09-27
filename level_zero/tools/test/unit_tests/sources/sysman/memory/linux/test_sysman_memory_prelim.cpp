@@ -604,68 +604,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     }
 }
 
-HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenVFID0IsActiveThenSuccessIsReturnedAndBandwidthIsValid, IsXEHP) {
-    setLocalSupportedAndReinit(true);
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto &handle : handles) {
-        zes_mem_bandwidth_t bandwidth{};
-        uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
-        uint64_t expectedBandwidth = 0;
-        zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
-        zesMemoryGetProperties(handle, &properties);
-
-        auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
-        hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
-        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-
-        pPmt->mockVfid0Status = true;
-        pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
-        pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-
-        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
-        expectedReadCounters = vF0Hbm0ReadValue + vF0Hbm1ReadValue + vF0Hbm2ReadValue + vF0Hbm3ReadValue;
-        EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
-        expectedWriteCounters = vF0Hbm0WriteValue + vF0Hbm1WriteValue + vF0Hbm2WriteValue + vF0Hbm3WriteValue;
-        EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
-        EXPECT_GT(bandwidth.timestamp, 0u);
-        expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
-        EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
-    }
-}
-
-HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenVFID1IsActiveThenSuccessIsReturnedAndBandwidthIsValid, IsXEHP) {
-    setLocalSupportedAndReinit(true);
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto &handle : handles) {
-        zes_mem_bandwidth_t bandwidth{};
-        uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
-        uint64_t expectedBandwidth = 0;
-        zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
-        zesMemoryGetProperties(handle, &properties);
-
-        auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        auto &productHelper = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getProductHelper();
-        hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
-        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-
-        pPmt->mockVfid1Status = true;
-        pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
-        pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-
-        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
-        expectedReadCounters = vF1Hbm0ReadValue + vF1Hbm1ReadValue + vF1Hbm2ReadValue + vF1Hbm3ReadValue;
-        EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
-        expectedWriteCounters = vF1Hbm0WriteValue + vF1Hbm1WriteValue + vF1Hbm2WriteValue + vF1Hbm3WriteValue;
-        EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
-        EXPECT_GT(bandwidth.timestamp, 0u);
-        expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
-        EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
-    }
-}
-
 HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidUsRevIdForRevisionBWhenCallingzesSysmanMemoryGetBandwidthThenSuccessIsReturnedAndBandwidthIsValid, IsPVC) {
     setLocalSupportedAndReinit(true);
     auto handles = getMemoryHandles(memoryHandleComponentCount);

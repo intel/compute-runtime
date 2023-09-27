@@ -447,29 +447,16 @@ void testGlobalAtomicsImpactOnSBA(StateBaseAddressXeHPAndLaterTests *sbaTest, bo
 
 } /* namespace */
 
-struct XeHpGlobalAtomicsStateBaseAddressTests : public StateBaseAddressXeHPAndLaterTests,
-                                                public ::testing::WithParamInterface<std::tuple<bool, bool>> {};
+struct GlobalAtomicsStateBaseAddressTests : public StateBaseAddressXeHPAndLaterTests,
+                                            public ::testing::WithParamInterface<std::tuple<bool, bool>> {};
 
-HWTEST2_P(XeHpGlobalAtomicsStateBaseAddressTests, givenMultiOSContextOrMultiSubDeviceWhenLastSentUseGlobalAtomicsIsFlippedThenStatBaseAddressIsReprorammed, IsXEHP) {
-    auto [multiOsCtx, multiSubDevices] = GetParam();
-    testGlobalAtomicsImpactOnSBA<FamilyType>(this, multiOsCtx, multiSubDevices, multiOsCtx || multiSubDevices);
-}
-
-INSTANTIATE_TEST_CASE_P(XeHpGlobalAtomicsStateBaseAddress,
-                        XeHpGlobalAtomicsStateBaseAddressTests,
-                        ::testing::Combine(
-                            ::testing::Bool(),
-                            ::testing::Bool()));
-
-using NonXeHpGlobalAtomicsStateBaseAddressTests = XeHpGlobalAtomicsStateBaseAddressTests;
-
-HWTEST2_P(NonXeHpGlobalAtomicsStateBaseAddressTests, givenAnyMultiOSContextValueWithAnySubDeviceNumberWhenLastSentUseGlobalAtomicsIsFlippedThenStatBaseAddressProgrammingIsNeverAffected, IsNotXEHP) {
+HWTEST_P(GlobalAtomicsStateBaseAddressTests, givenAnyMultiOSContextValueWithAnySubDeviceNumberWhenLastSentUseGlobalAtomicsIsFlippedThenStatBaseAddressProgrammingIsNeverAffected) {
     auto [multiOsCtx, multiSubDevices] = GetParam();
     testGlobalAtomicsImpactOnSBA<FamilyType>(this, multiOsCtx, multiSubDevices, false);
 }
 
-INSTANTIATE_TEST_CASE_P(NonXeHpGlobalAtomicsStateBaseAddress,
-                        NonXeHpGlobalAtomicsStateBaseAddressTests,
+INSTANTIATE_TEST_CASE_P(,
+                        GlobalAtomicsStateBaseAddressTests,
                         ::testing::Combine(
                             ::testing::Bool(),
                             ::testing::Bool()));

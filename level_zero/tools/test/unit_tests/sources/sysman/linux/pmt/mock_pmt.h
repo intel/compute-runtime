@@ -60,7 +60,7 @@ struct MockPmtFsAccess : public FsAccess {
         std::string guidPathForSubdevice1 = baseTelemSysFSNodeForSubdevice1 + std::string("/guid");
         if ((file.compare(guidPathForSubdevice0) == 0) ||
             (file.compare(guidPathForSubdevice1) == 0)) {
-            val = "0xfdc76194";
+            val = "0x490e01";
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;

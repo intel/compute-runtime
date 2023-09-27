@@ -61,27 +61,6 @@ DEVICE(0x7D60, MtlHwConfig)
 #endif
 #endif
 
-#ifdef SUPPORT_XE_HP_CORE
-#ifdef SUPPORT_XE_HP_SDV
-DEVICE(0x0201, XehpSdvHwConfig)
-DEVICE(0x0202, XehpSdvHwConfig)
-DEVICE(0x0203, XehpSdvHwConfig)
-DEVICE(0x0204, XehpSdvHwConfig)
-DEVICE(0x0205, XehpSdvHwConfig)
-DEVICE(0x0206, XehpSdvHwConfig)
-DEVICE(0x0207, XehpSdvHwConfig)
-DEVICE(0x0208, XehpSdvHwConfig)
-DEVICE(0x0209, XehpSdvHwConfig)
-DEVICE(0x020A, XehpSdvHwConfig)
-DEVICE(0x020B, XehpSdvHwConfig)
-DEVICE(0x020C, XehpSdvHwConfig)
-DEVICE(0x020D, XehpSdvHwConfig)
-DEVICE(0x020E, XehpSdvHwConfig)
-DEVICE(0x020F, XehpSdvHwConfig)
-DEVICE(0x0210, XehpSdvHwConfig)
-#endif
-#endif
-
 #ifdef SUPPORT_GEN12LP
 
 #ifdef SUPPORT_TGLLP

@@ -12,7 +12,6 @@ using IsGen9 = IsGfxCore<IGFX_GEN9_CORE>;
 using IsGen11HP = IsGfxCore<IGFX_GEN11_CORE>;
 using IsGen11LP = IsGfxCore<IGFX_GEN11LP_CORE>;
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
-using IsXeHpCore = IsGfxCore<IGFX_XE_HP_CORE>;
 using IsXeHpgCore = IsGfxCore<IGFX_XE_HPG_CORE>;
 using IsXeHpcCore = IsGfxCore<IGFX_XE_HPC_CORE>;
 using IsNotXeHpcCore = IsNotGfxCore<IGFX_XE_HPC_CORE>;
@@ -66,9 +65,6 @@ using IsDG1 = IsProduct<IGFX_DG1>;
 using IsADLS = IsProduct<IGFX_ALDERLAKE_S>;
 using IsADLP = IsProduct<IGFX_ALDERLAKE_P>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
-
-using IsXEHP = IsProduct<IGFX_XE_HP_SDV>;
-using IsNotXEHP = IsNotWithinProducts<IGFX_XE_HP_SDV, IGFX_XE_HP_SDV>;
 
 using IsMTL = IsProduct<IGFX_METEORLAKE>;
 using IsDG2 = IsProduct<IGFX_DG2>;

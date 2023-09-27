@@ -129,55 +129,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledAndStateSipWhenA0SteppingIsActivatedThenOnlyGlobalSipIsProgrammed, IsXEHP) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
-
-    using STATE_SIP = typename FamilyType::STATE_SIP;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
-
-    hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
-    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
-
-    auto sipType = SipKernel::getSipKernelType(*mockDevice);
-    SipKernel::initSipKernel(sipType, *mockDevice);
-
-    configureCSRtoNonDirtyState<FamilyType>(false);
-    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
-
-    flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
-
-    commandStreamReceiver.flushTask(
-        commandStream,
-        0,
-        &dsh,
-        &ioh,
-        &ssh,
-        taskLevel,
-        flushTaskFlags,
-        *mockDevice);
-
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-
-    auto itorLRI = findMmio<FamilyType>(cmdList.begin(), cmdList.end(), 0xE42C);
-    EXPECT_NE(cmdList.end(), itorLRI);
-
-    auto cmdLRI = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
-    auto sipAddress = cmdLRI->getDataDword() & 0xfffffff8;
-    auto sipAllocation = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation();
-
-    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
-}
-
 HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenSBACommandToProgramOnSingleCCSSetupThenThereIsPipeControlPriorToIt, IsWithinXeGfxFamily) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

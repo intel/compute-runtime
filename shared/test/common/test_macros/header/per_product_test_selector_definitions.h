@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,13 +34,6 @@
 #else
 #define TGLLP_TYPED_TEST(method)
 #define TGLLP_SUPPORTED_TEST(cmdSetBase) false
-#endif
-#ifdef TESTS_XE_HP_CORE
-#define XEHP_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_XE_HP_CORE>::GfxFamily>();
-#define XEHP_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_XE_HP_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
-#else
-#define XEHP_TYPED_TEST(method)
-#define XEHP_SUPPORTED_TEST(cmdSetBase) false
 #endif
 #ifdef TESTS_XE_HPG_CORE
 #define XEHPG_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_XE_HPG_CORE>::GfxFamily>();

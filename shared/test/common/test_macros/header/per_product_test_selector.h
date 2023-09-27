@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,6 @@
         break;                                             \
     case IGFX_GEN12LP_CORE:                                \
         TGLLP_TYPED_TEST(methodName)                       \
-        break;                                             \
-    case IGFX_XE_HP_CORE:                                  \
-        XEHP_TYPED_TEST(methodName)                        \
         break;                                             \
     case IGFX_XE_HPG_CORE:                                 \
         XEHPG_TYPED_TEST(methodName)                       \
@@ -52,9 +49,6 @@
             break;                                             \
         case IGFX_GEN12LP_CORE:                                \
             supported = TGLLP_SUPPORTED_TEST(cmdSetBase);      \
-            break;                                             \
-        case IGFX_XE_HP_CORE:                                  \
-            supported = XEHP_SUPPORTED_TEST(cmdSetBase);       \
             break;                                             \
         case IGFX_XE_HPG_CORE:                                 \
             supported = XEHPG_SUPPORTED_TEST(cmdSetBase);      \

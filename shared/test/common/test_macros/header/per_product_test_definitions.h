@@ -23,10 +23,6 @@
 #define GEN11TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN11_CORE, test_fixture, test_name)
 #define GEN11TEST_P(test_fixture, test_name) GENTEST_P(IGFX_GEN11_CORE, test_fixture, test_name)
 #endif
-#ifdef TESTS_XE_HP_CORE
-#define XE_HP_CORE_TEST_F(test_fixture, test_name) GENTEST_F(IGFX_XE_HP_CORE, test_fixture, test_name)
-#define XE_HP_CORE_TEST_P(test_fixture, test_name) GENTEST_P(IGFX_XE_HP_CORE, test_fixture, test_name)
-#endif
 #ifdef TESTS_XE_HPG_CORE
 #define XE_HPG_CORETEST_F(test_fixture, test_name) GENTEST_F(IGFX_XE_HPG_CORE, test_fixture, test_name)
 #define XE_HPG_CORETEST_P(test_fixture, test_name) GENTEST_P(IGFX_XE_HPG_CORE, test_fixture, test_name)

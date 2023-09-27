@@ -3361,35 +3361,6 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
 }
 
-using MultiTileModuleTest = Test<MultiTileModuleFixture>;
-
-HWTEST2_F(MultiTileModuleTest, GivenMultiTileDeviceWhenSettingKernelArgAndSurfaceStateThenMultiTileFlagsAreSetCorrectly, IsXeHpCore) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    ze_kernel_desc_t desc = {};
-    desc.pKernelName = kernelName.c_str();
-
-    WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
-    mockKernel.module = modules[0].get();
-    mockKernel.initialize(&desc);
-
-    auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
-    arg.bindless = undefined<CrossThreadDataOffset>;
-    arg.bindful = 0x40;
-
-    constexpr size_t size = 128;
-    uint64_t gpuAddress = 0x2000;
-    char bufferArray[size] = {};
-    void *buffer = reinterpret_cast<void *>(bufferArray);
-    NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
-
-    mockKernel.setBufferSurfaceState(0, buffer, &mockAllocation);
-
-    void *surfaceStateAddress = ptrOffset(mockKernel.surfaceStateHeapData.get(), arg.bindful);
-    RENDER_SURFACE_STATE *surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateAddress);
-    EXPECT_FALSE(surfaceState->getDisableSupportForMultiGpuAtomics());
-    EXPECT_FALSE(surfaceState->getDisableSupportForMultiGpuPartialWrites());
-}
-
 using BindlessKernelTest = Test<DeviceFixture>;
 
 TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {

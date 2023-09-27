@@ -34,7 +34,6 @@ enum PRODUCT_CONFIG : uint32_t {
     ADL_P = 0x0300c000,
     ADL_N = 0x03010000,
     DG1 = 0x03028000,
-    XEHP_SDV = 0x030c8004,
     DG2_G10_A0 = 0x030dc000,
     DG2_G10_A1 = 0x030dc001,
     DG2_G10_B0 = 0x030dc004,
@@ -62,7 +61,6 @@ enum RELEASE : uint32_t {
     GEN9_RELEASE,
     GEN11_RELEASE,
     GEN12LP_RELEASE,
-    XE_HP_RELEASE,
     XE_HPG_RELEASE,
     XE_HPC_RELEASE,
     XE_LPG_RELEASE,
@@ -92,7 +90,7 @@ inline const std::map<std::string, FAMILY> familyAcronyms = {
 #ifdef SUPPORT_GEN12LP
     {"gen12lp", GEN12LP_FAMILY},
 #endif
-#if defined(SUPPORT_XE_HP_CORE) || defined(SUPPORT_XE_HPC_CORE) || defined(SUPPORT_XE_HPG_CORE)
+#if defined(SUPPORT_XE_HPC_CORE) || defined(SUPPORT_XE_HPG_CORE)
     {"xe", XE_FAMILY},
 #endif
 };
@@ -109,9 +107,6 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #endif
 #ifdef SUPPORT_GEN12LP
     {"gen12lp", GEN12LP_RELEASE},
-#endif
-#ifdef SUPPORT_XE_HP_CORE
-    {"xe-hp", XE_HP_RELEASE},
 #endif
 #if defined(SUPPORT_XE_HPG_CORE) && defined(SUPPORT_DG2)
     {"xe-hpg", XE_HPG_RELEASE},

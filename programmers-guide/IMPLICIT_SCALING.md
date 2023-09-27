@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 # Overview
 
-Multi-tile devices, such as Xe HPC (PVC) and XeHP_SDV, contain smaller GPU devices called tiles. Each tile has its own dedicated set of resources.
+Multi-tile devices, such as Xe HPC (PVC), contain smaller GPU devices called tiles. Each tile has its own dedicated set of resources.
 
 * Each tile has Execution Units (EUs) doing the actual computation work, which can be accessed using the available devices.
 * Similarly, copy engines (BCSs) may be present on each tile.
@@ -36,7 +36,7 @@ When doing allocations in implicit scaling mode, driver *colors* an allocation a
 
 When scheduling a kernel for execution, driver distributes the kernel workgroups among the available tiles. Default mechanism is called *Static Partitioning*, where the workgroups are evenly distributed among tiles. For instance, in a 2-tile system, half of the workgroups go to tile 0, and the other half to tile 1.
 
-The number of CCSs, or compute engines, currently available with implicit scaling on the root device is one. This is because with implicit scaling the driver automatically uses all the EUs available in the device, so no other CCSs are exposed. Even though only one CCS is exposed, multiple kernels submitted to the root device using implicit scaling may execute concurrently on PVC, depending on EU availability. On XeHP_SDV, they may be serialized. See [Limitations](#Limitations) section below.
+The number of CCSs, or compute engines, currently available with implicit scaling on the root device is one. This is because with implicit scaling the driver automatically uses all the EUs available in the device, so no other CCSs are exposed. Even though only one CCS is exposed, multiple kernels submitted to the root device using implicit scaling may execute concurrently on PVC, depending on EU availability.
 
 No implicit scaling support is available for BCSs. Considering that, two models are followed in terms of discovery of copy engines:
 
@@ -63,17 +63,3 @@ In OpenCL, implicit scaling is always enabled. To not use implicit scaling with 
 ## Coloring scheme
 
 By default, allocations are equally split among available tiles. Allocations can also be colored by chunks and interleaved on each tile (`MultiStoragePolicy=1` or `MultiStoragePolicy=2`, respectively) with a size set on `MultiStorageGranularity`, which must be equal or greater than 64 kB, with 64 kB being the default.
-
-# Limitations
-
-## XeHP_SDV
-
-For workloads with no coherent L3 caches among tiles, such as XeHP_SDV, the following considerations are made:
-
-* Partial writes and atomics are moved to global memory. This can be controlled with:
-
-    * `ForceMultiGpuPartialWrites`: Set to `0` to handle partial writes on global memory (slow mode for multi-tile) and `1` to handle partial writes on L3 cache (fast mode for on tile).
-    * `ForceMultiGpuAtomics`: Set to `0` to have global atomics (slow mode for multi-tile) and `1` to have atomics on L3 cache (fast mode for on tile).
-
-* Caches are flushed after every kernel. This can be disabled with `DoNotFlushCaches=1`.
-* Kernels are serialized to maintain functional correctness of split execution.
