@@ -47,7 +47,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(c
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel,
-                                                                               const ze_group_count_t *threadGroupDimensions,
+                                                                               const ze_group_count_t &threadGroupDimensions,
                                                                                Event *event,
                                                                                const CmdListKernelLaunchParams &launchParams) {
     UNRECOVERABLE_IF(kernel == nullptr);
@@ -66,7 +66,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     DBG_LOG(PrintDispatchParameters, "Kernel: ", kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
             ", Group size: ", kernel->getGroupSize()[0], ", ", kernel->getGroupSize()[1], ", ", kernel->getGroupSize()[2],
-            ", Group count: ", threadGroupDimensions->groupCountX, ", ", threadGroupDimensions->groupCountY, ", ", threadGroupDimensions->groupCountZ,
+            ", Group count: ", threadGroupDimensions.groupCountX, ", ", threadGroupDimensions.groupCountY, ", ", threadGroupDimensions.groupCountZ,
             ", SIMD: ", kernelInfo->getMaxSimdSize());
 
     if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
@@ -111,13 +111,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     this->allocateOrReuseKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 
     if (!launchParams.isIndirect) {
-        kernel->setGroupCount(threadGroupDimensions->groupCountX,
-                              threadGroupDimensions->groupCountY,
-                              threadGroupDimensions->groupCountZ);
+        kernel->setGroupCount(threadGroupDimensions.groupCountX,
+                              threadGroupDimensions.groupCountY,
+                              threadGroupDimensions.groupCountZ);
     }
 
-    if (launchParams.isIndirect && threadGroupDimensions) {
-        prepareIndirectParams(threadGroupDimensions);
+    if (launchParams.isIndirect) {
+        prepareIndirectParams(&threadGroupDimensions);
     }
 
     if (kernel->hasIndirectAllocationsAllowed()) {
@@ -182,7 +182,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernel,                                                 // dispatchInterface
         ssh,                                                    // surfaceStateHeap
         dsh,                                                    // dynamicStateHeap
-        reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
+        reinterpret_cast<const void *>(&threadGroupDimensions), // threadGroupDimensions
         nullptr,                                                // outWalkerPtr
         &additionalCommands,                                    // additionalCommands
         commandListPreemptionMode,                              // preemptionMode
@@ -300,7 +300,7 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileB
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel *kernel,
-                                                                          const ze_group_count_t *threadGroupDimensions,
+                                                                          const ze_group_count_t &threadGroupDimensions,
                                                                           Event *event,
                                                                           const CmdListKernelLaunchParams &launchParams) {
     return appendLaunchKernelWithParams(kernel, threadGroupDimensions, nullptr, launchParams);

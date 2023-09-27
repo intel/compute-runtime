@@ -152,7 +152,7 @@ ze_result_t zeCommandListAppendLaunchKernel(
     L0::CmdListKernelLaunchParams launchParams = {};
     launchParams.skipInOrderNonWalkerSignaling = cmdList->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
 
-    return cmdList->appendLaunchKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams, false);
+    return cmdList->appendLaunchKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams, false);
 }
 
 ze_result_t zeCommandListAppendLaunchCooperativeKernel(
@@ -162,7 +162,7 @@ ze_result_t zeCommandListAppendLaunchCooperativeKernel(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchCooperativeKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, false);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchCooperativeKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeCommandListAppendLaunchKernelIndirect(
@@ -172,7 +172,7 @@ ze_result_t zeCommandListAppendLaunchKernelIndirect(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(kernelHandle, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(kernelHandle, *pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeCommandListAppendLaunchMultipleKernelsIndirect(
@@ -184,7 +184,7 @@ ze_result_t zeCommandListAppendLaunchMultipleKernelsIndirect(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pCountBuffer, *pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeKernelGetName(

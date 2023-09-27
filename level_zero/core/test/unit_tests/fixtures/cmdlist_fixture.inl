@@ -137,7 +137,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
 
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -180,7 +180,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -200,7 +200,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -247,7 +247,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -267,7 +267,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -290,7 +290,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -336,7 +336,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -398,7 +398,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
 
     sizeBefore = regularCommandListStream.getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = regularCommandListStream.getUsed();
 
@@ -444,7 +444,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
 
     size_t csrUsedBefore = csrStream.getUsed();
     sizeBefore = immediateCmdListStream.getUsed();
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = immediateCmdListStream.getUsed();
     size_t csrUsedAfter = csrStream.getUsed();
@@ -503,7 +503,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
 
     size_t csrUsedBefore = csrStream.getUsed();
     sizeBefore = immediateCmdListStream.getUsed();
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = immediateCmdListStream.getUsed();
     size_t csrUsedAfter = csrStream.getUsed();
@@ -544,7 +544,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     auto &cmdQueueStream = commandQueue->commandStream;
 
     sizeBefore = regularCommandListStream.getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = regularCommandListStream.getUsed();
 
@@ -587,7 +587,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
     CmdListKernelLaunchParams launchParams = {};
 
     auto result = ZE_RESULT_SUCCESS;
-    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = commandList->close();
@@ -596,7 +596,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
 
-    result = commandList2->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = commandList2->close();
@@ -680,7 +680,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
 
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -727,7 +727,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -747,7 +747,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -794,7 +794,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -814,7 +814,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -837,7 +837,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -883,7 +883,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -947,7 +947,7 @@ void CmdListLargeGrfFixture::testBody() {
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
 
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -994,7 +994,7 @@ void CmdListLargeGrfFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1014,7 +1014,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1061,7 +1061,7 @@ void CmdListLargeGrfFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1081,7 +1081,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1104,7 +1104,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1150,7 +1150,7 @@ void CmdListLargeGrfFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1221,12 +1221,12 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
     CmdListKernelLaunchParams launchParams = {};
     auto result = ZE_RESULT_SUCCESS;
 
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
 
-    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
@@ -1247,14 +1247,14 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
 
     csrSshHeap->getSpace(csrSshHeap->getAvailableSpace());
 
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
 
     EXPECT_NE(firstSshCpuPointer, sshFirstCmdList->getCpuBase());
 
-    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);

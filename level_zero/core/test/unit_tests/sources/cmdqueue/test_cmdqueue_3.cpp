@@ -435,7 +435,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     result = commandList->appendLaunchKernel(kernel->toHandle(),
-                                             &groupCount,
+                                             groupCount,
                                              nullptr, 0, nullptr,
                                              launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -498,7 +498,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     result = commandList->appendLaunchKernel(kernel->toHandle(),
-                                             &groupCount,
+                                             groupCount,
                                              nullptr, 0, nullptr,
                                              launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -565,7 +565,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     result = commandList->appendLaunchKernel(kernel->toHandle(),
-                                             &groupCount,
+                                             groupCount,
                                              nullptr, 0, nullptr,
                                              launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -617,7 +617,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     result = commandList->appendLaunchKernel(kernel->toHandle(),
-                                             &groupCount,
+                                             groupCount,
                                              nullptr, 0, nullptr,
                                              launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1081,57 +1081,57 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     commandListA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
 
     CmdListKernelLaunchParams launchParams = {};
-    commandListA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListA->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
     commandListA->close();
 
     auto commandListBB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListBB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
 
     launchParams.isCooperative = true;
-    commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
-    commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
+    commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
     commandListBB->close();
 
     auto commandListAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
 
     launchParams.isCooperative = false;
-    commandListAB->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListAB->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
 
     launchParams.isCooperative = true;
-    commandListAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListAB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
     commandListAB->close();
 
     auto commandListBA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListBA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
-    commandListBA->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBA->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
 
     launchParams.isCooperative = false;
-    commandListBA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBA->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
     commandListBA->close();
 
     auto commandListBAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListBAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
 
     launchParams.isCooperative = true;
-    commandListBAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBAB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
 
     launchParams.isCooperative = false;
-    commandListBAB->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBAB->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
 
     launchParams.isCooperative = true;
-    commandListBAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBAB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
     commandListBAB->close();
 
     auto commandListAAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListAAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
 
     launchParams.isCooperative = false;
-    commandListAAB->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
-    commandListAAB->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListAAB->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
+    commandListAAB->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
 
     launchParams.isCooperative = true;
-    commandListAAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListAAB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
     commandListAAB->close();
 
     auto commandListEmpty = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -1231,7 +1231,7 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
-    commandList->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandList->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
     commandList->close();
 
     EXPECT_EQ(-1, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
@@ -1275,14 +1275,14 @@ HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandLi
     commandListA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
 
     CmdListKernelLaunchParams launchParams = {};
-    commandListA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListA->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
     commandListA->close();
 
     auto commandListB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
 
     launchParams.isCooperative = true;
-    commandListB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
     commandListB->close();
 
     ze_command_list_handle_t commandListsA[] = {commandListA->toHandle()};

@@ -353,7 +353,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
     const ze_group_count_t launchKernelArgs = {};
-    commandList->updateStreamProperties(kernel, false, &launchKernelArgs, false);
+    commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
     if (commandList->stateComputeModeTracking) {
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
         if (productHelper.isGrfNumReportedWithScm()) {
@@ -366,7 +366,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
         EXPECT_TRUE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
-    commandList->updateStreamProperties(kernel, false, &launchKernelArgs, false);
+    commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
     EXPECT_TRUE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
@@ -391,7 +391,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
     const ze_group_count_t launchKernelArgs = {};
-    commandList->updateStreamProperties(kernel, false, &launchKernelArgs, false);
+    commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
     if (commandList->stateComputeModeTracking) {
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
@@ -400,7 +400,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
         EXPECT_TRUE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
-    commandList->updateStreamProperties(kernel, false, &launchKernelArgs, false);
+    commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
     EXPECT_TRUE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
@@ -441,7 +441,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpgCore, givenEventWhenAppendKernelIsCa
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     CmdListKernelLaunchParams launchParams = {};
-    result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();

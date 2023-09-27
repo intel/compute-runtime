@@ -117,7 +117,7 @@ GEN9TEST_F(CommandListCreateGen9, GivenDisabledMidThreadPreemptionWhenLaunchingK
 
     CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(kernelThreadGroup.toHandle(),
-                                    &dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
+                                    dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();
@@ -147,7 +147,7 @@ GEN9TEST_F(CommandListCreateGen9, GivenUsesFencesForReadWriteImagesWhenLaunching
 
     CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(kernelMidBatch.toHandle(),
-                                    &dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
+                                    dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(NEO::PreemptionMode::MidBatch, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();
@@ -182,11 +182,11 @@ GEN9TEST_F(CommandListCreateGen9, WhenCommandListHasLowerPreemptionLevelThenDoNo
 
     CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(kernelThreadGroup.toHandle(),
-                                    &dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
+                                    dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
     commandList->appendLaunchKernel(kernelMidThread.toHandle(),
-                                    &dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
+                                    dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();

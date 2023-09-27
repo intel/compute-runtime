@@ -80,7 +80,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
     kernel.groupSize[0] = 7;
     kernel.groupSize[1] = 1;
     kernel.groupSize[2] = 1;
-    commandList->updateStreamPropertiesForRegularCommandLists(kernel, false, &launchKernelArgs, false);
+    commandList->updateStreamPropertiesForRegularCommandLists(kernel, false, launchKernelArgs, false);
     EXPECT_TRUE(commandList->finalStreamState.frontEndState.disableEUFusion.value);
 }
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegularCommandListsCalledAndLwsIsNonOddThenFusedEuIsNotDisabled, IsDG2) {
@@ -97,7 +97,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
     kernel.groupSize[0] = 8;
     kernel.groupSize[1] = 1;
     kernel.groupSize[2] = 1;
-    commandList->updateStreamPropertiesForRegularCommandLists(kernel, false, &launchKernelArgs, false);
+    commandList->updateStreamPropertiesForRegularCommandLists(kernel, false, launchKernelArgs, false);
     EXPECT_FALSE(commandList->finalStreamState.frontEndState.disableEUFusion.value);
 }
 
@@ -115,7 +115,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
     kernel.groupSize[0] = 1;
     kernel.groupSize[1] = 1;
     kernel.groupSize[2] = 1;
-    commandList->updateStreamPropertiesForRegularCommandLists(kernel, false, &launchKernelArgs, true);
+    commandList->updateStreamPropertiesForRegularCommandLists(kernel, false, launchKernelArgs, true);
     EXPECT_TRUE(commandList->finalStreamState.frontEndState.disableEUFusion.value);
 }
 
@@ -133,7 +133,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
     kernel.groupSize[0] = 7;
     kernel.groupSize[1] = 1;
     kernel.groupSize[2] = 1;
-    commandList->updateStreamPropertiesForFlushTaskDispatchFlags(kernel, false, &launchKernelArgs, false);
+    commandList->updateStreamPropertiesForFlushTaskDispatchFlags(kernel, false, launchKernelArgs, false);
     EXPECT_TRUE(commandList->requiredStreamState.frontEndState.disableEUFusion.value);
 }
 HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlushTaskDispatchFlagsCalledAndLwsIsNonOddThenFusedEuIsNotDisabled, IsDG2) {
@@ -150,7 +150,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
     kernel.groupSize[0] = 8;
     kernel.groupSize[1] = 1;
     kernel.groupSize[2] = 1;
-    commandList->updateStreamPropertiesForFlushTaskDispatchFlags(kernel, false, &launchKernelArgs, false);
+    commandList->updateStreamPropertiesForFlushTaskDispatchFlags(kernel, false, launchKernelArgs, false);
     EXPECT_FALSE(commandList->requiredStreamState.frontEndState.disableEUFusion.value);
 }
 
@@ -168,25 +168,8 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
     kernel.groupSize[0] = 1;
     kernel.groupSize[1] = 1;
     kernel.groupSize[2] = 1;
-    commandList->updateStreamPropertiesForFlushTaskDispatchFlags(kernel, false, &launchKernelArgs, true);
+    commandList->updateStreamPropertiesForFlushTaskDispatchFlags(kernel, false, launchKernelArgs, true);
     EXPECT_TRUE(commandList->requiredStreamState.frontEndState.disableEUFusion.value);
-}
-
-HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlushTaskDispatchFlagsCalledAndGroupCountIsNullptrThenFusedEuIsNotDisabled, IsDG2) {
-    Mock<::L0::KernelImp> kernel;
-    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-    kernel.module = pMockModule.get();
-
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
-    kernel.groupSize[0] = 1;
-    kernel.groupSize[1] = 1;
-    kernel.groupSize[2] = 1;
-    commandList->updateStreamPropertiesForFlushTaskDispatchFlags(kernel, false, nullptr, true);
-    EXPECT_FALSE(commandList->requiredStreamState.frontEndState.disableEUFusion.value);
 }
 
 } // namespace ult

@@ -321,7 +321,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programL3(bool isSLMused) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_handle_t kernelHandle,
-                                                                     const ze_group_count_t *threadGroupDimensions,
+                                                                     const ze_group_count_t &threadGroupDimensions,
                                                                      ze_event_handle_t hEvent,
                                                                      uint32_t numWaitEvents,
                                                                      ze_event_handle_t *phWaitEvents,
@@ -372,7 +372,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
-                                                                                const ze_group_count_t *launchKernelArgs,
+                                                                                const ze_group_count_t &launchKernelArgs,
                                                                                 ze_event_handle_t hSignalEvent,
                                                                                 uint32_t numWaitEvents,
                                                                                 ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) {
@@ -403,7 +403,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_kernel_handle_t kernelHandle,
-                                                                             const ze_group_count_t *pDispatchArgumentsBuffer,
+                                                                             const ze_group_count_t &pDispatchArgumentsBuffer,
                                                                              ze_event_handle_t hEvent,
                                                                              uint32_t numWaitEvents,
                                                                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
@@ -441,7 +441,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsIndirect(uint32_t numKernels,
                                                                                       const ze_kernel_handle_t *kernelHandles,
                                                                                       const uint32_t *pNumLaunchArguments,
-                                                                                      const ze_group_count_t *pLaunchArgumentsBuffer,
+                                                                                      const ze_group_count_t &pLaunchArgumentsBuffer,
                                                                                       ze_event_handle_t hEvent,
                                                                                       uint32_t numWaitEvents,
                                                                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
@@ -462,7 +462,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     }
 
     appendEventForProfiling(event, true, false);
-    const bool haveLaunchArguments = pLaunchArgumentsBuffer != nullptr;
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pNumLaunchArguments);
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     commandContainer.addToResidencyContainer(alloc);
@@ -471,7 +470,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, alloc->getGpuAddress(), i);
 
         ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandles[i]),
-                                           haveLaunchArguments ? &pLaunchArgumentsBuffer[i] : nullptr,
+                                           pLaunchArgumentsBuffer,
                                            nullptr, launchParams);
         if (ret) {
             return ret;
@@ -709,7 +708,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
 
-    auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &kernelArgs,
+    auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), kernelArgs,
                                                                            event, numWaitEvents, phWaitEvents,
                                                                            launchParams, relaxedOrderingDispatch);
     addToMappedEventList(Event::fromHandle(hEvent));
@@ -867,7 +866,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
-    ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &kernelArgs,
+    ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), kernelArgs,
                                                                    event, numWaitEvents, phWaitEvents, launchParams, relaxedOrderingDispatch);
     addToMappedEventList(event);
 
@@ -1012,7 +1011,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
-    auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), &kernelArgs,
+    auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), kernelArgs,
                                                                            event, numWaitEvents, phWaitEvents,
                                                                            launchParams, relaxedOrderingDispatch);
     addToMappedEventList(event);
@@ -1149,7 +1148,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
         (dstAllocationType == NEO::AllocationType::SVM_CPU) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
 
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinKernel, &dispatchKernelArgs, signalEvent, launchParams);
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinKernel, dispatchKernelArgs, signalEvent, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1647,7 +1646,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &dispatchKernelArgs, signalEvent, numWaitEvents,
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, signalEvent, numWaitEvents,
                                                                     phWaitEvents, launchParams, relaxedOrderingDispatch);
 }
 
@@ -1715,7 +1714,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
         (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(),
-                                                                    &dispatchKernelArgs, signalEvent,
+                                                                    dispatchKernelArgs, signalEvent,
                                                                     numWaitEvents,
                                                                     phWaitEvents,
                                                                     launchParams, relaxedOrderingDispatch);
@@ -1749,7 +1748,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool
     builtinKernel->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
     builtinKernel->setArgumentValue(2, sizeof(value), &value);
 
-    auto res = appendLaunchKernelSplit(builtinKernel, &dispatchKernelRemainderArgs, signalEvent, launchParams);
+    auto res = appendLaunchKernelSplit(builtinKernel, dispatchKernelRemainderArgs, signalEvent, launchParams);
     if (res) {
         return res;
     }
@@ -1872,7 +1871,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         builtinKernel->setArgumentValue(1, sizeof(fillArguments.mainOffset), &fillArguments.mainOffset);
         builtinKernel->setArgumentValue(2, sizeof(value), &value);
 
-        res = appendLaunchKernelSplit(builtinKernel, &dispatchKernelArgs, signalEvent, launchParams);
+        res = appendLaunchKernelSplit(builtinKernel, dispatchKernelArgs, signalEvent, launchParams);
         if (res) {
             return res;
         }
@@ -1917,7 +1916,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             builtinKernel->setArgumentValue(3, sizeof(fillArguments.patternSizeInEls), &fillArguments.patternSizeInEls);
 
             ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
-            res = appendLaunchKernelSplit(builtinKernel, &dispatchKernelArgs, signalEvent, launchParams);
+            res = appendLaunchKernelSplit(builtinKernel, dispatchKernelArgs, signalEvent, launchParams);
             if (res) {
                 return res;
             }
@@ -1945,7 +1944,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                           patternGfxAlloc, nullptr);
             builtinKernelRemainder->setArgumentValue(3, sizeof(patternAllocationSize), &patternAllocationSize);
 
-            res = appendLaunchKernelSplit(builtinKernelRemainder, &dispatchKernelArgs, signalEvent, launchParams);
+            res = appendLaunchKernelSplit(builtinKernelRemainder, dispatchKernelArgs, signalEvent, launchParams);
             if (res) {
                 return res;
             }
@@ -1976,7 +1975,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                           patternGfxAlloc, nullptr);
             builtinKernelRemainder->setArgumentValue(3, sizeof(patternAllocationSize), &patternAllocationSize);
 
-            res = appendLaunchKernelSplit(builtinKernelRemainder, &dispatchKernelArgs, signalEvent, launchParams);
+            res = appendLaunchKernelSplit(builtinKernelRemainder, dispatchKernelArgs, signalEvent, launchParams);
             if (res) {
                 return res;
             }
@@ -2439,13 +2438,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kernel, NEO::Device &device,
-                                                                    const ze_group_count_t *threadGroupDimensions) {
+                                                                    const ze_group_count_t &threadGroupDimensions) {
     uint32_t maximalNumberOfWorkgroupsAllowed;
     auto ret = kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed, this->engineGroupType,
                                                       device.isEngineInstanced());
     UNRECOVERABLE_IF(ret != ZE_RESULT_SUCCESS);
-    size_t requestedNumberOfWorkgroups = (threadGroupDimensions->groupCountX * threadGroupDimensions->groupCountY *
-                                          threadGroupDimensions->groupCountZ);
+    size_t requestedNumberOfWorkgroups = (threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY *
+                                          threadGroupDimensions.groupCountZ);
     if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -2681,7 +2680,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
-    auto appendResult = appendLaunchKernel(builtinKernel->toHandle(), &dispatchKernelArgs, hSignalEvent, numWaitEvents,
+    auto appendResult = appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, hSignalEvent, numWaitEvents,
                                            phWaitEvents, launchParams, false);
     if (appendResult != ZE_RESULT_SUCCESS) {
         return appendResult;
@@ -2737,7 +2736,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
     if (this->isFlushTaskSubmissionEnabled) {
         updateStreamPropertiesForFlushTaskDispatchFlags(kernel, isCooperative, threadGroupDimensions, isIndirect);
     } else {
@@ -2746,29 +2745,27 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
+inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
     bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
     if (static_cast<DeviceImp *>(device)->calculationForDisablingEuFusionWithDpasNeeded) {
         auto &productHelper = device->getProductHelper();
-        if (threadGroupDimensions) {
-            uint32_t *groupCountPtr = nullptr;
-            uint32_t groupCount[3] = {};
-            if (!isIndirect) {
-                groupCount[0] = threadGroupDimensions->groupCountX;
-                groupCount[1] = threadGroupDimensions->groupCountY;
-                groupCount[2] = threadGroupDimensions->groupCountZ;
-                groupCountPtr = groupCount;
-            }
-            fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCountPtr, device->getHwInfo());
+        uint32_t *groupCountPtr = nullptr;
+        uint32_t groupCount[3] = {};
+        if (!isIndirect) {
+            groupCount[0] = threadGroupDimensions.groupCountX;
+            groupCount[1] = threadGroupDimensions.groupCountY;
+            groupCount[2] = threadGroupDimensions.groupCountZ;
+            groupCountPtr = groupCount;
         }
+        fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCountPtr, device->getHwInfo());
     }
     return fusedEuDisabled;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
     bool fusedEuDisabled = getFusedEuDisabled<gfxCoreFamily>(kernel, this->device, threadGroupDimensions, isIndirect);
@@ -2785,7 +2782,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDis
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
     size_t currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;

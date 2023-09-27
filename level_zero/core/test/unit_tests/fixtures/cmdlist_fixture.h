@@ -219,14 +219,14 @@ class AppendFillFixture : public DeviceFixture {
         MockCommandList() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
 
         ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
-                                                 const ze_group_count_t *pThreadGroupDimensions,
+                                                 const ze_group_count_t &pThreadGroupDimensions,
                                                  L0::Event *event,
                                                  const CmdListKernelLaunchParams &launchParams) override {
             if (numberOfCallsToAppendLaunchKernelWithParams == thresholdOfCallsToAppendLaunchKernelWithParamsToFail) {
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
             if (numberOfCallsToAppendLaunchKernelWithParams < 3) {
-                threadGroupDimensions[numberOfCallsToAppendLaunchKernelWithParams] = *pThreadGroupDimensions;
+                threadGroupDimensions[numberOfCallsToAppendLaunchKernelWithParams] = pThreadGroupDimensions;
                 xGroupSizes[numberOfCallsToAppendLaunchKernelWithParams] = kernel->getGroupSize()[0];
             }
             numberOfCallsToAppendLaunchKernelWithParams++;

@@ -594,7 +594,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
-    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, launchParams);
+    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, threadGroupDimensions, nullptr, launchParams);
     ze_command_list_handle_t commandListCooperative[] = {pCommandListWithCooperativeKernels->toHandle()};
     auto result = pCommandQueue->executeCommandLists(1, commandListCooperative, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -604,7 +604,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     pCommandListWithNonCooperativeKernels->initialize(&device, NEO::EngineGroupType::Compute, 0u);
 
     launchParams.isCooperative = false;
-    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, launchParams);
+    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, threadGroupDimensions, nullptr, launchParams);
     ze_command_list_handle_t commandListNonCooperative[] = {pCommandListWithNonCooperativeKernels->toHandle()};
     result = pCommandQueue->executeCommandLists(1, commandListNonCooperative, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

@@ -414,7 +414,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::skipInOrderNonWalkerSignalin
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
-    ze_kernel_handle_t kernelHandle, const ze_group_count_t *threadGroupDimensions,
+    ze_kernel_handle_t kernelHandle, const ze_group_count_t &threadGroupDimensions,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
     const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) {
 
@@ -465,7 +465,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignal
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelIndirect(
-    ze_kernel_handle_t kernelHandle, const ze_group_count_t *pDispatchArgumentsBuffer,
+    ze_kernel_handle_t kernelHandle, const ze_group_count_t &pDispatchArgumentsBuffer,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
@@ -848,7 +848,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBar
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
-                                                                                         const ze_group_count_t *launchKernelArgs,
+                                                                                         const ze_group_count_t &launchKernelArgs,
                                                                                          ze_event_handle_t hSignalEvent,
                                                                                          uint32_t numWaitEvents,
                                                                                          ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) {

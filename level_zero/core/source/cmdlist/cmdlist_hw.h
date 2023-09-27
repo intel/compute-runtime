@@ -102,23 +102,23 @@ struct CommandListCoreFamily : CommandListImp {
                                 ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle,
-                                   const ze_group_count_t *threadGroupDimensions,
+                                   const ze_group_count_t &threadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                    ze_event_handle_t *phWaitEvents,
                                    const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) override;
     ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
-                                              const ze_group_count_t *launchKernelArgs,
+                                              const ze_group_count_t &launchKernelArgs,
                                               ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents,
                                               ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) override;
     ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t kernelHandle,
-                                           const ze_group_count_t *pDispatchArgumentsBuffer,
+                                           const ze_group_count_t &pDispatchArgumentsBuffer,
                                            ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                            ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
     ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels,
                                                     const ze_kernel_handle_t *kernelHandles,
                                                     const uint32_t *pNumLaunchArguments,
-                                                    const ze_group_count_t *pLaunchArgumentsBuffer,
+                                                    const ze_group_count_t &pLaunchArgumentsBuffer,
                                                     ze_event_handle_t hEvent,
                                                     uint32_t numWaitEvents,
                                                     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
@@ -248,11 +248,11 @@ struct CommandListCoreFamily : CommandListImp {
                                                      Event *signalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
-                                                              const ze_group_count_t *threadGroupDimensions,
+                                                              const ze_group_count_t &threadGroupDimensions,
                                                               Event *event,
                                                               const CmdListKernelLaunchParams &launchParams);
     MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelSplit(Kernel *kernel,
-                                                         const ze_group_count_t *threadGroupDimensions,
+                                                         const ze_group_count_t &threadGroupDimensions,
                                                          Event *event,
                                                          const CmdListKernelLaunchParams &launchParams);
 
@@ -266,9 +266,9 @@ struct CommandListCoreFamily : CommandListImp {
     void appendWaitOnSingleEvent(Event *event, bool relaxedOrderingAllowed);
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
-    void updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect);
-    void updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect);
-    void updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect);
+    void updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect);
+    void updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect);
+    void updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect);
     void clearCommandsToPatch();
 
     size_t getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch);
@@ -279,7 +279,7 @@ struct CommandListCoreFamily : CommandListImp {
                                   const void **pRanges);
 
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, uint32_t lws[3]);
-    ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t *threadGroupDimensions);
+    ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t &threadGroupDimensions);
     void appendWriteKernelTimestamp(Event *event, bool beforeWalker, bool maskLsb, bool workloadPartition);
     void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition);
     void appendEventForProfiling(Event *event, bool beforeWalker, bool skipBarrierForEndProfiling);

@@ -82,7 +82,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(c
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t *threadGroupDimensions, Event *event,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions, Event *event,
                                                                                const CmdListKernelLaunchParams &launchParams) {
 
     if (NEO::DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
@@ -120,7 +120,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     DBG_LOG(PrintDispatchParameters, "Kernel: ", kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
             ", Group size: ", kernel->getGroupSize()[0], ", ", kernel->getGroupSize()[1], ", ", kernel->getGroupSize()[2],
-            ", Group count: ", threadGroupDimensions->groupCountX, ", ", threadGroupDimensions->groupCountY, ", ", threadGroupDimensions->groupCountZ,
+            ", Group count: ", threadGroupDimensions.groupCountX, ", ", threadGroupDimensions.groupCountY, ", ", threadGroupDimensions.groupCountZ,
             ", SIMD: ", kernelInfo->getMaxSimdSize());
 
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
@@ -165,13 +165,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     kernel->patchGlobalOffset();
     this->allocateOrReuseKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 
-    if (launchParams.isIndirect && threadGroupDimensions) {
-        prepareIndirectParams(threadGroupDimensions);
+    if (launchParams.isIndirect) {
+        prepareIndirectParams(&threadGroupDimensions);
     }
     if (!launchParams.isIndirect) {
-        kernel->setGroupCount(threadGroupDimensions->groupCountX,
-                              threadGroupDimensions->groupCountY,
-                              threadGroupDimensions->groupCountZ);
+        kernel->setGroupCount(threadGroupDimensions.groupCountX,
+                              threadGroupDimensions.groupCountY,
+                              threadGroupDimensions.groupCountZ);
     }
 
     uint64_t eventAddress = 0;
@@ -278,7 +278,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernel,                                                 // dispatchInterface
         ssh,                                                    // surfaceStateHeap
         dsh,                                                    // dynamicStateHeap
-        reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
+        reinterpret_cast<const void *>(&threadGroupDimensions), // threadGroupDimensions
         nullptr,                                                // outWalkerPtr
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
@@ -461,7 +461,7 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileB
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel *kernel,
-                                                                          const ze_group_count_t *threadGroupDimensions,
+                                                                          const ze_group_count_t &threadGroupDimensions,
                                                                           Event *event,
                                                                           const CmdListKernelLaunchParams &launchParams) {
     if (event) {

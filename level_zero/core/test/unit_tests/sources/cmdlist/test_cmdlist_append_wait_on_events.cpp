@@ -686,7 +686,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto eventHandle = event->toHandle();
     ze_group_count_t group = {1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    commandListImmediate->appendLaunchKernel(kernel->toHandle(), &group, nullptr, 1, &eventHandle, launchParams, false);
+    commandListImmediate->appendLaunchKernel(kernel->toHandle(), group, nullptr, 1, &eventHandle, launchParams, false);
 
     EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 }
@@ -696,7 +696,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     auto eventHandle = event->toHandle();
     ze_group_count_t group = {1, 1, 1};
-    commandListImmediate->appendLaunchKernelIndirect(kernel->toHandle(), &group, nullptr, 1, &eventHandle, false);
+    commandListImmediate->appendLaunchKernelIndirect(kernel->toHandle(), group, nullptr, 1, &eventHandle, false);
 
     EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 }
@@ -873,7 +873,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     ze_group_count_t groupCount{1, 1, 1};
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 1, &eventHandle, false);
+    commandListImmediate->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, false);
 
     EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 }

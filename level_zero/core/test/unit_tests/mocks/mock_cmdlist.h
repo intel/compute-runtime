@@ -105,7 +105,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 
     ze_result_t appendLaunchKernelWithParams(::L0::Kernel *kernel,
-                                             const ze_group_count_t *threadGroupDimensions,
+                                             const ze_group_count_t &threadGroupDimensions,
                                              ::L0::Event *event,
                                              const CmdListKernelLaunchParams &launchParams) override {
 
@@ -118,7 +118,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels,
                                                     const ze_kernel_handle_t *kernelHandles,
                                                     const uint32_t *pNumLaunchArguments,
-                                                    const ze_group_count_t *pLaunchArgumentsBuffer,
+                                                    const ze_group_count_t &pLaunchArgumentsBuffer,
                                                     ze_event_handle_t hEvent,
                                                     uint32_t numWaitEvents,
                                                     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
@@ -128,7 +128,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     }
 
     ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t kernelHandle,
-                                           const ze_group_count_t *pDispatchArgumentsBuffer,
+                                           const ze_group_count_t &pDispatchArgumentsBuffer,
                                            ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                            ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
         appendEventKernelIndirectEventHandleValue = hEvent;
@@ -276,21 +276,21 @@ struct MockCommandList : public CommandList {
 
     ADDMETHOD_NOBASE(appendLaunchKernel, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_kernel_handle_t kernelHandle,
-                      const ze_group_count_t *threadGroupDimensions,
+                      const ze_group_count_t &threadGroupDimensions,
                       ze_event_handle_t hEvent, uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents,
                       const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch));
 
     ADDMETHOD_NOBASE(appendLaunchCooperativeKernel, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_kernel_handle_t kernelHandle,
-                      const ze_group_count_t *launchKernelArgs,
+                      const ze_group_count_t &launchKernelArgs,
                       ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
                       ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch));
 
     ADDMETHOD_NOBASE(appendLaunchKernelIndirect, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_kernel_handle_t kernelHandle,
-                      const ze_group_count_t *pDispatchArgumentsBuffer,
+                      const ze_group_count_t &DispatchArgumentsBuffer,
                       ze_event_handle_t hEvent,
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
@@ -299,7 +299,7 @@ struct MockCommandList : public CommandList {
                      (uint32_t numKernels,
                       const ze_kernel_handle_t *kernelHandles,
                       const uint32_t *pNumLaunchArguments,
-                      const ze_group_count_t *pLaunchArgumentsBuffer,
+                      const ze_group_count_t &pLaunchArgumentsBuffer,
                       ze_event_handle_t hEvent,
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
@@ -672,7 +672,7 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
   public:
     CmdListHelper cmdListHelper;
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle,
-                                   const ze_group_count_t *threadGroupDimensions,
+                                   const ze_group_count_t &threadGroupDimensions,
                                    ze_event_handle_t hEvent,
                                    uint32_t numWaitEvents,
                                    ze_event_handle_t *phWaitEvents,
@@ -682,7 +682,7 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
         cmdListHelper.isaAllocation = kernel->getIsaAllocation();
         cmdListHelper.residencyContainer = kernel->getResidencyContainer();
         cmdListHelper.groupSize = kernel->getGroupSize();
-        cmdListHelper.threadGroupDimensions = *threadGroupDimensions;
+        cmdListHelper.threadGroupDimensions = threadGroupDimensions;
 
         auto kernelName = kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName;
         NEO::ArgDescriptor arg;
