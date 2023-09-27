@@ -221,7 +221,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
 
     this->programLastCommandListReturnBbStart(child, ctx);
-    this->programStateSipEndWA(ctx.stateSipRequired, child);
     this->assignCsrTaskCountToFenceIfAvailable(hFence);
     this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, child);
 
@@ -864,15 +863,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateSip(bool isStateSipRequired, NEO
     NEO::Device *neoDevice = this->device->getNEODevice();
     NEO::PreemptionHelper::programStateSip<GfxFamily>(cmdStream, *neoDevice, &this->csr->getOsContext());
     this->csr->setSipSentFlag(true);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programStateSipEndWA(bool isStateSipRequired, NEO::LinearStream &cmdStream) {
-    if (!isStateSipRequired) {
-        return;
-    }
-    NEO::Device *neoDevice = this->device->getNEODevice();
-    NEO::PreemptionHelper::programStateSipEndWa<GfxFamily>(cmdStream, neoDevice->getRootDeviceEnvironment());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

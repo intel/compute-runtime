@@ -128,17 +128,14 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandL
     EXPECT_EQ(0u, debugModeRegisterCount);
     EXPECT_EQ(0u, tdDebugControlRegisterCount);
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    if (!gfxCoreHelper.isSipWANeeded(hwInfo)) {
-        auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
-        ASSERT_EQ(1u, stateSipCmds.size());
+    auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, stateSipCmds.size());
 
-        STATE_SIP *stateSip = genCmdCast<STATE_SIP *>(*stateSipCmds[0]);
+    STATE_SIP *stateSip = genCmdCast<STATE_SIP *>(*stateSipCmds[0]);
 
-        auto systemRoutine = SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
-        ASSERT_NE(nullptr, systemRoutine);
-        EXPECT_EQ(systemRoutine->getGpuAddressToPatch(), stateSip->getSystemInstructionPointer());
-    }
+    auto systemRoutine = SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
+    ASSERT_NE(nullptr, systemRoutine);
+    EXPECT_EQ(systemRoutine->getGpuAddressToPatch(), stateSip->getSystemInstructionPointer());
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(commandLists[i]);

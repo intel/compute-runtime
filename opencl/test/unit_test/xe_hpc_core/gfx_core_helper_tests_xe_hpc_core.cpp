@@ -710,11 +710,6 @@ XE_HPC_CORETEST_F(LriHelperTestsXeHpcCore, whenProgrammingLriCommandThenExpectMm
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
-XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, WhenCheckingSipWAThenFalseIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.isSipWANeeded(*defaultHwInfo));
-}
-
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsCheckedThenReturnFalse) {
     DebugManagerStateRestore restore;
 

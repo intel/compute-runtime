@@ -565,11 +565,6 @@ bool MemorySynchronizationCommands<GfxFamily>::isBarrierPriorToPipelineSelectWaR
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isSipWANeeded(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const {
     return false;
 }

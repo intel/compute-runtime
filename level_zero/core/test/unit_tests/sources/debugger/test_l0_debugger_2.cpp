@@ -196,25 +196,8 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, commandList->csr->getCS().getCpuBase(), commandList->csr->getCS().getUsed()));
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
-
-        auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-
-        auto globalSipFound = 0u;
-        for (size_t i = 0; i < miLoadImm.size(); i++) {
-            MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
-            ASSERT_NE(nullptr, miLoad);
-
-            if (miLoad->getRegisterOffset() == NEO::GlobalSipRegister<FamilyType>::registerOffset) {
-                globalSipFound++;
-            }
-        }
-        EXPECT_NE(0u, globalSipFound);
-    } else {
-        auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), sipItor);
-    }
+    auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sipItor);
     commandList->destroy();
 }
 
@@ -258,25 +241,8 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, commandList->csr->getCS().getCpuBase(), commandList->csr->getCS().getUsed()));
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
-
-        auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-
-        auto globalSipFound = 0u;
-        for (size_t i = 0; i < miLoadImm.size(); i++) {
-            MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
-            ASSERT_NE(nullptr, miLoad);
-
-            if (miLoad->getRegisterOffset() == NEO::GlobalSipRegister<FamilyType>::registerOffset) {
-                globalSipFound++;
-            }
-        }
-        EXPECT_NE(0u, globalSipFound);
-    } else {
-        auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), sipItor);
-    }
+    auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sipItor);
     commandList->destroy();
 }
 
@@ -607,13 +573,10 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     EXPECT_EQ(0u, tdDebugControlRegisterCount);
     EXPECT_EQ(0u, globalSipFound);
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    if (!gfxCoreHelper.isSipWANeeded(hwInfo)) {
-        auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
 
-        if (device->getDevicePreemptionMode() != PreemptionMode::MidThread) {
-            ASSERT_EQ(0u, stateSipCmds.size());
-        }
+    if (device->getDevicePreemptionMode() != PreemptionMode::MidThread) {
+        ASSERT_EQ(0u, stateSipCmds.size());
     }
 
     for (auto i = 0u; i < numCommandLists; i++) {

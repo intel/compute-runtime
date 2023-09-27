@@ -60,9 +60,6 @@ void PreemptionHelper::programStateSipCmd(LinearStream &preambleCmdStream, Graph
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programStateSipEndWa(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment) {}
-
-template <typename GfxFamily>
 void PreemptionHelper::programCmdStream(LinearStream &cmdStream, PreemptionMode newPreemptionMode,
                                         PreemptionMode oldPreemptionMode, GraphicsAllocation *preemptionCsr) {
     if (oldPreemptionMode == newPreemptionMode) {

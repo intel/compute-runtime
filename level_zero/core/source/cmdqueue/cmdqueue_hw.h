@@ -172,7 +172,6 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void collectPrintfContentsFromCommandsList(CommandList *commandList);
     inline void migrateSharedAllocationsIfRequested(bool isMigrationRequested, CommandList *commandList);
     inline void prefetchMemoryToDeviceAssociatedWithCmdList(CommandList *commandList);
-    inline void programStateSipEndWA(bool isStateSipRequired, NEO::LinearStream &commandStream);
     inline void assignCsrTaskCountToFenceIfAvailable(ze_fence_handle_t hFence);
     inline void dispatchTaskCountPostSyncRegular(bool isDispatchTaskCountPostSyncRequired, NEO::LinearStream &commandStream);
     inline void dispatchTaskCountPostSyncByMiFlushDw(bool isDispatchTaskCountPostSyncRequired, NEO::LinearStream &commandStream);

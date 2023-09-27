@@ -1153,11 +1153,6 @@ HWTEST_F(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrec
     EXPECT_EQ(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K, receivedSlmSize);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCheckingSipWaThenFalseIsReturned, isTglLpOrBelow) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    EXPECT_FALSE(gfxCoreHelper.isSipWANeeded(*defaultHwInfo));
-}
 HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(gfxCoreHelper.getPlanarYuvMaxHeight(), 16352u);

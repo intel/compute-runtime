@@ -153,12 +153,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenGettingThrea
     EXPECT_EQ(8U, configs[1]);
 }
 
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, WhenCheckingSipWAThenFalseIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    EXPECT_FALSE(gfxCoreHelper.isSipWANeeded(pDevice->getHardwareInfo()));
-}
-
 XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isDummyBlitWaRequired());
