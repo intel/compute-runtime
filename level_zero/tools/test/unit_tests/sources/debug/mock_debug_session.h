@@ -323,6 +323,13 @@ struct MockDebugSession : public L0::DebugSessionImp {
         apiEventCondition.notify_all();
     }
 
+    bool isAIPequalToThreadStartIP(uint32_t *cr0, uint32_t *dbg0) override {
+        if (callBaseisAIPequalToThreadStartIP) {
+            return DebugSessionImp::isAIPequalToThreadStartIP(cr0, dbg0);
+        }
+        return forceAIPEqualStartIP;
+    }
+
     bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0) override {
         if (callBaseIsForceExceptionOrForceExternalHaltOnlyExceptionReason) {
             return isForceExceptionOrForceExternalHaltOnlyExceptionReasonBase(cr0);
@@ -488,7 +495,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
     ze_result_t interruptImpResult = ZE_RESULT_SUCCESS;
     ze_result_t resumeImpResult = ZE_RESULT_SUCCESS;
     bool onlyForceException = true;
+    bool forceAIPEqualStartIP = false;
     bool callBaseIsForceExceptionOrForceExternalHaltOnlyExceptionReason = false;
+    bool callBaseisAIPequalToThreadStartIP = false;
     bool threadStopped = true;
     int areRequestedThreadsStoppedReturnValue = -1;
     bool readSystemRoutineIdentRetVal = true;

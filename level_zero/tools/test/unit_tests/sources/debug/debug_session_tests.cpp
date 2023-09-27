@@ -756,6 +756,53 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenFillingResumeAndStoppedThreadsFrom
     }
 }
 
+TEST(DebugSessionTest, givenPFThreadWithAIPEqStartIPWhenCallingFillResumeAndStoppedThreadsFromNewlyStoppedThenCRIsNotWritten) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    EuThread::ThreadId thread = {0, 0, 0, 0, 1};
+
+    sessionMock->newlyStoppedThreads.push_back(thread);
+    sessionMock->onlyForceException = false;
+    sessionMock->forceAIPEqualStartIP = true;
+
+    std::vector<EuThread::ThreadId> resumeThreads;
+    std::vector<EuThread::ThreadId> stoppedThreads;
+    std::vector<EuThread::ThreadId> interruptedThreads;
+
+    sessionMock->allThreads[thread]->stopThread(1u);
+    sessionMock->allThreads[thread]->setPageFault(true);
+
+    sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
+    EXPECT_EQ(0u, resumeThreads.size());
+    EXPECT_EQ(1u, stoppedThreads.size());
+    EXPECT_EQ(0u, sessionMock->writeRegistersCallCount);
+    EXPECT_EQ(false, sessionMock->allThreads[thread]->getPageFault());
+}
+
+TEST(DebugSessionTest, givenDbgRegAndCRThenisAIPequalToThreadStartIPReturnsCorrectResult) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    sessionMock->callBaseisAIPequalToThreadStartIP = true;
+    uint32_t dbg[4] = {0xDEADBEEF, 0, 0, 0};
+    uint32_t cr[4] = {0, 0, 0xDEADBEEF, 0};
+    EXPECT_TRUE(sessionMock->isAIPequalToThreadStartIP(cr, dbg));
+    cr[2] = 0x1234567;
+    EXPECT_FALSE(sessionMock->isAIPequalToThreadStartIP(cr, dbg));
+}
+
 TEST(DebugSessionTest, givenThreadsStoppedWithPageFaultWhenCallingfillResumeAndStoppedThreadsFromNewlyStoppedThenCRIsWritten) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

@@ -808,6 +808,14 @@ bool DebugSessionImp::isForceExceptionOrForceExternalHaltOnlyExceptionReason(uin
     return (((cr0[1] & cr0ExceptionBitmask) & (~cr0ForcedExcpetionBitmask)) == 0);
 }
 
+bool DebugSessionImp::isAIPequalToThreadStartIP(uint32_t *cr0, uint32_t *dbg0) {
+    if (cr0[2] == dbg0[0]) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport, std::vector<EuThread::ThreadId> &interruptedThreads) {
 
     if (newlyStoppedThreads.empty()) {
@@ -822,9 +830,15 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
             readRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
 
             if (allThreads[newlyStopped]->getPageFault()) {
-                const uint32_t cr0PFBit16 = 0x10000;
-                reg[1] = reg[1] | cr0PFBit16;
-                writeRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
+                uint32_t dbgreg[64u] = {0};
+                readRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, 0, 1, dbgreg);
+                if (isAIPequalToThreadStartIP(reg.get(), dbgreg)) {
+                    PRINT_DEBUGGER_THREAD_LOG("Thread %s with PF AIP is equal to StartIP. Filtering out\n", allThreads[newlyStopped]->toString().c_str());
+                } else {
+                    const uint32_t cr0PFBit16 = 0x10000;
+                    reg[1] = reg[1] | cr0PFBit16;
+                    writeRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
+                }
             }
             if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get())) {
                 bool threadWasInterrupted = false;
