@@ -448,7 +448,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result) {
     bool nonWalkerSignalingHasRelaxedOrdering = false;
 
-    if (NEO::DebugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.get() == 1) {
+    if (NEO::DebugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.get() != 0) {
         nonWalkerSignalingHasRelaxedOrdering = isRelaxedOrderingDispatchAllowed(1);
     }
 
