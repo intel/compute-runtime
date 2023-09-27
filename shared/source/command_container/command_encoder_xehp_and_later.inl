@@ -713,8 +713,6 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
 
     encodeExtraCacheSettings(surfaceState, args);
 
-    encodeImplicitScalingParams(args);
-
     if (EncodeSurfaceState<Family>::isAuxModeEnabled(surfaceState, gmm)) {
         auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();
         compressionFormat = args.gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(resourceFormat);

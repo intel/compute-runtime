@@ -31,7 +31,6 @@ struct EncodeSurfaceState {
 
     static void encodeBuffer(EncodeSurfaceStateArgs &args);
     static void encodeExtraBufferParams(EncodeSurfaceStateArgs &args);
-    static void encodeImplicitScalingParams(const EncodeSurfaceStateArgs &args);
     static void encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args);
     static void appendBufferSurfaceState(EncodeSurfaceStateArgs &args);
 
