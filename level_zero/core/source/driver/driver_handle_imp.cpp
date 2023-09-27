@@ -427,7 +427,7 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
 
 bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
                                                  size_t size,
-                                                 NEO::SvmAllocationData **allocData) {
+                                                 NEO::SvmAllocationData *&allocData) {
 
     size_t offset = 0;
     if (size > 0) {
@@ -439,12 +439,10 @@ bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
     NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAlloc(baseAddress);
     NEO::SvmAllocationData *endAllocData = svmAllocsManager->getSVMAlloc(baseAddress + offset);
 
-    if (allocData) {
-        if (beginAllocData) {
-            *allocData = beginAllocData;
-        } else {
-            *allocData = endAllocData;
-        }
+    if (beginAllocData) {
+        allocData = beginAllocData;
+    } else {
+        allocData = endAllocData;
     }
 
     // Return true if the whole range requested is covered by the same allocation
@@ -457,7 +455,7 @@ bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
     auto allocDataVec = findAllocationsWithinRange(buffer, size, &allocationRangeCovered);
     for (const auto &mappedAllocationData : allocDataVec) {
         if (mappedAllocationData->virtualReservationData) {
-            *allocData = mappedAllocationData;
+            allocData = mappedAllocationData;
             return true;
         }
     }
@@ -560,7 +558,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getDriverSystemMemoryAllocation(void *
                                                                           uint32_t rootDeviceIndex,
                                                                           uintptr_t *gpuAddress) {
     NEO::SvmAllocationData *allocData = nullptr;
-    bool allocFound = findAllocationDataForRange(ptr, size, &allocData);
+    bool allocFound = findAllocationDataForRange(ptr, size, allocData);
     if (allocFound) {
         if (gpuAddress != nullptr) {
             *gpuAddress = reinterpret_cast<uintptr_t>(ptr);

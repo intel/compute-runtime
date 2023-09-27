@@ -356,12 +356,10 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::validateDispatchFlags(bool
 
 bool AppendFillFixture::MockDriverFillHandle::findAllocationDataForRange(const void *buffer,
                                                                          size_t size,
-                                                                         NEO::SvmAllocationData **allocData) {
+                                                                         NEO::SvmAllocationData *&allocData) {
     mockAllocation.reset(new NEO::MockGraphicsAllocation(const_cast<void *>(buffer), size));
     data.gpuAllocations.addAllocation(mockAllocation.get());
-    if (allocData) {
-        *allocData = &data;
-    }
+    allocData = &data;
     return true;
 }
 

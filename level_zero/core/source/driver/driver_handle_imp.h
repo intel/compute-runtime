@@ -58,7 +58,7 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
-                                    NEO::SvmAllocationData **allocData) override;
+                                    NEO::SvmAllocationData *&allocData) override;
     std::vector<NEO::SvmAllocationData *> findAllocationsWithinRange(const void *buffer,
                                                                      size_t size,
                                                                      bool *allocationRangeCovered) override;

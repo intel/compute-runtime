@@ -47,14 +47,12 @@ class MockDriverHandle : public L0::DriverHandleImp {
   public:
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
-                                    NEO::SvmAllocationData **allocData) override {
+                                    NEO::SvmAllocationData *&allocData) override {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(rootDeviceIndex, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount));
         data.gpuAllocations.addAllocation(mockAllocation.get());
-        if (allocData) {
-            *allocData = &data;
-        }
+        allocData = &data;
         return true;
     }
     const uint32_t rootDeviceIndex = 0u;

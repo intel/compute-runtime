@@ -450,7 +450,7 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
     if (allocation == nullptr) {
         NEO::SvmAllocationData *allocData = nullptr;
         DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
-        bool foundBuffer = driverHandleImp->findAllocationDataForRange(ptr, size, &allocData);
+        bool foundBuffer = driverHandleImp->findAllocationDataForRange(ptr, size, allocData);
         if (foundBuffer) {
             uintptr_t alignedPtr = reinterpret_cast<uintptr_t>(ptr);
             allocation = driverHandleImp->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr);

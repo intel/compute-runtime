@@ -50,7 +50,7 @@ struct DriverHandle : BaseDriver {
     virtual ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) = 0;
     virtual bool findAllocationDataForRange(const void *buffer,
                                             size_t size,
-                                            NEO::SvmAllocationData **allocData) = 0;
+                                            NEO::SvmAllocationData *&allocData) = 0;
     virtual std::vector<NEO::SvmAllocationData *> findAllocationsWithinRange(const void *buffer,
                                                                              size_t size,
                                                                              bool *allocationRangeCovered) = 0;

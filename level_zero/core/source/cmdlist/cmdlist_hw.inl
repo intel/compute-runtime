@@ -1801,7 +1801,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     bool hostPointerNeedsFlush = false;
 
     NEO::SvmAllocationData *allocData = nullptr;
-    bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, &allocData);
+    bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
     if (dstAllocFound) {
         if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
             allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
@@ -2129,7 +2129,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
     NEO::SvmAllocationData *allocData = nullptr;
     void *ptr = const_cast<void *>(buffer);
     bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr,
-                                                                               bufferSize, &allocData);
+                                                                               bufferSize, allocData);
     NEO::GraphicsAllocation *alloc = nullptr;
 
     uintptr_t sourcePtr = reinterpret_cast<uintptr_t>(ptr);
@@ -2981,8 +2981,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
 
     NEO::SvmAllocationData *srcAllocData = nullptr;
     NEO::SvmAllocationData *dstAllocData = nullptr;
-    bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcPtr), size, &srcAllocData);
-    bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, size, &dstAllocData);
+    bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcPtr), size, srcAllocData);
+    bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, size, dstAllocData);
 
     auto srcMemoryPool = getMemoryPoolFromAllocDataForSplit(srcAllocFound, srcAllocData);
     auto dstMemoryPool = getMemoryPoolFromAllocDataForSplit(dstAllocFound, dstAllocData);

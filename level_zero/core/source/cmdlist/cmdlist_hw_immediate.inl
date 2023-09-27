@@ -523,8 +523,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
 
     ze_result_t ret;
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, srcptr, size);
-    this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, &cpuMemCopyInfo.srcAllocData);
-    this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, &cpuMemCopyInfo.dstAllocData);
+    this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, cpuMemCopyInfo.srcAllocData);
+    this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, cpuMemCopyInfo.dstAllocData);
     if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
         ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
         if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {

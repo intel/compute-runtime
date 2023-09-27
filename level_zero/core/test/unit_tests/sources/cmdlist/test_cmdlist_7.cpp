@@ -1927,9 +1927,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
     ASSERT_FALSE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
     ASSERT_TRUE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
@@ -1939,9 +1939,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(nonUsmHostPtr, devicePtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.srcAllocData);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.dstAllocData);
     ASSERT_FALSE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
@@ -1951,9 +1951,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhen
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, hostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocData);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
     ASSERT_TRUE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
@@ -1963,9 +1963,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhen
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, hostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocData);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
     ASSERT_TRUE(dstFound);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2003,9 +2003,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhen
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(hostPtr, devicePtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocData);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
     ASSERT_TRUE(dstFound);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2043,9 +2043,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
     EXPECT_FALSE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
     EXPECT_TRUE(dstFound);
     EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocData));
     EXPECT_TRUE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData));
@@ -2057,9 +2057,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     NEO::SvmAllocationData *srcAllocData;
     NEO::SvmAllocationData *dstAllocData;
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, srcAllocData);
     EXPECT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, dstAllocData);
     EXPECT_TRUE(dstFound);
     EXPECT_TRUE(cmdList.isSuitableUSMHostAlloc(srcAllocData));
     EXPECT_FALSE(cmdList.isSuitableUSMHostAlloc(dstAllocData));
@@ -2072,11 +2072,11 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
     NEO::SvmAllocationData *hostAllocData;
     NEO::SvmAllocationData *deviceAllocData;
     NEO::SvmAllocationData *sharedAllocData;
-    auto hostAllocFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &hostAllocData);
+    auto hostAllocFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, hostAllocData);
     EXPECT_TRUE(hostAllocFound);
-    auto deviceAllocFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &deviceAllocData);
+    auto deviceAllocFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, deviceAllocData);
     EXPECT_TRUE(deviceAllocFound);
-    auto sharedAllocFound = device->getDriverHandle()->findAllocationDataForRange(sharedPtr, 1024, &sharedAllocData);
+    auto sharedAllocFound = device->getDriverHandle()->findAllocationDataForRange(sharedPtr, 1024, sharedAllocData);
     EXPECT_TRUE(sharedAllocFound);
     EXPECT_FALSE(cmdList.isSuitableUSMSharedAlloc(hostAllocData));
     EXPECT_FALSE(cmdList.isSuitableUSMSharedAlloc(deviceAllocData));
@@ -2104,7 +2104,7 @@ HWTEST2_F(LocalMemoryMultiSubDeviceTest, givenImmediateCommandListWhenIsSuitable
     context->allocDeviceMem(device->toHandle(), &deviceDesc, 2 * MemoryConstants::megaByte, 1u, &devicePtr);
 
     NEO::SvmAllocationData *allocData;
-    auto allocFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 2 * MemoryConstants::megaByte, &allocData);
+    auto allocFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 2 * MemoryConstants::megaByte, allocData);
     EXPECT_TRUE(allocFound);
     EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(allocData));
     context->freeMem(devicePtr);
@@ -2131,9 +2131,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtr
     cmdList.copyThroughLockedPtrEnabled = false;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
     ASSERT_FALSE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
     ASSERT_TRUE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
@@ -2153,15 +2153,15 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTy
     NEO::SvmAllocationData *sharedUSMAllocData;
     NEO::SvmAllocationData *notSpecifiedAllocData;
 
-    const auto hostUSMFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &hostUSMAllocData);
+    const auto hostUSMFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, hostUSMAllocData);
     EXPECT_TRUE(hostUSMFound);
-    const auto hostNonUSMFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &hostNonUSMAllocData);
+    const auto hostNonUSMFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, hostNonUSMAllocData);
     EXPECT_FALSE(hostNonUSMFound);
-    const auto deviceUSMFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &deviceUSMAllocData);
+    const auto deviceUSMFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, deviceUSMAllocData);
     EXPECT_TRUE(deviceUSMFound);
-    const auto sharedUSMFound = device->getDriverHandle()->findAllocationDataForRange(sharedPtr, 1024, &sharedUSMAllocData);
+    const auto sharedUSMFound = device->getDriverHandle()->findAllocationDataForRange(sharedPtr, 1024, sharedUSMAllocData);
     EXPECT_TRUE(sharedUSMFound);
-    const auto hostUSM2Found = device->getDriverHandle()->findAllocationDataForRange(hostPtr2, 1024, &notSpecifiedAllocData);
+    const auto hostUSM2Found = device->getDriverHandle()->findAllocationDataForRange(hostPtr2, 1024, notSpecifiedAllocData);
     EXPECT_TRUE(hostUSM2Found);
 
     notSpecifiedAllocData->memoryType = NOT_SPECIFIED;
@@ -2238,7 +2238,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     NEO::SvmAllocationData *allocData;
-    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData);
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
@@ -2254,7 +2254,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     NEO::SvmAllocationData *allocData;
-    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData);
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
@@ -2276,11 +2276,11 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllo
     void *devicePtr2 = nullptr;
     context->allocDeviceMem(device->toHandle(), &deviceDesc, sz, 1u, &devicePtr2);
     NEO::SvmAllocationData *allocData2;
-    device->getDriverHandle()->findAllocationDataForRange(devicePtr2, 1024, &allocData2);
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr2, 1024, allocData2);
     auto dstAlloc2 = allocData2->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     NEO::SvmAllocationData *allocData;
-    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData);
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
@@ -2305,11 +2305,11 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmT
     void *hostPtr = nullptr;
     context->allocHostMem(&hostDesc, sz, 1u, &hostPtr);
     NEO::SvmAllocationData *hostAlloc;
-    device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &hostAlloc);
+    device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, hostAlloc);
     auto hostAlloction = hostAlloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     NEO::SvmAllocationData *allocData;
-    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData);
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
@@ -2328,7 +2328,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     NEO::SvmAllocationData *allocData;
-    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData);
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     device->getDriverHandle()->getMemoryManager()->lockResource(dstAlloc);
@@ -2350,7 +2350,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     NEO::SvmAllocationData *allocData;
-    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData);
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     auto lockedPtr = reinterpret_cast<char *>(dstAlloc->getLockedPtr());
@@ -2596,7 +2596,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPt
     ASSERT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
 
     NEO::SvmAllocationData *dstAllocData;
-    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1 * MemoryConstants::megaByte, &dstAllocData));
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1 * MemoryConstants::megaByte, dstAllocData));
     ASSERT_NE(dstAllocData, nullptr);
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     auto graphicsAllocation = dstAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -2776,7 +2776,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenAllocationDataWhenFailingToObtainLock
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     NEO::SvmAllocationData *dstAllocData = nullptr;
-    EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData));
+    EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, dstAllocData));
     ASSERT_NE(dstAllocData, nullptr);
     auto graphicsAllocation = dstAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_FALSE(graphicsAllocation->isLocked());
@@ -2802,8 +2802,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerforming
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(nullptr, nullptr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
     ASSERT_TRUE(srcFound != dstFound);
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
