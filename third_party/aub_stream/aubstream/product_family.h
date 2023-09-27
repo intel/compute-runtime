@@ -23,7 +23,6 @@ enum class ProductFamily : uint32_t {
     Adlp = 9u,
     Adln = 10u,
     Dg1 = 11u,
-    XeHpSdv = 12u,
     Dg2 = 13u,
     Pvc = 14u,
     Mtl = 15u,
