@@ -90,7 +90,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(cons
     validateAllocateProperties(properties);
     lastAllocationProperties.reset(new AllocationProperties(properties));
     if (returnFakeAllocation) {
-        return new GraphicsAllocation(properties.rootDeviceIndex, properties.allocationType, reinterpret_cast<void *>(dummyAddress), reinterpret_cast<uint64_t>(ptr), properties.size, 0, MemoryPool::System4KBPages, maxOsContextCount);
+        return new GraphicsAllocation(properties.rootDeviceIndex, properties.allocationType, const_cast<void *>(ptr), dummyAddress, properties.size, 0, MemoryPool::System4KBPages, maxOsContextCount);
     }
     if (isMockHostMemoryManager) {
         allocateGraphicsMemoryWithPropertiesCount++;

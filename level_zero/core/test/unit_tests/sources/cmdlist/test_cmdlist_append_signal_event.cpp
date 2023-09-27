@@ -109,14 +109,19 @@ HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTim
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->getCmdContainer();
 
-    uint64_t timestampAddress = 0x12345678555500;
-    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+    uint64_t dstAddress = 0x12345678555500;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(dstAddress);
+
+    commandContainer.getResidencyContainer().clear();
 
     commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto residencyContainer = commandContainer.getResidencyContainer();
+    auto timestampAlloc = residencyContainer[0];
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itorPC);
@@ -129,6 +134,8 @@ HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTim
     }
     EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
     EXPECT_FALSE(cmd->getDcFlushEnable());
+    EXPECT_EQ(dstAddress, reinterpret_cast<uint64_t>(timestampAlloc->getUnderlyingBuffer()));
+    auto timestampAddress = timestampAlloc->getGpuAddress();
     EXPECT_EQ(timestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
 
     itorPC++;
@@ -482,8 +489,12 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->getCmdContainer();
 
-    uint64_t timestampAddress = 0x12345678555500;
-    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->returnFakeAllocation = true;
+
+    uint64_t dstAddress = 0x123456785500;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(dstAddress);
+    commandContainer.getResidencyContainer().clear();
 
     constexpr uint32_t packets = 2u;
 
@@ -492,6 +503,11 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
     EXPECT_EQ(packets, event->getPacketsInUse());
+
+    auto residencyContainer = commandContainer.getResidencyContainer();
+    auto timestampAlloc = residencyContainer[1];
+    EXPECT_EQ(dstAddress, reinterpret_cast<uint64_t>(timestampAlloc->getUnderlyingBuffer()));
+    auto timestampAddress = timestampAlloc->getGpuAddress();
 
     auto eventGpuAddress = event->getGpuAddress(device);
     uint64_t contextStartAddress = eventGpuAddress + event->getContextStartOffset();

@@ -2539,12 +2539,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
 
     appendEventForProfiling(signalEvent, true, false);
 
+    auto allocationStruct = getAlignedAllocationData(this->device, dstptr, sizeof(uint64_t), false);
+    if (allocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+    commandContainer.addToResidencyContainer(allocationStruct.alloc);
+
     if (isCopyOnly()) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         args.timeStampOperation = true;
         args.commandWithPostSync = true;
         NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(),
-                                                       reinterpret_cast<uint64_t>(dstptr),
+                                                       allocationStruct.alignedAllocationPtr,
                                                        0,
                                                        args);
         makeResidentDummyAllocation();
@@ -2555,7 +2561,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
             NEO::PostSyncMode::Timestamp,
-            reinterpret_cast<uint64_t>(dstptr),
+            allocationStruct.alignedAllocationPtr,
             0,
             this->device->getNEODevice()->getRootDeviceEnvironment(),
             args);
@@ -2567,12 +2573,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         appendSignalInOrderDependencyCounter();
         handleInOrderDependencyCounter();
     }
-
-    auto allocationStruct = getAlignedAllocationData(this->device, dstptr, sizeof(uint64_t), false);
-    if (allocationStruct.alloc == nullptr) {
-        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-    }
-    commandContainer.addToResidencyContainer(allocationStruct.alloc);
 
     addToMappedEventList(signalEvent);
 

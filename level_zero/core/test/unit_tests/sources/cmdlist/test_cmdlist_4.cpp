@@ -39,12 +39,20 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimest
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->returnFakeAllocation = true;
 
-    uint64_t timestampAddress = 0xfffffffffff0L;
-    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+    uint64_t dstAddress = 0xfffffffffff0L;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(dstAddress);
+    commandContainer.getResidencyContainer().clear();
 
     const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+
+    auto residencyContainer = commandContainer.getResidencyContainer();
+    auto timestampAlloc = residencyContainer[0];
+    EXPECT_EQ(dstAddress, reinterpret_cast<uint64_t>(timestampAlloc->getUnderlyingBuffer()));
+    auto timestampAddress = timestampAlloc->getGpuAddress();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -57,9 +65,9 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimest
     ASSERT_NE(0u, iterator.size());
     for (auto it : iterator) {
         auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
-
+        auto postSyncDestAddress = cmd->getDestinationAddress();
         if ((cmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER) &&
-            (cmd->getDestinationAddress() == timestampAddress)) {
+            (postSyncDestAddress == timestampAddress)) {
             postSyncFound = true;
         }
     }
@@ -94,6 +102,40 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_FALSE(cmd->getDcFlushEnable());
             EXPECT_EQ(timestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            foundTimestampPipeControl = true;
+        }
+    }
+    EXPECT_TRUE(foundTimestampPipeControl);
+}
+
+HWTEST2_F(CommandListCreate, givenMovedDstptrWhenAppendWriteGlobalTimestampCalledThenPipeControlWithProperTimestampEncoded, IsAtLeastSkl) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto &commandContainer = commandList->getCmdContainer();
+
+    uint64_t timestampAddress = 0x123456785500;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress) + 1;
+    uint64_t expectedTimestampAddress = timestampAddress + sizeof(uint64_t);
+    const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
+
+    auto pcList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pcList.size());
+    bool foundTimestampPipeControl = false;
+    for (auto it : pcList) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_FALSE(cmd->getDcFlushEnable());
+            EXPECT_EQ(expectedTimestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             foundTimestampPipeControl = true;
         }
     }

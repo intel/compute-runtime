@@ -65,7 +65,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
 
     if (fakeBigAllocations && allocationData.size > bigAllocation) {
         memoryAllocation = createMemoryAllocation(
-            allocationData.type, nullptr, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), allocationData.size, counter,
+            allocationData.type, nullptr, reinterpret_cast<void *>(dummyAddress), dummyAddress, allocationData.size, counter,
             MemoryPool::System4KBPages, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
         counter++;
         return memoryAllocation;
@@ -294,7 +294,12 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         delete gfxAllocation->getGmm(handleId);
     }
 
-    if ((uintptr_t)gfxAllocation->getUnderlyingBuffer() == dummyAddress) {
+    if (gfxAllocation->getGpuAddress() == dummyAddress) {
+        delete gfxAllocation;
+        return;
+    }
+
+    if (reinterpret_cast<uint64_t>(gfxAllocation->getUnderlyingBuffer()) == dummyAddress) {
         delete gfxAllocation;
         return;
     }
