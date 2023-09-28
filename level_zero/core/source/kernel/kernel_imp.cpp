@@ -57,8 +57,7 @@ KernelImmutableData::KernelImmutableData(L0::Device *l0device) : device(l0device
 
 KernelImmutableData::~KernelImmutableData() {
     if (nullptr != isaGraphicsAllocation) {
-        this->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*isaGraphicsAllocation);
-        isaGraphicsAllocation.release();
+        this->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(isaGraphicsAllocation.release());
     }
     crossThreadDataTemplate.reset();
     surfaceStateHeapTemplate.reset();
