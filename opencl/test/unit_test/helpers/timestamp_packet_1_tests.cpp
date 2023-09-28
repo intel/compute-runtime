@@ -924,6 +924,63 @@ HWTEST_F(TimestampPacketTests, givenNewSubmissionWhileWaitingThenDontReleaseDefe
     cmdQ.reset();
 }
 
+HWTEST_F(TimestampPacketTests, givenNewBcsSubmissionWhileWaitingThenDontReleaseDeferredNodes) {
+    class MyMockCmdQ : public MockCommandQueueHw<FamilyType> {
+      public:
+        using MockCommandQueueHw<FamilyType>::MockCommandQueueHw;
+
+        WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
+            this->bcsStates[0].taskCount++;
+
+            return MockCommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList, skipWait);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(0);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+
+    EngineControl bcsEngine(&csr, &csr.getOsContext());
+
+    auto cmdQ = std::make_unique<MyMockCmdQ>(context, device.get(), nullptr);
+
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+    TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
+
+    cmdQ->bcsStates[0].engineType = aub_stream::EngineType::ENGINE_BCS;
+
+    cmdQ->bcsEngines[0] = &bcsEngine;
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    cmdQ->flush();
+
+    EXPECT_EQ(2u, csr.taskCount);
+    cmdQ->bcsStates[0].taskCount = 2;
+
+    auto tagAddress = csr.getTagAddress();
+    *tagAddress = 2;
+
+    cmdQ->finish();
+
+    EXPECT_EQ(3u, cmdQ->bcsStates[0].taskCount);
+
+    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+    *tagAddress = 3;
+
+    cmdQ->bcsEngines[0] = nullptr;
+    cmdQ->bcsStates[0].engineType = aub_stream::EngineType::NUM_ENGINES;
+
+    cmdQ.reset();
+}
+
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
 extern volatile TagAddressType *pauseAddress;
