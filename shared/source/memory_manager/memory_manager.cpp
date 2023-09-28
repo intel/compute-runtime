@@ -910,12 +910,14 @@ bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
 
 void MemoryManager::overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties) {
     if (DebugManager.flags.ForceSystemMemoryPlacement.get()) {
+        UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSystemMemoryPlacement.get()) {
             allocationData.flags.useSystemMemory = true;
         }
     }
 
     if (DebugManager.flags.ForceNonSystemMemoryPlacement.get()) {
+        UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceNonSystemMemoryPlacement.get()) {
             allocationData.flags.useSystemMemory = false;
         }
