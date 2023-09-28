@@ -22,9 +22,7 @@ typedef int socklen_t;
 #include <string.h>
 #include <unistd.h>
 typedef struct sockaddr SOCKADDR;
-#define SOCKET_ERROR -1
 #define INVALID_SOCKET -1
-#define WSAECONNRESET -1
 #endif
 #include "tbx_proto.h"
 
@@ -120,7 +118,7 @@ bool TbxSocketsImp::connectToServer(const std::string &hostNameOrIp, uint16_t po
         clientService.sin_family = AF_INET;
         clientService.sin_port = htons(port);
 
-        if (::connect(socket, (SOCKADDR *)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
+        if (::connect(socket, (SOCKADDR *)&clientService, sizeof(clientService)) == INVALID_SOCKET) {
             logErrorInfo("Failed to connect: ");
             cerrStream << "Is TBX server process running on host system [ " << hostNameOrIp.c_str()
                        << ", port " << port << "]?" << std::endl;
@@ -280,15 +278,11 @@ bool TbxSocketsImp::sendWriteData(const void *buffer, size_t sizeInBytes) {
 
     do {
         auto bytesSent = ::send(socket, &dataBuffer[totalSent], static_cast<int>(sizeInBytes - totalSent), 0);
-        if (bytesSent == 0 || bytesSent == WSAECONNRESET) {
+        if (bytesSent == 0 || bytesSent == INVALID_SOCKET) {
             logErrorInfo("Connection Closed.");
             return false;
         }
 
-        if (bytesSent == SOCKET_ERROR) {
-            logErrorInfo("Error on send()");
-            return false;
-        }
         totalSent += bytesSent;
     } while (totalSent < sizeInBytes);
 
@@ -301,13 +295,8 @@ bool TbxSocketsImp::getResponseData(void *buffer, size_t sizeInBytes) {
 
     do {
         auto bytesRecv = ::recv(socket, &dataBuffer[totalRecv], static_cast<int>(sizeInBytes - totalRecv), 0);
-        if (bytesRecv == 0 || bytesRecv == WSAECONNRESET) {
+        if (bytesRecv == 0 || bytesRecv == INVALID_SOCKET) {
             logErrorInfo("Connection Closed.");
-            return false;
-        }
-
-        if (bytesRecv == SOCKET_ERROR) {
-            logErrorInfo("Error on recv()");
             return false;
         }
 
