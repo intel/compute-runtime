@@ -1291,9 +1291,25 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
 
     waitStatus = waitUntilComplete(taskCountToWait, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
-    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
+    {
+        TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
 
-    handlePostCompletionOperations(this->taskCount != taskCountToWait);
+        /*
+           Check if queue resources cleanup after wait is possible.
+           If new submission happened during wait, we need to query completion (without waiting).
+         */
+
+        bool checkCompletion = (this->taskCount != taskCountToWait);
+
+        for (auto &state : activeBcsStates) {
+            if (this->bcsStates[EngineHelpers::getBcsIndex(state.engineType)].taskCount != state.taskCount) {
+                checkCompletion = true;
+                break;
+            }
+        }
+
+        handlePostCompletionOperations(checkCompletion);
+    }
 
     if (printfHandler) {
         if (!printfHandler->printEnqueueOutput()) {
