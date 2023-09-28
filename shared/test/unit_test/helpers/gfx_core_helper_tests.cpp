@@ -1177,12 +1177,6 @@ HWTEST_F(GfxCoreHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
     EXPECT_EQ(0u, gfxCoreHelper.getNumCacheRegions());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, whenCheckingForSmallKernelPreferenceThenFalseIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.preferSmallWorkgroupSizeForKernel(0u, this->pDevice->getRootDeviceEnvironment()));
-    EXPECT_FALSE(gfxCoreHelper.preferSmallWorkgroupSizeForKernel(20000u, this->pDevice->getRootDeviceEnvironment()));
-}
-
 HWTEST_F(GfxCoreHelperTest, whenSetCompressedFlagThenProperFlagSet) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());

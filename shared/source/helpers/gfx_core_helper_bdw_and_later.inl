@@ -94,11 +94,6 @@ uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, dou
     return static_cast<uint64_t>(timeStamp * frequency);
 }
 
-template <typename GfxFamily>
-inline bool GfxCoreHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    return false;
-}
-
 constexpr uint32_t planarYuvMaxHeight = 16352;
 
 template <typename GfxFamily>

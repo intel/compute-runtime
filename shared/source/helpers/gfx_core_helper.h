@@ -63,7 +63,6 @@ class GfxCoreHelper {
     virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
-    virtual bool preferSmallWorkgroupSizeForKernel(const size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isBufferSizeSuitableForCompression(const size_t size) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const = 0;
     static bool compressedBuffersSupported(const HardwareInfo &hwInfo);
@@ -348,8 +347,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     static size_t getSingleTimestampPacketSizeHw();
 
     void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const override;
-
-    bool preferSmallWorkgroupSizeForKernel(const size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const override;
 
