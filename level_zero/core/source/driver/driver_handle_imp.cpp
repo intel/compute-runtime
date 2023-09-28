@@ -230,6 +230,8 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         auto osInterface = device->getNEODevice()->getRootDeviceEnvironment().osInterface.get();
         if (osInterface && !osInterface->isDebugAttachAvailable() && enableProgramDebugging != NEO::DebuggingMode::Disabled) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Debug mode is not enabled in the system.\n");
             return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
 

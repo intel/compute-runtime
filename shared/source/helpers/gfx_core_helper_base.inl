@@ -25,6 +25,8 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "encode_surface_state_args.h"
+
 namespace NEO {
 
 template <typename Family>
@@ -612,6 +614,10 @@ void GfxCoreHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize) co
 
 template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const {
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(args.outMemory);
+    *surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
 template <typename GfxFamily>

@@ -12,6 +12,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -737,6 +738,131 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     ASSERT_EQ(0u, debugSurfaceState->getSurfaceBaseAddress());
 
     kernelImmData->isaGraphicsAllocation.reset(nullptr);
+    commandList->destroy();
+}
+struct DebuggerWithGlobalBindlessFixture : public L0DebuggerFixture {
+    void setUp() {
+        NEO::DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        L0DebuggerFixture::setUp(false);
+
+        auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(),
+                                                                   neoDevice->getNumGenericSubDevices() > 1,
+                                                                   neoDevice->getRootDeviceIndex(),
+                                                                   neoDevice->getDeviceBitfield());
+        mockHelper->globalBindlessDsh = false;
+        bindlessHelper = mockHelper.get();
+
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
+
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    void tearDown() {
+        L0DebuggerFixture::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+    MockBindlesHeapsHelper *bindlessHelper = nullptr;
+};
+
+using DebuggerWithGlobalBindlessTest = Test<DebuggerWithGlobalBindlessFixture>;
+
+HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCreatedThenDebugSurfaceStateIsProgrammedAtBindlessOffsetZero) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto globalBindlessBase = bindlessHelper->getGlobalHeapsBase();
+
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getCpuBase());
+    auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
+
+    EXPECT_EQ(globalBindlessBase, bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getHeapGpuBase());
+
+    SURFACE_STATE_BUFFER_LENGTH length;
+    length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
+
+    EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, debugSurfaceState->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, debugSurfaceState->getHeight());
+    EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
+}
+
+HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingKernelToCmdListThenCmdContainerSshIsNotUsedForDebugSurface) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    Mock<::L0::KernelImp> kernel;
+    kernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    kernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->close();
+
+    auto ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+
+    EXPECT_EQ(nullptr, ssh);
+}
+
+HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenExecutingCmdListThenSpecialSshIsResident) {
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    Mock<::L0::KernelImp> kernel;
+
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->close();
+
+    memoryOperationsHandler->captureGfxAllocationsForMakeResident = true;
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto allocIter = std::find(memoryOperationsHandler->gfxAllocationsForMakeResident.begin(),
+                               memoryOperationsHandler->gfxAllocationsForMakeResident.end(),
+                               bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+    EXPECT_EQ(memoryOperationsHandler->gfxAllocationsForMakeResident.end(), allocIter);
+    commandList->destroy();
+    commandQueue->destroy();
+}
+
+HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingToImmCmdListThenSpecialSshIsResident) {
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+
+    ze_command_list_handle_t commandListHandle = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue);
+    auto commandList = CommandList::fromHandle(commandListHandle);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    Mock<::L0::KernelImp> kernel;
+
+    memoryOperationsHandler->captureGfxAllocationsForMakeResident = true;
+
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto allocIter = std::find(memoryOperationsHandler->gfxAllocationsForMakeResident.begin(),
+                               memoryOperationsHandler->gfxAllocationsForMakeResident.end(),
+                               bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+    EXPECT_EQ(memoryOperationsHandler->gfxAllocationsForMakeResident.end(), allocIter);
     commandList->destroy();
 }
 

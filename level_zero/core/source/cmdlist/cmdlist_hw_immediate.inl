@@ -158,10 +158,13 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         if (this->device->getL0Debugger()) {
             this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
             this->csr->makeResident(*this->device->getDebugSurface());
+            if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
+                this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+            }
         }
 
         NEO::Device *neoDevice = this->device->getNEODevice();
-        if (neoDevice->getDebugger()) {
+        if (neoDevice->getDebugger() && !neoDevice->getBindlessHeapsHelper()) {
             auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
             auto &sshState = csrHw->getSshState();
             bool sshDirty = sshState.updateAndCheck(ssh);
@@ -270,10 +273,13 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
             UNRECOVERABLE_IF(!NEO::Debugger::isDebugEnabled(this->internalUsage));
             this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
             this->csr->makeResident(*this->device->getDebugSurface());
+            if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
+                this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+            }
         }
 
         NEO::Device *neoDevice = this->device->getNEODevice();
-        if (neoDevice->getDebugger() && this->immediateCmdListHeapSharing) {
+        if (neoDevice->getDebugger() && this->immediateCmdListHeapSharing && !neoDevice->getBindlessHeapsHelper()) {
             auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
             auto sshStateCopy = csrHw->getSshState();
             bool sshDirty = sshStateCopy.updateAndCheck(ssh);

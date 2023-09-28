@@ -18,6 +18,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -25,6 +26,7 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/topology_map.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
@@ -55,6 +57,8 @@
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
+
+#include "encode_surface_state_args.h"
 
 #include <algorithm>
 
@@ -1243,6 +1247,22 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *debugSurface),
                                                               *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
                                                               stateSaveAreaHeader.size());
+        if (neoDevice->getBindlessHeapsHelper()) {
+            auto &gfxCoreHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[debugSurface->getRootDeviceIndex()]->getHelper<NEO::GfxCoreHelper>();
+            auto ssh = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getCpuBase();
+            NEO::EncodeSurfaceStateArgs args;
+            args.outMemory = ssh;
+            args.graphicsAddress = device->getDebugSurface()->getGpuAddress();
+            args.size = device->getDebugSurface()->getUnderlyingBufferSize();
+            args.mocs = device->getMOCS(false, false);
+            args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+            args.allocation = device->getDebugSurface();
+            args.gmmHelper = neoDevice->getGmmHelper();
+            args.useGlobalAtomics = false;
+            args.areMultipleSubDevicesInContext = neoDevice->getNumGenericSubDevices() > 1;
+            args.isDebuggerActive = true;
+            gfxCoreHelper.encodeBufferSurfaceState(args);
+        }
     }
 
     for (auto &neoSubDevice : neoDevice->getSubDevices()) {

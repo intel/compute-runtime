@@ -913,6 +913,9 @@ void CommandQueueHw<gfxCoreFamily>::makeDebugSurfaceResidentIfNEODebuggerActive(
     }
     UNRECOVERABLE_IF(this->device->getDebugSurface() == nullptr);
     this->csr->makeResident(*this->device->getDebugSurface());
+    if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
+        this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

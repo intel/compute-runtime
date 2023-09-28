@@ -24,6 +24,9 @@ namespace ult {
 
 struct L0DebuggerFixture {
     void setUp() {
+        setUp(true);
+    }
+    void setUp(bool createDriver) {
 
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new NEO::MockBuiltins();
@@ -48,13 +51,15 @@ struct L0DebuggerFixture {
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
 
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
+        if (createDriver) {
+            NEO::DeviceVector devices;
+            devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+            driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+            driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
 
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[0];
+            driverHandle->initialize(std::move(devices));
+            device = driverHandle->devices[0];
+        }
     }
 
     void tearDown() {

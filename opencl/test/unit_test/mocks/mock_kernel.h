@@ -327,7 +327,7 @@ class MockKernelWithInternals {
             kernelInfo.setAddressQualifier(0, KernelArgMetadata::AddrGlobal);
             kernelInfo.setAccessQualifier(0, KernelArgMetadata::AccessReadWrite);
 
-            kernelInfo.addArgBuffer(1, 8, sizeof(uintptr_t), 72);
+            kernelInfo.addArgBuffer(1, 8, sizeof(uintptr_t), 0);
             kernelInfo.setAddressQualifier(1, KernelArgMetadata::AddrGlobal);
             kernelInfo.setAccessQualifier(1, KernelArgMetadata::AccessReadWrite);
 
@@ -363,8 +363,8 @@ class MockKernelWithInternals {
     SKernelBinaryHeaderCommon kernelHeader = {};
     uint32_t kernelIsa[32];
     char crossThreadData[256];
-    char sshLocal[128];
-    char dshLocal[128];
+    alignas(64) char sshLocal[128];
+    alignas(64) char dshLocal[128];
     std::vector<Kernel::SimpleKernelArgInfo> defaultKernelArguments;
 };
 class MockDebugKernel : public MockKernel {
