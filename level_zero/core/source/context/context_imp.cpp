@@ -157,6 +157,38 @@ bool ContextImp::isDeviceDefinedForThisContext(Device *inDevice) {
     return (this->getDevices().find(deviceIndex) != this->getDevices().end());
 }
 
+ze_result_t ContextImp::checkMemSizeLimit(Device *inDevice, size_t size, bool relaxedSizeAllowed, void **ptr) {
+    auto neoDevice = inDevice->getNEODevice();
+    auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+    uint32_t enabledSubDeviceCount = 1;
+    if (inDevice->isImplicitScalingCapable()) {
+        enabledSubDeviceCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
+    }
+    if (relaxedSizeAllowed == false &&
+        (size > neoDevice->getDeviceInfo().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
+    auto &productHelper = inDevice->getProductHelper();
+    auto physicalMemSize = productHelper.getDeviceMemoryPhysicalSizeInBytes(osInterface, 0) * enabledSubDeviceCount;
+    uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
+
+    uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
+    if ((!inDevice->isImplicitScalingCapable()) && (numSubDevices > 1)) {
+        globalMemSize = globalMemSize / numSubDevices;
+    }
+    uint64_t memSizeLimit = physicalMemSize;
+    if (physicalMemSize == 0) {
+        memSizeLimit = globalMemSize;
+    }
+    if (relaxedSizeAllowed && (size > memSizeLimit)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                        const ze_device_mem_alloc_desc_t *deviceDesc,
                                        size_t size,
@@ -207,21 +239,9 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         return ZE_RESULT_SUCCESS;
     }
 
-    if (lookupTable.relaxedSizeAllowed == false &&
-        (size > neoDevice->getDeviceInfo().maxMemAllocSize)) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-    }
-
-    uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
-
-    uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
-    if ((!device->isImplicitScalingCapable()) && (numSubDevices > 1)) {
-        globalMemSize = globalMemSize / numSubDevices;
-    }
-    if (lookupTable.relaxedSizeAllowed && (size > globalMemSize)) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    ze_result_t checkResult = checkMemSizeLimit(device, size, lookupTable.relaxedSizeAllowed, ptr);
+    if (checkResult != ZE_RESULT_SUCCESS) {
+        return checkResult;
     }
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
@@ -283,22 +303,9 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         return parseResult;
     }
 
-    if (lookupTable.relaxedSizeAllowed == false &&
-        (size > neoDevice->getDeviceInfo().maxMemAllocSize)) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-    }
-
-    uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
-
-    uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
-    if ((!device->isImplicitScalingCapable()) && (numSubDevices > 1)) {
-        globalMemSize = globalMemSize / numSubDevices;
-    }
-    if (lookupTable.relaxedSizeAllowed &&
-        (size > globalMemSize)) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    ze_result_t checkResult = checkMemSizeLimit(device, size, lookupTable.relaxedSizeAllowed, ptr);
+    if (checkResult != ZE_RESULT_SUCCESS) {
+        return checkResult;
     }
 
     auto deviceBitfields = this->deviceBitfields;
