@@ -21,6 +21,8 @@ std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<release>::getPreferredA
     case AllocationType::TAG_BUFFER:
     case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         return {};
+    case AllocationType::COMMAND_BUFFER:
+        return GfxMemoryAllocationMethod::UseUmdSystemPtr;
     default:
         return GfxMemoryAllocationMethod::AllocateByKmd;
     }

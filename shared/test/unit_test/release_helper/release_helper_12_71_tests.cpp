@@ -66,5 +66,5 @@ TEST_F(ReleaseHelper1271Tests, whenGettingMediaFrequencyTileIndexThenOneIsReturn
 }
 
 TEST_F(ReleaseHelper1271Tests, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer) {
-    whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer();
+    whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBufferAndCommandBuffer();
 }
