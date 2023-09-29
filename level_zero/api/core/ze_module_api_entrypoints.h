@@ -184,7 +184,7 @@ ze_result_t zeCommandListAppendLaunchMultipleKernelsIndirect(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pCountBuffer, *pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeKernelGetName(

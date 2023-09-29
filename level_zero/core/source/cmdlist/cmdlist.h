@@ -120,7 +120,7 @@ struct CommandList : _ze_command_list_handle_t {
                                                    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
     virtual ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels, const ze_kernel_handle_t *kernelHandles,
                                                             const uint32_t *pNumLaunchArguments,
-                                                            const ze_group_count_t &pLaunchArgumentsBuffer, ze_event_handle_t hEvent,
+                                                            const ze_group_count_t *pLaunchArgumentsBuffer, ze_event_handle_t hEvent,
                                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
     virtual ze_result_t appendMemAdvise(ze_device_handle_t hDevice, const void *ptr, size_t size,
                                         ze_memory_advice_t advice) = 0;

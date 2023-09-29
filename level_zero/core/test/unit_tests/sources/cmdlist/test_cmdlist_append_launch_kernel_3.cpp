@@ -159,7 +159,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
         device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
-    result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, launchKernelArgs, nullptr, 0, nullptr, false);
+    result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, &launchKernelArgs, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 0;
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -185,7 +185,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     const ze_kernel_handle_t launchKernels[3] = {kernel->toHandle(), kernel->toHandle(), kernel->toHandle()};
     uint32_t *numLaunchArgs;
     const uint32_t numKernels = 3;
-    const ze_group_count_t launchKernelArgs = {1, 1, 1};
+    const ze_group_count_t launchKernelArgs[numKernels] = {{1, 1, 1}, {2, 2, 2}, {1, 1, 1}};
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
         device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));

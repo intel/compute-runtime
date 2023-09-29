@@ -141,6 +141,70 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProper
     driverHandle->svmAllocsManager->freeSVMAlloc(pDispatchTraits);
 }
 
+TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCountIsProperlyProgrammed) {
+    const uint32_t groupSize[] = {1, 2, 3};
+    const uint32_t groupCount[] = {4, 3, 1};
+    const uint32_t groupCount2[] = {7, 6, 4};
+    uint8_t size = 3 * sizeof(uint32_t);
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+                                                                           1,
+                                                                           context->rootDeviceIndices,
+                                                                           context->deviceBitfields);
+
+    auto pDispatchTraits = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(2 * sizeof(ze_group_count_t), unifiedMemoryProperties);
+
+    auto kernelCount = reinterpret_cast<uint32_t *>(driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(uint32_t), unifiedMemoryProperties));
+    kernelCount[0] = 2;
+
+    auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    auto outBuffer2 = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+
+    memset(outBuffer, 0, size);
+    memset(outBuffer2, 0, size);
+
+    ze_group_count_t *dispatchTraits = reinterpret_cast<ze_group_count_t *>(pDispatchTraits);
+    dispatchTraits[0].groupCountX = groupCount[0];
+    dispatchTraits[0].groupCountY = groupCount[1];
+    dispatchTraits[0].groupCountZ = groupCount[2];
+
+    dispatchTraits[1].groupCountX = groupCount2[0];
+    dispatchTraits[1].groupCountY = groupCount2[1];
+    dispatchTraits[1].groupCountZ = groupCount2[2];
+
+    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device);
+    ASSERT_NE(nullptr, moduleHandle);
+    ze_kernel_handle_t kernels[2];
+
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "test_get_group_count";
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernels[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernels[0], 0, sizeof(void *), &outBuffer));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernels[0], groupSize[0], groupSize[1], groupSize[2]));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernels[1], 0, sizeof(void *), &outBuffer2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernels[1], groupSize[0], groupSize[1], groupSize[2]));
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchMultipleKernelsIndirect(cmdListHandle, 2, kernels, kernelCount, dispatchTraits, nullptr, 0, nullptr));
+    commandList->close();
+
+    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
+
+    EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(outBuffer2, groupCount2, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernels[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
+    driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer);
+    driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer2);
+    driverHandle->svmAllocsManager->freeSVMAlloc(kernelCount);
+    driverHandle->svmAllocsManager->freeSVMAlloc(pDispatchTraits);
+}
+
 TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyProgrammed) {
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
                                                                            1,
