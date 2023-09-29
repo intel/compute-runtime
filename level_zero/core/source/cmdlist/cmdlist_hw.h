@@ -331,7 +331,7 @@ struct CommandListCoreFamily : CommandListImp {
     virtual void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {}
     bool isInOrderEventWaitRequired(const Event &event) const;
     void handleInOrderImplicitDependencies(bool relaxedOrderingAllowed);
-    virtual void handleInOrderDependencyCounter();
+    virtual void handleInOrderDependencyCounter(Event *signalEvent);
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
 

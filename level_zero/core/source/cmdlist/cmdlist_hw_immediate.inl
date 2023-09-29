@@ -444,8 +444,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
 
     if (isInOrderExecutionEnabled() && launchParams.skipInOrderNonWalkerSignaling) {
         // skip only in base appendLaunchKernel()
-        handleInOrderNonWalkerSignaling(Event::fromHandle(hSignalEvent), stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
-        CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter();
+        auto event = Event::fromHandle(hSignalEvent);
+
+        handleInOrderNonWalkerSignaling(event, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
+        CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(event);
     }
 
     return flushImmediate(ret, true, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, true, hSignalEvent);
@@ -928,10 +930,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     if (signalEvent) {
         signalEvent->setCsr(this->csr, isInOrderExecutionEnabled());
         this->latestFlushIsHostVisible = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
-
-        if (isInOrderExecutionEnabled() && signalEvent->isInOrderExecEvent()) {
-            signalEvent->updateInOrderExecState(inOrderExecInfo, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
-        }
     } else {
         this->latestFlushIsHostVisible = false;
     }
