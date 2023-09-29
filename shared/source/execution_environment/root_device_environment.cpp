@@ -56,11 +56,8 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
 }
 
 void RootDeviceEnvironment::initDebuggerL0(Device *neoDevice) {
-    if (this->debugger.get() != nullptr) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
-        UNRECOVERABLE_IF(this->debugger.get() != nullptr);
-    }
+
+    DEBUG_BREAK_IF(this->debugger.get() != nullptr);
 
     this->getMutableHardwareInfo()->capabilityTable.fusedEuEnabled = false;
     this->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = false;
