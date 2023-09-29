@@ -157,10 +157,11 @@ ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
     }
 
     auto hostAddress = static_cast<uint64_t *>(ptrOffset(inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer(), this->inOrderAllocationOffset));
+    auto waitValue = getInOrderExecSignalValue();
     bool signaled = true;
 
     for (uint32_t i = 0; i < this->getPacketsInUse(); i++) {
-        if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, this->inOrderExecSignalValue, std::greater_equal<uint64_t>())) {
+        if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
             signaled = false;
             break;
         }
@@ -391,7 +392,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
 
     uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer(), this->inOrderAllocationOffset));
 
-    if (!csrs[0]->waitUserFence(this->inOrderExecSignalValue, waitAddress, timeout)) {
+    if (!csrs[0]->waitUserFence(getInOrderExecSignalValue(), waitAddress, timeout)) {
         return ZE_RESULT_NOT_READY;
     }
 

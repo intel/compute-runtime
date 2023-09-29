@@ -304,7 +304,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, false, false, false);
         } else {
             dispatchKernelArgs.eventAddress = inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + this->inOrderAllocationOffset;
-            dispatchKernelArgs.postSyncImmValue = this->inOrderDependencyCounter + 1;
+            dispatchKernelArgs.postSyncImmValue = inOrderExecInfo->inOrderDependencyCounter + 1;
         }
     }
 
@@ -334,7 +334,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             }
         } else {
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
-            addCmdForPatching(dispatchKernelArgs.outWalkerPtr, dispatchKernelArgs.postSyncImmValue, InOrderPatchCommandTypes::CmdType::Walker);
+            addCmdForPatching(dispatchKernelArgs.outWalkerPtr, dispatchKernelArgs.postSyncImmValue, InOrderPatchCommandHelpers::PatchCmdType::Walker);
         }
     }
 

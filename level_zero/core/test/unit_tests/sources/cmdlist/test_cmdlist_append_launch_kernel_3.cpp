@@ -959,7 +959,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEven
     EXPECT_EQ(MemoryConstants::pageSize64k, immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBufferSize());
 
     EXPECT_TRUE(events[0]->inOrderExecEvent);
-    EXPECT_EQ(events[0]->inOrderExecSignalValue, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
     EXPECT_EQ(&events[0]->inOrderExecInfo->inOrderDependencyCounterAllocation, &immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation);
     EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
 
@@ -1369,17 +1369,17 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleDependen
     EXPECT_NE(nullptr, immCmdList->inOrderExecInfo.get());
     EXPECT_EQ(AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getAllocationType());
 
-    EXPECT_EQ(0u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(0u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
     EXPECT_EQ(1u, ultCsr->makeResidentAllocations[&immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation]);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(2u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
     EXPECT_EQ(2u, ultCsr->makeResidentAllocations[&immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation]);
 }
 
@@ -1573,7 +1573,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
     auto eventPool = createEvents<FamilyType>(1, true);
     events[0]->signalScope = 0;
 
-    immCmdList->inOrderDependencyCounter = 1;
+    immCmdList->inOrderExecInfo->inOrderDependencyCounter = 1;
 
     EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0));
 
@@ -1582,7 +1582,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
     zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
 
     ASSERT_EQ(2u, immCmdList->flushData.size());
-    EXPECT_EQ(2u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     {
 
@@ -1681,7 +1681,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
     auto eventPool = createEvents<FamilyType>(1, true);
     events[0]->signalScope = 0;
 
-    immCmdList->inOrderDependencyCounter = 1;
+    immCmdList->inOrderExecInfo->inOrderDependencyCounter = 1;
 
     EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0));
 
@@ -1690,7 +1690,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
     zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
 
     ASSERT_EQ(1u, immCmdList->flushCount);
-    EXPECT_EQ(2u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenClearAndChainWithSyncAllocSignaling, IsAtLeastXeHpCore) {
@@ -1786,11 +1786,11 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
 using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 
 HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, NonPostSyncWalkerMatcher) {
-    InOrderPatchCommandTypes::BaseCmd<FamilyType> incorrectCmd(nullptr, 1, InOrderPatchCommandTypes::CmdType::None);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::None);
 
     EXPECT_ANY_THROW(incorrectCmd.patch(1));
 
-    InOrderPatchCommandTypes::BaseCmd<FamilyType> walkerCmd(nullptr, 1, InOrderPatchCommandTypes::CmdType::Walker);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Walker);
 
     EXPECT_ANY_THROW(walkerCmd.patch(1));
 }
@@ -1815,7 +1815,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramP
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->inOrderAllocationOffset = 64;
-    immCmdList->inOrderDependencyCounter = 123;
+    immCmdList->inOrderExecInfo->inOrderDependencyCounter = 123;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1844,7 +1844,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramP
 
     EXPECT_EQ(expectedAddress, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(immCmdList->inOrderDependencyCounter, sdiCmd->getDataDword0());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounter, sdiCmd->getDataDword0());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenProgramPcAndSignalAlloc, NonPostSyncWalkerMatcher) {
@@ -1854,7 +1854,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenPro
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->inOrderAllocationOffset = 64;
-    immCmdList->inOrderDependencyCounter = 123;
+    immCmdList->inOrderExecInfo->inOrderDependencyCounter = 123;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1892,7 +1892,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenPro
 
     EXPECT_EQ(expectedAddress, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(immCmdList->inOrderDependencyCounter, sdiCmd->getDataDword0());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounter, sdiCmd->getDataDword0());
 
     context->freeMem(hostAlloc);
 }
@@ -2196,9 +2196,9 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
     ASSERT_EQ(1u, regularCmdList->inOrderPatchCmds.size());
 
     if (NonPostSyncWalkerMatcher::isMatched<productFamily>()) {
-        EXPECT_EQ(InOrderPatchCommandTypes::CmdType::Sdi, regularCmdList->inOrderPatchCmds[0].cmdType);
+        EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::Sdi, regularCmdList->inOrderPatchCmds[0].patchCmdType);
     } else {
-        EXPECT_EQ(InOrderPatchCommandTypes::CmdType::Walker, regularCmdList->inOrderPatchCmds[0].cmdType);
+        EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::Walker, regularCmdList->inOrderPatchCmds[0].patchCmdType);
     }
 
     GenCmdList cmdList;
@@ -2213,6 +2213,79 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
 
     auto walkerItor = find<WALKER_TYPE *>(semaphoreItor, cmdList.end());
     EXPECT_NE(cmdList.end(), walkerItor);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFromImmediateThenUseSubmissionCounter, IsAtLeastSkl) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto regularCmdListHandle = regularCmdList->toHandle();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    uint64_t expectedCounterValue = regularCmdList->inOrderExecInfo->inOrderDependencyCounter;
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList->close();
+
+    uint64_t expectedCounterAppendValue = regularCmdList->inOrderExecInfo->inOrderDependencyCounter;
+
+    auto verifySemaphore = [&](uint64_t expectedValue) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), semaphoreItor);
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        if (semaphoreCmd->getSemaphoreGraphicsAddress() == immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress()) {
+            // skip implicit dependency
+            semaphoreItor++;
+            semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+            ASSERT_NE(nullptr, semaphoreCmd);
+        }
+
+        EXPECT_EQ(expectedValue, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(regularCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
+    };
+
+    // 0 Execute calls
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    verifySemaphore(expectedCounterValue);
+
+    // 1 Execute call
+    offset = cmdStream->getUsed();
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    verifySemaphore(expectedCounterValue);
+
+    // 2 Execute calls
+    offset = cmdStream->getUsed();
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    verifySemaphore(expectedCounterValue + expectedCounterAppendValue);
+
+    // 3 Execute calls
+    offset = cmdStream->getUsed();
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    verifySemaphore(expectedCounterValue + (expectedCounterAppendValue * 2));
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker, IsAtLeastXeHpCore) {
@@ -2610,7 +2683,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderDependencyCounter = std::numeric_limits<uint32_t>::max() - 1;
+    immCmdList->inOrderExecInfo->inOrderDependencyCounter = std::numeric_limits<uint32_t>::max() - 1;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -2668,7 +2741,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
         EXPECT_EQ(1u, sdiCmd->getDataDword0());
     }
 
-    EXPECT_EQ(expectedCounter, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(expectedCounter, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
     EXPECT_EQ(offset, immCmdList->inOrderAllocationOffset);
 
     EXPECT_EQ(expectedCounter, events[0]->inOrderExecSignalValue);
@@ -2756,7 +2829,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     auto offset = cmdStream->getUsed();
 
@@ -2820,7 +2893,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     auto offset = cmdStream->getUsed();
 
@@ -2856,7 +2929,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    EXPECT_EQ(1u, immCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     auto offset = cmdStream->getUsed();
 
@@ -3404,10 +3477,10 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
         walkerFromParser2 = genCmdCast<COMPUTE_WALKER *>(*itor);
     }
 
-    EXPECT_EQ(2u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     auto verifyPatching = [&](uint64_t executionCounter) {
-        auto appendValue = regularCmdList->inOrderDependencyCounter * executionCounter;
+        auto appendValue = regularCmdList->inOrderExecInfo->inOrderDependencyCounter * executionCounter;
 
         EXPECT_EQ(1u + appendValue, walkerFromContainer1->getPostSync().getImmediateData());
         EXPECT_EQ(1u + appendValue, walkerFromParser1->getPostSync().getImmediateData());
@@ -3629,10 +3702,10 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
         sdiFromParser2 = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
     }
 
-    EXPECT_EQ(2u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     auto verifyPatching = [&](uint64_t executionCounter) {
-        auto appendValue = regularCmdList->inOrderDependencyCounter * executionCounter;
+        auto appendValue = regularCmdList->inOrderExecInfo->inOrderDependencyCounter * executionCounter;
 
         EXPECT_EQ(1u + appendValue, sdiFromContainer1->getDataDword0());
         EXPECT_EQ(1u + appendValue, sdiFromParser1->getDataDword0());
@@ -3716,10 +3789,10 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
         walkerFromParser2 = genCmdCast<COMPUTE_WALKER *>(*itor);
     }
 
-    EXPECT_EQ(2u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     auto verifyPatching = [&](uint64_t executionCounter) {
-        auto appendValue = regularCmdList->inOrderDependencyCounter * executionCounter;
+        auto appendValue = regularCmdList->inOrderExecInfo->inOrderDependencyCounter * executionCounter;
 
         EXPECT_EQ(1u + appendValue, walkerFromContainer1->getPostSync().getImmediateData());
         EXPECT_EQ(1u + appendValue, walkerFromParser1->getPostSync().getImmediateData());
@@ -3754,9 +3827,9 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     size_t offset = cmdStream->getUsed();
 
-    EXPECT_EQ(0u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(1u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(1u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     {
         GenCmdList cmdList;
@@ -3781,7 +3854,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     offset = cmdStream->getUsed();
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(2u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
 
     {
         GenCmdList cmdList;
@@ -3809,7 +3882,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     *hostAddr = 0x1234;
 
     regularCmdList->reset();
-    EXPECT_EQ(0u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
     EXPECT_EQ(0u, regularCmdList->inOrderAllocationOffset);
     EXPECT_EQ(0u, *hostAddr);
 }
@@ -3829,7 +3902,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     size_t offset = cmdStream->getUsed();
 
-    EXPECT_EQ(0u, regularCmdList->inOrderDependencyCounter);
+    EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
     EXPECT_NE(nullptr, regularCmdList->inOrderExecInfo.get());
 
     constexpr size_t size = 128 * sizeof(uint32_t);

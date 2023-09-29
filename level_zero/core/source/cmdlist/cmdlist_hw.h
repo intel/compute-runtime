@@ -334,8 +334,9 @@ struct CommandListCoreFamily : CommandListImp {
     virtual void handleInOrderDependencyCounter(Event *signalEvent);
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
+    bool hasInOrderDependencies() const;
 
-    void addCmdForPatching(void *cmd, uint64_t counterValue, InOrderPatchCommandTypes::CmdType cmdType);
+    void addCmdForPatching(void *cmd, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 
     InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 };

@@ -220,7 +220,7 @@ struct Event : _ze_event_handle_t {
     bool isInOrderExecEvent() const { return inOrderExecEvent; }
     void enableInOrderMode() { this->inOrderExecEvent = true; }
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const;
-    uint64_t getInOrderExecSignalValue() const { return inOrderExecSignalValue; }
+    uint64_t getInOrderExecSignalValue() const;
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
     NEO::TimeStampData *peekReferenceTs() {

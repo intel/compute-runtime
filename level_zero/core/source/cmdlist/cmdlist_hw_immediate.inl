@@ -411,7 +411,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::waitForEventsFromHost() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const {
-    return (!relaxedOrderingDispatch && (numWaitEvents > 0 || this->inOrderDependencyCounter > 0));
+    return (!relaxedOrderingDispatch && (numWaitEvents > 0 || this->hasInOrderDependencies()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -517,7 +517,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
             if (hSignalEvent) {
-                Event::fromHandle(hSignalEvent)->updateInOrderExecState(inOrderExecInfo, this->inOrderDependencyCounter, this->inOrderAllocationOffset);
+                Event::fromHandle(hSignalEvent)->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->inOrderDependencyCounter, this->inOrderAllocationOffset);
             }
 
             return ZE_RESULT_SUCCESS;
@@ -1253,7 +1253,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const {
-    auto numEvents = numWaitEvents + ((inOrderDependencyCounter > 0) ? 1 : 0);
+    auto numEvents = numWaitEvents + (this->hasInOrderDependencies() ? 1 : 0);
 
     return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numEvents);
 }
@@ -1265,7 +1265,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
     ze_result_t status = ZE_RESULT_NOT_READY;
 
-    auto waitValue = this->inOrderDependencyCounter;
+    auto waitValue = inOrderExecInfo->inOrderDependencyCounter;
 
     lastHangCheckTime = std::chrono::high_resolution_clock::now();
     waitStartTime = lastHangCheckTime;

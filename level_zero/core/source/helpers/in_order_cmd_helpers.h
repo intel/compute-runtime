@@ -29,12 +29,21 @@ struct InOrderExecInfo : public NEO::NonCopyableClass {
 
     NEO::GraphicsAllocation &inOrderDependencyCounterAllocation;
     NEO::MemoryManager &memoryManager;
+    uint64_t inOrderDependencyCounter = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
     bool isRegularCmdList = false;
 };
 
-namespace InOrderPatchCommandTypes {
-enum class CmdType {
+namespace InOrderPatchCommandHelpers {
+inline uint64_t getAppendCounterValue(const InOrderExecInfo &inOrderExecInfo) {
+    if (inOrderExecInfo.isRegularCmdList && inOrderExecInfo.regularCmdListSubmissionCounter > 1) {
+        return inOrderExecInfo.inOrderDependencyCounter * (inOrderExecInfo.regularCmdListSubmissionCounter - 1);
+    }
+
+    return 0;
+}
+
+enum class PatchCmdType {
     None,
     Sdi,
     Semaphore,
@@ -42,18 +51,18 @@ enum class CmdType {
 };
 
 template <typename GfxFamily>
-struct BaseCmd {
-    BaseCmd(void *cmd, uint64_t baseCounterValue, CmdType cmdType) : cmd(cmd), baseCounterValue(baseCounterValue), cmdType(cmdType) {}
+struct PatchCmd {
+    PatchCmd(void *cmd, uint64_t baseCounterValue, PatchCmdType patchCmdType) : cmd(cmd), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType) {}
 
     void patch(uint64_t appendCunterValue) {
-        switch (cmdType) {
-        case CmdType::Sdi:
+        switch (patchCmdType) {
+        case PatchCmdType::Sdi:
             patchSdi(appendCunterValue);
             break;
-        case CmdType::Semaphore:
+        case PatchCmdType::Semaphore:
             patchSemaphore(appendCunterValue);
             break;
-        case CmdType::Walker:
+        case PatchCmdType::Walker:
             patchComputeWalker(appendCunterValue);
             break;
         default:
@@ -64,7 +73,7 @@ struct BaseCmd {
 
     void *cmd = nullptr;
     const uint64_t baseCounterValue = 0;
-    const CmdType cmdType = CmdType::None;
+    const PatchCmdType patchCmdType = PatchCmdType::None;
 
   protected:
     void patchSdi(uint64_t appendCunterValue) {
@@ -88,12 +97,12 @@ struct BaseCmd {
         }
     }
 
-    BaseCmd() = delete;
+    PatchCmd() = delete;
 };
 
-} // namespace InOrderPatchCommandTypes
+} // namespace InOrderPatchCommandHelpers
 
 template <typename GfxFamily>
-using InOrderPatchCommandsContainer = std::vector<InOrderPatchCommandTypes::BaseCmd<GfxFamily>>;
+using InOrderPatchCommandsContainer = std::vector<InOrderPatchCommandHelpers::PatchCmd<GfxFamily>>;
 
 } // namespace L0
