@@ -498,7 +498,7 @@ struct RequestProperty {
         componentId = other.componentId;
         paramInfo = other.paramInfo;
         dataSize = other.dataSize;
-        if (other.dataSize > 0 && other.dataSize < MaxPropertyBufferSize && other.dataBuffer) {
+        if (other.dataSize > 0 && other.dataSize < MaxPropertyBufferSize) {
             memcpy_s(dataBuffer, other.dataSize, other.dataBuffer, other.dataSize);
         }
     }
@@ -523,7 +523,7 @@ struct RequestProperty {
         componentId = other.componentId;
         paramInfo = other.paramInfo;
         dataSize = other.dataSize;
-        if (other.dataSize > 0 && other.dataSize < MaxPropertyBufferSize && other.dataBuffer) {
+        if (other.dataSize > 0 && other.dataSize < MaxPropertyBufferSize) {
             memcpy_s(dataBuffer, other.dataSize, other.dataBuffer, other.dataSize);
         }
         return *this;
@@ -543,7 +543,7 @@ struct ResponseProperty {
         returnCode = other.returnCode;
         componentId = other.componentId;
         dataSize = other.dataSize;
-        if (other.dataSize > 0 && other.dataSize < MaxPropertyBufferSize && other.dataBuffer) {
+        if (other.dataSize > 0 && other.dataSize < MaxPropertyBufferSize) {
             memcpy_s(dataBuffer, other.dataSize, other.dataBuffer, other.dataSize);
         }
     }
@@ -565,7 +565,7 @@ struct ResponseProperty {
         this->returnCode = other.returnCode;
         this->componentId = other.componentId;
         this->dataSize = other.dataSize;
-        if (other.dataSize > 0 && other.dataSize < MaxPropertyBufferSize && other.dataBuffer) {
+        if (other.dataSize > 0 && other.dataSize < MaxPropertyBufferSize) {
             memcpy_s(this->dataBuffer, other.dataSize, other.dataBuffer, other.dataSize);
         }
         return *this;
