@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ struct HardwareInfo;
 
 struct SystemInfo {
 
-    SystemInfo(const std::vector<uint8_t> &inputData);
+    SystemInfo(const std::vector<uint64_t> &inputData);
 
     ~SystemInfo() = default;
 
@@ -36,7 +36,7 @@ struct SystemInfo {
     void checkSysInfoMismatch(HardwareInfo *hwInfo);
 
   protected:
-    void parseDeviceBlob(const std::vector<uint8_t> &inputData);
+    void parseDeviceBlob(const std::vector<uint64_t> &inputData);
 
     uint32_t maxSlicesSupported = 0;
     uint32_t maxDualSubSlicesSupported = 0;
