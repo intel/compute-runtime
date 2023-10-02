@@ -109,10 +109,10 @@ extern HANDLE createFileAResults[];
 extern size_t deleteFileACalled;
 extern std::string deleteFiles[];
 
-extern bool callBaseReadFileEx;
-extern BOOL readFileExResult;
-extern size_t readFileExCalled;
-extern size_t readFileExBufferData;
+extern bool callBaseReadFile;
+extern BOOL readFileResult;
+extern size_t readFileCalled;
+extern size_t readFileBufferData;
 
 extern size_t writeFileCalled;
 extern BOOL writeFileResult;
@@ -130,6 +130,9 @@ extern size_t findCloseCalled;
 
 extern size_t getFileAttributesCalled;
 extern DWORD getFileAttributesResult;
+
+extern size_t setFilePointerCalled;
+extern DWORD setFilePointerResult;
 } // namespace SysCalls
 
 struct CompilerCacheWindowsTest : public ::testing::Test {
@@ -144,17 +147,19 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
           unlockFileExResultBackup(&SysCalls::unlockFileExResult),
           createFileACalledBackup(&SysCalls::createFileACalled),
           deleteFileACalledBackup(&SysCalls::deleteFileACalled),
-          callBaseReadFileExBackup(&SysCalls::callBaseReadFileEx),
-          readFileExResultBackup(&SysCalls::readFileExResult),
-          readFileExCalledBackup(&SysCalls::readFileExCalled),
-          readFileExBufferDataBackup(&SysCalls::readFileExBufferData),
+          callBaseReadFileBackup(&SysCalls::callBaseReadFile),
+          readFileResultBackup(&SysCalls::readFileResult),
+          readFileCalledBackup(&SysCalls::readFileCalled),
+          readFileBufferDataBackup(&SysCalls::readFileBufferData),
           writeFileCalledBackup(&SysCalls::writeFileCalled),
           writeFileResultBackup(&SysCalls::writeFileResult),
           writeFileNumberOfBytesWrittenBackup(&SysCalls::writeFileNumberOfBytesWritten),
           findFirstFileAResultBackup(&SysCalls::findFirstFileAResult),
           findNextFileACalledBackup(&SysCalls::findNextFileACalled),
           getFileAttributesCalledBackup(&SysCalls::getFileAttributesCalled),
-          getFileAttributesResultBackup(&SysCalls::getFileAttributesResult) {}
+          getFileAttributesResultBackup(&SysCalls::getFileAttributesResult),
+          setFilePointerCalledBackup(&SysCalls::setFilePointerCalled),
+          setFilePointerResultBackup(&SysCalls::setFilePointerResult) {}
 
     void SetUp() override {
         SysCalls::closeHandleCalled = 0u;
@@ -163,10 +168,11 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
         SysCalls::unlockFileExCalled = 0u;
         SysCalls::createFileACalled = 0u;
         SysCalls::deleteFileACalled = 0u;
-        SysCalls::readFileExCalled = 0u;
+        SysCalls::readFileCalled = 0u;
         SysCalls::writeFileCalled = 0u;
         SysCalls::findNextFileACalled = 0u;
         SysCalls::getFileAttributesCalled = 0u;
+        SysCalls::setFilePointerCalled = 0u;
     }
 
     void TearDown() override {
@@ -193,10 +199,10 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
     VariableBackup<BOOL> unlockFileExResultBackup;
     VariableBackup<size_t> createFileACalledBackup;
     VariableBackup<size_t> deleteFileACalledBackup;
-    VariableBackup<bool> callBaseReadFileExBackup;
-    VariableBackup<BOOL> readFileExResultBackup;
-    VariableBackup<size_t> readFileExCalledBackup;
-    VariableBackup<size_t> readFileExBufferDataBackup;
+    VariableBackup<bool> callBaseReadFileBackup;
+    VariableBackup<BOOL> readFileResultBackup;
+    VariableBackup<size_t> readFileCalledBackup;
+    VariableBackup<size_t> readFileBufferDataBackup;
     VariableBackup<size_t> writeFileCalledBackup;
     VariableBackup<BOOL> writeFileResultBackup;
     VariableBackup<DWORD> writeFileNumberOfBytesWrittenBackup;
@@ -204,6 +210,8 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
     VariableBackup<size_t> findNextFileACalledBackup;
     VariableBackup<size_t> getFileAttributesCalledBackup;
     VariableBackup<DWORD> getFileAttributesResultBackup;
+    VariableBackup<size_t> setFilePointerCalledBackup;
+    VariableBackup<DWORD> setFilePointerResultBackup;
 };
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCacheIsCalledThenDeleteTwoOldestFiles) {
@@ -258,9 +266,9 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
     SysCalls::lockFileExResult = TRUE;
 
-    SysCalls::callBaseReadFileEx = false;
-    SysCalls::readFileExResult = TRUE;
-    SysCalls::readFileExBufferData = readCacheDirSize;
+    SysCalls::callBaseReadFile = false;
+    SysCalls::readFileResult = TRUE;
+    SysCalls::readFileBufferData = readCacheDirSize;
 
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
@@ -272,7 +280,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     EXPECT_EQ(1u, SysCalls::createFileACalled);
     EXPECT_EQ(1u, SysCalls::lockFileExCalled);
 
-    EXPECT_EQ(1u, SysCalls::readFileExCalled);
+    EXPECT_EQ(1u, SysCalls::readFileCalled);
     EXPECT_EQ(readCacheDirSize, directorySize);
 
     EXPECT_EQ(0u, SysCalls::unlockFileExCalled);
@@ -286,8 +294,8 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
     SysCalls::lockFileExResult = FALSE;
 
-    SysCalls::callBaseReadFileEx = false;
-    SysCalls::readFileExResult = TRUE;
+    SysCalls::callBaseReadFile = false;
+    SysCalls::readFileResult = TRUE;
 
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
@@ -305,10 +313,45 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     EXPECT_EQ(1u, SysCalls::createFileACalled);
     EXPECT_EQ(1u, SysCalls::lockFileExCalled);
 
-    EXPECT_EQ(0u, SysCalls::readFileExCalled);
+    EXPECT_EQ(0u, SysCalls::readFileCalled);
 
     EXPECT_EQ(0u, SysCalls::unlockFileExCalled);
     EXPECT_EQ(0u, SysCalls::closeHandleCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigWhenSetFilePointerFailsThenErrorIsPrintedAndFileIsUnlockedAndClosed) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+
+    SysCalls::setFilePointerResult = 8;
+
+    const size_t cacheSize = MemoryConstants::megaByte - 2u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    UnifiedHandle configFileHandle{nullptr};
+    size_t directorySize = 0u;
+
+    ::testing::internal::CaptureStderr();
+    cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
+    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+
+    std::string expectedStderrSubstr("[Cache failure]: File pointer move failed! error code:");
+    EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
+
+    EXPECT_EQ(INVALID_HANDLE_VALUE, std::get<void *>(configFileHandle));
+    EXPECT_EQ(0u, directorySize);
+
+    EXPECT_EQ(1u, SysCalls::createFileACalled);
+    EXPECT_EQ(1u, SysCalls::lockFileExCalled);
+    EXPECT_EQ(1u, SysCalls::setFilePointerCalled);
+
+    EXPECT_EQ(0u, SysCalls::readFileCalled);
+
+    EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
 }
 
 TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigWhenReadFileFailsThenErrorIsPrintedAndFileIsUnlockedAndClosed) {
@@ -318,8 +361,8 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
     SysCalls::lockFileExResult = TRUE;
 
-    SysCalls::callBaseReadFileEx = false;
-    SysCalls::readFileExResult = FALSE;
+    SysCalls::callBaseReadFile = false;
+    SysCalls::readFileResult = FALSE;
 
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
@@ -337,21 +380,23 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     EXPECT_EQ(1u, SysCalls::createFileACalled);
     EXPECT_EQ(1u, SysCalls::lockFileExCalled);
 
-    EXPECT_EQ(1u, SysCalls::readFileExCalled);
+    EXPECT_EQ(1u, SysCalls::readFileCalled);
 
     EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
     EXPECT_EQ(1u, SysCalls::closeHandleCalled);
 }
 
-TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigFailsThenCreateNewConfigFileAndCountDirectorySize) {
+TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigFailsDueToFileNotFoundThenCreateNewConfigFileAndCountDirectorySize) {
     const size_t readCacheDirSize = 840 * MemoryConstants::kiloByte;
     SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
     SysCalls::createFileAResults[1] = reinterpret_cast<HANDLE>(0x1234);
     SysCalls::lockFileExResult = TRUE;
 
-    SysCalls::callBaseReadFileEx = false;
-    SysCalls::readFileExResult = TRUE;
-    SysCalls::readFileExBufferData = readCacheDirSize;
+    SysCalls::callBaseReadFile = false;
+    SysCalls::readFileResult = TRUE;
+    SysCalls::readFileBufferData = readCacheDirSize;
+
+    SysCalls::getLastErrorResult = ERROR_FILE_NOT_FOUND;
 
     WIN32_FIND_DATAA filesData[4];
     DWORD cacheFileSize = (MemoryConstants::megaByte / 6) + 10;
@@ -383,9 +428,63 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
 
     EXPECT_EQ(expectedDirectorySize, directorySize);
 
-    EXPECT_EQ(0u, SysCalls::readFileExCalled);
+    EXPECT_EQ(0u, SysCalls::readFileCalled);
     EXPECT_EQ(0u, SysCalls::unlockFileExCalled);
     EXPECT_EQ(0u, SysCalls::closeHandleCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigFailsThenPrintErrorMessageAndEarlyReturn) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    const size_t readCacheDirSize = 840 * MemoryConstants::kiloByte;
+    SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
+    SysCalls::createFileAResults[1] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+
+    SysCalls::callBaseReadFile = false;
+    SysCalls::readFileResult = TRUE;
+    SysCalls::readFileBufferData = readCacheDirSize;
+
+    SysCalls::getLastErrorResult = ERROR_FILE_NOT_FOUND + 1;
+
+    WIN32_FIND_DATAA filesData[4];
+    DWORD cacheFileSize = (MemoryConstants::megaByte / 6) + 10;
+
+    filesData[0].ftLastAccessTime.dwLowDateTime = 6u;
+    filesData[1].ftLastAccessTime.dwLowDateTime = 4u;
+    filesData[2].ftLastAccessTime.dwLowDateTime = 8u;
+    filesData[3].ftLastAccessTime.dwLowDateTime = 2u;
+
+    for (size_t i = 0; i < 4; i++) {
+        snprintf(filesData[i].cFileName, MAX_PATH, "file_%zu.cl_cache", i);
+        filesData[i].nFileSizeHigh = 0;
+        filesData[i].nFileSizeLow = cacheFileSize;
+        filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+
+        SysCalls::findNextFileAFileData[i] = filesData[i];
+    }
+
+    const size_t cacheSize = MemoryConstants::megaByte - 2u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    UnifiedHandle configFileHandle{nullptr};
+    size_t directorySize = 0u;
+    ::testing::internal::CaptureStderr();
+    cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
+    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+
+    std::string expectedStderrSubstr("[Cache failure]: Open config file failed! error code:");
+
+    EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
+
+    EXPECT_EQ(INVALID_HANDLE_VALUE, std::get<void *>(configFileHandle));
+    EXPECT_EQ(1u, SysCalls::createFileACalled);
+    EXPECT_EQ(0u, SysCalls::lockFileExCalled);
+    EXPECT_EQ(0u, SysCalls::readFileCalled);
+    EXPECT_EQ(0u, SysCalls::unlockFileExCalled);
+    EXPECT_EQ(0u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(0u, directorySize);
 }
 
 TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenCreateAndWriteTempFileSucceedsThenBinaryIsWritten) {
@@ -576,44 +675,6 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCacheAlreadyExistsThenDoNot
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
-}
-
-TEST_F(CompilerCacheWindowsTest, givenEmptyConfigFileWhenCacheBinaryAndReadConfigFailsWithEOFErrorThenConfigIsDeletedAndErrorIsPrinted) {
-    DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
-
-    SysCalls::getLastErrorResult = ERROR_HANDLE_EOF;
-
-    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
-    SysCalls::lockFileExResult = TRUE;
-
-    SysCalls::callBaseReadFileEx = false;
-    SysCalls::readFileExResult = FALSE;
-
-    const size_t cacheSize = MemoryConstants::megaByte - 2u;
-    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
-
-    const std::string kernelFileHash = "7e3291364d8df42";
-    const char *binary = "123456";
-    const size_t binarySize = strlen(binary);
-
-    ::testing::internal::CaptureStderr();
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
-
-    std::string expectedStderrSubstr1("[Cache failure]: Read config failed! error code:");
-    EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr1));
-
-    std::string expectedStderrSubstr2("[Cache info]: deleting the corrupted config file");
-    EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr2));
-
-    EXPECT_FALSE(result);
-    EXPECT_EQ(1u, SysCalls::createFileACalled);
-    EXPECT_EQ(1u, SysCalls::lockFileExCalled);
-    EXPECT_EQ(1u, SysCalls::readFileExCalled);
-    EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
-    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
-    EXPECT_EQ(1u, SysCalls::deleteFileACalled);
 }
 
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteToConfigFileFailsThenErrorIsPrinted) {

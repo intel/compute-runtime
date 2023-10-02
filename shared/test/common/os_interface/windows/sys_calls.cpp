@@ -68,10 +68,10 @@ HRESULT shGetKnownFolderPathResult = 0;
 extern const size_t shGetKnownFolderSetPathSize = 50;
 wchar_t shGetKnownFolderSetPath[shGetKnownFolderSetPathSize];
 
-bool callBaseReadFileEx = true;
-BOOL readFileExResult = TRUE;
-size_t readFileExCalled = 0u;
-size_t readFileExBufferData = 0u;
+bool callBaseReadFile = true;
+BOOL readFileResult = TRUE;
+size_t readFileCalled = 0u;
+size_t readFileBufferData = 0u;
 
 size_t writeFileCalled = 0u;
 BOOL writeFileResult = true;
@@ -89,6 +89,9 @@ size_t findCloseCalled = 0u;
 
 size_t getFileAttributesCalled = 0u;
 DWORD getFileAttributesResult = TRUE;
+
+size_t setFilePointerCalled = 0u;
+DWORD setFilePointerResult = 0;
 
 bool pathExists(const std::string &path) {
     std::string tempP1 = path;
@@ -214,15 +217,15 @@ HRESULT shGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD dwFlags, HANDLE hToken
     return shGetKnownFolderPathResult;
 }
 
-BOOL readFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
-    readFileExCalled++;
-    if (callBaseReadFileEx) {
-        return ReadFileEx(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped, lpCompletionRoutine);
+BOOL readFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped) {
+    readFileCalled++;
+    if (callBaseReadFile) {
+        return ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
     }
     if (lpBuffer) {
-        *static_cast<size_t *>(lpBuffer) = readFileExBufferData;
+        *static_cast<size_t *>(lpBuffer) = readFileBufferData;
     }
-    return readFileExResult;
+    return readFileResult;
 }
 
 BOOL writeFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped) {
@@ -259,6 +262,11 @@ BOOL findClose(HANDLE hFindFile) {
 DWORD getFileAttributesA(LPCSTR lpFileName) {
     getFileAttributesCalled++;
     return getFileAttributesResult;
+}
+
+DWORD setFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod) {
+    setFilePointerCalled++;
+    return setFilePointerResult;
 }
 
 void coTaskMemFree(LPVOID pv) {

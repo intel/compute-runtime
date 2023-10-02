@@ -103,6 +103,10 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
                                                           NULL);
 
     if (std::get<void *>(handle) == INVALID_HANDLE_VALUE) {
+        if (SysCalls::getLastError() != ERROR_FILE_NOT_FOUND) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Open config file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
+            return;
+        }
         std::get<void *>(handle) = NEO::SysCalls::createFileA(configFilePath.c_str(),
                                                               GENERIC_READ | GENERIC_WRITE,
                                                               FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -132,11 +136,6 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
                                             MAXDWORD,
                                             &overlapped);
 
-    if (result == FALSE && SysCalls::getLastError() == ERROR_IO_PENDING) { // if file is already locked by somebody else
-        DWORD numberOfBytesTransmitted = 0;
-        result = NEO::SysCalls::getOverlappedResult(std::get<void *>(handle), &overlapped, &numberOfBytesTransmitted, TRUE);
-    }
-
     if (!result) {
         std::get<void *>(handle) = INVALID_HANDLE_VALUE;
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Lock config file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
@@ -150,8 +149,24 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
             directorySize += static_cast<size_t>(file.fileSize);
         }
     } else {
-        memset(&overlapped, 0, sizeof(overlapped));
-        result = NEO::SysCalls::readFileEx(std::get<void *>(handle), &directorySize, sizeof(directorySize), &overlapped, NULL);
+        DWORD fPointer = NEO::SysCalls::setFilePointer(std::get<void *>(handle),
+                                                       0,
+                                                       NULL,
+                                                       FILE_BEGIN);
+        if (fPointer != 0) {
+            directorySize = 0;
+            unlockFileAndClose(std::get<void *>(handle));
+            std::get<void *>(handle) = INVALID_HANDLE_VALUE;
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: File pointer move failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
+            return;
+        }
+
+        DWORD numOfBytesRead = 0;
+        result = NEO::SysCalls::readFile(std::get<void *>(handle),
+                                         &directorySize,
+                                         sizeof(directorySize),
+                                         &numOfBytesRead,
+                                         NULL);
 
         if (!result) {
             directorySize = 0;
@@ -235,10 +250,6 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     lockConfigFileAndReadSize(configFilePath, hConfigFile, directorySize);
 
     if (std::get<void *>(hConfigFile) == INVALID_HANDLE_VALUE) {
-        if (SysCalls::getLastError() == ERROR_HANDLE_EOF) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache info]: deleting the corrupted config file\n", NEO::SysCalls::getProcessId());
-            SysCalls::deleteFileA(configFilePath.c_str());
-        }
         return false;
     }
 
@@ -274,11 +285,12 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     directorySize += binarySize;
 
     DWORD sizeWritten = 0;
+    OVERLAPPED overlapped = {0};
     auto result = NEO::SysCalls::writeFile(std::get<void *>(hConfigFile),
                                            &directorySize,
                                            (DWORD)sizeof(directorySize),
                                            &sizeWritten,
-                                           NULL);
+                                           &overlapped);
 
     if (!result) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing to config file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
