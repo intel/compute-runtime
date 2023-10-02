@@ -44,8 +44,8 @@ namespace NEO {
 
 int IoctlHelperXe::xeGetQuery(Query *data) {
     if (data->numItems == 1) {
-        QueryItem *queryItem = (QueryItem *)data->itemsPtr;
-        std::vector<uint8_t> *queryData = nullptr;
+        QueryItem *queryItem = reinterpret_cast<QueryItem *>(data->itemsPtr);
+        std::vector<uint64_t> *queryData = nullptr;
         switch (queryItem->queryId) {
         case static_cast<int>(DrmParam::QueryHwconfigTable):
             queryData = &hwconfigFakei915;
@@ -55,14 +55,12 @@ int IoctlHelperXe::xeGetQuery(Query *data) {
             return -1;
         }
         if (queryData != nullptr) {
+            auto queryDataSize = static_cast<int32_t>(queryData->size() / sizeof(uint64_t));
             if (queryItem->length == 0) {
-                queryItem->length = static_cast<int32_t>(queryData->size());
+                queryItem->length = queryDataSize;
                 return 0;
             }
-            if (queryItem->length != static_cast<int32_t>(queryData->size())) {
-                xeLog("error: incorrect length 0x%x 0x%lx\n", queryItem->length, queryData->size());
-                return -1;
-            }
+            UNRECOVERABLE_IF(queryItem->length != queryDataSize);
             memcpy_s(reinterpret_cast<void *>(queryItem->dataPtr),
                      queryItem->length, queryData->data(), queryItem->length);
             return 0;
@@ -136,7 +134,7 @@ bool IoctlHelperXe::initialize() {
     if (retVal != 0 || queryConfig.size == 0) {
         return false;
     }
-    auto data = std::vector<uint8_t>(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, 0);
+    auto data = std::vector<uint64_t>(Math::divideAndRoundUp(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, sizeof(uint64_t)), 0);
     struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(data.data());
     queryConfig.data = castToUint64(config);
     IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
@@ -195,13 +193,13 @@ bool IoctlHelperXe::isVmBindAvailable() {
     return true;
 }
 
-std::vector<uint8_t> IoctlHelperXe::queryData(uint32_t queryId) {
+std::vector<uint64_t> IoctlHelperXe::queryData(uint32_t queryId) {
     struct drm_xe_device_query deviceQuery = {};
     deviceQuery.query = queryId;
 
     IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
 
-    std::vector<uint8_t> retVal(deviceQuery.size);
+    std::vector<uint64_t> retVal(Math::divideAndRoundUp(deviceQuery.size, sizeof(uint64_t)));
 
     deviceQuery.data = castToUint64(retVal.data());
     IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
@@ -212,7 +210,7 @@ std::vector<uint8_t> IoctlHelperXe::queryData(uint32_t queryId) {
 std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled) {
     auto enginesData = queryData(DRM_XE_DEVICE_QUERY_ENGINES);
 
-    auto numberHwEngines = enginesData.size() /
+    auto numberHwEngines = enginesData.size() * sizeof(uint64_t) /
                            sizeof(struct drm_xe_engine_class_instance);
 
     xeLog("numberHwEngines=%d\n", numberHwEngines);
@@ -377,8 +375,8 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     std::vector<std::bitset<8>> geomDss[2];
     std::vector<std::bitset<8>> computeDss[2];
     std::vector<std::bitset<8>> euDss[2];
-    auto topologySize = queryGtTopology.size();
-    uint8_t *dataPtr = reinterpret_cast<uint8_t *>(queryGtTopology.data());
+    auto topologySize = queryGtTopology.size() * sizeof(uint64_t);
+    uint64_t *dataPtr = reinterpret_cast<uint64_t *>(queryGtTopology.data());
 
     auto nTiles = 1u;
 
@@ -406,7 +404,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
 
         uint32_t itemSize = sizeof(drm_xe_query_topology_mask) + topo->num_bytes;
         topologySize -= itemSize;
-        dataPtr += itemSize;
+        dataPtr = ptrOffset(dataPtr, itemSize);
     }
 
     bool isComputeDssEmpty = false;

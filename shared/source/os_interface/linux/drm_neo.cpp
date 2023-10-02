@@ -16,6 +16,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -601,7 +602,7 @@ std::string Drm::getDrmVersion(int fileDescriptor) {
     return std::string(name);
 }
 
-std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
+std::vector<uint64_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     Query query{};
     QueryItem queryItem{};
     queryItem.queryId = queryId;
@@ -615,7 +616,7 @@ std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
         return {};
     }
 
-    auto data = std::vector<uint8_t>(queryItem.length, 0);
+    auto data = std::vector<uint64_t>(Math::divideAndRoundUp(queryItem.length, sizeof(uint64_t)), 0);
     queryItem.dataPtr = castToUint64(data.data());
 
     ret = ioctlHelper->ioctl(DrmIoctl::Query, &query);
@@ -941,7 +942,7 @@ bool Drm::querySystemInfo() {
     return true;
 }
 
-std::vector<uint8_t> Drm::getMemoryRegions() {
+std::vector<uint64_t> Drm::getMemoryRegions() {
     auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryMemoryRegions);
     return this->query(request, 0);
 }

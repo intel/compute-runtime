@@ -9,7 +9,7 @@
 
 #include "drm/intel_hwconfig_types.h"
 
-static constexpr uint32_t dummyDeviceBlobData[] = {
+alignas(64) static constexpr uint32_t dummyDeviceBlobData[] = {
     INTEL_HWCONFIG_MAX_SLICES_SUPPORTED,
     1,
     0x01,
@@ -132,5 +132,5 @@ static constexpr uint32_t dummyDeviceBlobData[] = {
     0x2D,
 };
 
-const std::vector<uint8_t> inputBlobData(reinterpret_cast<const uint8_t *>(dummyDeviceBlobData),
-                                         reinterpret_cast<const uint8_t *>(dummyDeviceBlobData) + sizeof(dummyDeviceBlobData));
+const std::vector<uint64_t> inputBlobData(reinterpret_cast<const uint64_t *>(dummyDeviceBlobData),
+                                          reinterpret_cast<const uint64_t *>(ptrOffset(dummyDeviceBlobData, sizeof(dummyDeviceBlobData))));
