@@ -518,6 +518,9 @@ struct RequestProperty {
         }
     }
     RequestProperty &operator=(const RequestProperty &other) {
+        if (this == &other) {
+            return *this;
+        }
         requestId = other.requestId;
         commandId = other.commandId;
         componentId = other.componentId;
@@ -561,6 +564,9 @@ struct ResponseProperty {
         }
     }
     ResponseProperty &operator=(const ResponseProperty &other) {
+        if (this == &other) {
+            return *this;
+        }
         this->requestId = other.requestId;
         this->returnCode = other.returnCode;
         this->componentId = other.componentId;

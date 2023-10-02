@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,9 @@ class ConstStringRef {
     }
 
     ConstStringRef &operator=(const ConstStringRef &rhs) {
+        if (this == &rhs) {
+            return *this;
+        }
         this->ptr = rhs.ptr;
         this->len = rhs.len;
         return *this;

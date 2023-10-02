@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,9 @@ class ArrayRef {
     }
 
     ArrayRef &operator=(const ArrayRef &src) {
+        if (this == &src) {
+            return *this;
+        }
         this->begIt = src.begIt;
         this->endIt = src.endIt;
         return *this;

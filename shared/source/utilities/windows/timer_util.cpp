@@ -53,6 +53,9 @@ class Timer::TimerImpl {
     }
 
     TimerImpl &operator=(const TimerImpl &t) {
+        if (this == &t) {
+            return *this;
+        }
         startTime = t.startTime;
         return *this;
     }

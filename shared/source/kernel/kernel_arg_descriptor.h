@@ -305,6 +305,9 @@ inline bool patchPointer(ArrayRef<uint8_t> buffer, const ArgDescPointer &arg, ui
 }
 
 inline ArgDescriptor &ArgDescriptor::operator=(const ArgDescriptor &rhs) {
+    if (this == &rhs) {
+        return *this;
+    }
     this->type = ArgTUnknown;
     switch (rhs.type) {
     default:
