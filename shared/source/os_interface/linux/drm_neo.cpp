@@ -16,6 +16,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -601,7 +602,8 @@ std::string Drm::getDrmVersion(int fileDescriptor) {
     return std::string(name);
 }
 
-std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
+template <typename DataType>
+std::vector<DataType> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     Query query{};
     QueryItem queryItem{};
     queryItem.queryId = queryId;
@@ -615,7 +617,7 @@ std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
         return {};
     }
 
-    auto data = std::vector<uint8_t>(queryItem.length, 0);
+    auto data = std::vector<DataType>(Math::divideAndRoundUp(queryItem.length, sizeof(DataType)), 0);
     queryItem.dataPtr = castToUint64(data.data());
 
     ret = ioctlHelper->ioctl(DrmIoctl::Query, &query);
@@ -932,7 +934,7 @@ int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWi
 
 bool Drm::querySystemInfo() {
     auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryHwconfigTable);
-    auto deviceBlobQuery = this->query(request, 0);
+    auto deviceBlobQuery = this->query<uint32_t>(request, 0);
     if (deviceBlobQuery.empty()) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
         return false;
@@ -941,9 +943,9 @@ bool Drm::querySystemInfo() {
     return true;
 }
 
-std::vector<uint8_t> Drm::getMemoryRegions() {
+std::vector<uint64_t> Drm::getMemoryRegions() {
     auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryMemoryRegions);
-    return this->query(request, 0);
+    return this->query<uint64_t>(request, 0);
 }
 
 bool Drm::queryMemoryInfo() {
@@ -1522,4 +1524,7 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
         completionFenceCpuAddress = ptrOffset(completionFenceCpuAddress, postSyncOffset);
     }
 }
+template std::vector<uint16_t> Drm::query<uint16_t>(uint32_t queryId, uint32_t queryItemFlags);
+template std::vector<uint32_t> Drm::query<uint32_t>(uint32_t queryId, uint32_t queryItemFlags);
+template std::vector<uint64_t> Drm::query<uint64_t>(uint32_t queryId, uint32_t queryItemFlags);
 } // namespace NEO

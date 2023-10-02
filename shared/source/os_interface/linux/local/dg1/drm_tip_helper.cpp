@@ -12,10 +12,10 @@
 
 namespace NEO {
 
-bool isQueryDrmTip(const std::vector<uint8_t> &queryInfo) {
+bool isQueryDrmTip(const std::vector<uint64_t> &queryInfo) {
     auto dataOnDrmTip = reinterpret_cast<const drm_i915_query_memory_regions *>(queryInfo.data());
     auto lengthOnDrmTip = static_cast<uint32_t>(sizeof(drm_i915_query_memory_regions) + dataOnDrmTip->num_regions * sizeof(drm_i915_memory_region_info));
-    return static_cast<uint32_t>(queryInfo.size()) == lengthOnDrmTip;
+    return static_cast<uint32_t>(queryInfo.size() * sizeof(uint64_t)) == lengthOnDrmTip;
 }
 
 } // namespace NEO

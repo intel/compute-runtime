@@ -32,7 +32,7 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsNotCreatedAndIoctl
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThenReturnZero) {
-    std::vector<uint8_t> inputData{};
+    std::vector<uint32_t> inputData{};
     SystemInfo systemInfo(inputData);
 
     EXPECT_EQ(0u, systemInfo.getMemoryType());

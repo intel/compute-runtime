@@ -132,5 +132,5 @@ static constexpr uint32_t dummyDeviceBlobData[] = {
     0x2D,
 };
 
-const std::vector<uint8_t> inputBlobData(reinterpret_cast<const uint8_t *>(dummyDeviceBlobData),
-                                         reinterpret_cast<const uint8_t *>(dummyDeviceBlobData) + sizeof(dummyDeviceBlobData));
+const std::vector<uint32_t> inputBlobData(reinterpret_cast<const uint32_t *>(dummyDeviceBlobData),
+                                          reinterpret_cast<const uint32_t *>(ptrOffset(dummyDeviceBlobData, sizeof(dummyDeviceBlobData))));

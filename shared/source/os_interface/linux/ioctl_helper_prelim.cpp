@@ -95,7 +95,7 @@ bool IoctlHelperPrelim20::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQ
             uint32_t flags = classInstance->engineClass;
             flags |= (classInstance->engineInstance << 8);
 
-            auto dataQuery = drm.query(request, flags);
+            auto dataQuery = drm.query<uint64_t>(request, flags);
             if (dataQuery.empty()) {
                 success = false;
                 break;

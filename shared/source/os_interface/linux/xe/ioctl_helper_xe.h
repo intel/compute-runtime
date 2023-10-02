@@ -120,7 +120,8 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetClassName(int className);
     const char *xeGetBindOpName(int bindOp);
     const char *xeGetengineClassName(uint32_t engineClass);
-    std::vector<uint8_t> queryData(uint32_t queryId);
+    template <typename DataType>
+    std::vector<DataType> queryData(uint32_t queryId);
     int xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout);
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
     void xeShowBindTable();
@@ -145,7 +146,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::vector<BindInfo> bindInfo;
     int instance = 0;
     uint32_t xeTimestampFrequency = 0;
-    std::vector<uint8_t> hwconfigFakei915;
+    std::vector<uint64_t> hwconfigFakei915;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
     std::vector<drm_xe_engine_class_instance> allEngines;
 };

@@ -311,7 +311,7 @@ class DrmMockXe : public DrmMockCustom {
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
     int gemVmBindReturn = 0;
-    const drm_xe_engine_class_instance queryEngines[9] = {
+    const drm_xe_engine_class_instance queryEngines[11] = {
         {DRM_XE_ENGINE_CLASS_RENDER, 0, 0},
         {DRM_XE_ENGINE_CLASS_COPY, 1, 0},
         {DRM_XE_ENGINE_CLASS_COPY, 2, 0},
@@ -319,8 +319,10 @@ class DrmMockXe : public DrmMockCustom {
         {DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0},
         {DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1},
         {DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1},
-        {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 7, 1},
-        {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 8, 0}};
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1},
+        {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1},
+        {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}};
 
     static_assert(sizeof(drm_xe_query_mem_region) == 12 * sizeof(uint64_t), "");
     uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
@@ -1282,6 +1284,18 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
         EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COMPUTE), ccs1Engine1->engineClass);
         EXPECT_EQ(1u, engineInfo->getEngineTileIndex(*ccs1Engine1));
 
+        auto ccs1Engine2 = engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS2);
+        EXPECT_NE(nullptr, ccs1Engine2);
+        EXPECT_EQ(7, ccs1Engine2->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COMPUTE), ccs1Engine2->engineClass);
+        EXPECT_EQ(1u, engineInfo->getEngineTileIndex(*ccs1Engine2));
+
+        auto ccs1Engine3 = engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS3);
+        EXPECT_NE(nullptr, ccs1Engine3);
+        EXPECT_EQ(8, ccs1Engine3->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COMPUTE), ccs1Engine3->engineClass);
+        EXPECT_EQ(1u, engineInfo->getEngineTileIndex(*ccs1Engine3));
+
         std::vector<EngineClassInstance> enginesOnTile0;
         std::vector<EngineClassInstance> enginesOnTile1;
         engineInfo->getListOfEnginesOnATile(0, enginesOnTile0);
@@ -1294,7 +1308,7 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
         bool foundVideDecodeEngine = false;
         for (const auto &engine : enginesOnTile1) {
             if (engine.engineClass == DRM_XE_ENGINE_CLASS_VIDEO_DECODE) {
-                EXPECT_EQ(7, engine.engineInstance);
+                EXPECT_EQ(9, engine.engineInstance);
                 foundVideDecodeEngine = true;
             }
         }
@@ -1303,7 +1317,7 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
         bool foundVideoEnhanceEngine = false;
         for (const auto &engine : enginesOnTile0) {
             if (engine.engineClass == DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE) {
-                EXPECT_EQ(8, engine.engineInstance);
+                EXPECT_EQ(10, engine.engineInstance);
                 foundVideoEnhanceEngine = true;
             }
         }
@@ -1311,6 +1325,14 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
 
         for (const auto &engine : enginesOnTile1) {
             EXPECT_NE(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE), engine.engineClass);
+        }
+
+        if (isSysmanEnabled) {
+            EXPECT_EQ(6u, enginesOnTile0.size());
+            EXPECT_EQ(5u, enginesOnTile1.size());
+        } else {
+            EXPECT_EQ(5u, enginesOnTile0.size());
+            EXPECT_EQ(4u, enginesOnTile1.size());
         }
     }
 }

@@ -121,7 +121,7 @@ int IoctlHelper::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t 
     return drmContextId;
 }
 
-std::vector<EngineCapabilities> IoctlHelper::translateToEngineCaps(const std::vector<uint8_t> &data) {
+std::vector<EngineCapabilities> IoctlHelper::translateToEngineCaps(const std::vector<uint64_t> &data) {
     auto engineInfo = reinterpret_cast<const drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;
     engines.reserve(engineInfo->num_engines);
@@ -135,7 +135,7 @@ std::vector<EngineCapabilities> IoctlHelper::translateToEngineCaps(const std::ve
     return engines;
 }
 
-std::vector<MemoryRegion> IoctlHelper::translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
+std::vector<MemoryRegion> IoctlHelper::translateToMemoryRegions(const std::vector<uint64_t> &regionInfo) {
     auto *data = reinterpret_cast<const drm_i915_query_memory_regions *>(regionInfo.data());
     auto memRegions = std::vector<MemoryRegion>(data->num_regions);
     for (uint32_t i = 0; i < data->num_regions; i++) {
@@ -393,7 +393,7 @@ bool IoctlHelper::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest)
 
 std::unique_ptr<MemoryInfo> IoctlHelper::createMemoryInfo() {
     auto request = getDrmParamValue(DrmParam::QueryMemoryRegions);
-    auto dataQuery = drm.query(request, 0);
+    auto dataQuery = drm.query<uint64_t>(request, 0);
     if (!dataQuery.empty()) {
         auto memRegions = translateToMemoryRegions(dataQuery);
         return std::make_unique<MemoryInfo>(memRegions, drm);
@@ -404,7 +404,7 @@ std::unique_ptr<MemoryInfo> IoctlHelper::createMemoryInfo() {
 bool IoctlHelper::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
 
     auto request = this->getDrmParamValue(DrmParam::QueryTopologyInfo);
-    auto dataQuery = drm.query(request, 0);
+    auto dataQuery = drm.query<uint64_t>(request, 0);
     if (dataQuery.empty()) {
         return false;
     }
@@ -489,7 +489,7 @@ bool IoctlHelper::translateTopologyInfo(const QueryTopologyInfo *queryTopologyIn
 
 std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) {
     auto request = getDrmParamValue(DrmParam::QueryEngineInfo);
-    auto enginesQuery = drm.query(request, 0);
+    auto enginesQuery = drm.query<uint64_t>(request, 0);
     if (enginesQuery.empty()) {
         return {};
     }

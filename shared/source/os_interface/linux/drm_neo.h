@@ -238,7 +238,7 @@ class Drm : public DriverModel {
         pciDomain = domain;
     }
 
-    MOCKABLE_VIRTUAL std::vector<uint8_t> getMemoryRegions();
+    MOCKABLE_VIRTUAL std::vector<uint64_t> getMemoryRegions();
 
     MOCKABLE_VIRTUAL bool completionFenceSupport();
 
@@ -253,7 +253,9 @@ class Drm : public DriverModel {
     bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();
     std::unique_ptr<HwDeviceIdDrm> &getHwDeviceId() { return hwDeviceId; }
-    std::vector<uint8_t> query(uint32_t queryId, uint32_t queryItemFlags);
+
+    template <typename DataType>
+    std::vector<DataType> query(uint32_t queryId, uint32_t queryItemFlags);
     static std::string getDrmVersion(int fileDescriptor);
 
   protected:

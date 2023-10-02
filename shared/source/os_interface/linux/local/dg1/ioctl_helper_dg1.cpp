@@ -18,7 +18,7 @@ using namespace Dg1I915;
 
 constexpr static auto gfxProduct = IGFX_DG1;
 
-extern bool isQueryDrmTip(const std::vector<uint8_t> &queryInfo);
+extern bool isQueryDrmTip(const std::vector<uint64_t> &queryInfo);
 
 template <>
 int IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
@@ -55,7 +55,7 @@ int IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInsta
     return ret;
 }
 
-std::vector<MemoryRegion> translateDg1RegionInfoToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
+std::vector<MemoryRegion> translateDg1RegionInfoToMemoryRegions(const std::vector<uint64_t> &regionInfo) {
     auto *data = reinterpret_cast<const drm_i915_query_memory_regions *>(regionInfo.data());
     auto memRegions = std::vector<MemoryRegion>(data->num_regions);
     for (uint32_t i = 0; i < data->num_regions; i++) {
@@ -68,7 +68,7 @@ std::vector<MemoryRegion> translateDg1RegionInfoToMemoryRegions(const std::vecto
 }
 
 template <>
-std::vector<MemoryRegion> IoctlHelperImpl<gfxProduct>::translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
+std::vector<MemoryRegion> IoctlHelperImpl<gfxProduct>::translateToMemoryRegions(const std::vector<uint64_t> &regionInfo) {
     if (!isQueryDrmTip(regionInfo)) {
         return translateDg1RegionInfoToMemoryRegions(regionInfo);
     }
