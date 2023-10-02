@@ -38,7 +38,6 @@ cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
             return CL_SNORM_INT16;
 
         return CL_HALF_FLOAT;
-        [[fallthrough]];
     case ZE_IMAGE_FORMAT_LAYOUT_32:
     case ZE_IMAGE_FORMAT_LAYOUT_32_32:
     case ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32:
