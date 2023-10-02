@@ -213,7 +213,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineGroupsT regularEngineGroups;
     std::vector<SubDevice *> subdevices;
 
-    PreemptionMode preemptionMode;
+    PreemptionMode preemptionMode = PreemptionMode::Disabled;
     ExecutionEnvironment *executionEnvironment = nullptr;
     aub_stream::EngineType engineInstancedType = aub_stream::EngineType::NUM_ENGINES;
     uint32_t defaultEngineIndex = 0;

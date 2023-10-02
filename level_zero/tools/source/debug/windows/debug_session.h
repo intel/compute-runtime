@@ -117,8 +117,8 @@ struct DebugSessionWindows : DebugSessionImp {
         uint32_t size;
     };
 
-    uint64_t debugAreaVA;
-    NEO::DebugAreaHeader debugArea;
+    uint64_t debugAreaVA{};
+    NEO::DebugAreaHeader debugArea{};
     std::atomic<uint64_t> stateSaveAreaVA{0};
     std::atomic<size_t> stateSaveAreaSize{0};
     bool stateSaveAreaCaptured = false;

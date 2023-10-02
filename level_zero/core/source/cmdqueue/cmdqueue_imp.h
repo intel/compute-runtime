@@ -58,7 +58,7 @@ struct CommandQueueImp : public CommandQueue {
         }
 
       private:
-        NEO::GraphicsAllocation *buffers[BUFFER_ALLOCATION::COUNT];
+        NEO::GraphicsAllocation *buffers[BUFFER_ALLOCATION::COUNT]{};
         std::pair<TaskCountType, NEO::FlushStamp> flushId[BUFFER_ALLOCATION::COUNT];
         BUFFER_ALLOCATION bufferUse = BUFFER_ALLOCATION::FIRST;
     };

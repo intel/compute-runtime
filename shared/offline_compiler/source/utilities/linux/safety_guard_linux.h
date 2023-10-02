@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ static jmp_buf jmpbuf;
 class SafetyGuardLinux {
   public:
     SafetyGuardLinux() {
-        struct sigaction sigact;
+        struct sigaction sigact {};
 
         sigact.sa_sigaction = sigAction;
         sigact.sa_flags = SA_RESTART | SA_SIGINFO;
@@ -72,6 +72,6 @@ class SafetyGuardLinux {
 
     typedef void (*callbackFunction)();
     callbackFunction onSigSegv = nullptr;
-    struct sigaction previousSigSegvAction = {};
-    struct sigaction previousSigIllvAction = {};
+    struct sigaction previousSigSegvAction {};
+    struct sigaction previousSigIllvAction {};
 };

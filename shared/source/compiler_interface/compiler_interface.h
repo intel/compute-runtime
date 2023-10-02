@@ -154,16 +154,16 @@ class CompilerInterface {
     using fclDevCtxUptr = CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL>;
 
     std::unique_ptr<OsLibrary> igcLib;
-    CIF::RAII::UPtr_t<CIF::CIFMain> igcMain = nullptr;
+    CIF::RAII::UPtr_t<CIF::CIFMain> igcMain;
     std::map<const Device *, igcDevCtxUptr> igcDeviceContexts;
     std::string igcRevision;
-    size_t igcLibSize;
-    time_t igcLibMTime;
+    size_t igcLibSize{};
+    time_t igcLibMTime{};
 
     std::unique_ptr<OsLibrary> fclLib;
-    CIF::RAII::UPtr_t<CIF::CIFMain> fclMain = nullptr;
+    CIF::RAII::UPtr_t<CIF::CIFMain> fclMain;
     std::map<const Device *, fclDevCtxUptr> fclDeviceContexts;
-    CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> fclBaseTranslationCtx = nullptr;
+    CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> fclBaseTranslationCtx;
 
     MOCKABLE_VIRTUAL IGC::FclOclDeviceCtxTagOCL *getFclDeviceCtx(const Device &device);
     MOCKABLE_VIRTUAL IGC::IgcOclDeviceCtxTagOCL *getIgcDeviceCtx(const Device &device);

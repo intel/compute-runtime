@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ class SWTagsManager {
     void allocateBXMLHeap(Device &device);
     void allocateSWTagHeap(Device &device);
 
-    MemoryManager *memoryManager;
+    MemoryManager *memoryManager{};
     GraphicsAllocation *tagHeap = nullptr;
     GraphicsAllocation *bxmlHeap = nullptr;
     unsigned int currentHeapOffset = 0;

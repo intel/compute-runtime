@@ -714,7 +714,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
 
     // iterate through all elements of pidClientMap
     for (auto itr = pidClientMap.begin(); itr != pidClientMap.end(); ++itr) {
-        zes_process_state_t process;
+        zes_process_state_t process{};
         process.processId = static_cast<uint32_t>(itr->first);
         process.memSize = itr->second.deviceMemStructField.deviceMemorySize;
         process.sharedSize = itr->second.deviceMemStructField.deviceSharedMemorySize;

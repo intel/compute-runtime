@@ -373,7 +373,7 @@ struct EventPool : _ze_event_pool_handle_t {
     uint32_t eventPackets = 0;
     uint32_t maxKernelCount = 0;
 
-    ze_event_pool_flags_t eventPoolFlags;
+    ze_event_pool_flags_t eventPoolFlags{};
 
     bool isDeviceEventPoolAllocation = false;
     bool isHostVisibleEventPoolAllocation = false;

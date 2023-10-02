@@ -364,7 +364,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
     for (const auto &clientId : clientIds) {
         // realClientPidPath will be something like: clients/<clientId>/pid
         std::string realClientPidPath = clientsDir + "/" + clientId + "/" + "pid";
-        uint64_t pid;
+        uint64_t pid{};
         result = pSysfsAccess->read(realClientPidPath, pid);
 
         if (ZE_RESULT_SUCCESS != result) {
@@ -471,7 +471,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
 
     // iterate through all elements of pidClientMap
     for (auto itr = pidClientMap.begin(); itr != pidClientMap.end(); ++itr) {
-        zes_process_state_t process;
+        zes_process_state_t process{};
         process.processId = static_cast<uint32_t>(itr->first);
         process.memSize = itr->second.deviceMemStructField.deviceMemorySize;
         process.sharedSize = itr->second.deviceMemStructField.deviceSharedMemorySize;
