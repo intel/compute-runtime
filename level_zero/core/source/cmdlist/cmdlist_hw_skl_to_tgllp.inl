@@ -87,23 +87,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, commandContainer.getNumIddPerBlock()),
             NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment()};
 
-        if (launchParams.isKernelSplitOperation) {
-            // when appendLaunchKernel is called during an operation with kernel split is true,
-            // then reserve sufficient ssh and dsh heaps during first kernel split, by multiplying, individual
-            // dsh and ssh heap size retrieved above with number of kernels in split operation.
-            // And after first kernel split, for remainder kernel split calls, dont estimate heap size.
-            if (launchParams.numKernelsExecutedInSplitLaunch == 0) {
-                dshReserveArgs.size = launchParams.numKernelsInSplitLaunch * dshReserveArgs.size;
-                sshReserveArgs.size = launchParams.numKernelsInSplitLaunch * sshReserveArgs.size;
-                commandContainer.reserveSpaceForDispatch(
-                    sshReserveArgs,
-                    dshReserveArgs, true);
-            }
-        } else {
-            commandContainer.reserveSpaceForDispatch(
-                sshReserveArgs,
-                dshReserveArgs, true);
-        }
+        commandContainer.reserveSpaceForDispatch(
+            sshReserveArgs,
+            dshReserveArgs, true);
+
         ssh = sshReserveArgs.indirectHeapReservation;
         dsh = dshReserveArgs.indirectHeapReservation;
     }

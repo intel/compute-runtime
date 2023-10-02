@@ -1280,8 +1280,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                     size);
     } else {
         CmdListKernelLaunchParams launchParams = {};
-        launchParams.isKernelSplitOperation = rightSize > 0;
-        launchParams.numKernelsInSplitLaunch = 2;
+        launchParams.isKernelSplitOperation = rightSize > 1;
         ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
                                            dstAllocation, 0,
                                            reinterpret_cast<void *>(&srcAddress),
@@ -1292,7 +1291,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                            nullptr,
                                            isStateless,
                                            launchParams);
-        launchParams.numKernelsExecutedInSplitLaunch++;
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
             ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
                                                dstAllocation, size - rightSize,
@@ -1303,7 +1301,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                                nullptr,
                                                isStateless,
                                                launchParams);
-            launchParams.numKernelsExecutedInSplitLaunch++;
         }
 
         if (this->dcFlushSupport) {
@@ -1399,7 +1396,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
     }
 
-    launchParams.numKernelsInSplitLaunch = kernelCounter;
     launchParams.isKernelSplitOperation = kernelCounter > 1;
     bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
 
@@ -1426,7 +1422,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                signalEvent,
                                                isStateless,
                                                launchParams);
-            launchParams.numKernelsExecutedInSplitLaunch++;
         }
 
         if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
@@ -1445,7 +1440,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                signalEvent,
                                                isStateless,
                                                launchParams);
-            launchParams.numKernelsExecutedInSplitLaunch++;
         }
 
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
@@ -1463,7 +1457,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                signalEvent,
                                                isStateless,
                                                launchParams);
-            launchParams.numKernelsExecutedInSplitLaunch++;
         }
     }
 
@@ -1862,21 +1855,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
 
-    if (fillArguments.leftRemainingBytes > 0) {
-        launchParams.numKernelsInSplitLaunch++;
-    }
-    if (fillArguments.rightRemainingBytes > 0) {
-        launchParams.numKernelsInSplitLaunch++;
-    }
-
     if (patternSize == 1) {
-        launchParams.numKernelsInSplitLaunch++;
         if (fillArguments.leftRemainingBytes > 0) {
             res = appendUnalignedFillKernel(isStateless, fillArguments.leftRemainingBytes, dstAllocation, pattern, signalEvent, launchParams);
             if (res) {
                 return res;
             }
-            launchParams.numKernelsExecutedInSplitLaunch++;
         }
 
         ze_result_t ret = builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1u, 1u);
@@ -1897,7 +1881,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         if (res) {
             return res;
         }
-        launchParams.numKernelsExecutedInSplitLaunch++;
 
         if (fillArguments.rightRemainingBytes > 0) {
             dstAllocation.offset = fillArguments.rightOffset;
@@ -1905,7 +1888,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             if (res) {
                 return res;
             }
-            launchParams.numKernelsExecutedInSplitLaunch++;
         }
     } else {
         builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
@@ -1940,12 +1922,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             builtinKernel->setArgumentValue(3, sizeof(fillArguments.patternSizeInEls), &fillArguments.patternSizeInEls);
 
             ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
-            launchParams.numKernelsInSplitLaunch++;
             res = appendLaunchKernelSplit(builtinKernel, dispatchKernelArgs, signalEvent, launchParams);
             if (res) {
                 return res;
             }
-            launchParams.numKernelsExecutedInSplitLaunch++;
         } else {
             uint32_t dstOffsetRemainder = static_cast<uint32_t>(dstAllocation.offset);
 
@@ -1974,7 +1954,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             if (res) {
                 return res;
             }
-            launchParams.numKernelsExecutedInSplitLaunch++;
         }
 
         if (fillArguments.rightRemainingBytes > 0) {
@@ -2006,7 +1985,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             if (res) {
                 return res;
             }
-            launchParams.numKernelsExecutedInSplitLaunch++;
         }
     }
 
