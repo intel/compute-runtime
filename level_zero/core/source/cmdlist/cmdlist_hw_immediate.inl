@@ -494,7 +494,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSkippingInOrderBarrierAllo
     uint32_t eventsToWait = numWaitEvents;
 
     for (uint32_t i = 0; i < numWaitEvents; i++) {
-        if (!CommandListCoreFamily<gfxCoreFamily>::isInOrderEventWaitRequired(*Event::fromHandle(phWaitEvents[i]))) {
+        if (CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(*Event::fromHandle(phWaitEvents[i]))) {
             eventsToWait--;
         }
     }

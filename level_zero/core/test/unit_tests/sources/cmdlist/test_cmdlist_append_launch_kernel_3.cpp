@@ -1206,6 +1206,63 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAp
     EXPECT_EQ(cmdList.end(), itor);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAppendOnRegularCmdListThenSkip, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_NE(cmdList.end(), itor); // implicit dependency
+
+    itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
+
+    EXPECT_EQ(cmdList.end(), itor);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForRegularEventFromPreviousAppendThenSkip, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = false;
+    auto eventHandle = events[0]->toHandle();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_NE(cmdList.end(), itor); // implicit dependency
+
+    itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
+
+    EXPECT_EQ(cmdList.end(), itor);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromAfterResetThenDontSkip, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 

@@ -227,6 +227,7 @@ struct Event : _ze_event_handle_t {
         return &referenceTs;
     }
     void setReferenceTs(uint64_t currentCpuTimeStamp);
+    const CommandQueue *getLatestUsedCmdQueue() const { return latestUsedCmdQueue; }
     bool hasKerneMappedTsCapability = false;
 
   protected:

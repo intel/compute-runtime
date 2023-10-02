@@ -2330,8 +2330,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isInOrderEventWaitRequired(const Event &event) const {
-    return (event.getInOrderExecDataAllocation() != &inOrderExecInfo->inOrderDependencyCounterAllocation);
+bool CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(const Event &event) const {
+    if (isInOrderExecutionEnabled()) {
+        return ((this->cmdListType == TYPE_IMMEDIATE && event.getLatestUsedCmdQueue() == this->cmdQImmediate) || // 1. Immediate CmdList can skip "regular Events" from the same CmdList
+                (event.getInOrderExecDataAllocation() == &inOrderExecInfo->inOrderDependencyCounterAllocation)); // 2. Both Immediate and Regular CmdLists can skip "in-order Events" from the same CmdList
+    }
+
+    return false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2375,7 +2380,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 
-        if (this->cmdListType == TYPE_IMMEDIATE && event->isAlreadyCompleted()) {
+        if ((this->cmdListType == TYPE_IMMEDIATE && event->isAlreadyCompleted()) ||
+            canSkipInOrderEventWait(*event)) {
             continue;
         }
 
@@ -2383,9 +2389,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             if (!event->getInOrderExecDataAllocation()) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
             }
-            if (isInOrderEventWaitRequired(*event)) {
-                CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), event->getInOrderAllocationOffset(), relaxedOrderingAllowed, false);
-            }
+
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), event->getInOrderAllocationOffset(), relaxedOrderingAllowed, false);
+
             continue;
         }
 
