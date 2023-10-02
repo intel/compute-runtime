@@ -140,7 +140,7 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromWrongHandleTh
     clContext->memoryManager = tempMemoryManager;
 }
 
-EGLBoolean mockGLAcquireSharedTexture(EGLDisplay dpy, EGLImageKHR image, int *fds, EGLint *strides, EGLint *offsets) {
+int mockGLInteropExportObject(EGLDisplay dpy, EGLContext context, struct mesa_glinterop_export_in *in, struct mesa_glinterop_export_out *out) {
     CL_GL_RESOURCE_INFO textureInfo;
     GlDllHelper dllParam;
     textureInfo.globalShareHandle = dllParam.getTextureInfo().globalShareHandle;
@@ -156,12 +156,11 @@ EGLBoolean mockGLAcquireSharedTexture(EGLDisplay dpy, EGLImageKHR image, int *fd
     textureInfo.textureBufferOffset = dllParam.getTextureInfo().textureBufferOffset;
     dllParam.loadTexture(textureInfo);
 
-    *fds = 0;
-    return GL_FALSE;
+    return MESA_GLINTEROP_INVALID_OBJECT;
 };
 
 TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromIncorrectFormatThenErrorAndNoTextureIsReturned) {
-    mockGlSharingFunctions->setGLAcquireSharedTextureMock(mockGLAcquireSharedTexture);
+    mockGlSharingFunctions->setGLInteropExportObjectMock(mockGLInteropExportObject);
 
     tempMM->useForcedGmm = false;
     auto retVal = CL_SUCCESS;
