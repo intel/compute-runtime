@@ -92,4 +92,9 @@ template <ReleaseType releaseType>
 std::vector<uint32_t> ReleaseHelperHw<releaseType>::getSupportedNumGrfs() const {
     return {128u, 256u};
 }
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isBindlessAddressingDisabled() const {
+    return true;
+}
 } // namespace NEO
