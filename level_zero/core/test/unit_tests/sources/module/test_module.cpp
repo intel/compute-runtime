@@ -222,7 +222,11 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
     auto &productHelper = device.getProductHelper();
     auto &rootDeviceEnvironment = device.getNEODevice()->getRootDeviceEnvironment();
     if (productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
-        EXPECT_EQ(zebinData->numOfKernels, blitterCalled);
+        if (module->getKernelsIsaParentAllocation()) {
+            EXPECT_EQ(1u, blitterCalled);
+        } else {
+            EXPECT_EQ(zebinData->numOfKernels, blitterCalled);
+        }
     } else {
         EXPECT_EQ(0u, blitterCalled);
     }
@@ -3788,7 +3792,13 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     class MyMockModuleTU : public MockModuleTU {
       public:
         using MockModuleTU::MockModuleTU;
-        ze_result_t createFromNativeBinary(const char *input, size_t inputSize) override { return ZE_RESULT_SUCCESS; }
+        ze_result_t createFromNativeBinary(const char *input, size_t inputSize) override {
+            programInfo.kernelInfos[0]->heapInfo.pKernelHeap = &mockKernelHeap;
+            programInfo.kernelInfos[0]->heapInfo.kernelHeapSize = 4;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        uint32_t mockKernelHeap = 0xDEAD;
     };
 
     const auto &compilerProductHelper = neoDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
