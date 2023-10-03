@@ -949,7 +949,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
     EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEventState, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledThenReturnError, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(3, false);
@@ -964,11 +964,21 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenResetEventCalledThenResetEven
     EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
 
     events[0]->inOrderAllocationOffset = 123;
-    events[0]->reset();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, events[0]->reset());
 
-    EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
-    EXPECT_EQ(events[0]->inOrderExecInfo, nullptr);
-    EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
+    EXPECT_EQ(events[0]->inOrderExecInfo.get(), immCmdList->inOrderExecInfo.get());
+    EXPECT_EQ(events[0]->inOrderAllocationOffset, 123u);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, events[0]->hostSignal());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderEventWhenAppendEventResetCalledThenReturnError, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(3, false);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendEventReset(events[0]->toHandle()));
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenDontSetInOrderParams, IsAtLeastSkl) {
@@ -1261,20 +1271,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForRegularEventFromPre
     itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
 
     EXPECT_EQ(cmdList.end(), itor);
-}
-
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromAfterResetThenDontSkip, IsAtLeastXeHpCore) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    auto eventPool = createEvents<FamilyType>(1, false);
-    auto eventHandle = events[0]->toHandle();
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
-    events[0]->reset();
-
-    auto retValue = immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
-
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retValue);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSemaphoreOnlyForExternalEvent, IsAtLeastXeHpCore) {
@@ -2017,6 +2013,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->inOrderExecEvent = false;
 
     uint64_t inOrderSyncVa = immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
 
@@ -2122,6 +2119,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
 
     auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->inOrderExecEvent = false;
 
     uint8_t ptr[64] = {};
 

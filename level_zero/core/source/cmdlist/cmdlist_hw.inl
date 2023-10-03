@@ -493,6 +493,10 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
     auto event = Event::fromHandle(hEvent);
 
+    if (event->isInOrderExecEvent()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
     if (NEO::DebugManager.flags.EnableSWTags.get()) {

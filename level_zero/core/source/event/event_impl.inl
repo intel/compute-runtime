@@ -373,6 +373,10 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostSignal() {
+    if (this->isInOrderExecEvent()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     auto status = hostEventSetValue(Event::STATE_SIGNALED);
     if (status == ZE_RESULT_SUCCESS) {
         this->setIsCompleted();
@@ -467,6 +471,10 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
+    if (this->isInOrderExecEvent()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     if (NEO::DebugManager.flags.SynchronizeEventBeforeReset.get() != -1) {
         if (NEO::DebugManager.flags.SynchronizeEventBeforeReset.get() == 2 && queryStatus() != ZE_RESULT_SUCCESS) {
             printf("\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", this);
@@ -474,12 +482,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
 
         hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
-    if (inOrderExecEvent) {
-        freeInOrderExecAllocation();
 
-        inOrderExecSignalValue = 0;
-        inOrderAllocationOffset = 0;
-    }
     unsetCmdQueue();
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
