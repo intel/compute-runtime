@@ -941,7 +941,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     this->startRingBuffer();
 
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
-    bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds);
+    bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(batchBuffer.dispatchMonitorFence);
 
     size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies, dispatchMonitorFence);
 
@@ -983,7 +983,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     currentQueueWorkCount++;
     DirectSubmissionDiagnostics::diagnosticModeOneSubmit(diagnostic.get());
 
-    uint64_t flushValue = updateTagValue(batchBuffer.hasStallingCmds);
+    uint64_t flushValue = updateTagValue(batchBuffer.dispatchMonitorFence);
     flushStamp.setStamp(flushValue);
 
     return ringStart;
