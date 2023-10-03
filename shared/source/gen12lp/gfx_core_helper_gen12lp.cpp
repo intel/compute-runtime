@@ -112,7 +112,10 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
 
     if (hwInfo.capabilityTable.blitterOperationsSupported) {
         if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
-            engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
+            engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular}); // Main copy engine
+            if (!hwInfo.capabilityTable.isIntegratedDevice) {
+                engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Internal}); // internal usage
+            }
         }
     }
 
