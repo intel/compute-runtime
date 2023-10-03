@@ -220,7 +220,8 @@ struct Event : _ze_event_handle_t {
     bool isInOrderExecEvent() const { return inOrderExecEvent; }
     void enableInOrderMode() { this->inOrderExecEvent = true; }
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const;
-    uint64_t getInOrderExecSignalValue() const;
+    uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
+    uint64_t getInOrderExecBaseSignalValue() const { return inOrderExecSignalValue; }
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
     NEO::TimeStampData *peekReferenceTs() {
@@ -229,6 +230,7 @@ struct Event : _ze_event_handle_t {
     void setReferenceTs(uint64_t currentCpuTimeStamp);
     const CommandQueue *getLatestUsedCmdQueue() const { return latestUsedCmdQueue; }
     bool hasKerneMappedTsCapability = false;
+    std::shared_ptr<InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}

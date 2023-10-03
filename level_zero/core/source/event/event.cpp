@@ -399,7 +399,7 @@ void Event::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderE
     inOrderAllocationOffset = allocationOffset;
 }
 
-uint64_t Event::getInOrderExecSignalValue() const {
+uint64_t Event::getInOrderExecSignalValueWithSubmissionCounter() const {
     return (inOrderExecSignalValue + InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo));
 }
 

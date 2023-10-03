@@ -1843,11 +1843,11 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
 using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 
 HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, NonPostSyncWalkerMatcher) {
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::None);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::None);
 
     EXPECT_ANY_THROW(incorrectCmd.patch(1));
 
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Walker);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Walker);
 
     EXPECT_ANY_THROW(walkerCmd.patch(1));
 }
@@ -3786,6 +3786,148 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
 
     mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
     verifyPatching(2);
+}
+
+HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenExecutingThenDontPatchWhenExecutedOnlyOnce, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+
+    auto regularCmdList1 = createRegularCmdList<gfxCoreFamily>(false);
+    auto regularCmdList2 = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    regularCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    regularCmdList1->close();
+
+    uint64_t baseEventWaitValue = 3;
+
+    auto implicitCounterGpuVa = regularCmdList2->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
+    auto externalCounterGpuVa = regularCmdList1->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
+
+    auto cmdStream2 = regularCmdList2->getCmdContainer().getCommandStream();
+
+    size_t offset2 = cmdStream2->getUsed();
+
+    regularCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    regularCmdList2->close();
+
+    size_t sizeToParse2 = cmdStream2->getUsed();
+
+    auto verifyPatching = [&](uint64_t expectedImplicitDependencyValue, uint64_t expectedExplicitDependencyValue) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream2->getCpuBase(), offset2), (sizeToParse2 - offset2)));
+
+        auto semaphoreCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_EQ(2u, semaphoreCmds.size());
+
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCmds[0]);
+        EXPECT_EQ(expectedImplicitDependencyValue, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(implicitCounterGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+
+        semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCmds[1]);
+        EXPECT_EQ(expectedExplicitDependencyValue, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(externalCounterGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    };
+
+    auto cmdListHandle1 = regularCmdList1->toHandle();
+    auto cmdListHandle2 = regularCmdList2->toHandle();
+
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+
+    verifyPatching(5, baseEventWaitValue);
+
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+
+    verifyPatching(7, baseEventWaitValue);
+}
+
+HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenExecutingThenPatchWhenExecutedMultipleTimes, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+
+    auto regularCmdList1 = createRegularCmdList<gfxCoreFamily>(false);
+    auto regularCmdList2 = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    regularCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    regularCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    regularCmdList1->close();
+
+    uint64_t baseEventWaitValue = 3;
+
+    auto implicitCounterGpuVa = regularCmdList2->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
+    auto externalCounterGpuVa = regularCmdList1->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
+
+    auto cmdListHandle1 = regularCmdList1->toHandle();
+    auto cmdListHandle2 = regularCmdList2->toHandle();
+
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
+
+    auto cmdStream2 = regularCmdList2->getCmdContainer().getCommandStream();
+
+    size_t offset2 = cmdStream2->getUsed();
+    size_t sizeToParse2 = 0;
+
+    auto verifyPatching = [&](uint64_t expectedImplicitDependencyValue, uint64_t expectedExplicitDependencyValue) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream2->getCpuBase(), offset2), (sizeToParse2 - offset2)));
+
+        auto semaphoreCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_EQ(2u, semaphoreCmds.size());
+
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCmds[0]);
+        EXPECT_EQ(expectedImplicitDependencyValue, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(implicitCounterGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+
+        semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCmds[1]);
+        EXPECT_EQ(expectedExplicitDependencyValue, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(externalCounterGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    };
+
+    regularCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    regularCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    regularCmdList2->close();
+
+    sizeToParse2 = cmdStream2->getUsed();
+
+    verifyPatching(1, baseEventWaitValue);
+
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+
+    verifyPatching(1, baseEventWaitValue + (2 * regularCmdList1->inOrderExecInfo->inOrderDependencyCounter));
+
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+
+    verifyPatching(5, baseEventWaitValue + (2 * regularCmdList1->inOrderExecInfo->inOrderDependencyCounter));
+
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+
+    verifyPatching(7, baseEventWaitValue + (3 * regularCmdList1->inOrderExecInfo->inOrderDependencyCounter));
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {

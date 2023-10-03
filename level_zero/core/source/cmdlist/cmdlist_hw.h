@@ -171,7 +171,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool signalInOrderCompletion) override;
-    void appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency);
+    void appendWaitOnInOrderDependency(std::shared_ptr<InOrderExecInfo> &inOrderExecInfo, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency);
     void appendSignalInOrderDependencyCounter();
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
@@ -336,7 +336,7 @@ struct CommandListCoreFamily : CommandListImp {
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     bool hasInOrderDependencies() const;
 
-    void addCmdForPatching(void *cmd, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
+    void addCmdForPatching(std::shared_ptr<InOrderExecInfo> *externalInOrderExecInfo, void *cmd, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 
     InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 };

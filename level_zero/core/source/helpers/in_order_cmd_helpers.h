@@ -11,6 +11,7 @@
 #include "shared/source/helpers/ptr_math.h"
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace NEO {
@@ -52,7 +53,12 @@ enum class PatchCmdType {
 
 template <typename GfxFamily>
 struct PatchCmd {
-    PatchCmd(void *cmd, uint64_t baseCounterValue, PatchCmdType patchCmdType) : cmd(cmd), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType) {}
+    PatchCmd(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo, void *cmd, uint64_t baseCounterValue, PatchCmdType patchCmdType)
+        : cmd(cmd), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType) {
+        if (inOrderExecInfo) {
+            this->inOrderExecInfo = *inOrderExecInfo;
+        }
+    }
 
     void patch(uint64_t appendCunterValue) {
         switch (patchCmdType) {
@@ -71,6 +77,9 @@ struct PatchCmd {
         }
     }
 
+    bool isExternalDependency() const { return inOrderExecInfo.get(); }
+
+    std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
     void *cmd = nullptr;
     const uint64_t baseCounterValue = 0;
     const PatchCmdType patchCmdType = PatchCmdType::None;
@@ -83,6 +92,13 @@ struct PatchCmd {
     }
 
     void patchSemaphore(uint64_t appendCunterValue) {
+        if (isExternalDependency()) {
+            appendCunterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+            if (appendCunterValue == 0) {
+                return;
+            }
+        }
+
         auto semaphoreCmd = reinterpret_cast<typename GfxFamily::MI_SEMAPHORE_WAIT *>(cmd);
         semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCunterValue));
     }

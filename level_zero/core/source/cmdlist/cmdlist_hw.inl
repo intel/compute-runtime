@@ -154,7 +154,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event *signalEvent) {
     if (!isQwordInOrderCounter() && ((inOrderExecInfo->inOrderDependencyCounter + 1) == std::numeric_limits<uint32_t>::max())) {
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(&inOrderExecInfo->inOrderDependencyCounterAllocation, inOrderExecInfo->inOrderDependencyCounter + 1, inOrderAllocationOffset, false, true);
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, inOrderExecInfo->inOrderDependencyCounter + 1, inOrderAllocationOffset, false, true);
 
         inOrderExecInfo->inOrderDependencyCounter = 0;
 
@@ -2230,7 +2230,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
             NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
         }
 
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(&inOrderExecInfo->inOrderDependencyCounterAllocation, inOrderExecInfo->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed, true);
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, inOrderExecInfo->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed, true);
     }
 }
 
@@ -2295,14 +2295,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *dependencyCounterAllocation, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency) {
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::shared_ptr<InOrderExecInfo> &inOrderExecInfo, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     UNRECOVERABLE_IF(waitValue > std::numeric_limits<uint32_t>::max());
 
-    commandContainer.addToResidencyContainer(dependencyCounterAllocation);
+    auto &dependencyCounterAllocation = inOrderExecInfo->inOrderDependencyCounterAllocation;
 
-    uint64_t gpuAddress = dependencyCounterAllocation->getGpuAddress() + offset;
+    commandContainer.addToResidencyContainer(&dependencyCounterAllocation);
+
+    uint64_t gpuAddress = dependencyCounterAllocation.getGpuAddress() + offset;
 
     for (uint32_t i = 0; i < this->partitionCount; i++) {
         if (relaxedOrderingAllowed) {
@@ -2316,8 +2318,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
                                                                     false, true, isQwordInOrderCounter(), false);
 
-            if (implicitDependency) {
-                addCmdForPatching(semaphoreCommand, waitValue, InOrderPatchCommandHelpers::PatchCmdType::Semaphore);
+            if (inOrderExecInfo->isRegularCmdList) {
+                addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), semaphoreCommand, waitValue, InOrderPatchCommandHelpers::PatchCmdType::Semaphore);
             }
         }
 
@@ -2390,7 +2392,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
             }
 
-            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecDataAllocation(), event->getInOrderExecSignalValue(), event->getInOrderAllocationOffset(), relaxedOrderingAllowed, false);
+            // 1. Regular CmdList adds submission counter to base value on each Execute
+            // 2. Immediate CmdList takes current value (with submission counter)
+            auto waitValue = (this->cmdListType == TYPE_REGULAR) ? event->getInOrderExecBaseSignalValue() : event->getInOrderExecSignalValueWithSubmissionCounter();
+
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecInfo(), waitValue, event->getInOrderAllocationOffset(), relaxedOrderingAllowed, false);
 
             continue;
         }
@@ -2438,7 +2444,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
     NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(miStoreCmd, gpuVa, getLowPart(signalValue), getHighPart(signalValue),
                                                            isQwordInOrderCounter(), (this->partitionCount > 1));
 
-    addCmdForPatching(miStoreCmd, signalValue, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
+    addCmdForPatching(nullptr, miStoreCmd, signalValue, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
 
     if (NEO::EncodeUserInterruptHelper::isOperationAllowed(NEO::EncodeUserInterruptHelper::onSignalingFenceMask)) {
         NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
@@ -3461,19 +3467,21 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(void *cmd, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
+void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<InOrderExecInfo> *externalInOrderExecInfo, void *cmd, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
     if ((NEO::DebugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && (this->cmdListType == TYPE_REGULAR)) {
-        this->inOrderPatchCmds.emplace_back(cmd, counterValue, patchCmdType);
+        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd, counterValue, patchCmdType);
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::patchInOrderCmds() {
-    if (isInOrderExecutionEnabled() && inOrderExecInfo->regularCmdListSubmissionCounter > 1) {
-        auto appendCounter = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+    if (isInOrderExecutionEnabled()) {
+        auto implicitAppendCounter = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
 
         for (auto &cmd : inOrderPatchCmds) {
-            cmd.patch(appendCounter);
+            if (cmd.isExternalDependency() || (inOrderExecInfo->regularCmdListSubmissionCounter > 1)) {
+                cmd.patch(implicitAppendCounter);
+            }
         }
     }
 }
