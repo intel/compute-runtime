@@ -47,14 +47,13 @@ ze_result_t LinuxSysmanImp::init() {
     }
     auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
     int myDeviceFd = sysmanHwDeviceId.getFileDescriptor();
-    std::string myDeviceName;
-    result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, myDeviceName);
+    result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, deviceName);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
 
     if (pSysfsAccess == nullptr) {
-        pSysfsAccess = SysfsAccess::create(myDeviceName);
+        pSysfsAccess = SysfsAccess::create(deviceName);
     }
     DEBUG_BREAK_IF(nullptr == pSysfsAccess);
 
@@ -72,6 +71,10 @@ ze_result_t LinuxSysmanImp::init() {
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     pPmuInterface = PmuInterface::create(this);
     return createPmtHandles();
+}
+
+std::string &LinuxSysmanImp::getDeviceName() {
+    return deviceName;
 }
 
 std::string &LinuxSysmanImp::getPciRootPath() {

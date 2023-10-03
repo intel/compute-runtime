@@ -16,8 +16,9 @@
 namespace L0 {
 namespace Sysman {
 
-class SysfsAccess;
 class PlatformMonitoringTech;
+class SysFsAccessInterface;
+class SysmanKmdInterface;
 class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_power_properties_t *pProperties) override;
@@ -39,13 +40,12 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
 
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
 
   private:
-    std::string i915HwmonDir;
+    std::string intelGraphicsHwmonDir;
     std::string energyHwmonDir;
-    static const std::string hwmonDir;
-    static const std::string i915;
     static const std::string sustainedPowerLimitEnabled;
     static const std::string sustainedPowerLimit;
     static const std::string sustainedPowerLimitInterval;
