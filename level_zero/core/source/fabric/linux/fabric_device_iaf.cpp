@@ -136,7 +136,7 @@ ze_result_t FabricSubDeviceIaf::enumerate() {
     }
 
     // Get Connections
-    for (auto iafPort : iafPorts) {
+    for (auto &iafPort : iafPorts) {
         FabricPortConnection connection = {};
         ze_result_t result = getConnection(iafPort, connection);
         if (result != ZE_RESULT_SUCCESS) {

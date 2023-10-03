@@ -621,7 +621,7 @@ int IafNlApi::nlOperation(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct
     if (info->attrs[IAF_ATTR_CMD_OP_CONTEXT]) {
         uint64_t context = pNlApi->nlaGetU64(info->attrs[IAF_ATTR_CMD_OP_CONTEXT]);
         bool found = false;
-        for (auto i : validContexts) {
+        for (auto &i : validContexts) {
             if (context == i) {
                 found = true;
                 break;
@@ -700,7 +700,7 @@ ze_result_t IafNlApi::initPorts(const uint32_t fabricId, std::vector<IafPort> &i
             iafPorts.clear();
             return ZE_RESULT_ERROR_UNKNOWN;
         }
-        for (auto port : ports) {
+        for (auto &port : ports) {
             IafPort p = {};
             IafPortSpeed rxSpeed, txSpeed;
             uint8_t neighbourPortNumber = 0;
@@ -726,7 +726,7 @@ ze_result_t IafNlApi::getPorts(const std::string &devicePciPath, std::vector<Iaf
     std::string path;
     path.clear();
     std::vector<std::string> list = NEO::Directory::getFiles(devicePciPath);
-    for (auto entry : list) {
+    for (auto &entry : list) {
         if ((entry.find(iafDirectory) != std::string::npos) ||
             (entry.find(iafDirectoryLegacy) != std::string::npos)) {
             path = entry + fabricIdFile;

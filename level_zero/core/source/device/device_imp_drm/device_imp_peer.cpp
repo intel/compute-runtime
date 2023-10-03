@@ -35,7 +35,7 @@ ze_result_t DeviceImp::queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latenc
     std::string fabricPath;
     fabricPath.clear();
     std::vector<std::string> list = NEO::Directory::getFiles(peerDevicePath + "/device");
-    for (auto entry : list) {
+    for (auto &entry : list) {
         if ((entry.find(iafDirectory) != std::string::npos) || (entry.find(iafDirectoryLegacy) != std::string::npos)) {
             fabricPath = entry + fabricIdFile;
             break;

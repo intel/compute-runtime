@@ -216,7 +216,7 @@ void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceI
             auto graphicsAllocation = createGraphicsAllocationFromExistingStorage(properties, ptr, multiGraphicsAllocation);
 
             if (!graphicsAllocation) {
-                for (auto gpuAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
+                for (auto &gpuAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
                     freeGraphicsMemory(gpuAllocation);
                 }
                 return nullptr;

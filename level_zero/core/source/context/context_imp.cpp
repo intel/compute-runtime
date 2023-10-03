@@ -44,7 +44,7 @@ ze_result_t ContextImp::destroy() {
 
 ze_result_t ContextImp::getStatus() {
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
-    for (auto device : driverHandleImp->devices) {
+    for (auto &device : driverHandleImp->devices) {
         DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
         if (deviceImp->resourcesReleased) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
@@ -391,7 +391,7 @@ void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *dev
         deviceImp->peerAllocations.allocations.erase(iter);
     }
 
-    for (auto subDevice : deviceImp->subDevices) {
+    for (auto &subDevice : deviceImp->subDevices) {
         this->freePeerAllocations(ptr, blocking, subDevice);
     }
 }
@@ -420,7 +420,7 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
         ipcHandleIterator++;
     }
 
-    for (auto pairDevice : this->devices) {
+    for (auto &pairDevice : this->devices) {
         this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
     }
     this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
@@ -440,7 +440,7 @@ ze_result_t ContextImp::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        for (auto pairDevice : this->devices) {
+        for (auto &pairDevice : this->devices) {
             this->freePeerAllocations(ptr, false, Device::fromHandle(pairDevice.second));
         }
 

@@ -174,7 +174,7 @@ ze_result_t FabricDeviceAccessNl::getPorts(std::vector<zes_fabric_port_id_t> &po
     }
 
     ports.clear();
-    for (auto port : fabricPorts) {
+    for (auto &port : fabricPorts) {
         ports.push_back(port.portId);
     }
     return ZE_RESULT_SUCCESS;
@@ -182,7 +182,7 @@ ze_result_t FabricDeviceAccessNl::getPorts(std::vector<zes_fabric_port_id_t> &po
 
 void FabricDeviceAccessNl::getProperties(const zes_fabric_port_id_t portId, std::string &model, bool &onSubdevice,
                                          uint32_t &subdeviceId, zes_fabric_port_speed_t &maxRxSpeed, zes_fabric_port_speed_t &maxTxSpeed) {
-    for (auto port : fabricPorts) {
+    for (auto &port : fabricPorts) {
         UNRECOVERABLE_IF(portId.fabricId != port.portId.fabricId);
         if (portId.attachId == port.portId.attachId && portId.portNumber == port.portId.portNumber) {
             model = port.model;
@@ -213,7 +213,7 @@ void FabricDeviceAccessNl::populateGuidMap() {
     if (ZE_RESULT_SUCCESS != getAllFabricIds(fabricIds)) {
         return;
     }
-    for (auto fabricId : fabricIds) {
+    for (auto &fabricId : fabricIds) {
         uint32_t numSubdevices = 0;
 
         if (ZE_RESULT_SUCCESS != getNumSubdevices(fabricId, numSubdevices)) {

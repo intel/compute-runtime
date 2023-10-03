@@ -114,7 +114,7 @@ inline std::string concatenate(T &&arg, RestT &&...rest) {
 template <size_t NumOptions>
 constexpr size_t concatenationLength(const ConstStringRef (&options)[NumOptions]) {
     size_t ret = 0U;
-    for (auto opt : options) {
+    for (auto &opt : options) {
         ret += spaceSeparatorSize + opt.length();
     }
     return (ret != 0U) ? ret - nullterminateSize : 0U;
@@ -141,7 +141,7 @@ class ConstConcatenation {
     template <size_t NumOptions>
     constexpr ConstConcatenation(const ConstStringRef (&options)[NumOptions]) {
         size_t i = 0U;
-        for (auto opt : options) {
+        for (auto &opt : options) {
             for (size_t j = 0U, e = opt.length(); j < e; ++j, ++i) {
                 storage[i] = opt[j];
             }

@@ -229,7 +229,7 @@ void ClDevice::initializeCaps() {
         exposedBuiltinKernelsVector.push_back("block_advanced_motion_estimate_check_intel");
         exposedBuiltinKernelsVector.push_back("block_advanced_motion_estimate_bidirectional_check_intel");
     }
-    for (auto builtInKernel : exposedBuiltinKernelsVector) {
+    for (auto &builtInKernel : exposedBuiltinKernelsVector) {
         exposedBuiltinKernels.append(builtInKernel);
         exposedBuiltinKernels.append(";");
 
@@ -433,7 +433,7 @@ void ClDevice::initializeExtensionsWithVersion() {
     std::vector<std::string> deviceExtensionsVector{
         std::istream_iterator<std::string>{deviceExtensionsStringStream}, std::istream_iterator<std::string>{}};
     deviceInfo.extensionsWithVersion.reserve(deviceExtensionsVector.size());
-    for (auto deviceExtension : deviceExtensionsVector) {
+    for (auto &deviceExtension : deviceExtensionsVector) {
         cl_name_version deviceExtensionWithVersion;
         deviceExtensionWithVersion.version = getExtensionVersion(deviceExtension);
         strcpy_s(deviceExtensionWithVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, deviceExtension.c_str());

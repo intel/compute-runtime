@@ -19,7 +19,7 @@
 namespace NEO {
 
 bool Drm::registerResourceClasses() {
-    for (auto classNameUUID : classNamesToUuid) {
+    for (auto &classNameUUID : classNamesToUuid) {
         auto className = classNameUUID.first;
         auto uuid = classNameUUID.second;
 

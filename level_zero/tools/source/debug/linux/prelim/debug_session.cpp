@@ -1419,12 +1419,12 @@ void DebugSessionLinux::handlePageFaultEvent(prelim_drm_i915_debug_event_page_fa
         } else {
             lock = std::unique_lock<std::mutex>(threadStateMutex);
         }
-        for (auto threadId : threadsWithPF) {
+        for (auto &threadId : threadsWithPF) {
 
             PRINT_DEBUGGER_INFO_LOG("PageFault event for thread %s", EuThread::toString(threadId).c_str());
             allThreads[threadId]->setPageFault(true);
         }
-        for (auto threadId : stoppedThreads) {
+        for (auto &threadId : stoppedThreads) {
             if (tileSessionsEnabled) {
                 static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
             } else {

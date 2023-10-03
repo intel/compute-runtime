@@ -18,7 +18,7 @@
 
 namespace NEO {
 BarrierCommand::BarrierCommand(CommandQueue *commandQueue, const cl_resource_barrier_descriptor_intel *descriptors, uint32_t numDescriptors) : numSurfaces(numDescriptors) {
-    for (auto description : createRange(descriptors, numDescriptors)) {
+    for (auto &description : createRange(descriptors, numDescriptors)) {
         GraphicsAllocation *allocation;
         if (description.memObject) {
             MemObj *memObj = nullptr;

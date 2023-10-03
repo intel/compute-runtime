@@ -122,7 +122,7 @@ void CommandList::removeDeallocationContainerData() {
     auto memoryManager = device ? device->getNEODevice()->getMemoryManager() : nullptr;
 
     auto container = commandContainer.getDeallocationContainer();
-    for (auto deallocation : container) {
+    for (auto &deallocation : container) {
         DEBUG_BREAK_IF(deallocation == nullptr);
         UNRECOVERABLE_IF(memoryManager == nullptr);
         NEO::SvmAllocationData *allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(deallocation->getGpuAddress()));
@@ -162,7 +162,7 @@ void CommandList::migrateSharedAllocations() {
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
     std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
     auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-    for (auto alloc : driverHandleImp->sharedMakeResidentAllocations) {
+    for (auto &alloc : driverHandleImp->sharedMakeResidentAllocations) {
         pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc.second->getGpuAddress()));
     }
     if (this->unifiedMemoryControls.indirectSharedAllocationsAllowed) {

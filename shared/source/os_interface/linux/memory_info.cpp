@@ -102,7 +102,7 @@ size_t MemoryInfo::getMemoryRegionSize(uint32_t memoryBank) {
 }
 
 void MemoryInfo::printRegionSizes() {
-    for (auto region : drmQueryRegions) {
+    for (auto &region : drmQueryRegions) {
         std::cout << "Memory type: " << region.region.memoryClass
                   << ", memory instance: " << region.region.memoryInstance
                   << ", region size: " << region.probedSize << std::endl;

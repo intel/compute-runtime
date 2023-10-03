@@ -83,7 +83,7 @@ ze_result_t DeviceImp::getStatus() {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
     auto engines = neoDevice->getAllEngines();
-    for (auto engine : engines) {
+    for (auto &engine : engines) {
         auto csr = engine.commandStreamReceiver;
         if (csr->isGpuHangDetected()) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
@@ -1105,7 +1105,7 @@ ze_result_t DeviceImp::systemBarrier() { return ZE_RESULT_ERROR_UNSUPPORTED_FEAT
 ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
                                                     zet_metric_group_handle_t *phMetricGroups) {
     if (!this->isSubdevice && this->isImplicitScalingCapable()) {
-        for (auto subDevice : this->subDevices) {
+        for (auto &subDevice : this->subDevices) {
             subDevice->getMetricDeviceContext().activateMetricGroupsDeferred(count, phMetricGroups);
         }
     } else {
@@ -1410,7 +1410,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
 
     if (!allocDataArray.empty()) {
         UNRECOVERABLE_IF(commandList == nullptr);
-        for (auto allocData : allocDataArray) {
+        for (auto &allocData : allocDataArray) {
             allocation = allocData->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex());
             char *allocAddress = reinterpret_cast<char *>(allocation->getGpuAddress());
             size_t allocSize = allocData->size;
