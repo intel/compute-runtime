@@ -10,6 +10,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/include/ze_intel_gpu.h"
 
 namespace L0 {
 namespace ult {
@@ -23,6 +24,21 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMemoryProperties(&pCount, &memProperties));
     EXPECT_EQ(0, strcmp(memProperties.name, "DDR"));
     EXPECT_EQ(0u, memProperties.maxClockRate);
+}
+
+HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPWhenGettingDpSupportThenReturnsTrue, IsXeLpg) {
+    ze_device_module_properties_t deviceModProps = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
+    ze_intel_device_module_dp_exp_properties_t moduleDpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES};
+    moduleDpProps.flags = 0u;
+    deviceModProps.pNext = &moduleDpProps;
+
+    ze_result_t res = device->getKernelProperties(&deviceModProps);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    bool dp4a = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
+    bool dpas = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
+    EXPECT_TRUE(dp4a);
+    EXPECT_TRUE(dpas);
 }
 
 using CommandQueueGroupTest = Test<DeviceFixture>;

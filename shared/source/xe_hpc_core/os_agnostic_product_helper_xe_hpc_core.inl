@@ -51,4 +51,14 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
     return 0u;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isPlatformDpasSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isPlatformDp4aSupported() const {
+    return true;
+}
+
 } // namespace NEO

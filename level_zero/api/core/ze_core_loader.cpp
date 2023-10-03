@@ -20,12 +20,21 @@
 #include "level_zero/experimental/source/tracing/tracing_module_imp.h"
 #include "level_zero/experimental/source/tracing/tracing_residency_imp.h"
 #include "level_zero/experimental/source/tracing/tracing_sampler_imp.h"
-#include "level_zero/source/inc/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 
 #include "ze_core_all_api_entrypoints.h"
 #include "ze_ddi_tables.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+inline bool getEnvToBool(const char *name) {
+    const char *env = getenv(name);
+    if ((nullptr == env) || (0 == strcmp("0", env)))
+        return false;
+    return (0 == strcmp("1", env));
+}
 
 ze_gpu_driver_dditable_t driverDdiTable;
 

@@ -338,6 +338,16 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isTimestampWaitSupportedForEvents() const {
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isPlatformDpasSupported() const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isPlatformDp4aSupported() const {
+    return false;
+}
+
+template <>
 uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() const {
     return 0;
 }

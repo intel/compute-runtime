@@ -81,4 +81,14 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint
     return patIndex;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isPlatformDpasSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isPlatformDp4aSupported() const {
+    return true;
+}
+
 } // namespace NEO

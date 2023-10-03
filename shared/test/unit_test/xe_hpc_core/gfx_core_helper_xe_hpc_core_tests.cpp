@@ -74,6 +74,16 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimesta
     EXPECT_TRUE(helper.isTimestampWaitSupportedForEvents());
 }
 
+XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckDpasSupportThenReturnTrue) {
+    auto &helper = getHelper<ProductHelper>();
+    EXPECT_TRUE(helper.isPlatformDpasSupported());
+}
+
+XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckDp4aSupportThenReturnTrue) {
+    auto &helper = getHelper<ProductHelper>();
+    EXPECT_TRUE(helper.isPlatformDp4aSupported());
+}
+
 XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();

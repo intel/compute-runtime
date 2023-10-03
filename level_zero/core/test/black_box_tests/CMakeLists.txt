@@ -37,6 +37,7 @@ set(TEST_TARGETS
     zello_bindless_kernel
     zello_commandlist_immediate
     zello_copy
+    zello_dp_support
     zello_copy_fence
     zello_copy_image
     zello_copy_kernel_printf

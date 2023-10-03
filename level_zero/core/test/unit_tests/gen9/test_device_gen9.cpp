@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/include/ze_intel_gpu.h"
 
 namespace L0 {
 namespace ult {
@@ -23,6 +24,23 @@ HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPropertie
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ECC);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
     EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_INTEGRATED, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+}
+
+using DeviceTestGen9 = Test<DeviceFixture>;
+
+HWTEST2_F(DeviceTestGen9, GivenTargetGen9WhenGettingDpSupportThenReturnsFalseAndFlagsSetCorrectly, IsAtMostGen9) {
+    ze_device_module_properties_t deviceModProps = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
+    ze_intel_device_module_dp_exp_properties_t moduleDpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES};
+    moduleDpProps.flags = 0u;
+    deviceModProps.pNext = &moduleDpProps;
+
+    ze_result_t res = device->getKernelProperties(&deviceModProps);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    bool dp4a = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
+    bool dpas = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
+    EXPECT_FALSE(dp4a);
+    EXPECT_FALSE(dpas);
 }
 
 using CommandQueueGroupTest = Test<DeviceFixture>;
