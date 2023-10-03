@@ -955,7 +955,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
-    if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL) {
+    if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL && this->kernelImmData->getIsaParentAllocation() == nullptr) {
         isaAllocation->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
         isaAllocation->setAubWritable(true, std::numeric_limits<uint32_t>::max());
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(neoDevice->getRootDeviceEnvironment(), *isaAllocation),
