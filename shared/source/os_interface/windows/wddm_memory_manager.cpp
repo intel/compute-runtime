@@ -223,12 +223,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
     auto cpuPtr = gmm->isCompressionEnabled ? nullptr : lockResource(wddmAllocation.get());
 
-    if (alignGpuAddressTo64KB) {
-        void *tempCPUPtr = cpuPtr;
-        cpuPtr = alignUp(cpuPtr, std::max(allocationData.alignment, MemoryConstants::pageSize64k));
-        wddmAllocation->setGpuAddress(wddmAllocation->getGpuAddress() + ptrDiff(cpuPtr, tempCPUPtr));
-    }
-
     [[maybe_unused]] auto status = true;
 
     if ((!(alignGpuAddressTo64KB) && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) || is32bit) {
@@ -239,6 +233,12 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
         status = mapGpuVirtualAddress(wddmAllocation.get(), requiredGpuVa);
     } else {
         status = mapGpuVirtualAddress(wddmAllocation.get(), nullptr);
+
+        if (alignGpuAddressTo64KB) {
+            void *tempCPUPtr = cpuPtr;
+            cpuPtr = alignUp(cpuPtr, MemoryConstants::pageSize64k);
+            wddmAllocation->setGpuAddress(wddmAllocation->getGpuAddress() + ptrDiff(cpuPtr, tempCPUPtr));
+        }
     }
     DEBUG_BREAK_IF(!status);
     wddmAllocation->setCpuAddress(cpuPtr);
@@ -1302,7 +1302,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         alignment = MemoryConstants::pageSize64k;
         sizeAligned = allocationData.imgInfo->size;
     } else {
-        alignment = std::max(allocationData.alignment, alignmentSelector.selectAlignment(allocationData.size).alignment);
+        alignment = alignmentSelector.selectAlignment(allocationData.size).alignment;
         sizeAligned = alignUp(allocationData.size, alignment);
 
         if (singleBankAllocation) {
