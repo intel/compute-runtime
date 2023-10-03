@@ -120,7 +120,8 @@ TEST(CompilerCacheTests, GivenCompilerCacheWithOneMegabyteWhenEvictCacheIsCalled
 
     CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte - 2u});
 
-    EXPECT_TRUE(cache.evictCache());
+    uint64_t bytesEvicted{0u};
+    EXPECT_TRUE(cache.evictCache(bytesEvicted));
 
     EXPECT_EQ(unlinkLocalFiles.size(), 2u);
 
@@ -132,7 +133,8 @@ TEST(CompilerCacheTests, GivenCompilerCacheWithWhenScandirFailThenEvictCacheFail
     CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
     VariableBackup<decltype(NEO::SysCalls::sysCallsScandir)> scandirBackup(&NEO::SysCalls::sysCallsScandir, [](const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *), int (*compar)(const struct dirent **, const struct dirent **)) -> int { return -1; });
 
-    EXPECT_FALSE(cache.evictCache());
+    uint64_t bytesEvicted{0u};
+    EXPECT_FALSE(cache.evictCache(bytesEvicted));
 }
 
 namespace CreateUniqueTempFilePass {
@@ -482,7 +484,7 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfEvictFailed : public CompilerC
         return;
     }
 
-    bool evictCache() override {
+    bool evictCache(uint64_t &bytesEvicted) override {
         return false;
     }
 };
@@ -509,7 +511,7 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfCreateUniqueFileFailed : publi
         return;
     }
 
-    bool evictCache() override {
+    bool evictCache(uint64_t &bytesEvicted) override {
         return true;
     }
 
@@ -540,7 +542,7 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfRenameFileFailed : public Comp
         return;
     }
 
-    bool evictCache() override {
+    bool evictCache(uint64_t &bytesEvicted) override {
         return true;
     }
 
@@ -575,7 +577,7 @@ class CompilerCacheLinuxReturnTrueOnCacheBinary : public CompilerCache {
         return;
     }
 
-    bool evictCache() override {
+    bool evictCache(uint64_t &bytesEvicted) override {
         return true;
     }
 

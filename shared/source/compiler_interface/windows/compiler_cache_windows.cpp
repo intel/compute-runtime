@@ -30,7 +30,7 @@ std::vector<ElementsStruct> getFiles(const std::string &path) {
     std::vector<ElementsStruct> files;
     std::string newPath;
 
-    WIN32_FIND_DATAA ffd;
+    WIN32_FIND_DATAA ffd{0};
     HANDLE hFind = INVALID_HANDLE_VALUE;
 
     if (path.c_str()[path.size() - 1] == '\\') {
@@ -49,8 +49,7 @@ std::vector<ElementsStruct> getFiles(const std::string &path) {
     do {
         auto fileName = joinPath(path, ffd.cFileName);
         if (fileName.find(".cl_cache") != fileName.npos ||
-            fileName.find(".l0_cache") != fileName.npos ||
-            fileName.find(".ocloc_cache") != fileName.npos) {
+            fileName.find(".l0_cache") != fileName.npos) {
             uint64_t fileSize = (ffd.nFileSizeHigh * (MAXDWORD + 1)) + ffd.nFileSizeLow;
             files.push_back({fileName, ffd.ftLastAccessTime, fileSize});
         }
@@ -74,16 +73,19 @@ void unlockFileAndClose(UnifiedHandle handle) {
     NEO::SysCalls::closeHandle(std::get<void *>(handle));
 }
 
-bool CompilerCache::evictCache() {
-    auto files = getFiles(config.cacheDir);
-    auto evictionLimit = config.cacheSize / 3;
-    uint64_t evictionSizeCount = 0;
+bool CompilerCache::evictCache(uint64_t &bytesEvicted) {
+    bytesEvicted = 0;
+    const auto cacheFiles = getFiles(config.cacheDir);
+    const auto evictionLimit = config.cacheSize / 3;
 
-    for (const auto &file : files) {
-        NEO::SysCalls::deleteFileA(file.path.c_str());
-        evictionSizeCount += file.fileSize;
+    for (const auto &file : cacheFiles) {
+        auto res = NEO::SysCalls::deleteFileA(file.path.c_str());
+        if (!res) {
+            continue;
+        }
 
-        if (evictionSizeCount > evictionLimit) {
+        bytesEvicted += file.fileSize;
+        if (bytesEvicted > evictionLimit) {
             return true;
         }
     }
@@ -143,9 +145,9 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
     }
 
     if (countDirectorySize) {
-        auto files = getFiles(config.cacheDir);
+        const auto cacheFiles = getFiles(config.cacheDir);
 
-        for (const auto &file : files) {
+        for (const auto &file : cacheFiles) {
             directorySize += static_cast<size_t>(file.fileSize);
         }
     } else {
@@ -233,8 +235,24 @@ class HandleGuard {
     void *handle = nullptr;
 };
 
+void writeDirSizeToConfigFile(void *hConfigFile, size_t directorySize) {
+    DWORD sizeWritten = 0;
+    OVERLAPPED overlapped = {0};
+    auto result = NEO::SysCalls::writeFile(hConfigFile,
+                                           &directorySize,
+                                           (DWORD)sizeof(directorySize),
+                                           &sizeWritten,
+                                           &overlapped);
+
+    if (!result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing to config file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
+    } else if (sizeWritten != (DWORD)sizeof(directorySize)) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing to config file failed! Incorrect number of bytes written: %lu vs %lu\n", NEO::SysCalls::getProcessId(), sizeWritten, (DWORD)sizeof(directorySize));
+    }
+}
+
 bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize) {
-    if (pBinary == nullptr || binarySize == 0) {
+    if (pBinary == nullptr || binarySize == 0 || binarySize > config.cacheSize) {
         return false;
     }
 
@@ -263,9 +281,18 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
         return true;
     }
 
-    size_t maxSize = config.cacheSize;
+    const size_t maxSize = config.cacheSize;
     if (maxSize < (directorySize + binarySize)) {
-        if (!evictCache()) {
+        uint64_t bytesEvicted{0u};
+        const auto evictSuccess = evictCache(bytesEvicted);
+        const auto availableSpace = maxSize - directorySize + bytesEvicted;
+
+        directorySize = std::max(static_cast<size_t>(0), directorySize - static_cast<size_t>(bytesEvicted));
+
+        if (!evictSuccess || binarySize > availableSpace) {
+            if (bytesEvicted > 0) {
+                writeDirSizeToConfigFile(std::get<void *>(hConfigFile), directorySize);
+            }
             return false;
         }
     }
@@ -283,20 +310,7 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     }
 
     directorySize += binarySize;
-
-    DWORD sizeWritten = 0;
-    OVERLAPPED overlapped = {0};
-    auto result = NEO::SysCalls::writeFile(std::get<void *>(hConfigFile),
-                                           &directorySize,
-                                           (DWORD)sizeof(directorySize),
-                                           &sizeWritten,
-                                           &overlapped);
-
-    if (!result) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing to config file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
-    } else if (sizeWritten != (DWORD)sizeof(directorySize)) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing to config file failed! Incorrect number of bytes written: %lu vs %lu\n", NEO::SysCalls::getProcessId(), sizeWritten, (DWORD)sizeof(directorySize));
-    }
+    writeDirSizeToConfigFile(std::get<void *>(hConfigFile), directorySize);
 
     return true;
 }

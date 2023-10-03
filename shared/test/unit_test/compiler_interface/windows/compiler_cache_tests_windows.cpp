@@ -57,17 +57,19 @@ class CompilerCacheMockWindows : public CompilerCache {
     bool renameTempFileBinaryToProperNameResult = true;
     std::string renameTempFileBinaryToProperNameCacheFilePath = "";
 
-    bool evictCache() override {
+    bool evictCache(uint64_t &bytesEvicted) override {
         evictCacheCalled++;
         if (callBaseEvictCache) {
-            return CompilerCache::evictCache();
+            return CompilerCache::evictCache(bytesEvicted);
         }
+        bytesEvicted = evictCacheBytesEvicted;
         return evictCacheResult;
     }
 
     bool callBaseEvictCache = true;
     size_t evictCacheCalled = 0u;
     bool evictCacheResult = true;
+    uint64_t evictCacheBytesEvicted = 0u;
 
     void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &handle, size_t &directorySize) override {
         lockConfigFileAndReadSizeCalled++;
@@ -75,11 +77,13 @@ class CompilerCacheMockWindows : public CompilerCache {
             return CompilerCache::lockConfigFileAndReadSize(configFilePath, handle, directorySize);
         }
         std::get<void *>(handle) = lockConfigFileAndReadSizeHandle;
+        directorySize = lockConfigFileAndReadSizeDirSize;
     }
 
     bool callBaseLockConfigFileAndReadSize = true;
     size_t lockConfigFileAndReadSizeCalled = 0u;
     void *lockConfigFileAndReadSizeHandle = INVALID_HANDLE_VALUE;
+    size_t lockConfigFileAndReadSizeDirSize = 0u;
 };
 
 TEST(CompilerCacheHelper, GivenHomeEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperDirectoryIsReturned) {
@@ -236,7 +240,9 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCache
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
     auto &deletedFiles = SysCalls::deleteFiles;
-    auto result = cache.evictCache();
+
+    uint64_t bytesEvicted{0u};
+    auto result = cache.evictCache(bytesEvicted);
 
     EXPECT_TRUE(result);
     EXPECT_EQ(2u, SysCalls::deleteFileACalled);
@@ -252,8 +258,10 @@ TEST_F(CompilerCacheWindowsTest, givenEvictCacheWhenFileSearchFailedThenDebugMes
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
+    uint64_t bytesEvicted{0u};
+
     ::testing::internal::CaptureStderr();
-    cache.evictCache();
+    cache.evictCache(bytesEvicted);
     auto capturedStderr = ::testing::internal::GetCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: File search failed! error code:");
@@ -618,6 +626,14 @@ TEST_F(CompilerCacheWindowsTest, givenEmptyBinaryAndOrBinarySizeWhenCacheBinaryT
     EXPECT_FALSE(result);
 }
 
+TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenBinarySizeIsOverCacheLimitThenEarlyReturnFalse) {
+    const size_t cacheSize = MemoryConstants::megaByte;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    auto result = cache.cacheBinary("7e3291364d8df42", "123456", cacheSize * 2);
+    EXPECT_FALSE(result);
+}
+
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenAllStepsSuccessThenReturnTrue) {
     SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
 
@@ -777,14 +793,51 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenLockConfigFileAndReadSizeFa
     EXPECT_FALSE(result);
 }
 
-TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenEvictCacheFailsThenReturnFalse) {
+TEST_F(CompilerCacheWindowsTest, givenCacheDirectoryFilledToTheLimitWhenNewBinaryFitsAfterEvictionThenWriteCacheAndUpdateConfigAndReturnTrue) {
     SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
 
-    const size_t cacheSize = 3u;
+    const size_t cacheSize = 10;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
     cache.callBaseLockConfigFileAndReadSize = false;
     cache.lockConfigFileAndReadSizeHandle = reinterpret_cast<HANDLE>(0x1234);
+    cache.lockConfigFileAndReadSizeDirSize = 6;
+
+    cache.callBaseEvictCache = false;
+    cache.evictCacheResult = true;
+    cache.evictCacheBytesEvicted = cacheSize / 3;
+
+    cache.callBaseCreateUniqueTempFileAndWriteData = false;
+    cache.createUniqueTempFileAndWriteDataResult = true;
+
+    cache.callBaseRenameTempFileBinaryToProperName = false;
+    cache.renameTempFileBinaryToProperNameResult = true;
+
+    const std::string kernelFileHash = "7e3291364d8df42";
+    const char *binary = "123456";
+    const size_t binarySize = strlen(binary);
+    SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(sizeof(size_t));
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
+    EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
+    EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
+    EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(1u, SysCalls::writeFileCalled);
+    EXPECT_EQ(0, strcmp(cache.createUniqueTempFileAndWriteDataTmpFilePath.c_str(), "somePath\\cl_cache\\cl_cache.XXXXXX"));
+    EXPECT_EQ(0, strcmp(cache.renameTempFileBinaryToProperNameCacheFilePath.c_str(), "somePath\\cl_cache\\7e3291364d8df42.cl_cache"));
+}
+
+TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenEvictCacheFailsThenReturnFalse) {
+    SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
+
+    const size_t cacheSize = 10u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    cache.callBaseLockConfigFileAndReadSize = false;
+    cache.lockConfigFileAndReadSizeHandle = reinterpret_cast<HANDLE>(0x1234);
+    cache.lockConfigFileAndReadSizeDirSize = 5;
 
     cache.callBaseEvictCache = false;
     cache.evictCacheResult = false;
@@ -802,6 +855,66 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenEvictCacheFailsThenReturnFa
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenBinaryDoesntFitAfterEvictionThenWriteToConfigAndReturnFalse) {
+    SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
+
+    const size_t cacheSize = 10u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    cache.callBaseLockConfigFileAndReadSize = false;
+    cache.lockConfigFileAndReadSizeHandle = reinterpret_cast<HANDLE>(0x1234);
+    cache.lockConfigFileAndReadSizeDirSize = 9;
+
+    cache.callBaseEvictCache = false;
+    cache.evictCacheResult = true;
+    cache.evictCacheBytesEvicted = cacheSize / 3;
+
+    const std::string kernelFileHash = "7e3291364d8df42";
+    const char *binary = "123456";
+    const size_t binarySize = strlen(binary);
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+
+    EXPECT_FALSE(result);
+    EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
+    EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
+    EXPECT_EQ(1u, SysCalls::writeFileCalled);
+
+    EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
+    EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, givenCacheDirectoryFilledToTheLimitWhenNoBytesHaveBeenEvictedAndNewBinaryDoesntFitAfterEvictionThenDontWriteToConfigAndReturnFalse) {
+    SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
+
+    const size_t cacheSize = 10u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    cache.callBaseLockConfigFileAndReadSize = false;
+    cache.lockConfigFileAndReadSizeHandle = reinterpret_cast<HANDLE>(0x1234);
+    cache.lockConfigFileAndReadSizeDirSize = 9;
+
+    cache.callBaseEvictCache = false;
+    cache.evictCacheResult = true;
+    cache.evictCacheBytesEvicted = 0;
+
+    const std::string kernelFileHash = "7e3291364d8df42";
+    const char *binary = "123456";
+    const size_t binarySize = strlen(binary);
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+
+    EXPECT_FALSE(result);
+    EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
+    EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
+    EXPECT_EQ(0u, SysCalls::writeFileCalled);
+
+    EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
+    EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
 }
 
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCreateUniqueTempFileAndWriteDataFailsThenReturnFalse) {

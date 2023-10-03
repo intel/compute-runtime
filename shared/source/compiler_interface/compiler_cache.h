@@ -48,7 +48,7 @@ class CompilerCache {
     MOCKABLE_VIRTUAL std::unique_ptr<char[]> loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize);
 
   protected:
-    MOCKABLE_VIRTUAL bool evictCache();
+    MOCKABLE_VIRTUAL bool evictCache(uint64_t &bytesEvicted);
     MOCKABLE_VIRTUAL bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash);
     MOCKABLE_VIRTUAL bool createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, const char *pBinary, size_t binarySize);
     MOCKABLE_VIRTUAL void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize);

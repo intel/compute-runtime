@@ -47,7 +47,7 @@ bool compareByLastAccessTime(const ElementsStruct &a, ElementsStruct &b) {
     return a.statEl.st_atime < b.statEl.st_atime;
 }
 
-bool CompilerCache::evictCache() {
+bool CompilerCache::evictCache(uint64_t &bytesEvicted) {
     struct dirent **files = 0;
 
     int filesCount = NEO::SysCalls::scandir(config.cacheDir.c_str(), &files, filterFunction, NULL);
@@ -231,7 +231,8 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     size_t maxSize = config.cacheSize;
 
     if (maxSize < directorySize + binarySize) {
-        if (!evictCache()) {
+        uint64_t bytesEvicted{0u};
+        if (!evictCache(bytesEvicted)) {
             unlockFileAndClose(std::get<int>(fd));
             return false;
         }
