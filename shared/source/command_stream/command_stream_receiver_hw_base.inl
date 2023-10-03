@@ -646,7 +646,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, taskStartAddress, chainedBatchBuffer,
                             dispatchFlags.lowPriority, dispatchFlags.throttle, dispatchFlags.sliceCount,
                             streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchFlags.hasStallingCmds || hasStallingCmdsOnTaskStream),
-                            dispatchFlags.hasRelaxedOrderingDependencies, dispatchFlags.blocking};
+                            dispatchFlags.hasRelaxedOrderingDependencies, hasStallingCmdsOnTaskStream};
 
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
 
@@ -658,7 +658,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                 CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
                 return completionStamp;
             }
-            if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
+            if (hasStallingCmdsOnTaskStream) {
                 this->latestFlushedTaskCount = this->taskCount + 1;
             }
         } else {

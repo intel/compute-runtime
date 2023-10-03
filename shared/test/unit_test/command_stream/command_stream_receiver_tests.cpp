@@ -4583,3 +4583,79 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperWh
 
     EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, GivenFlushIsBlockingWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.recordFlusheBatchBuffer = true;
+
+    commandStreamReceiver.taskCount = 5;
+    flushTaskFlags.blocking = true;
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.dispatchMonitorFence);
+    EXPECT_EQ(6u, commandStreamReceiver.peekLatestFlushedTaskCount());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, GivenFlushIsDcFlushWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.recordFlusheBatchBuffer = true;
+
+    commandStreamReceiver.taskCount = 11;
+    flushTaskFlags.dcFlush = true;
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.dispatchMonitorFence);
+    EXPECT_EQ(12u, commandStreamReceiver.peekLatestFlushedTaskCount());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, GivenFlushGuardBufferWithPipeControlWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.recordFlusheBatchBuffer = true;
+
+    commandStreamReceiver.taskCount = 17;
+    flushTaskFlags.guardCommandBufferWithPipeControl = true;
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.dispatchMonitorFence);
+    EXPECT_EQ(18u, commandStreamReceiver.peekLatestFlushedTaskCount());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, GivenFlushHeapStorageRequiresRecyclingTagWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.recordFlusheBatchBuffer = true;
+
+    commandStreamReceiver.taskCount = 23;
+    commandStreamReceiver.heapStorageRequiresRecyclingTag = true;
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.dispatchMonitorFence);
+    EXPECT_EQ(24u, commandStreamReceiver.peekLatestFlushedTaskCount());
+}
