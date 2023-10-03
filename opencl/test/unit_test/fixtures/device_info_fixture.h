@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
 
     void check(std::vector<TestParams> &params) {
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
+        auto &productHelper = device->getProductHelper();
         for (auto &param : params) {
             cl_unified_shared_memory_capabilities_intel unifiedSharedMemoryCapabilities{};
             size_t paramRetSize;
@@ -29,7 +29,11 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
                                                       sizeof(cl_unified_shared_memory_capabilities_intel),
                                                       &unifiedSharedMemoryCapabilities, &paramRetSize);
             EXPECT_EQ(CL_SUCCESS, retVal);
-            EXPECT_EQ(param.expectedCapabilities, unifiedSharedMemoryCapabilities);
+            if ((param.paramName == CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL) && (productHelper.isKmdMigrationSupported())) {
+                EXPECT_EQ((param.expectedCapabilities | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL), unifiedSharedMemoryCapabilities);
+            } else {
+                EXPECT_EQ(param.expectedCapabilities, unifiedSharedMemoryCapabilities);
+            }
             EXPECT_EQ(sizeof(cl_unified_shared_memory_capabilities_intel), paramRetSize);
         }
     }

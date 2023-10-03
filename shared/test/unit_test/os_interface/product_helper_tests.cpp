@@ -135,6 +135,15 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
     }
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperAndSingleDeviceSharedMemAccessConcurrentAtomicEnabledIfKmdMigrationEnabled) {
+
+    auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities();
+    if ((singleDeviceSharedMemCapabilities > 0) && (productHelper->isKmdMigrationSupported())) {
+        EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & singleDeviceSharedMemCapabilities);
+        EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & singleDeviceSharedMemCapabilities);
+    }
+}
+
 TEST_F(ProductHelperTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     uint64_t hwInfoConfig = 0x0;
 
