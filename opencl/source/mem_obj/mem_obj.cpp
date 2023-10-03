@@ -99,6 +99,7 @@ MemObj::~MemObj() {
             }
             if (mcsAllocation) {
                 destroyGraphicsAllocation(mcsAllocation, false);
+                mcsAllocation = nullptr;
             }
         }
         if (associatedMemObject) {

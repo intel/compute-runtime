@@ -576,6 +576,26 @@ TEST_F(MemObjMultiRootDeviceTests, WhenMemObjIsCreatedWithMultiGraphicsAllocatio
     memObj.reset(nullptr);
 }
 
+TEST_F(MemObjMultiRootDeviceTests, WhenMemObjIsCreatedWithMcsAllocationForNonDefaultRootDeviceThenAllAllocationAreDestroyedProperly) {
+    auto allocation = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1, MemoryConstants::pageSize});
+
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(1);
+    multiGraphicsAllocation.addAllocation(allocation);
+
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
+    std::unique_ptr<MemObj> memObj(
+        new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
+                   1, nullptr, nullptr, std::move(multiGraphicsAllocation), true, false, false));
+
+    EXPECT_EQ(nullptr, memObj->getMultiGraphicsAllocation().getGraphicsAllocation(0));
+    EXPECT_NE(nullptr, memObj->getMultiGraphicsAllocation().getGraphicsAllocation(1));
+
+    auto mcsAllocation = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
+    memObj->setMcsAllocation(mcsAllocation);
+
+    memObj.reset(nullptr);
+}
+
 TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapAreCreatedThenAllAllocationAreDestroyedProperly) {
     auto allocation0 = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{2, MemoryConstants::pageSize});
     auto allocation1 = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1, MemoryConstants::pageSize});
