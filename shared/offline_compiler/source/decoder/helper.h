@@ -48,9 +48,9 @@ class MessagePrinter : NEO::NonCopyableOrMovableClass {
     template <typename... Args>
     void printf(const char *format, Args... args) {
         if (!suppressMessages) {
-            ::printf(format, std::forward<Args>(args)...);
+            ::printf(format, args...);
         }
-        ss << stringFormat(format, std::forward<Args>(args)...);
+        ss << stringFormat(format, args...);
     }
 
     const std::stringstream &getLog() {

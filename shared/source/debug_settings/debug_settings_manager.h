@@ -42,9 +42,9 @@ void flushDebugStream(StreamT stream, Args &&...args) {
 }
 
 template <typename... Args>
-void printDebugString(bool showDebugLogs, Args &&...args) {
+void printDebugString(bool showDebugLogs, Args... args) {
     if (showDebugLogs) {
-        IoFunctions::fprintf(std::forward<Args>(args)...);
+        IoFunctions::fprintf(args...);
         flushDebugStream(args...);
     }
 }

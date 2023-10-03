@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,10 +85,10 @@ class DispatchInfoBuilder {
     }
 
     template <typename... ArgsT>
-    cl_int setArgSvm(ArgsT &&...args) {
+    cl_int setArgSvm(ArgsT... args) {
         for (auto &dispatchInfo : dispatchInfos) {
             if (dispatchInfo.getKernel()) {
-                dispatchInfo.getKernel()->setArgSvm(std::forward<ArgsT>(args)...);
+                dispatchInfo.getKernel()->setArgSvm(args...);
             }
         }
         return CL_SUCCESS;
@@ -118,11 +118,11 @@ class DispatchInfoBuilder {
     }
 
     template <typename... ArgsT>
-    cl_int setArg(ArgsT &&...args) {
+    cl_int setArg(ArgsT... args) {
         cl_int result = CL_SUCCESS;
         for (auto &dispatchInfo : dispatchInfos) {
             if (dispatchInfo.getKernel()) {
-                result = dispatchInfo.getKernel()->setArg(std::forward<ArgsT>(args)...);
+                result = dispatchInfo.getKernel()->setArg(args...);
                 if (result != CL_SUCCESS) {
                     break;
                 }
