@@ -14,7 +14,6 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/source/inc/ze_intel_gpu.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 

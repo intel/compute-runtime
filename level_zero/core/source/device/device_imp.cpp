@@ -53,6 +53,7 @@
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/rtas/rtas.h"
 #include "level_zero/core/source/sampler/sampler.h"
+#include "level_zero/include/ze_intel_gpu.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
@@ -783,6 +784,17 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
             } else {
                 rtProperties->flags = 0;
                 rtProperties->maxBVHLevels = 0;
+            }
+        } else if (extendedProperties->stype == ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES) {
+            ze_intel_device_module_dp_exp_properties_t *dpProperties =
+                reinterpret_cast<ze_intel_device_module_dp_exp_properties_t *>(extendedProperties);
+            dpProperties->flags = 0u;
+            if (productHelper.isPlatformDp4aSupported()) {
+                dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
+            }
+
+            if (productHelper.isPlatformDpasSupported()) {
+                dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
             }
         }
         getExtendedDeviceModuleProperties(extendedProperties);

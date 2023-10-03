@@ -14,6 +14,7 @@
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
+#include "level_zero/include/ze_intel_gpu.h"
 
 #include <map>
 #include <mutex>
@@ -156,7 +157,10 @@ struct DriverHandleImp : public DriverHandle {
         {ZE_IMAGE_VIEW_EXT_NAME, ZE_IMAGE_VIEW_EXP_VERSION_CURRENT},
         {ZE_IMAGE_VIEW_PLANAR_EXT_NAME, ZE_IMAGE_VIEW_PLANAR_EXP_VERSION_CURRENT},
         {ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_NAME, ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_VERSION_CURRENT},
-        {ZE_RTAS_BUILDER_EXP_NAME, ZE_RTAS_BUILDER_EXP_VERSION_CURRENT}};
+        {ZE_RTAS_BUILDER_EXP_NAME, ZE_RTAS_BUILDER_EXP_VERSION_CURRENT},
+
+        // Driver experimental extensions
+        {ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME, ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_VERSION_CURRENT}};
 
     uint64_t uuidTimestamp = 0u;
 
