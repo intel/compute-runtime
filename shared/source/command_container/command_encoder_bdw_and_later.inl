@@ -287,13 +287,13 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
 
-    auto buffer = listCmdBufferStream->getSpace(sizeof(cmd));
-    *(decltype(cmd) *)buffer = cmd;
+    auto buffer = listCmdBufferStream->getSpaceForCmd<WALKER_TYPE>();
+    *buffer = cmd;
 
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
     {
-        auto mediaStateFlush = listCmdBufferStream->getSpace(sizeof(MEDIA_STATE_FLUSH));
-        *reinterpret_cast<MEDIA_STATE_FLUSH *>(mediaStateFlush) = Family::cmdInitMediaStateFlush;
+        auto mediaStateFlush = listCmdBufferStream->getSpaceForCmd<MEDIA_STATE_FLUSH>();
+        *mediaStateFlush = Family::cmdInitMediaStateFlush;
     }
 
     args.partitionCount = 1;

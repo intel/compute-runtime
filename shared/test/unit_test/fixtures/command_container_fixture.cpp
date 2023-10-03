@@ -38,6 +38,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
 
     EncodeDispatchKernelArgs args{
         0,                        // eventAddress
+        0,                        // postSyncImmValue
         device,                   // device
         dispatchInterface,        // dispatchInterface
         nullptr,                  // surfaceStateHeap
@@ -47,7 +48,6 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         nullptr,                  // additionalCommands
         PreemptionMode::Disabled, // preemptionMode
         1,                        // partitionCount
-        0,                        // postSyncImmValue
         false,                    // isIndirect
         false,                    // isPredicate
         false,                    // isTimestampEvent

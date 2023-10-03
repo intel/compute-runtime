@@ -360,9 +360,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                           hwInfo);
     } else {
         args.partitionCount = 1;
-        auto buffer = listCmdBufferStream->getSpace(sizeof(walkerCmd));
+        auto buffer = listCmdBufferStream->getSpaceForCmd<WALKER_TYPE>();
         args.outWalkerPtr = buffer;
-        *(decltype(walkerCmd) *)buffer = walkerCmd;
+        *buffer = walkerCmd;
     }
 
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);

@@ -626,27 +626,30 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     const uint32_t threadGroupDimensions[3] = {1, 1, 1};
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        0,
-        device->getNEODevice(),
-        kernel.get(),
-        nullptr,
-        nullptr,
-        threadGroupDimensions,
-        nullptr,
-        nullptr,
-        PreemptionMode::MidBatch,
-        0,
-        0,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        commandList->getDcFlushRequired(true)};
+        0,                                    // eventAddress
+        0,                                    // postSyncImmValue
+        device->getNEODevice(),               // device
+        kernel.get(),                         // dispatchInterface
+        nullptr,                              // surfaceStateHeap
+        nullptr,                              // dynamicStateHeap
+        threadGroupDimensions,                // threadGroupDimensions
+        nullptr,                              // outWalkerPtr
+        nullptr,                              // additionalCommands
+        PreemptionMode::MidBatch,             // preemptionMode
+        0,                                    // partitionCount
+        false,                                // isIndirect
+        false,                                // isPredicate
+        false,                                // isTimestampEvent
+        false,                                // requiresUncachedMocs
+        false,                                // useGlobalAtomics
+        false,                                // isInternal
+        false,                                // isCooperative
+        false,                                // isHostScopeSignalEvent
+        false,                                // isKernelUsingSystemAllocation
+        false,                                // isKernelDispatchedFromImmediateCmdList
+        false,                                // isRcs
+        commandList->getDcFlushRequired(true) // dcFlushEnable
+    };
     EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs), std::exception);
 }
 

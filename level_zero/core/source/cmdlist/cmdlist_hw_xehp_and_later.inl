@@ -272,6 +272,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         eventAddress,                                           // eventAddress
+        static_cast<uint64_t>(Event::STATE_SIGNALED),           // postSyncImmValue
         neoDevice,                                              // device
         kernel,                                                 // dispatchInterface
         ssh,                                                    // surfaceStateHeap
@@ -281,7 +282,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
         this->partitionCount,                                   // partitionCount
-        static_cast<uint64_t>(Event::STATE_SIGNALED),           // postSyncImmValue
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate
         isTimestampEvent,                                       // isTimestampEvent
