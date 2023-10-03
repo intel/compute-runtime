@@ -23,8 +23,8 @@
 
 using namespace NEO;
 
-extern std::vector<uint64_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions);
-extern std::vector<uint64_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
+extern std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions);
+extern std::vector<uint8_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
 
 struct IoctlPrelimHelperTests : ::testing::Test {
     MockExecutionEnvironment executionEnvironment{};

@@ -131,10 +131,10 @@ class IoctlHelper {
     virtual std::string getIoctlString(DrmIoctl ioctlRequest) const = 0;
 
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
-    virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);
+    virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo);
 
     virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
-    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint64_t> &data);
+    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data);
 
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
     void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);
@@ -237,7 +237,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
     }
 
     int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) override;
-    std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo) override;
+    std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
 };
