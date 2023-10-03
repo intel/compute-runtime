@@ -186,11 +186,6 @@ void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t
 
 EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles, const ze_event_pool_desc_t *desc, ze_result_t &result) {
     auto eventPool = std::make_unique<EventPool>(desc);
-    if (!eventPool) {
-        result = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-        DEBUG_BREAK_IF(true);
-        return nullptr;
-    }
 
     result = eventPool->initialize(driver, context, numDevices, deviceHandles);
     if (result) {

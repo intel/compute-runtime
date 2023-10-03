@@ -878,9 +878,6 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, deviceCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
 
     std::unique_ptr<RTDispatchGlobalsInfo> dispatchGlobalsInfo = std::make_unique<RTDispatchGlobalsInfo>();
-    if (dispatchGlobalsInfo == nullptr) {
-        return;
-    }
 
     auto &productHelper = getProductHelper();
 
