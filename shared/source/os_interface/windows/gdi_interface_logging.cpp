@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,7 +298,7 @@ inline void logExit(NTSTATUS status, Param param) {
         constexpr size_t stringBufferSize = 256;
         char stringBuffer[stringBufferSize];
         getExitString<Param>(param, stringBuffer, stringBufferSize);
-        IoFunctions::fprintf(output, "GDI Call EXIT STATUS: 0x%lx %s\n", status, stringBuffer);
+        IoFunctions::fprintf(output, "GDI Call EXIT STATUS: 0x%x %s\n", status, stringBuffer);
     }
 }
 
