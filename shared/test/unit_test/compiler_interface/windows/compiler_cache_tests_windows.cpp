@@ -981,6 +981,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenRenameTempFileBinaryToPrope
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
 }
 
+TEST(CompilerCacheHelperWindowsTest, whenDefaultCacheEnabledIsCalledThenReturnCorrectValue) {
+    EXPECT_EQ(1l, NEO::defaultCacheEnabled());
+}
+
 TEST(CompilerCacheHelperWindowsTest, givenFindFirstFileASuccessWhenGetFileModificationTimeThenFindCloseIsCalled) {
     VariableBackup<HANDLE> findFirstFileAResultBackup(&SysCalls::findFirstFileAResult, reinterpret_cast<HANDLE>(0x1234));
     VariableBackup<size_t> findCloseCalledBackup(&SysCalls::findCloseCalled, 0u);
