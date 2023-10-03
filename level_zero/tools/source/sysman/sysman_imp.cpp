@@ -106,9 +106,6 @@ ze_result_t SysmanDeviceImp::init() {
     updateSubDeviceHandlesLocally();
 
     auto result = pOsSysman->init();
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
     return result;
 }
 
