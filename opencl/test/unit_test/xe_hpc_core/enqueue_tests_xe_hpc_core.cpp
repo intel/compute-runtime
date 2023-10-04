@@ -103,6 +103,33 @@ XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenPrefetchEnabledWhenEstimati
 
 using ProgramWalkerTestsXeHpcCore = EnqueueFixtureXeHpcCore;
 
+XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenProperThreadGroupSizesWhenWalkerIsProgrammedThenThreadGroupDispatchSizeIsProperlyProgrammed) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+
+    auto commandQueue = createCommandQueue<FamilyType>();
+    auto &commandStream = commandQueue->getCS(1024);
+
+    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 1);
+    size_t workSize[] = {1, 1, 1};
+    Vec3<size_t> wgInfo = {1024, 1, 1};
+
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(workSize, wgInfo, PreemptionMode::Disabled);
+
+    {
+        HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
+                                                     heap, heap, heap, dispatchInfo, walkerArgs);
+        HardwareParse hwParse;
+        hwParse.parseCommands<FamilyType>(commandStream, 0);
+        auto itorWalker = find<COMPUTE_WALKER *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+        EXPECT_NE(hwParse.cmdList.end(), itorWalker);
+        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorWalker);
+        EXPECT_NE(nullptr, walkerCmd);
+        auto &idd = walkerCmd->getInterfaceDescriptor();
+
+        EXPECT_EQ(FamilyType::INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, idd.getThreadGroupDispatchSize());
+    }
+}
+
 XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgrammingWalkerThenSetL3Prefetch) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 

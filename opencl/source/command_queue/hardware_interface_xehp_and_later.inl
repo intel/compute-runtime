@@ -96,6 +96,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, 0, rootDeviceEnvironment);
     }
 
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups,
+                                                           numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
+                                                           localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
+
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
         dsh,
@@ -114,9 +118,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         localIdsGenerationByRuntime,
         commandQueue.getDevice());
 
-    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups,
-                                                           numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
-                                                           localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
     bool kernelSystemAllocation = false;
     if (kernel.isBuiltIn) {
         kernelSystemAllocation = kernel.getDestinationAllocationInSystemMemory();

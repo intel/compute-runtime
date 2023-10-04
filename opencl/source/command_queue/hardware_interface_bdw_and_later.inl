@@ -77,6 +77,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
 
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernel.getKernelInfo().kernelDescriptor,
+                                                           globalOffsets, startWorkGroups,
+                                                           numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
+                                                           false, false, 0u);
+
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
         dsh,
@@ -94,11 +99,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         nullptr,
         kernelUsesLocalIds,
         commandQueue.getDevice());
-
-    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernel.getKernelInfo().kernelDescriptor,
-                                                           globalOffsets, startWorkGroups,
-                                                           numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
-                                                           false, false, 0u);
 
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false, kernel.getKernelInfo().kernelDescriptor};
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
