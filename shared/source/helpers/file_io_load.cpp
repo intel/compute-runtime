@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ std::unique_ptr<char[]> loadDataFromFile(
         // Allocate a buffer for the file contents
         fseek(fp, 0, SEEK_END);
         nsize = static_cast<size_t>(ftell(fp));
+        UNRECOVERABLE_IF(nsize == static_cast<size_t>(-1));
 
         fseek(fp, 0, SEEK_SET);
 

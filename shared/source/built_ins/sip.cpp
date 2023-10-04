@@ -43,6 +43,7 @@ std::vector<char> readFile(const std::string &fileName, size_t &retSize) {
 
     IoFunctions::fseekPtr(fileDescriptor, 0, SEEK_END);
     size = IoFunctions::ftellPtr(fileDescriptor);
+    UNRECOVERABLE_IF(size == -1);
     IoFunctions::rewindPtr(fileDescriptor);
 
     retBuf.resize(size);
