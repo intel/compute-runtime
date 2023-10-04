@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
@@ -34,6 +35,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
     uint32_t getSubDeviceCount() override;
     SysmanDeviceImp *getSysmanDeviceImp();
+    const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }
 
   protected:
     FirmwareUtil *pFwUtilInterface = nullptr;

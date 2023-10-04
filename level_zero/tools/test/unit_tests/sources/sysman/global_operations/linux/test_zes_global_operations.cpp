@@ -510,7 +510,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndOpenSysCallFailsW
     auto pOriginalDrm = pLinuxSysmanImp->pDrm;
     pLinuxSysmanImp->pDrm = pDrmMock.get();
 
-    zes_device_properties_t properties;
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    properties.pNext = nullptr;
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

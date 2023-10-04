@@ -31,7 +31,6 @@ class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableOrMovableCl
 
   private:
     OsSysman *pOsSysman = nullptr;
-    zes_device_properties_t sysmanProperties = {};
     std::once_flag initGlobalOpOnce;
     void initGlobalOperations();
 };

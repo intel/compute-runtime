@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
@@ -49,6 +50,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *getSysmanDeviceImp();
     SysmanProductHelper *getSysmanProductHelper();
     uint32_t getSubDeviceCount() override;
+    const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);

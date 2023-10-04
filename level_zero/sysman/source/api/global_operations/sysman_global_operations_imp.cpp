@@ -44,14 +44,52 @@ ze_result_t GlobalOperationsImp::processesGetState(uint32_t *pCount, zes_process
 
 ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pProperties) {
     initGlobalOperations();
-    sysmanProperties.numSubdevices = pOsSysman->getSubDeviceCount();
+    pProperties->numSubdevices = pOsSysman->getSubDeviceCount();
 
     std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
     bool uuidValid = pOsGlobalOperations->getUuid(deviceUuid);
     if (uuidValid) {
-        std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(sysmanProperties.core.uuid.id));
+        std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pProperties->core.uuid.id));
     }
-    *pProperties = sysmanProperties;
+
+    zes_base_properties_t *pNext = static_cast<zes_base_properties_t *>(pProperties->pNext);
+    while (pNext) {
+
+        if (pNext->stype == ZES_STRUCTURE_TYPE_DEVICE_EXT_PROPERTIES) {
+            auto extendedProperties = reinterpret_cast<zes_device_ext_properties_t *>(pNext);
+
+            extendedProperties->type = ZES_DEVICE_TYPE_GPU;
+
+            auto &hardwareInfo = pOsSysman->getHardwareInfo();
+            if (hardwareInfo.capabilityTable.isIntegratedDevice) {
+                extendedProperties->flags |= ZES_DEVICE_PROPERTY_FLAG_INTEGRATED;
+            }
+
+            if (hardwareInfo.capabilityTable.supportsOnDemandPageFaults) {
+                extendedProperties->flags |= ZES_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING;
+            }
+
+            if (uuidValid) {
+                std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(extendedProperties->uuid.id));
+            }
+        }
+
+        pNext = static_cast<zes_base_properties_t *>(pNext->pNext);
+    }
+
+    pOsGlobalOperations->getVendorName(pProperties->vendorName);
+    pOsGlobalOperations->getDriverVersion(pProperties->driverVersion);
+    pOsGlobalOperations->getModelName(pProperties->modelName);
+    pOsGlobalOperations->getBrandName(pProperties->brandName);
+    memset(pProperties->boardNumber, 0, ZES_STRING_PROPERTY_SIZE);
+    if (!pOsGlobalOperations->getBoardNumber(pProperties->boardNumber)) {
+        memcpy_s(pProperties->boardNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
+    }
+    memset(pProperties->serialNumber, 0, ZES_STRING_PROPERTY_SIZE);
+    if (!pOsGlobalOperations->getSerialNumber(pProperties->serialNumber)) {
+        memcpy_s(pProperties->serialNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -70,18 +108,6 @@ void GlobalOperationsImp::init() {
         pOsGlobalOperations = OsGlobalOperations::create(pOsSysman);
     }
     UNRECOVERABLE_IF(nullptr == pOsGlobalOperations);
-    pOsGlobalOperations->getVendorName(sysmanProperties.vendorName);
-    pOsGlobalOperations->getDriverVersion(sysmanProperties.driverVersion);
-    pOsGlobalOperations->getModelName(sysmanProperties.modelName);
-    pOsGlobalOperations->getBrandName(sysmanProperties.brandName);
-    memset(sysmanProperties.boardNumber, 0, ZES_STRING_PROPERTY_SIZE);
-    if (!pOsGlobalOperations->getBoardNumber(sysmanProperties.boardNumber)) {
-        memcpy_s(sysmanProperties.boardNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
-    }
-    memset(sysmanProperties.serialNumber, 0, ZES_STRING_PROPERTY_SIZE);
-    if (!pOsGlobalOperations->getSerialNumber(sysmanProperties.serialNumber)) {
-        memcpy_s(sysmanProperties.serialNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
-    }
 }
 void GlobalOperationsImp::initGlobalOperations() {
     std::call_once(initGlobalOpOnce, [this]() {
