@@ -330,6 +330,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
     initializeEngine();
 
     // Write our batch buffer
+    auto commandBufferAllocationBackup = batchBuffer.commandBufferAllocation;
     auto pBatchBuffer = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
     auto batchBufferGpuAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
     auto currentOffset = batchBuffer.usedSize;
@@ -372,6 +373,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
 
     if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         pollForCompletion();
+        batchBuffer.commandBufferAllocation = commandBufferAllocationBackup;
     }
 
     getAubStream()->flush();

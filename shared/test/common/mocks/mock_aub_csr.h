@@ -100,6 +100,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     void submitBatchBufferAub(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) override {
         AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBufferAub(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
         submitBatchBufferCalled = true;
+        batchBufferGpuAddressPassed = batchBufferGpuAddress;
     }
 
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override {
@@ -139,6 +140,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     }
 
     DispatchFlags recordedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    uint64_t batchBufferGpuAddressPassed = 0u;
     bool multiOsContextCapable = false;
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;

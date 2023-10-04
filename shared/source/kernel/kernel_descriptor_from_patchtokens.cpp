@@ -346,13 +346,11 @@ void populateArgMetadata(KernelDescriptor &dst, size_t argNum, const SPatchKerne
     metadataExtended->addressQualifier = parseLimitedString(inlineData.addressQualifier.begin(), inlineData.addressQualifier.size());
     metadataExtended->accessQualifier = parseLimitedString(inlineData.accessQualifier.begin(), inlineData.accessQualifier.size());
     metadataExtended->argName = parseLimitedString(inlineData.argName.begin(), inlineData.argName.size());
-
-    auto argTypeFull = parseLimitedString(inlineData.typeName.begin(), inlineData.typeName.size());
-    const char *argTypeDelim = strchr(argTypeFull.data(), ';');
-    if (nullptr == argTypeDelim) {
-        argTypeDelim = argTypeFull.data() + argTypeFull.size();
+    metadataExtended->type = parseLimitedString(inlineData.typeName.begin(), inlineData.typeName.size());
+    auto delimPosition = metadataExtended->type.find(";");
+    if (delimPosition != std::string::npos) {
+        metadataExtended->type = metadataExtended->type.substr(0, delimPosition);
     }
-    metadataExtended->type = std::string(static_cast<const char *>(argTypeFull.data()), argTypeDelim);
     metadataExtended->typeQualifiers = parseLimitedString(inlineData.typeQualifiers.begin(), inlineData.typeQualifiers.size());
 
     ArgTypeTraits metadata = {};

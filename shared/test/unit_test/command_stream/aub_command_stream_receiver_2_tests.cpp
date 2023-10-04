@@ -361,12 +361,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
         aubExecutionEnvironment->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize}),
         [&](GraphicsAllocation *ptr) { aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(ptr); });
 
-    auto expectedAllocation = ptr.get();
+    auto expectedBatchBufferGpuAddress = ptr->getGpuAddress();
     mockHelper->flattenBatchBufferResult = ptr.release();
 
     aubCsr->flush(batchBuffer, allocationsForResidency);
 
-    EXPECT_EQ(batchBuffer.commandBufferAllocation, expectedAllocation);
+    EXPECT_EQ(aubCsr->batchBufferGpuAddressPassed, expectedBatchBufferGpuAddress);
+    EXPECT_NE(aubCsr->batchBufferGpuAddressPassed, batchBuffer.commandBufferAllocation->getGpuAddress());
+    EXPECT_EQ(batchBuffer.commandBufferAllocation, cs.getGraphicsAllocation());
 
     aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(chainedBatchBuffer);
 

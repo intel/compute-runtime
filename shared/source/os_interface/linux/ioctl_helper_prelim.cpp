@@ -509,6 +509,7 @@ int IoctlHelperPrelim20::queryDistances(std::vector<QueryItem> &queryItems, std:
     query.numItems = static_cast<uint32_t>(queryItems.size());
     auto ret = IoctlHelper::ioctl(DrmIoctl::Query, &query);
     for (auto i = 0u; i < i915Distances.size(); i++) {
+        queryItems[i].dataPtr = 0u;
         distanceInfos[i].distance = i915Distances[i].distance;
     }
     return ret;

@@ -625,6 +625,10 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
     EXPECT_EQ(0, distances[0].distance);
     EXPECT_EQ(0, distances[1].distance);
     EXPECT_EQ(100, distances[2].distance);
+
+    EXPECT_EQ(0u, queryItems[0].dataPtr);
+    EXPECT_EQ(0u, queryItems[1].dataPtr);
+    EXPECT_EQ(0u, queryItems[2].dataPtr);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryThenDistancesUsedAndMultileValuesSet) {
