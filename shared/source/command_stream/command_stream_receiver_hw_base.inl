@@ -1066,6 +1066,7 @@ void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
 
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     if (imagesSupported) {
+        UNRECOVERABLE_IF(!dsh);
         PatchInfoData dynamicStatePatchInfo = {dsh->getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::DynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
         flatBatchBufferHelper->setPatchInfoData(dynamicStatePatchInfo);
     }

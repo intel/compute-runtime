@@ -299,6 +299,7 @@ inline std::tuple<SvmAllocationData *, GraphicsAllocation *, PtrType> getExistin
     GraphicsAllocation *allocation = nullptr;
     if (svmData) {
         allocation = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        UNRECOVERABLE_IF(!allocation);
     } else {
         context->tryGetExistingMapAllocation(ptr, size, allocation);
         if (allocation) {
