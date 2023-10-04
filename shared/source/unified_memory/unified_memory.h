@@ -20,7 +20,8 @@ enum InternalMemoryType : uint32_t {
 
 enum class InternalIpcMemoryType : uint32_t {
     IPC_DEVICE_UNIFIED_MEMORY = 0,
-    IPC_HOST_UNIFIED_MEMORY = 1
+    IPC_HOST_UNIFIED_MEMORY = 1,
+    IPC_DEVICE_VIRTUAL_ADDRESS = 2
 };
 
 enum TransferType : uint32_t {
