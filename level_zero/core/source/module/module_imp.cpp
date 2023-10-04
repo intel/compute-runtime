@@ -181,7 +181,7 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
     return true;
 }
 
-ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) {
+ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (!compilerInterface) {

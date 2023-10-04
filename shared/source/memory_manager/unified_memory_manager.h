@@ -87,8 +87,8 @@ class SVMAllocsManager {
 
       public:
         using SvmAllocationContainer = std::map<const void *, SvmAllocationData>;
-        void insert(SvmAllocationData);
-        void remove(SvmAllocationData);
+        void insert(const SvmAllocationData &);
+        void remove(const SvmAllocationData &);
         SvmAllocationData *get(const void *);
         size_t getNumAllocs() const { return allocations.size(); };
 

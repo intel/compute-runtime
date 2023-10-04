@@ -27,7 +27,7 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 
     ADDMETHOD(processUnpackedBinary, ze_result_t, true, ZE_RESULT_SUCCESS, (), ());
 
-    ze_result_t compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
+    ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink) override {
         if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
             return ZE_RESULT_SUCCESS;
         } else {

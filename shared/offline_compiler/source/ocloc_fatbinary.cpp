@@ -205,7 +205,7 @@ std::vector<ConstStringRef> getProductForOpenRange(ConstStringRef openRange, Ocl
     return {};
 }
 
-std::vector<ConstStringRef> getProductForSpecificTarget(CompilerOptions::TokenizedString targets, OclocArgHelper *argHelper) {
+std::vector<ConstStringRef> getProductForSpecificTarget(const CompilerOptions::TokenizedString &targets, OclocArgHelper *argHelper) {
     std::vector<ConstStringRef> requestedConfigs;
     for (const auto &target : targets) {
         auto targetStr = target.str();

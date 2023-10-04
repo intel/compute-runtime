@@ -51,15 +51,14 @@ struct DispatchBcsFlags {
 
 struct DispatchFlags {
     DispatchFlags() = delete;
-    DispatchFlags(CsrDependencies csrDependenciesP, TimestampPacketContainer *barrierTimestampPacketNodesP, PipelineSelectArgs pipelineSelectArgsP,
+    DispatchFlags(TimestampPacketContainer *barrierTimestampPacketNodesP, PipelineSelectArgs pipelineSelectArgsP,
                   FlushStampTrackingObj *flushStampReferenceP, QueueThrottle throttleP, PreemptionMode preemptionModeP, uint32_t numGrfRequiredP,
                   uint32_t l3CacheSettingsP, int32_t threadArbitrationPolicyP, uint32_t additionalKernelExecInfoP,
                   KernelExecutionType kernelExecutionTypeP, MemoryCompressionState memoryCompressionStateP,
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
                   bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
                   bool usePerDSSbackedBufferP, bool useGlobalAtomicsP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
-                  bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool stateCacheInvalidation, bool isStallingCommandsOnNextFlushRequired, bool isDcFlushRequiredOnStallingCommandsOnNextFlush) : csrDependencies(csrDependenciesP),
-                                                                                                                                                                                                             barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
+                  bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool stateCacheInvalidation, bool isStallingCommandsOnNextFlushRequired, bool isDcFlushRequiredOnStallingCommandsOnNextFlush) : barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
                                                                                                                                                                                                              pipelineSelectArgs(pipelineSelectArgsP),
                                                                                                                                                                                                              flushStampReference(flushStampReferenceP),
                                                                                                                                                                                                              throttle(throttleP),
@@ -91,7 +90,7 @@ struct DispatchFlags {
                                                                                                                                                                                                              isStallingCommandsOnNextFlushRequired(isStallingCommandsOnNextFlushRequired),
                                                                                                                                                                                                              isDcFlushRequiredOnStallingCommandsOnNextFlush(isDcFlushRequiredOnStallingCommandsOnNextFlush){};
 
-    CsrDependencies csrDependencies;
+    CsrDependencies csrDependencies{};
     TimestampPacketContainer *barrierTimestampPacketNodes = nullptr;
     PipelineSelectArgs pipelineSelectArgs;
     FlushStampTrackingObj *flushStampReference = nullptr;

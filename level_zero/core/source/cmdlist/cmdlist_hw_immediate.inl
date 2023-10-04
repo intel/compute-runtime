@@ -211,7 +211,6 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
 template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation) {
     NEO::DispatchFlags dispatchFlags(
-        {},                                                          // csrDependencies
         nullptr,                                                     // barrierTimestampPacketNodes
         {},                                                          // pipelineSelectArgs
         nullptr,                                                     // flushStampReference

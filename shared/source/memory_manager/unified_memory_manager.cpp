@@ -32,11 +32,11 @@ uint32_t SVMAllocsManager::UnifiedMemoryProperties::getRootDeviceIndex() const {
     return *rootDeviceIndices.begin();
 }
 
-void SVMAllocsManager::MapBasedAllocationTracker::insert(SvmAllocationData allocationsPair) {
+void SVMAllocsManager::MapBasedAllocationTracker::insert(const SvmAllocationData &allocationsPair) {
     allocations.insert(std::make_pair(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), allocationsPair));
 }
 
-void SVMAllocsManager::MapBasedAllocationTracker::remove(SvmAllocationData allocationsPair) {
+void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData &allocationsPair) {
     SvmAllocationContainer::iterator iter;
     iter = allocations.find(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
     allocations.erase(iter);

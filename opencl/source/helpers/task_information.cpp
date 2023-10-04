@@ -53,7 +53,6 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
     Device &device = commandQueue.getDevice();
 
     DispatchFlags dispatchFlags(
-        {},                                                                          // csrDependencies
         nullptr,                                                                     // barrierTimestampPacketNodes
         {},                                                                          // pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                // flushStampReference
@@ -190,7 +189,6 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
     auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired());
 
     DispatchFlags dispatchFlags(
-        {},                                                                               // csrDependencies
         nullptr,                                                                          // barrierTimestampPacketNodes
         {false, kernel->isVmeKernel()},                                                   // pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                     // flushStampReference
@@ -367,7 +365,6 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
 
     auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
     DispatchFlags dispatchFlags(
-        {},                                                                    // csrDependencies
         barrierNodes,                                                          // barrierTimestampPacketNodes
         {},                                                                    // pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                          // flushStampReference

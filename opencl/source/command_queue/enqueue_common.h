@@ -875,7 +875,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     bool hasStallingCmds = enqueueProperties.hasStallingCmds || (!relaxedOrderingEnabled && (eventsRequest.numEventsInWaitList > 0 || timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0));
 
     DispatchFlags dispatchFlags(
-        {},                                                                                                     // csrDependencies
         &timestampPacketDependencies.barrierNodes,                                                              // barrierTimestampPacketNodes
         {},                                                                                                     // pipelineSelectArgs
         this->flushStamp->getStampReference(),                                                                  // flushStampReference
@@ -1133,7 +1132,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
         auto rootDeviceIndex = getDevice().getRootDeviceIndex();
         DispatchFlags dispatchFlags(
-            {},                                                                  // csrDependencies
             &timestampPacketDependencies.barrierNodes,                           // barrierTimestampPacketNodes
             {},                                                                  // pipelineSelectArgs
             flushStamp->getStampReference(),                                     // flushStampReference

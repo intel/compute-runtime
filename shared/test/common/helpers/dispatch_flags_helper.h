@@ -14,7 +14,6 @@ using namespace NEO;
 struct DispatchFlagsHelper {
     static DispatchFlags createDefaultDispatchFlags() {
         return DispatchFlags(
-            {},                                      // csrDependencies
             nullptr,                                 // barrierTimestampPacketNodes
             {},                                      // pipelineSelectArgs
             nullptr,                                 // flushStampReference
