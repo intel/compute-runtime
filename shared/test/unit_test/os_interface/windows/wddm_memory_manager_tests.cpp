@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
@@ -546,10 +547,11 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
         for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
             executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
             executionEnvironment.rootDeviceEnvironments[i]->initGmm();
-            auto wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment.rootDeviceEnvironments[i]));
+            auto wddmTemp = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment.rootDeviceEnvironments[i]));
             constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
-            wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-            wddm->init();
+            wddmTemp->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
+            wddmTemp->init();
+            wddm = wddmTemp;
         }
         rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
         wddm = static_cast<WddmMock *>(rootDeviceEnvironment->osInterface->getDriverModel()->as<Wddm>());
@@ -1392,6 +1394,84 @@ TEST_F(WddmMemoryManagerSimpleTest, givenDebugModuleAreaTypeWhenCreatingAllocati
     EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuAddress());
 
     memoryManager->freeGraphicsMemory(moduleDebugArea);
+}
+
+HWTEST2_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed, IsAtLeastGen12lp) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    const auto size = MemoryConstants::pageSize64k;
+    const auto localMemoryEnabled = true;
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+    NEO::AllocationProperties properties{0, true, size,
+                                         NEO::AllocationType::DEBUG_MODULE_AREA,
+                                         false,
+                                         mockDeviceBitfield};
+
+    auto moduleDebugArea = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_NE(nullptr, moduleDebugArea);
+    EXPECT_NE(nullptr, moduleDebugArea->getUnderlyingBuffer());
+    EXPECT_GE(moduleDebugArea->getUnderlyingBufferSize(), size);
+
+    auto address64bit = moduleDebugArea->getGpuAddressToPatch();
+    EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
+    EXPECT_TRUE(moduleDebugArea->isAllocatedInLocalMemoryPool());
+
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto frontWindowBase = gmmHelper->canonize(memoryManager->getGfxPartition(moduleDebugArea->getRootDeviceIndex())->getHeapBase(memoryManager->selectInternalHeap(moduleDebugArea->isAllocatedInLocalMemoryPool())));
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(moduleDebugArea);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingMemoryInFrontWindowThenCorrectHeapIsUsedForGpuVa) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    const auto size = MemoryConstants::pageSize64k;
+    const auto localMemoryEnabled = true;
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+    NEO::AllocationProperties properties{0, true, size,
+                                         NEO::AllocationType::BUFFER,
+                                         false,
+                                         mockDeviceBitfield};
+    properties.flags.use32BitFrontWindow = true;
+
+    auto buffer = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_GE(buffer->getUnderlyingBufferSize(), size);
+
+    auto address64bit = buffer->getGpuAddressToPatch();
+    EXPECT_NE(0u, address64bit);
+    EXPECT_TRUE(buffer->isAllocatedInLocalMemoryPool());
+
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto heapBase = gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB));
+    auto heapLimit = gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB));
+
+    EXPECT_NE(0u, buffer->getGpuAddress());
+
+    const auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+
+    if (!productHelper.overrideGfxPartitionLayoutForWsl() && is64bit) {
+        EXPECT_LE(heapBase, buffer->getGpuAddress());
+        EXPECT_GT(heapLimit, buffer->getGpuAddress());
+    }
+
+    memoryManager->freeGraphicsMemory(buffer);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, whenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {

@@ -1338,6 +1338,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     wddmAllocation->storageInfo = allocationData.storageInfo;
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
     wddmAllocation->needsMakeResidentBeforeLock = true;
+    if (heapAssigner.use32BitHeap(allocationData.type)) {
+        wddmAllocation->allocInFrontWindowPool = allocationData.flags.use32BitFrontWindow;
+    }
 
     void *requiredGpuVa = nullptr;
     if (allocationData.type == AllocationType::SVM_GPU) {

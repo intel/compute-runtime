@@ -230,7 +230,7 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryAndAllowed32BitWhen32BitIsNotForc
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed) {
+HWTEST_F(MemoryManagerTests, givenDefaultHwInfoWhenAllocatingDebugAreaThenHeapInternalFrontWindowIsUsed) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MemoryManagerCreate<OsAgnosticMemoryManager> osAgnosticMemoryManager(false, true, executionEnvironment);
 
@@ -252,6 +252,41 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenH
         expectedHeap = HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW;
         baseHeap = HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
     }
+    auto moduleDebugArea = osAgnosticMemoryManager.allocateGraphicsMemoryWithProperties(properties);
+    auto gpuAddress = moduleDebugArea->getGpuAddress();
+    auto gmmHelper = osAgnosticMemoryManager.getGmmHelper(moduleDebugArea->getRootDeviceIndex());
+
+    EXPECT_LE(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(expectedHeap)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapLimit(expectedHeap)), gpuAddress);
+    EXPECT_EQ(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(expectedHeap)), moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(baseHeap)), moduleDebugArea->getGpuBaseAddress());
+
+    osAgnosticMemoryManager.freeGraphicsMemory(moduleDebugArea);
+}
+
+HWTEST2_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed, IsAtLeastGen12lp) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    MemoryManagerCreate<OsAgnosticMemoryManager> osAgnosticMemoryManager(false, true, executionEnvironment);
+
+    NEO::AllocationProperties properties{0, true, MemoryConstants::pageSize64k,
+                                         NEO::AllocationType::DEBUG_MODULE_AREA,
+                                         false,
+                                         mockDeviceBitfield};
+    properties.flags.use32BitFrontWindow = true;
+
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto systemMemoryPlacement = gfxCoreHelper.useSystemMemoryPlacementForISA(hwInfo);
+    EXPECT_FALSE(systemMemoryPlacement);
+
+    HeapIndex expectedHeap = HeapIndex::TOTAL_HEAPS;
+    HeapIndex baseHeap = HeapIndex::TOTAL_HEAPS;
+
+    expectedHeap = HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW;
+    baseHeap = HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
+
     auto moduleDebugArea = osAgnosticMemoryManager.allocateGraphicsMemoryWithProperties(properties);
     auto gpuAddress = moduleDebugArea->getGpuAddress();
     auto gmmHelper = osAgnosticMemoryManager.getGmmHelper(moduleDebugArea->getRootDeviceIndex());
