@@ -42,30 +42,39 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
             adjustTGDispatchSize = !!DebugManager.flags.AdjustThreadGroupDispatchSize.get();
         }
         if (adjustTGDispatchSize) {
+            UNRECOVERABLE_IF(numGrf == 0u);
 
-            auto tgDispatchSizeSelected = 8u;
-            auto dispatchDimension = 1u;
+            constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
+            constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
+            auto &gfxCoreHelper = device.getGfxCoreHelper();
+            uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf);
+            if (ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true)) {
+                const uint32_t tilesCount = device.getNumSubDevices();
+                availableThreadCount *= tilesCount;
+            }
+            uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
+            uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
+            UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
+            auto tgDispatchSizeSelected = 1u;
 
-            if (walkerCmd.getThreadGroupIdXDimension() > 1) {
-                dispatchDimension = walkerCmd.getThreadGroupIdXDimension();
-                if (walkerCmd.getPartitionType() == WALKER_TYPE::PARTITION_TYPE_X) {
-                    dispatchDimension = dispatchDimension / 2;
+            if (dispatchedTotalThreadCount <= availableThreadCount) {
+                tgDispatchSizeSelected = 1;
+            } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize8) {
+                tgDispatchSizeSelected = 8;
+            } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize4) {
+                tgDispatchSizeSelected = 4;
+            } else {
+                tgDispatchSizeSelected = 2;
+            }
+            if (walkerCmd.getThreadGroupIdXDimension() > 1 && (walkerCmd.getThreadGroupIdYDimension() > 1 || walkerCmd.getThreadGroupIdZDimension() > 1)) {
+                while (walkerCmd.getThreadGroupIdXDimension() % tgDispatchSizeSelected != 0) {
+                    tgDispatchSizeSelected /= 2;
                 }
-            } else if (walkerCmd.getThreadGroupIdYDimension() > 1) {
-                dispatchDimension = walkerCmd.getThreadGroupIdYDimension();
-                if (walkerCmd.getPartitionType() == WALKER_TYPE::PARTITION_TYPE_Y) {
-                    dispatchDimension = dispatchDimension / 2;
-                }
-            } else if (walkerCmd.getThreadGroupIdZDimension() > 1) {
-                dispatchDimension = walkerCmd.getThreadGroupIdZDimension();
-                if (walkerCmd.getPartitionType() == WALKER_TYPE::PARTITION_TYPE_Z) {
-                    dispatchDimension = dispatchDimension / 2;
+            } else if (walkerCmd.getThreadGroupIdYDimension() > 1 && walkerCmd.getThreadGroupIdZDimension() > 1) {
+                while (walkerCmd.getThreadGroupIdYDimension() % tgDispatchSizeSelected != 0) {
+                    tgDispatchSizeSelected /= 2;
                 }
             }
-            while (dispatchDimension % tgDispatchSizeSelected != 0) {
-                tgDispatchSizeSelected /= 2;
-            }
-
             if (tgDispatchSizeSelected == 8) {
                 interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
             } else if (tgDispatchSizeSelected == 1) {
