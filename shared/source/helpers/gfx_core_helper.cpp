@@ -76,7 +76,7 @@ uint32_t GfxCoreHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
 }
 
 uint32_t GfxCoreHelper::getHighestEnabledSlice(const HardwareInfo &hwInfo) {
-    uint32_t highestEnabledSlice = 0;
+    uint32_t highestEnabledSlice = 1;
     if (!hwInfo.gtSystemInfo.IsDynamicallyPopulated) {
         return hwInfo.gtSystemInfo.MaxSlicesSupported;
     }

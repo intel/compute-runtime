@@ -812,6 +812,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             areBosSharedObjects = false;
 
             size_t size = lseekFunction(handle, 0, SEEK_END);
+            UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
             totalSize += size;
 
             auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);

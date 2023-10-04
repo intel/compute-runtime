@@ -165,12 +165,11 @@ template <>
 uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
 
+    UNRECOVERABLE_IF(highestEnabledSlice == 0);
+    UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MaxSlicesSupported == 0);
     auto subSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     auto maxSubSlice = highestEnabledSlice * subSlicesPerSlice;
 
-    if (highestEnabledSlice == 0) {
-        UNRECOVERABLE_IF(true);
-    }
     return maxSubSlice;
 }
 

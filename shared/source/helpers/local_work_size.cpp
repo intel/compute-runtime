@@ -23,7 +23,7 @@ namespace NEO {
 // big cores like SKL have 8EU * 7 HW threads per subslice and are considered as highThreadCount devices
 constexpr uint32_t highThreadCountThreshold = 56u;
 
-static const uint32_t optimalHardwareThreadCountGeneric[] = {32, 16, 8, 4, 2, 1};
+constexpr uint32_t optimalHardwareThreadCountGeneric[] = {32, 16, 8, 4, 2, 1};
 
 static const uint32_t primeNumbers[] = {
     251,
@@ -91,14 +91,13 @@ inline uint32_t factor<0>(size_t workItems, uint32_t workSize, uint32_t maxWorkG
 
 void computePowerOfTwoLWS(const size_t workItems[3], WorkSizeInfo &workGroupInfo, size_t workGroupSize[3], const uint32_t workDim, bool canUseNx4) {
     uint32_t targetIndex = (canUseNx4 || workGroupInfo.numThreadsPerSubSlice < highThreadCountThreshold) ? 2 : 0;
-    auto arraySize = arrayCount(optimalHardwareThreadCountGeneric);
     auto simdSize = workGroupInfo.simdSize;
 
-    while (targetIndex < arraySize &&
-           optimalHardwareThreadCountGeneric[targetIndex] > 1 &&
+    while (optimalHardwareThreadCountGeneric[targetIndex] > 1 &&
            workGroupInfo.maxWorkGroupSize < optimalHardwareThreadCountGeneric[targetIndex] * simdSize) {
         targetIndex++;
     }
+
     uint32_t optimalLocalThreads = optimalHardwareThreadCountGeneric[targetIndex];
 
     if (workDim == 2) {

@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/print.h"
 
+#include "shared/source/helpers/debug_helpers.h"
+
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
@@ -23,11 +25,15 @@ void printToStderr(const char *str) {
 
 template <class T>
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, T value) {
-    return snprintf(output, outputSize, format, value);
+    auto retVal = snprintf(output, outputSize, format, value);
+    UNRECOVERABLE_IF(retVal < 0);
+    return static_cast<size_t>(retVal);
 }
 
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, const char *value) {
-    return snprintf(output, outputSize, format, value);
+    auto retVal = snprintf(output, outputSize, format, value);
+    UNRECOVERABLE_IF(retVal < 0);
+    return static_cast<size_t>(retVal);
 }
 
 template size_t simpleSprintf<float>(char *output, size_t output_size, const char *format, float value);

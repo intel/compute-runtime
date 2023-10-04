@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/print.h"
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <cctype>
@@ -51,29 +52,33 @@ size_t simpleSprintf(char *output, size_t outputSize, const char *format, T valu
         return 0;
     }
 
+    int retVal = 0;
     if (len > 3 && *(format + len - 2) == 'h' && *(format + len - 3) == 'h') {
         if (*(format + len - 1) == 'i' || *(format + len - 1) == 'd') {
             int32_t fixedValue = (char)value;
-            return sprintf_s(output, outputSize, format, fixedValue);
+            retVal = sprintf_s(output, outputSize, format, fixedValue);
         } else {
             uint32_t fixedValue = (unsigned char)value;
-            return sprintf_s(output, outputSize, format, fixedValue);
+            retVal = sprintf_s(output, outputSize, format, fixedValue);
         }
     } else if (format[len - 1] == 'F') {
         std::string formatCopy = format;
         *formatCopy.rbegin() = 'f';
 
-        size_t returnValue = sprintf_s(output, outputSize, formatCopy.c_str(), value);
-        for (size_t i = 0; i < returnValue; i++)
+        retVal = sprintf_s(output, outputSize, formatCopy.c_str(), value);
+        for (int i = 0; i < retVal; i++)
             output[i] = std::toupper(output[i]);
-        return returnValue;
     } else {
-        return sprintf_s(output, outputSize, format, value);
+        retVal = sprintf_s(output, outputSize, format, value);
     }
+    UNRECOVERABLE_IF(retVal < 0);
+    return static_cast<size_t>(retVal);
 }
 
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, const char *value) {
-    return sprintf_s(output, outputSize, format, value);
+    auto retVal = sprintf_s(output, outputSize, format, value);
+    UNRECOVERABLE_IF(retVal < 0);
+    return static_cast<size_t>(retVal);
 }
 
 template size_t simpleSprintf<float>(char *output, size_t output_size, const char *format, float value);

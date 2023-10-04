@@ -706,10 +706,8 @@ DG2TEST_F(ProductHelperTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeU
 DG2TEST_F(ProductHelperTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScratchThenThrowUnrecoverableIf) {
     HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
-    testSysInfo.IsDynamicallyPopulated = true;
-    for (auto &sliceInfo : testSysInfo.SliceInfo) {
-        sliceInfo.Enabled = false;
-    }
+    testSysInfo.IsDynamicallyPopulated = false;
+    testSysInfo.MaxSlicesSupported = 0;
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
