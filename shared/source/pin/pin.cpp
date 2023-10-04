@@ -11,14 +11,14 @@
 
 #include "os_pin.h"
 
+#include <memory>
+
 namespace NEO {
 
 PinContext::OsLibraryLoadPtr PinContext::osLibraryLoadFunction(NEO::OsLibrary::load);
 
 bool PinContext::init(const std::string &gtPinOpenFunctionName) {
-    NEO::OsLibrary *hGtPinLibrary = nullptr;
-
-    hGtPinLibrary = PinContext::osLibraryLoadFunction(PinContext::gtPinLibraryFilename.c_str());
+    auto hGtPinLibrary = std::unique_ptr<OsLibrary>(PinContext::osLibraryLoadFunction(PinContext::gtPinLibraryFilename.c_str()));
 
     if (hGtPinLibrary == nullptr) {
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find gtpin library %s\n", PinContext::gtPinLibraryFilename.c_str());

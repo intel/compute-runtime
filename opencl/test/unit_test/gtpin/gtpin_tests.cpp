@@ -2515,13 +2515,13 @@ TEST(GTPinInitNotifyTests, givenAvailablePlatformsAndNoEnvironmentVariableSetWhe
 
     VariableBackup<uint32_t> gtpinCounterBackup(&gtpinInitTimesCalled, 0u);
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
-    MockOsLibrary mockLibraryObject(reinterpret_cast<void *>(openPinHandler), false);
-    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
     NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
 
     gtPinTryNotifyInit();
     EXPECT_EQ(0u, gtpinInitTimesCalled);
     platformsImpl->clear();
+    delete MockOsLibrary::loadLibraryNewObject;
 }
 
 TEST(GTPinInitNotifyTests, givenNoPlatformsAvailableAndEnvironmentVariableSetWhenTryingToNotifyGtpinInitializationThenGtpinDoesNotGetNotified) {
@@ -2534,13 +2534,13 @@ TEST(GTPinInitNotifyTests, givenNoPlatformsAvailableAndEnvironmentVariableSetWhe
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
-    MockOsLibrary mockLibraryObject(reinterpret_cast<void *>(openPinHandler), false);
-    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
     NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
 
     gtPinTryNotifyInit();
     EXPECT_EQ(0u, gtpinInitTimesCalled);
     platformsImpl->clear();
+    delete MockOsLibrary::loadLibraryNewObject;
 }
 
 TEST(GTPinInitNotifyTests, givenAvailablePlatformsAndEnvironmentVariableSetWhenTryingToNotifyGtpinInitializationThenGtpinGetsNotified) {
@@ -2554,8 +2554,7 @@ TEST(GTPinInitNotifyTests, givenAvailablePlatformsAndEnvironmentVariableSetWhenT
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
-    MockOsLibrary mockLibraryObject(reinterpret_cast<void *>(openPinHandler), false);
-    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
     NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
 
     gtPinTryNotifyInit();

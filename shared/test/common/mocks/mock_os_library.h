@@ -36,6 +36,7 @@ class MockOsLibrary : public NEO::OsLibrary {
 
     static OsLibrary *load(const std::string &name) {
         OsLibrary *ptr = loadLibraryNewObject;
+        loadLibraryNewObject = nullptr;
         return ptr;
     }
 };

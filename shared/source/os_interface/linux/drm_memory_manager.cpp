@@ -634,11 +634,15 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     bo->setAddress(gpuRange);
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), nullptr, gpuRange, bufferSize, MemoryPool::SystemCpuInaccessible);
+    if (!allocation) {
+        return nullptr;
+    }
+    bo.release();
+
     allocation->setDefaultGmm(gmm.release());
 
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
 
-    bo.release();
     return allocation;
 }
 

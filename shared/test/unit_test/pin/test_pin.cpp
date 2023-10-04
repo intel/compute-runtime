@@ -14,8 +14,7 @@ namespace ULT {
 
 TEST(PinInitializationTest, GivenValidLibraryPinContextInitSucceeds) {
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { return 0; };
-    MockOsLibrary mockLibraryObject(reinterpret_cast<void *>(openPinHandler), false);
-    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
     NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
     std::string mockGTPinFunctionName{"aaa"};
     EXPECT_TRUE(NEO::PinContext::init(mockGTPinFunctionName));
@@ -33,8 +32,7 @@ TEST(PinInitializationTest, GivenBadLibraryNamePinContextInitFAILS) {
 }
 
 TEST(PinInitializationTest, GivenBadProcAddressPinContextInitFAILS) {
-    MockOsLibrary mockLibraryObject(nullptr, false);
-    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(nullptr, false);
     NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
     std::string mockGTPinFunctionName{"aaa"};
     EXPECT_FALSE(NEO::PinContext::init(mockGTPinFunctionName));
@@ -44,8 +42,7 @@ TEST(PinInitializationTest, GivenBadProcAddressPinContextInitFAILS) {
 
 TEST(PinInitializationTest, GivenBadPinHandlerPinContextInitFAILS) {
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { return 1; };
-    MockOsLibrary mockLibraryObject(reinterpret_cast<void *>(openPinHandler), false);
-    MockOsLibrary::loadLibraryNewObject = &mockLibraryObject;
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
     NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
     std::string mockGTPinFunctionName{"aaa"};
     EXPECT_FALSE(NEO::PinContext::init(mockGTPinFunctionName));
