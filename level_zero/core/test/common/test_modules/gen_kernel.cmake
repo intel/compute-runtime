@@ -81,6 +81,7 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
                          COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
+                         VERBATIM
       )
 
       list(APPEND ${target_list} ${output_files})
