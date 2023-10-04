@@ -5,10 +5,11 @@
  *
  */
 
+#include "level_zero/core/source/context/context_imp.h"
+
 #include "shared/source/device/device.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
-#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 namespace L0 {

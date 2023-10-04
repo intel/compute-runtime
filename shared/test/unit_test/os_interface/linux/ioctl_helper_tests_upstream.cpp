@@ -793,3 +793,12 @@ TEST(IoctlHelperTestsUpstream, givenInitializeGetGpuTimeFunctionNotCalledWhenSet
     auto ret = ioctlHelper.setGpuCpuTimes(&pGpuCpuTime, osTime.get());
     EXPECT_EQ(false, ret);
 }
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetFdFromVmExportIsCalledThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+    uint32_t vmId = 0, flags = 0;
+    int32_t fd = 0;
+    EXPECT_FALSE(ioctlHelper.getFdFromVmExport(vmId, flags, &fd));
+}

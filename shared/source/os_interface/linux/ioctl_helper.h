@@ -164,6 +164,7 @@ class IoctlHelper {
     virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap);
     bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping);
     virtual void fillBindInfoForIpcHandle(uint32_t handle, size_t size);
+    virtual bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd);
 
     virtual void initializeGetGpuTimeFunction();
     virtual bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime);
