@@ -19,6 +19,7 @@ namespace NEO {
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper) {
     if (DebugManager.flags.ForceUncachedGmmUsageType.get()) {
+        UNRECOVERABLE_IF(allocationType == AllocationType::UNKNOWN);
         if ((1llu << (static_cast<int64_t>(allocationType) - 1)) & DebugManager.flags.ForceUncachedGmmUsageType.get()) {
             forceUncached = true;
         }

@@ -192,6 +192,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
     }
     if (DebugManager.flags.ForceMultiTileAllocPlacement.get()) {
+        UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceMultiTileAllocPlacement.get()) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
