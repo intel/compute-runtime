@@ -850,7 +850,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWh
     ze_event_handle_t events[] = {&event, &event2};
     event.isCompleted = Event::State::STATE_SIGNALED;
 
-    static_cast<CommandListCoreFamily<gfxCoreFamily> *>(commandList.get())->addEventsToCmdList(2, events, false, false);
+    static_cast<CommandListCoreFamily<gfxCoreFamily> *>(commandList.get())->addEventsToCmdList(2, events, false, false, true);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));

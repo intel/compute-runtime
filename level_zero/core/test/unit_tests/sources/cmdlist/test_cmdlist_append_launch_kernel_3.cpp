@@ -1450,7 +1450,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsTh
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->addEventsToCmdList(0, nullptr, true, true);
+    immCmdList->addEventsToCmdList(0, nullptr, true, true, true);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -3576,7 +3576,7 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListTests {
     bool verifySplit(uint64_t expectedTaskCount) {
         auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
 
-        for (uint32_t i = 0; i < 4; i++) {
+        for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
             if (static_cast<CommandQueueImp *>(bcsSplit.cmdQs[0])->getTaskCount() != expectedTaskCount) {
                 return false;
             }
@@ -3600,8 +3600,117 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListTests {
         return cmdList;
     }
 
+    template <typename FamilyType, GFXCORE_FAMILY gfxCoreFamily>
+    void verifySplitCmds(LinearStream &cmdStream, size_t streamOffset, L0::Device *device, uint64_t submissionId, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> &immCmdList,
+                         uint64_t externalDependencyGpuVa);
+
     std::unique_ptr<VariableBackup<HardwareInfo>> hwInfoBackup;
+    const uint32_t numLinkCopyEngines = 4;
 };
+
+template <typename FamilyType, GFXCORE_FAMILY gfxCoreFamily>
+void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_t streamOffset, L0::Device *device, uint64_t submissionId,
+                                                  WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> &immCmdList, uint64_t externalDependencyGpuVa) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
+    auto counterGpuAddress = immCmdList.inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream.getCpuBase(), streamOffset), (cmdStream.getUsed() - streamOffset)));
+
+    auto itor = cmdList.begin();
+
+    for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
+        auto beginItor = itor;
+
+        auto signalSubCopyEventGpuVa = bcsSplit.events.subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device);
+
+        size_t numExpectedSemaphores = 0;
+
+        if (submissionId > 0) {
+            numExpectedSemaphores++;
+            itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
+            ASSERT_NE(cmdList.end(), itor);
+            auto implicitSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+            ASSERT_NE(nullptr, implicitSemaphore);
+
+            EXPECT_EQ(counterGpuAddress, implicitSemaphore->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(submissionId, implicitSemaphore->getSemaphoreDataDword());
+            itor++;
+        }
+
+        if (externalDependencyGpuVa > 0) {
+            numExpectedSemaphores++;
+            itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
+            ASSERT_NE(cmdList.end(), itor);
+            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+            ASSERT_NE(nullptr, semaphoreCmd);
+
+            EXPECT_EQ(externalDependencyGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        }
+
+        itor = find<XY_COPY_BLT *>(itor, cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+        ASSERT_NE(nullptr, genCmdCast<XY_COPY_BLT *>(*itor));
+
+        auto flushDwItor = find<MI_FLUSH_DW *>(++itor, cmdList.end());
+        ASSERT_NE(cmdList.end(), flushDwItor);
+
+        auto signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*flushDwItor);
+        ASSERT_NE(nullptr, signalSubCopyEvent);
+
+        while (signalSubCopyEvent->getDestinationAddress() != signalSubCopyEventGpuVa) {
+            flushDwItor = find<MI_FLUSH_DW *>(++flushDwItor, cmdList.end());
+            ASSERT_NE(cmdList.end(), flushDwItor);
+
+            signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*flushDwItor);
+            ASSERT_NE(nullptr, signalSubCopyEvent);
+        }
+
+        itor = ++flushDwItor;
+
+        auto semaphoreCmds = findAll<MI_SEMAPHORE_WAIT *>(beginItor, itor);
+        EXPECT_EQ(numExpectedSemaphores, semaphoreCmds.size());
+    }
+
+    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
+
+    if (submissionId > 0) {
+        auto implicitSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        ASSERT_NE(nullptr, implicitSemaphore);
+
+        EXPECT_EQ(counterGpuAddress, implicitSemaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(submissionId, implicitSemaphore->getSemaphoreDataDword());
+
+        ++semaphoreItor;
+    }
+
+    for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
+        auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        ASSERT_NE(nullptr, subCopyEventSemaphore);
+
+        EXPECT_EQ(bcsSplit.events.subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), subCopyEventSemaphore->getSemaphoreGraphicsAddress());
+
+        itor = ++semaphoreItor;
+    }
+
+    ASSERT_NE(nullptr, genCmdCast<MI_FLUSH_DW *>(*itor)); // marker event
+
+    auto implicitCounterSdi = genCmdCast<MI_STORE_DATA_IMM *>(*(++itor));
+    ASSERT_NE(nullptr, implicitCounterSdi);
+
+    EXPECT_EQ(counterGpuAddress, implicitCounterSdi->getAddress());
+    EXPECT_EQ(submissionId + 1, implicitCounterSdi->getDataDword0());
+
+    EXPECT_EQ(submissionId + 1, immCmdList.inOrderExecInfo->inOrderDependencyCounter);
+
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(++itor, cmdList.end());
+    EXPECT_EQ(0u, sdiCmds.size());
+}
 
 HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyThenHandleInOrderSignaling, IsAtLeastXeHpcCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -3639,6 +3748,69 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
+}
+
+HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCopyAfterBarrierWithoutImplicitDependenciesThenHandleCorrectInOrderSignaling, IsAtLeastXeHpcCore) {
+    auto immCmdList = createBcsSplitImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    uint32_t copyData = 0;
+    constexpr size_t copySize = 8 * MemoryConstants::megaByte;
+
+    *immCmdList->csr->getBarrierCountTagAddress() = 0u;
+    immCmdList->csr->getNextBarrierCount();
+
+    size_t offset = cmdStream->getUsed();
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+
+    // no implicit dependencies
+    verifySplitCmds<FamilyType, gfxCoreFamily>(*cmdStream, offset, device, 0, *immCmdList, 0);
+}
+
+HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCopyAfterBarrierWithImplicitDependenciesThenHandleCorrectInOrderSignaling, IsAtLeastXeHpcCore) {
+    auto immCmdList = createBcsSplitImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    uint32_t copyData = 0;
+    constexpr size_t copySize = 8 * MemoryConstants::megaByte;
+
+    *immCmdList->csr->getBarrierCountTagAddress() = 0u;
+    immCmdList->csr->getNextBarrierCount();
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+
+    size_t offset = cmdStream->getUsed();
+
+    *immCmdList->csr->getBarrierCountTagAddress() = 0u;
+    immCmdList->csr->getNextBarrierCount();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+
+    // implicit dependencies
+    verifySplitCmds<FamilyType, gfxCoreFamily>(*cmdStream, offset, device, 1, *immCmdList, 0);
+}
+
+HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCopyWithEventDependencyThenRequiredSemaphores, IsAtLeastXeHpcCore) {
+    auto immCmdList = createBcsSplitImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    uint32_t copyData = 0;
+    constexpr size_t copySize = 8 * MemoryConstants::megaByte;
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = false;
+    auto eventHandle = events[0]->toHandle();
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+
+    size_t offset = cmdStream->getUsed();
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 1, &eventHandle, false, false);
+
+    verifySplitCmds<FamilyType, gfxCoreFamily>(*cmdStream, offset, device, 1, *immCmdList, events[0]->getCompletionFieldGpuAddress(device));
 }
 
 HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRegionThenHandleInOrderSignaling, IsAtLeastXeHpcCore) {

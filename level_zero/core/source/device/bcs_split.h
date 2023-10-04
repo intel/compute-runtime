@@ -76,7 +76,7 @@ struct BcsSplit {
 
         auto markerEventIndex = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
 
-        auto barrierRequired = cmdList->isBarrierRequired();
+        auto barrierRequired = !cmdList->isInOrderExecutionEnabled() && cmdList->isBarrierRequired();
         if (barrierRequired) {
             cmdList->appendSignalEvent(this->events.barrier[markerEventIndex]->toHandle());
         }
@@ -86,17 +86,20 @@ struct BcsSplit {
 
         auto &cmdQsForSplit = this->getCmdQsForSplit(direction);
 
+        auto signalEvent = Event::fromHandle(hSignalEvent);
+
         auto totalSize = size;
         auto engineCount = cmdQsForSplit.size();
         for (size_t i = 0; i < cmdQsForSplit.size(); i++) {
             if (barrierRequired) {
                 auto barrierEventHandle = this->events.barrier[markerEventIndex]->toHandle();
-                cmdList->addEventsToCmdList(1u, &barrierEventHandle, hasRelaxedOrderingDependencies, false);
+                cmdList->addEventsToCmdList(1u, &barrierEventHandle, hasRelaxedOrderingDependencies, false, true);
             }
 
-            cmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, hasRelaxedOrderingDependencies, false);
-            if (hSignalEvent && i == 0u) {
-                cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), true, true);
+            cmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, hasRelaxedOrderingDependencies, false, true);
+
+            if (signalEvent && i == 0u) {
+                cmdList->appendEventForProfilingAllWalkers(signalEvent, true, true);
             }
 
             auto localSize = totalSize / engineCount;
@@ -117,19 +120,20 @@ struct BcsSplit {
             totalSize -= localSize;
             engineCount--;
 
-            if (hSignalEvent) {
-                Event::fromHandle(hSignalEvent)->appendAdditionalCsr(static_cast<CommandQueueImp *>(cmdQsForSplit[i])->getCsr());
+            if (signalEvent) {
+                signalEvent->appendAdditionalCsr(static_cast<CommandQueueImp *>(cmdQsForSplit[i])->getCsr());
             }
         }
 
-        cmdList->addEventsToCmdList(static_cast<uint32_t>(cmdQsForSplit.size()), eventHandles.data(), hasRelaxedOrderingDependencies, false);
-        if (hSignalEvent) {
-            cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), false, true);
+        cmdList->addEventsToCmdList(static_cast<uint32_t>(cmdQsForSplit.size()), eventHandles.data(), hasRelaxedOrderingDependencies, false, true);
+        if (signalEvent) {
+            cmdList->appendEventForProfilingAllWalkers(signalEvent, false, true);
         }
         cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], false, true);
 
         if (cmdList->isInOrderExecutionEnabled()) {
             cmdList->appendSignalInOrderDependencyCounter();
+            cmdList->handleInOrderDependencyCounter(signalEvent);
         }
 
         return result;

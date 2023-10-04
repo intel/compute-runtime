@@ -88,7 +88,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ultCsr->directSubmission.reset(directSubmission);
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    auto result = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(immCommandList.get())->addEventsToCmdList(1, &hEventHandle, true, true);
+    auto result = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(immCommandList.get())->addEventsToCmdList(1, &hEventHandle, true, true, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = immCommandList->getCmdContainer().getCommandStream()->getUsed();
