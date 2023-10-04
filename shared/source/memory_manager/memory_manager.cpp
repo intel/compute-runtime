@@ -611,7 +611,7 @@ GraphicsAllocation *MemoryManager::allocateInternalGraphicsMemoryWithHostCopy(ui
 
 bool MemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
     bool ret = false;
-    for (auto engine : getRegisteredEngines(graphicsAllocation->getRootDeviceIndex())) {
+    for (auto &engine : getRegisteredEngines(graphicsAllocation->getRootDeviceIndex())) {
         if (engine.commandStreamReceiver->pageTableManager.get()) {
             ret = engine.commandStreamReceiver->pageTableManager->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
             if (!ret) {

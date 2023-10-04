@@ -1767,7 +1767,7 @@ ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t 
     if (elfMap.size() > 0) {
         uint64_t baseVa;
         uint64_t ceilVa;
-        for (auto elf : elfMap) {
+        for (auto &elf : elfMap) {
             baseVa = elf.first;
             ceilVa = elf.first + clientHandleToConnection[clientHandle]->uuidMap[elf.second].dataSize;
             if (accessVA >= baseVa && accessVA < ceilVa) {
