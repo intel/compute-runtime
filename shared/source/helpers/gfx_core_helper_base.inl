@@ -709,4 +709,10 @@ template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const {
     return getThreadsPerWG(simd, totalWorkItems);
 }
+
+template <typename GfxFamily>
+char const *GfxCoreHelperHw<GfxFamily>::getDefaultDeviceHierarchy() const {
+    return deviceHierarchyComposite;
+}
+
 } // namespace NEO

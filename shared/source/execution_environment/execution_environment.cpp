@@ -287,6 +287,24 @@ void ExecutionEnvironment::sortNeoDevices() {
     std::sort(rootDeviceEnvironments.begin(), rootDeviceEnvironments.end(), comparePciIdBusNumber);
 }
 
+void ExecutionEnvironment::setDeviceHierarchy(const GfxCoreHelper &gfxCoreHelper) {
+    NEO::EnvironmentVariableReader envReader;
+    std::string hierarchyModel = envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string(gfxCoreHelper.getDefaultDeviceHierarchy()));
+    if (strcmp(hierarchyModel.c_str(), "COMPOSITE") == 0) {
+        setExposeSubDevicesAsDevices(false);
+    }
+    if (strcmp(hierarchyModel.c_str(), "FLAT") == 0) {
+        setExposeSubDevicesAsDevices(true);
+    }
+    if (strcmp(hierarchyModel.c_str(), "COMBINED") == 0) {
+        setCombinedDeviceHierarchy(true);
+    }
+
+    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
+        setExposeSubDevicesAsDevices(NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get());
+    }
+}
+
 void ExecutionEnvironment::adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const {
     auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
     auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
@@ -345,21 +363,6 @@ void ExecutionEnvironment::configureNeoEnvironment() {
     if (DebugManager.flags.NEO_CAL_ENABLED.get()) {
         DebugManager.flags.UseKmdMigration.setIfDefault(0);
         DebugManager.flags.SplitBcsSize.setIfDefault(256);
-    }
-    NEO::EnvironmentVariableReader envReader;
-    std::string hierarchyModel = envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string("COMPOSITE"));
-    if (strcmp(hierarchyModel.c_str(), "COMPOSITE") == 0) {
-        setExposeSubDevicesAsDevices(false);
-    }
-    if (strcmp(hierarchyModel.c_str(), "FLAT") == 0) {
-        setExposeSubDevicesAsDevices(true);
-    }
-    if (strcmp(hierarchyModel.c_str(), "COMBINED") == 0) {
-        setCombinedDeviceHierarchy(true);
-    }
-
-    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() == 1) {
-        setExposeSubDevicesAsDevices(true);
     }
 }
 

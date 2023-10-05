@@ -48,6 +48,10 @@ class GfxCoreHelper;
 using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
 using GfxCoreHelperCreateFunctionType = std::unique_ptr<GfxCoreHelper> (*)();
 
+extern const char *deviceHierarchyComposite;
+extern const char *deviceHierarchyFlat;
+extern const char *deviceHierarchyUnk;
+
 class GfxCoreHelper {
   public:
     static std::unique_ptr<GfxCoreHelper> create(const GFXCORE_FAMILY gfxCoreFamily);
@@ -168,6 +172,7 @@ class GfxCoreHelper {
     virtual bool isRelaxedOrderingSupported() const = 0;
     virtual uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const = 0;
     virtual uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const = 0;
+    virtual char const *getDefaultDeviceHierarchy() const = 0;
     static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
     virtual ~GfxCoreHelper() = default;
 
@@ -380,6 +385,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isRelaxedOrderingSupported() const override;
     uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const override;
     uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const override;
+    char const *getDefaultDeviceHierarchy() const override;
     ~GfxCoreHelperHw() override = default;
 
   protected:
