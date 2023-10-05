@@ -41,16 +41,22 @@ TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnv
     EXPECT_EQ(0, environment.getRefApiCount());
 }
 
-TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenSubDevicesAsDevicesIsFalse) {
-    ExecutionEnvironment environment;
-    EXPECT_FALSE(environment.isExposingSubDevicesAsDevices());
-}
-
-TEST(ExecutionEnvironment, givenDefaultConstructoWhenItIsCalledAndReturnSubDevicesAsApiDevicesIsSetThenSubDevicesAsDevicesIsTrue) {
+TEST(ExecutionEnvironment, givenDefaultConstructoWhenItIsCalledAndReturnSubDevicesAsApiDevicesIsSetTrueThenSubDevicesAsDevicesIsTrue) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
-    ExecutionEnvironment environment;
+    MockExecutionEnvironment environment;
+    environment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    environment.setDeviceHierarchy(environment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     EXPECT_TRUE(environment.isExposingSubDevicesAsDevices());
+}
+
+TEST(ExecutionEnvironment, givenDefaultConstructoWhenItIsCalledAndReturnSubDevicesAsApiDevicesIsSetFalseThenSubDevicesAsDevicesIsFalse) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(0);
+    MockExecutionEnvironment environment;
+    environment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    environment.setDeviceHierarchy(environment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
+    EXPECT_FALSE(environment.isExposingSubDevicesAsDevices());
 }
 
 TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
@@ -451,11 +457,23 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSettingFP64EmulationEnab
     EXPECT_TRUE(executionEnvironment.isFP64EmulationEnabled());
 }
 
+TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithDefaultDeviceHierarchyThenExecutionEnvironmentIsInitializedCorrectly) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    executionEnvironment.setDeviceHierarchy(gfxCoreHelper);
+    EXPECT_EQ((strcmp(gfxCoreHelper.getDefaultDeviceHierarchy(), "COMPOSITE") != 0),
+              executionEnvironment.isExposingSubDevicesAsDevices());
+}
+
 TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithCompositeDeviceHierarchyThenExposeSubDevicesAsDevicesIsFalse) {
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-    ExecutionEnvironment executionEnvironment{};
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     EXPECT_FALSE(executionEnvironment.isExposingSubDevicesAsDevices());
 }
 
@@ -463,7 +481,9 @@ TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithFlatDevic
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-    ExecutionEnvironment executionEnvironment{};
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     EXPECT_TRUE(executionEnvironment.isExposingSubDevicesAsDevices());
 }
 
@@ -471,7 +491,9 @@ TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithCombinedD
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMBINED"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-    ExecutionEnvironment executionEnvironment{};
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     EXPECT_FALSE(executionEnvironment.isExposingSubDevicesAsDevices());
 }
 

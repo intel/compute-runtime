@@ -118,6 +118,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         }
     }
 
+    executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment.parseAffinityMask();
     executionEnvironment.adjustCcsCount();
     executionEnvironment.calculateMaxOsContextCount();
@@ -177,6 +178,7 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
         rootDeviceIndex++;
     }
 
+    executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment.sortNeoDevices();
     executionEnvironment.parseAffinityMask();
     executionEnvironment.adjustRootDeviceEnvironments();
