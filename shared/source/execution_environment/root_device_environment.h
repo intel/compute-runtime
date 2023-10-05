@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/helpers/affinity_mask.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 
 #include <functional>
@@ -43,13 +44,12 @@ class ReleaseHelper;
 struct AllocationProperties;
 struct HardwareInfo;
 
-struct RootDeviceEnvironment {
+struct RootDeviceEnvironment : NonCopyableClass {
   protected:
     std::unique_ptr<HardwareInfo> hwInfo;
 
   public:
     RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
-    RootDeviceEnvironment(RootDeviceEnvironment &) = delete;
     MOCKABLE_VIRTUAL ~RootDeviceEnvironment();
 
     MOCKABLE_VIRTUAL const HardwareInfo *getHardwareInfo() const;

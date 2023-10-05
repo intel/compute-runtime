@@ -32,7 +32,7 @@ struct SmallBuffersParams {
 };
 
 template <typename PoolT, typename BufferType, typename BufferParentType = BufferType>
-struct AbstractBuffersPool : public SmallBuffersParams<PoolT>, public NonCopyableClass {
+struct AbstractBuffersPool : public SmallBuffersParams<PoolT>, public NonCopyableClass, NonAssignableClass {
     // The prototype of a function allocating the `mainStorage` is not specified.
     // That would be an unnecessary limitation here - it is completely up to derived class implementation.
     // Perhaps the allocating function needs to leverage `HeapAllocator::allocate()` and also
