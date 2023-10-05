@@ -373,7 +373,7 @@ void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex
             PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error in decodeAndPopulateKernelMiscInfo: %s\n", errors.c_str());
         }
     };
-    std::call_once(extractAndDecodeMetadataOnce, extractAndDecodeMetadata);
+    std::call_once(metadataGenerationFlags->extractAndDecodeMetadataOnce, extractAndDecodeMetadata);
 }
 
 void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {
@@ -466,7 +466,7 @@ void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceInd
             }
         }
     };
-    std::call_once(generateDefaultMetadataOnce, generateDefaultMetadata);
+    std::call_once(metadataGenerationFlags->generateDefaultMetadataOnce, generateDefaultMetadata);
 }
 
 } // namespace NEO

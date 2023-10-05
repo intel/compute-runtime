@@ -57,6 +57,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
 
     buildInfos.resize(maxRootDeviceIndex + 1);
     debuggerInfos.resize(maxRootDeviceIndex + 1);
+    metadataGenerationFlags = std::make_unique<MetadataGenerationFlags>();
 }
 
 std::string Program::getInternalOptions() const {
@@ -339,6 +340,7 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
         delete kernelInfo;
     }
     buildInfo.kernelInfoArray.clear();
+    metadataGenerationFlags.reset(new MetadataGenerationFlags());
 }
 
 void Program::updateNonUniformFlag() {

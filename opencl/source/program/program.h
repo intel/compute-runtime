@@ -380,8 +380,11 @@ class Program : public BaseObject<_cl_program> {
 
     size_t exportedFunctionsKernelId = std::numeric_limits<size_t>::max();
 
-    std::once_flag extractAndDecodeMetadataOnce;
-    std::once_flag generateDefaultMetadataOnce;
+    struct MetadataGenerationFlags {
+        std::once_flag extractAndDecodeMetadataOnce;
+        std::once_flag generateDefaultMetadataOnce;
+    };
+    std::unique_ptr<MetadataGenerationFlags> metadataGenerationFlags;
 };
 
 } // namespace NEO
