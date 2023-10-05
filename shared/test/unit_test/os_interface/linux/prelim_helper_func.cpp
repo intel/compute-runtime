@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -97,10 +96,10 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
     return ioctlRetVal;
 }
 
-std::vector<uint64_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions) {
+std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions) {
     auto inputSize = static_cast<uint32_t>(inputRegions.size());
     int length = sizeof(drm_i915_query_memory_regions) + inputSize * sizeof(drm_i915_memory_region_info);
-    auto data = std::vector<uint64_t>(Math::divideAndRoundUp(length, sizeof(uint64_t)));
+    auto data = std::vector<uint8_t>(length);
     auto memoryRegions = reinterpret_cast<drm_i915_query_memory_regions *>(data.data());
     memoryRegions->num_regions = inputSize;
 
@@ -113,10 +112,10 @@ std::vector<uint64_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegion
     return data;
 }
 
-std::vector<uint64_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines) {
+std::vector<uint8_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines) {
     auto inputSize = static_cast<uint32_t>(inputEngines.size());
     int length = sizeof(drm_i915_query_engine_info) + inputSize * sizeof(drm_i915_engine_info);
-    auto data = std::vector<uint64_t>(Math::divideAndRoundUp(length, sizeof(uint64_t)));
+    auto data = std::vector<uint8_t>(length);
     auto memoryRegions = reinterpret_cast<drm_i915_query_engine_info *>(data.data());
     memoryRegions->num_engines = inputSize;
 

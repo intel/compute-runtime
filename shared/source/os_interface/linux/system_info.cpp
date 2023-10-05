@@ -15,13 +15,13 @@
 
 namespace NEO {
 
-SystemInfo::SystemInfo(const std::vector<uint64_t> &inputData) {
+SystemInfo::SystemInfo(const std::vector<uint8_t> &inputData) {
     this->parseDeviceBlob(inputData);
 }
 
-void SystemInfo::parseDeviceBlob(const std::vector<uint64_t> &inputData) {
+void SystemInfo::parseDeviceBlob(const std::vector<uint8_t> &inputData) {
     auto data = reinterpret_cast<const uint32_t *>(inputData.data());
-    auto dataSize = inputData.size() * 2;
+    auto dataSize = inputData.size() / sizeof(uint32_t);
     uint32_t i = 0;
     while (i + 2 < dataSize) {
         DEBUG_BREAK_IF(data[i + 1] < 1);

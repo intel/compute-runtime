@@ -220,7 +220,7 @@ struct MockMemoryNeoDrm : public Drm {
         mockMemoryType = memory;
     }
 
-    std::vector<uint64_t> getMemoryRegionsReturnsEmpty() {
+    std::vector<uint8_t> getMemoryRegionsReturnsEmpty() {
         return {};
     }
 
@@ -234,8 +234,8 @@ struct MockMemoryNeoDrm : public Drm {
             return returnValue;
         }
 
-        alignas(64) uint32_t hwBlob[] = {INTEL_HWCONFIG_MAX_MEMORY_CHANNELS, 1, 8, INTEL_HWCONFIG_MEMORY_TYPE, 0, mockMemoryType};
-        std::vector<uint64_t> inputBlobData(reinterpret_cast<uint64_t *>(hwBlob), reinterpret_cast<uint64_t *>(ptrOffset(hwBlob, sizeof(hwBlob))));
+        uint32_t hwBlob[] = {INTEL_HWCONFIG_MAX_MEMORY_CHANNELS, 1, 8, INTEL_HWCONFIG_MEMORY_TYPE, 0, mockMemoryType};
+        std::vector<uint8_t> inputBlobData(reinterpret_cast<uint8_t *>(hwBlob), reinterpret_cast<uint8_t *>(hwBlob) + sizeof(hwBlob));
         this->systemInfo.reset(new SystemInfo(inputBlobData));
         return returnValue;
     }
