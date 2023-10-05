@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,5 +25,12 @@ class NonCopyableClass {
 
     NonCopyableClass(NonCopyableClass &&) = default;
     NonCopyableClass &operator=(NonCopyableClass &&) = default;
+};
+
+class NonAssignableClass {
+  public:
+    NonAssignableClass() = default;
+    NonAssignableClass &operator=(const NonAssignableClass &) = delete;
+    NonAssignableClass &operator=(NonAssignableClass &&) = delete;
 };
 } // namespace NEO
