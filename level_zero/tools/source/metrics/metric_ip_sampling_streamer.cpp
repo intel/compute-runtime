@@ -104,6 +104,7 @@ Event::State IpSamplingMetricStreamerImp::getNotificationState() {
 
 uint32_t IpSamplingMetricStreamerImp::getMaxSupportedReportCount() {
     const auto unitReportSize = ipSamplingSource.getMetricOsInterface()->getUnitReportSize();
+    UNRECOVERABLE_IF(unitReportSize == 0);
     return ipSamplingSource.getMetricOsInterface()->getRequiredBufferSize(UINT32_MAX) / unitReportSize;
 }
 
