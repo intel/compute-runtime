@@ -7,13 +7,14 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <functional>
 #include <memory>
 
 namespace NEO {
 class GmmClientContext;
-class GmmResourceInfo {
+class GmmResourceInfo : NonCopyableOrMovableClass {
   public:
     static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams);
 

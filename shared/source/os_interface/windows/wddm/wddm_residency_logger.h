@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -22,7 +23,7 @@ constexpr bool wddmResidencyLoggingAvailable = true;
 constexpr bool wddmResidencyLoggingAvailable = false;
 #endif
 
-class WddmResidencyLogger {
+class WddmResidencyLogger : NonCopyableOrMovableClass {
   public:
     WddmResidencyLogger(unsigned int device, void *fenceValueCpuVirtualAddress, std::string outDirectory) {
         const char *wddmResidencyLoggerDefaultDirectory = "unk";

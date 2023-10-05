@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -29,7 +30,7 @@ struct SysmanDevice;
 struct FabricVertex;
 class CacheReservation;
 
-struct DeviceImp : public Device {
+struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     DeviceImp();
     ze_result_t getStatus() override;
     ze_result_t submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value);

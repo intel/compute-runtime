@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include <cstdint>
 #include <memory>
 
@@ -16,7 +18,7 @@ class GraphicsAllocation;
 class LinearStream;
 class MemoryManager;
 
-class ExperimentalCommandBuffer {
+class ExperimentalCommandBuffer : NonCopyableOrMovableClass {
   public:
     virtual ~ExperimentalCommandBuffer();
     ExperimentalCommandBuffer(CommandStreamReceiver *csr, double profilingTimerResolution);

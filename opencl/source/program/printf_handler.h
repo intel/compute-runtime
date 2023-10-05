@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <cstdint>
 #include <memory>
@@ -18,7 +20,7 @@ class GraphicsAllocation;
 class Device;
 struct MultiDispatchInfo;
 
-class PrintfHandler {
+class PrintfHandler : NonCopyableOrMovableClass {
   public:
     static PrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, Device &deviceArg);
 

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <cstdint>
 #include <mutex>
@@ -26,7 +27,7 @@ static_assert(sizeof(AssertBufferHeader) == 3u * sizeof(uint32_t));
 
 #pragma pack()
 
-class AssertHandler {
+class AssertHandler : NonCopyableOrMovableClass {
   public:
     AssertHandler(Device *device);
     MOCKABLE_VIRTUAL ~AssertHandler();

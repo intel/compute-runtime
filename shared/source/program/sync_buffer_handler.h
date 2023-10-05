@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <mutex>
 
@@ -18,7 +19,7 @@ class Device;
 class GraphicsAllocation;
 class MemoryManager;
 
-class SyncBufferHandler {
+class SyncBufferHandler : NonCopyableOrMovableClass {
   public:
     ~SyncBufferHandler();
 

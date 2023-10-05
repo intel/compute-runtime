@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/surface_format_info.h"
 
 #include "level_zero/core/source/image/image.h"
@@ -16,7 +17,7 @@
 
 namespace L0 {
 
-struct ImageImp : public Image {
+struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     ze_result_t destroy() override;
     ze_result_t destroyPeerImages(const void *ptr, Device *device) override;
 

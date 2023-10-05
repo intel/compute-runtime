@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/os_library.h"
 
 #define UMDF_USING_NTSTATUS
@@ -14,7 +15,7 @@
 namespace NEO {
 namespace Windows {
 
-class OsLibrary : public NEO::OsLibrary {
+class OsLibrary : public NEO::OsLibrary, NEO::NonCopyableOrMovableClass {
   private:
     HMODULE handle;
 

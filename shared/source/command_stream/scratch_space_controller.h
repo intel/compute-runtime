@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 
 #include <cstddef>
@@ -28,7 +29,7 @@ inline constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
 
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
 
-class ScratchSpaceController {
+class ScratchSpaceController : NonCopyableOrMovableClass {
   public:
     ScratchSpaceController(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage);
     virtual ~ScratchSpaceController();

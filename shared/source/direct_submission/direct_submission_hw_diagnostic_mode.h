@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <chrono>
@@ -27,7 +28,7 @@ struct DirectSubmissionSingleDelta {
 
 using DirectSubmissionExecution = std::vector<DirectSubmissionSingleDelta>;
 
-class DirectSubmissionDiagnosticsCollector {
+class DirectSubmissionDiagnosticsCollector : NonCopyableOrMovableClass {
   public:
     DirectSubmissionDiagnosticsCollector(uint32_t executions,
                                          bool storeExecutions,
