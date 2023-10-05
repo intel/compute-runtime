@@ -15,6 +15,7 @@
 
 namespace NEO {
 class DirectSubmissionController;
+class GfxCoreHelper;
 class MemoryManager;
 struct OsEnvironment;
 struct RootDeviceEnvironment;
@@ -33,6 +34,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void adjustCcsCount();
     void adjustCcsCount(const uint32_t rootDeviceIndex) const;
     void sortNeoDevices();
+    void setDeviceHierarchy(const GfxCoreHelper &gfxCoreHelper);
     void adjustRootDeviceEnvironments();
     void prepareForCleanup() const;
     void setDebuggingMode(DebuggingMode debuggingMode) {

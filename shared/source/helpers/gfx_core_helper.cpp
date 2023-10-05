@@ -18,6 +18,10 @@ namespace NEO {
 
 GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
+const char *deviceHierarchyComposite = "COMPOSITE";
+const char *deviceHierarchyFlat = "FLAT";
+const char *deviceHierarchyUnk = "UNK";
+
 std::unique_ptr<GfxCoreHelper> GfxCoreHelper::create(const GFXCORE_FAMILY gfxCoreFamily) {
 
     auto createFunction = gfxCoreHelperFactory[gfxCoreFamily];

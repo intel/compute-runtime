@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/api/api.h"
@@ -114,6 +115,8 @@ TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenSubDevi
 }
 
 TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceApiReferenceCountIsIncreasedEveryTime) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     setup(2);
 
     EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
@@ -131,6 +134,8 @@ TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceA
 }
 
 TEST_F(ClCreateSubDevicesTests, GivenValidInputAndReturnSubDevicesAsApiDevicesIsSetWhenCreatingSubDevicesThenDeviceApiReferenceCountIsNotIncreased) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
     setup(2);
 

@@ -9,6 +9,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/pin/pin.h"
@@ -47,7 +48,7 @@ void DriverImp::initialize(ze_result_t *result) {
     envVariables.fp64Emulation =
         envReader.getSetting("NEO_FP64_EMULATION", false);
     envVariables.deviceHierarchyMode =
-        envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string("COMPOSITE"));
+        envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string(NEO::deviceHierarchyUnk));
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
