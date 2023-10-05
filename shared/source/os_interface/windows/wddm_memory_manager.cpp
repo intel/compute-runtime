@@ -725,6 +725,13 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     if (input->reservedGpuVirtualAddress) {
         getWddm(gfxAllocation->getRootDeviceIndex()).freeGpuVirtualAddress(input->reservedGpuVirtualAddress, input->reservedSizeForGpuVirtualAddress);
     }
+
+    if (input->allocInFrontWindowPool) {
+        auto heapIndex = selectHeap(input, false, is32bit || executionEnvironment.rootDeviceEnvironments[input->getRootDeviceIndex()]->isFullRangeSvm(), input->allocInFrontWindowPool);
+        auto alignedSize = input->getAlignedSize();
+        auto gfxPartition = getGfxPartition(input->getRootDeviceIndex());
+        gfxPartition->heapFree(heapIndex, input->getGpuAddress(), alignedSize);
+    }
     delete gfxAllocation;
 }
 

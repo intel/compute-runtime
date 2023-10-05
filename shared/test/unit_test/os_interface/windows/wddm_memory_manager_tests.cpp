@@ -22,6 +22,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
@@ -1368,6 +1369,68 @@ TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRan
     EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAddress);
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenIsaTypeAnd32BitFrontWindowWhenFrontWindowMemoryAllocatedAndFreedThenFrontWindowHeapAllocatorIsUsed) {
+    size_t size = 1 * MemoryConstants::kiloByte + 512;
+
+    auto gfxPartition = new MockGfxPartition();
+    gfxPartition->callHeapAllocate = false;
+
+    memoryManager->gfxPartitions[0].reset(gfxPartition);
+    AllocationProperties props{0, size, AllocationType::KERNEL_ISA, mockDeviceBitfield};
+    props.flags.use32BitFrontWindow = 1;
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(props));
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_LE(size, allocation->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_TRUE(allocation->allocInFrontWindowPool);
+
+    uint64_t gpuAddress = allocation->getGpuAddress();
+    EXPECT_NE(0ULL, gpuAddress);
+    EXPECT_EQ(gfxPartition->mockGpuVa, gpuAddress);
+
+    gfxPartition->heapFreePtr = 0;
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(gpuAddress, gfxPartition->heapFreePtr);
+}
+
+HWTEST2_F(WddmMemoryManagerSimpleTest, givenLocalMemoryIsaTypeAnd32BitFrontWindowWhenFrontWindowMemoryAllocatedAndFreedThenFrontWindowHeapAllocatorIsUsed, IsAtLeastGen12lp) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+
+    const auto localMemoryEnabled = true;
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+
+    size_t size = 1 * MemoryConstants::kiloByte + 512;
+
+    auto gfxPartition = new MockGfxPartition();
+    gfxPartition->callHeapAllocate = false;
+
+    memoryManager->gfxPartitions[0].reset(gfxPartition);
+    AllocationProperties props{0, size, AllocationType::KERNEL_ISA, mockDeviceBitfield};
+    props.flags.use32BitFrontWindow = 1;
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(props));
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_LE(alignUp(size, MemoryConstants::pageSize64k), allocation->getUnderlyingBufferSize());
+    EXPECT_TRUE(allocation->allocInFrontWindowPool);
+
+    uint64_t gpuAddress = allocation->getGpuAddress();
+    EXPECT_NE(0ULL, gpuAddress);
+    EXPECT_EQ(gfxPartition->mockGpuVa, gpuAddress);
+
+    gfxPartition->heapFreePtr = 0;
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(gpuAddress, gfxPartition->heapFreePtr);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenDebugModuleAreaTypeWhenCreatingAllocationThen32BitAllocationWithFrontWindowGpuVaIsReturned) {

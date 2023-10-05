@@ -58,6 +58,7 @@ class MockGfxPartition : public GfxPartition {
         if (callHeapAllocate) {
             getHeap(heapIndex).free(ptr, size);
         }
+        heapFreePtr = ptr;
     }
 
     void freeGpuAddressRange(uint64_t gpuAddress, size_t size) override {
@@ -79,6 +80,7 @@ class MockGfxPartition : public GfxPartition {
     bool callHeapAllocate = true;
     HeapIndex heapAllocateIndex = HeapIndex::TOTAL_HEAPS;
     const uint64_t mockGpuVa = std::numeric_limits<uint64_t>::max();
+    uint64_t heapFreePtr = 0;
 };
 
 class MockGfxPartitionBasic : public GfxPartition {
