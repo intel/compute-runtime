@@ -441,7 +441,7 @@ bool IoctlHelper::translateTopologyInfo(const QueryTopologyInfo *queryTopologyIn
         subSliceIndices.reserve(queryTopologyInfo->maxSubslices);
 
         for (int y = 0; y < queryTopologyInfo->maxSubslices; y++) {
-            size_t yOffset = (queryTopologyInfo->subsliceOffset + x * queryTopologyInfo->subsliceStride + y / 8);
+            size_t yOffset = (queryTopologyInfo->subsliceOffset + static_cast<size_t>(x * queryTopologyInfo->subsliceStride) + y / 8);
             bool isSubSliceEnabled = (queryTopologyInfo->data[yOffset] >> (y % 8)) & 1;
             if (!isSubSliceEnabled) {
                 continue;
@@ -450,7 +450,7 @@ bool IoctlHelper::translateTopologyInfo(const QueryTopologyInfo *queryTopologyIn
             subSliceIndices.push_back(y);
 
             for (int z = 0; z < queryTopologyInfo->maxEusPerSubslice; z++) {
-                size_t zOffset = (queryTopologyInfo->euOffset + (x * queryTopologyInfo->maxSubslices + y) * queryTopologyInfo->euStride + z / 8);
+                size_t zOffset = (queryTopologyInfo->euOffset + static_cast<size_t>((x * queryTopologyInfo->maxSubslices + y) * queryTopologyInfo->euStride) + z / 8);
                 bool isEUEnabled = (queryTopologyInfo->data[zOffset] >> (z % 8)) & 1;
                 if (!isEUEnabled) {
                     continue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,12 +44,12 @@ Elf<NumBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErr
         return {};
     }
 
-    if (ret.elfFileHeader->phOff + ret.elfFileHeader->phNum * ret.elfFileHeader->phEntSize > binary.size()) {
+    if (ret.elfFileHeader->phOff + static_cast<uint32_t>(ret.elfFileHeader->phNum * ret.elfFileHeader->phEntSize) > binary.size()) {
         outErrReason = "Out of bounds program headers table";
         return {};
     }
 
-    if (ret.elfFileHeader->shOff + ret.elfFileHeader->shNum * ret.elfFileHeader->shEntSize > binary.size()) {
+    if (ret.elfFileHeader->shOff + static_cast<uint32_t>(ret.elfFileHeader->shNum * ret.elfFileHeader->shEntSize) > binary.size()) {
         outErrReason = "Out of bounds section headers table";
         return {};
     }

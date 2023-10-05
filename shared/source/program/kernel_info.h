@@ -71,7 +71,7 @@ struct KernelInfo {
         auto requiredWorkGroupSizeX = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
         auto requiredWorkGroupSizeY = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
         auto requiredWorkGroupSizeZ = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
-        size_t maxRequiredWorkGroupSize = requiredWorkGroupSizeX * requiredWorkGroupSizeY * requiredWorkGroupSizeZ;
+        size_t maxRequiredWorkGroupSize = static_cast<size_t>(requiredWorkGroupSizeX) * requiredWorkGroupSizeY * requiredWorkGroupSizeZ;
         if ((maxRequiredWorkGroupSize == 0) || (maxRequiredWorkGroupSize > maxWorkGroupSize)) {
             maxRequiredWorkGroupSize = maxWorkGroupSize;
         }

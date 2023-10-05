@@ -208,7 +208,7 @@ ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
         uint64_t val = 0;
         for (uint32_t i = 0; i < *pCount; i++) {
             if (pSustained[i].level == ZES_POWER_LEVEL_SUSTAINED) {
-                val = pSustained[i].limit * milliFactor; // Convert milliwatts to microwatts
+                val = static_cast<uint64_t>(pSustained[i].limit) * milliFactor; // Convert milliwatts to microwatts
                 result = pSysfsAccess->write(i915HwmonDir + "/" + sustainedPowerLimit, val);
                 if (ZE_RESULT_SUCCESS != result) {
                     NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
@@ -224,7 +224,7 @@ ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
                 if (productFamily == IGFX_PVC) {
                     val = pSustained[i].limit;
                 } else {
-                    val = pSustained[i].limit * milliFactor; // Convert milliwatts to microwatts
+                    val = static_cast<uint64_t>(pSustained[i].limit) * milliFactor; // Convert milliwatts to microwatts
                 }
                 result = pSysfsAccess->write(i915HwmonDir + "/" + criticalPowerLimit, val);
                 if (ZE_RESULT_SUCCESS != result) {
