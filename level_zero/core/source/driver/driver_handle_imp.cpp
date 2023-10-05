@@ -12,6 +12,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/string_helpers.h"
@@ -268,11 +269,15 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(envVariables.programDebugging);
     driverHandle->enableSysman = envVariables.sysman;
     driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
-    if (strcmp(envVariables.deviceHierarchyMode.c_str(), "COMPOSITE") == 0) {
+    char const *preferredDeviceHierarchy = envVariables.deviceHierarchyMode.c_str();
+    if (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyUnk) == 0) {
+        preferredDeviceHierarchy = devices[0]->getGfxCoreHelper().getDefaultDeviceHierarchy();
+    }
+    if (strcmp(preferredDeviceHierarchy, "COMPOSITE") == 0) {
         driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
-    } else if (strcmp(envVariables.deviceHierarchyMode.c_str(), "FLAT") == 0) {
+    } else if (strcmp(preferredDeviceHierarchy, "FLAT") == 0) {
         driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
-    } else if (strcmp(envVariables.deviceHierarchyMode.c_str(), "COMBINED") == 0) {
+    } else if (strcmp(preferredDeviceHierarchy, "COMBINED") == 0) {
         driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
     }
     ze_result_t res = driverHandle->initialize(std::move(devices));

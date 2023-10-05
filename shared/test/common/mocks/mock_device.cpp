@@ -112,6 +112,7 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(pHwInfo);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
+    executionEnvironment->setDeviceHierarchy(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment->calculateMaxOsContextCount();
     return executionEnvironment;
 }
@@ -147,6 +148,7 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
 
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
+    executionEnvironment->setDeviceHierarchy(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
 
     MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->initializeMemoryManager();

@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
@@ -473,7 +474,7 @@ TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironment
     L0::GlobalDriver = nullptr;
 }
 
-TEST(DriverImpTest, givenDefaultFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThenCompositeHierarchyIsEnabled) {
+TEST(DriverImpTest, whenCreatingExecutionEnvironmentThenDefaultHierarchyIsEnabled) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -482,7 +483,12 @@ TEST(DriverImpTest, givenDefaultFlatDeviceHierarchyWhenCreatingExecutionEnvironm
     DriverImp driverImp;
     driverImp.initialize(&result);
     L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(L0::GlobalDriverHandle);
-    EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE);
+    auto &gfxCoreHelper = driverHandleImp->memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    if (strcmp(gfxCoreHelper.getDefaultDeviceHierarchy(), "COMPOSITE") == 0) {
+        EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE);
+    } else {
+        EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT);
+    }
     ASSERT_NE(nullptr, L0::GlobalDriver);
     ASSERT_NE(0u, L0::GlobalDriver->numDevices);
 
@@ -505,6 +511,28 @@ TEST(DriverImpTest, givenFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThen
     driverImp.initialize(&result);
     L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(L0::GlobalDriverHandle);
     EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT);
+    ASSERT_NE(nullptr, L0::GlobalDriver);
+    ASSERT_NE(0u, L0::GlobalDriver->numDevices);
+
+    delete L0::GlobalDriver;
+    L0::GlobalDriverHandle = nullptr;
+    L0::GlobalDriver = nullptr;
+}
+
+TEST(DriverImpTest, givenCompositeDeviceHierarchyWhenCreatingExecutionEnvironmentThenCompositeHierarchyIsEnabled) {
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+    L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(L0::GlobalDriverHandle);
+    EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE);
     ASSERT_NE(nullptr, L0::GlobalDriver);
     ASSERT_NE(0u, L0::GlobalDriver->numDevices);
 
