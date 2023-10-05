@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -17,7 +18,7 @@ namespace NEO {
 class MigrationSyncData;
 class GraphicsAllocation;
 
-class MultiGraphicsAllocation {
+class MultiGraphicsAllocation : NonAssignableClass {
   public:
     MultiGraphicsAllocation(uint32_t maxRootDeviceIndex);
     MultiGraphicsAllocation(const MultiGraphicsAllocation &multiGraphicsAllocation);
