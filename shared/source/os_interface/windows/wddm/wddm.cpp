@@ -87,6 +87,7 @@ bool Wddm::init() {
         rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(this));
     }
+
     if (!queryAdapterInfo()) {
         return false;
     }

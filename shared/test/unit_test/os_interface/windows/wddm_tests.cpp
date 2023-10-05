@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -650,4 +651,17 @@ TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHan
     int ret = allocation.peekInternalHandle(nullptr, handle);
     EXPECT_NE(ret, 0);
 }
+
+TEST_F(WddmTests, whenInitializeFailureThenInitOsInterfaceWddmFails) {
+
+    auto hwDeviceId = std::make_unique<HwDeviceIdWddm>(0, LUID{0, 0}, 1u, executionEnvironment->osEnvironment.get(), nullptr);
+
+    rootDeviceEnvironment->osInterface.reset();
+    auto productHelper = std::make_unique<MockProductHelper>();
+    productHelper->configureHwInfoWddmResult = 1; // failure
+    rootDeviceEnvironment->productHelper = std::move(productHelper);
+
+    EXPECT_FALSE(rootDeviceEnvironment->initOsInterface(std::move(hwDeviceId), 0u));
+}
+
 } // namespace NEO

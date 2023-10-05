@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,6 @@ bool initWddmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, RootDeviceEnv
     auto hwDeviceIdWddm = std::unique_ptr<HwDeviceIdWddm>(reinterpret_cast<HwDeviceIdWddm *>(hwDeviceId.release()));
     NEO::Wddm *wddm = Wddm::createWddm(std::move(hwDeviceIdWddm), *rootDeviceEnv);
     if (!wddm->init()) {
-        delete wddm;
         return false;
     }
     rootDeviceEnv->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
