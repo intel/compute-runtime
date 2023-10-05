@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -35,7 +36,6 @@ using DrmGlobalBindlessAllocatorTests = Test<GlobalBindlessDrmMemManagerFixture>
 
 TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedThenGpuBaseAddressIsSetToCorrectBaseAddress) {
     MockAllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::LINEAR_STREAM);
-    properties.flags.use32BitFrontWindow = true;
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
     auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     ASSERT_NE(nullptr, allocation);
@@ -49,7 +49,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocat
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset();
 }
 
-TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToCorrectBaseAddress) {
+TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToBindlessBaseAddress) {
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
     allocData.type = AllocationType::LINEAR_STREAM;
@@ -63,7 +63,27 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocat
     EXPECT_EQ(gmmHelper->canonize(memoryManager->getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), true)), allocation->getGpuBaseAddress());
     ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper());
     EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getGlobalHeapsBase(), allocation->getGpuBaseAddress());
+    EXPECT_LT(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getGlobalHeapsBase(), allocation->getGpuAddress());
+
     memoryManager->freeGraphicsMemory(allocation);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset();
+}
+
+TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreatedInDevicePoolThenGpuAddressIsSetToBindlessBaseAddress) {
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    AllocationData allocData = {};
+    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.size = MemoryConstants::pageSize64k;
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
+
+    auto gmmHelper = memoryManager->getGmmHelper(rootDeviceIndex);
+    EXPECT_EQ(gmmHelper->canonize(memoryManager->getExternalHeapBaseAddress(rootDeviceIndex, true)),
+              executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getGlobalHeapsBase());
+
+    EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getGlobalHeapsBase(),
+              executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::SPECIAL_SSH)->getGraphicsAllocation()->getGpuAddress());
+
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset();
 }
 

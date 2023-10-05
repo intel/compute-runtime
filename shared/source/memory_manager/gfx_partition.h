@@ -97,7 +97,7 @@ class GfxPartition {
 
     static constexpr uint64_t heapGranularity = MemoryConstants::pageSize64k;
     static constexpr uint64_t heapGranularity2MB = 2 * MemoryConstants::megaByte;
-    static constexpr size_t externalFrontWindowPoolSize = 16 * MemoryConstants::megaByte;
+    static constexpr size_t externalFrontWindowPoolSize = 2 * MemoryConstants::pageSize64k;
     static constexpr size_t internalFrontWindowPoolSize = 1 * MemoryConstants::megaByte;
 
     static const std::array<HeapIndex, 4> heap32Names;

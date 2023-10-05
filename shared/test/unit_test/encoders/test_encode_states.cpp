@@ -111,16 +111,25 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
-    uint32_t borderColorSize = 0x40;
-    SAMPLER_BORDER_COLOR_STATE samplerState;
-    samplerState.init();
-    samplerState.setBorderColorAlpha(1.0);
+    SAMPLER_BORDER_COLOR_STATE borderColorState;
+    borderColorState.init();
+    borderColorState.setBorderColorAlpha(1.0);
+    uint32_t borderColorSize = sizeof(SAMPLER_BORDER_COLOR_STATE);
+
+    auto memory = alignedMalloc(4096, 4096);
+    memcpy_s(memory, 4096, &borderColorState, sizeof(SAMPLER_BORDER_COLOR_STATE));
+
+    SAMPLER_STATE samplerState = {};
+    memcpy_s(ptrOffset(memory, sizeof(SAMPLER_BORDER_COLOR_STATE)), 4096 - sizeof(SAMPLER_BORDER_COLOR_STATE), &samplerState, sizeof(SAMPLER_BORDER_COLOR_STATE));
+
     auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
-    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
+    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, memory, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
     auto expectedValue = pDevice->getBindlessHeapsHelper()->getAlphaBorderColorOffset();
 
     auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(dsh->getGraphicsAllocation()->getUnderlyingBuffer());
     EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+
+    alignedFree(memory);
 }
 
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNotUsedWhenCopyingSamplerStateThenDynamicPatternIsUsedAndOffsetFromDshProgrammed) {
@@ -137,17 +146,21 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNot
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
+    SAMPLER_BORDER_COLOR_STATE borderColorState;
+    borderColorState.init();
+    borderColorState.setBorderColorAlpha(1.0);
     uint32_t borderColorSize = sizeof(SAMPLER_BORDER_COLOR_STATE);
-    SAMPLER_BORDER_COLOR_STATE samplerState;
-    samplerState.init();
-    samplerState.setBorderColorAlpha(1.0);
-    uint64_t data[sizeof(SAMPLER_BORDER_COLOR_STATE) + sizeof(SAMPLER_STATE)];
-    memset(data, 0, sizeof(data));
-    memcpy(data, &samplerState, sizeof(SAMPLER_BORDER_COLOR_STATE));
+
+    auto memory = alignedMalloc(4096, 4096);
+    memcpy_s(memory, 4096, &borderColorState, sizeof(SAMPLER_BORDER_COLOR_STATE));
+
+    SAMPLER_STATE samplerState = {};
+    memcpy_s(ptrOffset(memory, sizeof(SAMPLER_BORDER_COLOR_STATE)), 4096 - sizeof(SAMPLER_BORDER_COLOR_STATE), &samplerState, sizeof(SAMPLER_BORDER_COLOR_STATE));
+
     auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
 
     auto usedBefore = dsh->getUsed();
-    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &data, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
+    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, memory, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
     auto expectedValue = usedBefore;
     auto usedAfter = dsh->getUsed();
 
@@ -155,6 +168,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNot
 
     auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(ptrDiff(dsh->getSpace(0), sizeof(SAMPLER_STATE)));
     EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+
+    alignedFree(memory);
 }
 
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRedChanelIsNotZeroThenExceptionThrown) {

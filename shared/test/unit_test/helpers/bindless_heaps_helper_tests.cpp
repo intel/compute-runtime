@@ -195,30 +195,33 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenGetAlphaBorderColorO
     EXPECT_EQ(bindlessHeapHelper->getAlphaBorderColorOffset(), expectedOffset);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInSpecialHeapThenOffsetLessThanFrontWindowSize) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInSpecialHeapThenFirstSlotIsAtOffsetZero) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::SPECIAL_SSH);
-    auto frontWindowSize = GfxPartition::externalFrontWindowPoolSize;
-    EXPECT_LT(ssInHeapInfo.surfaceStateOffset, frontWindowSize);
+
+    EXPECT_EQ(0u, ssInHeapInfo.surfaceStateOffset);
+    EXPECT_EQ(ssInHeapInfo.heapAllocation->getGpuAddress(), ssInHeapInfo.heapAllocation->getGpuBaseAddress());
+    EXPECT_EQ(bindlessHeapHelper->getGlobalHeapsBase(), ssInHeapInfo.heapAllocation->getGpuBaseAddress());
 }
-TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalHeapThenOffsetLessThanFrontWindowSize) {
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalHeapThenOffsetLessThanHeapSize) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
-    auto frontWindowSize = GfxPartition::externalFrontWindowPoolSize;
-    EXPECT_LT(ssInHeapInfo.surfaceStateOffset, frontWindowSize);
+    EXPECT_LE(0u, ssInHeapInfo.surfaceStateOffset);
+    EXPECT_GT(MemoryConstants::max32BitAddress, ssInHeapInfo.surfaceStateOffset);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalDshThenOffsetGreaterOrEqualFrontWindowSize) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalDshThenOffsetLessThanHeapSize) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
-    auto frontWindowSize = GfxPartition::externalFrontWindowPoolSize;
-    EXPECT_GE(ssInHeapInfo.surfaceStateOffset, frontWindowSize);
+    EXPECT_LE(0u, ssInHeapInfo.surfaceStateOffset);
+    EXPECT_GT(MemoryConstants::max32BitAddress, ssInHeapInfo.surfaceStateOffset);
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIsCalledThenSSinHeapInfoShouldBePlacedInReuseVector) {

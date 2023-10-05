@@ -1364,7 +1364,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
 
-    adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa);
+    if (!heapAssigner.use32BitHeap(allocationData.type)) {
+        adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa);
+    }
 
     if (!createWddmAllocation(wddmAllocation.get(), requiredGpuVa)) {
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {

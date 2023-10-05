@@ -13,6 +13,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
@@ -30,14 +31,14 @@ BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMulti
                                                                                                           deviceBitfield(deviceBitfield) {
 
     for (auto heapType = 0; heapType < BindlesHeapType::NUM_HEAP_TYPES; heapType++) {
-        auto allocInFrontWindow = heapType != BindlesHeapType::GLOBAL_DSH;
-        auto heapAllocation = getHeapAllocation(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, allocInFrontWindow);
+        auto size = MemoryConstants::pageSize64k;
+        auto heapAllocation = getHeapAllocation(size, MemoryConstants::pageSize64k, heapType == BindlesHeapType::SPECIAL_SSH);
         UNRECOVERABLE_IF(heapAllocation == nullptr);
         ssHeapsAllocations.push_back(heapAllocation);
         surfaceStateHeaps[heapType] = std::make_unique<IndirectHeap>(heapAllocation, true);
     }
 
-    borderColorStates = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, true);
+    borderColorStates = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, false);
     UNRECOVERABLE_IF(borderColorStates == nullptr);
     float borderColorDefault[4] = {0, 0, 0, 0};
     memcpy_s(borderColorStates->getUnderlyingBuffer(), sizeof(borderColorDefault), borderColorDefault, sizeof(borderColorDefault));
@@ -155,7 +156,7 @@ IndirectHeap *BindlessHeapsHelper::getHeap(BindlesHeapType heapType) {
 
 bool BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
     auto heap = surfaceStateHeaps[heapType].get();
-    auto allocInFrontWindow = heapType != BindlesHeapType::GLOBAL_DSH;
+    auto allocInFrontWindow = false;
     auto newAlloc = getHeapAllocation(globalSshAllocationSize, MemoryConstants::pageSize64k, allocInFrontWindow);
     DEBUG_BREAK_IF(newAlloc == nullptr);
     if (newAlloc == nullptr) {

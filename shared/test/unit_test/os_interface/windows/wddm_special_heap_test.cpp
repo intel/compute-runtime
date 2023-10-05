@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -92,11 +93,14 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
     executionEnvironment->rootDeviceEnvironments[0]->bindlessHeapsHelper.reset();
 }
 
-TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToCorrectBaseAddress) {
+TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToBindlessBaseAddress) {
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
     allocData.type = AllocationType::LINEAR_STREAM;
     allocData.size = MemoryConstants::pageSize64k;
+
+    auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
+    wddm->callBaseMapGpuVa = true;
 
     memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
 
@@ -112,6 +116,29 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
     EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase(), allocation->getGpuBaseAddress());
 
     memManager->freeGraphicsMemory(allocation);
+    executionEnvironment->rootDeviceEnvironments[0]->bindlessHeapsHelper.reset();
+}
+
+TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreatedInDevicePoolThenGpuAddressIsSetToBindlessBaseAddress) {
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    AllocationData allocData = {};
+    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.size = MemoryConstants::pageSize64k;
+
+    auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
+    wddm->callBaseMapGpuVa = true;
+
+    memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
+
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
+
+    auto gmmHelper = memManager->getGmmHelper(0);
+    EXPECT_EQ(gmmHelper->canonize(memManager->getExternalHeapBaseAddress(0, true)),
+              executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase());
+
+    EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase(),
+              executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::SPECIAL_SSH)->getGraphicsAllocation()->getGpuAddress());
+
     executionEnvironment->rootDeviceEnvironments[0]->bindlessHeapsHelper.reset();
 }
 
