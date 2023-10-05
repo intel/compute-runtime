@@ -52,6 +52,7 @@ void appendAdditionalExtensions(std::string &extensions, const std::string &comp
 
 void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions) {
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    UNRECOVERABLE_IF(!compilerProductHelper);
     auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
 
