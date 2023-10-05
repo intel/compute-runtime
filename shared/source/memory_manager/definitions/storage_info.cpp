@@ -200,6 +200,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
     }
     if (DebugManager.flags.ForceSingleTileAllocPlacement.get()) {
+        UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSingleTileAllocPlacement.get()) {
             storageInfo.cloningOfPageTables = true;
             storageInfo.memoryBanks = preferredTile;

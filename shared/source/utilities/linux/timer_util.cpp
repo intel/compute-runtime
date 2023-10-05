@@ -46,7 +46,9 @@ class Timer::TimerImpl {
     }
 
     TimerImpl &operator=(const TimerImpl &t) {
-        startTime = t.startTime;
+        if (this != &t) {
+            startTime = t.startTime;
+        }
         return *this;
     }
 

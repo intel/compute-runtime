@@ -226,7 +226,9 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
 
     // Write KernelName and padding
     kernelBlob.write(kernelName.c_str(), kernelName.size());
-    addPadding(kernelBlob, kernelNameSizeInBinary - kernelName.size());
+    if (kernelNameSizeInBinary > kernelName.size()) {
+        addPadding(kernelBlob, kernelNameSizeInBinary - kernelName.size());
+    }
 
     // Write KernelHeap and padding
     uint32_t kernelHeapSizeUnpadded = 0U;
