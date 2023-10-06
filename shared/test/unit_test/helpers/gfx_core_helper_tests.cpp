@@ -1604,3 +1604,9 @@ HWTEST_F(GfxCoreHelperTest, givenFlagRemoveRestrictionsOnNumberOfThreadsInGpgpuT
         EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfsize, isHwLocalIdGeneration));
     }
 }
+
+HWTEST_F(GfxCoreHelperTest, whenGetDefaultDeviceHierarchyThenReturnFlatHierarchy) {
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto defaultDeviceHierarchy = gfxCoreHelper.getDefaultDeviceHierarchy();
+    EXPECT_STREQ("FLAT", defaultDeviceHierarchy);
+}
