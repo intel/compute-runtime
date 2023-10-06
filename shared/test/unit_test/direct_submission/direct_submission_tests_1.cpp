@@ -97,7 +97,7 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
     csr.blitterDirectSubmission.release();
 }
 
-HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionCalledThenCsrStopDirecttSubmissionCalled) {
+HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionAndWaitForCompletionCalledThenCsrStopDirectSubmissionCalledBlocking) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
     ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
@@ -110,13 +110,14 @@ HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionCalledThenCsrStopD
     EXPECT_TRUE(ret);
 
     EXPECT_FALSE(csr.stopDirectSubmissionCalled);
-    pDevice->stopDirectSubmission();
+    pDevice->stopDirectSubmissionAndWaitForCompletion();
     EXPECT_TRUE(csr.stopDirectSubmissionCalled);
+    EXPECT_TRUE(csr.stopDirectSubmissionCalledBlocking);
 
     csr.directSubmission.release();
 }
 
-HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionCalledThenBcsStopDirecttSubmissionCalled) {
+HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionAndWaitForCompletionCalledThenBcsStopDirectSubmissionCalledBlocking) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
     ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
@@ -133,10 +134,22 @@ HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionCalledThenBcsStopD
     EXPECT_TRUE(ret);
 
     EXPECT_FALSE(csr.stopDirectSubmissionCalled);
-    pDevice->stopDirectSubmission();
+    pDevice->stopDirectSubmissionAndWaitForCompletion();
     EXPECT_TRUE(csr.stopDirectSubmissionCalled);
+    EXPECT_TRUE(csr.stopDirectSubmissionCalledBlocking);
 
     csr.blitterDirectSubmission.release();
+}
+
+HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStopRingBufferBlockingCalledAndRingBufferIsNotStartedThenEnsureRingCompletionCalled) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    bool ret = directSubmission.initialize(false, false);
+    EXPECT_TRUE(ret);
+
+    EXPECT_FALSE(directSubmission.ringStart);
+    EXPECT_EQ(0u, directSubmission.ensureRingCompletionCalled);
+    directSubmission.stopRingBuffer(true);
+    EXPECT_EQ(1u, directSubmission.ensureRingCompletionCalled);
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenMakingResourcesResidentThenCorrectContextIsUsed) {

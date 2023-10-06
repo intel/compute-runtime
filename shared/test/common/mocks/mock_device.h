@@ -151,9 +151,9 @@ class MockDevice : public RootDevice {
         rtDispatchGlobalsForceAllocation = true;
     }
 
-    void stopDirectSubmission() override {
+    void stopDirectSubmissionAndWaitForCompletion() override {
         stopDirectSubmissionCalled = true;
-        Device::stopDirectSubmission();
+        Device::stopDirectSubmissionAndWaitForCompletion();
     }
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;

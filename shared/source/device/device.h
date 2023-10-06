@@ -163,7 +163,7 @@ class Device : public ReferenceTrackedObject<Device> {
 
     uint32_t getNumberOfRegularContextsPerEngine() const { return numberOfRegularContextsPerEngine; }
     bool isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const;
-    MOCKABLE_VIRTUAL void stopDirectSubmission();
+    MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
     bool isAnyDirectSubmissionEnabled();
     bool isStateSipRequired() const {
         return getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr;

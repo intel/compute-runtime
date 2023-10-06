@@ -45,7 +45,7 @@ Platform::~Platform() {
 
     for (auto clDevice : this->clDevices) {
         clDevice->getDevice().getRootDeviceEnvironmentRef().debugger.reset(nullptr);
-        clDevice->getDevice().stopDirectSubmission();
+        clDevice->getDevice().stopDirectSubmissionAndWaitForCompletion();
         clDevice->decRefInternal();
     }
 

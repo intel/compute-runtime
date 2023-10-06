@@ -422,6 +422,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     void stopDirectSubmission(bool blocking) override {
         stopDirectSubmissionCalled = true;
+        stopDirectSubmissionCalledBlocking = blocking;
         BaseClass::stopDirectSubmission(blocking);
     }
 
@@ -496,6 +497,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool callBaseIsKmdWaitOnTaskCountAllowed = false;
     bool isKmdWaitOnTaskCountAllowedValue = false;
     bool stopDirectSubmissionCalled = false;
+    bool stopDirectSubmissionCalledBlocking = false;
 };
 
 } // namespace NEO

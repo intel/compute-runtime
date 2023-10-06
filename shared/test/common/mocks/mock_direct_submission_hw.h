@@ -125,6 +125,11 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         BaseClass::dispatchTaskStoreSection(taskStartSectionVa);
     }
 
+    void ensureRingCompletion() override {
+        ensureRingCompletionCalled++;
+        BaseClass::ensureRingCompletion();
+    }
+
     bool makeResourcesResident(DirectSubmissionAllocations &allocations) override {
         makeResourcesResidentVectorSize = static_cast<uint32_t>(allocations.size());
         if (callBaseResident) {
@@ -185,6 +190,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     uint32_t dispatchRelaxedOrderingSchedulerSectionCalled = 0;
     uint32_t dispatchRelaxedOrderingQueueStallCalled = 0;
     uint32_t dispatchTaskStoreSectionCalled = 0;
+    uint32_t ensureRingCompletionCalled = 0;
     uint32_t makeResourcesResidentVectorSize = 0u;
     bool allocateOsResourcesReturn = true;
     bool submitReturn = true;

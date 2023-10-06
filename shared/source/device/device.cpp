@@ -843,12 +843,12 @@ ReleaseHelper *Device::getReleaseHelper() const {
     return getRootDeviceEnvironment().getReleaseHelper();
 }
 
-void Device::stopDirectSubmission() {
+void Device::stopDirectSubmissionAndWaitForCompletion() {
     for (auto &engine : allEngines) {
         auto csr = engine.commandStreamReceiver;
         if (csr->isAnyDirectSubmissionEnabled()) {
             auto lock = csr->obtainUniqueOwnership();
-            csr->stopDirectSubmission(false);
+            csr->stopDirectSubmission(true);
         }
     }
 }

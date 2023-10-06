@@ -543,6 +543,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
     if (!ringStart) {
+        if (blocking) {
+            this->ensureRingCompletion();
+        }
         return true;
     }
 
