@@ -696,7 +696,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t 
 
 template <typename GfxFamily>
 char const *GfxCoreHelperHw<GfxFamily>::getDefaultDeviceHierarchy() const {
-    return deviceHierarchyComposite;
+    return deviceHierarchyFlat;
 }
 
 } // namespace NEO
