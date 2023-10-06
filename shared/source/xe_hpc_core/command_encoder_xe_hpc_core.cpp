@@ -242,14 +242,10 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
         walkerCmd.setL3PrefetchDisable(!forceL3PrefetchForComputeWalker);
     }
 
-    auto programComputeDispatchAllWalkerEnableInComputeWalker = productHelper.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo) &&
-                                                                walkerArgs.kernelExecutionType == KernelExecutionType::Concurrent;
     int32_t overrideDispatchAllWalkerEnableInComputeWalker = DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
     if (overrideDispatchAllWalkerEnableInComputeWalker != -1) {
-        programComputeDispatchAllWalkerEnableInComputeWalker = !!overrideDispatchAllWalkerEnableInComputeWalker;
+        walkerCmd.setComputeDispatchAllWalkerEnable(overrideDispatchAllWalkerEnableInComputeWalker);
     }
-
-    walkerCmd.setComputeDispatchAllWalkerEnable(programComputeDispatchAllWalkerEnableInComputeWalker);
 }
 
 template <>

@@ -601,16 +601,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenIsAdjustProgrammableIdPreferre
     EXPECT_FALSE(productHelper->isAdjustProgrammableIdPreferredSlmSizeRequired(*defaultHwInfo));
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsComputeDispatchAllWalkerEnableInCfeStateRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isComputeDispatchAllWalkerEnableInCfeStateRequired(*defaultHwInfo));
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsComputeDispatchAllWalkerEnableInComputeWalkerRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isComputeDispatchAllWalkerEnableInComputeWalkerRequired(*defaultHwInfo));
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsGlobalFenceInCommandStreamRequiredThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->isGlobalFenceInCommandStreamRequired(*defaultHwInfo));

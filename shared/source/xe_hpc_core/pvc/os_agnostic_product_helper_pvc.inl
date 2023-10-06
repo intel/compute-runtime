@@ -162,11 +162,6 @@ bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
     return false;
 }
