@@ -73,8 +73,8 @@ void DebugApiLinuxMultiDeviceFixture::setUp() {
     rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 }
 
-TileDebugSessionLinux *MockDebugSessionLinux::createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) {
-    auto tileSession = new MockTileDebugSessionLinux(config, device, rootDebugSession);
+TileDebugSessionLinuxi915 *MockDebugSessionLinuxi915::createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) {
+    auto tileSession = new MockTileDebugSessionLinuxi915(config, device, rootDebugSession);
     tileSession->initialize();
     return tileSession;
 }

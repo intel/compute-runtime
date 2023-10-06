@@ -34,7 +34,7 @@ namespace ult {
 
 using typeOfUUID = std::decay<decltype(prelim_drm_i915_debug_event_vm_bind::uuids[0])>::type;
 
-struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
+struct MockIoctlHandler : public L0::DebugSessionLinuxi915::IoctlHandler {
     using EventPair = std::pair<char *, uint64_t>;
     using EventQueue = std::queue<EventPair>;
 
@@ -248,7 +248,7 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
     uint32_t ackCount = 0;
 };
 
-struct MockDebugSessionLinux : public L0::DebugSessionLinux {
+struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     using L0::DebugSessionImp::allThreads;
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::attachTile;
@@ -267,62 +267,62 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::tileSessionsEnabled;
     using L0::DebugSessionImp::triggerEvents;
 
-    using L0::DebugSessionLinux::asyncThread;
-    using L0::DebugSessionLinux::blockOnFenceMode;
-    using L0::DebugSessionLinux::checkAllEventsCollected;
-    using L0::DebugSessionLinux::checkStoppedThreadsAndGenerateEvents;
-    using L0::DebugSessionLinux::clientHandle;
-    using L0::DebugSessionLinux::clientHandleClosed;
-    using L0::DebugSessionLinux::clientHandleToConnection;
-    using L0::DebugSessionLinux::closeAsyncThread;
-    using L0::DebugSessionLinux::closeInternalEventsThread;
-    using L0::DebugSessionLinux::createTileSessionsIfEnabled;
-    using L0::DebugSessionLinux::debugArea;
-    using L0::DebugSessionLinux::euControlInterruptSeqno;
-    using L0::DebugSessionLinux::eventsToAck;
-    using L0::DebugSessionLinux::extractVaFromUuidString;
-    using L0::DebugSessionLinux::fd;
-    using L0::DebugSessionLinux::getContextStateSaveAreaGpuVa;
-    using L0::DebugSessionLinux::getContextStateSaveAreaSize;
-    using L0::DebugSessionLinux::getIsaInfoForAllInstances;
-    using L0::DebugSessionLinux::getISAVMHandle;
-    using L0::DebugSessionLinux::getRegisterSetProperties;
-    using L0::DebugSessionLinux::getSbaBufferGpuVa;
-    using L0::DebugSessionLinux::getStateSaveAreaHeader;
-    using L0::DebugSessionLinux::handleEvent;
-    using L0::DebugSessionLinux::handleEventsAsync;
-    using L0::DebugSessionLinux::handleVmBindEvent;
-    using L0::DebugSessionLinux::internalEventQueue;
-    using L0::DebugSessionLinux::internalEventThread;
-    using L0::DebugSessionLinux::interruptImp;
-    using L0::DebugSessionLinux::ioctl;
-    using L0::DebugSessionLinux::ioctlHandler;
-    using L0::DebugSessionLinux::newlyStoppedThreads;
-    using L0::DebugSessionLinux::pendingInterrupts;
-    using L0::DebugSessionLinux::pendingVmBindEvents;
-    using L0::DebugSessionLinux::printContextVms;
-    using L0::DebugSessionLinux::pushApiEvent;
-    using L0::DebugSessionLinux::readEventImp;
-    using L0::DebugSessionLinux::readGpuMemory;
-    using L0::DebugSessionLinux::readInternalEventsAsync;
-    using L0::DebugSessionLinux::readModuleDebugArea;
-    using L0::DebugSessionLinux::readSbaBuffer;
-    using L0::DebugSessionLinux::readStateSaveAreaHeader;
-    using L0::DebugSessionLinux::startAsyncThread;
-    using L0::DebugSessionLinux::threadControl;
-    using L0::DebugSessionLinux::ThreadControlCmd;
-    using L0::DebugSessionLinux::typeToRegsetDesc;
-    using L0::DebugSessionLinux::typeToRegsetFlags;
-    using L0::DebugSessionLinux::uuidL0CommandQueueHandleToDevice;
-    using L0::DebugSessionLinux::writeGpuMemory;
+    using L0::DebugSessionLinuxi915::asyncThread;
+    using L0::DebugSessionLinuxi915::blockOnFenceMode;
+    using L0::DebugSessionLinuxi915::checkAllEventsCollected;
+    using L0::DebugSessionLinuxi915::checkStoppedThreadsAndGenerateEvents;
+    using L0::DebugSessionLinuxi915::clientHandle;
+    using L0::DebugSessionLinuxi915::clientHandleClosed;
+    using L0::DebugSessionLinuxi915::clientHandleToConnection;
+    using L0::DebugSessionLinuxi915::closeAsyncThread;
+    using L0::DebugSessionLinuxi915::closeInternalEventsThread;
+    using L0::DebugSessionLinuxi915::createTileSessionsIfEnabled;
+    using L0::DebugSessionLinuxi915::debugArea;
+    using L0::DebugSessionLinuxi915::euControlInterruptSeqno;
+    using L0::DebugSessionLinuxi915::eventsToAck;
+    using L0::DebugSessionLinuxi915::extractVaFromUuidString;
+    using L0::DebugSessionLinuxi915::fd;
+    using L0::DebugSessionLinuxi915::getContextStateSaveAreaGpuVa;
+    using L0::DebugSessionLinuxi915::getContextStateSaveAreaSize;
+    using L0::DebugSessionLinuxi915::getIsaInfoForAllInstances;
+    using L0::DebugSessionLinuxi915::getISAVMHandle;
+    using L0::DebugSessionLinuxi915::getRegisterSetProperties;
+    using L0::DebugSessionLinuxi915::getSbaBufferGpuVa;
+    using L0::DebugSessionLinuxi915::getStateSaveAreaHeader;
+    using L0::DebugSessionLinuxi915::handleEvent;
+    using L0::DebugSessionLinuxi915::handleEventsAsync;
+    using L0::DebugSessionLinuxi915::handleVmBindEvent;
+    using L0::DebugSessionLinuxi915::internalEventQueue;
+    using L0::DebugSessionLinuxi915::internalEventThread;
+    using L0::DebugSessionLinuxi915::interruptImp;
+    using L0::DebugSessionLinuxi915::ioctl;
+    using L0::DebugSessionLinuxi915::ioctlHandler;
+    using L0::DebugSessionLinuxi915::newlyStoppedThreads;
+    using L0::DebugSessionLinuxi915::pendingInterrupts;
+    using L0::DebugSessionLinuxi915::pendingVmBindEvents;
+    using L0::DebugSessionLinuxi915::printContextVms;
+    using L0::DebugSessionLinuxi915::pushApiEvent;
+    using L0::DebugSessionLinuxi915::readEventImp;
+    using L0::DebugSessionLinuxi915::readGpuMemory;
+    using L0::DebugSessionLinuxi915::readInternalEventsAsync;
+    using L0::DebugSessionLinuxi915::readModuleDebugArea;
+    using L0::DebugSessionLinuxi915::readSbaBuffer;
+    using L0::DebugSessionLinuxi915::readStateSaveAreaHeader;
+    using L0::DebugSessionLinuxi915::startAsyncThread;
+    using L0::DebugSessionLinuxi915::threadControl;
+    using L0::DebugSessionLinuxi915::ThreadControlCmd;
+    using L0::DebugSessionLinuxi915::typeToRegsetDesc;
+    using L0::DebugSessionLinuxi915::typeToRegsetFlags;
+    using L0::DebugSessionLinuxi915::uuidL0CommandQueueHandleToDevice;
+    using L0::DebugSessionLinuxi915::writeGpuMemory;
 
-    MockDebugSessionLinux(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinux(config, device, debugFd, params) {
+    MockDebugSessionLinuxi915(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxi915(config, device, debugFd, params) {
         clientHandleToConnection[mockClientHandle].reset(new ClientConnection);
         clientHandle = mockClientHandle;
         createEuThreads();
     }
 
-    MockDebugSessionLinux(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinux(config, device, debugFd, nullptr) {}
+    MockDebugSessionLinuxi915(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxi915(config, device, debugFd, nullptr) {}
 
     ze_result_t initialize() override {
         if (initializeRetVal != ZE_RESULT_FORCE_UINT32) {
@@ -335,7 +335,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
             clientHandle = mockClientHandle;
             return initializeRetVal;
         }
-        return DebugSessionLinux::initialize();
+        return DebugSessionLinuxi915::initialize();
     }
 
     std::unordered_map<uint64_t, std::pair<std::string, uint32_t>> &getClassHandleToIndex() {
@@ -346,46 +346,46 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         if (returnTimeDiff != -1) {
             return returnTimeDiff;
         }
-        return L0::DebugSessionLinux::getTimeDifferenceMilliseconds(time);
+        return L0::DebugSessionLinuxi915::getTimeDifferenceMilliseconds(time);
     }
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
         numThreadsPassedToThreadControl = threads.size();
-        return L0::DebugSessionLinux::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
+        return L0::DebugSessionLinuxi915::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
     }
 
     ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         readRegistersCallCount++;
-        return L0::DebugSessionLinux::readRegisters(thread, type, start, count, pRegisterValues);
+        return L0::DebugSessionLinuxi915::readRegisters(thread, type, start, count, pRegisterValues);
     }
 
     ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         writeRegistersCallCount++;
         writeRegistersReg = type;
-        return L0::DebugSessionLinux::writeRegisters(thread, type, start, count, pRegisterValues);
+        return L0::DebugSessionLinuxi915::writeRegisters(thread, type, start, count, pRegisterValues);
     }
 
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override {
         resumedThreads.push_back(threads);
         resumedDevices.push_back(deviceIndex);
-        return L0::DebugSessionLinux::resumeImp(threads, deviceIndex);
+        return L0::DebugSessionLinuxi915::resumeImp(threads, deviceIndex);
     }
 
     ze_result_t interruptImp(uint32_t deviceIndex) override {
         interruptedDevice = deviceIndex;
-        return L0::DebugSessionLinux::interruptImp(deviceIndex);
+        return L0::DebugSessionLinuxi915::interruptImp(deviceIndex);
     }
 
     void handleEvent(prelim_drm_i915_debug_event *event) override {
         handleEventCalledCount++;
-        L0::DebugSessionLinux::handleEvent(event);
+        L0::DebugSessionLinuxi915::handleEvent(event);
     }
 
     bool areRequestedThreadsStopped(ze_device_thread_t thread) override {
         if (allThreadsStopped) {
             return allThreadsStopped;
         }
-        return L0::DebugSessionLinux::areRequestedThreadsStopped(thread);
+        return L0::DebugSessionLinuxi915::areRequestedThreadsStopped(thread);
     }
 
     void ensureThreadStopped(ze_device_thread_t thread) {
@@ -428,7 +428,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         if (skipWriteResumeCommand) {
             return true;
         }
-        return L0::DebugSessionLinux::writeResumeCommand(threadIds);
+        return L0::DebugSessionLinuxi915::writeResumeCommand(threadIds);
     }
 
     bool checkThreadIsResumed(const EuThread::ThreadId &threadID) override {
@@ -436,14 +436,14 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         if (skipcheckThreadIsResumed) {
             return true;
         }
-        return L0::DebugSessionLinux::checkThreadIsResumed(threadID);
+        return L0::DebugSessionLinuxi915::checkThreadIsResumed(threadID);
     }
 
     float getThreadStartLimitTime() override {
         if (threadStartLimit >= 0.0) {
             return threadStartLimit;
         }
-        return L0::DebugSessionLinux::getThreadStartLimitTime();
+        return L0::DebugSessionLinuxi915::getThreadStartLimitTime();
     }
 
     void startInternalEventsThread() override {
@@ -454,7 +454,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         if (failInternalEventsThreadStart) {
             return;
         }
-        return DebugSessionLinux::startInternalEventsThread();
+        return DebugSessionLinuxi915::startInternalEventsThread();
     }
 
     std::unique_ptr<uint64_t[]> getInternalEvent() override {
@@ -462,17 +462,17 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         if (synchronousInternalEventRead) {
             readInternalEventsAsync();
         }
-        return DebugSessionLinux::getInternalEvent();
+        return DebugSessionLinuxi915::getInternalEvent();
     }
 
     void processPendingVmBindEvents() override {
         processPendingVmBindEventsCalled++;
-        return DebugSessionLinux::processPendingVmBindEvents();
+        return DebugSessionLinuxi915::processPendingVmBindEvents();
     }
 
     void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override {
         checkStoppedThreadsAndGenerateEventsCallCount++;
-        return DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, deviceIndex);
+        return DebugSessionLinuxi915::checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, deviceIndex);
     }
 
     void addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle, const void *stateSaveArea) override {
@@ -482,10 +482,10 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
 
     void cleanRootSessionAfterDetach(uint32_t deviceIndex) override {
         cleanRootSessionAfterDetachCallCount++;
-        return DebugSessionLinux::cleanRootSessionAfterDetach(deviceIndex);
+        return DebugSessionLinuxi915::cleanRootSessionAfterDetach(deviceIndex);
     }
 
-    TileDebugSessionLinux *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
+    TileDebugSessionLinuxi915 *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
 
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
     bool allThreadsStopped = false;
@@ -520,11 +520,11 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     float threadStartLimit = -1.0;
 };
 
-struct MockAsyncThreadDebugSessionLinux : public MockDebugSessionLinux {
-    using MockDebugSessionLinux::MockDebugSessionLinux;
+struct MockAsyncThreadDebugSessionLinuxi915 : public MockDebugSessionLinuxi915 {
+    using MockDebugSessionLinuxi915::MockDebugSessionLinuxi915;
     static void *mockAsyncThreadFunction(void *arg) {
-        DebugSessionLinux::asyncThreadFunction(arg);
-        reinterpret_cast<MockAsyncThreadDebugSessionLinux *>(arg)->asyncThreadFinished = true;
+        DebugSessionLinuxi915::asyncThreadFunction(arg);
+        reinterpret_cast<MockAsyncThreadDebugSessionLinuxi915 *>(arg)->asyncThreadFinished = true;
         return nullptr;
     }
 
@@ -535,7 +535,7 @@ struct MockAsyncThreadDebugSessionLinux : public MockDebugSessionLinux {
     std::atomic<bool> asyncThreadFinished{false};
 };
 
-struct MockTileDebugSessionLinux : TileDebugSessionLinux {
+struct MockTileDebugSessionLinuxi915 : TileDebugSessionLinuxi915 {
     using DebugSession::allThreads;
     using DebugSessionImp::apiEvents;
     using DebugSessionImp::checkTriggerEventsForAttention;
@@ -547,24 +547,24 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     using DebugSessionImp::sipSupportsSlm;
     using DebugSessionImp::stateSaveAreaHeader;
     using DebugSessionImp::triggerEvents;
-    using DebugSessionLinux::detached;
-    using DebugSessionLinux::ioctl;
-    using DebugSessionLinux::pushApiEvent;
-    using TileDebugSessionLinux::cleanRootSessionAfterDetach;
-    using TileDebugSessionLinux::getAllMemoryHandles;
-    using TileDebugSessionLinux::getContextStateSaveAreaGpuVa;
-    using TileDebugSessionLinux::getContextStateSaveAreaSize;
-    using TileDebugSessionLinux::getSbaBufferGpuVa;
-    using TileDebugSessionLinux::isAttached;
-    using TileDebugSessionLinux::modules;
-    using TileDebugSessionLinux::processEntryState;
-    using TileDebugSessionLinux::readGpuMemory;
-    using TileDebugSessionLinux::readModuleDebugArea;
-    using TileDebugSessionLinux::readSbaBuffer;
-    using TileDebugSessionLinux::readStateSaveAreaHeader;
-    using TileDebugSessionLinux::startAsyncThread;
-    using TileDebugSessionLinux::TileDebugSessionLinux;
-    using TileDebugSessionLinux::writeGpuMemory;
+    using DebugSessionLinuxi915::detached;
+    using DebugSessionLinuxi915::ioctl;
+    using DebugSessionLinuxi915::pushApiEvent;
+    using TileDebugSessionLinuxi915::cleanRootSessionAfterDetach;
+    using TileDebugSessionLinuxi915::getAllMemoryHandles;
+    using TileDebugSessionLinuxi915::getContextStateSaveAreaGpuVa;
+    using TileDebugSessionLinuxi915::getContextStateSaveAreaSize;
+    using TileDebugSessionLinuxi915::getSbaBufferGpuVa;
+    using TileDebugSessionLinuxi915::isAttached;
+    using TileDebugSessionLinuxi915::modules;
+    using TileDebugSessionLinuxi915::processEntryState;
+    using TileDebugSessionLinuxi915::readGpuMemory;
+    using TileDebugSessionLinuxi915::readModuleDebugArea;
+    using TileDebugSessionLinuxi915::readSbaBuffer;
+    using TileDebugSessionLinuxi915::readStateSaveAreaHeader;
+    using TileDebugSessionLinuxi915::startAsyncThread;
+    using TileDebugSessionLinuxi915::TileDebugSessionLinuxi915;
+    using TileDebugSessionLinuxi915::writeGpuMemory;
 
     void ensureThreadStopped(ze_device_thread_t thread, uint64_t vmHandle) {
         auto threadId = convertToThreadId(thread);
@@ -591,14 +591,14 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
             }
             return true;
         }
-        return L0::DebugSessionLinux::readSystemRoutineIdent(thread, vmHandle, srIdent);
+        return L0::DebugSessionLinuxi915::readSystemRoutineIdent(thread, vmHandle, srIdent);
     }
 
     int64_t getTimeDifferenceMilliseconds(std::chrono::high_resolution_clock::time_point time) override {
         if (returnTimeDiff != -1) {
             return returnTimeDiff;
         }
-        return L0::DebugSessionLinux::getTimeDifferenceMilliseconds(time);
+        return L0::DebugSessionLinuxi915::getTimeDifferenceMilliseconds(time);
     }
 
     int writeResumeResult = -1;
@@ -626,19 +626,19 @@ struct DebugApiPageFaultEventFixture : public DebugApiLinuxFixture {
         zet_debug_config_t config = {};
         config.pid = 0x1234;
 
-        sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+        sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
         ASSERT_NE(nullptr, sessionMock);
-        sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
+        sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
         auto handler = new MockIoctlHandler;
         sessionMock->ioctlHandler.reset(handler);
         SIP::version version = {2, 0, 0};
         initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
         handler->setPreadMemory(sessionMock->stateSaveAreaHeader.data(), sessionMock->stateSaveAreaHeader.size(), 0x1000);
-        sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
-        sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
-        DebugSessionLinux::BindInfo cssaInfo = {0x1000, sessionMock->stateSaveAreaHeader.size()};
-        sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
+        sessionMock->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
+        sessionMock->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
+        DebugSessionLinuxi915::BindInfo cssaInfo = {0x1000, sessionMock->stateSaveAreaHeader.size()};
+        sessionMock->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
     }
 
     void tearDown() {
@@ -646,7 +646,7 @@ struct DebugApiPageFaultEventFixture : public DebugApiLinuxFixture {
     }
 
     void buildPfi915Event() {
-        buildPfi915Event(MockDebugSessionLinux::mockClientHandle);
+        buildPfi915Event(MockDebugSessionLinuxi915::mockClientHandle);
     }
     void buildPfi915Event(uint64_t clientHandle) {
         prelim_drm_i915_debug_event_page_fault pf = {};
@@ -669,7 +669,7 @@ struct DebugApiPageFaultEventFixture : public DebugApiLinuxFixture {
     size_t bitmaskSize = 256;
     uint8_t data[sizeof(prelim_drm_i915_debug_event_page_fault) + (256 * 3)];
     std::unique_ptr<uint8_t[]> bitmaskBefore, bitmaskAfter, bitmaskResolved;
-    std::unique_ptr<MockDebugSessionLinux> sessionMock;
+    std::unique_ptr<MockDebugSessionLinuxi915> sessionMock;
     uint64_t ctxHandle = 2;
     uint64_t vmHandle = 7;
     uint64_t lrcHandle = 8;
@@ -687,16 +687,16 @@ struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo 
     static constexpr uint8_t bufferSize = 16;
 };
 
-struct MockDebugSessionLinuxHelper {
+struct MockDebugSessionLinuxi915Helper {
 
-    void setupSessionClassHandlesAndUuidMap(MockDebugSessionLinux *session) {
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[sbaClassHandle] = {"SBA AREA", static_cast<uint32_t>(NEO::DrmResourceClass::SbaTrackingBuffer)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[moduleDebugClassHandle] = {"DEBUG AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ModuleHeapDebugArea)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[contextSaveClassHandle] = {"CONTEXT SAVE AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ContextSaveArea)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[isaClassHandle] = {"ISA", static_cast<uint32_t>(NEO::DrmResourceClass::Isa)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[elfClassHandle] = {"ELF", static_cast<uint32_t>(NEO::DrmResourceClass::Elf)};
+    void setupSessionClassHandlesAndUuidMap(MockDebugSessionLinuxi915 *session) {
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[sbaClassHandle] = {"SBA AREA", static_cast<uint32_t>(NEO::DrmResourceClass::SbaTrackingBuffer)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[moduleDebugClassHandle] = {"DEBUG AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ModuleHeapDebugArea)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[contextSaveClassHandle] = {"CONTEXT SAVE AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ContextSaveArea)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[isaClassHandle] = {"ISA", static_cast<uint32_t>(NEO::DrmResourceClass::Isa)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[elfClassHandle] = {"ELF", static_cast<uint32_t>(NEO::DrmResourceClass::Elf)};
 
-        DebugSessionLinux::UuidData isaUuidData = {
+        DebugSessionLinuxi915::UuidData isaUuidData = {
             .handle = isaUUID,
             .classHandle = isaClassHandle,
             .classIndex = NEO::DrmResourceClass::Isa,
@@ -706,7 +706,7 @@ struct MockDebugSessionLinuxHelper {
         auto deviceBitfield = static_cast<uint32_t>(bitfield.to_ulong());
         memcpy(isaUuidData.data.get(), &deviceBitfield, sizeof(deviceBitfield));
 
-        DebugSessionLinux::UuidData elfUuidData = {
+        DebugSessionLinuxi915::UuidData elfUuidData = {
             .handle = elfUUID,
             .classHandle = elfClassHandle,
             .classIndex = NEO::DrmResourceClass::Elf,
@@ -714,40 +714,40 @@ struct MockDebugSessionLinuxHelper {
             .dataSize = elfSize};
         memcpy(elfUuidData.data.get(), "ELF", sizeof("ELF"));
 
-        DebugSessionLinux::UuidData cookieUuidData = {
+        DebugSessionLinuxi915::UuidData cookieUuidData = {
             .handle = cookieUUID,
             .classHandle = isaUUID,
             .classIndex = NEO::DrmResourceClass::MaxSize,
         };
-        DebugSessionLinux::UuidData sbaUuidData = {
+        DebugSessionLinuxi915::UuidData sbaUuidData = {
             .handle = sbaUUID,
             .classHandle = sbaClassHandle,
             .classIndex = NEO::DrmResourceClass::SbaTrackingBuffer,
             .data = nullptr,
             .dataSize = 0};
 
-        DebugSessionLinux::UuidData debugAreaUuidData = {
+        DebugSessionLinuxi915::UuidData debugAreaUuidData = {
             .handle = debugAreaUUID,
             .classHandle = moduleDebugClassHandle,
             .classIndex = NEO::DrmResourceClass::ModuleHeapDebugArea,
             .data = nullptr,
             .dataSize = 0};
 
-        DebugSessionLinux::UuidData stateSaveUuidData = {
+        DebugSessionLinuxi915::UuidData stateSaveUuidData = {
             .handle = stateSaveUUID,
             .classHandle = contextSaveClassHandle,
             .classIndex = NEO::DrmResourceClass::ContextSaveArea,
             .data = nullptr,
             .dataSize = 0};
 
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(isaUUID, std::move(isaUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(elfUUID, std::move(elfUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(cookieUUID, std::move(cookieUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(sbaUUID, std::move(sbaUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(debugAreaUUID, std::move(debugAreaUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(stateSaveUUID, std::move(stateSaveUuidData));
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(isaUUID, std::move(isaUuidData));
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(elfUUID, std::move(elfUuidData));
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(cookieUUID, std::move(cookieUuidData));
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(sbaUUID, std::move(sbaUuidData));
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(debugAreaUUID, std::move(debugAreaUuidData));
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(stateSaveUUID, std::move(stateSaveUuidData));
 
-        DebugSessionLinux::UuidData zebinModuleUuidData = {
+        DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
             .handle = zebinModuleUUID,
             .classHandle = zebinModuleClassHandle,
             .classIndex = NEO::DrmResourceClass::L0ZebinModule,
@@ -755,18 +755,18 @@ struct MockDebugSessionLinuxHelper {
             .dataSize = sizeof(kernelCount)};
 
         memcpy(zebinModuleUuidData.data.get(), &kernelCount, sizeof(kernelCount));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 2;
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].ptr = elfVa;
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 2;
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[elfUUID].ptr = elfVa;
     }
 
-    void setupVmToTile(MockDebugSessionLinux *session) {
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vm0] = 0;
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vm1] = 1;
+    void setupVmToTile(MockDebugSessionLinuxi915 *session) {
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vm0] = 0;
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vm1] = 1;
     }
 
-    void addIsaVmBindEvent(MockDebugSessionLinux *session, uint64_t vm, bool ack, bool create) {
+    void addIsaVmBindEvent(MockDebugSessionLinuxi915 *session, uint64_t vm, bool ack, bool create) {
         uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID) + sizeof(uint64_t)) / sizeof(uint64_t)];
         prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
@@ -782,7 +782,7 @@ struct MockDebugSessionLinuxHelper {
         }
         vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
         vmBindIsa->base.seqno = 20u;
-        vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+        vmBindIsa->client_handle = MockDebugSessionLinuxi915::mockClientHandle;
         vmBindIsa->va_start = isaGpuVa;
         vmBindIsa->va_length = isaSize;
         vmBindIsa->vm_handle = vm;
@@ -800,7 +800,7 @@ struct MockDebugSessionLinuxHelper {
         session->handleEvent(&vmBindIsa->base);
     }
 
-    void addZebinVmBindEvent(MockDebugSessionLinux *session, uint64_t vm, bool ack, bool create, uint64_t kernelIndex, uint32_t zebinModuleId) {
+    void addZebinVmBindEvent(MockDebugSessionLinuxi915 *session, uint64_t vm, bool ack, bool create, uint64_t kernelIndex, uint32_t zebinModuleId) {
         uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + 4 * sizeof(typeOfUUID) + sizeof(uint64_t)) / sizeof(uint64_t)];
         prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
@@ -817,21 +817,21 @@ struct MockDebugSessionLinuxHelper {
 
         vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 4 * sizeof(typeOfUUID);
         vmBindIsa->base.seqno = 10;
-        vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+        vmBindIsa->client_handle = MockDebugSessionLinuxi915::mockClientHandle;
         if (zebinModuleId == 0) {
             vmBindIsa->va_start = kernelIndex == 0 ? isaGpuVa : isaGpuVa + isaSize;
         } else {
             vmBindIsa->va_start = kernelIndex == 0 ? isaGpuVa * 4 : isaGpuVa * 4 + isaSize;
 
-            DebugSessionLinux::UuidData zebinModuleUuidData = {
+            DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
                 .handle = zebinModuleUUID1,
                 .classHandle = zebinModuleClassHandle,
                 .classIndex = NEO::DrmResourceClass::L0ZebinModule,
                 .data = std::make_unique<char[]>(sizeof(kernelCount)),
                 .dataSize = sizeof(kernelCount)};
 
-            session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(zebinModuleUUID1, std::move(zebinModuleUuidData));
-            session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].segmentCount = kernelCount;
+            session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(zebinModuleUUID1, std::move(zebinModuleUuidData));
+            session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID1].segmentCount = kernelCount;
         }
         vmBindIsa->va_length = isaSize;
         vmBindIsa->vm_handle = vm;
@@ -847,7 +847,7 @@ struct MockDebugSessionLinuxHelper {
         session->handleEvent(&vmBindIsa->base);
     }
 
-    void addZebinVmBindEvent(MockDebugSessionLinux *session, uint64_t vm, bool ack, bool create, uint64_t kernelIndex) {
+    void addZebinVmBindEvent(MockDebugSessionLinuxi915 *session, uint64_t vm, bool ack, bool create, uint64_t kernelIndex) {
         return addZebinVmBindEvent(session, vm, ack, create, kernelIndex, 0);
     }
 

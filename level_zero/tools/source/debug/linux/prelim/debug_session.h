@@ -28,14 +28,14 @@ struct EngineClassInstance;
 } // namespace NEO
 
 namespace L0 {
-struct TileDebugSessionLinux;
+struct TileDebugSessionLinuxi915;
 
-struct DebugSessionLinux : DebugSessionImp {
+struct DebugSessionLinuxi915 : DebugSessionImp {
 
-    friend struct TileDebugSessionLinux;
+    friend struct TileDebugSessionLinuxi915;
 
-    ~DebugSessionLinux() override;
-    DebugSessionLinux(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
+    ~DebugSessionLinuxi915() override;
+    DebugSessionLinuxi915(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
     ze_result_t initialize() override;
 
@@ -212,7 +212,7 @@ struct DebugSessionLinux : DebugSessionImp {
     }
 
     MOCKABLE_VIRTUAL void createTileSessionsIfEnabled();
-    MOCKABLE_VIRTUAL TileDebugSessionLinux *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession);
+    MOCKABLE_VIRTUAL TileDebugSessionLinuxi915 *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession);
 
     static void *asyncThreadFunction(void *arg);
     static void *readInternalEventsThreadFunction(void *arg);
@@ -377,13 +377,13 @@ struct DebugSessionLinux : DebugSessionImp {
                                    // true - blocking on fence - do not auto-ack events
 };
 
-struct TileDebugSessionLinux : DebugSessionLinux {
-    TileDebugSessionLinux(zet_debug_config_t config, Device *device, DebugSessionImp *rootDebugSession) : DebugSessionLinux(config, device, 0, nullptr),
-                                                                                                          rootDebugSession(reinterpret_cast<DebugSessionLinux *>(rootDebugSession)) {
+struct TileDebugSessionLinuxi915 : DebugSessionLinuxi915 {
+    TileDebugSessionLinuxi915(zet_debug_config_t config, Device *device, DebugSessionImp *rootDebugSession) : DebugSessionLinuxi915(config, device, 0, nullptr),
+                                                                                                              rootDebugSession(reinterpret_cast<DebugSessionLinuxi915 *>(rootDebugSession)) {
         tileIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
     }
 
-    ~TileDebugSessionLinux() override = default;
+    ~TileDebugSessionLinuxi915() override = default;
 
     bool closeConnection() override { return true; }
     ze_result_t initialize() override {
@@ -461,7 +461,7 @@ struct TileDebugSessionLinux : DebugSessionLinux {
         return rootDebugSession->interruptImp(this->tileIndex);
     }
 
-    DebugSessionLinux *rootDebugSession = nullptr;
+    DebugSessionLinuxi915 *rootDebugSession = nullptr;
     uint32_t tileIndex = std::numeric_limits<uint32_t>::max();
     bool processEntryState = false;
 
