@@ -87,6 +87,14 @@ class GfxPartition {
 
     bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
 
+    static bool isAnyHeap32(HeapIndex heapIndex) {
+        if ((heapIndex >= HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY && heapIndex <= HeapIndex::HEAP_EXTERNAL) ||
+            (heapIndex >= HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW && heapIndex <= HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW)) {
+            return true;
+        }
+        return false;
+    }
+
     static constexpr uint64_t heapGranularity = MemoryConstants::pageSize64k;
     static constexpr uint64_t heapGranularity2MB = 2 * MemoryConstants::megaByte;
     static constexpr size_t externalFrontWindowPoolSize = 16 * MemoryConstants::megaByte;

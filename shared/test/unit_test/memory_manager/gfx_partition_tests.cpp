@@ -902,3 +902,31 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
         EXPECT_EQ(maxNBitValue(56) + 1 + rootDeviceIndex * heapExtendedSize, gfxPartition.getHeapBase(HeapIndex::HEAP_EXTENDED));
     }
 }
+
+TEST(GfxPartitionTest, givenHeapIndexWhenCheckingIsAnyHeap32ThenTrueIsReturnedFor32BitHeapsOnly) {
+
+    HeapIndex heaps32[] = {HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
+                           HeapIndex::HEAP_INTERNAL,
+                           HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
+                           HeapIndex::HEAP_EXTERNAL,
+                           HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW,
+                           HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW,
+                           HeapIndex::HEAP_INTERNAL_FRONT_WINDOW,
+                           HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW};
+
+    for (size_t i = 0; i < sizeof(heaps32) / sizeof(heaps32[0]); i++) {
+        EXPECT_TRUE(GfxPartition::isAnyHeap32(heaps32[i]));
+    }
+
+    HeapIndex heapsOther[] = {
+        HeapIndex::HEAP_STANDARD,
+        HeapIndex::HEAP_STANDARD64KB,
+        HeapIndex::HEAP_STANDARD2MB,
+        HeapIndex::HEAP_SVM,
+        HeapIndex::HEAP_EXTENDED,
+        HeapIndex::HEAP_EXTENDED_HOST};
+
+    for (size_t i = 0; i < sizeof(heapsOther) / sizeof(heapsOther[0]); i++) {
+        EXPECT_FALSE(GfxPartition::isAnyHeap32(heapsOther[i]));
+    }
+}

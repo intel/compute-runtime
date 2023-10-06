@@ -525,6 +525,8 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         return nullptr;
     }
     auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigner.get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow));
+    UNRECOVERABLE_IF(gmmHelper->canonize(baseAddress) != wddmAllocation->getGpuBaseAddress());
+
     wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(baseAddress));
 
     if (storageInfo.isLockable) {
@@ -970,6 +972,12 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
         getWddm(allocation->getRootDeviceIndex()).destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->resourceHandle);
         return false;
     }
+
+    if (GfxPartition::isAnyHeap32(heapIndex)) {
+        auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
+        allocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heapIndex)));
+    }
+
     return true;
 }
 
@@ -1375,13 +1383,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     }
     if (allocationData.flags.requiresCpuAccess) {
         wddmAllocation->setCpuAddress(lockResource(wddmAllocation.get()));
-    }
-    if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
-        auto gmmHelper = getGmmHelper(wddmAllocation->getRootDeviceIndex());
-        wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(getInternalHeapBaseAddress(wddmAllocation->getRootDeviceIndex(), true)));
-    } else if (heapAssigner.useExternal32BitHeap(allocationData.type)) {
-        auto gmmHelper = getGmmHelper(wddmAllocation->getRootDeviceIndex());
-        wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(wddmAllocation->getRootDeviceIndex(), true)));
     }
 
     status = AllocationStatus::Success;
