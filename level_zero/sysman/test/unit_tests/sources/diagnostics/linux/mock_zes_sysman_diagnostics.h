@@ -40,9 +40,6 @@ struct MockDiagnosticsFwInterface : public L0::Sysman::FirmwareUtil {
     void setFwInitRetVal(ze_result_t val) {
         mockFwInitResult = val;
     }
-    ze_result_t getFirstDevice(igsc_device_info *info) override {
-        return ZE_RESULT_SUCCESS;
-    }
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override {
         supportedDiagTests.push_back(mockSupportedDiagTypes[0]);
         supportedDiagTests.push_back(mockSupportedDiagTypes[1]);

@@ -108,7 +108,6 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     FirmwareUtilImp(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function);
     ~FirmwareUtilImp() override;
     ze_result_t fwDeviceInit() override;
-    ze_result_t getFirstDevice(igsc_device_info *) override;
     ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) override;
     ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) override;
     ze_result_t fwIfrApplied(bool &ifrStatus) override;
@@ -120,6 +119,16 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
     void fwGetMemoryHealthIndicator(zes_mem_health_t *health) override;
 
+    using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
+    static OsLibraryLoadPtr osLibraryLoadFunction;
+    static std::string fwUtilLibraryName;
+    bool loadEntryPoints();
+    bool loadEntryPointsExt();
+
+    NEO::OsLibrary *libraryHandle = nullptr;
+
+  protected:
+    ze_result_t getFirstDevice(igsc_device_info *);
     ze_result_t fwGetVersion(std::string &fwVersion);
     ze_result_t opromGetVersion(std::string &fwVersion);
     ze_result_t pscGetVersion(std::string &fwVersion);
@@ -128,15 +137,8 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwFlashIafPsc(void *pImage, uint32_t size);
     ze_result_t fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset);
 
-    using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
-    static OsLibraryLoadPtr osLibraryLoadFunction;
-    static std::string fwUtilLibraryName;
     std::string fwDevicePath{};
     struct igsc_device_handle fwDeviceHandle = {};
-    bool loadEntryPoints();
-    bool loadEntryPointsExt();
-
-    NEO::OsLibrary *libraryHandle = nullptr;
     template <class T>
     bool getSymbolAddr(const std::string name, T &proc) {
         void *addr = libraryHandle->getProcAddress(name);
