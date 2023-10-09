@@ -48,6 +48,8 @@ extern int (*sysCallsClosedir)(DIR *dir);
 extern int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize);
 
 extern int flockRetVal;
+extern int openFuncRetVal;
+extern uint32_t openFuncCalled;
 extern int closeFuncRetVal;
 extern int closeFuncArgPassed;
 extern const char *drmVersion;

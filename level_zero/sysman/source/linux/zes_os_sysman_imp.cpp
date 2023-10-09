@@ -12,6 +12,7 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -370,8 +371,7 @@ ze_result_t LinuxSysmanImp::resizeVfBar(uint8_t size) {
     std::string pciConfigNode;
     pciConfigNode = gtDevicePath + "/config";
 
-    int fdConfig = -1;
-    fdConfig = this->openFunction(pciConfigNode.c_str(), O_RDWR);
+    auto fdConfig = NEO::FileDescriptor(pciConfigNode.c_str(), O_RDWR);
     if (fdConfig < 0) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
                               "Config node open failed\n");
@@ -397,11 +397,6 @@ ze_result_t LinuxSysmanImp::resizeVfBar(uint8_t size) {
                               "Write to change VF bar size failed\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    if (this->closeFunction(fdConfig) < 0) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
-                              "Config node close failed\n");
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -414,9 +409,8 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     std::string rootPortPath;
     rootPortPath = getPciRootPortDirectoryPath(gtDevicePath);
 
-    int fd = 0;
     std::string configFilePath = rootPortPath + '/' + "config";
-    fd = this->openFunction(configFilePath.c_str(), O_RDWR);
+    auto fd = NEO::FileDescriptor(configFilePath.c_str(), O_RDWR);
     if (fd < 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -457,11 +451,6 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
         return result;
     }
     NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
-
-    int ret = this->closeFunction(fd);
-    if (ret < 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
 
     // PCIe port driver uses the BIOS allocated VF bars on bootup. A known bug exists in pcie port driver
     // and is causing VF bar allocation failure in PCIe port driver after an SBR - https://bugzilla.kernel.org/show_bug.cgi?id=216795

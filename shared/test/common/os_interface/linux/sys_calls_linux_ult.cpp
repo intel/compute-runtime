@@ -32,6 +32,7 @@ namespace NEO {
 namespace SysCalls {
 uint32_t closeFuncCalled = 0u;
 uint32_t openFuncCalled = 0u;
+int openFuncRetVal = 0;
 int closeFuncArgPassed = 0;
 int closeFuncRetVal = 0;
 int dlOpenFlags = 0;
@@ -145,7 +146,7 @@ int open(const char *file, int flags) {
         return fakeFileDescriptor;
     }
 
-    return 0;
+    return openFuncRetVal;
 }
 
 int openWithMode(const char *file, int flags, int mode) {

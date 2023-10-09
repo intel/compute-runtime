@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/pmt_util.h"
 
+#include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 
@@ -53,13 +54,12 @@ void PmtUtil::getTelemNodesInPciPath(std::string_view rootPciPath, std::map<uint
 bool PmtUtil::readGuid(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString) {
     std::ostringstream guidFilename;
     guidFilename << telemDir << "/guid";
-    int fd = SysCalls::open(guidFilename.str().c_str(), O_RDONLY);
-    if (fd <= 0) {
-        return false;
+    auto fd = FileDescriptor(guidFilename.str().c_str(), O_RDONLY);
+    ssize_t bytesRead = 0;
+    if (fd > 0) {
+        guidString.fill('\0');
+        bytesRead = SysCalls::pread(fd, guidString.data(), guidString.size() - 1, 0);
     }
-    guidString.fill('\0');
-    ssize_t bytesRead = SysCalls::pread(fd, guidString.data(), guidString.size() - 1, 0);
-    SysCalls::close(fd);
     if (bytesRead <= 0) {
         return false;
     }
@@ -71,18 +71,19 @@ bool PmtUtil::readOffset(std::string_view telemDir, uint64_t &offset) {
 
     std::ostringstream offsetFilename;
     offsetFilename << telemDir << "/offset";
-    int fd = SysCalls::open(offsetFilename.str().c_str(), O_RDONLY);
-    if (fd <= 0) {
+    auto fd = FileDescriptor(offsetFilename.str().c_str(), O_RDONLY);
+    ssize_t bytesRead = 0;
+    std::array<char, 16> offsetString = {'\0'};
+    if (fd > 0) {
+        offset = ULONG_MAX;
+        bytesRead = SysCalls::pread(fd, offsetString.data(), offsetString.size() - 1, 0);
+    }
+    if (bytesRead <= 0) {
         return false;
     }
-    offset = ULONG_MAX;
-    std::array<char, 16> offsetString = {'\0'};
-    ssize_t bytesRead = SysCalls::pread(fd, offsetString.data(), offsetString.size() - 1, 0);
-    if (bytesRead > 0) {
-        std::replace(offsetString.begin(), offsetString.end(), '\n', '\0');
-        offset = std::strtoul(offsetString.data(), nullptr, 10);
-    }
-    SysCalls::close(fd);
+
+    std::replace(offsetString.begin(), offsetString.end(), '\n', '\0');
+    offset = std::strtoul(offsetString.data(), nullptr, 10);
 
     if (offset == ULONG_MAX) {
         return false;
@@ -99,10 +100,9 @@ ssize_t PmtUtil::readTelem(std::string_view telemDir, const std::size_t count, c
     ssize_t bytesRead = 0;
     std::ostringstream telemFilename;
     telemFilename << telemDir << "/telem";
-    int fd = SysCalls::open(telemFilename.str().c_str(), O_RDONLY);
+    auto fd = FileDescriptor(telemFilename.str().c_str(), O_RDONLY);
     if (fd > 0) {
         bytesRead = SysCalls::pread(fd, data, count, static_cast<off_t>(offset));
-        SysCalls::close(fd);
     }
     return bytesRead;
 }
