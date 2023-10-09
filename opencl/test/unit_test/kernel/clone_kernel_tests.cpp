@@ -218,11 +218,14 @@ TEST_F(CloneKernelTest, givenArgBufferWhenCloningKernelThenKernelInfoIsCorrect) 
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
-        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, *static_cast<const cl_mem *>(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value));
+        EXPECT_EQ(pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object, *static_cast<const cl_mem *>(pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value));
+        EXPECT_EQ(*static_cast<const cl_mem *>(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value), *static_cast<const cl_mem *>(pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value));
 
         auto pKernelArg = reinterpret_cast<uint64_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
                                                        pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);

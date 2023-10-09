@@ -411,6 +411,9 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
                            (GraphicsAllocation *)pSourceKernel->getKernelArgInfo(i).object,
                            pSourceKernel->getKernelArgInfo(i).allocId);
             break;
+        case BUFFER_OBJ:
+            setArg(i, pSourceKernel->getKernelArgInfo(i).size, &pSourceKernel->getKernelArgInfo(i).object);
+            break;
         default:
             setArg(i, pSourceKernel->getKernelArgInfo(i).size, pSourceKernel->getKernelArgInfo(i).value);
             break;
