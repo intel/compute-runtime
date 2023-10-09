@@ -74,8 +74,8 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
         if (fp) {
             NEO::IoFunctions::fprintf(fp, "---- igcRevision ----\n");
             NEO::IoFunctions::fprintf(fp, "%s\n", &*igcRevision.begin());
-            NEO::IoFunctions::fprintf(fp, "  libSize=%l\n", igcLibSize);
-            NEO::IoFunctions::fprintf(fp, "  libMTime=%l\n", igcLibMTime);
+            NEO::IoFunctions::fprintf(fp, "  libSize=%llu\n", igcLibSize);
+            NEO::IoFunctions::fprintf(fp, "  libMTime=%llu\n", igcLibMTime);
             NEO::IoFunctions::fprintf(fp, "---- input ----\n");
             NEO::IoFunctions::fprintf(fp, "<%s>\n", inputFilePath.c_str());
             NEO::IoFunctions::fprintf(fp, "---- options ----\n");
