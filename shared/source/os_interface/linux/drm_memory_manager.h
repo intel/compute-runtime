@@ -161,7 +161,6 @@ class DrmMemoryManager : public MemoryManager {
     std::unique_ptr<DrmGemCloseWorker> gemCloseWorker;
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
-    decltype(&lseek) lseekFunction = lseek;
     decltype(&close) closeFunction = close;
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;

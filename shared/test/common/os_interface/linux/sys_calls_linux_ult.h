@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <dirent.h>
 #include <iostream>
@@ -73,5 +74,8 @@ extern bool mmapCaptureExtendedPointers;
 extern bool mmapAllowExtendedPointers;
 extern uint32_t mmapFuncCalled;
 extern uint32_t munmapFuncCalled;
+
+extern off_t lseekReturn;
+extern std::atomic<int> lseekCalledCount;
 } // namespace SysCalls
 } // namespace NEO

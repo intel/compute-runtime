@@ -101,6 +101,8 @@ DIR *(*sysCallsOpendir)(const char *name) = nullptr;
 struct dirent *(*sysCallsReaddir)(DIR *dir) = nullptr;
 int (*sysCallsClosedir)(DIR *dir) = nullptr;
 int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize) = nullptr;
+off_t lseekReturn = 4096u;
+std::atomic<int> lseekCalledCount(0);
 
 int mkdir(const std::string &path) {
     if (sysCallsMkdir != nullptr) {
@@ -455,6 +457,11 @@ int closedir(DIR *dir) {
     }
 
     return 0;
+}
+
+off_t lseek(int fd, off_t offset, int whence) noexcept {
+    lseekCalledCount++;
+    return lseekReturn;
 }
 
 } // namespace SysCalls

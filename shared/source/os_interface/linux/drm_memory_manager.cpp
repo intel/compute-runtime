@@ -41,6 +41,7 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include <cstring>
@@ -815,7 +816,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         if (bo == nullptr) {
             areBosSharedObjects = false;
 
-            size_t size = lseekFunction(handle, 0, SEEK_END);
+            size_t size = SysCalls::lseek(handle, 0, SEEK_END);
             UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
             totalSize += size;
 
@@ -964,7 +965,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     }
 
     if (bo == nullptr) {
-        size_t size = lseekFunction(handle, 0, SEEK_END);
+        size_t size = SysCalls::lseek(handle, 0, SEEK_END);
+        UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
         auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
         auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
@@ -2388,7 +2390,8 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
     if (bo == nullptr) {
         void *cpuPointer = nullptr;
-        size_t size = lseekFunction(handle, 0, SEEK_END);
+        size_t size = SysCalls::lseek(handle, 0, SEEK_END);
+        UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
         bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, boHandle, size, maxOsContextCount);
 

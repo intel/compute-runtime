@@ -183,5 +183,8 @@ int closedir(DIR *dir) {
     return ::closedir(dir);
 }
 
+off_t lseek(int fd, off_t offset, int whence) noexcept {
+    return ::lseek(fd, offset, whence);
+}
 } // namespace SysCalls
 } // namespace NEO

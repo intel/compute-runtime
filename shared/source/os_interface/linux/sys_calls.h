@@ -51,5 +51,6 @@ int unlink(const std::string &pathname);
 DIR *opendir(const char *name);
 struct dirent *readdir(DIR *dir);
 int closedir(DIR *dir);
+off_t lseek(int fd, off_t offset, int whence) noexcept;
 } // namespace SysCalls
 } // namespace NEO

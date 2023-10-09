@@ -15,18 +15,9 @@
 #include <atomic>
 
 namespace NEO {
-extern off_t lseekReturn;
-extern std::atomic<int> lseekCalledCount;
 extern std::atomic<int> closeInputFd;
 extern std::atomic<int> closeCalledCount;
 
-inline off_t lseekMock(int fd, off_t offset, int whence) noexcept {
-    lseekCalledCount++;
-    if ((fd == closeInputFd) && (closeCalledCount > 0)) {
-        return 0;
-    }
-    return lseekReturn;
-}
 inline int closeMock(int fd) {
     closeInputFd = fd;
     closeCalledCount++;

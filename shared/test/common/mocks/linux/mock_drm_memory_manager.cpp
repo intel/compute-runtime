@@ -19,8 +19,6 @@
 #include <atomic>
 
 namespace NEO {
-off_t lseekReturn = 4096u;
-std::atomic<int> lseekCalledCount(0);
 std::atomic<int> closeInputFd(0);
 std::atomic<int> closeCalledCount(0);
 
@@ -30,10 +28,7 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEn
                                                                                                                  executionEnvironment) {
     this->mmapFunction = SysCalls::mmap;
     this->munmapFunction = SysCalls::munmap;
-    this->lseekFunction = &lseekMock;
     this->closeFunction = &closeMock;
-    lseekReturn = 4096;
-    lseekCalledCount = 0;
     closeInputFd = 0;
     closeCalledCount = 0;
     hostPtrManager.reset(new MockHostPtrManager);
@@ -49,10 +44,7 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(bool enableLocalMemory,
                                                                                                                  executionEnvironment) {
     this->mmapFunction = SysCalls::mmap;
     this->munmapFunction = SysCalls::munmap;
-    this->lseekFunction = &lseekMock;
     this->closeFunction = &closeMock;
-    lseekReturn = 4096;
-    lseekCalledCount = 0;
     closeInputFd = 0;
     closeCalledCount = 0;
     this->executionEnvironment = &executionEnvironment;

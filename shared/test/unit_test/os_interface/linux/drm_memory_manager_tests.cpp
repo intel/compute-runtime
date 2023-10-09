@@ -2029,6 +2029,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBi
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
+    SysCalls::lseekCalledCount = 0;
     memoryManager->setForce32BitAllocations(true);
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
@@ -2038,7 +2039,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBi
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, true, false, true, nullptr);
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
-    EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, SysCalls::lseekCalledCount);
     auto gmmHelper = device->getGmmHelper();
     EXPECT_EQ(gmmHelper->canonize(memoryManager->getExternalHeapBaseAddress(graphicsAllocation->getRootDeviceIndex(), drmAllocation->isAllocatedInLocalMemoryPool())), drmAllocation->getGpuBaseAddress());
     memoryManager->freeGraphicsMemory(graphicsAllocation);
@@ -2048,6 +2049,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
+    SysCalls::lseekCalledCount = 0;
 
     memoryManager->setForce32BitAllocations(true);
     osHandle handle = 1u;
@@ -2057,7 +2059,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
 
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
-    EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, SysCalls::lseekCalledCount);
 
     EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
 
@@ -2068,6 +2070,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenBufferFromSharedHandl
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
+    SysCalls::lseekCalledCount = 0;
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
     osHandle handle = 1u;
@@ -2078,7 +2081,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenBufferFromSharedHandl
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
 
     EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
-    EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, SysCalls::lseekCalledCount);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
@@ -2086,6 +2089,7 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
+    SysCalls::lseekCalledCount = 0;
 
     memoryManager->setForce32BitAllocations(false);
     osHandle handle = 1u;
@@ -2094,7 +2098,7 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, true, false, true, nullptr);
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
-    EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, SysCalls::lseekCalledCount);
     EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -2404,7 +2408,8 @@ TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragm
 
 TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCreateIsCalledThenRealSizeIsUsed) {
     unsigned int realSize = 64 * 1024;
-    lseekReturn = realSize;
+    VariableBackup<decltype(SysCalls::lseekReturn)> lseekBackup(&SysCalls::lseekReturn, realSize);
+    SysCalls::lseekCalledCount = 0;
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
@@ -2423,7 +2428,7 @@ TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCre
     EXPECT_NE(0llu, bo->peekAddress());
     EXPECT_EQ(1u, bo->getRefCount());
     EXPECT_EQ(realSize, bo->peekSize());
-    EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, SysCalls::lseekCalledCount);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
