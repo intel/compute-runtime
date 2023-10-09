@@ -407,14 +407,14 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
     }
 
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
-    auto lockIPC = this->lockIPCHandleMap();
-    ipcHandleIterator = this->getIPCHandleMap().begin();
-    while (ipcHandleIterator != this->getIPCHandleMap().end()) {
+    auto lockIPC = this->driverHandle->lockIPCHandleMap();
+    ipcHandleIterator = this->driverHandle->getIPCHandleMap().begin();
+    while (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         if (ipcHandleIterator->second->ptr == reinterpret_cast<uint64_t>(ptr)) {
             auto *memoryManager = driverHandle->getMemoryManager();
             memoryManager->closeInternalHandle(ipcHandleIterator->second->ipcData.handle, ipcHandleIterator->second->handleId, nullptr);
             delete ipcHandleIterator->second;
-            this->getIPCHandleMap().erase(ipcHandleIterator->first);
+            this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
             break;
         }
         ipcHandleIterator++;
@@ -555,15 +555,15 @@ ze_result_t ContextImp::closeIpcMemHandle(const void *ptr) {
 ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
     IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
-    auto lock = this->lockIPCHandleMap();
-    ipcHandleIterator = this->getIPCHandleMap().find(ipcData.handle);
-    if (ipcHandleIterator != this->getIPCHandleMap().end()) {
+    auto lock = this->driverHandle->lockIPCHandleMap();
+    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(ipcData.handle);
+    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         ipcHandleIterator->second->refcnt -= 1;
         if (ipcHandleIterator->second->refcnt == 0) {
             auto *memoryManager = driverHandle->getMemoryManager();
             memoryManager->closeInternalHandle(ipcData.handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
             delete ipcHandleIterator->second;
-            this->getIPCHandleMap().erase(ipcData.handle);
+            this->driverHandle->getIPCHandleMap().erase(ipcData.handle);
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -576,9 +576,9 @@ void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, u
     ipcData.handle = handle;
     ipcData.type = type;
 
-    auto lock = this->lockIPCHandleMap();
-    ipcHandleIterator = this->getIPCHandleMap().find(handle);
-    if (ipcHandleIterator != this->getIPCHandleMap().end()) {
+    auto lock = this->driverHandle->lockIPCHandleMap();
+    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);
+    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         ipcHandleIterator->second->refcnt += 1;
     } else {
         IpcHandleTracking *handleTracking = new IpcHandleTracking;
@@ -586,7 +586,7 @@ void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, u
         handleTracking->refcnt = 1;
         handleTracking->ptr = ptrAddress;
         handleTracking->ipcData = ipcData;
-        this->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
+        this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
     }
 }
 
@@ -620,9 +620,9 @@ ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
 
 ze_result_t ContextImp::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
-    auto lock = this->lockIPCHandleMap();
-    ipcHandleIterator = this->getIPCHandleMap().find(handle);
-    if (ipcHandleIterator != this->getIPCHandleMap().end()) {
+    auto lock = this->driverHandle->lockIPCHandleMap();
+    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);
+    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
         ipcData = ipcHandleIterator->second->ipcData;
     } else {
@@ -634,9 +634,9 @@ ze_result_t ContextImp::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t 
 ze_result_t ContextImp::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) {
     IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
-    auto lock = this->lockIPCHandleMap();
-    ipcHandleIterator = this->getIPCHandleMap().find(ipcData.handle);
-    if (ipcHandleIterator != this->getIPCHandleMap().end()) {
+    auto lock = this->driverHandle->lockIPCHandleMap();
+    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(ipcData.handle);
+    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         *pHandle = ipcHandleIterator->first;
     } else {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;

@@ -29,6 +29,22 @@ enum L0DeviceHierarchyMode {
     L0_DEVICE_HIERARCHY_FLAT,
     L0_DEVICE_HIERARCHY_COMBINED
 };
+#pragma pack(1)
+struct IpcMemoryData {
+    uint64_t handle = 0;
+    uint8_t type = 0;
+};
+#pragma pack()
+static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
+struct IpcHandleTracking {
+    uint64_t refcnt = 0;
+    NEO::GraphicsAllocation *alloc = nullptr;
+    uint32_t handleId = 0;
+    uint64_t handle = 0;
+    uint64_t ptr = 0;
+    struct IpcMemoryData ipcData = {};
+};
 
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
@@ -105,6 +121,8 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA, ze_rtas_format_exp_t rtasFormatB) override;
 
     ze_result_t parseAffinityMaskCombined(uint32_t *pCount, ze_device_handle_t *phDevices);
+    std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
+    [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
     // Experimental functions
@@ -149,6 +167,9 @@ struct DriverHandleImp : public DriverHandle {
     bool rtasLibraryUnavailable = false;
 
     uint32_t numDevices = 0;
+
+    std::map<uint64_t, IpcHandleTracking *> ipcHandles;
+    std::mutex ipcHandleMapMutex;
 
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;

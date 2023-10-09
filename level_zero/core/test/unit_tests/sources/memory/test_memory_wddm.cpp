@@ -66,7 +66,7 @@ TEST_F(MemoryIPCTests,
     result = context->putIpcMemHandle(ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0u, context->getIPCHandleMap().size());
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -92,7 +92,7 @@ TEST_F(MemoryIPCTests,
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0u, context->getIPCHandleMap().size());
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 }
 
 TEST_F(MemoryIPCTests,
@@ -121,7 +121,7 @@ TEST_F(MemoryIPCTests,
     result = context->putIpcMemHandle(ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0u, context->getIPCHandleMap().size());
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -150,12 +150,12 @@ TEST_F(MemoryIPCTests,
     result = context->putIpcMemHandle(ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_NE(0u, context->getIPCHandleMap().size());
+    EXPECT_NE(0u, driverHandle->getIPCHandleMap().size());
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0u, context->getIPCHandleMap().size());
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 }
 
 TEST_F(MemoryIPCTests,
@@ -185,12 +185,12 @@ TEST_F(MemoryIPCTests,
     result = context->putIpcMemHandle(ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0u, context->getIPCHandleMap().size());
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 
     result = contextInvalid->putIpcMemHandle(ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0u, context->getIPCHandleMap().size());
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

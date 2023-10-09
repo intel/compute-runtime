@@ -11,6 +11,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 
 #include <map>
 
@@ -18,23 +19,6 @@ namespace L0 {
 struct StructuresLookupTable;
 struct DriverHandleImp;
 struct Device;
-
-#pragma pack(1)
-struct IpcMemoryData {
-    uint64_t handle = 0;
-    uint8_t type = 0;
-};
-#pragma pack()
-static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
-
-struct IpcHandleTracking {
-    uint64_t refcnt = 0;
-    NEO::GraphicsAllocation *alloc = nullptr;
-    uint32_t handleId = 0;
-    uint64_t handle = 0;
-    uint64_t ptr = 0;
-    struct IpcMemoryData ipcData = {};
-};
 
 struct ContextImp : Context {
     ContextImp(DriverHandle *driverHandle);
@@ -185,8 +169,6 @@ struct ContextImp : Context {
         this->numDevices = static_cast<uint32_t>(this->deviceHandles.size());
     }
     NEO::VirtualMemoryReservation *findSupportedVirtualReservation(const void *ptr, size_t size);
-    std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
-    [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
     ze_result_t checkMemSizeLimit(Device *inDevice, size_t size, bool relaxedSizeAllowed, void **ptr);
 
   protected:
@@ -195,8 +177,6 @@ struct ContextImp : Context {
     size_t getPageSizeRequired(size_t size);
 
     std::map<uint32_t, ze_device_handle_t> devices;
-    std::map<uint64_t, IpcHandleTracking *> ipcHandles;
-    std::mutex ipcHandleMapMutex;
     std::vector<ze_device_handle_t> deviceHandles;
     DriverHandleImp *driverHandle = nullptr;
     uint32_t numDevices = 0;
