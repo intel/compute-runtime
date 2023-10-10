@@ -1048,7 +1048,8 @@ Wddm &WddmMemoryManager::getWddm(uint32_t rootDeviceIndex) const {
 
 void *WddmMemoryManager::reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) {
     void *reservePtr = nullptr;
-    getWddm(rootDeviceIndex).reserveValidAddressRange(size, reservePtr);
+    auto ret = getWddm(rootDeviceIndex).reserveValidAddressRange(size, reservePtr);
+    UNRECOVERABLE_IF(!ret && reservePtr);
     return reservePtr;
 }
 

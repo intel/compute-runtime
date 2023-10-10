@@ -42,7 +42,9 @@ IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelper(drmArg) {
     }
     if (handleExecBufferInNonBlockMode) {
         auto fileDescriptor = this->drm.getFileDescriptor();
-        SysCalls::fcntl(fileDescriptor, F_SETFL, SysCalls::fcntl(fileDescriptor, F_GETFL) | O_NONBLOCK);
+        auto flags = SysCalls::fcntl(fileDescriptor, F_GETFL);
+        [[maybe_unused]] auto status = SysCalls::fcntl(fileDescriptor, F_SETFL, flags | O_NONBLOCK);
+        DEBUG_BREAK_IF(status != 0);
     }
 };
 

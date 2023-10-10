@@ -47,8 +47,10 @@ unsigned int getProcessId() {
 
 unsigned long getNumThreads() {
     struct stat taskStat;
-    stat("/proc/self/task", &taskStat);
-    return taskStat.st_nlink - 2;
+    if (stat("/proc/self/task", &taskStat) == 0) {
+        return taskStat.st_nlink - 2;
+    }
+    return 0;
 }
 
 int mkdir(const std::string &path) {

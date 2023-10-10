@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/utilities/directory.h"
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <direct.h>
@@ -41,6 +42,7 @@ std::vector<std::string> getFiles(const std::string &path) {
 }
 
 void createDirectory(const std::string &path) {
-    _mkdir(path.c_str());
+    [[maybe_unused]] auto status = _mkdir(path.c_str());
+    DEBUG_BREAK_IF(status != 0);
 }
 }; // namespace NEO::Directory
