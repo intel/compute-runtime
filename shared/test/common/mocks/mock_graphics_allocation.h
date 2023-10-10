@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
 
@@ -51,6 +52,13 @@ class MockGraphicsAllocation : public MemoryAllocation {
     void overrideMemoryPool(MemoryPool pool) {
         this->memoryPool = pool;
     }
+
+    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override {
+        handle = internalHandle;
+        return peekInternalHandleResult;
+    }
+    int peekInternalHandleResult = 0;
+    uint64_t internalHandle = 0;
 };
 
 class MockGraphicsAllocationTaskCount : public MockGraphicsAllocation {

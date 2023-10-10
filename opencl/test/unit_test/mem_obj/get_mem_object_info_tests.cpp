@@ -420,3 +420,51 @@ TEST_F(GetMemObjectInfoLocalMemory, givenLocalMemoryEnabledWhenNoZeroCopySvmAllo
         clSVMFree(BufferDefaults::context, hostPtr);
     }
 }
+
+TEST_F(GetMemObjectInfo, GivenValidInternalHandleWhenGettingMemObjectInfoThenHandleIsReturned) {
+    auto graphicsAllocation = new MockGraphicsAllocation();
+    MemObj memObj(BufferDefaults::context, CL_MEM_OBJECT_BUFFER, {}, CL_MEM_COPY_HOST_PTR, 0,
+                  64, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAllocation), true, false, false);
+    size_t sizeReturned = 0;
+    uint64_t internalHandle = std::numeric_limits<uint64_t>::max();
+    auto retVal = memObj.getMemObjectInfo(
+        CL_MEM_ALLOCATION_HANDLE_INTEL,
+        0,
+        nullptr,
+        &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(internalHandle), sizeReturned);
+
+    graphicsAllocation->internalHandle = 0xf00d;
+    graphicsAllocation->peekInternalHandleResult = 0;
+
+    retVal = memObj.getMemObjectInfo(
+        CL_MEM_ALLOCATION_HANDLE_INTEL,
+        sizeof(internalHandle),
+        &internalHandle,
+        &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(internalHandle, graphicsAllocation->internalHandle);
+
+    graphicsAllocation->peekInternalHandleResult = -1;
+
+    retVal = memObj.getMemObjectInfo(
+        CL_MEM_ALLOCATION_HANDLE_INTEL,
+        sizeof(internalHandle),
+        &internalHandle,
+        &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(internalHandle, graphicsAllocation->internalHandle);
+    EXPECT_EQ(internalHandle, 0u);
+
+    graphicsAllocation->peekInternalHandleResult = 1;
+
+    retVal = memObj.getMemObjectInfo(
+        CL_MEM_ALLOCATION_HANDLE_INTEL,
+        sizeof(internalHandle),
+        &internalHandle,
+        &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(internalHandle, graphicsAllocation->internalHandle);
+    EXPECT_EQ(internalHandle, 0u);
+}

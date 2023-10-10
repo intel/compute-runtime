@@ -200,11 +200,15 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         srcParam = &refCnt;
         break;
 
-    case CL_MEM_ALLOCATION_HANDLE_INTEL:
-        multiGraphicsAllocation.getDefaultGraphicsAllocation()->peekInternalHandle(this->memoryManager, internalHandle);
+    case CL_MEM_ALLOCATION_HANDLE_INTEL: {
+        auto retVal = multiGraphicsAllocation.getDefaultGraphicsAllocation()->peekInternalHandle(this->memoryManager, internalHandle);
+        if (retVal != 0) {
+            internalHandle = 0;
+        }
         srcParamSize = sizeof(internalHandle);
         srcParam = &internalHandle;
         break;
+    }
 
     case CL_MEM_USES_COMPRESSION_INTEL:
         usesCompression = allocation->isCompressionEnabled();
