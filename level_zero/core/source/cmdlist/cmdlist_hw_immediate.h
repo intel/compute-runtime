@@ -149,6 +149,12 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                               uint32_t numWaitEvents,
                                               ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) override;
 
+    ze_result_t appendWaitOnMemory(void *desc, void *ptr,
+                                   uint32_t data, ze_event_handle_t signalEventHandle) override;
+
+    ze_result_t appendWriteToMemory(void *desc, void *ptr,
+                                    uint64_t data) override;
+
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
     ze_result_t close() override {

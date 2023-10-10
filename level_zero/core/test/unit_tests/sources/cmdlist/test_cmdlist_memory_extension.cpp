@@ -839,5 +839,560 @@ HWTEST2_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCon
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
 }
 
+class ImmediateCommandListWaitOnMemFixture : public DeviceFixture {
+  public:
+    void setUp() {
+        DeviceFixture::setUp();
+        ze_result_t returnValue;
+        ze_command_queue_desc_t queueDesc{};
+        queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+        immCommandList.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+        immCommandListBcs.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue)));
+
+        ze_event_pool_desc_t eventPoolDesc{};
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        eventPoolDesc.count = 2;
+
+        ze_event_desc_t eventDesc{};
+        eventDesc.index = 0;
+        eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+        eventDesc.signal = 0;
+
+        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        event = std::unique_ptr<Event>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+
+        size_t size = sizeof(uint32_t);
+        size_t alignment = 1u;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        auto result = context->allocDeviceMem(device->toHandle(),
+                                              &deviceDesc,
+                                              size, alignment, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+
+        signalAllPackets = L0GfxCoreHelper::useSignalAllEventPackets(device->getHwInfo());
+    }
+
+    void tearDown() {
+        context->freeMem(ptr);
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
+        immCommandListBcs.reset(nullptr);
+        immCommandList.reset(nullptr);
+        DeviceFixture::tearDown();
+    }
+
+    std::unique_ptr<L0::ult::CommandList> immCommandList;
+    std::unique_ptr<L0::ult::CommandList> immCommandListBcs;
+    std::unique_ptr<EventPool> eventPool;
+    std::unique_ptr<Event> event;
+    void *ptr = nullptr;
+    uint32_t waitMemData = 1u;
+    bool signalAllPackets = false;
+};
+
+using ImmediateCommandListAppendWaitOnMem = Test<ImmediateCommandListWaitOnMemFixture>;
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataAndNotEqualOpThenSemaphoreWaitProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getCompareOperation(),
+              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
+
+    EXPECT_EQ(cmd->getWaitMode(),
+              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataAndEqualOpThenSemaphoreWaitProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_EQUAL;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getCompareOperation(),
+              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
+    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
+
+    EXPECT_EQ(cmd->getWaitMode(),
+              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataGreaterOpThenSemaphoreWaitProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_GREATER_THAN;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getCompareOperation(),
+              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD);
+    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
+
+    EXPECT_EQ(cmd->getWaitMode(),
+              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataGreaterThanEqualOpThenSemaphoreWaitProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_GREATER_THAN_EQUAL;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getCompareOperation(),
+              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
+
+    EXPECT_EQ(cmd->getWaitMode(),
+              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataLessThanOpThenSemaphoreWaitProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getCompareOperation(),
+              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_SDD);
+    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
+
+    EXPECT_EQ(cmd->getWaitMode(),
+              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataLessThanEqualOpThenSemaphoreWaitProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getCompareOperation(),
+              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD);
+    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
+
+    EXPECT_EQ(cmd->getWaitMode(),
+              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndInvalidOpThenReturnsInvalid) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_BIT(6);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndHostScopeThenSemaphoreWaitAndPipeControlProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+    std::unique_ptr<EventPool> signalEventPool;
+    std::unique_ptr<Event> signalEvent;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    signalEventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    signalEvent = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto gpuAddress = event->getCompletionFieldGpuAddress(this->device);
+
+    size_t expectedPostSyncStoreDataImm = 0;
+    uint64_t storeDataImmAddress = gpuAddress;
+    if (signalAllPackets) {
+        expectedPostSyncStoreDataImm = event->getMaxPacketsCount() - 1;
+    }
+
+    auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedPostSyncStoreDataImm, itorStoreDataImm.size());
+
+    for (size_t i = 0; i < expectedPostSyncStoreDataImm; i++) {
+        auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
+        EXPECT_EQ(storeDataImmAddress, cmd->getAddress());
+        EXPECT_FALSE(cmd->getStoreQword());
+        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getDataDword0());
+        storeDataImmAddress += event->getSinglePacketSize();
+    }
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    itor++;
+    auto itorPC = findAll<PIPE_CONTROL *>(itor, cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+
+    auto pipeControlAddress = storeDataImmAddress;
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
+            EXPECT_EQ(pipeControlAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndNoScopeThenSemaphoreWaitAndPipeControlProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+    std::unique_ptr<EventPool> signalEventPool;
+    std::unique_ptr<Event> signalEvent;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    signalEventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    signalEvent = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto gpuAddress = event->getCompletionFieldGpuAddress(this->device);
+
+    size_t expectedPostSyncStoreDataImm = 0;
+    uint64_t storeDataImmAddress = gpuAddress;
+    if (signalAllPackets) {
+        expectedPostSyncStoreDataImm = event->getMaxPacketsCount() - 1;
+    }
+
+    auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedPostSyncStoreDataImm, itorStoreDataImm.size());
+
+    for (size_t i = 0; i < expectedPostSyncStoreDataImm; i++) {
+        auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
+        EXPECT_EQ(storeDataImmAddress, cmd->getAddress());
+        EXPECT_FALSE(cmd->getStoreQword());
+        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getDataDword0());
+        storeDataImmAddress += event->getSinglePacketSize();
+    }
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    itor++;
+    auto itorPC = findAll<PIPE_CONTROL *>(itor, cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+
+    auto pipeControlAddress = storeDataImmAddress;
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
+            EXPECT_EQ(pipeControlAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_FALSE(cmd->getDcFlushEnable());
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
+HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemOnBcsWithSignalEventAndNoScopeThenSemaphoreWaitAndFlushDwProgrammedCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandListBcs->commandContainer;
+    std::unique_ptr<EventPool> signalEventPool;
+    std::unique_ptr<Event> signalEvent;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    signalEventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    signalEvent = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
+    result = immCommandListBcs->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor++;
+    auto itorFDW = findAll<MI_FLUSH_DW *>(itor, cmdList.end());
+    ASSERT_NE(0u, itorFDW.size());
+    bool postSyncFound = false;
+    for (auto it : itorFDW) {
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
+        if (cmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
+            auto gpuAddress = event->getCompletionFieldGpuAddress(device);
+            EXPECT_EQ(cmd->getDestinationAddress(), gpuAddress);
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
+HWTEST2_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithHostMemAndNoScopeThenMiMemFenceEncoded, IsXeHpcCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    auto hwInfo = immCommandList->commandContainer.getDevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->platform.usRevId = 0x03;
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
+
+    constexpr size_t allocSize = sizeof(uint32_t);
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), dstBuffer, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_MEM_FENCE *>(*itor);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE, cmd->getFenceType());
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithDeviceMemAndNoScopeThenMiMemFenceNotEncoded, IsXeHpcCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    auto hwInfo = immCommandList->commandContainer.getDevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->platform.usRevId = 0x03;
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), itor);
+}
+
+using ImmediateCommandListAppendWriteToMem = Test<ImmediateCommandListWaitOnMemFixture>;
+
+HWTEST_F(ImmediateCommandListAppendWriteToMem, givenAppendWriteToMemWithNoScopeThenPipeControlEncodedCorrectly) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    zex_write_to_mem_desc_t desc = {};
+    uint64_t data = 0xabc;
+    result = immCommandList->appendWriteToMemory(reinterpret_cast<void *>(&desc), ptr, data);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(cmd->getImmediateData(), data);
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_FALSE(cmd->getDcFlushEnable());
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
+HWTEST_F(ImmediateCommandListAppendWriteToMem, givenAppendWriteToMemOnBcsWithNoScopeThenFlushDwEncodedCorrectly) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandListBcs->commandContainer;
+
+    zex_write_to_mem_desc_t desc = {};
+    uint64_t data = 0xabc;
+    result = immCommandListBcs->appendWriteToMemory(reinterpret_cast<void *>(&desc), ptr, data);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itorFDW = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorFDW.size());
+    bool postSyncFound = false;
+    for (auto it : itorFDW) {
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
+        if (cmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
+            EXPECT_EQ(cmd->getImmediateData(), data);
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
+HWTEST_F(ImmediateCommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeControlEncodedCorrectly) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = immCommandList->commandContainer;
+
+    zex_write_to_mem_desc_t desc = {};
+    desc.writeScope = ZEX_MEM_ACTION_SCOPE_FLAG_HOST;
+    uint64_t data = 0xabc;
+    result = immCommandList->appendWriteToMemory(reinterpret_cast<void *>(&desc), ptr, data);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(cmd->getImmediateData(), data);
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
 } // namespace ult
 } // namespace L0
