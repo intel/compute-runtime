@@ -177,26 +177,24 @@ void ExecutionEnvironment::parseAffinityMask() {
 
     uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
 
-    RootDeviceIndicesMap mapOfIndexes;
+    RootDeviceIndicesMap mapOfIndices;
     // Reserve at least for a size equal to rootDeviceEnvironments.size() times four,
     // which is enough for typical configurations
     size_t reservedSizeForIndices = numRootDevices * 4;
-    mapOfIndexes.reserve(reservedSizeForIndices);
+    mapOfIndices.reserve(reservedSizeForIndices);
     uint32_t hwSubDevicesCount = 0u;
     if (exposeSubDevicesAsApiDevices) {
-        uint32_t currentDeviceIndex = 0;
         for (uint32_t currentRootDevice = 0u; currentRootDevice < static_cast<uint32_t>(rootDeviceEnvironments.size()); currentRootDevice++) {
             auto hwInfo = rootDeviceEnvironments[currentRootDevice]->getHardwareInfo();
             hwSubDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
             uint32_t currentSubDevice = 0;
-            mapOfIndexes[currentDeviceIndex++] = std::make_tuple(currentRootDevice, currentSubDevice);
+            mapOfIndices.push_back(std::make_tuple(currentRootDevice, currentSubDevice));
             for (currentSubDevice = 1; currentSubDevice < hwSubDevicesCount; currentSubDevice++) {
-                mapOfIndexes[currentDeviceIndex++] = std::make_tuple(currentRootDevice, currentSubDevice);
+                mapOfIndices.push_back(std::make_tuple(currentRootDevice, currentSubDevice));
             }
         }
 
-        numRootDevices = currentDeviceIndex;
-        UNRECOVERABLE_IF(numRootDevices > reservedSizeForIndices);
+        numRootDevices = static_cast<uint32_t>(mapOfIndices.size());
     }
 
     std::vector<AffinityMaskHelper> affinityMaskHelper(numRootDevices);
@@ -221,7 +219,7 @@ void ExecutionEnvironment::parseAffinityMask() {
                 continue;
             }
 
-            std::tuple<uint32_t, uint32_t> indexKey = mapOfIndexes[rootDeviceIndex];
+            std::tuple<uint32_t, uint32_t> indexKey = mapOfIndices[rootDeviceIndex];
             auto hwDeviceIndex = std::get<0>(indexKey);
             auto tileIndex = std::get<1>(indexKey);
             affinityMaskHelper[hwDeviceIndex].enableGenericSubDevice(tileIndex);
