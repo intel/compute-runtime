@@ -392,7 +392,7 @@ std::unique_ptr<uint64_t[]> DebugSessionLinuxi915::getInternalEvent() {
         std::unique_lock<std::mutex> lock(internalEventThreadMutex);
 
         if (internalEventQueue.empty()) {
-            internalEventCondition.wait_for(lock, std::chrono::milliseconds(100));
+            NEO::waitOnCondition(internalEventCondition, lock, std::chrono::milliseconds(100));
         }
 
         if (!internalEventQueue.empty()) {
