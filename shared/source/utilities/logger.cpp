@@ -98,7 +98,7 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
         printDebugString(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
     }
 
-    if (false == enabled()) {
+    if (false == enabled() && !logAllocationStdout) {
         return;
     }
 
@@ -120,7 +120,7 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
             return;
         }
 
-        if (logAllocationMemoryPool || logAllocationType) {
+        if (enabled()) {
             writeToFile(logFileName, str.c_str(), str.size(), std::ios::app);
         }
     }
