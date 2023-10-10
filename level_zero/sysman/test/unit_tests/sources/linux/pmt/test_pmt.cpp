@@ -13,8 +13,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-static int fakeFileDescriptor = 123;
-
 const std::map<std::string, uint64_t> dummyKeyOffsetMap = {
     {"DUMMY_KEY", 0x0}};
 
@@ -104,32 +102,24 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesTh
     EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt, productFamily), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
-inline static int openMock(const char *pathname, int flags) {
-    if (strcmp(pathname, "/sys/class/intel_pmt/telem2/telem") == 0) {
-        return fakeFileDescriptor;
-    }
-    if (strcmp(pathname, "/sys/class/intel_pmt/telem3/telem") == 0) {
-        return fakeFileDescriptor;
-    }
-    return -1;
-}
-
 inline static int openMockReturnFailure(const char *pathname, int flags) {
     return -1;
 }
 
-inline static int closeMock(int fd) {
-    if (fd == fakeFileDescriptor) {
-        return 0;
-    }
-    return -1;
-}
-
-inline static int closeMockReturnFailure(int fd) {
-    return -1;
+inline static int openMockReturnSuccess(const char *pathname, int flags) {
+    NEO::SysCalls::closeFuncCalled = 0;
+    return 0;
 }
 
 ssize_t preadMockPmt(int fd, void *buf, size_t count, off_t offset) {
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+    *reinterpret_cast<uint32_t *>(buf) = 3u;
+    return count;
+}
+
+ssize_t preadMockPmt64(int fd, void *buf, size_t count, off_t offset) {
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+    *reinterpret_cast<uint64_t *>(buf) = 5u;
     return count;
 }
 
@@ -139,52 +129,49 @@ ssize_t preadMockPmtFailure(int fd, void *buf, size_t count, off_t offset) {
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint32TypeAndOpenSysCallFailsThenreadValueFails) {
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    pPmt->openFunction = openMockReturnFailure;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnFailure);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> preadBackup(&NEO::SysCalls::sysCallsPread, preadMockPmt);
 
     uint32_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPmt->readValue("DUMMY_KEY", val));
 }
 
-TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint32TypeAndCloseSysCallFailsThenreadValueFails) {
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingReadValueWithUint32TypeThenSuccessIsReturned) {
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    pPmt->telemetryDeviceEntry = baseTelemSysFS + "/" + telemNodeForSubdevice0 + "/" + telem;
-    pPmt->openFunction = openMock;
-    pPmt->preadFunction = preadMockPmt;
-    pPmt->closeFunction = closeMockReturnFailure;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> preadBackup(&NEO::SysCalls::sysCallsPread, preadMockPmt);
 
     uint32_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pPmt->readValue("DUMMY_KEY", val));
+    EXPECT_EQ(val, 3u);
+}
+
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingReadValueWithUint64TypeThenSuccessIsReturned) {
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> preadBackup(&NEO::SysCalls::sysCallsPread, preadMockPmt64);
+
+    uint64_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pPmt->readValue("DUMMY_KEY", val));
+    EXPECT_EQ(val, 5u);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint64TypeAndOpenSysCallFailsThenreadValueFails) {
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    pPmt->openFunction = openMockReturnFailure;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnFailure);
 
     uint64_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPmt->readValue("DUMMY_KEY", val));
-}
-
-TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint64TypeAndCloseSysCallFailsThenreadValueFails) {
-    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    pPmt->telemetryDeviceEntry = baseTelemSysFS + "/" + telemNodeForSubdevice0 + "/" + telem;
-    pPmt->openFunction = openMock;
-    pPmt->preadFunction = preadMockPmt;
-    pPmt->closeFunction = closeMockReturnFailure;
-
-    uint64_t val = 0;
-    pPmt->keyOffsetMap = dummyKeyOffsetMap;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint32TypeAndPreadSysCallFailsThenreadValueFails) {
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
     pPmt->telemetryDeviceEntry = baseTelemSysFS + "/" + telemNodeForSubdevice0 + "/" + telem;
-    pPmt->openFunction = openMock;
     pPmt->preadFunction = preadMockPmtFailure;
-    pPmt->closeFunction = closeMock;
 
     uint32_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
@@ -194,9 +181,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint3
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint64TypeAndPreadSysCallFailsThenreadValueFails) {
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
     pPmt->telemetryDeviceEntry = baseTelemSysFS + "/" + telemNodeForSubdevice0 + "/" + telem;
-    pPmt->openFunction = openMock;
     pPmt->preadFunction = preadMockPmtFailure;
-    pPmt->closeFunction = closeMock;
 
     uint64_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;

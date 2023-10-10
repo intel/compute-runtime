@@ -216,9 +216,7 @@ struct MockPowerSysfsAccess : public SysfsAccess {
 struct MockPowerPmt : public PlatformMonitoringTech {
 
     MockPowerPmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
-    using PlatformMonitoringTech::closeFunction;
     using PlatformMonitoringTech::keyOffsetMap;
-    using PlatformMonitoringTech::openFunction;
     using PlatformMonitoringTech::preadFunction;
     using PlatformMonitoringTech::telemetryDeviceEntry;
     ~MockPowerPmt() override {

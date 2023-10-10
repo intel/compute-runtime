@@ -146,11 +146,9 @@ struct MockPmtFsAccess : public L0::Sysman::FsAccess {
 class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
   public:
     PublicPlatformMonitoringTech(L0::Sysman::FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
-    using PlatformMonitoringTech::closeFunction;
     using PlatformMonitoringTech::doInitPmtObject;
     using PlatformMonitoringTech::init;
     using PlatformMonitoringTech::keyOffsetMap;
-    using PlatformMonitoringTech::openFunction;
     using PlatformMonitoringTech::preadFunction;
     using PlatformMonitoringTech::rootDeviceTelemNodeIndex;
     using PlatformMonitoringTech::telemetryDeviceEntry;

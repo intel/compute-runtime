@@ -41,9 +41,7 @@ const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
 
 struct MockTemperaturePmt : public PlatformMonitoringTech {
     MockTemperaturePmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
-    using PlatformMonitoringTech::closeFunction;
     using PlatformMonitoringTech::keyOffsetMap;
-    using PlatformMonitoringTech::openFunction;
     using PlatformMonitoringTech::preadFunction;
     using PlatformMonitoringTech::telemetryDeviceEntry;
 

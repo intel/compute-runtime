@@ -284,9 +284,7 @@ struct MockPowerSysfsAccess : public L0::Sysman::SysfsAccess {
 };
 
 struct MockPowerPmt : public L0::Sysman::PlatformMonitoringTech {
-    using L0::Sysman::PlatformMonitoringTech::closeFunction;
     using L0::Sysman::PlatformMonitoringTech::keyOffsetMap;
-    using L0::Sysman::PlatformMonitoringTech::openFunction;
     using L0::Sysman::PlatformMonitoringTech::preadFunction;
     using L0::Sysman::PlatformMonitoringTech::telemetryDeviceEntry;
 
