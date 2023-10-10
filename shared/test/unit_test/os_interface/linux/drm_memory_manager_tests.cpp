@@ -1076,6 +1076,28 @@ TEST_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhichRequiresHostMapThen
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhenSetCacheRegionFailsThenNullptrIsReturned) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 0;
+    mock->ioctlExpected.gemClose = 0;
+    mock->ioctlExpected.gemMmapOffset = 1;
+
+    osHandle handle = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+
+    this->mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    this->mock->queryEngineInfo();
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, false, {});
+    properties.cacheRegion = std::numeric_limits<uint32_t>::max();
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, true, false, nullptr);
+
+    EXPECT_EQ(nullptr, graphicsAllocation);
+}
+
 TEST_F(DrmMemoryManagerTest, GivenAllocationWhenFreeingThenSucceeds) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemWait = 1;

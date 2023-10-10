@@ -2442,14 +2442,17 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         pushSharedBufferObject(bo);
 
-        DrmAllocation *drmAllocation = nullptr;
-        drmAllocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, cpuPointer, bo->peekAddress(), bo->peekSize(), MemoryPool::System4KBPages);
+        auto drmAllocation = std::make_unique<DrmAllocation>(properties.rootDeviceIndex, properties.allocationType, bo, cpuPointer, bo->peekAddress(), bo->peekSize(), MemoryPool::System4KBPages);
         drmAllocation->setMmapPtr(cpuPointer);
         drmAllocation->setMmapSize(size);
         drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(cpuPointer), size);
-        drmAllocation->setCacheRegion(&drm, static_cast<CacheRegion>(properties.cacheRegion));
+        if (!drmAllocation->setCacheRegion(&drm, static_cast<CacheRegion>(properties.cacheRegion))) {
+            this->munmapFunction(cpuPointer, size);
+            delete bo;
+            return nullptr;
+        }
 
-        return drmAllocation;
+        return drmAllocation.release();
     }
 
     auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
