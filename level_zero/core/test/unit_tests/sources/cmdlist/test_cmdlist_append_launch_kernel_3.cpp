@@ -1212,11 +1212,15 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAp
 
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
 
-    ASSERT_NE(cmdList.end(), itor); // implicit dependency
+    if (immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get())) {
+        EXPECT_EQ(cmdList.end(), itor); // already waited on previous call
+    } else {
+        ASSERT_NE(cmdList.end(), itor); // implicit dependency
 
-    itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
+        itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
 
-    EXPECT_EQ(cmdList.end(), itor);
+        EXPECT_EQ(cmdList.end(), itor);
+    }
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAppendOnRegularCmdListThenSkip, IsAtLeastSkl) {
@@ -1240,17 +1244,21 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAp
 
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
 
-    ASSERT_NE(cmdList.end(), itor); // implicit dependency
+    if (regularCmdList->isInOrderNonWalkerSignalingRequired(events[0].get())) {
+        EXPECT_EQ(cmdList.end(), itor); // already waited on previous call
+    } else {
+        ASSERT_NE(cmdList.end(), itor); // implicit dependency
 
-    itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
+        itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
 
-    EXPECT_EQ(cmdList.end(), itor);
+        EXPECT_EQ(cmdList.end(), itor);
+    }
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForRegularEventFromPreviousAppendThenSkip, IsAtLeastSkl) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->inOrderExecEvent = false;
@@ -1258,11 +1266,17 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForRegularEventFromPre
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    uint32_t copyData = 0;
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    immCmdList->appendMemoryCopy(deviceAlloc, &copyData, 1, eventHandle, 0, nullptr, false, false);
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    immCmdList->appendMemoryCopy(deviceAlloc, &copyData, 1, nullptr, 1, &eventHandle, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
@@ -1274,6 +1288,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForRegularEventFromPre
     itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
 
     EXPECT_EQ(cmdList.end(), itor);
+
+    context->freeMem(deviceAlloc);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSemaphoreOnlyForExternalEvent, IsAtLeastXeHpCore) {
@@ -1331,6 +1347,219 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSem
     EXPECT_EQ(nullptr, semaphoreCmd);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelThenProgramSemaphoreOnce, IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = false;
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventHandle = events[0]->toHandle();
+
+    auto offset = cmdStream->getUsed();
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+    uint32_t copyData = 0;
+
+    void *alloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    auto findSemaphores = [&](size_t expectedNumSemaphores) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        auto cmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+        EXPECT_EQ(expectedNumSemaphores, cmds.size());
+    };
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    findSemaphores(1); // chaining
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    findSemaphores(0); // no implicit dependency semaphore
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    findSemaphores(2); // implicit dependency + chaining
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+    findSemaphores(0); // no implicit dependency
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    findSemaphores(2); // implicit dependency + chaining
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
+    findSemaphores(0); // no implicit dependency
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    findSemaphores(2); // implicit dependency + chaining
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryFill(alloc, &copyData, 1, 16, nullptr, 0, nullptr, false);
+    findSemaphores(0); // no implicit dependency
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    findSemaphores(2); // implicit dependency + chaining
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernelIndirect(kernel->toHandle(), *static_cast<ze_group_count_t *>(alloc), nullptr, 0, nullptr, false);
+    findSemaphores(0); // no implicit dependency
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    findSemaphores(2); // implicit dependency + chaining
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, false);
+    findSemaphores(0); // no implicit dependency
+
+    context->freeMem(alloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKernelThenProgramSemaphoreOnce, IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = false;
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventHandle = events[0]->toHandle();
+
+    auto offset = cmdStream->getUsed();
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+    uint32_t copyData = 0;
+
+    auto findSemaphores = [&](size_t expectedNumSemaphores) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        auto cmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+        EXPECT_EQ(expectedNumSemaphores, cmds.size());
+    };
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    uint32_t numSemaphores = immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope())) ? 1 : 2;
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
+    findSemaphores(numSemaphores); // implicit dependency + optional chaining
+
+    numSemaphores = immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope())) ? 1 : 0;
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+    findSemaphores(numSemaphores); // implicit dependency for Compact event or no semaphores for non-compact
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, eventHandle, 0, nullptr, false, false);
+    findSemaphores(2); // implicit dependency + chaining
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
+    findSemaphores(0); // no implicit dependency
+}
+
+HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingCopyThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventHandle = events[0]->toHandle();
+
+    uint32_t copyData = 0;
+
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+
+    if (immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope()))) {
+        EXPECT_NE(cmdList.end(), sdiItor);
+    } else {
+        EXPECT_EQ(cmdList.end(), sdiItor);
+
+        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), walkerItor);
+
+        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto &postSync = walkerCmd->getPostSync();
+
+        EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+        EXPECT_EQ(1u, postSync.getImmediateData());
+        EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), postSync.getDestinationAddress());
+    }
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxedOrderingThenProgramAllDependencies, IsAtLeastXeHpCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+    int client1, client2;
+    ultCsr->registerClient(&client1);
+    ultCsr->registerClient(&client2);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->inOrderExecEvent = false;
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventHandle = events[0]->toHandle();
+    size_t offset = 0;
+
+    auto findConditionalBbStarts = [&](size_t expectedNumBbStarts) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        auto cmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+
+        EXPECT_EQ(expectedNumBbStarts, cmds.size());
+    };
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    findConditionalBbStarts(1); // chaining
+
+    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0));
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    findConditionalBbStarts(1); // implicit dependency
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenWaitingForEventFromPreviousAppendThenSkip, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
@@ -1350,19 +1579,25 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenWaitingForEventFromPrevi
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &event0Handle, launchParams, false);
 
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdStream->getCpuBase(), offset),
-        cmdStream->getUsed() - offset));
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+            cmdList,
+            ptrOffset(cmdStream->getCpuBase(), offset),
+            cmdStream->getUsed() - offset));
 
-    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
 
-    ASSERT_NE(cmdList.end(), itor);
+        if (immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get())) {
+            EXPECT_EQ(cmdList.end(), itor); // already waited on previous call
+        } else {
+            ASSERT_NE(cmdList.end(), itor);
 
-    itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
+            itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
 
-    EXPECT_EQ(cmdList.end(), itor);
+            EXPECT_EQ(cmdList.end(), itor);
+        }
+    }
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentCmdListThenProgramSemaphoreForEvent, IsAtLeastSkl) {
@@ -3342,30 +3577,74 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
 
+    size_t offset = cmdStream->getUsed();
+
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
 
-    size_t offset = cmdStream->getUsed();
+    auto isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isSignalScope()));
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+        if (isCompactEvent) {
+            ASSERT_NE(cmdList.end(), semaphoreItor);
+            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+
+            ASSERT_NE(nullptr, semaphoreCmd);
+
+            auto gpuAddress = events[0]->getCompletionFieldGpuAddress(device);
+
+            while (gpuAddress != semaphoreCmd->getSemaphoreGraphicsAddress()) {
+                semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
+                ASSERT_NE(cmdList.end(), semaphoreItor);
+
+                semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+                ASSERT_NE(nullptr, semaphoreCmd);
+            }
+
+            EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+
+            semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
+            ASSERT_NE(nullptr, semaphoreCmd);
+
+            EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(gpuAddress + sizeof(uint64_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+        }
+    }
+
+    offset = cmdStream->getUsed();
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
 
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                      ptrOffset(cmdStream->getCpuBase(), offset),
-                                                      (cmdStream->getUsed() - offset)));
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
 
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*cmdList.begin());
-    ASSERT_NE(nullptr, semaphoreCmd);
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*cmdList.begin());
 
-    auto gpuAddress = immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
+        if (isCompactEvent) {
+            ASSERT_EQ(nullptr, semaphoreCmd); // already waited on previous call
+        } else {
+            ASSERT_NE(nullptr, semaphoreCmd);
 
-    EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            auto gpuAddress = immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
 
-    semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
-    ASSERT_NE(nullptr, semaphoreCmd);
+            EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
 
-    EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(gpuAddress + sizeof(uint64_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+            semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
+            ASSERT_NE(nullptr, semaphoreCmd);
+
+            EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(gpuAddress + sizeof(uint64_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+        }
+    }
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSyncAllocationThenEnablePartitionOffset, IsAtLeastXeHpCore) {
@@ -3426,7 +3705,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(0));
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingTimestampEventThenHandleChaining, IsAtLeastXeHpcCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingTimestampEventThenHandleChaining, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
@@ -3475,7 +3754,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
     EXPECT_EQ(eventEndGpuVa + events[0]->getSinglePacketSize(), semaphoreCmd->getSemaphoreGraphicsAddress());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingTimestampEventThenHandlePacketsChaining, IsAtLeastXeHpcCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingTimestampEventThenHandlePacketsChaining, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 

@@ -262,7 +262,7 @@ void CommandListImp::addToMappedEventList(Event *event) {
 }
 
 void CommandListImp::incRegularCmdListSubmissionCounter() {
-    if (isInOrderExecutionEnabled() && inOrderExecInfo->isRegularCmdList) {
+    if (isInOrderExecutionEnabled()) {
         inOrderExecInfo->regularCmdListSubmissionCounter++;
     }
 }

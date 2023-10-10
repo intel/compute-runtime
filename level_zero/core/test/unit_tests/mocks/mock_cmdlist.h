@@ -66,6 +66,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::doubleSbaWa;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
+    using BaseClass::eventSignalPipeControl;
     using BaseClass::finalStreamState;
     using BaseClass::flags;
     using BaseClass::frontEndStateTracking;
@@ -81,6 +82,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
     using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::isInOrderNonWalkerSignalingRequired;
     using BaseClass::isQwordInOrderCounter;
     using BaseClass::isRelaxedOrderingDispatchAllowed;
     using BaseClass::isSyncModeQueue;
@@ -169,6 +171,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::engineGroupType;
+    using BaseClass::eventSignalPipeControl;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;

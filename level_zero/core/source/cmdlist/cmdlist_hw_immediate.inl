@@ -446,7 +446,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
         auto event = Event::fromHandle(hSignalEvent);
 
         handleInOrderNonWalkerSignaling(event, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
-        CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(event);
+        CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(event, true);
     }
 
     return flushImmediate(ret, true, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, true, hSignalEvent);
