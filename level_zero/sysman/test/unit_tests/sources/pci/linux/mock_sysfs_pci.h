@@ -95,8 +95,6 @@ struct MockPciSysfsAccess : public L0::Sysman::SysfsAccess {
 class PublicLinuxPciImp : public L0::Sysman::LinuxPciImp {
   public:
     PublicLinuxPciImp(L0::Sysman::OsSysman *pOsSysman) : L0::Sysman::LinuxPciImp(pOsSysman) {}
-    using L0::Sysman::LinuxPciImp::closeFunction;
-    using L0::Sysman::LinuxPciImp::openFunction;
     using L0::Sysman::LinuxPciImp::preadFunction;
     using L0::Sysman::LinuxPciImp::pSysfsAccess;
 };

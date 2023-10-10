@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/pci/linux/sysman_os_pci_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/utilities/directory.h"
 
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
@@ -294,17 +295,13 @@ bool LinuxPciImp::getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &
     }
 
     int fd = -1;
-    fd = this->openFunction(pciPath.c_str(), O_RDONLY);
+    fd = NEO::FileDescriptor(pciPath.c_str(), O_RDONLY);
     if (fd < 0) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() Config File Open Failed \n", __FUNCTION__);
         return false;
     }
     if (this->preadFunction(fd, configMem.data(), configMem.size(), 0) < 0) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() Config Mem Read Failed \n", __FUNCTION__);
-        return false;
-    }
-    if (this->closeFunction(fd) < 0) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() Config file close Failed \n", __FUNCTION__);
         return false;
     }
     return true;
