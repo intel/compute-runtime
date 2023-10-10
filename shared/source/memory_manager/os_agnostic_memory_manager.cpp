@@ -9,6 +9,7 @@
 
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/aub/aub_helper.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
@@ -25,6 +26,7 @@
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/residency.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 struct OsHandleOsAgnostic : OsHandle {
@@ -655,6 +657,16 @@ uint64_t OsAgnosticMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, u
 
 double OsAgnosticMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
     return 0.8;
+}
+
+void OsAgnosticMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
+
+    for (auto &engine : getRegisteredEngines(allocation->getRootDeviceIndex())) {
+        const auto usedByContext = allocation->isUsedByOsContext(engine.osContext->getContextId());
+        if (usedByContext) {
+            engine.commandStreamReceiver->pollForCompletion();
+        }
+    }
 }
 
 } // namespace NEO

@@ -679,6 +679,26 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandle
     EXPECT_TRUE(mockManager1->freeMemoryCalled);
 }
 
+HWTEST_F(MemoryAllocatorTest, givenAllocationUsedByContextWhenFreeingThenHandleCompletionIsCalled) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockManager0 = new MockAubManager();
+    auto mockAubCenter0 = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    mockAubCenter0->aubManager.reset(mockManager0);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter0);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), true, 0x1000, device->getDeviceBitfield()}, nullptr);
+
+    ASSERT_NE(nullptr, allocation);
+    allocation->updateTaskCount(0u, csr->getOsContext().getContextId());
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    EXPECT_TRUE(mockManager0->freeMemoryCalled);
+    EXPECT_TRUE(static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->pollForCompletionCalled);
+}
+
 TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeSizeWhenAskedForHostPtrAllocationThenGraphicsAllocationIsBeignCreatedWithAllFragmentsPresent) {
     void *cpuPtr = (void *)0x1005;
     auto size = MemoryConstants::pageSize * 10 - 1;
