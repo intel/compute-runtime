@@ -39,10 +39,8 @@ void RasHandleContext::init(uint32_t subDeviceCount) {
             return;
         }
 
-        int32_t typeId = 0;
         for (const auto &type : errorTypeSubDev) {
             createHandle(type, isSubDevice, subDeviceId);
-            typeId++;
         }
     }
 }

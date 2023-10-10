@@ -16,18 +16,12 @@ void onEnterCommandListAppendLaunchKernel(
     ze_command_list_append_launch_kernel_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
-    void **ppTracerInstanceUserData) {
-    int a = 0;
-    a++;
-}
+    void **ppTracerInstanceUserData) {}
 void onExitCommandListAppendLaunchKernel(
     ze_command_list_append_launch_kernel_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
-    void **ppTracerInstanceUserData) {
-    int a = 0;
-    a++;
-}
+    void **ppTracerInstanceUserData) {}
 
 void onEnterCommandListCreateWithUserData(
     ze_command_list_create_params_t *params,

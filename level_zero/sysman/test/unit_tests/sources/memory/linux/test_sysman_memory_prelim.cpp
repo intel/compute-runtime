@@ -776,13 +776,11 @@ TEST_F(SysmanMultiDeviceMemoryFixture, GivenValidDevicePointerWhenGettingMemoryP
 
     std::vector<zes_mem_handle_t> handles(count, nullptr);
     EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-    uint32_t subDeviceIndex = 0;
     for (auto handle : handles) {
         zes_mem_properties_t properties = {};
         EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
         EXPECT_TRUE(properties.onSubdevice);
         EXPECT_EQ(properties.physicalSize, strtoull(mockPhysicalSize.c_str(), nullptr, 16));
-        subDeviceIndex++;
     }
 }
 

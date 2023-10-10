@@ -889,8 +889,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSource
     std::istringstream input;
     input.str(mockAubFileStream->comments[1]);
 
-    uint32_t lineNo = 0;
-
     std::vector<std::string> expectedAddresses = {"bbbbbbbb"};
     while (std::getline(input, line)) {
         if (line.substr(0, 15) == "AllocationsList") {
@@ -906,7 +904,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSource
         }
         EXPECT_TRUE(foundAddr);
         EXPECT_TRUE(line.size() > 9);
-        lineNo++;
     }
     EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
@@ -933,8 +930,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTarget
     std::istringstream input;
     input.str(mockAubFileStream->comments[1]);
 
-    uint32_t lineNo = 0;
-
     std::vector<std::string> expectedAddresses = {"aaaaaaaa"};
     while (std::getline(input, line)) {
         if (line.substr(0, 15) == "AllocationsList") {
@@ -950,7 +945,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTarget
         }
         EXPECT_TRUE(foundAddr);
         EXPECT_TRUE(line.size() > 9);
-        lineNo++;
     }
     EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
