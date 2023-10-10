@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/firmware/sysman_firmware_imp.h"
-#include "level_zero/sysman/source/firmware/windows/sysman_os_firmware_imp.h"
+#include "level_zero/sysman/source/api/firmware/sysman_firmware_imp.h"
+#include "level_zero/sysman/source/api/firmware/windows/sysman_os_firmware_imp.h"
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 

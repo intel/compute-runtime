@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/global_operations/sysman_global_operations_imp.h"
-#include "level_zero/sysman/source/global_operations/windows/sysman_os_global_operations_imp.h"
+#include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
+#include "level_zero/sysman/source/api/global_operations/windows/sysman_os_global_operations_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {

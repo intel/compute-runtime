@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include "level_zero/sysman/source/api/pci/linux/sysman_os_pci_imp.h"
+#include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
-#include "level_zero/sysman/source/pci/linux/sysman_os_pci_imp.h"
-#include "level_zero/sysman/source/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {

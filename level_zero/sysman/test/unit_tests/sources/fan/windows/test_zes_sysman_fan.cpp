@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/fan/windows/sysman_os_fan_imp.h"
+#include "level_zero/sysman/source/api/fan/windows/sysman_os_fan_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/fan/windows/mock_fan.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 

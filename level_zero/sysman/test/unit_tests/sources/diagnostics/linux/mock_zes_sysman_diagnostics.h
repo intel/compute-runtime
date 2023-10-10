@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/diagnostics/linux/sysman_os_diagnostics_imp.h"
+#include "level_zero/sysman/source/api/diagnostics/linux/sysman_os_diagnostics_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {

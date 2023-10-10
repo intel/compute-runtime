@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/fan/sysman_fan_imp.h"
+#include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {

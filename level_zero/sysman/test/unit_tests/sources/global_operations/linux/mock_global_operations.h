@@ -11,9 +11,9 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include "level_zero/sysman/source/api/global_operations/linux/sysman_os_global_operations_imp.h"
+#include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/global_operations/linux/sysman_os_global_operations_imp.h"
-#include "level_zero/sysman/source/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 

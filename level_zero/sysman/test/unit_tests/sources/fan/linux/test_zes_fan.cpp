@@ -5,8 +5,8 @@
  *
  */
 
-#include "level_zero/sysman/source/fan/linux/sysman_os_fan_imp.h"
-#include "level_zero/sysman/source/fan/sysman_fan_imp.h"
+#include "level_zero/sysman/source/api/fan/linux/sysman_os_fan_imp.h"
+#include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {

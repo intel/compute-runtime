@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/ras/sysman_ras_imp.h"
+#include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
 namespace L0 {

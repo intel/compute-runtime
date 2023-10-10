@@ -10,9 +10,9 @@
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 
+#include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
+#include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
-#include "level_zero/sysman/source/memory/linux/sysman_os_memory_imp.h"
-#include "level_zero/sysman/source/memory/sysman_memory_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 using namespace NEO;

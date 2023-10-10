@@ -9,7 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include "level_zero/sysman/source/events/linux/sysman_os_events_imp.h"
+#include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 
 #include <sys/stat.h>
 

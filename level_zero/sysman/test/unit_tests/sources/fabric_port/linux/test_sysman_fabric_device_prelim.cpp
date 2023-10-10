@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/fabric_port/linux/sysman_fabric_device_access_imp.h"
+#include "level_zero/sysman/source/api/fabric_port/linux/sysman_fabric_device_access_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_iaf_nl_api_prelim.h"
 

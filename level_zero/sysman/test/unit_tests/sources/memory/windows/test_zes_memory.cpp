@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/memory/windows/sysman_os_memory_imp.h"
+#include "level_zero/sysman/source/api/memory/windows/sysman_os_memory_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/windows/mock_memory.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 

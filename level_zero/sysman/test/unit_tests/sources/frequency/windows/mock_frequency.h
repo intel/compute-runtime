@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/frequency/windows/sysman_os_frequency_imp.h"
+#include "level_zero/sysman/source/api/frequency/windows/sysman_os_frequency_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {

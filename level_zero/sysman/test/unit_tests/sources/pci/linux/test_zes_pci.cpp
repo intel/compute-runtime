@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/pci/sysman_pci_utils.h"
+#include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/pci/linux/mock_sysfs_pci.h"
 

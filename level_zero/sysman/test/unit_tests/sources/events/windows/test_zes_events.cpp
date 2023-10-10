@@ -7,9 +7,9 @@
 
 #include "shared/source/os_interface/windows/sys_calls.h"
 
-#include "level_zero/sysman/source/events/sysman_events_imp.h"
-#include "level_zero/sysman/source/events/windows/sysman_os_events_imp.h"
-#include "level_zero/sysman/source/global_operations/sysman_global_operations_imp.h"
+#include "level_zero/sysman/source/api/events/sysman_events_imp.h"
+#include "level_zero/sysman/source/api/events/windows/sysman_os_events_imp.h"
+#include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 

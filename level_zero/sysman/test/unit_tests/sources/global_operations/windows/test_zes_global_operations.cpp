@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/global_operations/windows/sysman_os_global_operations_imp.h"
+#include "level_zero/sysman/source/api/global_operations/windows/sysman_os_global_operations_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/windows/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 

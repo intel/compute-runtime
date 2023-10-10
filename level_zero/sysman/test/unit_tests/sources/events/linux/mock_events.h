@@ -13,8 +13,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/sysman/source/events/linux/sysman_os_events_imp.h"
-#include "level_zero/sysman/source/events/sysman_events_imp.h"
+#include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
+#include "level_zero/sysman/source/api/events/sysman_events_imp.h"
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_driver_imp.h"

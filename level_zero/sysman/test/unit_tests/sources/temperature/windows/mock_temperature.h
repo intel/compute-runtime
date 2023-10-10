@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/temperature/sysman_temperature_imp.h"
+#include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {

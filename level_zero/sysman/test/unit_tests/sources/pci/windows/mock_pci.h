@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "level_zero/sysman/source/pci/sysman_pci_imp.h"
-#include "level_zero/sysman/source/pci/windows/sysman_os_pci_imp.h"
+#include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
+#include "level_zero/sysman/source/api/pci/windows/sysman_os_pci_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
