@@ -11,6 +11,8 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_fixture.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_cache_info.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_device_blob.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_extended.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_extended.h
   )
 
   if(NEO_ENABLE_i915_PRELIM_DETECTION)
@@ -19,8 +21,6 @@ if(UNIX)
                    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_context.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_prelim.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_prelim_fixtures.h
-                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_extended.cpp
-                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_extended.h
     )
   endif()
 endif()

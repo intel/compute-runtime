@@ -59,6 +59,9 @@ DEVICE(0x7DD5, MtlHwConfig)
 DEVICE(0x7D45, MtlHwConfig)
 DEVICE(0x7D60, MtlHwConfig)
 #endif
+#ifdef SUPPORT_ARL
+DEVICE(0x7D67, ArlHwConfig)
+#endif
 #endif
 
 #ifdef SUPPORT_GEN12LP

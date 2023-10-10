@@ -191,6 +191,17 @@
                       IGFX_ALDERLAKE_N)
 #endif
 
+#ifdef TESTS_ARL
+#define ARLTEST_F(test_fixture, test_name)                           \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_XE_HPG_CORE, IGFX_ARROWLAKE)
+#define ARLTEST_P(test_suite_name, test_name)     \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_XE_HPG_CORE,           \
+                      IGFX_ARROWLAKE)
+#endif
+
 #ifdef TESTS_MTL
 #define MTLTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \

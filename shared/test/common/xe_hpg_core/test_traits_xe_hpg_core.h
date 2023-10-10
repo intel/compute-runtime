@@ -31,3 +31,12 @@ struct TestTraits<IGFX_XE_HPG_CORE> {
     static constexpr bool isPipeControlExtendedPriorToNonPipelinedStateCommandSupported = false;
     static constexpr bool largeGrfModeInStateComputeModeSupported = true;
 };
+#ifdef TESTS_MTL
+#include "shared/test/common/xe_hpg_core/mtl/test_traits_mtl.h"
+#endif
+#ifdef TESTS_DG2
+#include "shared/test/common/xe_hpg_core/dg2/test_traits_dg2.h"
+#endif
+#ifdef TESTS_ARL
+#include "shared/test/common/xe_hpg_core/arl/test_traits_arl.h"
+#endif

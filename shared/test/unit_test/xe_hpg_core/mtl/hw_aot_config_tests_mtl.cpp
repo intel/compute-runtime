@@ -14,9 +14,4 @@ INSTANTIATE_TEST_CASE_P(ProductConfigHwInfoMtlTests,
                         ::testing::Combine(::testing::ValuesIn(AOT_MTL::productConfigs),
                                            ::testing::Values(IGFX_METEORLAKE)));
 
-INSTANTIATE_TEST_CASE_P(ProductConfigHwInfoMtlTests,
-                        ProductConfigHwInfoBadRevisionTests,
-                        ::testing::Combine(::testing::Values(AOT::MTL_M_A0, AOT::MTL_P_A0),
-                                           ::testing::Values(IGFX_METEORLAKE)));
-
 } // namespace NEO

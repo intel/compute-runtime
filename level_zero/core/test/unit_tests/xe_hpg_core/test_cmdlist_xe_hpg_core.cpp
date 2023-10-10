@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/xe_hpg_core/test_traits_xe_hpg_core.h"
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/xe_hpg_core/cmdlist_xe_hpg_core.h"
@@ -21,8 +22,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
-
-#include "test_traits_platforms_common.h"
 
 namespace L0 {
 namespace ult {

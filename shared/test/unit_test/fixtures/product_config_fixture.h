@@ -45,5 +45,4 @@ struct ProductConfigHwInfoTests : public ProductConfigTest<::testing::TestWithPa
 };
 
 using ProductConfigTests = ProductConfigTest<::testing::Test>;
-using ProductConfigHwInfoBadRevisionTests = ProductConfigHwInfoTests;
 using ProductConfigHwInfoBadArchTests = ProductConfigHwInfoTests;

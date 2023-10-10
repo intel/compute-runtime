@@ -107,7 +107,8 @@ struct CmdServicesMemTraceVersion {
             Adln = 34,
             Dg2 = 36,
             Pvc = 39,
-            Mtl = 42
+            Mtl = 42,
+            Arl = 46,
         };
     };
     struct RecordingMethodValues {

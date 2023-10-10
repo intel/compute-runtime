@@ -67,6 +67,7 @@ using IsADLP = IsProduct<IGFX_ALDERLAKE_P>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
 
 using IsMTL = IsProduct<IGFX_METEORLAKE>;
+using IsARL = IsProduct<IGFX_ARROWLAKE>;
 using IsDG2 = IsProduct<IGFX_DG2>;
 
 using IsPVC = IsProduct<IGFX_PVC>;
