@@ -12,6 +12,6 @@ unsigned int ultIterationMaxTime = 45;
 unsigned int testCaseMaxTimeInMs = 5000;
 bool useMockGmm = true;
 const char *executionDirectorySuffix = "";
-const char *executionName = "ULT";
+const char *executionName = "MT";
 TestMode testMode = defaultTestMode;
 } // namespace NEO

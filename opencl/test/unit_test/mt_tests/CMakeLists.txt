@@ -17,14 +17,14 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                $<TARGET_OBJECTS:neo_libult_cs>
                $<TARGET_OBJECTS:neo_libult>
                $<TARGET_OBJECTS:neo_shared_mocks>
-               $<TARGET_OBJECTS:neo_unit_tests_config>
+               $<TARGET_OBJECTS:neo_mt_tests_config>
                $<TARGET_OBJECTS:igdrcl_libult_env>
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
 )
 
 target_include_directories(igdrcl_mt_tests PRIVATE
-                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/mt_tests
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SOURCE_DIR}/opencl/source/gen_common

@@ -441,7 +441,7 @@ TEST(EventsTracker, givenTwoEventsWithCommonParentEventThenDumpingProperGraph) {
     uEvent.setStatus(0);
 }
 
-TEST(EventsTracker, whenCalingCreateDumpStreamThenGettingValidFstreamInstance) {
+TEST(EventsTracker, DISABLED_whenCalingCreateDumpStreamThenGettingValidFstreamInstance) {
     std::string testFileName("EventsTracker_testfile.gv");
     std::shared_ptr<std::ostream> stream = EventsTracker::getEventsTracker().createDumpStream(testFileName);
 

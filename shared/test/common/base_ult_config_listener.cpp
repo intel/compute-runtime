@@ -12,14 +12,26 @@
 
 #include "aubstream/aubstream.h"
 
-void NEO::BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
+extern bool enableAlarm;
+
+namespace NEO {
+
+extern unsigned int testCaseMaxTimeInMs;
+
+void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
     debugVarSnapshot = DebugManager.flags;
     injectFcnSnapshot = DebugManager.injectFcn;
 
     referencedHwInfo = *defaultHwInfo;
+    testStart = std::chrono::steady_clock::now();
 }
 
-void NEO::BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
+void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
+    auto testEnd = std::chrono::steady_clock::now();
+
+    if (enableAlarm) {
+        EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(testEnd - testStart).count(), testCaseMaxTimeInMs);
+    }
     aub_stream::injectMMIOList(aub_stream::MMIOList{});
 
 #undef DECLARE_DEBUG_VARIABLE
@@ -44,3 +56,4 @@ void NEO::BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
     EXPECT_EQ(1, referencedHwInfo.workaroundTable.asHash() == defaultHwInfo->workaroundTable.asHash());
     EXPECT_EQ(1, referencedHwInfo.capabilityTable == defaultHwInfo->capabilityTable);
 }
+} // namespace NEO

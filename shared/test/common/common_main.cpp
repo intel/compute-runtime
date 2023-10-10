@@ -133,11 +133,11 @@ void applyCommonWorkarounds() {
     }
 }
 
+bool enableAlarm = true;
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
     bool enableAbrt = true;
-    bool enableAlarm = true;
     bool enableSegv = true;
     bool showTestStats = false;
     bool dumpTestStats = false;

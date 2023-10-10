@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/helpers/hw_info.h"
 
 #include "gtest/gtest.h"
+
+#include <chrono>
 
 namespace NEO {
 
@@ -22,6 +24,7 @@ class BaseUltConfigListener : public ::testing::EmptyTestEventListener {
     DebugVariables debugVarSnapshot;
     void *injectFcnSnapshot = nullptr;
     HardwareInfo referencedHwInfo;
+    std::chrono::steady_clock::time_point testStart{};
 };
 
 } // namespace NEO

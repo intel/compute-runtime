@@ -818,9 +818,9 @@ TEST(SysCalls, WhenSysCallsGetNumThreadsCalledThenCallIsRedirectedToOs) {
     EXPECT_GT(result, 0u);
 }
 
+bool enableAlarm = true;
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
-    bool enableAlarm = true;
 
     ::testing::InitGoogleTest(&argc, argv);
 
