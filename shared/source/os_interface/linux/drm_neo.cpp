@@ -531,6 +531,9 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
             std::string path = std::string(pathPrefix) + std::to_string(i + startNum);
             int fileDescriptor = SysCalls::open(path.c_str(), O_RDWR | O_CLOEXEC);
 
+            if (fileDescriptor < 0) {
+                continue;
+            }
             auto pciPath = NEO::getPciPath(fileDescriptor);
 
             appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.value_or("0000:00:02.0").c_str(), path.c_str());

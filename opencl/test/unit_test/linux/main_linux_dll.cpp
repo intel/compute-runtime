@@ -181,7 +181,9 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
     EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_EQ(1, readLinkCalledTimes);
 
+    readLinkCalledTimes = 0;
     openCounter = 2;
     hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
@@ -190,6 +192,7 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
     EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
     EXPECT_STREQ("0000:00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_EQ(2, readLinkCalledTimes);
 }
 
 TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
