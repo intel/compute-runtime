@@ -259,10 +259,8 @@ bool LinuxGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::u
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     if (NEO::DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
         if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
-            auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
-            hwDeviceId->openFileDescriptor();
+            auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
             this->uuid.isValid = productHelper.getUuid(driverModel, subDeviceCount, 0u, this->uuid.id);
-            hwDeviceId->closeFileDescriptor();
         }
     }
 
@@ -726,8 +724,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
 
 void LinuxGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
     NEO::GemContextCreateExt gcc{};
-    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
-    hwDeviceId->openFileDescriptor();
+    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
     auto pDrm = pLinuxSysmanImp->getDrm();
     // Device is said to be in wedged if context creation returns EIO.
     auto ret = pDrm->getIoctlHelper()->ioctl(NEO::DrmIoctl::GemContextCreateExt, &gcc);
@@ -735,7 +732,6 @@ void LinuxGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
         pDrm->destroyDrmContext(gcc.contextId);
         return;
     }
-    hwDeviceId->closeFileDescriptor();
 
     if (pDrm->getErrno() == EIO) {
         pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;

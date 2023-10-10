@@ -45,9 +45,8 @@ ze_result_t LinuxSysmanImp::init() {
     if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    auto sysmanHwDeviceId = getSysmanHwDeviceId();
-    sysmanHwDeviceId->openFileDescriptor();
-    int myDeviceFd = sysmanHwDeviceId->getFileDescriptor();
+    auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
+    int myDeviceFd = sysmanHwDeviceId.getFileDescriptor();
     std::string myDeviceName;
     result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, myDeviceName);
     if (ZE_RESULT_SUCCESS != result) {
@@ -71,8 +70,6 @@ ze_result_t LinuxSysmanImp::init() {
     pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
 
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
-    // Close Drm handles
-    sysmanHwDeviceId->closeFileDescriptor();
     pPmuInterface = PmuInterface::create(this);
     return createPmtHandles();
 }
@@ -81,8 +78,9 @@ std::string &LinuxSysmanImp::getPciRootPath() {
     return rootPath;
 }
 
-SysmanHwDeviceIdDrm *LinuxSysmanImp::getSysmanHwDeviceId() {
-    return static_cast<SysmanHwDeviceIdDrm *>(getDrm()->getHwDeviceId().get());
+SysmanHwDeviceIdDrm::SingleInstance LinuxSysmanImp::getSysmanHwDeviceIdInstance() {
+    UNRECOVERABLE_IF(!getDrm() || !getDrm()->getHwDeviceId());
+    return static_cast<SysmanHwDeviceIdDrm *>(getDrm()->getHwDeviceId().get())->getSingleInstance();
 }
 
 NEO::Drm *LinuxSysmanImp::getDrm() {
@@ -523,16 +521,14 @@ ze_result_t LinuxSysmanImp::osColdReset() {
 uint32_t LinuxSysmanImp::getMemoryType() {
     if (memType == unknownMemoryType) {
         NEO::Drm *pDrm = getDrm();
-        auto hwDeviceId = getSysmanHwDeviceId();
+        auto hwDeviceIdInstance = getSysmanHwDeviceIdInstance();
 
-        hwDeviceId->openFileDescriptor();
         if (pDrm->querySystemInfo()) {
             auto memSystemInfo = getDrm()->getSystemInfo();
             if (memSystemInfo != nullptr) {
                 memType = memSystemInfo->getMemoryType();
             }
         }
-        hwDeviceId->closeFileDescriptor();
     }
     return memType;
 }

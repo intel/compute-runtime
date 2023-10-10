@@ -481,11 +481,13 @@ ze_result_t LinuxSchedulerImp::disableComputeUnitDebugMode(ze_bool_t *pNeedReloa
 
 static ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                                              LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
-    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
     auto pDrm = pLinuxSysmanImp->getDrm();
-    hwDeviceId->openFileDescriptor();
-    auto engineInfo = pDrm->getEngineInfo();
-    hwDeviceId->closeFileDescriptor();
+    NEO::EngineInfo *engineInfo = nullptr;
+    {
+        auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+        engineInfo = pDrm->getEngineInfo();
+    }
+
     if (engineInfo == nullptr) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

@@ -30,9 +30,10 @@ TEST(sysmanHwDeviceIdTest, whenOpenFileDescriptorIsCalledMultipleTimesThenOpenIs
     });
 
     openCallCount = 0;
-    hwDeviceId.openFileDescriptor();
+
+    auto instance1 = hwDeviceId.getSingleInstance();
     EXPECT_EQ(openCallCount, 1u);
-    hwDeviceId.openFileDescriptor();
+    auto instance2 = hwDeviceId.getSingleInstance();
     EXPECT_EQ(openCallCount, 1u);
 }
 
@@ -44,14 +45,18 @@ TEST(sysmanHwDeviceIdTest, whenOpenFileDescriptorIsCalledMultipleTimesThenCloseI
     });
 
     const auto referenceCloseCount = NEO::SysCalls::closeFuncCalled;
-    hwDeviceId.openFileDescriptor();
-    hwDeviceId.openFileDescriptor();
-    hwDeviceId.openFileDescriptor();
-    hwDeviceId.closeFileDescriptor();
-    EXPECT_EQ(NEO::SysCalls::closeFuncCalled, referenceCloseCount);
-    hwDeviceId.closeFileDescriptor();
-    EXPECT_EQ(NEO::SysCalls::closeFuncCalled, referenceCloseCount);
-    hwDeviceId.closeFileDescriptor();
+    {
+        auto instance1 = hwDeviceId.getSingleInstance();
+        EXPECT_EQ(NEO::SysCalls::closeFuncCalled, referenceCloseCount);
+        {
+            auto instance2 = hwDeviceId.getSingleInstance();
+            {
+                auto instance3 = hwDeviceId.getSingleInstance();
+            }
+            EXPECT_EQ(NEO::SysCalls::closeFuncCalled, referenceCloseCount);
+        }
+        EXPECT_EQ(NEO::SysCalls::closeFuncCalled, referenceCloseCount);
+    }
     EXPECT_EQ(NEO::SysCalls::closeFuncCalled, referenceCloseCount + 1u);
 }
 

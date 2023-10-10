@@ -13,14 +13,30 @@
 namespace L0 {
 namespace Sysman {
 class SysmanHwDeviceIdDrm : public NEO::HwDeviceIdDrm {
-
   public:
     using NEO::HwDeviceIdDrm::HwDeviceIdDrm;
+    class SingleInstance {
+      public:
+        SingleInstance(SysmanHwDeviceIdDrm &input) : instance(input), fileDescriptor(input.openFileDescriptor()) {
+            UNRECOVERABLE_IF(fileDescriptor < 0);
+        }
+        ~SingleInstance() { instance.closeFileDescriptor(); }
+        int getFileDescriptor() const { return fileDescriptor; }
+
+      private:
+        SysmanHwDeviceIdDrm &instance;
+        const int fileDescriptor;
+    };
     SysmanHwDeviceIdDrm() = delete;
+
+    SingleInstance getSingleInstance() {
+        return SingleInstance(*this);
+    }
+
+  private:
     MOCKABLE_VIRTUAL int openFileDescriptor();
     MOCKABLE_VIRTUAL int closeFileDescriptor();
 
-  private:
     std::mutex fdMutex{};
     uint32_t fdRefCounter = 0;
 };

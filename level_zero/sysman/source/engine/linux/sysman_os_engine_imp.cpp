@@ -37,11 +37,12 @@ static const std::multimap<zes_engine_group_t, __u16> engineToI915Map = {
 ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     NEO::Drm *pDrm = pLinuxSysmanImp->getDrm();
-    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
 
-    hwDeviceId->openFileDescriptor();
-    auto status = pDrm->sysmanQueryEngineInfo();
-    hwDeviceId->closeFileDescriptor();
+    bool status = false;
+    {
+        auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+        status = pDrm->sysmanQueryEngineInfo();
+    }
 
     if (status == false) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);

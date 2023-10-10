@@ -45,10 +45,12 @@ bool LinuxMemoryImp::isMemoryModuleSupported() {
 ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     pProperties->type = ZES_MEM_TYPE_DDR;
     pProperties->numChannels = -1;
-    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
-    hwDeviceId->openFileDescriptor();
-    auto status = pDrm->querySystemInfo();
-    hwDeviceId->closeFileDescriptor();
+
+    bool status = false;
+    {
+        auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+        status = pDrm->querySystemInfo();
+    }
 
     if (status) {
         auto memSystemInfo = pDrm->getSystemInfo();
@@ -342,10 +344,11 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         pFwInterface->fwGetMemoryHealthIndicator(&pState->health);
     }
 
-    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
-    hwDeviceId->openFileDescriptor();
-    auto memoryInfo = pDrm->getIoctlHelper()->createMemoryInfo();
-    hwDeviceId->closeFileDescriptor();
+    std::unique_ptr<NEO::MemoryInfo> memoryInfo;
+    {
+        auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+        memoryInfo = pDrm->getIoctlHelper()->createMemoryInfo();
+    }
 
     auto region = memoryInfo->getMemoryRegion(MemoryBanks::getBankForLocalMemory(subdeviceId));
 

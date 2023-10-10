@@ -44,10 +44,12 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     std::vector<NEO::MemoryRegion> deviceRegions;
-    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceId();
-    hwDeviceId->openFileDescriptor();
-    auto status = pDrm->queryMemoryInfo();
-    hwDeviceId->closeFileDescriptor();
+
+    bool status = false;
+    {
+        auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+        status = pDrm->queryMemoryInfo();
+    }
 
     if (status == false) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

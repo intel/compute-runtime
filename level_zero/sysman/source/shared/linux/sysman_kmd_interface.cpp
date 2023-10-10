@@ -275,10 +275,11 @@ static ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine
                                                              NEO::Drm *pDrm,
                                                              SysmanKmdInterface *pSysmanKmdInterface,
                                                              uint32_t subdeviceId) {
-    auto hwDeviceId = static_cast<SysmanHwDeviceIdDrm *>(pDrm->getHwDeviceId().get());
-    hwDeviceId->openFileDescriptor();
-    auto engineInfo = pDrm->getEngineInfo();
-    hwDeviceId->closeFileDescriptor();
+    NEO::EngineInfo *engineInfo = nullptr;
+    {
+        auto hwDeviceId = static_cast<SysmanHwDeviceIdDrm *>(pDrm->getHwDeviceId().get())->getSingleInstance();
+        engineInfo = pDrm->getEngineInfo();
+    }
     if (engineInfo == nullptr) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

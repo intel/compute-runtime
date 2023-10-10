@@ -54,7 +54,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
     PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
-    SysmanHwDeviceIdDrm *getSysmanHwDeviceId();
+    SysmanHwDeviceIdDrm::SingleInstance getSysmanHwDeviceIdInstance();
     NEO::Drm *getDrm();
     void releasePmtObject();
     MOCKABLE_VIRTUAL void releaseSysmanDeviceResources();
