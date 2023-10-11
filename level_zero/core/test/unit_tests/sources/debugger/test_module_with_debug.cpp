@@ -61,12 +61,14 @@ TEST_F(KernelInitializeTest, givenDebuggingEnabledWhenKernelsAreInitializedThenA
 
     KernelImmutableData kernelImmutableData(device);
     kernelImmutableData.setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo.heapInfo.kernelHeapSize, false));
+    auto isa = kernelImmutableData.getIsaGraphicsAllocation()->getUnderlyingBuffer();
+
+    *reinterpret_cast<uint32_t *>(isa) = 0;
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
     kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
     EXPECT_EQ(0, memoryOperationsHandler->makeResidentCalledCount);
 
-    auto isa = kernelImmutableData.getIsaGraphicsAllocation()->getUnderlyingBuffer();
     EXPECT_NE(0, memcmp(isa, &kernelHeap, sizeof(kernelHeap)));
 };
 
