@@ -8,7 +8,6 @@
 #include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/os_interface/linux/file_descriptor.h"
 
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_device_imp.h"
@@ -33,7 +32,7 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint32_t &v
     if (offset == keyOffsetMap.end()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    int fd = NEO::FileDescriptor(telemetryDeviceEntry.c_str(), O_RDONLY);
+    int fd = this->openFunction(telemetryDeviceEntry.c_str(), O_RDONLY);
     if (fd == -1) {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
@@ -42,6 +41,11 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint32_t &v
     if (this->preadFunction(fd, &value, sizeof(uint32_t), baseOffset + offset->second) != sizeof(uint32_t)) {
         res = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
+
+    if (this->closeFunction(fd) < 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     return res;
 }
 
@@ -50,7 +54,7 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint64_t &v
     if (offset == keyOffsetMap.end()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    int fd = NEO::FileDescriptor(telemetryDeviceEntry.c_str(), O_RDONLY);
+    int fd = this->openFunction(telemetryDeviceEntry.c_str(), O_RDONLY);
     if (fd == -1) {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
@@ -59,6 +63,11 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint64_t &v
     if (this->preadFunction(fd, &value, sizeof(uint64_t), baseOffset + offset->second) != sizeof(uint64_t)) {
         res = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
+
+    if (this->closeFunction(fd) < 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     return res;
 }
 

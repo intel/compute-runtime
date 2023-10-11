@@ -11,8 +11,26 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+static int fakeFileDescriptor = 123;
 constexpr uint64_t convertJouleToMicroJoule = 1000000u;
 constexpr uint32_t powerHandleComponentCount = 1u;
+
+inline static int openMockPower(const char *pathname, int flags) {
+    if (strcmp(pathname, "/sys/class/intel_pmt/telem2/telem") == 0) {
+        return fakeFileDescriptor;
+    }
+    if (strcmp(pathname, "/sys/class/intel_pmt/telem3/telem") == 0) {
+        return fakeFileDescriptor;
+    }
+    return -1;
+}
+
+inline static int closeMockPower(int fd) {
+    if (fd == fakeFileDescriptor) {
+        return 0;
+    }
+    return -1;
+}
 
 ssize_t preadMockPower(int fd, void *buf, size_t count, off_t offset) {
     uint64_t *mockBuf = static_cast<uint64_t *>(buf);
@@ -165,6 +183,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     uint32_t subdeviceId = 0;
     do {
         auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
+        pPmt->openFunction = openMockPower;
+        pPmt->closeFunction = closeMockPower;
         pPmt->preadFunction = preadMockPower;
     } while (++subdeviceId < subDeviceCount);
 
@@ -486,6 +506,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     uint32_t subdeviceId = 0;
     do {
         auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
+        pPmt->openFunction = openMockPower;
+        pPmt->closeFunction = closeMockPower;
         pPmt->preadFunction = preadMockPower;
     } while (++subdeviceId < subDeviceCount);
 
@@ -636,6 +658,8 @@ TEST_F(SysmanDevicePowerMultiDeviceFixture, GivenValidPowerHandleWhenGettingPowe
     uint32_t subdeviceId = 0;
     do {
         auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
+        pPmt->openFunction = openMockPower;
+        pPmt->closeFunction = closeMockPower;
         pPmt->preadFunction = preadMockPower;
     } while (++subdeviceId < subDeviceCount);
 

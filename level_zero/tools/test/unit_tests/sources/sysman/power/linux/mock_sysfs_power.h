@@ -282,7 +282,9 @@ struct MockPowerSysfsAccess : public SysfsAccess {
 };
 
 struct MockPowerPmt : public PlatformMonitoringTech {
+    using PlatformMonitoringTech::closeFunction;
     using PlatformMonitoringTech::keyOffsetMap;
+    using PlatformMonitoringTech::openFunction;
     using PlatformMonitoringTech::preadFunction;
     using PlatformMonitoringTech::telemetryDeviceEntry;
 

@@ -40,6 +40,8 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     L0::Sysman::SysfsAccess *pSysfsAccess = nullptr;
     L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     bool getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &configMem);
+    decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
+    decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
 
   private:

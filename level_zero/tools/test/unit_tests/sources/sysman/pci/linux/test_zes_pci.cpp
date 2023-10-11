@@ -30,8 +30,24 @@ constexpr int convertMegabitsPerSecondToBytesPerSecond = 125000;
 constexpr int convertGigabitToMegabit = 1000;
 constexpr double encodingGen1Gen2 = 0.8;
 constexpr double encodingGen3andAbove = 0.98461538461;
+static int fakeFileDescriptor = 123;
+
+inline static int openMock(const char *pathname, int flags) {
+    if ((strcmp(pathname, mockRealPathConfig.c_str()) == 0) || (strcmp(pathname, mockRealPath2LevelsUpConfig.c_str()) == 0)) {
+        return fakeFileDescriptor;
+    }
+
+    return -1;
+}
 
 inline static int openMockReturnFailure(const char *pathname, int flags) {
+    return -1;
+}
+
+inline static int closeMock(int fd) {
+    if (fd == fakeFileDescriptor) {
+        return 0;
+    }
     return -1;
 }
 
@@ -236,6 +252,8 @@ class ZesPciFixture : public SysmanDeviceFixture {
         pPciImp->pOsPci = nullptr;
         memoryManager->localMemorySupported[0] = 0;
         PublicLinuxPciImp *pLinuxPciImp = new PublicLinuxPciImp(pOsSysman);
+        pLinuxPciImp->openFunction = openMock;
+        pLinuxPciImp->closeFunction = closeMock;
         pLinuxPciImp->preadFunction = preadMock;
 
         pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImp);
@@ -296,6 +314,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenSettingLmemSupportAndCallingzetS
     memoryManager->localMemorySupported[0] = 1;
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMock;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
@@ -349,6 +369,8 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenGettingPCIWidthAndSpeedAndCapabilityL
     memoryManager->localMemorySupported[0] = 1;
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMockInvalidPos;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
@@ -367,6 +389,8 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenGettingPCIWidthAndSpeedAndUserIsNonRo
     memoryManager->localMemorySupported[0] = 1;
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMock;
 
     pSysfsAccess->isRootUserResult = false;
@@ -387,6 +411,8 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenGettingPCIWidthAndSpeedAndPCIExpressC
     memoryManager->localMemorySupported[0] = 1;
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMockLoop;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
@@ -406,6 +432,7 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenInitializingPciAndPciConfigOpenFailsT
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnFailure);
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMock;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
@@ -424,6 +451,9 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenGettingPCIWidthAndSpeedAndPCIHeaderIs
     memoryManager->localMemorySupported[0] = 1;
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
+    pLinuxPciImpTemp->preadFunction = preadMockHeaderFailure;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
     pPciImp->pciGetStaticFields();
@@ -460,6 +490,7 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenInitializingPciAndPciConfigOpenF
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnFailure);
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMock;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
@@ -474,6 +505,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenInitializingPciAndPciConfigOpenF
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenInitializingPciAndPciConfigReadFailsThenResizableBarSupportWillBeFalse) {
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMockFailure;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
@@ -488,6 +521,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenInitializingPciAndPciConfigReadF
 TEST_F(ZesPciFixture, GivenSysmanHandleWhenCheckForResizableBarSupportAndHeaderFieldNotPresentThenResizableBarSupportFalseReturned) {
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMockHeaderFailure;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
@@ -502,6 +537,8 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenCheckForResizableBarSupportAndHeaderF
 TEST_F(ZesPciFixture, GivenSysmanHandleWhenCheckForResizableBarSupportAndCapabilityLinkListIsBrokenThenResizableBarSupportFalseReturned) {
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMockInvalidPos;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
@@ -516,6 +553,8 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenCheckForResizableBarSupportAndCapabil
 TEST_F(ZesPciFixture, GivenSysmanHandleWhenCheckForResizableBarSupportAndIfRebarCapabilityNotPresentThenResizableBarSupportFalseReturned) {
     OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->openFunction = openMock;
+    pLinuxPciImpTemp->closeFunction = closeMock;
     pLinuxPciImpTemp->preadFunction = preadMockLoop;
 
     pPciImp->pOsPci = static_cast<OsPci *>(pLinuxPciImpTemp);
