@@ -52,6 +52,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::commandListPerThreadScratchSize;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::commandsToPatch;
+    using BaseClass::compactL3FlushEvent;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
@@ -162,6 +163,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandsToPatch;
+    using BaseClass::compactL3FlushEvent;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::csr;
     using BaseClass::device;

@@ -76,7 +76,7 @@ void programEventL3Flush(Event *event,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
-    return (event && (event->isUsingContextEndOffset() || !event->isInOrderExecEvent()));
+    return (event && (event->isUsingContextEndOffset() || !event->isInOrderExecEvent() || compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -177,6 +177,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool l3FlushEnable = false;
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
     Event *compactEvent = nullptr;
+    Event *eventForInOrderExec = event;
     if (event) {
         if (kernel->getPrintfBufferAllocation() != nullptr) {
             event->setKernelForPrintf(kernel);
@@ -297,11 +298,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     };
 
     bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation);
-    bool inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(event);
+    bool inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
-            dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, false, false, false);
+            dispatchEventPostSyncOperation(eventForInOrderExec, Event::STATE_CLEARED, false, false, false, false);
         } else {
             dispatchKernelArgs.eventAddress = inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + this->inOrderAllocationOffset;
             dispatchKernelArgs.postSyncImmValue = inOrderExecInfo->inOrderDependencyCounter + 1;
@@ -329,7 +330,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
-                appendWaitOnSingleEvent(event, false);
+                appendWaitOnSingleEvent(eventForInOrderExec, false);
                 appendSignalInOrderDependencyCounter();
             }
         } else {

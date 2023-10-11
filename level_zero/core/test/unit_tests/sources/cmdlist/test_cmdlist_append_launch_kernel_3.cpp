@@ -1473,6 +1473,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     uint32_t counterOffset = 64;
 
@@ -1482,6 +1483,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
+
+    bool isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isSignalScope()));
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
@@ -1518,9 +1522,33 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
-        EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-        EXPECT_EQ(2u, postSync.getImmediateData());
-        EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + counterOffset, postSync.getDestinationAddress());
+        if (isCompactEvent) {
+            EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
+
+            auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
+            ASSERT_NE(cmdList.end(), pcItor);
+
+            auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(pcItor, cmdList.end());
+            ASSERT_NE(cmdList.end(), semaphoreItor);
+
+            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+            ASSERT_NE(nullptr, semaphoreCmd);
+
+            EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+
+            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+            ASSERT_NE(nullptr, sdiCmd);
+
+            EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + counterOffset, sdiCmd->getAddress());
+            EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+            EXPECT_EQ(2u, sdiCmd->getDataDword0());
+        } else {
+            EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+            EXPECT_EQ(2u, postSync.getImmediateData());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + counterOffset, postSync.getDestinationAddress());
+        }
     }
 
     auto hostAddress = static_cast<uint64_t *>(ptrOffset(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer(), counterOffset));
@@ -2747,6 +2775,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
 
     auto eventPool = createEvents<FamilyType>(1, false);
 
+    bool isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isSignalScope()));
+
     auto eventHandle = events[0]->toHandle();
 
     uint64_t baseGpuVa = immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
@@ -2759,12 +2789,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
     auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
-    auto &postSync = walkerCmd->getPostSync();
-
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), postSync.getImmediateData());
-    EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), postSync.getDestinationAddress());
-
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
 
     uint64_t expectedCounter = 1;
@@ -2773,16 +2797,38 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
     if (immCmdList->isQwordInOrderCounter()) {
         expectedCounter = std::numeric_limits<uint32_t>::max();
 
-        EXPECT_EQ(cmdList.end(), semaphoreItor);
-
         auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
-        EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-        EXPECT_EQ(expectedCounter, postSync.getImmediateData());
-        EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), postSync.getDestinationAddress());
+        if (isCompactEvent) {
+            EXPECT_NE(cmdList.end(), semaphoreItor);
+
+            auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
+            ASSERT_NE(cmdList.end(), sdiItor);
+
+            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+            ASSERT_NE(nullptr, sdiCmd);
+
+            EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), sdiCmd->getAddress());
+            EXPECT_EQ(getLowPart(expectedCounter), sdiCmd->getDataDword0());
+            EXPECT_EQ(getHighPart(expectedCounter), sdiCmd->getDataDword1());
+
+            EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
+        } else {
+            EXPECT_EQ(cmdList.end(), semaphoreItor);
+
+            EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+            EXPECT_EQ(expectedCounter, postSync.getImmediateData());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), postSync.getDestinationAddress());
+        }
     } else {
         ASSERT_NE(cmdList.end(), semaphoreItor);
+
+        if (isCompactEvent) {
+            // commands chaining
+            semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
+            ASSERT_NE(cmdList.end(), semaphoreItor);
+        }
 
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         ASSERT_NE(nullptr, semaphoreCmd);
