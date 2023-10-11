@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -18,11 +17,13 @@ namespace NEO {
 class MigrationSyncData;
 class GraphicsAllocation;
 
-class MultiGraphicsAllocation : NonAssignableClass {
+class MultiGraphicsAllocation {
   public:
     MultiGraphicsAllocation(uint32_t maxRootDeviceIndex);
     MultiGraphicsAllocation(const MultiGraphicsAllocation &multiGraphicsAllocation);
     MultiGraphicsAllocation(MultiGraphicsAllocation &&);
+    MultiGraphicsAllocation &operator=(const MultiGraphicsAllocation &) = delete;
+    MultiGraphicsAllocation &operator=(MultiGraphicsAllocation &&) = delete;
     ~MultiGraphicsAllocation();
 
     GraphicsAllocation *getDefaultGraphicsAllocation() const;

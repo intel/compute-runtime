@@ -6,15 +6,12 @@
  */
 
 #pragma once
-
-#include "shared/source/helpers/non_copyable_or_moveable.h"
-
 #include <iterator>
 
 namespace NEO {
 
 template <typename DataType>
-struct Range : NonAssignableClass {
+struct Range {
     using iterator = DataType *;
     using const_iterator = const DataType *;
     using reverse_iterator = std::reverse_iterator<iterator>;
@@ -37,6 +34,7 @@ struct Range : NonAssignableClass {
     Range(T (&base)[S])
         : Range(&base[0], S) {
     }
+    Range &operator=(const Range &) = delete;
 
     iterator begin() {
         return begIt;
