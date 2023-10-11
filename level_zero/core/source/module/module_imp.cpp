@@ -575,7 +575,11 @@ void ModuleImp::transferIsaSegmentsToAllocation(NEO::Device *neoDevice, const NE
     const auto &productHelper = neoDevice->getProductHelper();
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
 
-    if (this->kernelsIsaParentRegion && this->kernelImmDatas.size() && !this->kernelImmDatas[0]->isIsaCopiedToAllocation()) {
+    if (this->kernelsIsaParentRegion && this->kernelImmDatas.size()) {
+        if (this->kernelImmDatas[0]->isIsaCopiedToAllocation()) {
+            return;
+        }
+
         const auto isaBufferSize = this->kernelsIsaParentRegion->getUnderlyingBufferSize();
         DEBUG_BREAK_IF(isaBufferSize == 0);
         auto isaBuffer = std::vector<std::byte>(isaBufferSize);
@@ -601,23 +605,20 @@ void ModuleImp::transferIsaSegmentsToAllocation(NEO::Device *neoDevice, const NE
         }
     } else {
         for (auto &kernelImmData : kernelImmDatas) {
-            if (nullptr == kernelImmData->getIsaGraphicsAllocation()) {
+            if (nullptr == kernelImmData->getIsaGraphicsAllocation() || kernelImmData->isIsaCopiedToAllocation()) {
                 continue;
             }
-            DEBUG_BREAK_IF(kernelImmData->isIsaCopiedToAllocation());
             kernelImmData->getIsaGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             kernelImmData->getIsaGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
 
-            if (!kernelImmData->isIsaCopiedToAllocation()) {
-                auto [kernelHeapPtr, kernelHeapSize] = this->getKernelHeapPointerAndSize(kernelImmData, isaSegmentsForPatching);
-                NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *kernelImmData->getIsaGraphicsAllocation()),
-                                                                      *neoDevice,
-                                                                      kernelImmData->getIsaGraphicsAllocation(),
-                                                                      0u,
-                                                                      kernelHeapPtr,
-                                                                      kernelHeapSize);
-                kernelImmData->setIsaCopiedToAllocation();
-            }
+            auto [kernelHeapPtr, kernelHeapSize] = this->getKernelHeapPointerAndSize(kernelImmData, isaSegmentsForPatching);
+            NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *kernelImmData->getIsaGraphicsAllocation()),
+                                                                  *neoDevice,
+                                                                  kernelImmData->getIsaGraphicsAllocation(),
+                                                                  0u,
+                                                                  kernelHeapPtr,
+                                                                  kernelHeapSize);
+            kernelImmData->setIsaCopiedToAllocation();
         }
     }
 }
