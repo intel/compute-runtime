@@ -81,6 +81,8 @@ HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(pCS->getGraphicsAllocation(), pCS, pCS->getUsed());
     ResidencyContainer allocationsForResidency;
 
+    pCommandStreamReceiver->setLatestSentTaskCount(pCommandStreamReceiver->peekTaskCount() + 1);
+
     pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
     BatchBuffer batchBuffer2 = BatchBufferHelper::createDefaultBatchBuffer(pCS->getGraphicsAllocation(), pCS, pCS->getUsed());
     pCommandStreamReceiver->flush(batchBuffer2, allocationsForResidency);

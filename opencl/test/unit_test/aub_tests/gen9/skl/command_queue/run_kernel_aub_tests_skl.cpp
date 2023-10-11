@@ -18,12 +18,14 @@ class AUBRunKernelIntegrateTest : public RunKernelFixture<AUBRunKernelFixtureFac
 
   protected:
     void SetUp() override {
+        DebugManager.flags.EnableFreeMemory.set(false);
         ParentClass::setUp();
     }
 
     void TearDown() override {
         ParentClass::tearDown();
     }
+    DebugManagerStateRestore restorer;
 };
 
 SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {

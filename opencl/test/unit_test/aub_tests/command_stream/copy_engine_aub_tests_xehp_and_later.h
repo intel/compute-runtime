@@ -51,6 +51,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
 
         DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
         DebugManager.flags.RenderCompressedImagesEnabled.set(true);
+        DebugManager.flags.EnableFreeMemory.set(false);
 
         MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, true);
 

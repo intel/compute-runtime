@@ -329,7 +329,7 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         }
 
         auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
-        if (aubCenter && aubCenter->getAubManager() && DebugManager.flags.EnableFreeMemory.get()) {
+        if (aubCenter && aubCenter->getAubManager() && DebugManager.flags.EnableFreeMemory.get() && gfxAllocation->getAllocationType() != AllocationType::EXTERNAL_HOST_PTR) {
             aubCenter->getAubManager()->freeMemory(
                 peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()].get()->gmmHelper.get()->decanonize(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
         }

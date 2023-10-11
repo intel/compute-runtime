@@ -96,6 +96,7 @@ HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
         size_t sizeRemaining = sizeUserMemory - sizeWritten - offset;
         AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, zeroMemory, sizeRemaining);
     }
+
     delete dstBuffer;
     delete[] srcMemory;
     delete[] destMemory;

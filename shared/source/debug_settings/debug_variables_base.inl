@@ -397,7 +397,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableMultiRootDeviceContexts, true, "Enables suppo
 DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeSquared, false, "Enables algorithm to compute the most squared work group as possible")
 DECLARE_DEBUG_VARIABLE(bool, EnableExtendedVaFormats, false, "Enable more formats in cl-va sharing")
 DECLARE_DEBUG_VARIABLE(bool, EnableFormatQuery, true, "Enable sharing format querying")
-DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memory manager")
+DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, true, "Enable freeMemory in memory manager")
 DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Low Filtering Precision Sampler mode")
 DECLARE_DEBUG_VARIABLE(bool, EngineInstancedSubDevices, false, "Create subdevices assigned to specific engine")
 DECLARE_DEBUG_VARIABLE(bool, AllowSingleTileEngineInstancedSubDevices, false, "Create subdevices assigned to specific engine on single tile config")

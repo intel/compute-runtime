@@ -688,7 +688,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryIsCall
     auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     aubCsr->setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
-
+    aubCsr->hardwareContextController.reset(nullptr);
     aubCsr->stream = mockAubFileStream.get();
 
     uintptr_t gpuAddress = 0x30000;

@@ -1750,7 +1750,7 @@ INSTANTIATE_TEST_CASE_P(OsAgnosticMemoryManagerWithParams,
                         OsAgnosticMemoryManagerWithParams,
                         ::testing::Values(false, true));
 
-TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryEnabledWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
+TEST(OsAgnosticMemoryManager, givenFreeMemoryEnabledAndNonExternalHostPtrAllocationWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableFreeMemory.set(true);
     MockExecutionEnvironment executionEnvironment;
@@ -1759,21 +1759,37 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryEnabledWh
     MockAubCenter *mockAubCenter = new MockAubCenter(*executionEnvironment.rootDeviceEnvironments[0], false, "file_name.aub", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     executionEnvironment.rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
-
-    auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
-    EXPECT_FALSE(mockManager->freeMemoryCalled);
-
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    gfxAllocation->setCpuPtrAndGpuAddress(gfxAllocation->getUnderlyingBuffer(), 1ull << (gmmHelper->getAddressWidth() - 1));
-    auto canonizedGpuAddress = gmmHelper->canonize(gfxAllocation->getGpuAddress());
-    auto decanonizedGpuAddress = gmmHelper->decanonize(canonizedGpuAddress);
+    {
+        auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
+        EXPECT_FALSE(mockManager->freeMemoryCalled);
 
-    memoryManager.freeGraphicsMemory(gfxAllocation);
-    EXPECT_TRUE(mockManager->freeMemoryCalled);
+        gfxAllocation->setCpuPtrAndGpuAddress(gfxAllocation->getUnderlyingBuffer(), 1ull << (gmmHelper->getAddressWidth() - 1));
+        auto canonizedGpuAddress = gmmHelper->canonize(gfxAllocation->getGpuAddress());
+        auto decanonizedGpuAddress = gmmHelper->decanonize(canonizedGpuAddress);
 
-    EXPECT_NE(canonizedGpuAddress, decanonizedGpuAddress);
-    EXPECT_EQ(decanonizedGpuAddress, mockManager->freedGfxAddress);
+        memoryManager.freeGraphicsMemory(gfxAllocation);
+        EXPECT_TRUE(mockManager->freeMemoryCalled);
+
+        EXPECT_NE(canonizedGpuAddress, decanonizedGpuAddress);
+        EXPECT_EQ(decanonizedGpuAddress, mockManager->freedGfxAddress);
+    }
+
+    mockManager->freeMemoryCalled = false;
+    mockManager->freedGfxAddress = 0;
+
+    {
+        MockAllocationProperties properties{0, MemoryConstants::pageSize};
+        properties.allocationType = AllocationType::EXTERNAL_HOST_PTR;
+
+        auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
+        EXPECT_FALSE(mockManager->freeMemoryCalled);
+
+        memoryManager.freeGraphicsMemory(gfxAllocation);
+        EXPECT_FALSE(mockManager->freeMemoryCalled);
+        EXPECT_EQ(0u, mockManager->freedGfxAddress);
+    }
 }
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryDisabledWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {

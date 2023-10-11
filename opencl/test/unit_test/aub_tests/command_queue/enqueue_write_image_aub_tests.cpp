@@ -33,6 +33,7 @@ struct AUBWriteImage
       public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, WriteImageParams>>,
       public ::testing::Test {
     void SetUp() override {
+        DebugManager.flags.EnableFreeMemory.set(false);
         ImageAubFixture::setUp(enableBlitter);
     }
 
@@ -283,7 +284,7 @@ struct AUBWriteImage
 
         alignedFree(srcMemoryAligned);
     }
-
+    DebugManagerStateRestore restorer;
     std::unique_ptr<Image> dstImage;
 };
 

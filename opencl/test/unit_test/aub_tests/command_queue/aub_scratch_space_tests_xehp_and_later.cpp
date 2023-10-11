@@ -320,7 +320,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, Gen12AubScratchSpaceForSpillFillTest, givenSurfaceS
         event);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->flush();
 
     expectMemory<FamilyType>(outBuffer, expectedMemory, expectedMemorySize);
 }

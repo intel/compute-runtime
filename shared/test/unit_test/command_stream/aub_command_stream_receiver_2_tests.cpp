@@ -985,6 +985,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenAskedForMemoryExpectation
     MyMockAubCsr myMockCsr(std::string(), true, *pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     myMockCsr.setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
     myMockCsr.stream = mockStream.get();
+    myMockCsr.hardwareContextController.reset(nullptr);
 
     myMockCsr.expectMemoryNotEqual(mockAddress, mockAddress, 1);
     EXPECT_EQ(compareNotEqual, myMockCsr.inputCompareOperation);
