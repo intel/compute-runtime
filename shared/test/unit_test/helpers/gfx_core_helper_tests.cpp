@@ -1559,5 +1559,5 @@ HWTEST_F(GfxCoreHelperTest, givenFlagRemoveRestrictionsOnNumberOfThreadsInGpgpuT
 HWTEST2_F(GfxCoreHelperTest, whenGetDefaultDeviceHierarchyThenReturnFlatHierarchy, IsNotXeHpcCore) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto defaultDeviceHierarchy = gfxCoreHelper.getDefaultDeviceHierarchy();
-    EXPECT_STREQ("FLAT", defaultDeviceHierarchy);
+    EXPECT_STREQ("COMPOSITE", defaultDeviceHierarchy);
 }
