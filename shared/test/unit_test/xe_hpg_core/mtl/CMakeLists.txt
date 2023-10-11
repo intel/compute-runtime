@@ -15,7 +15,6 @@ if(TESTS_MTL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xe_hpg_core_mtl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_aot_config_tests_mtl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_mtl.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_tests_mtl.cpp
   )
 
   add_subdirectories()
