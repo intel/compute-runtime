@@ -422,6 +422,11 @@ bool GfxCoreHelperHw<Family>::isRelaxedOrderingSupported() const {
     return true;
 }
 
+template <>
+char const *GfxCoreHelperHw<Family>::getDefaultDeviceHierarchy() const {
+    return deviceHierarchyFlat;
+}
+
 } // namespace NEO
 
 namespace NEO {

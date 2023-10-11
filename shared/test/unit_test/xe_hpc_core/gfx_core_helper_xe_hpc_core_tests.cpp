@@ -93,3 +93,10 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenAskingForRel
 
     EXPECT_TRUE(gfxCoreHelper.isRelaxedOrderingSupported());
 }
+XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, whenGetDefaultDeviceHierarchyThenReturnFlatHierarchy) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+
+    auto defaultDeviceHierarchy = gfxCoreHelper.getDefaultDeviceHierarchy();
+    EXPECT_STREQ("FLAT", defaultDeviceHierarchy);
+}
