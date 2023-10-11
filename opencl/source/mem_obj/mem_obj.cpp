@@ -203,7 +203,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     case CL_MEM_ALLOCATION_HANDLE_INTEL: {
         auto retVal = multiGraphicsAllocation.getDefaultGraphicsAllocation()->peekInternalHandle(this->memoryManager, internalHandle);
         if (retVal != 0) {
-            internalHandle = 0;
+            return CL_OUT_OF_RESOURCES;
         }
         srcParamSize = sizeof(internalHandle);
         srcParam = &internalHandle;
