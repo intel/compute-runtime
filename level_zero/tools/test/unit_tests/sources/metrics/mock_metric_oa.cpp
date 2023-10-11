@@ -361,7 +361,9 @@ void Mock<MetricsLibrary>::setMockedApi(MockMetricsLibraryApi *mockedApi) {
 
         //  Mock class used to communicate with metrics library.
         metricsLibrary = &metricSource.getMetricsLibrary();
-        metricSource.setMetricsLibrary(*this);
+        auto &actualMetricsLibrary = metricSource.getMetricsLibraryObject();
+        actualMetricsLibrary.release();
+        actualMetricsLibrary.reset(this);
 
         // Mock metrics library api functions.
         contextCreateFunction = mockedApi->contextCreate;
@@ -394,7 +396,9 @@ void Mock<MetricsLibrary>::setMockedApi(MockMetricsLibraryApi *mockedApi) {
     } else {
 
         // Restore an original class used to communicate with metrics library.
-        metricSource.setMetricsLibrary(*metricsLibrary);
+        auto &actualMetricsLibrary = metricSource.getMetricsLibraryObject();
+        actualMetricsLibrary.release();
+        actualMetricsLibrary.reset(metricsLibrary);
     }
 }
 

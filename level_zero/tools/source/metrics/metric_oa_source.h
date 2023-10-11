@@ -8,15 +8,15 @@
 #pragma once
 
 #include "level_zero/tools/source/metrics/metric.h"
-#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
-#include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
-#include "level_zero/tools/source/metrics/metric_oa_streamer_imp.h"
 
 namespace NEO {
 class OsLibrary;
 } // namespace NEO
 
 namespace L0 {
+struct MetricEnumeration;
+struct MetricsLibrary;
+struct MetricsStreamer;
 
 class OaMetricSourceImp : public MetricSource {
 
@@ -35,8 +35,8 @@ class OaMetricSourceImp : public MetricSource {
     MetricEnumeration &getMetricEnumeration();
     MetricStreamer *getMetricStreamer();
     void setMetricStreamer(MetricStreamer *pMetricStreamer);
-    void setMetricsLibrary(MetricsLibrary &metricsLibrary);
-    void setMetricEnumeration(MetricEnumeration &metricEnumeration);
+    std::unique_ptr<MetricsLibrary> &getMetricsLibraryObject() { return metricsLibrary; }
+    std::unique_ptr<MetricEnumeration> &getMetricEnumerationObject() { return metricEnumeration; }
 
     ze_result_t getTimerResolution(uint64_t &resolution) override;
     ze_result_t getTimestampValidBits(uint64_t &validBits) override;
@@ -60,8 +60,8 @@ class OaMetricSourceImp : public MetricSource {
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
     const MetricDeviceContext &metricDeviceContext;
-    std::unique_ptr<MetricEnumeration> metricEnumeration = nullptr;
-    std::unique_ptr<MetricsLibrary> metricsLibrary = nullptr;
+    std::unique_ptr<MetricEnumeration> metricEnumeration;
+    std::unique_ptr<MetricsLibrary> metricsLibrary;
     MetricStreamer *pMetricStreamer = nullptr;
     bool useCompute = false;
     std::unique_ptr<MetricOAOsInterface> metricOAOsInterface = nullptr;

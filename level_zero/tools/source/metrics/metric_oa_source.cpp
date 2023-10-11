@@ -139,16 +139,6 @@ void OaMetricSourceImp::setMetricStreamer(MetricStreamer *pMetricStreamer) {
     this->pMetricStreamer = pMetricStreamer;
 }
 
-void OaMetricSourceImp::setMetricsLibrary(MetricsLibrary &metricsLibrary) {
-    this->metricsLibrary.release();
-    this->metricsLibrary.reset(&metricsLibrary);
-}
-
-void OaMetricSourceImp::setMetricEnumeration(MetricEnumeration &metricEnumeration) {
-    this->metricEnumeration.release();
-    this->metricEnumeration.reset(&metricEnumeration);
-}
-
 void OaMetricSourceImp::setUseCompute(const bool useCompute) {
     this->useCompute = useCompute;
 }

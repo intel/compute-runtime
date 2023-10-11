@@ -42,7 +42,9 @@ void Mock<MetricEnumeration>::setMockedApi(MockMetricsDiscoveryApi *mockedApi) {
 
         //  Mock class used to communicate with metrics library.
         metricEnumeration = &metricSource.getMetricEnumeration();
-        metricSource.setMetricEnumeration(*this);
+        auto &actualMetricEnumeration = metricSource.getMetricEnumerationObject();
+        actualMetricEnumeration.release();
+        actualMetricEnumeration.reset(this);
 
         // Mock metrics library api functions.
         openAdapterGroup = mockedApi->OpenAdapterGroup;
@@ -53,7 +55,9 @@ void Mock<MetricEnumeration>::setMockedApi(MockMetricsDiscoveryApi *mockedApi) {
     } else {
 
         // Restore an original class used to communicate with metrics library.
-        metricSource.setMetricEnumeration(*metricEnumeration);
+        auto &actualMetricEnumeration = metricSource.getMetricEnumerationObject();
+        actualMetricEnumeration.release();
+        actualMetricEnumeration.reset(metricEnumeration);
     }
 }
 
