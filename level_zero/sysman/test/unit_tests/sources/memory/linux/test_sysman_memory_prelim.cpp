@@ -501,10 +501,8 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthForDg2PlatformIfIdiReadFailsTheFailureIsReturned) {
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthForDg2PlatformIfIdiReadFailsTheFailureIsReturned, IsDG2) {
     setLocalSupportedAndReinit(true);
-    auto hwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = IGFX_DG2;
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
@@ -521,13 +519,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
 
 HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthForDg2PlatformAndReadingMaxBwFailsThenMaxBwIsReturnedAsZero, IsDG2) {
     setLocalSupportedAndReinit(true);
-
-    // auto hwInfo = *NEO::defaultHwInfo.get();
-    // hwInfo.platform.eProductFamily = IGFX_DG2;
-    // pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
-
-    auto hwInfo = pSysmanDeviceImp->getHardwareInfo();
-    hwInfo.platform.eProductFamily = IGFX_DG2;
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (const auto &handle : handles) {
@@ -542,11 +533,9 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthForDg2PlatformIfIdiWriteFailsTheFailureIsReturned) {
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthForDg2PlatformIfIdiWriteFailsTheFailureIsReturned, IsDG2) {
     setLocalSupportedAndReinit(true);
 
-    auto hwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = IGFX_DG2;
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
