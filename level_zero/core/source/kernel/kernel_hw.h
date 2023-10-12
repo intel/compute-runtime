@@ -12,6 +12,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -38,10 +39,22 @@ struct KernelHw : public KernelImp {
         auto misalignedSize = ptrDiff(alloc->getGpuAddressToPatch(), baseAddress);
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
         size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
-        // If the allocation has been set with an extended size to span other resident allocations, then program that size for the surface state & reset the extended size to 0 in the allocation structure.
-        if (alloc->getExtendedBufferSize() != 0) {
-            bufferSizeForSsh = alloc->getExtendedBufferSize();
-            alloc->setExtendedSize(0);
+        // If the allocation is part of a mapped virtual range, then check to see if the buffer size needs to be extended to include more physical buffers.
+        Device *device = module->getDevice();
+        auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
+        if (allocData && allocData->virtualReservationData) {
+            size_t calcBufferSizeForSsh = bufferSizeForSsh;
+            for (const auto &mappedAllocationData : allocData->virtualReservationData->mappedAllocations) {
+                // Add additional allocations buffer size to be programmed to allow full usage of the memory range if the allocation is after this starting address.
+                if (address != mappedAllocationData.second->ptr && mappedAllocationData.second->ptr > address) {
+                    calcBufferSizeForSsh += mappedAllocationData.second->mappedAllocation->allocation->getUnderlyingBufferSize();
+                    // Only allow for the surface state to be extended up to 4GB in size.
+                    bufferSizeForSsh = std::min(calcBufferSizeForSsh, MemoryConstants::gigaByte * 4);
+                    if (bufferSizeForSsh == MemoryConstants::gigaByte * 4) {
+                        break;
+                    }
+                }
+            }
         }
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
@@ -85,10 +98,8 @@ struct KernelHw : public KernelImp {
         // Most commonly this issue will occur with Host Point Allocations from customers.
         l3Enabled = isL3Capable(*alloc);
 
-        Device *device = module->getDevice();
         NEO::Device *neoDevice = device->getNEODevice();
 
-        auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
         if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
             l3Enabled = false;
         }

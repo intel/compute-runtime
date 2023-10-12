@@ -858,8 +858,6 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevi
             phys2Resident = true;
         }
     }
-    NEO::GraphicsAllocation *baseAlloc = reinterpret_cast<NEO::GraphicsAllocation *>(phPhysicalMemory);
-    EXPECT_EQ(reservationSize, baseAlloc->getExtendedBufferSize());
 
     EXPECT_TRUE(phys2Resident);
     res = context->unMapVirtualMem(dstBuffer, size);
@@ -898,9 +896,6 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedD
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
     commandList->appendMemoryCopy(dstBuffer, srcPtr, reservationSize, nullptr, 0, nullptr, false, false);
-
-    NEO::GraphicsAllocation *baseAlloc = reinterpret_cast<NEO::GraphicsAllocation *>(phPhysicalMemory);
-    EXPECT_EQ(0u, baseAlloc->getExtendedBufferSize());
 
     res = context->unMapVirtualMem(dstBuffer, reservationSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

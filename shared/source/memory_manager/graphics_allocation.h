@@ -90,8 +90,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     }
     size_t getUnderlyingBufferSize() const { return size; }
     void setSize(size_t size) { this->size = size; }
-    void setExtendedSize(size_t size) { this->extendedSize = size; }
-    size_t getExtendedBufferSize() const { return extendedSize; }
 
     uint64_t getAllocationOffset() const {
         return allocationOffset;
@@ -373,7 +371,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     size_t size = 0;
     void *cpuPtr = nullptr;
     void *lockedPtr = nullptr;
-    size_t extendedSize = 0;
 
     MemoryPool memoryPool = MemoryPool::MemoryNull;
     AllocationType allocationType = AllocationType::UNKNOWN;

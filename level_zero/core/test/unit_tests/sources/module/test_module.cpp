@@ -2409,7 +2409,7 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
 
 HWTEST_F(MultiDeviceModuleSetArgBufferTest,
          givenCallsToSetArgBufferWithReservedMemoryThenResidencyContainerHasAllMappedAllocations) {
-
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         createModuleFromMockBinary(rootDeviceIndex);
         auto device = driverHandle->devices[rootDeviceIndex];
@@ -2446,6 +2446,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         bool phys1Resident = false;
         bool phys2Resident = false;
         NEO::GraphicsAllocation *baseAlloc = nullptr;
+        NEO::GraphicsAllocation *offsetAlloc = nullptr;
         for (auto alloc : kernel->getResidencyContainer()) {
             if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
                 phys1Resident = true;
@@ -2453,13 +2454,21 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
             }
             if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
                 phys2Resident = true;
+                offsetAlloc = alloc;
             }
         }
+        auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+        auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
+        auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        length.length = static_cast<uint32_t>((baseAlloc->getUnderlyingBufferSize() + offsetAlloc->getUnderlyingBufferSize()) - 1);
+        EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
+        EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+        EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
         EXPECT_TRUE(phys1Resident);
         EXPECT_TRUE(phys2Resident);
         res = context->unMapVirtualMem(ptr, size);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        EXPECT_EQ(0u, baseAlloc->getExtendedBufferSize());
         res = context->unMapVirtualMem(offsetAddress, size);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->freeVirtualMem(ptr, reservationSize);
@@ -2473,8 +2482,80 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 }
 
 HWTEST_F(MultiDeviceModuleSetArgBufferTest,
-         givenCallsToSetArgBufferWithReservedMemoryWithMappingToFullReservedSizeThenExtendedBufferSizeIsZero) {
+         givenCallsToSetArgBufferWithOffsetReservedMemoryThenResidencyContainerHasAllMappedAllocations) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        createModuleFromMockBinary(rootDeviceIndex);
+        auto device = driverHandle->devices[rootDeviceIndex];
+        driverHandle->devices[rootDeviceIndex]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
+            std::make_unique<NEO::MockMemoryOperations>();
 
+        ze_kernel_handle_t kernelHandle;
+        void *ptr = nullptr;
+        size_t size = MemoryConstants::pageSize64k;
+        size_t reservationSize = size * 2;
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.pKernelName = kernelName.c_str();
+        ze_result_t res = modules[rootDeviceIndex]->createKernel(&kernelDesc, &kernelHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->reserveVirtualMem(nullptr, reservationSize, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ze_physical_mem_desc_t desc = {};
+        desc.size = size;
+        ze_physical_mem_handle_t phPhysicalMemory;
+        res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ze_physical_mem_handle_t phPhysicalMemory2;
+        res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->mapVirtualMem(ptr, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + size);
+        res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+        kernel->setArgBuffer(0, sizeof(offsetAddress), &offsetAddress);
+
+        bool phys1Resident = false;
+        bool phys2Resident = false;
+        NEO::GraphicsAllocation *offsetAlloc = nullptr;
+        for (auto alloc : kernel->getResidencyContainer()) {
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
+                phys1Resident = true;
+            }
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
+                phys2Resident = true;
+                offsetAlloc = alloc;
+            }
+        }
+        auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+        auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
+        auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        length.length = static_cast<uint32_t>(offsetAlloc->getUnderlyingBufferSize() - 1);
+        EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
+        EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+        EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        EXPECT_TRUE(phys1Resident);
+        EXPECT_TRUE(phys2Resident);
+        res = context->unMapVirtualMem(ptr, size);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->unMapVirtualMem(offsetAddress, size);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->freeVirtualMem(ptr, reservationSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->destroyPhysicalMem(phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->destroyPhysicalMem(phPhysicalMemory2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        Kernel::fromHandle(kernelHandle)->destroy();
+    }
+}
+
+HWTEST_F(MultiDeviceModuleSetArgBufferTest,
+         givenCallsToSetArgBufferWithReservedMemoryWithMappingToFullReservedSizeThenSurfaceStateSizeisUnchanged) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         createModuleFromMockBinary(rootDeviceIndex);
         auto device = driverHandle->devices[rootDeviceIndex];
@@ -2510,13 +2591,106 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
                 baseAlloc = alloc;
             }
         }
+        auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+        auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
+        auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        length.length = static_cast<uint32_t>(baseAlloc->getUnderlyingBufferSize() - 1);
+        EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
+        EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+        EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
         EXPECT_TRUE(phys1Resident);
-        EXPECT_EQ(0u, baseAlloc->getExtendedBufferSize());
         res = context->unMapVirtualMem(ptr, reservationSize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->freeVirtualMem(ptr, reservationSize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->destroyPhysicalMem(phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        Kernel::fromHandle(kernelHandle)->destroy();
+    }
+}
+
+HWTEST_F(MultiDeviceModuleSetArgBufferTest,
+         givenCallsToSetArgBufferWithReservedMemoryWithMappingLargerThan4GBThenSurfaceStateSizeProgrammedDoesNotExceed4GB) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        createModuleFromMockBinary(rootDeviceIndex);
+        auto device = driverHandle->devices[rootDeviceIndex];
+        driverHandle->devices[rootDeviceIndex]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
+            std::make_unique<NEO::MockMemoryOperations>();
+
+        ze_kernel_handle_t kernelHandle;
+        void *ptr = nullptr;
+        size_t size = MemoryConstants::pageSize64k;
+        size_t reservationSize = size * 4;
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.pKernelName = kernelName.c_str();
+        ze_result_t res = modules[rootDeviceIndex]->createKernel(&kernelDesc, &kernelHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->reserveVirtualMem(nullptr, reservationSize, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ze_physical_mem_desc_t desc = {};
+        desc.size = size;
+        ze_physical_mem_handle_t phPhysicalMemory;
+        res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ze_physical_mem_handle_t phPhysicalMemory2;
+        res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ze_physical_mem_handle_t phPhysicalMemory3;
+        res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory3);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->mapVirtualMem(ptr, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + size);
+        res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        void *offsetAddress2 = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + (size * 2));
+        res = context->mapVirtualMem(offsetAddress2, size, phPhysicalMemory3, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+        auto virtualAlloc = svmAllocsManager->getSVMAlloc(ptr);
+        virtualAlloc->virtualReservationData->mappedAllocations.at(offsetAddress)->mappedAllocation->allocation->setSize((MemoryConstants::gigaByte * 4) - MemoryConstants::pageSize64k);
+
+        L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+        kernel->setArgBuffer(0, sizeof(ptr), &ptr);
+
+        virtualAlloc->virtualReservationData->mappedAllocations.at(offsetAddress)->mappedAllocation->allocation->setSize(size);
+
+        bool phys1Resident = false;
+        bool phys2Resident = false;
+        for (auto alloc : kernel->getResidencyContainer()) {
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
+                phys1Resident = true;
+            }
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
+                phys2Resident = true;
+            }
+        }
+        auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+        auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
+        auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        length.length = static_cast<uint32_t>((MemoryConstants::gigaByte * 4) - 1);
+        EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
+        EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+        EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        EXPECT_TRUE(phys1Resident);
+        EXPECT_TRUE(phys2Resident);
+        res = context->unMapVirtualMem(ptr, size);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->unMapVirtualMem(offsetAddress, size);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->unMapVirtualMem(offsetAddress2, size);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->freeVirtualMem(ptr, reservationSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->destroyPhysicalMem(phPhysicalMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->destroyPhysicalMem(phPhysicalMemory2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = context->destroyPhysicalMem(phPhysicalMemory3);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         Kernel::fromHandle(kernelHandle)->destroy();
     }
