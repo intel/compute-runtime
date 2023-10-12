@@ -1357,11 +1357,47 @@ uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
     return CommonConstants::unspecifiedDeviceIndex;
 }
 
+size_t DrmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
+    AlignmentSelector::CandidateAlignment alignmentBase = alignmentSelector.selectAlignment(size);
+    size_t pageSizeAlignment = alignmentBase.alignment;
+    auto rootDeviceCount = this->executionEnvironment.rootDeviceEnvironments.size();
+
+    // If all devices can support HEAP EXTENDED, then that heap is used, otherwise the HEAP based on the size is used.
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceCount; rootDeviceIndex++) {
+        auto gfxPartition = getGfxPartition(rootDeviceIndex);
+        if (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0) {
+            auto alignSize = size >= 8 * MemoryConstants::gigaByte && Math::isPow2(size);
+            if (DebugManager.flags.UseHighAlignmentForHeapExtended.get() != -1) {
+                alignSize = !!DebugManager.flags.UseHighAlignmentForHeapExtended.get();
+            }
+
+            if (alignSize) {
+                pageSizeAlignment = Math::prevPowerOfTwo(size);
+            }
+
+            *heap = HeapIndex::HEAP_EXTENDED;
+        } else {
+            pageSizeAlignment = alignmentBase.alignment;
+            *heap = alignmentBase.heap;
+            break;
+        }
+    }
+    return pageSizeAlignment;
+}
+
 AddressRange DrmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::HEAP_STANDARD, MemoryConstants::pageSize64k);
+}
+
+AddressRange DrmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) {
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
     for (auto rootDeviceIndex : rootDeviceIndices) {
-        gpuVa = acquireGpuRange(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        if (heap == HeapIndex::HEAP_EXTENDED) {
+            gpuVa = acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heap, alignment);
+        } else {
+            gpuVa = acquireGpuRange(size, rootDeviceIndex, heap);
+        }
         if (gpuVa != 0u) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;
             break;

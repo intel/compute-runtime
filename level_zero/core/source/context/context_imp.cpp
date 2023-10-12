@@ -994,11 +994,13 @@ NEO::VirtualMemoryReservation *ContextImp::findSupportedVirtualReservation(const
 ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
                                           size_t size,
                                           void **pptr) {
-    if ((getPageSizeRequired(size) != size)) {
+    NEO::HeapIndex heap;
+    size_t pageSize;
+    if ((getPageAlignedSizeRequired(size, &heap, &pageSize) != size)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
     NEO::VirtualMemoryReservation *virtualMemoryReservation = new NEO::VirtualMemoryReservation;
-    virtualMemoryReservation->virtualAddressRange = this->driverHandle->getMemoryManager()->reserveGpuAddress(reinterpret_cast<uint64_t>(pStart), size, this->driverHandle->rootDeviceIndices, &virtualMemoryReservation->rootDeviceIndex);
+    virtualMemoryReservation->virtualAddressRange = this->driverHandle->getMemoryManager()->reserveGpuAddressOnHeap(reinterpret_cast<uint64_t>(pStart), size, this->driverHandle->rootDeviceIndices, &virtualMemoryReservation->rootDeviceIndex, heap, pageSize);
     if (virtualMemoryReservation->virtualAddressRange.address == 0) {
         delete virtualMemoryReservation;
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -1037,25 +1039,41 @@ ze_result_t ContextImp::freeVirtualMem(const void *ptr,
     }
 }
 
-size_t ContextImp::getPageSizeRequired(size_t size) {
-    return std::max(Math::prevPowerOfTwo(size), MemoryConstants::pageSize64k);
+size_t ContextImp::getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired) {
+    [[maybe_unused]] NEO::HeapIndex heap;
+    size_t pageSize;
+    pageSize = this->driverHandle->getMemoryManager()->selectAlignmentAndHeap(size, &heap);
+    if (heapRequired) {
+        *heapRequired = heap;
+    }
+    if (pageSizeRequired) {
+        *pageSizeRequired = pageSize;
+    }
+    // Given a size larger than the pageSize, then round the size up to the next pageSize alignment if unaligned
+    if (size > pageSize) {
+        return ((size + pageSize) & (~pageSize));
+    }
+    return pageSize;
 }
 
 ze_result_t ContextImp::queryVirtualMemPageSize(ze_device_handle_t hDevice,
                                                 size_t size,
                                                 size_t *pagesize) {
-    *pagesize = getPageSizeRequired(size);
+    // Retrieve the page size and heap required for this allocation size requested.
+    getPageAlignedSizeRequired(size, nullptr, pagesize);
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ContextImp::createPhysicalMem(ze_device_handle_t hDevice,
                                           ze_physical_mem_desc_t *desc,
                                           ze_physical_mem_handle_t *phPhysicalMemory) {
-    if ((getPageSizeRequired(desc->size) != desc->size)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-    }
+
     auto device = Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
+
+    if ((getPageAlignedSizeRequired(desc->size, nullptr, nullptr) != desc->size)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
 
     NEO::AllocationProperties physicalDeviceMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                              true,
@@ -1101,15 +1119,16 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
     std::map<void *, NEO::PhysicalMemoryAllocation *>::iterator physicalIt;
     NEO::PhysicalMemoryAllocation *allocationNode = nullptr;
 
-    if ((getPageSizeRequired(size) != size)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
-    }
     auto lockPhysical = this->driverHandle->getMemoryManager()->lockPhysicalMemoryAllocationMap();
     physicalIt = this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(hPhysicalMemory));
     if (physicalIt != this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().end()) {
         allocationNode = physicalIt->second;
     } else {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if ((getPageAlignedSizeRequired(size, nullptr, nullptr) != size)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
     }
 
     NEO::VirtualMemoryReservation *virtualMemoryReservation = nullptr;

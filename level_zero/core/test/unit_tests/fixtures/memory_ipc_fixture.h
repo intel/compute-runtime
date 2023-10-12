@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -411,6 +412,13 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
     AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) override {
         return {};
     }
+    AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override {
+        return {};
+    }
+    size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override {
+        *heap = HeapIndex::HEAP_STANDARD;
+        return MemoryConstants::pageSize64k;
+    }
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
     NEO::GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const NEO::AllocationData &allocationData) override { return nullptr; };
     NEO::GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const NEO::AllocationData &allocationData) override { return nullptr; };
@@ -628,6 +636,13 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
     double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override { return 0; }
     AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) override {
         return {};
+    }
+    AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override {
+        return {};
+    }
+    size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override {
+        *heap = HeapIndex::HEAP_STANDARD;
+        return MemoryConstants::pageSize64k;
     }
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
     NEO::GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const NEO::AllocationData &allocationData) override { return nullptr; };

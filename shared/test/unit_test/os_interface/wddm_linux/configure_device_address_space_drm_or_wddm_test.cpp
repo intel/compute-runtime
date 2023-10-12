@@ -709,7 +709,7 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleThenSharedHandle
     memoryManager.freeGraphicsMemoryImpl(alloc);
 }
 
-TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleWihtoutAllocationThenSharedHandleStillClosed) {
+TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleWithoutAllocationThenSharedHandleStillClosed) {
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
     osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
     osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;

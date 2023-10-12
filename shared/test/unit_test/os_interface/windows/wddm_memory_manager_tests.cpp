@@ -1113,12 +1113,30 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenSelectAlignmentAndHeapCalledThenCorrectHeapReturned) {
+    HeapIndex heap = HeapIndex::HEAP_STANDARD;
+    auto alignment = memoryManager->selectAlignmentAndHeap(MemoryConstants::pageSize64k, &heap);
+    EXPECT_EQ(heap, HeapIndex::HEAP_STANDARD64KB);
+    EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressRangeIsNonZero) {
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
-    auto addressRange = memoryManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
+    HeapIndex heap = HeapIndex::HEAP_STANDARD;
+    auto alignment = memoryManager->selectAlignmentAndHeap(MemoryConstants::pageSize64k, &heap);
+    EXPECT_EQ(heap, HeapIndex::HEAP_STANDARD64KB);
+    EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
+    auto addressRange = memoryManager->reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
     auto gmmHelper = memoryManager->getGmmHelper(0);
+    EXPECT_EQ(0u, rootDeviceIndexReserved);
+    EXPECT_NE(0u, gmmHelper->decanonize(addressRange.address));
+    EXPECT_EQ(MemoryConstants::pageSize64k, addressRange.size);
+
+    memoryManager->freeGpuAddress(addressRange, 0);
+
+    addressRange = memoryManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(0u, rootDeviceIndexReserved);
     EXPECT_NE(0u, gmmHelper->decanonize(addressRange.address));
     EXPECT_EQ(MemoryConstants::pageSize64k, addressRange.size);

@@ -913,16 +913,26 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
     return mapGpuVirtualAddress(allocation, requiredGpuPtr);
 }
 
+size_t WddmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
+    AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(size);
+    *heap = HeapIndex::HEAP_STANDARD64KB;
+    return alignment.alignment;
+}
+
 AddressRange WddmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::HEAP_STANDARD64KB, MemoryConstants::pageSize64k);
+}
+
+AddressRange WddmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) {
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
     size_t reservedSize = 0;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
-        status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(requiredStartAddress, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size, &gpuVa);
+        status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(requiredStartAddress, gfxPartition->getHeapMinimalAddress(heap), gfxPartition->getHeapLimit(heap), size, &gpuVa);
         if (requiredStartAddress != 0ull && status != STATUS_SUCCESS) {
-            status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size, &gpuVa);
+            status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(heap), gfxPartition->getHeapLimit(heap), size, &gpuVa);
         }
         if (status == STATUS_SUCCESS) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;

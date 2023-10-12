@@ -22,6 +22,7 @@ namespace NEO {
 struct MemoryReservationMock : public MockWddmMemoryManager {
     using MemoryManager::freeGpuAddress;
     using MemoryManager::reserveGpuAddress;
+    using MemoryManager::reserveGpuAddressOnHeap;
     MemoryReservationMock(NEO::ExecutionEnvironment &executionEnvironment) : MockWddmMemoryManager(executionEnvironment) {}
 };
 
@@ -50,8 +51,15 @@ TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReserve
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
-    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     auto gmmHelper = memManager->getGmmHelper(0);
+    auto addressRange = memManager->reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved, HeapIndex::HEAP_STANDARD64KB, MemoryConstants::pageSize64k);
+
+    EXPECT_EQ(rootDeviceIndexReserved, 0u);
+    EXPECT_LE(memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    memManager->freeGpuAddress(addressRange, 0);
+
+    addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
 
     EXPECT_EQ(rootDeviceIndexReserved, 0u);
     EXPECT_LE(memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
@@ -64,8 +72,16 @@ TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReserve
     rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
     uint64_t invalidAddress = 0x1234;
-    auto addressRange = memManager->reserveGpuAddress(invalidAddress, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     auto gmmHelper = memManager->getGmmHelper(0);
+    auto addressRange = memManager->reserveGpuAddressOnHeap(invalidAddress, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved, HeapIndex::HEAP_STANDARD64KB, MemoryConstants::pageSize64k);
+    EXPECT_NE(invalidAddress, addressRange.address);
+
+    EXPECT_EQ(rootDeviceIndexReserved, 0u);
+    EXPECT_LE(memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    memManager->freeGpuAddress(addressRange, 0);
+
+    addressRange = memManager->reserveGpuAddress(invalidAddress, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_NE(invalidAddress, addressRange.address);
 
     EXPECT_EQ(rootDeviceIndexReserved, 0u);
@@ -78,11 +94,22 @@ TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReserve
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
-    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
+    auto gmmHelper = memManager->getGmmHelper(0);
+    auto addressRange = memManager->reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved, HeapIndex::HEAP_STANDARD64KB, MemoryConstants::pageSize64k);
     auto previousAddress = addressRange.address;
     memManager->freeGpuAddress(addressRange, 0);
-    auto newAddressRange = memManager->reserveGpuAddress(previousAddress, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
-    auto gmmHelper = memManager->getGmmHelper(0);
+    auto newAddressRange = memManager->reserveGpuAddressOnHeap(previousAddress, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved, HeapIndex::HEAP_STANDARD64KB, MemoryConstants::pageSize64k);
+    EXPECT_EQ(previousAddress, addressRange.address);
+
+    EXPECT_EQ(rootDeviceIndexReserved, 0u);
+    EXPECT_LE(memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
+    memManager->freeGpuAddress(addressRange, 0);
+
+    addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
+    previousAddress = addressRange.address;
+    memManager->freeGpuAddress(addressRange, 0);
+    newAddressRange = memManager->reserveGpuAddress(previousAddress, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(previousAddress, addressRange.address);
 
     EXPECT_EQ(rootDeviceIndexReserved, 0u);
@@ -109,7 +136,10 @@ TEST(WddmMemoryReservationFailTest, givenWddmMemoryManagerWhenGpuAddressReservat
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
-    auto addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
+    auto addressRange = memManager->reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved, HeapIndex::HEAP_STANDARD64KB, MemoryConstants::pageSize64k);
+    EXPECT_EQ(addressRange.address, 0ull);
+    EXPECT_EQ(addressRange.size, 0u);
+    addressRange = memManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(addressRange.address, 0ull);
     EXPECT_EQ(addressRange.size, 0u);
 }
