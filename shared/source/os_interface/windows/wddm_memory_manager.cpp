@@ -111,6 +111,8 @@ bool WddmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalA
 }
 
 GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    auto memoryBanks = static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong());
+    const auto memoryPool = (memoryBanks == 0) ? MemoryPool::SystemCpuInaccessible : MemoryPool::LocalCpuInaccessible;
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
@@ -120,7 +122,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const Alloca
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
-                                                       MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
+                                                       memoryPool, allocationData.flags.shareable, maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
     if (!createPhysicalAllocation(allocation.get())) {
         return nullptr;
@@ -136,6 +138,9 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
         return allocateHugeGraphicsMemory(allocationData, false);
     }
 
+    auto memoryBanks = static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong());
+    const auto memoryPool = (memoryBanks == 0) ? MemoryPool::SystemCpuInaccessible : MemoryPool::LocalCpuInaccessible;
+
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
     systemMemoryStorageInfo.isLockable = allocationData.storageInfo.isLockable;
@@ -144,7 +149,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
-                                                       MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
+                                                       memoryPool, allocationData.flags.shareable, maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
     void *requiredGpuVa = nullptr;
     adjustGpuPtrToHostAddressSpace(*allocation.get(), requiredGpuVa);
@@ -158,10 +163,13 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
+    UNRECOVERABLE_IF(allocationData.imgInfo->useLocalMemory);
+    const auto memoryPool = MemoryPool::SystemCpuInaccessible;
+
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.imgInfo->size,
-                                                       nullptr, MemoryPool::SystemCpuInaccessible,
+                                                       nullptr, memoryPool,
                                                        0u, // shareable
                                                        maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
@@ -549,7 +557,8 @@ bool WddmMemoryManager::isNTHandle(osHandle handle, uint32_t rootDeviceIndex) {
 }
 
 GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex, void *mapPointer) {
-    auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, maxOsContextCount, 0llu);
+    const auto memoryPool = MemoryPool::LocalCpuInaccessible;
+    auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, memoryPool, maxOsContextCount, 0llu);
 
     bool status = ntHandle ? getWddm(rootDeviceIndex).openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)), allocation.get())
                            : getWddm(rootDeviceIndex).openSharedHandle(handle, allocation.get());

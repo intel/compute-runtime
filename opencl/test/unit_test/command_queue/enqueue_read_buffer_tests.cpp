@@ -612,7 +612,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedB
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    static_cast<MemoryAllocation *>(graphicsAllocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(graphicsAllocation)->overrideMemoryPool(MemoryPool::System4KBPages);
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
 
     MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
@@ -644,7 +644,6 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedB
                                          nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(graphicsAllocation->isLocked());
     EXPECT_TRUE(mockCmdQ->cpuDataTransferHandlerCalled);
 }
 

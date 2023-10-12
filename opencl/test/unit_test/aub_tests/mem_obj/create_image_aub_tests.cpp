@@ -221,17 +221,14 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
     auto destGpuAddress = reinterpret_cast<uint32_t *>(allocation->getGpuAddress());
     pCmdQ->flush();
 
-    auto address = (int *)image->getCpuAddress();
     auto currentCounter = 0;
     for (auto array = 0u; array < imageDesc.image_array_size; array++) {
         for (auto height = 0u; height < imageHeight; height++) {
             for (auto element = 0u; element < imageDesc.image_width; element++) {
                 auto offset = (array * imgInfo.slicePitch + element * pixelSize + height * imgInfo.rowPitch) / 4;
-                if (MemoryPoolHelper::isSystemMemoryPool(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool()) == false) {
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&destGpuAddress[offset], &currentCounter, pixelSize);
-                } else {
-                    EXPECT_EQ(currentCounter, address[offset]);
-                }
+
+                AUBCommandStreamFixture::expectMemory<FamilyType>(&destGpuAddress[offset], &currentCounter, pixelSize);
+
                 currentCounter++;
             }
         }

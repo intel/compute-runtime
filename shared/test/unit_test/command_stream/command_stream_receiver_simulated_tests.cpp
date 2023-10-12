@@ -535,6 +535,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
     MemoryPool poolsWith4kPages[] = {
         MemoryPool::System4KBPages,
         MemoryPool::System4KBPagesWith32BitGpuAddressing,
+        MemoryPool::LocalCpuInaccessible,
         MemoryPool::SystemCpuInaccessible};
 
     for (size_t i = 0; i < arrayCount(poolsWith4kPages); i++) {

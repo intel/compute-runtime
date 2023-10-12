@@ -473,7 +473,6 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenForcedCpuCopyWhenEnqueueWriteCompresse
                                           nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(allocation->isLocked());
     EXPECT_TRUE(mockCmdQ->cpuDataTransferHandlerCalled);
 }
 

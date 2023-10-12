@@ -560,7 +560,16 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageThenBuiltinKernelIsResolved
     pCmdQ->finish();
 }
 
-HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageThenKernelRequiresMigration) {
+struct EnqueueWriteImageMigrationTest : public EnqueueWriteImageTest {
+    void SetUp() override {
+        DebugManager.flags.EnableLocalMemory.set(1);
+        EnqueueWriteImageTest::SetUp();
+    }
+
+    DebugManagerStateRestore restore;
+};
+
+HWTEST_F(EnqueueWriteImageMigrationTest, givenMultiRootDeviceImageWhenEnqueueWriteImageThenKernelRequiresMigration) {
 
     MockDefaultContext context{true};
 
@@ -611,7 +620,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageTh
     pImage->release();
 }
 
-HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIsCalledMultipleTimesThenEachKernelUsesDifferentImage) {
+HWTEST_F(EnqueueWriteImageMigrationTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIsCalledMultipleTimesThenEachKernelUsesDifferentImage) {
 
     MockDefaultContext context{true};
 
@@ -694,7 +703,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIs
     pImage->release();
 }
 
-HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWriteImageIsCalledThenCommandQueueIsFlushed) {
+HWTEST_F(EnqueueWriteImageMigrationTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWriteImageIsCalledThenCommandQueueIsFlushed) {
     MockDefaultContext context{true};
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
@@ -717,7 +726,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWr
     pImage->release();
 }
 
-HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWriteImageIsCalledThenTlbCacheIsInvalidated) {
+HWTEST_F(EnqueueWriteImageMigrationTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWriteImageIsCalledThenTlbCacheIsInvalidated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     MockDefaultContext context{true};

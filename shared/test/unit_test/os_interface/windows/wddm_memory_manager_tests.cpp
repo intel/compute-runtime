@@ -857,7 +857,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
     AllocationProperties properties(0, false, 0, AllocationType::SHARED_BUFFER, false, false, 0);
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -979,21 +979,50 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndHugeSizeWhenAskedToC
     AllocationData allocationData;
     allocationData.size = 2ULL * MemoryConstants::pageSize64k;
     allocationData.flags.shareable = true;
+
     auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_TRUE(memoryManager->allocateHugeGraphicsMemoryCalled);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenMemoryBanksWhenAllocatingByKmdThenSetCorrectPool) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+
+    allocationData.storageInfo.memoryBanks = 0;
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+
+    allocationData.storageInfo.memoryBanks = 3;
+    allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndSmallSizeWhenAskedToCreatePhysicalGraphicsAllocationThenValidAllocationIsReturned) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    MemoryManager::AllocationStatus status;
+
     AllocationData allocationData;
     allocationData.size = 4096u;
     allocationData.flags.shareable = true;
-    MemoryManager::AllocationStatus status;
+
+    allocationData.storageInfo.memoryBanks = 0;
     auto allocation = memoryManager->allocatePhysicalDeviceMemory(allocationData, status);
     EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+
+    allocationData.storageInfo.memoryBanks = 3;
+    allocation = memoryManager->allocatePhysicalDeviceMemory(allocationData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
 }
 

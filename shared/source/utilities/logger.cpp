@@ -266,6 +266,8 @@ const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation) {
         return "System64KBPagesWith32BitGpuAddressing";
     case MemoryPool::SystemCpuInaccessible:
         return "SystemCpuInaccessible";
+    case MemoryPool::LocalCpuInaccessible:
+        return "LocalCpuInaccessible";
     case MemoryPool::LocalMemory:
         return "LocalMemory";
     }

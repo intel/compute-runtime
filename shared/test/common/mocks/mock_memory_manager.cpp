@@ -268,7 +268,7 @@ GraphicsAllocation *MockMemoryManagerFailFirstAllocation::allocateNonSystemGraph
     if (!allocation) {
         allocation = allocateGraphicsMemory(allocationData);
     }
-    static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::LocalCpuInaccessible);
     return allocation;
 }
 

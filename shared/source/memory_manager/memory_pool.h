@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ enum class MemoryPool {
     System4KBPagesWith32BitGpuAddressing,
     System64KBPagesWith32BitGpuAddressing,
     SystemCpuInaccessible,
+    LocalCpuInaccessible,
     LocalMemory,
 };
 
@@ -26,6 +27,7 @@ inline bool isSystemMemoryPool(Args... pool) {
     return ((pool == MemoryPool::System4KBPages ||
              pool == MemoryPool::System64KBPages ||
              pool == MemoryPool::System4KBPagesWith32BitGpuAddressing ||
+             pool == MemoryPool::SystemCpuInaccessible ||
              pool == MemoryPool::System64KBPagesWith32BitGpuAddressing) &&
             ...);
 }
