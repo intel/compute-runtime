@@ -1112,7 +1112,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
         mock->context.receivedVmBindPatIndex.reset();
         mock->context.receivedVmUnbindPatIndex.reset();
 
-        bo.setPatIndex(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, (debugFlag == 1 && closSupported)));
+        bo.setPatIndex(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, (debugFlag == 1 && closSupported), true));
 
         operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
 
@@ -1163,7 +1163,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
     BufferObject bo(0, mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
     DrmAllocation allocation(0, 1, AllocationType::BUFFER, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
 
-    EXPECT_ANY_THROW(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false));
+    EXPECT_ANY_THROW(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false, false));
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBindCalledThenSetCorrectPatIndexExtension) {
@@ -1224,6 +1224,68 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
     EXPECT_EQ(1u, mock->context.receivedVmUnbindPatIndex.value());
 }
 
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndexForDeviceMem) {
+    DebugManager.flags.UseVmBind.set(1);
+    DebugManager.flags.ClosEnabled.set(1);
+    DebugManager.flags.OverridePatIndex.set(1);
+    DebugManager.flags.OverridePatIndexForDeviceMemory.set(2);
+    DebugManager.flags.OverridePatIndexForSystemMemory.set(3);
+
+    mock->bindAvailable = true;
+    mock->vmBindPatIndexProgrammingSupported = true;
+
+    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
+
+    auto patIndex = mock->getPatIndex(nullptr, AllocationType::BUFFER, CacheRegion::Default, CachePolicy::WriteBack, false, false);
+    EXPECT_EQ(2u, patIndex);
+
+    MockBufferObject bo(0, mock, patIndex, 0, 0, 1);
+    DrmAllocation allocation(0, AllocationType::BUFFER, &bo, nullptr, 0x1234000, 1, MemoryPool::LocalMemory);
+
+    GraphicsAllocation *allocPtr = &allocation;
+
+    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+
+    EXPECT_EQ(2u, mock->context.receivedVmBindPatIndex.value());
+
+    operationHandler->evict(device, allocation);
+
+    EXPECT_EQ(2u, mock->context.receivedVmUnbindPatIndex.value());
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndexForSystemMem) {
+    DebugManager.flags.UseVmBind.set(1);
+    DebugManager.flags.ClosEnabled.set(1);
+    DebugManager.flags.OverridePatIndex.set(1);
+    DebugManager.flags.OverridePatIndexForDeviceMemory.set(2);
+    DebugManager.flags.OverridePatIndexForSystemMemory.set(3);
+
+    mock->bindAvailable = true;
+    mock->vmBindPatIndexProgrammingSupported = true;
+
+    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
+
+    auto patIndex = mock->getPatIndex(nullptr, AllocationType::BUFFER, CacheRegion::Default, CachePolicy::WriteBack, false, true);
+    EXPECT_EQ(3u, patIndex);
+
+    MockBufferObject bo(0, mock, patIndex, 0, 0, 1);
+    DrmAllocation allocation(0, AllocationType::BUFFER, &bo, nullptr, 0x1234000, 1, MemoryPool::System4KBPages);
+
+    GraphicsAllocation *allocPtr = &allocation;
+
+    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+
+    EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
+
+    operationHandler->evict(device, allocation);
+
+    EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
+}
+
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCachedInCacheRegionWhenVmBindIsCalledThenSetPatIndexCorrespondingToRequestedRegion) {
     DebugManager.flags.UseVmBind.set(1);
     DebugManager.flags.ClosEnabled.set(1);
@@ -1244,7 +1306,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     for (auto cacheRegion : {CacheRegion::Default, CacheRegion::Region1, CacheRegion::Region2}) {
-        EXPECT_TRUE(static_cast<DrmAllocation *>(allocation)->setCacheAdvice(mock, 32 * MemoryConstants::kiloByte, cacheRegion));
+        EXPECT_TRUE(static_cast<DrmAllocation *>(allocation)->setCacheAdvice(mock, 32 * MemoryConstants::kiloByte, cacheRegion, false));
 
         mock->context.receivedVmBindPatIndex.reset();
         operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));

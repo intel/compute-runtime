@@ -54,6 +54,7 @@ class DrmMock : public Drm {
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;
     using Drm::virtualMemoryIds;
+    using Drm::vmBindPatIndexProgrammingSupported;
 
     DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment);
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}

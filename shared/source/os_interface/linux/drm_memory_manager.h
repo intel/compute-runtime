@@ -71,7 +71,7 @@ class DrmMemoryManager : public MemoryManager {
     AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) override;
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
     MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
-                                                                    uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle);
+                                                                    uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool);
 
     bool hasPageFaultsEnabled(const Device &neoDevice) override;
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;

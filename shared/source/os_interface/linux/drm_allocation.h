@@ -104,7 +104,7 @@ class DrmAllocation : public GraphicsAllocation {
     int peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) override;
 
     bool setCacheRegion(Drm *drm, CacheRegion regionIndex);
-    bool setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex);
+    bool setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex, bool isSystemMemoryPool);
     void setCachePolicy(CachePolicy memType);
 
     bool setPreferredLocation(Drm *drm, PreferredLocation memoryLocation);

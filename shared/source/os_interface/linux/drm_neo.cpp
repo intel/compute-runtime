@@ -1193,7 +1193,15 @@ bool Drm::isVmBindAvailable() {
     return bindAvailable;
 }
 
-uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) const {
+uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled, bool isSystemMemory) const {
+    if ((DebugManager.flags.OverridePatIndexForSystemMemory.get() != -1) && isSystemMemory) {
+        return static_cast<uint64_t>(DebugManager.flags.OverridePatIndexForSystemMemory.get());
+    }
+
+    if ((DebugManager.flags.OverridePatIndexForDeviceMemory.get() != -1) && !isSystemMemory) {
+        return static_cast<uint64_t>(DebugManager.flags.OverridePatIndexForDeviceMemory.get());
+    }
+
     if (DebugManager.flags.OverridePatIndex.get() != -1) {
         return static_cast<uint64_t>(DebugManager.flags.OverridePatIndex.get());
     }

@@ -154,15 +154,15 @@ bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
         return false;
     }
 
-    return setCacheAdvice(drm, regionSize, regionIndex);
+    return setCacheAdvice(drm, regionSize, regionIndex, !isAllocatedInLocalMemoryPool());
 }
 
-bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex) {
+bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex, bool isSystemMemoryPool) {
     if (!drm->getCacheInfo()->getCacheRegion(regionSize, regionIndex)) {
         return false;
     }
 
-    auto patIndex = drm->getPatIndex(getDefaultGmm(), allocationType, regionIndex, CachePolicy::WriteBack, true);
+    auto patIndex = drm->getPatIndex(getDefaultGmm(), allocationType, regionIndex, CachePolicy::WriteBack, true, isSystemMemoryPool);
 
     if (fragmentsStorage.fragmentCount > 0) {
         for (uint32_t i = 0; i < fragmentsStorage.fragmentCount; i++) {

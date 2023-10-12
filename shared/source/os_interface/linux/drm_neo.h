@@ -245,7 +245,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size);
     MOCKABLE_VIRTUAL void notifyLastCommandQueueDestroyed(uint32_t handle);
 
-    uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) const;
+    uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled, bool isSystemMemory) const;
     bool isVmBindPatIndexProgrammingSupported() const { return vmBindPatIndexProgrammingSupported; }
     MOCKABLE_VIRTUAL bool getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate);
     MOCKABLE_VIRTUAL bool getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize);

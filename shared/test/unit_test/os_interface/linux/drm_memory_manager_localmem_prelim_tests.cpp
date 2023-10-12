@@ -61,7 +61,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithPrelimSup
                                                                                             size,
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
                                                                                             1,
-                                                                                            -1));
+                                                                                            -1,
+                                                                                            false));
     ASSERT_NE(nullptr, bo);
 
     EXPECT_EQ(1u, mock->ioctlCallsCount);
@@ -1980,7 +1981,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
                                                                                             size,
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
                                                                                             1,
-                                                                                            -1));
+                                                                                            -1,
+                                                                                            false));
     EXPECT_NE(nullptr, bo);
 
     std::string output = testing::internal::GetCapturedStdout();
