@@ -204,6 +204,23 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     }
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumPowerHandleSucceeds) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumPowerDomains(device->toHandle(), &count, NULL));
+    EXPECT_EQ(count, powerHandleComponentCount);
+
+    for (auto handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+
+    pLinuxSysmanImp->reInitSysmanDeviceResources();
+
+    count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumPowerDomains(device->toHandle(), &count, NULL));
+    EXPECT_EQ(count, powerHandleComponentCount);
+}
+
 TEST_F(SysmanDevicePowerFixture, GivenSetPowerLimitsWhenGettingPowerLimitsWhenHwmonInterfaceExistThenLimitsSetEarlierAreRetrieved) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {

@@ -13,7 +13,13 @@
 namespace L0 {
 namespace Sysman {
 
-TemperatureHandleContext::~TemperatureHandleContext() {}
+TemperatureHandleContext::~TemperatureHandleContext() {
+    releaseTemperatureHandles();
+}
+
+void TemperatureHandleContext::releaseTemperatureHandles() {
+    handleList.clear();
+}
 
 void TemperatureHandleContext::createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type) {
     std::unique_ptr<Temperature> pTemperature = std::make_unique<TemperatureImp>(pOsSysman, onSubdevice, subDeviceId, type);
@@ -42,6 +48,7 @@ ze_result_t TemperatureHandleContext::init(uint32_t subDeviceCount) {
 ze_result_t TemperatureHandleContext::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {
     std::call_once(initTemperatureOnce, [this]() {
         this->init(pOsSysman->getSubDeviceCount());
+        this->tempInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

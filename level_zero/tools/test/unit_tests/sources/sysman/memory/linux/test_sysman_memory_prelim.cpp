@@ -438,6 +438,44 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     }
 }
 
+TEST_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitializedWhenCallingZesSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceeds) {
+    pMemoryManager->localMemorySupported[0] = true;
+
+    pLinuxSysmanImp->releaseSysmanDeviceResources();
+    pLinuxSysmanImp->pDrm = pDrm;
+    pLinuxSysmanImp->reInitSysmanDeviceResources();
+
+    VariableBackup<std::map<uint32_t, PlatformMonitoringTech *>> pmtBackup(&pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject);
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        auto pPmt = new MockMemoryPmt(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                      deviceProperties.subdeviceId);
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
+    }
+
+    VariableBackup<FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto handle : handles) {
+        zes_mem_state_t state;
+
+        ze_result_t result = zesMemoryGetState(handle, &state);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
+        EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
+        EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
+    }
+
+    pLinuxSysmanImp->releasePmtObject();
+    delete pLinuxSysmanImp->pFwUtilInterface;
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+}
+
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenPmtObjectIsNullThenFailureRetuned) {
     for (auto &subDeviceIdToPmtEntry : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
         if (subDeviceIdToPmtEntry.second != nullptr) {

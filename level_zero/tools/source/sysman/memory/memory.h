@@ -36,14 +36,20 @@ struct MemoryHandleContext {
     ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory);
+    void releaseMemoryHandles();
 
     OsSysman *pOsSysman = nullptr;
     bool isLmemSupported = false;
     std::vector<std::unique_ptr<Memory>> handleList = {};
 
+    bool isMemoryInitDone() {
+        return memoryInitDone;
+    }
+
   private:
     void createHandle(ze_device_handle_t deviceHandle);
     std::once_flag initMemoryOnce;
+    bool memoryInitDone = false;
 };
 
 } // namespace L0
