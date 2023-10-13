@@ -14,7 +14,13 @@
 namespace L0 {
 namespace Sysman {
 
-MemoryHandleContext::~MemoryHandleContext() = default;
+MemoryHandleContext::~MemoryHandleContext() {
+    releaseMemoryHandles();
+}
+
+void MemoryHandleContext::releaseMemoryHandles() {
+    handleList.clear();
+}
 
 void MemoryHandleContext::createHandle(bool onSubdevice, uint32_t subDeviceId) {
     std::unique_ptr<Memory> pMemory = std::make_unique<MemoryImp>(pOsSysman, onSubdevice, subDeviceId);
@@ -39,6 +45,7 @@ ze_result_t MemoryHandleContext::init(uint32_t subDeviceCount) {
 ze_result_t MemoryHandleContext::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
     std::call_once(initMemoryOnce, [this]() {
         this->init(pOsSysman->getSubDeviceCount());
+        this->memoryInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

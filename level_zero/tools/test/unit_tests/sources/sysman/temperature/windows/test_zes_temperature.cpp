@@ -65,6 +65,14 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenEnumeratingTem
     EXPECT_EQ(count, temperatureHandleComponentCount);
 }
 
+TEST_F(SysmanDeviceTemperatureFixture, GivenTempDomainsAreEnumeratedWhenCallingIsTempInitCompletedThenVerifyTempInitializationIsCompleted) {
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, temperatureHandleComponentCount);
+
+    EXPECT_EQ(true, pSysmanDeviceImp->pTempHandleContext->isTempInitDone());
+}
+
 TEST_F(SysmanDeviceTemperatureFixture, GivenInvalidComponentCountWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);

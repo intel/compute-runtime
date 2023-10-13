@@ -37,13 +37,19 @@ struct TemperatureHandleContext {
     void init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature);
+    void releaseTemperatureHandles();
 
     OsSysman *pOsSysman = nullptr;
     std::vector<std::unique_ptr<Temperature>> handleList = {};
 
+    bool isTempInitDone() {
+        return tempInitDone;
+    }
+
   private:
     void createHandle(const ze_device_handle_t &deviceHandle, zes_temp_sensors_t type);
     std::once_flag initTemperatureOnce;
+    bool tempInitDone = false;
 };
 
 } // namespace L0

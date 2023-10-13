@@ -403,6 +403,42 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     }
 }
 
+TEST_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitializedWhenCallingZesSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceeds) {
+    pLinuxSysmanImp->releaseSysmanDeviceResources();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->reInitSysmanDeviceResources());
+
+    VariableBackup<std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *>> pmtBackup(&pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject);
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
+    auto subdeviceId = 0u;
+    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
+    do {
+        ze_bool_t onSubdevice = subDeviceCount == 0 ? false : true;
+        auto pPmt = new MockMemoryPmt(pFsAccess.get(), onSubdevice,
+                                      subdeviceId);
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
+    } while (++subdeviceId < subDeviceCount);
+
+    VariableBackup<L0::Sysman::FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto handle : handles) {
+        zes_mem_state_t state;
+
+        ze_result_t result = zesMemoryGetState(handle, &state);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
+        EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
+        EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
+    }
+
+    pLinuxSysmanImp->releasePmtObject();
+    delete pLinuxSysmanImp->pFwUtilInterface;
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+}
+
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenPmtObjectIsNullThenFailureRetuned) {
     for (auto &subDeviceIdToPmtEntry : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
         if (subDeviceIdToPmtEntry.second != nullptr) {

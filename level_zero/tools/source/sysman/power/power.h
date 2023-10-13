@@ -42,13 +42,20 @@ struct PowerHandleContext {
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower);
     ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower);
 
+    void releasePowerHandles();
+
     OsSysman *pOsSysman = nullptr;
     std::vector<Power *> handleList = {};
+
+    bool isPowerInitDone() {
+        return powerInitDone;
+    }
 
   private:
     void createHandle(ze_device_handle_t deviceHandle);
     std::once_flag initPowerOnce;
     void initPower();
+    bool powerInitDone = false;
 };
 
 } // namespace L0

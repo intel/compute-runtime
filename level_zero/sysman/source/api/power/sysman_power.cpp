@@ -15,10 +15,15 @@
 namespace L0 {
 namespace Sysman {
 
-PowerHandleContext::~PowerHandleContext() {
+void PowerHandleContext::releasePowerHandles() {
     for (Power *pPower : handleList) {
         delete pPower;
     }
+    handleList.clear();
+}
+
+PowerHandleContext::~PowerHandleContext() {
+    releasePowerHandles();
 }
 
 void PowerHandleContext::createHandle(ze_bool_t isSubDevice, uint32_t subDeviceId) {
@@ -43,6 +48,7 @@ ze_result_t PowerHandleContext::init(uint32_t subDeviceCount) {
 void PowerHandleContext::initPower() {
     std::call_once(initPowerOnce, [this]() {
         this->init(pOsSysman->getSubDeviceCount());
+        this->powerInitDone = true;
     });
 }
 

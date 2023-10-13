@@ -223,6 +223,20 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     }
 };
 
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumPowerHandleSucceeds, IsPVC) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(device->toHandle(), &count, NULL));
+    EXPECT_EQ(count, handleComponentCountForSingleTileDevice);
+
+    pSysmanDeviceImp->pTempHandleContext->handleList.clear();
+
+    pLinuxSysmanImp->reInitSysmanDeviceResources();
+
+    count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(device->toHandle(), &count, NULL));
+    EXPECT_EQ(count, handleComponentCountForSingleTileDevice);
+}
+
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndGlobalTemperatureThenValidTemperatureReadingsRetrieved, IsDG1) {
     auto handles = getTempHandles(handleComponentCountForNoSubDevices);
     for (auto &handle : handles) {

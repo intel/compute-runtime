@@ -73,6 +73,16 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     EXPECT_EQ(count, powerHandleComponentCount);
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenPowerDomainsAreEnumeratedWhenCallingIsPowerInitCompletedThenVerifyPowerInitializationIsCompleted) {
+    init(true);
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, powerHandleComponentCount);
+
+    EXPECT_EQ(true, pSysmanDeviceImp->pPowerHandleContext->isPowerInitDone());
+}
+
 TEST_F(SysmanDevicePowerFixture, GivenInvalidComponentCountWhenEnumeratingPowerDomainThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     init(true);
 
