@@ -133,6 +133,8 @@ TEST(MockOSTime, givenDeviceTimestampBaseNotEnabledWhenGetDeviceAndHostTimerThen
 }
 
 TEST(MockOSTime, givenDeviceTimestampBaseEnabledWhenGetDeviceAndHostTimerThenGpuTimestampIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(1);
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setOSTime(new MockOSTimeWithConstTimestamp());
 
