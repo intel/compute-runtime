@@ -142,6 +142,8 @@ struct EnqueueHandlerTimestampTest : public EnqueueHandlerTest {
 using EnqueueHandlerTimestampEnabledTest = EnqueueHandlerTimestampTest<true>;
 
 HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEnabledWhenEnqueueCommandWithoutKernelThenSubmitTimeStampIsSet) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(1);
     cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, properties));
 
@@ -180,6 +182,8 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
 using EnqueueHandlerTimestampDisabledTest = EnqueueHandlerTimestampTest<false>;
 
 HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacketsDisabledWhenEnqueueCommandWithoutKernelThenSubmitTimeStampIsSet) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(1);
     cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, properties));
 
