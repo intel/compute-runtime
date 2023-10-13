@@ -512,8 +512,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
                                                            MemoryPool::System4KBPages,
                                                            canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        MockBufferObject bo0(properties.rootDeviceIndex, &drm);
-        alloc->bufferObjects[0] = &bo0;
+        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -540,8 +539,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
                                                            MemoryPool::System4KBPages,
                                                            canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        MockBufferObject bo0(properties.rootDeviceIndex, &drm);
-        alloc->bufferObjects[0] = &bo0;
+        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -561,6 +559,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
     uint64_t sharedHandleAddress = 0x1234;
 
     bool failOnCreateGraphicsAllocationFromSharedHandle = false;
+    std::vector<std::unique_ptr<MockBufferObject>> mockBos;
 };
 
 struct DriverHandleObtaindFdMock : public L0::DriverHandleImp {

@@ -241,8 +241,17 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenInputEventsWhenDispatchingEn
 
     cl_event waitlist[] = {&event1, &event2};
 
+    // activate subcapture
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
     EXPECT_TRUE(cmdQ.timestampPacketDependenciesCleared);
+
+    // keep subcapture active
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, waitlist, nullptr);
+    EXPECT_FALSE(cmdQ.timestampPacketDependenciesCleared);
+
+    // deactivate subcapture
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, waitlist, nullptr);
+    EXPECT_FALSE(cmdQ.timestampPacketDependenciesCleared);
 
     CsrDependencies &outOfCsrDeps = aubCsr->recordedDispatchFlags.csrDependencies;
     EXPECT_EQ(0u, outOfCsrDeps.timestampPacketContainer.size());
