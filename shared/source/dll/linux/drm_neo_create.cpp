@@ -13,7 +13,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/drm_null_device.h"
 
 #include "hw_cmds.h"
 
@@ -32,12 +31,7 @@ const DeviceDescriptor deviceDescriptorTable[] = {
     {0, nullptr, nullptr}};
 
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    std::unique_ptr<Drm> drm;
-    if (DebugManager.flags.EnableNullHardware.get() == true) {
-        drm.reset(new DrmNullDevice(std::move(hwDeviceId), rootDeviceEnvironment));
-    } else {
-        drm.reset(new Drm(std::move(hwDeviceId), rootDeviceEnvironment));
-    }
+    auto drm = std::unique_ptr<Drm>(new Drm(std::move(hwDeviceId), rootDeviceEnvironment));
 
     if (!drm->queryDeviceIdAndRevision()) {
         return nullptr;

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,7 +15,6 @@ add_executable(igdrcl_${target_name}
                $<TARGET_OBJECTS:neo_shared_mocks>
                $<TARGET_OBJECTS:neo_unit_tests_config>
                $<TARGET_OBJECTS:mock_gmm>
-               ${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrap.h
                ${CMAKE_CURRENT_SOURCE_DIR}/main_linux_dll.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.cpp
