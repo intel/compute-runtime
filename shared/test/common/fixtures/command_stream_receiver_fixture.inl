@@ -15,6 +15,11 @@
 template <typename FamilyType>
 void CommandStreamReceiverSystolicFixture::testBody() {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    if (!commandStreamReceiver.pipelineSupportFlags.systolicMode) {
+        GTEST_SKIP();
+    }
+
     StreamProperties &streamProperties = commandStreamReceiver.getStreamProperties();
 
     commandStreamReceiver.isPreambleSent = true;

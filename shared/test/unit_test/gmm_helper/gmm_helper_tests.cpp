@@ -12,6 +12,7 @@
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -511,6 +512,53 @@ TEST_F(GmmHelperTests, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabi
     EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed);
 
     EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
+}
+
+TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingResourceThenPrintCompressionParams) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintGmmCompressionParams.set(true);
+
+    testing::internal::CaptureStdout();
+
+    StorageInfo storageInfo;
+    auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, storageInfo, true);
+    auto &flags = gmm->resourceParams.Flags;
+
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_NE(0u, output.size());
+
+    char expectedStr[512] = {};
+    snprintf(expectedStr, 512, "\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
+             flags.Gpu.CCS, flags.Gpu.UnifiedAuxSurface, flags.Info.RenderCompressed);
+
+    EXPECT_TRUE(hasSubstr(output, std::string(expectedStr)));
+}
+
+TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingImageResourceThenPrintCompressionParams) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintGmmCompressionParams.set(true);
+
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image3D;
+    imgDesc.imageWidth = 17;
+    imgDesc.imageHeight = 17;
+    imgDesc.imageDepth = 17;
+
+    testing::internal::CaptureStdout();
+
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+
+    auto gmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
+    auto &flags = gmm->resourceParams.Flags;
+
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_NE(0u, output.size());
+
+    char expectedStr[512] = {};
+    snprintf(expectedStr, 512, "\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
+             flags.Gpu.CCS, flags.Gpu.UnifiedAuxSurface, flags.Info.RenderCompressed);
+
+    EXPECT_TRUE(hasSubstr(output, std::string(expectedStr)));
 }
 
 TEST_F(GmmHelperTests, givenAlignmentValueWhenConstructingGmmThenSetAlignmentInResourceCreateObject) {

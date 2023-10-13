@@ -302,6 +302,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintImageBlitBlockCopyCmdDetails, false, "Prints X
 DECLARE_DEBUG_VARIABLE(bool, PrintCompletionFenceUsage, false, "Prints all usages of DRM completion fences")
 DECLARE_DEBUG_VARIABLE(bool, LogGdiCalls, false, "Log GDI calls")
 DECLARE_DEBUG_VARIABLE(bool, LogGdiCallsToFile, false, "Log GDI calls to file")
+DECLARE_DEBUG_VARIABLE(bool, PrintGmmCompressionParams, false, "Print Gmm compression resource params")
 
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
