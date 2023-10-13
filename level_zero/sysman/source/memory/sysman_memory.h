@@ -38,13 +38,19 @@ struct MemoryHandleContext {
     ze_result_t init(uint32_t subDeviceCount);
 
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory);
+    void releaseMemoryHandles();
 
     OsSysman *pOsSysman = nullptr;
     std::vector<std::unique_ptr<Memory>> handleList = {};
 
+    bool isMemoryInitDone() {
+        return memoryInitDone;
+    }
+
   private:
     void createHandle(bool onSubdevice, uint32_t subDeviceId);
     std::once_flag initMemoryOnce;
+    bool memoryInitDone = false;
 };
 
 } // namespace Sysman

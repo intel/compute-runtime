@@ -293,6 +293,9 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup() {
 void LinuxSysmanImp::releaseSysmanDeviceResources() {
     getSysmanDeviceImp()->pEngineHandleContext->releaseEngines();
     getSysmanDeviceImp()->pRasHandleContext->releaseRasHandles();
+    getSysmanDeviceImp()->pMemoryHandleContext->releaseMemoryHandles();
+    getSysmanDeviceImp()->pTempHandleContext->releaseTemperatureHandles();
+    getSysmanDeviceImp()->pPowerHandleContext->releasePowerHandles();
     if (!diagnosticsReset) {
         getSysmanDeviceImp()->pDiagnosticsHandleContext->releaseDiagnosticsHandles();
     }
@@ -340,6 +343,15 @@ void LinuxSysmanImp::reInitSysmanDeviceResources() {
     isMemoryDiagnostics = false;
     if (getSysmanDeviceImp()->pFirmwareHandleContext->isFirmwareInitDone()) {
         getSysmanDeviceImp()->pFirmwareHandleContext->init();
+    }
+    if (getSysmanDeviceImp()->pMemoryHandleContext->isMemoryInitDone()) {
+        getSysmanDeviceImp()->pMemoryHandleContext->init(getSysmanDeviceImp()->deviceHandles);
+    }
+    if (getSysmanDeviceImp()->pTempHandleContext->isTempInitDone()) {
+        getSysmanDeviceImp()->pTempHandleContext->init(getSysmanDeviceImp()->deviceHandles);
+    }
+    if (getSysmanDeviceImp()->pPowerHandleContext->isPowerInitDone()) {
+        getSysmanDeviceImp()->pPowerHandleContext->init(getSysmanDeviceImp()->deviceHandles, getCoreDeviceHandle());
     }
 }
 
