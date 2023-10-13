@@ -50,7 +50,7 @@ struct QueryTopologyTests : ::testing::Test {
                 return false;
             }
 
-            auto realEuCount = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount;
+            auto realEuCount = std::max(static_cast<uint32_t>(queryComputeSlicesEuCount / queryComputeSlicesSSCount), rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount);
             auto dataSize = static_cast<size_t>(std::ceil(realEuCount / 8.0));
 
             if (queryItem->length == 0) {
