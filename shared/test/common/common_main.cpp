@@ -172,6 +172,12 @@ int main(int argc, char **argv) {
     uint32_t subSlicePerSliceCount = 0;
     int32_t revId = -1;
     int dieRecovery = 0;
+    bool productOptionSelected = false;
+
+    std::vector<PRODUCT_FAMILY> selectedTestProducts;
+
+    auto baseTestFiles = testFiles;
+    auto baseTestFilesApiSpecific = testFilesApiSpecific;
 
     for (int i = 1; i < argc; ++i) {
         if (!strcmp("--disable_default_listener", argv[i])) {
@@ -209,13 +215,18 @@ int main(int argc, char **argv) {
                         productFamily = IGFX_UNKNOWN;
                     }
                 } else {
+                    bool selectAllProducts = (strcmp("*", argv[i]) == 0);
                     productFamily = IGFX_UNKNOWN;
                     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
                         if (hardwarePrefix[j] == nullptr)
                             continue;
-                        if (strcmp(hardwarePrefix[j], argv[i]) == 0) {
+                        if ((strcmp(hardwarePrefix[j], argv[i]) == 0) || selectAllProducts) {
                             productFamily = static_cast<PRODUCT_FAMILY>(j);
-                            break;
+                            selectedTestProducts.push_back(productFamily);
+
+                            if (!selectAllProducts) {
+                                break;
+                            }
                         }
                     }
                 }
@@ -226,6 +237,7 @@ int main(int argc, char **argv) {
                     std::cout << "product family: " << hardwarePrefix[productFamily] << " (" << productFamily << ")" << std::endl;
                 }
                 hwInfoForTests = *hardwareInfoTable[productFamily];
+                productOptionSelected = true;
             }
         } else if (!strcmp("--slices", argv[i])) {
             ++i;
@@ -267,121 +279,163 @@ int main(int argc, char **argv) {
         }
     }
 
-    productFamily = hwInfoForTests.platform.eProductFamily;
-    renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
-    PLATFORM &platform = hwInfoForTests.platform;
-    if (revId != -1) {
-        platform.usRevId = revId;
-    } else {
-        revId = platform.usRevId;
+    if (!productOptionSelected) {
+        selectedTestProducts.push_back(hwInfoForTests.platform.eProductFamily);
     }
 
-    adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);
-    // Platforms with uninitialized factory are not supported
-    if (!isPlatformSupported(hwInfoForTests)) {
-        std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
-        std::cout << "skipping tests" << std::endl;
-        return 0;
-    }
+    auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
+    auto defaultListener = listeners.default_result_printer();
 
-    binaryNameSuffix.append(hardwarePrefix[hwInfoForTests.platform.eProductFamily]);
+    defaultHwInfo = std::make_unique<HardwareInfo>();
 
-    setupTestFiles(getRunPath(argv[0]), revId);
+    CCustomEventListener *customEventListener = nullptr;
+    bool ultListenersInitialized = false;
+    bool gmmInitialized = false;
+    bool sipInitialized = false;
 
-    auto executionDirectory = getBaseExecutionDir();
-    executionDirectory += hardwarePrefix[productFamily];
-    executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
-    executionDirectory += "/";
-    executionDirectory += std::to_string(revId);
+    for (auto &selectedProduct : selectedTestProducts) {
+        hwInfoForTests = *hardwareInfoTable[selectedProduct];
+
+        productFamily = hwInfoForTests.platform.eProductFamily;
+        renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
+        PLATFORM &platform = hwInfoForTests.platform;
+
+        auto testRevId = revId;
+
+        if (testRevId != -1) {
+            platform.usRevId = testRevId;
+        } else {
+            testRevId = platform.usRevId;
+        }
+
+        adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);
+        // Platforms with uninitialized factory are not supported
+        if (!isPlatformSupported(hwInfoForTests)) {
+            std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
+            std::cout << "skipping tests" << std::endl;
+            return 0;
+        }
+
+        binaryNameSuffix = hardwarePrefix[hwInfoForTests.platform.eProductFamily];
+
+        testFiles = baseTestFiles;
+        testFilesApiSpecific = baseTestFilesApiSpecific;
+
+        setupTestFiles(getRunPath(argv[0]), testRevId);
+
+        auto executionDirectory = getBaseExecutionDir();
+        executionDirectory += hardwarePrefix[productFamily];
+        executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
+        executionDirectory += "/";
+        executionDirectory += std::to_string(testRevId);
 
 #ifdef WIN32
 #include <direct.h>
-    if (_chdir(executionDirectory.c_str())) {
-        std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
-    }
+        if (_chdir(executionDirectory.c_str())) {
+            std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
+        }
 #elif defined(__linux__)
 #include <unistd.h>
-    if (chdir(executionDirectory.c_str()) != 0) {
-        std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
-    }
+        if (chdir(executionDirectory.c_str()) != 0) {
+            std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
+        }
 #endif
 
-    if (!checkAubTestsExecutionPathValidity()) {
-        return -1;
+        if (!checkAubTestsExecutionPathValidity()) {
+            return -1;
+        }
+
+        *defaultHwInfo = hwInfoForTests;
+
+        if (!useDefaultListener) {
+            if (!customEventListener) {
+                customEventListener = new CCustomEventListener(defaultListener);
+            }
+            customEventListener->setHwPrefix(hardwarePrefix[productFamily]);
+        }
+
+        if (!ultListenersInitialized) {
+            if (!useDefaultListener) {
+                listeners.Release(defaultListener);
+
+                listeners.Append(customEventListener);
+            }
+
+            listeners.Append(new MemoryLeakListener);
+
+            addUltListener(listeners);
+            ultListenersInitialized = true;
+        }
+
+        if (!gEnvironment) {
+            gEnvironment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));
+        }
+
+        MockCompilerDebugVars fclDebugVars;
+        MockCompilerDebugVars igcDebugVars;
+
+        std::string builtInsFileName;
+        if (TestChecks::supportsImages(defaultHwInfo)) {
+            builtInsFileName = KernelBinaryHelper::BUILT_INS_WITH_IMAGES;
+        } else {
+            builtInsFileName = KernelBinaryHelper::BUILT_INS;
+        }
+        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
+        retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
+
+        gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
+        gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
+
+        int sigOut = setAlarm(enableAlarm);
+        if (sigOut != 0) {
+            return sigOut;
+        }
+
+        sigOut = setSegv(enableSegv);
+        if (sigOut != 0) {
+            return sigOut;
+        }
+
+        sigOut = setAbrt(enableAbrt);
+        if (sigOut != 0) {
+            return sigOut;
+        }
+
+        if (!gmmInitialized) {
+            if (useMockGmm) {
+                GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
+            } else {
+                GmmInterface::initialize(nullptr, nullptr);
+            }
+            gmmInitialized = true;
+        }
+
+        if (!sipInitialized) {
+            MockSipData::mockSipKernel.reset(new MockSipKernel());
+            if (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx) {
+                MockSipData::useMockSip = false;
+            }
+            sipInitialized = true;
+        }
+
+        retVal = RUN_ALL_TESTS();
+
+        if (showTestStats) {
+            std::cout << getTestStats() << std::endl;
+        }
+
+        if (dumpTestStats) {
+            std::ofstream dumpTestStatsFile;
+            dumpTestStatsFile.open(dumpTestStatsFileName);
+            dumpTestStatsFile << getTestStatsJson();
+            dumpTestStatsFile.close();
+        }
+        cleanTestHelpers();
+
+        if (retVal != 0) {
+            break;
+        }
     }
-
-    defaultHwInfo = std::make_unique<HardwareInfo>();
-    *defaultHwInfo = hwInfoForTests;
-
-    auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (useDefaultListener == false) {
-        auto defaultListener = listeners.default_result_printer();
-
-        auto customEventListener = new CCustomEventListener(defaultListener, hardwarePrefix[productFamily]);
-
-        listeners.Release(defaultListener);
-        listeners.Append(customEventListener);
-    }
-
-    listeners.Append(new MemoryLeakListener);
-    addUltListener(listeners);
-
-    gEnvironment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));
-
-    MockCompilerDebugVars fclDebugVars;
-    MockCompilerDebugVars igcDebugVars;
-
-    std::string builtInsFileName;
-    if (TestChecks::supportsImages(defaultHwInfo)) {
-        builtInsFileName = KernelBinaryHelper::BUILT_INS_WITH_IMAGES;
-    } else {
-        builtInsFileName = KernelBinaryHelper::BUILT_INS;
-    }
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
-
-    gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
-    gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
-
-    int sigOut = setAlarm(enableAlarm);
-    if (sigOut != 0) {
-        return sigOut;
-    }
-
-    sigOut = setSegv(enableSegv);
-    if (sigOut != 0) {
-        return sigOut;
-    }
-
-    sigOut = setAbrt(enableAbrt);
-    if (sigOut != 0) {
-        return sigOut;
-    }
-
-    if (useMockGmm) {
-        GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
-    } else {
-        GmmInterface::initialize(nullptr, nullptr);
-    }
-
-    MockSipData::mockSipKernel.reset(new MockSipKernel());
-    if (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx) {
-        MockSipData::useMockSip = false;
-    }
-
-    retVal = RUN_ALL_TESTS();
-
-    if (showTestStats) {
-        std::cout << getTestStats() << std::endl;
-    }
-
-    if (dumpTestStats) {
-        std::ofstream dumpTestStatsFile;
-        dumpTestStatsFile.open(dumpTestStatsFileName);
-        dumpTestStatsFile << getTestStatsJson();
-        dumpTestStatsFile.close();
-    }
-    cleanTestHelpers();
 
     return retVal;
 }

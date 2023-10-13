@@ -25,6 +25,11 @@ class CCustomEventListener : public ::testing::TestEventListener {
     CCustomEventListener(::testing::TestEventListener *listener) : listener(listener), hardwarePrefix("---") {}
 
     CCustomEventListener(::testing::TestEventListener *listener, const char *hardwarePrefix) : listener(listener), hardwarePrefix(hardwarePrefix) {
+        setHwPrefix(hardwarePrefix);
+    }
+
+    void setHwPrefix(const char *hardwarePrefix) {
+        this->hardwarePrefix = hardwarePrefix;
         std::transform(this->hardwarePrefix.begin(), this->hardwarePrefix.end(), this->hardwarePrefix.begin(),
                        [](unsigned char c) { return std::toupper(c); });
     }
