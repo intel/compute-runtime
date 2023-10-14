@@ -841,8 +841,6 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
 }
 
 TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenGetEventProfilingInfoThenGpuTimestampIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(1);
     pClDevice->setOSTime(new MockOSTimeWithConstTimestamp());
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
@@ -859,8 +857,6 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenGetEventProfilingI
 }
 
 TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenCalculateStartTimestampThenCorrectTimeIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(1);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
@@ -882,8 +878,6 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenCalculateStartTime
 }
 
 TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmallerThanQueueTSWhenCalculateStartTimestampThenCorrectTimeIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(1);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
