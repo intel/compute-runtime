@@ -40,4 +40,9 @@ template <PRODUCT_FAMILY Product>
 inline void AILConfigurationHw<Product>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {
 }
 
+template <PRODUCT_FAMILY Product>
+inline bool AILConfigurationHw<Product>::isContextSyncFlagRequired() {
+    return false;
+}
+
 } // namespace NEO

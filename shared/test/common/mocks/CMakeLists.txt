@@ -16,6 +16,7 @@ set_property(GLOBAL PROPERTY NEO_CORE_tests_compiler_mocks ${NEO_CORE_tests_comp
 set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/debugger_l0_create.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_ail_configuration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_allocation_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_assert_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center.h

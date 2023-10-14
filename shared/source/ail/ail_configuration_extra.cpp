@@ -24,6 +24,8 @@ std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blen
                                                                           // Modify reported platform name to ensure older versions of Adobe Premiere Pro are able to recognize the GPU device
                                                                           {"Adobe Premiere Pro", {AILEnumeration::ENABLE_LEGACY_PLATFORM_NAME}}};
 
+const std::set<std::string_view> applicationsContextSyncFlag = {};
+
 AILConfiguration *ailConfigurationTable[IGFX_MAX_PRODUCT] = {};
 
 AILConfiguration *AILConfiguration::get(PRODUCT_FAMILY productFamily) {

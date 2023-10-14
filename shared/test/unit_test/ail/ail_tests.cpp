@@ -5,10 +5,10 @@
  *
  */
 
-#include "shared/source/ail/ail_configuration.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -18,13 +18,6 @@ using IsDG2 = IsProduct<IGFX_DG2>;
 using IsHostPtrTrackingDisabled = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN11LP_CORE>;
 
 using AILTests = ::testing::Test;
-template <PRODUCT_FAMILY productFamily>
-class AILMock : public AILConfigurationHw<productFamily> {
-  public:
-    using AILConfiguration::isKernelHashCorrect;
-    using AILConfiguration::processName;
-    using AILConfiguration::sourcesContain;
-};
 
 HWTEST2_F(AILTests, givenInitializedTemplateWhenGetAILConfigurationThenNullptrIsNotReturned, IsSKL) {
     auto ailConfiguration = AILConfiguration::get(productFamily);
@@ -182,23 +175,6 @@ HWTEST2_F(AILTests, givenPreGen12AndAndProcessNameIsNotResolveWhenApplyWithDavin
     EXPECT_TRUE(rtTable.hostPtrTrackingEnabled);
 }
 
-class MockAILConfiguration : public AILConfiguration {
-  public:
-    bool initProcessExecutableName() override {
-        initCalled = true;
-        return true;
-    }
-    bool initCalled = false;
-    void modifyKernelIfRequired(std::string &kernel) override {}
-
-    bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override {
-        return false;
-    }
-
-  protected:
-    void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override {}
-};
-
 HWTEST_F(AILTests, whenAilIsDisabledByDebugVariableThenAilIsNotInitialized) {
     DebugManagerStateRestore restore;
     NEO::DebugManager.flags.EnableAIL.set(false);
@@ -235,6 +211,28 @@ HWTEST_F(AILTests, whenAilIsEnabledByDebugVariableThenAilIsInitialized) {
     rootDeviceEnvironment->initAilConfiguration();
 
     EXPECT_EQ(true, ailConfig.initCalled);
+}
+
+HWTEST_F(AILTests, GivenPlatformHasNoAilAvailableWhenAilIsEnabledThenAilInitializationReturnsTrue) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.EnableAIL.set(true);
+
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+    ailConfigurationTable[productFamily] = nullptr;
+
+    HardwareInfo hwInfo{};
+    hwInfo.platform.eProductFamily = productFamily;
+    hwInfo.platform.eRenderCoreFamily = renderCoreFamily;
+
+    NEO::MockExecutionEnvironment executionEnvironment{&hwInfo, true, 1};
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
+    EXPECT_TRUE(rootDeviceEnvironment->initAilConfiguration());
+}
+
+HWTEST2_F(AILTests, GivenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, IsAtLeastGen9) {
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "other";
+    EXPECT_FALSE(ailTemp.isContextSyncFlagRequired());
 }
 
 } // namespace NEO

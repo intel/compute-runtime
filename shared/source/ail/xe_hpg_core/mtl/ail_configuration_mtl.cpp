@@ -33,6 +33,12 @@ void AILConfigurationHw<IGFX_METEORLAKE>::applyExt(RuntimeCapabilityTable &runti
     }
 }
 
+template <>
+bool AILConfigurationHw<IGFX_METEORLAKE>::isContextSyncFlagRequired() {
+    auto iterator = applicationsContextSyncFlag.find(processName);
+    return iterator != applicationsContextSyncFlag.end();
+}
+
 template class AILConfigurationHw<IGFX_METEORLAKE>;
 
 } // namespace NEO

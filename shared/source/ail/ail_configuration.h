@@ -10,6 +10,7 @@
 #include "igfxfmid.h"
 
 #include <cstdint>
+#include <set>
 #include <string>
 
 /*
@@ -56,6 +57,8 @@ class AILConfiguration {
 
     virtual bool isFallbackToPatchtokensRequired(const std::string &kernelSources) = 0;
 
+    virtual bool isContextSyncFlagRequired() = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
@@ -65,6 +68,8 @@ class AILConfiguration {
 };
 
 extern AILConfiguration *ailConfigurationTable[IGFX_MAX_PRODUCT];
+
+extern const std::set<std::string_view> applicationsContextSyncFlag;
 
 template <PRODUCT_FAMILY Product>
 class AILConfigurationHw : public AILConfiguration {
@@ -78,6 +83,7 @@ class AILConfigurationHw : public AILConfiguration {
 
     void modifyKernelIfRequired(std::string &kernel) override;
     bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override;
+    bool isContextSyncFlagRequired() override;
 };
 
 template <PRODUCT_FAMILY product>

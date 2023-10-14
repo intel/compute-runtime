@@ -5,9 +5,9 @@
  *
  */
 
-#include "shared/source/ail/ail_configuration.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
@@ -15,14 +15,8 @@ namespace NEO {
 using AILTestsMTL = ::testing::Test;
 
 HWTEST2_F(AILTestsMTL, givenMtlWhenSvchostAppIsDetectedThenDisableDirectSubmission, IsMTL) {
-    class AILMock : public AILConfigurationHw<productFamily> {
-      public:
-        using AILConfiguration::apply;
-        using AILConfiguration::processName;
-    };
-
     VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
-    AILMock ail;
+    AILMock<productFamily> ail;
     ailConfigurationTable[productFamily] = &ail;
 
     auto capabilityTable = defaultHwInfo->capabilityTable;
@@ -36,4 +30,5 @@ HWTEST2_F(AILTestsMTL, givenMtlWhenSvchostAppIsDetectedThenDisableDirectSubmissi
     ail.apply(capabilityTable);
     EXPECT_FALSE(capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
 }
+
 } // namespace NEO
