@@ -192,6 +192,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefetchWhenEx
     DebugManagerStateRestore restore;
     DebugManager.flags.UseKmdMigration.set(true);
     DebugManager.flags.EnableBOChunkingPrefetch.set(true);
+    DebugManager.flags.EnableBOChunking.set(1);
 
     size_t size = 10;
     size_t alignment = 1u;

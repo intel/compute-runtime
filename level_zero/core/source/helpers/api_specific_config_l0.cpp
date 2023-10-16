@@ -68,4 +68,9 @@ const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {
 const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
     return validL0PrefixTypes;
 }
+
+bool ApiSpecificConfig::isSharedAllocPrefetchEnabled() {
+    return (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get() ||
+            (NEO::DebugManager.flags.EnableBOChunkingPrefetch.get() && ((NEO::DebugManager.flags.EnableBOChunking.get()) & 0x1)));
+}
 } // namespace NEO

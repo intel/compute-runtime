@@ -804,7 +804,7 @@ void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &com
     // and if KMD migration is set, as current target is to use
     // chunking only with KMD migration
     bool isChunkingNeededForDeviceAllocations = false;
-    if (NEO::DebugManager.flags.EnableBOChunkingPrefetch.get() &&
+    if (NEO::DebugManager.flags.EnableBOChunkingDevMemPrefetch.get() &&
         memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
         (svmData.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY)) {
         isChunkingNeededForDeviceAllocations = true;

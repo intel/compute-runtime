@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/hw_info.h"
@@ -332,8 +333,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     auto csr = static_cast<CommandQueueImp *>(cmdQ)->getCsr();
     auto lockCSR = csr->obtainUniqueOwnership();
 
-    if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get() ||
-        NEO::DebugManager.flags.EnableBOChunkingPrefetch.get()) {
+    if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
         auto svmAllocMgr = this->device->getDriverHandle()->getSvmAllocsManager();
         svmAllocMgr->prefetchSVMAllocs(*this->device->getNEODevice(), *csr);
     }

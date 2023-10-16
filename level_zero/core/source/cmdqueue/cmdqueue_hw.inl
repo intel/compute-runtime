@@ -19,6 +19,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_base_address_model.h"
@@ -63,8 +64,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
 
-    if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get() ||
-        NEO::DebugManager.flags.EnableBOChunkingPrefetch.get() == 1) {
+    if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
         auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
         svmAllocMgr->prefetchSVMAllocs(*device->getNEODevice(), *csr);
     }

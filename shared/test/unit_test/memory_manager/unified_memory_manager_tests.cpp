@@ -244,7 +244,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenKmdMigratedSharedAllocationWhenPrefetch
 TEST_F(SVMLocalMemoryAllocatorTest, givenEnableBOChunkingPrefetchWhenPrefetchMemoryIsCalledThenSetMemPrefetchCalled) {
     DebugManagerStateRestore restore;
     DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
+    DebugManager.flags.EnableBOChunkingDevMemPrefetch.set(true);
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];

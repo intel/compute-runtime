@@ -33,5 +33,6 @@ struct ApiSpecificConfig {
     static std::string getAubPrefixForSpecificApi() {
         return (getName() + "_");
     }
+    static bool isSharedAllocPrefetchEnabled();
 };
 } // namespace NEO
