@@ -336,6 +336,7 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 }
 
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
+    ze_result_t status = ZE_RESULT_SUCCESS;
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     if (pFwInterface != nullptr) {
@@ -347,12 +348,21 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     auto memoryInfo = pDrm->getIoctlHelper()->createMemoryInfo();
     hwDeviceId->closeFileDescriptor();
 
-    auto region = memoryInfo->getMemoryRegion(MemoryBanks::getBankForLocalMemory(subdeviceId));
-
-    pState->free = region.unallocatedSize;
-    pState->size = region.probedSize;
-
-    return ZE_RESULT_SUCCESS;
+    if (memoryInfo != nullptr) {
+        auto region = memoryInfo->getMemoryRegion(MemoryBanks::getBankForLocalMemory(subdeviceId));
+        pState->free = region.unallocatedSize;
+        pState->size = region.probedSize;
+    } else {
+        pState->free = 0;
+        pState->size = 0;
+        status = ZE_RESULT_ERROR_UNKNOWN;
+        if (errno == ENODEV) {
+            status = ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
+    }
+    return status;
 }
 
 std::unique_ptr<OsMemory> OsMemory::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
