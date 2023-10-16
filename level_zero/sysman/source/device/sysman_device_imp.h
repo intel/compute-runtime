@@ -85,6 +85,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t pciGetStats(zes_pci_stats_t *pStats) override;
     ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) override;
     ze_result_t deviceEventRegister(zes_event_type_flags_t events) override;
+    ze_result_t deviceResetExt(zes_reset_properties_t *pProperties) override;
     bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
     ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) override;
 

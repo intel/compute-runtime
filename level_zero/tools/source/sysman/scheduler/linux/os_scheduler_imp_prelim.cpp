@@ -430,7 +430,7 @@ ze_result_t LinuxSchedulerImp::updateComputeUnitDebugNode(uint64_t val) {
     NEO::ExecutionEnvironment *executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
     auto restorer = std::make_unique<L0::ExecutionEnvironmentRefCountRestore>(executionEnvironment);
     pLinuxSysmanImp->releaseDeviceResources();
-    ze_result_t result = pLinuxSysmanImp->gpuProcessCleanup();
+    ze_result_t result = pLinuxSysmanImp->gpuProcessCleanup(true);
     if (ZE_RESULT_SUCCESS != result) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "updateComputeUnitDebugNode: gpuProcessCleanup() failed with error code: %ld\n", result);

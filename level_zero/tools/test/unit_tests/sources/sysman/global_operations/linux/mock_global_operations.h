@@ -541,6 +541,7 @@ struct MockGlobalOpsLinuxSysmanImp : public LinuxSysmanImp {
     void setMockInitDeviceError(ze_result_t result) {
         mockInitDeviceError = result;
     }
+    ADDMETHOD_NOBASE(gpuProcessCleanup, ze_result_t, ZE_RESULT_SUCCESS, (ze_bool_t force));
 };
 
 class DrmGlobalOpsMock : public DrmMock {

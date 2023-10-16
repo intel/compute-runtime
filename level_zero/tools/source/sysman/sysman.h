@@ -93,6 +93,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) = 0;
     virtual ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) = 0;
     virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) = 0;
+    virtual ze_result_t deviceResetExt(zes_reset_properties_t *pProperties) = 0;
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual ~SysmanDevice() = default;
 };

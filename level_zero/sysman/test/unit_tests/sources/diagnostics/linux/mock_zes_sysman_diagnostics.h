@@ -253,7 +253,6 @@ struct MockDiagLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
 };
 class PublicLinuxDiagnosticsImp : public L0::Sysman::LinuxDiagnosticsImp {
   public:
-    using L0::Sysman::LinuxDiagnosticsImp::gpuProcessCleanup;
     using L0::Sysman::LinuxDiagnosticsImp::pFwInterface;
     using L0::Sysman::LinuxDiagnosticsImp::pLinuxSysmanImp;
     using L0::Sysman::LinuxDiagnosticsImp::pSysfsAccess;

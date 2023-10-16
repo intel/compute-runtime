@@ -98,6 +98,11 @@ ze_result_t GlobalOperationsImp::reset(ze_bool_t force) {
     return pOsGlobalOperations->reset(force);
 }
 
+ze_result_t GlobalOperationsImp::resetExt(zes_reset_properties_t *pProperties) {
+    initGlobalOperations();
+    return pOsGlobalOperations->resetExt(pProperties);
+}
+
 ze_result_t GlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
     initGlobalOperations();
     return pOsGlobalOperations->deviceGetState(pState);

@@ -54,7 +54,7 @@ ze_result_t LinuxDiagnosticsImp::waitForQuiescentCompletion() {
 
             // Sleep for 1second every loop, gives enough time for KMD to clear all allocations and wedge the system
             NEO::sleep(std::chrono::seconds(1));
-            auto processResult = pLinuxSysmanImp->gpuProcessCleanup();
+            auto processResult = pLinuxSysmanImp->gpuProcessCleanup(true);
             if (ZE_RESULT_SUCCESS != processResult) {
                 return processResult;
             }
@@ -75,7 +75,7 @@ ze_result_t LinuxDiagnosticsImp::waitForQuiescentCompletion() {
 ze_result_t LinuxDiagnosticsImp::osRunDiagTestsinFW(zes_diag_result_t *pResult) {
     pLinuxSysmanImp->diagnosticsReset = true;
     pLinuxSysmanImp->releaseSysmanDeviceResources();
-    ze_result_t result = pLinuxSysmanImp->gpuProcessCleanup();
+    ze_result_t result = pLinuxSysmanImp->gpuProcessCleanup(true);
     if (ZE_RESULT_SUCCESS != result) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): gpuProcessCleanup() failed and returning error:0x%x \n", __FUNCTION__, result);
         return result;

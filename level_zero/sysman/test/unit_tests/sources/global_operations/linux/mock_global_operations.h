@@ -61,6 +61,10 @@ const std::string ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
 const std::string mockFunctionResetPath("/MOCK_FUNCTION_LEVEL_RESET_PATH");
 const std::string mockDeviceDir("devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0");
 const std::string mockDeviceName("/MOCK_DEVICE_NAME");
+const std::string mockSlotPath("/sys/bus/pci/slots/1");
+const std::string mockSlotPathAddress("/sys/bus/pci/slots/1/address");
+const std::string mockRootAddress("devices");
+const std::string mockCardBusPath("/sys/devices");
 
 enum mockEnumListProcessCall {
     DEVICE_IN_USE = 0,
@@ -464,9 +468,17 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccess {
     ze_result_t mockReadError = ZE_RESULT_SUCCESS;
     ze_result_t readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     std::string mockReadVal = "";
+    std::string mockFlrValue = "";
+    std::string mockColdResetValue = "unknown";
+    std::string mockWarmResetValue = "unknown";
     ze_result_t read(const std::string file, std::string &val) override {
         if (mockReadError != ZE_RESULT_SUCCESS) {
             return mockReadError;
+        }
+
+        if (file.compare(mockSlotPathAddress) == 0) {
+            val = mockRootAddress;
+            return ZE_RESULT_SUCCESS;
         }
 
         if (mockReadVal == srcVersion) {
@@ -538,7 +550,23 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccess {
             return mockWriteError;
         }
 
+        if (file.compare(mockFunctionResetPath) == 0) {
+            mockFlrValue = val;
+        } else if (file.compare(mockSlotPath + "/power") == 0) {
+            if (val.compare("0") == 0) {
+                mockColdResetValue = val;
+            } else if ((val.compare("1") == 0) && mockColdResetValue.compare("0") == 0) {
+                mockColdResetValue = val;
+            }
+        } else if (file.compare(mockCardBusPath + "/remove") == 0) {
+            mockWarmResetValue = val;
+        }
         return writeResult;
+    }
+
+    ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfslots) override {
+        listOfslots.push_back("1");
+        return ZE_RESULT_SUCCESS;
     }
 
     ADDMETHOD_NOBASE(canWrite, ze_result_t, ZE_RESULT_SUCCESS, (const std::string file));

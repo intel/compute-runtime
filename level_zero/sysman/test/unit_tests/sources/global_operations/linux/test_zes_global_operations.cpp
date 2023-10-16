@@ -752,9 +752,33 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGemCreateIoctlFailsWithEINVALWhenCall
     EXPECT_EQ(0u, deviceState.reset);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceResetExtThenUnsupportedFeatureErrorIsReturned) {
-    ze_result_t result = zesDeviceResetExt(device, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingzesDeviceResetExtThenResetExtCallReturnSuccess) {
+    init(true);
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_WARM};
+    ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pFsAccess->mockWarmResetValue, "1");
+
+    pProperties.resetType = ZES_RESET_TYPE_COLD;
+    result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pFsAccess->mockColdResetValue, "1");
+
+    pProperties.resetType = ZES_RESET_TYPE_FLR;
+    result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pFsAccess->mockFlrValue, "1");
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetExtWithInvalidTypeThenFailureIsReturned) {
+    init(true);
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_FORCE_UINT32};
+    ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {

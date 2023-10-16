@@ -84,6 +84,10 @@ ze_result_t SysmanDeviceImp::deviceReset(ze_bool_t force) {
     return pGlobalOperations->reset(force);
 }
 
+ze_result_t SysmanDeviceImp::deviceResetExt(zes_reset_properties_t *pProperties) {
+    return pGlobalOperations->resetExt(pProperties);
+}
+
 ze_result_t SysmanDeviceImp::deviceGetState(zes_device_state_t *pState) {
     return pGlobalOperations->deviceGetState(pState);
 }

@@ -254,7 +254,7 @@ void LinuxSysmanImp::getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAc
     }
 }
 
-ze_result_t LinuxSysmanImp::gpuProcessCleanup() {
+ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
     ::pid_t myPid = pProcfsAccess->myProcessId();
     std::vector<::pid_t> processes;
     std::vector<int> myPidFds;
@@ -275,7 +275,12 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup() {
             continue;
         }
         if (!fds.empty()) {
-            pProcfsAccess->kill(pid);
+            if (force) {
+                pProcfsAccess->kill(pid);
+            } else {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+                return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+            }
         }
     }
 

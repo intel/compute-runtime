@@ -277,55 +277,32 @@ bool LinuxGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::u
 }
 
 ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
+    auto hwInfo = pLinuxSysmanImp->getParentSysmanDeviceImp()->getHardwareInfo();
+    auto resetType = hwInfo.capabilityTable.isIntegratedDevice ? ZES_RESET_TYPE_FLR : ZES_RESET_TYPE_WARM;
+
+    return resetImpl(force, resetType);
+}
+
+ze_result_t LinuxGlobalOperationsImp::resetExt(zes_reset_properties_t *pProperties) {
+    return resetImpl(pProperties->force, pProperties->resetType);
+}
+
+ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_t resetType) {
     if (!pSysfsAccess->isRootUser()) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Not running as root user and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
+
     pLinuxSysmanImp->releaseSysmanDeviceResources();
-    std::string resetPath;
-    std::string resetName;
-    ze_result_t result = ZE_RESULT_SUCCESS;
-
-    ::pid_t myPid = pProcfsAccess->myProcessId();
-    std::vector<int> myPidFds;
-    std::vector<::pid_t> processes;
-
-    result = pProcfsAccess->listProcesses(processes);
+    ze_result_t result = pLinuxSysmanImp->gpuProcessCleanup(force);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to list processes and returning error:0x%x \n", __FUNCTION__, result);
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): gpuProcessCleanup() failed and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
-    for (auto &&pid : processes) {
-        std::vector<int> fds;
-        pLinuxSysmanImp->getPidFdsForOpenDevice(pid, fds);
-        if (pid == myPid) {
-            // L0 is expected to have this file open.
-            // Keep list of fds. Close before unbind.
-            myPidFds = fds;
-        } else if (!fds.empty()) {
-            if (force) {
-                pProcfsAccess->kill(pid);
-            } else {
-                // Device is in use by another process.
-                // Don't reset while in use.
-                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, not resetting and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
-                return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
-            }
-        }
-    }
 
+    std::string resetName;
     pSysfsAccess->getRealPath(deviceDir, resetName);
     resetName = pFsAccess->getBaseName(resetName);
-
-    for (auto &&fd : myPidFds) {
-        // Close open filedescriptors to the device
-        // before unbinding device.
-        // From this point forward, there is no
-        // graceful way to fail the reset call.
-        // All future ze calls by this process for this
-        // device will fail.
-        ::close(fd);
-    }
 
     // Unbind the device from the kernel driver.
     result = pSysfsAccess->unbindDevice(resetName);
@@ -334,8 +311,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         return result;
     }
 
-    // If someone opened the device
-    // after we check, kill them here.
+    std::vector<::pid_t> processes;
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list processes and returning error:0x%x \n", __FUNCTION__, result);
@@ -370,18 +346,22 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         }
     }
 
-    if (!pLinuxSysmanImp->getParentSysmanDeviceImp()->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+    std::string resetPath = {};
+    switch (resetType) {
+    case ZES_RESET_TYPE_WARM:
         result = pLinuxSysmanImp->osWarmReset();
-        if (ZE_RESULT_SUCCESS == result) {
-            return pLinuxSysmanImp->reInitSysmanDeviceResources();
-        }
-        return result;
+        break;
+    case ZES_RESET_TYPE_COLD:
+        result = pLinuxSysmanImp->osColdReset();
+        break;
+    case ZES_RESET_TYPE_FLR:
+        pSysfsAccess->getRealPath(functionLevelReset, resetPath);
+        result = pFsAccess->write(resetPath, "1");
+        break;
+    default:
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    pSysfsAccess->getRealPath(functionLevelReset, resetPath);
-
-    // Reset the device.
-    result = pFsAccess->write(resetPath, "1");
     if (ZE_RESULT_SUCCESS != result) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to reset the device and returning error:0x%x \n", __FUNCTION__, result);
         return result;

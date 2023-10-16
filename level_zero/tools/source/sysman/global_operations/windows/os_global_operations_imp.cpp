@@ -60,6 +60,10 @@ ze_result_t WddmGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t WddmGlobalOperationsImp::resetExt(zes_reset_properties_t *pProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 WddmGlobalOperationsImp::WddmGlobalOperationsImp(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pDevice = pWddmSysmanImp->getDeviceHandle();

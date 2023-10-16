@@ -31,7 +31,6 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
     FirmwareUtil *pFwInterface = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
     FsAccess *pFsAccess = nullptr;
-    ze_result_t gpuProcessCleanup();
     ze_result_t waitForQuiescentCompletion();
 
   private:

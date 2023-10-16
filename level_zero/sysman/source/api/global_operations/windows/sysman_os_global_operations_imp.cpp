@@ -53,6 +53,10 @@ ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {
     return pKmdSysManager->requestSingle(request, response);
 }
 
+ze_result_t WddmGlobalOperationsImp::resetExt(zes_reset_properties_t *pProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

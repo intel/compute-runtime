@@ -313,7 +313,8 @@ uint64_t SysmanDevice::getSysmanTimestamp() {
 }
 
 ze_result_t SysmanDevice::deviceResetExt(zes_device_handle_t hDevice, zes_reset_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto pSysmanDevice = L0::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceResetExt(pProperties);
 }
 
 ze_result_t SysmanDevice::fabricPortGetMultiPortThroughput(zes_device_handle_t hDevice, uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) {

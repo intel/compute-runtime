@@ -33,6 +33,7 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     ze_result_t reset(ze_bool_t force) override;
     ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
     ze_result_t deviceGetState(zes_device_state_t *pState) override;
+    ze_result_t resetExt(zes_reset_properties_t *pProperties) override;
     bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
     bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
     LinuxGlobalOperationsImp() = default;
@@ -82,6 +83,7 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     uint32_t rootDeviceIndex = 0u;
     ze_result_t getListOfEnginesUsedByProcess(std::vector<std::string> &fdFileContents, uint32_t &activeEngines);
     ze_result_t getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize);
+    ze_result_t resetImpl(ze_bool_t force, zes_reset_type_t resetType);
 };
 
 } // namespace Sysman
