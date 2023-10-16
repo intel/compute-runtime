@@ -20,6 +20,8 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "hw_cmds.h"
+
 using namespace NEO;
 
 TEST(MemoryManagerTest, givenSetUseSytemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
@@ -866,42 +868,6 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
                     EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
                 }
             }
-            memoryManager->freeGraphicsMemory(allocation);
-        }
-    }
-}
-
-HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsPVC) {
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
-    for (auto &multiTile : ::testing::Bool()) {
-        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
-            allocationProperties->allocationType = allocationType;
-            allocationProperties->flags.multiOsContextCapable = multiTile;
-            auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
-
-            EXPECT_NE(nullptr, allocation);
-
-            EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-            EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
-
-            memoryManager->freeGraphicsMemory(allocation);
-        }
-    }
-}
-
-HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageDefaultModeWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsPVC) {
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(-1);
-    for (auto &multiTile : ::testing::Bool()) {
-        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
-            allocationProperties->allocationType = allocationType;
-            allocationProperties->flags.multiOsContextCapable = multiTile;
-            auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
-
-            EXPECT_NE(nullptr, allocation);
-
-            EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-            EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
-
             memoryManager->freeGraphicsMemory(allocation);
         }
     }

@@ -11,6 +11,7 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
@@ -60,10 +61,11 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystol
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
     auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
-    ASSERT_NE(itorCmd, commands.end());
 
+    ASSERT_NE(itorCmd, commands.end());
     auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
-    EXPECT_TRUE(cmd->getSystolicModeEnable());
+
+    EXPECT_EQ(pDevice->getUltCommandStreamReceiver<FamilyType>().pipelineSupportFlags.systolicMode, cmd->getSystolicModeEnable());
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithNoKernelDpasThenSystolicModeIsNotEnabled, IsWithinXeGfxFamily) {

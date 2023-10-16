@@ -133,6 +133,10 @@ void CmdListPipelineSelectStateFixture::testBody() {
     size_t sizeAfter = 0;
     auto result = ZE_RESULT_SUCCESS;
 
+    bool systolicModeSupported = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr)->pipelineSupportFlags.systolicMode;
+
+    PIPELINE_SELECT *pipelineSelectCmd = nullptr;
+
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
 
@@ -141,8 +145,13 @@ void CmdListPipelineSelectStateFixture::testBody() {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
-        EXPECT_EQ(0, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-        EXPECT_EQ(0, cmdListFinalState.pipelineSelect.systolicMode.value);
+        if (systolicModeSupported) {
+            EXPECT_EQ(0, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(0, cmdListFinalState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(-1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        }
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -160,74 +169,11 @@ void CmdListPipelineSelectStateFixture::testBody() {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
-        EXPECT_EQ(0, csrState.pipelineSelect.systolicMode.value);
-
-        currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                          currentBuffer,
-                                                          (sizeAfter - sizeBefore)));
-        pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
-        ASSERT_EQ(1u, pipelineSelectList.size());
-
-        auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
-        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
-
-        cmdList.clear();
-        pipelineSelectList.clear();
-        commandList->reset();
-    }
-
-    {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
-        sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        sizeAfter = commandListStream.getUsed();
-
-        EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-        EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
-
-        currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
-
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                          currentBuffer,
-                                                          (sizeAfter - sizeBefore)));
-        pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(0u, pipelineSelectList.size());
-
-        cmdList.clear();
-        pipelineSelectList.clear();
-
-        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
-        sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        sizeAfter = commandListStream.getUsed();
-
-        EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-        EXPECT_EQ(0, cmdListFinalState.pipelineSelect.systolicMode.value);
-
-        currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
-
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                          currentBuffer,
-                                                          (sizeAfter - sizeBefore)));
-        pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
-        ASSERT_EQ(1u, pipelineSelectList.size());
-
-        auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
-        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
-
-        cmdList.clear();
-        pipelineSelectList.clear();
-        commandList->close();
-
-        sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        sizeAfter = cmdQueueStream.getUsed();
-
-        EXPECT_EQ(0, csrState.pipelineSelect.systolicMode.value);
+        if (systolicModeSupported) {
+            EXPECT_EQ(0, csrState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, csrState.pipelineSelect.systolicMode.value);
+        }
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -237,7 +183,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         ASSERT_EQ(1u, pipelineSelectList.size());
 
         pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
 
         cmdList.clear();
         pipelineSelectList.clear();
@@ -251,8 +197,13 @@ void CmdListPipelineSelectStateFixture::testBody() {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
-        EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-        EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        if (systolicModeSupported) {
+            EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(-1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        }
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
@@ -271,8 +222,13 @@ void CmdListPipelineSelectStateFixture::testBody() {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
-        EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-        EXPECT_EQ(0, cmdListFinalState.pipelineSelect.systolicMode.value);
+        if (systolicModeSupported) {
+            EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(0, cmdListFinalState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(-1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        }
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
@@ -280,33 +236,15 @@ void CmdListPipelineSelectStateFixture::testBody() {
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
-        ASSERT_EQ(1u, pipelineSelectList.size());
 
-        auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
-        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        if (systolicModeSupported) {
+            ASSERT_EQ(1u, pipelineSelectList.size());
 
-        cmdList.clear();
-        pipelineSelectList.clear();
-
-        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
-        sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        sizeAfter = commandListStream.getUsed();
-
-        EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-        EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
-
-        currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
-
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                          currentBuffer,
-                                                          (sizeAfter - sizeBefore)));
-        pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
-        ASSERT_EQ(1u, pipelineSelectList.size());
-
-        pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+            pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        } else {
+            EXPECT_EQ(0u, pipelineSelectList.size());
+        }
 
         cmdList.clear();
         pipelineSelectList.clear();
@@ -317,17 +255,151 @@ void CmdListPipelineSelectStateFixture::testBody() {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
-        EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+        if (systolicModeSupported) {
+            EXPECT_EQ(0, csrState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, csrState.pipelineSelect.systolicMode.value);
+        }
+
+        currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          currentBuffer,
+                                                          (sizeAfter - sizeBefore)));
+
+        pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+
+        if (systolicModeSupported) {
+            ASSERT_EQ(1u, pipelineSelectList.size());
+
+            pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
+            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        } else {
+            EXPECT_EQ(0u, pipelineSelectList.size());
+        }
+
+        cmdList.clear();
+        pipelineSelectList.clear();
+        commandList->reset();
+    }
+
+    {
+        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
+        sizeBefore = commandListStream.getUsed();
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        sizeAfter = commandListStream.getUsed();
+
+        if (systolicModeSupported) {
+            EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(-1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        }
+
+        currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
+
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          currentBuffer,
+                                                          (sizeAfter - sizeBefore)));
+        pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(0u, pipelineSelectList.size());
+
+        cmdList.clear();
+        pipelineSelectList.clear();
+
+        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
+        sizeBefore = commandListStream.getUsed();
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        sizeAfter = commandListStream.getUsed();
+
+        if (systolicModeSupported) {
+            EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(0, cmdListFinalState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(-1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        }
+
+        currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
+
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          currentBuffer,
+                                                          (sizeAfter - sizeBefore)));
+        pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+
+        if (systolicModeSupported) {
+            ASSERT_EQ(1u, pipelineSelectList.size());
+
+            pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        } else {
+            EXPECT_EQ(0u, pipelineSelectList.size());
+        }
+
+        cmdList.clear();
+        pipelineSelectList.clear();
+
+        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
+        sizeBefore = commandListStream.getUsed();
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        sizeAfter = commandListStream.getUsed();
+
+        if (systolicModeSupported) {
+            EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(-1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        }
+
+        currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
+
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                          currentBuffer,
+                                                          (sizeAfter - sizeBefore)));
+        pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+
+        if (systolicModeSupported) {
+            ASSERT_EQ(1u, pipelineSelectList.size());
+
+            pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
+            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        } else {
+            EXPECT_EQ(0u, pipelineSelectList.size());
+        }
+
+        cmdList.clear();
+        pipelineSelectList.clear();
+        commandList->close();
+
+        sizeBefore = cmdQueueStream.getUsed();
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        sizeAfter = cmdQueueStream.getUsed();
+
+        if (systolicModeSupported) {
+            EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, csrState.pipelineSelect.systolicMode.value);
+        }
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
-        ASSERT_EQ(1u, pipelineSelectList.size());
 
-        pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        if (systolicModeSupported) {
+            ASSERT_EQ(1u, pipelineSelectList.size());
+
+            pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
+            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        } else {
+            EXPECT_EQ(0u, pipelineSelectList.size());
+        }
 
         cmdList.clear();
         pipelineSelectList.clear();
@@ -340,8 +412,13 @@ void CmdListPipelineSelectStateFixture::testBody() {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
-        EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-        EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        if (systolicModeSupported) {
+            EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
+            EXPECT_EQ(-1, cmdListFinalState.pipelineSelect.systolicMode.value);
+        }
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
@@ -360,7 +437,11 @@ void CmdListPipelineSelectStateFixture::testBody() {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
-        EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+        if (systolicModeSupported) {
+            EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+        } else {
+            EXPECT_EQ(-1, csrState.pipelineSelect.systolicMode.value);
+        }
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -402,8 +483,15 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = regularCommandListStream.getUsed();
 
-    EXPECT_EQ(1, regularCmdlistRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(1, regularCmdListFinalState.pipelineSelect.systolicMode.value);
+    bool systolicModeSupported = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr)->pipelineSupportFlags.systolicMode;
+
+    if (systolicModeSupported) {
+        EXPECT_EQ(1, regularCmdlistRequiredState.pipelineSelect.systolicMode.value);
+        EXPECT_EQ(1, regularCmdListFinalState.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, regularCmdlistRequiredState.pipelineSelect.systolicMode.value);
+        EXPECT_EQ(-1, regularCmdListFinalState.pipelineSelect.systolicMode.value);
+    }
 
     currentBuffer = ptrOffset(regularCommandListStream.getCpuBase(), sizeBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -421,17 +509,24 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = cmdQueueStream.getUsed();
 
-    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+    if (systolicModeSupported) {
+        EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, csrState.pipelineSelect.systolicMode.value);
+    }
 
     currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (sizeAfter - sizeBefore)));
+
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+
     ASSERT_EQ(1u, pipelineSelectList.size());
 
     auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
-    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+
+    EXPECT_EQ(systolicModeSupported, NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
 
     cmdList.clear();
     pipelineSelectList.clear();
@@ -451,7 +546,11 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
 
     auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
 
-    EXPECT_EQ(1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
+    if (systolicModeSupported) {
+        EXPECT_EQ(1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
+    }
 
     currentBuffer = ptrOffset(immediateCmdListStream.getCpuBase(), sizeBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -463,7 +562,11 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     cmdList.clear();
     pipelineSelectList.clear();
 
-    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+    if (systolicModeSupported) {
+        EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, csrState.pipelineSelect.systolicMode.value);
+    }
 
     currentBuffer = ptrOffset(csrStream.getCpuBase(), csrUsedBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -508,7 +611,13 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     sizeAfter = immediateCmdListStream.getUsed();
     size_t csrUsedAfter = csrStream.getUsed();
 
-    EXPECT_EQ(1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
+    bool systolicModeSupported = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr)->pipelineSupportFlags.systolicMode;
+
+    if (systolicModeSupported) {
+        EXPECT_EQ(1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
+    }
 
     currentBuffer = ptrOffset(immediateCmdListStream.getCpuBase(), sizeBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -520,7 +629,11 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     cmdList.clear();
     pipelineSelectList.clear();
 
-    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+    if (systolicModeSupported) {
+        EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, csrState.pipelineSelect.systolicMode.value);
+    }
 
     currentBuffer = ptrOffset(csrStream.getCpuBase(), csrUsedBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -530,7 +643,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     ASSERT_EQ(1u, pipelineSelectList.size());
 
     auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
-    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+    EXPECT_EQ(systolicModeSupported, NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
 
     cmdList.clear();
     pipelineSelectList.clear();
@@ -548,8 +661,13 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = regularCommandListStream.getUsed();
 
-    EXPECT_EQ(1, regularCmdlistRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(1, regularCmdListFinalState.pipelineSelect.systolicMode.value);
+    if (systolicModeSupported) {
+        EXPECT_EQ(1, regularCmdlistRequiredState.pipelineSelect.systolicMode.value);
+        EXPECT_EQ(1, regularCmdListFinalState.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, regularCmdlistRequiredState.pipelineSelect.systolicMode.value);
+        EXPECT_EQ(-1, regularCmdListFinalState.pipelineSelect.systolicMode.value);
+    }
 
     currentBuffer = ptrOffset(regularCommandListStream.getCpuBase(), sizeBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -567,7 +685,11 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = cmdQueueStream.getUsed();
 
-    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+    if (systolicModeSupported) {
+        EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, csrState.pipelineSelect.systolicMode.value);
+    }
 
     currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -636,13 +758,23 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
 
     // 3rd is pipeline select before systolic kernel
     auto iterPsCmd = find<PIPELINE_SELECT *>(iterBbStartCmd, cmdList.end());
-    ASSERT_NE(cmdList.end(), iterPsCmd);
-    auto pipelineSelectCmd = reinterpret_cast<PIPELINE_SELECT *>(*iterPsCmd);
 
-    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+    bool systolicModeSupported = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr)->pipelineSupportFlags.systolicMode;
+
+    if (systolicModeSupported) {
+        ASSERT_NE(cmdList.end(), iterPsCmd);
+        auto pipelineSelectCmd = reinterpret_cast<PIPELINE_SELECT *>(*iterPsCmd);
+
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+        iterBbStartCmd = find<MI_BATCH_BUFFER_START *>(iterPsCmd, cmdList.end());
+
+    } else {
+        EXPECT_EQ(cmdList.end(), iterPsCmd);
+        iterBbStartCmd = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+        iterBbStartCmd = find<MI_BATCH_BUFFER_START *>(++iterBbStartCmd, cmdList.end());
+    }
 
     // find bb start jumping to second command list
-    iterBbStartCmd = find<MI_BATCH_BUFFER_START *>(iterPsCmd, cmdList.end());
     ASSERT_NE(cmdList.end(), iterBbStartCmd);
     bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*iterBbStartCmd);
 

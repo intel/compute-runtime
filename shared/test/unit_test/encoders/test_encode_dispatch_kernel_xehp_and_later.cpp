@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -1427,10 +1428,15 @@ HWTEST2_F(CommandEncodeStatesTest,
                                              cmdContainer->getCommandStream()->getUsed());
 
     auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
-    ASSERT_NE(itorCmd, commands.end());
 
-    auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
-    EXPECT_EQ(cmd->getSystolicModeEnable(), dpasModeRequired);
+    if (pDevice->getUltCommandStreamReceiver<FamilyType>().pipelineSupportFlags.systolicMode) {
+        ASSERT_NE(itorCmd, commands.end());
+
+        auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
+        EXPECT_EQ(cmd->getSystolicModeEnable(), dpasModeRequired);
+    } else {
+        EXPECT_EQ(itorCmd, commands.end());
+    }
 }
 
 HWTEST2_F(CommandEncodeStatesTest,
@@ -1457,10 +1463,15 @@ HWTEST2_F(CommandEncodeStatesTest,
                                              cmdContainer->getCommandStream()->getUsed());
 
     auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
-    ASSERT_NE(itorCmd, commands.end());
 
-    auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
-    EXPECT_EQ(cmd->getSystolicModeEnable(), !dpasModeRequired);
+    if (pDevice->getUltCommandStreamReceiver<FamilyType>().pipelineSupportFlags.systolicMode) {
+        ASSERT_NE(itorCmd, commands.end());
+
+        auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
+        EXPECT_EQ(cmd->getSystolicModeEnable(), !dpasModeRequired);
+    } else {
+        EXPECT_EQ(itorCmd, commands.end());
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,

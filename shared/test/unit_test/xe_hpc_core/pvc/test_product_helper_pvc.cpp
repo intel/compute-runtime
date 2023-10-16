@@ -145,6 +145,9 @@ PVCTEST_F(PvcProductHelper, givenPvcWhenCallingGetDeviceMemoryNameThenHbmIsRetur
 
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
     auto hwInfo = *defaultHwInfo;
+
+    hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, hwInfo);
+
     EXPECT_FALSE(productHelper->isDisableOverdispatchAvailable(hwInfo));
 
     FrontEndPropertiesSupport fePropertiesSupport{};

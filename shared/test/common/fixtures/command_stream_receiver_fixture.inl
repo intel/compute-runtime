@@ -15,12 +15,9 @@
 template <typename FamilyType>
 void CommandStreamReceiverSystolicFixture::testBody() {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    if (!commandStreamReceiver.pipelineSupportFlags.systolicMode) {
-        GTEST_SKIP();
-    }
-
     StreamProperties &streamProperties = commandStreamReceiver.getStreamProperties();
+
+    bool systolicModeSupported = commandStreamReceiver.pipelineSupportFlags.systolicMode;
 
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.lastMediaSamplerConfig = false;
@@ -36,8 +33,13 @@ void CommandStreamReceiverSystolicFixture::testBody() {
                                     taskLevel,
                                     flushTaskFlags,
                                     *pDevice);
-    EXPECT_EQ(true, commandStreamReceiver.lastSystolicPipelineSelectMode);
-    EXPECT_EQ(1, streamProperties.pipelineSelect.systolicMode.value);
+    if (systolicModeSupported) {
+        EXPECT_EQ(true, commandStreamReceiver.lastSystolicPipelineSelectMode);
+        EXPECT_EQ(1, streamProperties.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(false, commandStreamReceiver.lastSystolicPipelineSelectMode);
+        EXPECT_EQ(-1, streamProperties.pipelineSelect.systolicMode.value);
+    }
 
     flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
 
@@ -50,5 +52,10 @@ void CommandStreamReceiverSystolicFixture::testBody() {
                                     flushTaskFlags,
                                     *pDevice);
     EXPECT_EQ(false, commandStreamReceiver.lastSystolicPipelineSelectMode);
-    EXPECT_EQ(0, streamProperties.pipelineSelect.systolicMode.value);
+
+    if (systolicModeSupported) {
+        EXPECT_EQ(0, streamProperties.pipelineSelect.systolicMode.value);
+    } else {
+        EXPECT_EQ(-1, streamProperties.pipelineSelect.systolicMode.value);
+    }
 }

@@ -362,7 +362,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
     targetDevice.maxPointerSizeInBytes = 8;
     targetDevice.productFamily = productFamily;
     targetDevice.coreFamily = renderCoreFamily;
-    targetDevice.stepping = NEO::hardwareInfoTable[productFamily]->platform.usRevId;
+    targetDevice.stepping = NEO::hardwareInfoTable[productFamily]->platform.usRevId & 0x1F; // mask to 5 bits (minHwRevisionId and maxHwRevisionId size)
 
     NEO::Zebin::Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;

@@ -5534,7 +5534,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndV
     targetDevice.productFamily = productFamily;
     targetDevice.coreFamily = renderCoreFamily;
     targetDevice.maxPointerSizeInBytes = 8;
-    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId & 0x1F; // mask to 5 bits (minHwRevisionId and maxHwRevisionId size)
 
     std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
     for (int i = 0; i < 3; i++) {
@@ -5619,7 +5619,7 @@ TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenVali
     targetDevice.productFamily = productFamily;
     targetDevice.coreFamily = renderCoreFamily;
     targetDevice.maxPointerSizeInBytes = 4;
-    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId & 0x1F; // mask to 5 bits (minHwRevisionId and maxHwRevisionId size)
 
     ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin;
     zebin.elfHeader->type = NEO::Elf::ET_REL;
@@ -5648,7 +5648,7 @@ TEST(ValidateTargetDeviceGeneratorZebin, GivenZebinAndValidIntelGTNotesWithGener
         targetDevice.productFamily = productFamily;
         targetDevice.coreFamily = renderCoreFamily;
         targetDevice.maxPointerSizeInBytes = 4;
-        targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
+        targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId & 0x1F; // mask to 5 bits (minHwRevisionId and maxHwRevisionId size)
 
         ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin;
         zebin.elfHeader->type = NEO::Elf::ET_REL;

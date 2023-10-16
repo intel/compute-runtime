@@ -1144,6 +1144,12 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
     verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr), true, true);
 
+    const auto &productHelper = device->getProductHelper();
+
+    bool stallingCmdRequired = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo());
+
+    verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, false), false, stallingCmdRequired);
+
     verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, false), false, false);
 
     driverHandle->releaseImportedPointer(dstPtr);

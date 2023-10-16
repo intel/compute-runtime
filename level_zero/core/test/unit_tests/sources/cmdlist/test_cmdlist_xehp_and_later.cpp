@@ -314,15 +314,18 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
     const ze_group_count_t launchKernelArgs = {};
     pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
     pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+
+    const auto &productHelper = device->getProductHelper();
+
+    size_t expectedCmdsToPatch = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo()) ? 1 : 0;
+
+    EXPECT_EQ(expectedCmdsToPatch, pCommandList->commandsToPatch.size());
+
     pCommandList->reset();
 
     DebugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
     pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
     pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-
-    const auto &productHelper = device->getProductHelper();
-    size_t expectedCmdsToPatch = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo()) ? 1 : 0;
 
     EXPECT_EQ(expectedCmdsToPatch, pCommandList->commandsToPatch.size());
     pCommandList->reset();
