@@ -975,7 +975,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
     }
 
-    const auto memoryPool = isHostIpcAllocation ? MemoryPool::SystemCpuInaccessible : MemoryPool::LocalCpuInaccessible;
+    const auto memoryPool = MemoryPool::LocalCpuInaccessible;
+    UNRECOVERABLE_IF(isHostIpcAllocation);
 
     if (bo == nullptr) {
         size_t size = SysCalls::lseek(handle, 0, SEEK_END);
