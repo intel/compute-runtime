@@ -287,12 +287,13 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return this->taskCount;
     }
 
-    void setQueueTimeStamp(TimeStampData *queueTimeStamp) {
-        this->queueTimeStamp = *queueTimeStamp;
+    void setQueueTimeStamp(const TimeStampData &queueTimeStamp) {
+        this->queueTimeStamp = queueTimeStamp;
     };
 
-    void setQueueTimeStamp();
-    void setSubmitTimeStamp();
+    void setSubmitTimeStamp(const TimeStampData &submitTimeStamp) {
+        this->submitTimeStamp = submitTimeStamp;
+    };
 
     void setStartTimeStamp();
     void setEndTimeStamp();

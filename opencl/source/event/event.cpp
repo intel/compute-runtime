@@ -612,11 +612,10 @@ void Event::submitCommand(bool abortTasks) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
                 cmdToProcess->timestamp = timeStampNode;
             }
+            this->cmdQueue->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
             if (profilingCpuPath) {
-                setSubmitTimeStamp();
                 setStartTimeStamp();
             } else {
-                this->cmdQueue->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
             }
             if (perfCountersEnabled && perfCounterNode) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*perfCounterNode->getBaseGraphicsAllocation());
@@ -887,18 +886,6 @@ bool Event::tryFlushEvent() {
         }
     }
     return true;
-}
-
-void Event::setQueueTimeStamp() {
-    if (this->profilingEnabled && (this->cmdQueue != nullptr)) {
-        this->cmdQueue->getDevice().getOSTime()->getCpuTime(&queueTimeStamp.cpuTimeinNS);
-    }
-}
-
-void Event::setSubmitTimeStamp() {
-    if (this->profilingEnabled && (this->cmdQueue != nullptr)) {
-        this->cmdQueue->getDevice().getOSTime()->getCpuTime(&submitTimeStamp.cpuTimeinNS);
-    }
 }
 
 void Event::setStartTimeStamp() {

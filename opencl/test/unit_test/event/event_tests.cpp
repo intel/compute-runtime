@@ -1308,16 +1308,6 @@ TEST_F(EventTest, WhenSettingCpuTimeStampThenCorrectTimeIsSet) {
     MyEvent ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
 
     ev.setProfilingEnabled(true);
-    ev.setQueueTimeStamp();
-    TimeStampData outtimeStamp = {0, 0};
-    outtimeStamp = ev.getQueueTimeStamp();
-    EXPECT_NE(0ULL, outtimeStamp.cpuTimeinNS);
-    EXPECT_EQ(0ULL, outtimeStamp.gpuTimeStamp);
-
-    ev.setSubmitTimeStamp();
-    outtimeStamp = ev.getSubmitTimeStamp();
-    EXPECT_NE(0ULL, outtimeStamp.cpuTimeinNS);
-    EXPECT_EQ(0ULL, outtimeStamp.gpuTimeStamp);
 
     ev.setStartTimeStamp();
     uint64_t outCPUtimeStamp = ev.getStartTimeStamp();
@@ -1331,19 +1321,28 @@ TEST_F(EventTest, WhenSettingCpuTimeStampThenCorrectTimeIsSet) {
     EXPECT_NE(0ULL, outCPUtimeStamp);
 }
 
+TEST_F(EventTest, whenSettingQueueTimestampThenCorrectTimestampIsSet) {
+    MyEvent event(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
+
+    TimeStampData queueTimeStamp = {1234, 5678};
+    event.setQueueTimeStamp(queueTimeStamp);
+    auto timeStamp = event.getQueueTimeStamp();
+    EXPECT_EQ(1234ULL, timeStamp.gpuTimeStamp);
+    EXPECT_EQ(5678ULL, timeStamp.cpuTimeinNS);
+}
+
+TEST_F(EventTest, whenSettingSubmitTimestampThenCorrectTimestampIsSet) {
+    MyEvent event(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
+
+    TimeStampData submitTimeStamp = {1234, 5678};
+    event.setSubmitTimeStamp(submitTimeStamp);
+    auto timeStamp = event.getSubmitTimeStamp();
+    EXPECT_EQ(1234ULL, timeStamp.gpuTimeStamp);
+    EXPECT_EQ(5678ULL, timeStamp.cpuTimeinNS);
+}
+
 TEST_F(EventTest, GivenNoQueueWhenSettingCpuTimeStampThenTimesIsNotSet) {
     MyEvent ev(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
-
-    ev.setQueueTimeStamp();
-    TimeStampData outtimeStamp = {0, 0};
-    outtimeStamp = ev.getQueueTimeStamp();
-    EXPECT_EQ(0ULL, outtimeStamp.cpuTimeinNS);
-    EXPECT_EQ(0ULL, outtimeStamp.gpuTimeStamp);
-
-    ev.setSubmitTimeStamp();
-    outtimeStamp = ev.getSubmitTimeStamp();
-    EXPECT_EQ(0ULL, outtimeStamp.cpuTimeinNS);
-    EXPECT_EQ(0ULL, outtimeStamp.gpuTimeStamp);
 
     ev.setStartTimeStamp();
     uint64_t outCPUtimeStamp = ev.getStartTimeStamp();

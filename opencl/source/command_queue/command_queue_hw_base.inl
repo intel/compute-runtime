@@ -227,13 +227,11 @@ void CommandQueueHw<Family>::setupEvent(EventBuilder &eventBuilder, cl_event *ou
 
         if (eventObj->isProfilingEnabled()) {
             TimeStampData queueTimeStamp;
-
             getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
-            eventObj->setQueueTimeStamp(&queueTimeStamp);
+            eventObj->setQueueTimeStamp(queueTimeStamp);
 
             if (isCommandWithoutKernel(cmdType) && cmdType != CL_COMMAND_MARKER) {
                 eventObj->setCPUProfilingPath(true);
-                eventObj->setQueueTimeStamp();
             }
         }
         DBG_LOG(EventsDebugEnable, "enqueueHandler commandType", cmdType, "output Event", eventObj);

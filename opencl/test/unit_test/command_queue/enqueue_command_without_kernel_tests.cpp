@@ -105,7 +105,7 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr, false);
 
     EXPECT_NE(ev->submitTimeStamp.cpuTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
+    EXPECT_NE(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
     ev->queueTimeStamp.gpuTimeStamp = 1000;
     ev->calculateSubmitTimestampData();
@@ -143,7 +143,7 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr, false);
 
     EXPECT_NE(ev->submitTimeStamp.cpuTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
+    EXPECT_NE(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
     ev->queueTimeStamp.gpuTimeStamp = 1000;
     ev->calculateSubmitTimestampData();

@@ -60,7 +60,9 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     if (eventsRequest.outEvent && !isMarkerRequiredForEventSignal) {
         eventBuilder.create<Event>(this, transferProperties.cmdType, CompletionStamp::notReady, CompletionStamp::notReady);
         outEventObj = eventBuilder.getEvent();
-        outEventObj->setQueueTimeStamp();
+        TimeStampData queueTimeStamp;
+        getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
+        outEventObj->setQueueTimeStamp(queueTimeStamp);
         outEventObj->setCPUProfilingPath(true);
         *eventsRequest.outEvent = outEventObj;
     }
@@ -96,7 +98,9 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         bool modifySimulationFlags = false;
 
         if (outEventObj) {
-            outEventObj->setSubmitTimeStamp();
+            TimeStampData submitTimeStamp;
+            getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
+            outEventObj->setSubmitTimeStamp(submitTimeStamp);
         }
         // wait for the completness of previous commands
         if (transferProperties.finishRequired) {
