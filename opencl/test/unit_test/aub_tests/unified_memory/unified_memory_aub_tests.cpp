@@ -17,9 +17,15 @@ class UnifiedMemoryAubTest : public UnifiedMemoryAubFixture,
   public:
     using UnifiedMemoryAubFixture::tearDown;
 
+    DebugManagerStateRestore restorer;
     std::vector<char> values;
 
     void SetUp() override {
+        if (testMode == TestMode::AubTestsWithTbx) {
+            DebugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
+        } else {
+            DebugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));
+        }
         UnifiedMemoryAubFixture::setUp();
         values = std::vector<char>(dataSize, 11);
     };
