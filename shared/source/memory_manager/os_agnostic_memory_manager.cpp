@@ -332,7 +332,8 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
 
         auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
         if (aubCenter && aubCenter->getAubManager() && DebugManager.flags.EnableFreeMemory.get()) {
-            aubCenter->getAubManager()->freeMemory(gfxAllocation->getGpuAddress(), gfxAllocation->getUnderlyingBufferSize());
+            aubCenter->getAubManager()->freeMemory(
+                peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()].get()->gmmHelper.get()->decanonize(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
         }
     }
     delete gfxAllocation;

@@ -1765,8 +1765,18 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryEnabledWh
 
     auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
     EXPECT_FALSE(mockManager->freeMemoryCalled);
+
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+
+    gfxAllocation->setCpuPtrAndGpuAddress(gfxAllocation->getUnderlyingBuffer(), 1ull << (gmmHelper->getAddressWidth() - 1));
+    auto canonizedGpuAddress = gmmHelper->canonize(gfxAllocation->getGpuAddress());
+    auto decanonizedGpuAddress = gmmHelper->decanonize(canonizedGpuAddress);
+
     memoryManager.freeGraphicsMemory(gfxAllocation);
     EXPECT_TRUE(mockManager->freeMemoryCalled);
+
+    EXPECT_NE(canonizedGpuAddress, decanonizedGpuAddress);
+    EXPECT_EQ(decanonizedGpuAddress, mockManager->freedGfxAddress);
 }
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryDisabledWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {

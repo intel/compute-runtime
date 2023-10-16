@@ -134,6 +134,7 @@ class MockAubManager : public aub_stream::AubManager {
 
     void freeMemory(uint64_t gfxAddress, size_t size) override {
         freeMemoryCalled = true;
+        freedGfxAddress = gfxAddress;
     }
 
     bool reservePhysicalMemory(aub_stream::AllocationParams allocationParams, aub_stream::PhysicalAllocationInfo &physicalAllocInfo) override { return false; };
@@ -152,6 +153,7 @@ class MockAubManager : public aub_stream::AubManager {
     bool writePageTableEntriesCalled = false;
     bool writePhysicalMemoryPagesCalled = false;
     bool freeMemoryCalled = false;
+    uint64_t freedGfxAddress = 0;
     bool storeAllocationParams = false;
     uint32_t contextFlags = 0;
     int hintToWriteMemory = 0;
