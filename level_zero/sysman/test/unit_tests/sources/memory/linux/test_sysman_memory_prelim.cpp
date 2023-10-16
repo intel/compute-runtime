@@ -19,11 +19,27 @@
 namespace L0 {
 namespace Sysman {
 namespace ult {
-
 constexpr int32_t memoryBusWidth = 128; // bus width in bits
 constexpr int32_t numMemoryChannels = 8;
 constexpr uint32_t memoryHandleComponentCount = 1u;
 const std::string sampleGuid1 = "0xb15a0edc";
+
+class SysmanMemoryMockIoctlHelper : public NEO::MockIoctlHelper {
+
+  public:
+    using NEO::MockIoctlHelper::MockIoctlHelper;
+    bool returnEmptyMemoryInfo = false;
+    int32_t mockErrorNumber = 0;
+
+    std::unique_ptr<MemoryInfo> createMemoryInfo() override {
+        if (returnEmptyMemoryInfo) {
+            errno = mockErrorNumber;
+            return {};
+        }
+        return NEO::MockIoctlHelper::createMemoryInfo();
+    }
+};
+
 class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockMemorySysfsAccess> pSysfsAccess;
@@ -54,7 +70,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
-        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<NEO::MockIoctlHelper>(*pDrm));
+        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<SysmanMemoryMockIoctlHelper>(*pDrm));
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pmtMapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
@@ -348,6 +364,42 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
         EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
         EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
         EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateAndIoctlReturnedErrorThenApiReturnsError) {
+    setLocalSupportedAndReinit(true);
+
+    auto ioctlHelper = static_cast<SysmanMemoryMockIoctlHelper *>(pDrm->ioctlHelper.get());
+    ioctlHelper->returnEmptyMemoryInfo = true;
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        zes_mem_state_t state;
+
+        ze_result_t result = zesMemoryGetState(handle, &state);
+
+        EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+        EXPECT_EQ(state.size, 0u);
+        EXPECT_EQ(state.free, 0u);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateAndDeviceIsNotAvailableThenDeviceLostErrorIsReturned) {
+    setLocalSupportedAndReinit(true);
+
+    auto ioctlHelper = static_cast<SysmanMemoryMockIoctlHelper *>(pDrm->ioctlHelper.get());
+    ioctlHelper->returnEmptyMemoryInfo = true;
+    ioctlHelper->mockErrorNumber = ENODEV;
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        zes_mem_state_t state;
+
+        ze_result_t result = zesMemoryGetState(handle, &state);
+
+        EXPECT_EQ(result, ZE_RESULT_ERROR_DEVICE_LOST);
+        EXPECT_EQ(state.size, 0u);
+        EXPECT_EQ(state.free, 0u);
+        errno = 0;
     }
 }
 
