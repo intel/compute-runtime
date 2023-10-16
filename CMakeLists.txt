@@ -89,23 +89,6 @@ set(GLOBAL PROPERTY NEO_L0_COMPONENTS_LIST "")
 
 string(REPLACE " " ";" NEO_RUN_INTERCEPTOR_LIST "${NEO_RUN_INTERCEPTOR}")
 
-if(WIN32)
-  set(DISABLE_WDDM_LINUX TRUE)
-endif()
-
-include(cmake/find_wdk.cmake)
-
-if(WIN32)
-  set(DRIVER_MODEL wddm)
-else()
-  if(DISABLE_WDDM_LINUX)
-    set(DRIVER_MODEL drm)
-  else()
-    set(DRIVER_MODEL drm_or_wddm)
-  endif()
-endif()
-message(STATUS "Driver model : ${DRIVER_MODEL}")
-
 if(TR_DEPRECATED)
   add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 endif()
@@ -168,14 +151,6 @@ add_definitions(
                 -DCL_USE_DEPRECATED_OPENCL_2_1_APIS
                 -DCL_USE_DEPRECATED_OPENCL_2_2_APIS
 )
-
-if(WIN32 OR NOT DISABLE_WDDM_LINUX)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS -DWDDM_VERSION_NUMBER=23 -DNOMINMAX)
-  add_definitions(-DLEGACY_D3DAPI_VERSION=20)
-  if(NOT WIN32)
-    add_definitions(-DWDDM_LINUX=1)
-  endif()
-endif()
 
 if(UNIX)
   add_definitions(-D__user= -D__packed=)
@@ -469,6 +444,44 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Get available platfroms
 include(platforms.cmake)
+
+if(WIN32)
+  set(DISABLE_WDDM_LINUX TRUE)
+endif()
+
+if(PLATFORMS_TO_HAVE_WDDM_DISABLED AND NOT DISABLE_WDDM_LINUX)
+  message(STATUS "Platforms to have WDDM_LINUX disabled: ${PLATFORMS_TO_HAVE_WDDM_DISABLED}")
+  set(PLATFORMS_TO_HAVE_WDDM_ENABLED ${SUPPORTED_PLATFORM_LIST})
+  foreach(SKU_NAME ${PLATFORMS_TO_HAVE_WDDM_DISABLED})
+    list(REMOVE_ITEM PLATFORMS_TO_HAVE_WDDM_ENABLED ${SKU_NAME})
+  endforeach()
+  if(NOT PLATFORMS_TO_HAVE_WDDM_ENABLED)
+    set(DISABLE_WDDM_LINUX TRUE)
+  endif()
+  unset(PLATFORMS_TO_HAVE_WDDM_ENABLED)
+endif()
+unset(PLATFORMS_TO_HAVE_WDDM_DISABLED)
+
+include(cmake/find_wdk.cmake)
+
+if(WIN32)
+  set(DRIVER_MODEL wddm)
+else()
+  if(DISABLE_WDDM_LINUX)
+    set(DRIVER_MODEL drm)
+  else()
+    set(DRIVER_MODEL drm_or_wddm)
+  endif()
+endif()
+message(STATUS "Driver model : ${DRIVER_MODEL}")
+
+if(WIN32 OR NOT DISABLE_WDDM_LINUX)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -DWDDM_VERSION_NUMBER=23 -DNOMINMAX)
+  add_definitions(-DLEGACY_D3DAPI_VERSION=20)
+  if(NOT WIN32)
+    add_definitions(-DWDDM_LINUX=1)
+  endif()
+endif()
 
 if(UNIX)
   # prelim headers detection
