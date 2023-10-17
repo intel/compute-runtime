@@ -27,7 +27,7 @@ const PLATFORM PVC::platform = {
     IGFX_XE_HPC_CORE,
     PLATFORM_NONE,     // default init
     pvcXtDeviceIds[0], // usDeviceID
-    7,                 // usRevId
+    47,                // usRevId
     0,                 // usDeviceID_PCH
     0,                 // usRevId_PCH
     GTTYPE_UNDEFINED};

@@ -115,6 +115,11 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenProperThreadGroupSizesWhenWa
 
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(workSize, wgInfo, PreemptionMode::Disabled);
 
+    const auto &productHelper = clDevice->getProductHelper();
+
+    auto hwInfo = clDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+
     {
         HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
                                                      heap, heap, heap, dispatchInfo, walkerArgs);

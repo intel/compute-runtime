@@ -309,7 +309,15 @@ void DeviceImp::populateSubDeviceCopyEngineGroups() {
         return;
     }
 
-    NEO::Device *activeSubDevice = activeDevice->getSubDevice(0u);
+    NEO::Device *activeSubDevice = nullptr;
+    for (auto &subDevice : activeDevice->getSubDevices()) {
+        if (subDevice) {
+            activeSubDevice = subDevice;
+            break;
+        }
+    }
+    UNRECOVERABLE_IF(!activeSubDevice);
+
     auto &subDeviceEngineGroups = activeSubDevice->getRegularEngineGroups();
     uint32_t numSubDeviceEngineGroups = static_cast<uint32_t>(subDeviceEngineGroups.size());
 
