@@ -58,7 +58,7 @@ void DebuggerL0::initialize() {
         properties.gpuAddress = sbaTrackingGpuVa.address;
     }
 
-    SbaTrackedAddresses sbaHeader;
+    SbaTrackedAddresses sbaHeader{};
 
     for (auto &engine : engines) {
         if (!singleAddressSpaceSbaTracking) {
