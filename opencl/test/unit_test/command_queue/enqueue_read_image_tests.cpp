@@ -220,16 +220,7 @@ HWTEST_F(EnqueueReadImageTest, givenGpuHangAndCommandQueueAndPtrCopyAllowedForHo
     cmdQ->gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
 }
 
-struct EnqueueReadImageMigrationTest : public EnqueueReadImageTest {
-    void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        EnqueueReadImageTest::SetUp();
-    }
-
-    DebugManagerStateRestore restore;
-};
-
-HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenEnqueueReadImageThenKernelRequiresMigration) {
+HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageThenKernelRequiresMigration) {
 
     MockDefaultContext context{true};
 
@@ -280,7 +271,7 @@ HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenEnqueueRead
     pImage->release();
 }
 
-HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCalledMultipleTimesThenEachKernelUsesDifferentImage) {
+HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCalledMultipleTimesThenEachKernelUsesDifferentImage) {
 
     MockDefaultContext context{true};
 
@@ -363,7 +354,7 @@ HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenEnqueueRead
     pImage->release();
 }
 
-HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueReadImageIsCalledThenCommandQueueIsFlushed) {
+HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueReadImageIsCalledThenCommandQueueIsFlushed) {
     MockDefaultContext context{true};
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
@@ -386,7 +377,7 @@ HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenNonBlockedE
     pImage->release();
 }
 
-HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueReadImageIsCalledThenTlbCacheIsInvalidated) {
+HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueReadImageIsCalledThenTlbCacheIsInvalidated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     MockDefaultContext context{true};
@@ -422,7 +413,7 @@ HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenNonBlockedE
     pImage->release();
 }
 
-HWTEST_F(EnqueueReadImageMigrationTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCalledToDifferentDevicesThenCorrectLocationIsSet) {
+HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCalledToDifferentDevicesThenCorrectLocationIsSet) {
 
     MockDefaultContext context{true};
 

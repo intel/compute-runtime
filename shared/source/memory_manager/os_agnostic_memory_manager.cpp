@@ -249,10 +249,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedH
     if (mapPointer) {
         gpuPtr = mapPointer;
     }
-
-    const auto memoryPool = isHostIpcAllocation ? MemoryPool::SystemCpuInaccessible : MemoryPool::LocalCpuInaccessible;
     auto graphicsAllocation = createMemoryAllocation(properties.allocationType, nullptr, gpuPtr, 1,
-                                                     4096u, static_cast<uint64_t>(handle), memoryPool, properties.rootDeviceIndex,
+                                                     4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible, properties.rootDeviceIndex,
                                                      false, false, requireSpecificBitness);
     graphicsAllocation->setSharedHandle(handle);
     graphicsAllocation->set32BitAllocation(requireSpecificBitness);
@@ -446,11 +444,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const 
 
     auto ptr = allocateSystemMemory(alignUp(allocationData.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
     if (ptr != nullptr) {
-        auto memoryBanks = static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong());
-        const auto memoryPool = (memoryBanks == 0) ? MemoryPool::SystemCpuInaccessible : MemoryPool::LocalCpuInaccessible;
-
         alloc = new MemoryAllocation(allocationData.rootDeviceIndex, allocationData.type, ptr, ptr, 0u, allocationData.size,
-                                     counter, memoryPool, allocationData.flags.uncacheable, allocationData.flags.flushL3, maxOsContextCount);
+                                     counter, MemoryPool::SystemCpuInaccessible, allocationData.flags.uncacheable, allocationData.flags.flushL3, maxOsContextCount);
         counter++;
     }
 
@@ -473,10 +468,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const Allocatio
     const size_t alignment = std::max(allocationData.alignment, MemoryConstants::pageSize);
     auto ptr = allocateSystemMemory(alignUp(allocationData.size, alignment), alignment);
     if (ptr != nullptr) {
-        auto memoryBanks = static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong());
-        const auto memoryPool = (memoryBanks == 0) ? MemoryPool::SystemCpuInaccessible : MemoryPool::LocalCpuInaccessible;
         alloc = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size,
-                                       counter, memoryPool, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
+                                       counter, MemoryPool::SystemCpuInaccessible, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
         counter++;
     }
 
@@ -500,10 +493,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
 
     auto ptr = allocateSystemMemory(alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize), MemoryConstants::pageSize);
     if (ptr != nullptr) {
-        UNRECOVERABLE_IF(allocationData.imgInfo->useLocalMemory);
-        const auto memoryPool = MemoryPool::SystemCpuInaccessible;
         alloc = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.imgInfo->size,
-                                       counter, memoryPool, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
+                                       counter, MemoryPool::SystemCpuInaccessible, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
         counter++;
     }
 

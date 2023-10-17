@@ -329,15 +329,11 @@ TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAll
 }
 
 TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPoolThenBufferIsNotZeroCopy) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
-
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx(device.get());
 
     auto memoryManager = std::make_unique<MockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
     memoryManager->returnAllocateNonSystemGraphicsMemoryInDevicePool = true;
-    memoryManager->localMemorySupported[0] = true;
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
@@ -347,19 +343,14 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
 
     ASSERT_NE(nullptr, buffer.get());
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
-    EXPECT_TRUE(buffer->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
 }
 
 TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPoolThenAllocationIsNotAddedToHostPtrManager) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
-
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx(device.get());
 
     auto memoryManager = std::make_unique<MockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
     memoryManager->returnAllocateNonSystemGraphicsMemoryInDevicePool = true;
-    memoryManager->localMemorySupported[0] = true;
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
@@ -373,7 +364,6 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
     auto hostPtrAllocationCountAfter = hostPtrManager->getFragmentCount();
 
     EXPECT_EQ(hostPtrAllocationCountBefore, hostPtrAllocationCountAfter);
-    EXPECT_TRUE(buffer->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
 }
 
 TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrCompressedBuffersThenBuffersAllocationTypeIsBufferOrBufferHostMemory) {
@@ -582,14 +572,11 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndCompressedBuffersDisabledWhenAlloca
 TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuDisabledThenAllocationIsWrittenByEnqueueWriteBuffer) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CopyHostPtrOnCpu.set(0);
-    DebugManager.flags.EnableLocalMemory.set(1);
-
     ExecutionEnvironment *executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
 
     auto *memoryManager = new MockMemoryManagerFailFirstAllocation(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     memoryManager->returnBaseAllocateGraphicsMemoryInDevicePool = true;
-    memoryManager->localMemorySupported[0] = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
 
     MockContext ctx(device.get());
@@ -605,8 +592,6 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
     if constexpr (is64bit) {
         EXPECT_LT(taskCount, taskCountSent);
     }
-
-    EXPECT_TRUE(buffer->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
 }
 
 TEST(Buffer, givenPropertiesWithClDeviceHandleListKHRWhenCreateBufferThenCorrectBufferIsSet) {

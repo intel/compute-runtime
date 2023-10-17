@@ -409,9 +409,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
     auto stateHeapMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
     auto l1CacheOnMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    static_cast<MemoryAllocation *>(ioh.getGraphicsAllocation())->overrideMemoryPool(MemoryPool::System4KBPages);
-
     flushTask(commandStreamReceiver);
 
     auto &commandStreamCSR = commandStreamReceiver.commandStream;

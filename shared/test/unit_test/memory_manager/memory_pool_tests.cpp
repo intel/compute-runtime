@@ -14,11 +14,10 @@ TEST(MemoryPool, givenSystemMemoryPoolTypesWhenIsSystemMemoryPoolIsCalledThenTru
     EXPECT_TRUE(NEO::MemoryPoolHelper::isSystemMemoryPool(NEO::MemoryPool::System4KBPagesWith32BitGpuAddressing));
     EXPECT_TRUE(NEO::MemoryPoolHelper::isSystemMemoryPool(NEO::MemoryPool::System64KBPages));
     EXPECT_TRUE(NEO::MemoryPoolHelper::isSystemMemoryPool(NEO::MemoryPool::System64KBPagesWith32BitGpuAddressing));
-    EXPECT_TRUE(NEO::MemoryPoolHelper::isSystemMemoryPool(NEO::MemoryPool::SystemCpuInaccessible));
 }
 
 TEST(MemoryPool, givenNonSystemMemoryPoolTypesWhenIsSystemMemoryPoolIsCalledThenFalseIsReturned) {
     EXPECT_FALSE(NEO::MemoryPoolHelper::isSystemMemoryPool(NEO::MemoryPool::MemoryNull));
-    EXPECT_FALSE(NEO::MemoryPoolHelper::isSystemMemoryPool(NEO::MemoryPool::LocalCpuInaccessible));
+    EXPECT_FALSE(NEO::MemoryPoolHelper::isSystemMemoryPool(NEO::MemoryPool::SystemCpuInaccessible));
     EXPECT_FALSE(NEO::MemoryPoolHelper::isSystemMemoryPool(NEO::MemoryPool::LocalMemory));
 }

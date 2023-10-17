@@ -706,7 +706,7 @@ TEST_P(CreateImageHostPtr, WhenImageIsCreatedThenResidencyIsFalse) {
 
 TEST_P(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelativeToPage) {
     image = createImage(retVal);
-
+    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, image);
 
     auto address = image->getBasePtrForMap(0);
@@ -739,6 +739,11 @@ TEST_P(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelati
         }
     } else {
         EXPECT_NE(pHostPtr, address);
+    }
+
+    if (flags & CL_MEM_COPY_HOST_PTR && image->isMemObjZeroCopy()) {
+        // Buffer should contain a copy of host memory
+        EXPECT_EQ(0, memcmp(pHostPtr, allocation->getUnderlyingBuffer(), sizeof(testImageDimensions)));
     }
 }
 
@@ -1345,9 +1350,6 @@ TEST(ImageTest, givenMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
 }
 
 TEST(ImageTest, givenNonMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenReturnOffsetWithSlicePitch) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableLocalMemory.set(1);
-
     MockContext ctx;
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;

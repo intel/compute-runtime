@@ -271,9 +271,9 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
 
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
-    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::LocalMemory);
-
-    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
+    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    // read write on CPU is allowed, but not preferred. We can access this memory via Lock.
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
 }
 

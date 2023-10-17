@@ -590,9 +590,7 @@ bool DrmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAl
 }
 
 GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
-    auto memoryBanks = static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong());
-
-    const auto memoryPool = (memoryBanks == 0) ? MemoryPool::SystemCpuInaccessible : MemoryPool::LocalCpuInaccessible;
+    const auto memoryPool = MemoryPool::SystemCpuInaccessible;
     StorageInfo systemMemoryStorageInfo = {};
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
 
@@ -603,7 +601,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
     auto &drm = getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    uint32_t handle = ioctlHelper->createGem(bufferSize, memoryBanks);
+    uint32_t handle = ioctlHelper->createGem(bufferSize, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()));
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
 
@@ -618,9 +616,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
-    auto memoryBanks = static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong());
-
-    const auto memoryPool = (memoryBanks == 0) ? MemoryPool::SystemCpuInaccessible : MemoryPool::LocalCpuInaccessible;
+    const auto memoryPool = MemoryPool::SystemCpuInaccessible;
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
@@ -632,7 +628,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     auto &drm = getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    uint32_t handle = ioctlHelper->createGem(bufferSize, memoryBanks);
+    uint32_t handle = ioctlHelper->createGem(bufferSize, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()));
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
 
@@ -661,15 +657,13 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
         return alloc;
     }
 
-    auto memoryBanks = static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong());
-    UNRECOVERABLE_IF(allocationData.imgInfo->useLocalMemory);
     const auto memoryPool = MemoryPool::SystemCpuInaccessible;
 
     uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
 
     auto &drm = this->getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
-    uint32_t handle = ioctlHelper->createGem(allocationData.imgInfo->size, memoryBanks);
+    uint32_t handle = ioctlHelper->createGem(allocationData.imgInfo->size, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()));
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
 
@@ -975,8 +969,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
     }
 
-    const auto memoryPool = MemoryPool::LocalCpuInaccessible;
-    UNRECOVERABLE_IF(isHostIpcAllocation);
+    const auto memoryPool = MemoryPool::SystemCpuInaccessible;
 
     if (bo == nullptr) {
         size_t size = SysCalls::lseek(handle, 0, SEEK_END);

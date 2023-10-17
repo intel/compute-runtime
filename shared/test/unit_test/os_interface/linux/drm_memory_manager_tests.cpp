@@ -281,30 +281,17 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
 }
 
 TEST_F(DrmMemoryManagerTest, GivenAllocatePhysicalDeviceMemoryThenSuccessReturnedAndNoVirtualMemoryAssigned) {
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
-
-    mock->ioctlExpected.gemWait = 2;
-    mock->ioctlExpected.gemCreate = 2;
-    mock->ioctlExpected.gemClose = 2;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemCreate = 1;
+    mock->ioctlExpected.gemClose = 1;
 
     allocationData.size = MemoryConstants::pageSize;
     allocationData.flags.shareable = true;
-
-    allocationData.storageInfo.memoryBanks = 0;
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     auto allocation = memoryManager->allocatePhysicalDeviceMemory(allocationData, status);
     EXPECT_EQ(status, MemoryManager::AllocationStatus::Success);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(0u, allocation->getGpuAddress());
-    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
-    memoryManager->freeGraphicsMemory(allocation);
-
-    allocationData.storageInfo.memoryBanks = 3;
-    status = MemoryManager::AllocationStatus::Error;
-    allocation = memoryManager->allocatePhysicalDeviceMemory(allocationData, status);
-    EXPECT_EQ(status, MemoryManager::AllocationStatus::Success);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(0u, allocation->getGpuAddress());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -1932,7 +1919,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
 
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, graphicsAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, graphicsAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, graphicsAllocation->getMemoryPool());
     EXPECT_EQ(this->mock->inputFd, static_cast<int32_t>(handle));
 
     const bool prefer57bitAddressing = memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0;
@@ -2821,7 +2808,7 @@ TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenCreateAllocationFromHandleIs
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
 }
 

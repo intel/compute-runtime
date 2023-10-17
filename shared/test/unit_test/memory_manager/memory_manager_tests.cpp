@@ -82,33 +82,6 @@ TEST(MemoryManagerTest, givenDefaultMemoryManagerWhenGraphicsAllocationContainsE
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST(MemoryManagerTest, givenMemoryBanksWhenAllocatingPhysicalDeviecMemoryThenSetCorrectPool) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-    MemoryManager::AllocationStatus status;
-
-    AllocationData allocationData;
-    allocationData.size = 4096u;
-    allocationData.flags.shareable = true;
-
-    allocationData.storageInfo.memoryBanks = 0;
-    auto allocation = memoryManager.allocatePhysicalDeviceMemory(allocationData, status);
-    EXPECT_EQ(status, MemoryManager::AllocationStatus::Success);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(0u, allocation->getGpuAddress());
-    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
-    memoryManager.freeGraphicsMemory(allocation);
-
-    allocationData.storageInfo.memoryBanks = 3;
-    status = MemoryManager::AllocationStatus::Error;
-    allocation = memoryManager.allocatePhysicalDeviceMemory(allocationData, status);
-    EXPECT_EQ(status, MemoryManager::AllocationStatus::Success);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(0u, allocation->getGpuAddress());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, allocation->getMemoryPool());
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
 TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsReturned) {
     MockMemoryManager memoryManager;
     for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
@@ -349,7 +322,7 @@ TEST(OsAgnosticMemoryManager, whenCallingCreateGraphicsAllocationFromSharedHandl
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, sharedAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }
@@ -369,7 +342,7 @@ TEST(OsAgnosticMemoryManager, whenCallingCreateGraphicsAllocationFromSharedHandl
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, sharedAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }
@@ -1300,7 +1273,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, sharedAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }
@@ -1317,7 +1290,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_EQ(mapPointer, sharedAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, sharedAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }
@@ -1337,7 +1310,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, sharedAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }
@@ -1354,7 +1327,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(MemoryPool::LocalCpuInaccessible, sharedAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }
@@ -2583,7 +2556,7 @@ TEST_F(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForNullAllocat
 }
 
 TEST_F(HeapSelectorTest, givenDebugModuleAreaAllocationAndUseFrontWindowWhenSelectingHeapThenInternalFrontWindowHeapIsReturned) {
-    GraphicsAllocation allocation{0, AllocationType::DEBUG_MODULE_AREA, nullptr, 0, 0, 0, MemoryPool::System4KBPages, 1};
+    GraphicsAllocation allocation{0, AllocationType::DEBUG_MODULE_AREA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, 1};
     allocation.set32BitAllocation(true);
     EXPECT_EQ(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW, memoryManager->selectHeap(&allocation, false, false, true));
 }

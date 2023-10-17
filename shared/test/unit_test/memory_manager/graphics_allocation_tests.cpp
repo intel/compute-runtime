@@ -263,7 +263,6 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThen
     MemoryPool page4kPools[] = {MemoryPool::MemoryNull,
                                 MemoryPool::System4KBPages,
                                 MemoryPool::System4KBPagesWith32BitGpuAddressing,
-                                MemoryPool::LocalCpuInaccessible,
                                 MemoryPool::SystemCpuInaccessible};
 
     for (auto pool : page4kPools) {

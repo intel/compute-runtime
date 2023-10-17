@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -69,16 +68,10 @@ class CreateImage2DTest : public ClDeviceFixture,
     cl_mem_object_type types = 0;
 };
 
-struct CreateImage2DLocalMemoryTest : public CreateImage2DTest {
-    void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        CreateImage2DTest::SetUp();
-    }
-    DebugManagerStateRestore dbgRestore;
-};
+typedef CreateImage2DTest CreateImage2DType;
 
-HWTEST_P(CreateImage2DLocalMemoryTest, GivenValidTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
-    auto image = std::unique_ptr<Image>(createImageWithFlags(CL_MEM_READ_WRITE));
+HWTEST_P(CreateImage2DType, GivenValidTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
+    auto image = createImageWithFlags(CL_MEM_READ_WRITE);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
@@ -100,11 +93,10 @@ HWTEST_P(CreateImage2DLocalMemoryTest, GivenValidTypeWhenCreatingImageThenImageC
     }
 
     EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
-    EXPECT_FALSE(image->isMemObjZeroCopy());
-    EXPECT_TRUE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
+    EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
 
     typedef typename FamilyType::RENDER_SURFACE_STATE SURFACE_STATE;
-    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image);
     EXPECT_EQ(SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D, imageHw->surfaceType);
 
     SurfaceOffsets surfaceOffsets;
@@ -114,45 +106,8 @@ HWTEST_P(CreateImage2DLocalMemoryTest, GivenValidTypeWhenCreatingImageThenImageC
     EXPECT_EQ(0u, surfaceOffsets.xOffset);
     EXPECT_EQ(0u, surfaceOffsets.yOffset);
     EXPECT_EQ(0u, surfaceOffsets.yOffsetForUVplane);
-}
 
-HWTEST_P(CreateImage2DTest, GivenValidTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
-    auto image = std::unique_ptr<Image>(createImageWithFlags(CL_MEM_READ_WRITE));
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, image);
-
-    auto imgDesc = image->getImageDesc();
-
-    EXPECT_NE(0u, imgDesc.image_width);
-    EXPECT_NE(0u, imgDesc.image_height);
-    EXPECT_EQ(0u, imgDesc.image_depth);
-    EXPECT_NE(0u, imgDesc.image_row_pitch);
-    EXPECT_GE(imgDesc.image_slice_pitch, imgDesc.image_row_pitch);
-
-    if (types == CL_MEM_OBJECT_IMAGE2D) {
-        EXPECT_EQ(0u, imgDesc.image_array_size);
-    } else if (types == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-        EXPECT_NE(0u, imgDesc.image_array_size);
-    } else {
-        ASSERT_TRUE(false);
-    }
-
-    EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
-    EXPECT_TRUE(image->isMemObjZeroCopy());
-    EXPECT_FALSE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
-
-    typedef typename FamilyType::RENDER_SURFACE_STATE SURFACE_STATE;
-    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    EXPECT_EQ(SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D, imageHw->surfaceType);
-
-    SurfaceOffsets surfaceOffsets;
-    image->getSurfaceOffsets(surfaceOffsets);
-
-    EXPECT_EQ(0u, surfaceOffsets.offset);
-    EXPECT_EQ(0u, surfaceOffsets.xOffset);
-    EXPECT_EQ(0u, surfaceOffsets.yOffset);
-    EXPECT_EQ(0u, surfaceOffsets.yOffsetForUVplane);
+    delete image;
 }
 
 static cl_mem_object_type Image2DTypes[] = {
@@ -161,10 +116,5 @@ static cl_mem_object_type Image2DTypes[] = {
 
 INSTANTIATE_TEST_CASE_P(
     CreateImage2DTestCreate,
-    CreateImage2DTest,
-    testing::ValuesIn(Image2DTypes));
-
-INSTANTIATE_TEST_CASE_P(
-    CreateImage2DTestLocalMemoryCreate,
-    CreateImage2DLocalMemoryTest,
+    CreateImage2DType,
     testing::ValuesIn(Image2DTypes));

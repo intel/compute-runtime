@@ -6,12 +6,10 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
-#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -72,46 +70,6 @@ class ImageArraySizeTest : public ClDeviceFixture,
 
 typedef ImageArraySizeTest CreateImageArraySize;
 
-struct CreateImageArraySizeLocalMemoryTest : public CreateImageArraySize {
-    void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        CreateImageArraySize::SetUp();
-    }
-    DebugManagerStateRestore dbgRestore;
-};
-
-HWTEST_P(CreateImageArraySizeLocalMemoryTest, GivenArrayTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
-
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    auto image = Image::create(
-        context,
-        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-        flags,
-        0,
-        surfaceFormat,
-        &imageDesc,
-        nullptr,
-        retVal);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, image);
-
-    if (types == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
-        EXPECT_FALSE(image->isMemObjZeroCopy());
-        EXPECT_TRUE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
-        auto address = image->getCpuAddress();
-        EXPECT_NE(nullptr, address);
-
-    } else if (types == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-        EXPECT_FALSE(image->isMemObjZeroCopy());
-        EXPECT_TRUE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
-    }
-    ASSERT_EQ(10u, image->getImageDesc().image_array_size);
-
-    delete image;
-}
-
 HWTEST_P(CreateImageArraySize, GivenArrayTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -131,13 +89,11 @@ HWTEST_P(CreateImageArraySize, GivenArrayTypeWhenCreatingImageThenImageCreatedWi
 
     if (types == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
         EXPECT_TRUE(image->isMemObjZeroCopy());
-        EXPECT_FALSE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
         auto address = image->getCpuAddress();
         EXPECT_NE(nullptr, address);
 
     } else if (types == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-        EXPECT_TRUE(image->isMemObjZeroCopy());
-        EXPECT_FALSE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
+        EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
     }
     ASSERT_EQ(10u, image->getImageDesc().image_array_size);
 
@@ -153,55 +109,7 @@ INSTANTIATE_TEST_CASE_P(
     CreateImageArraySize,
     testing::ValuesIn(ArrayImageTypes));
 
-INSTANTIATE_TEST_CASE_P(
-    ImageArraySizeTestCreate,
-    CreateImageArraySizeLocalMemoryTest,
-    testing::ValuesIn(ArrayImageTypes));
-
 typedef ImageArraySizeTest CreateImageNonArraySize;
-
-struct CreateImageNonArraySizeLocalMemory : public CreateImageNonArraySize {
-    void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        CreateImageNonArraySize::SetUp();
-    }
-    DebugManagerStateRestore dbgRestore;
-};
-
-HWTEST_P(CreateImageNonArraySizeLocalMemory, GivenNonArrayTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
-
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    auto image = Image::create(
-        context,
-        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-        flags,
-        0,
-        surfaceFormat,
-        &imageDesc,
-        nullptr,
-        retVal);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, image);
-
-    if (types == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-        EXPECT_TRUE(image->isMemObjZeroCopy());
-        auto buffer = castToObject<Buffer>(imageDesc.buffer);
-        EXPECT_EQ(buffer->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool(), image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
-    } else if (types == CL_MEM_OBJECT_IMAGE2D || types == CL_MEM_OBJECT_IMAGE3D || types == CL_MEM_OBJECT_IMAGE1D) {
-        EXPECT_FALSE(image->isMemObjZeroCopy());
-        EXPECT_TRUE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
-    } else {
-        EXPECT_TRUE(image->isMemObjZeroCopy());
-        EXPECT_TRUE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
-        auto address = image->getCpuAddress();
-        EXPECT_NE(nullptr, address);
-    }
-    ASSERT_EQ(0u, image->getImageDesc().image_array_size);
-
-    delete image;
-}
 
 HWTEST_P(CreateImageNonArraySize, GivenNonArrayTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
 
@@ -220,11 +128,9 @@ HWTEST_P(CreateImageNonArraySize, GivenNonArrayTypeWhenCreatingImageThenImageCre
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
     if (types == CL_MEM_OBJECT_IMAGE2D || types == CL_MEM_OBJECT_IMAGE3D) {
-        EXPECT_TRUE(image->isMemObjZeroCopy());
-        EXPECT_FALSE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
+        EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
     } else {
         EXPECT_TRUE(image->isMemObjZeroCopy());
-        EXPECT_FALSE(image->getGraphicsAllocation(0)->isAllocatedInLocalMemoryPool());
         auto address = image->getCpuAddress();
         EXPECT_NE(nullptr, address);
     }
@@ -242,11 +148,6 @@ static cl_mem_object_type NonArrayImageTypes[] = {
 INSTANTIATE_TEST_CASE_P(
     ImageArraySizeTest_Create,
     CreateImageNonArraySize,
-    testing::ValuesIn(NonArrayImageTypes));
-
-INSTANTIATE_TEST_CASE_P(
-    ImageArraySizeTest_Create,
-    CreateImageNonArraySizeLocalMemory,
     testing::ValuesIn(NonArrayImageTypes));
 
 typedef ImageArraySizeTest CreateImageSize;

@@ -562,14 +562,13 @@ TEST(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrect
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    std::array<std::pair<MemoryPool, const char *>, 8> memoryPoolValues = {
+    std::array<std::pair<MemoryPool, const char *>, 7> memoryPoolValues = {
         {{MemoryPool::MemoryNull, "MemoryNull"},
          {MemoryPool::LocalMemory, "LocalMemory"},
          {MemoryPool::System4KBPages, "System4KBPages"},
          {MemoryPool::System4KBPagesWith32BitGpuAddressing, "System4KBPagesWith32BitGpuAddressing"},
          {MemoryPool::System64KBPages, "System64KBPages"},
          {MemoryPool::System64KBPagesWith32BitGpuAddressing, "System64KBPagesWith32BitGpuAddressing"},
-         {MemoryPool::LocalCpuInaccessible, "LocalCpuInaccessible"},
          {MemoryPool::SystemCpuInaccessible, "SystemCpuInaccessible"}}};
 
     for (const auto &[pool, str] : memoryPoolValues) {
