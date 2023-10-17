@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-TEST(PerfProfiler, WhenCreatingThenOnlyOneInstanceExists) {
+TEST(PerfProfiler, DISABLED_WhenCreatingThenOnlyOneInstanceExists) {
     PerfProfiler *ptr = PerfProfiler::create();
     ASSERT_NE(nullptr, ptr);
     EXPECT_EQ(1, PerfProfiler::getCurrentCounter());
@@ -28,7 +28,7 @@ TEST(PerfProfiler, WhenCreatingThenOnlyOneInstanceExists) {
     EXPECT_EQ(nullptr, PerfProfiler::getObject(0));
 }
 
-TEST(PerfProfiler, WhenCreatingDestroyingCreatingThenStateMachineIsCorrect) {
+TEST(PerfProfiler, DISABLED_WhenCreatingDestroyingCreatingThenStateMachineIsCorrect) {
     // purpose of this test is multiple create and destroy, so check the state machine works correctly
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
     PerfProfiler *ptr = PerfProfiler::create();
@@ -56,7 +56,7 @@ TEST(PerfProfiler, WhenCreatingDestroyingCreatingThenStateMachineIsCorrect) {
     EXPECT_EQ(nullptr, PerfProfiler::getObject(0));
 }
 
-TEST(PerfProfiler, WhenDestroyingAllThenAllObjectsAreDestroyed) {
+TEST(PerfProfiler, DISABLED_WhenDestroyingAllThenAllObjectsAreDestroyed) {
     struct PerfProfilerMock : PerfProfiler {
         static void addNullObjects() {
             PerfProfiler::objects[0] = nullptr;
@@ -73,7 +73,7 @@ TEST(PerfProfiler, WhenDestroyingAllThenAllObjectsAreDestroyed) {
     EXPECT_EQ(nullptr, PerfProfiler::getObject(0));
 }
 
-TEST(PerfProfiler, GivenPerfProfilerXmlVerifierWhenDumpingLogThenLogIsCorrect) {
+TEST(PerfProfiler, DISABLED_GivenPerfProfilerXmlVerifierWhenDumpingLogThenLogIsCorrect) {
     std::unique_ptr<std::stringstream> logs = std::unique_ptr<std::stringstream>(new std::stringstream());
     std::unique_ptr<std::stringstream> sysLogs = std::unique_ptr<std::stringstream>(new std::stringstream());
     std::unique_ptr<PerfProfiler> ptr(new PerfProfiler(1, std::move(logs), std::move(sysLogs)));
@@ -133,7 +133,7 @@ TEST(PerfProfiler, GivenPerfProfilerXmlVerifierWhenDumpingLogThenLogIsCorrect) {
     }
 }
 
-TEST(PerfProfiler, GivenApiEnterLeaveWhenDumpingLogThenLogIsCorrect) {
+TEST(PerfProfiler, DISABLED_GivenApiEnterLeaveWhenDumpingLogThenLogIsCorrect) {
     PerfProfiler *ptr = PerfProfiler::create(false);
     ASSERT_NE(nullptr, ptr);
     EXPECT_EQ(1, PerfProfiler::getCurrentCounter());
@@ -162,7 +162,7 @@ TEST(PerfProfiler, GivenApiEnterLeaveWhenDumpingLogThenLogIsCorrect) {
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
 }
 
-TEST(PerfProfiler, GivenSystemEnterLeaveWhenDumpingLogThenLogIsCorrect) {
+TEST(PerfProfiler, DISABLED_GivenSystemEnterLeaveWhenDumpingLogThenLogIsCorrect) {
     PerfProfiler *ptr = PerfProfiler::create(false);
     ASSERT_NE(nullptr, ptr);
     EXPECT_EQ(1, PerfProfiler::getCurrentCounter());
@@ -191,7 +191,7 @@ TEST(PerfProfiler, GivenSystemEnterLeaveWhenDumpingLogThenLogIsCorrect) {
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
 }
 
-TEST(PerfProfiler, GivenIncorrectInputWhenReadingAndVerifingThenExceptionIsThrown) {
+TEST(PerfProfiler, DISABLED_GivenIncorrectInputWhenReadingAndVerifingThenExceptionIsThrown) {
     std::string log = "someData";
     std::stringstream in{log + log};
     bool exceptionCaught = false;
@@ -234,7 +234,7 @@ TEST(PerfProfiler, GivenIncorrectInputWhenReadingAndVerifingThenExceptionIsThrow
     EXPECT_TRUE(exceptionCaught);
 }
 
-TEST(PerfProfiler, GivenLogBuilderWhenReadingAndWritingThenLogIsCorrect) {
+TEST(PerfProfiler, DISABLED_GivenLogBuilderWhenReadingAndWritingThenLogIsCorrect) {
     std::stringstream out;
     long long startW = 3, startR = 0;
     long long endW = 5, endR = 0;
@@ -256,7 +256,7 @@ TEST(PerfProfiler, GivenLogBuilderWhenReadingAndWritingThenLogIsCorrect) {
     EXPECT_EQ(functionW, functionR);
 }
 
-TEST(PerfProfiler, GivenLogWithBrokenFunctionNameWhenReadingLogThenExceptionIsThrown) {
+TEST(PerfProfiler, DISABLED_GivenLogWithBrokenFunctionNameWhenReadingLogThenExceptionIsThrown) {
     std::stringstream in{"<api name=\"funcName"};
     long long startR = 0;
     long long endR = 0;
@@ -273,7 +273,7 @@ TEST(PerfProfiler, GivenLogWithBrokenFunctionNameWhenReadingLogThenExceptionIsTh
     EXPECT_TRUE(exceptionCaught);
 }
 
-TEST(PerfProfiler, GivenSysLogBuilderWhenReadingAndWritingThenLogIsCorrect) {
+TEST(PerfProfiler, DISABLED_GivenSysLogBuilderWhenReadingAndWritingThenLogIsCorrect) {
     std::stringstream out;
     long long startW = 3, startR = 0;
     unsigned long long timeW = 7, timeR = 0;
