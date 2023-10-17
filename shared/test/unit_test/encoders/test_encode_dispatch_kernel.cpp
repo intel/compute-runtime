@@ -1036,6 +1036,30 @@ HWTEST2_F(EncodeDispatchKernelTest, givenKernelsSharingISAParentAllocationsWhenP
     EXPECT_EQ(walkerCmd->getInterfaceDescriptor().getKernelStartPointer(), dispatchInterface->getIsaAllocation()->getGpuAddressToPatch() + dispatchInterface->getIsaOffsetInParentAllocation());
 }
 
+HWTEST2_F(EncodeDispatchKernelTest, givenPrintKernelDispatchParametersWhenEncodingKernelThenPrintKernelDispatchParams, IsAtLeastXeHpCore) {
+    auto dispatchInterface = std::make_unique<MockDispatchKernelEncoder>();
+
+    uint32_t dims[] = {2, 1, 1};
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintKernelDispatchParameters.set(true);
+    testing::internal::CaptureStdout(); // start capturing
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
+    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+
+    EXPECT_NE(std::string::npos, outputString.find("kernel"));
+    EXPECT_NE(std::string::npos, outputString.find("numGrf"));
+    EXPECT_NE(std::string::npos, outputString.find("simdSize"));
+    EXPECT_NE(std::string::npos, outputString.find("tilesCount"));
+    EXPECT_NE(std::string::npos, outputString.find("implicitScaling"));
+    EXPECT_NE(std::string::npos, outputString.find("threadGroupCount"));
+    EXPECT_NE(std::string::npos, outputString.find("numberOfThreadsInGpgpuThreadGroup"));
+    EXPECT_NE(std::string::npos, outputString.find("threadGroupDimensions"));
+    EXPECT_NE(std::string::npos, outputString.find("threadGroupDispatchSize enum"));
+}
+
 HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsNotPatched) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;

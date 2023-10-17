@@ -300,6 +300,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintIoctlEntries, false, "Print ioctl being called
 DECLARE_DEBUG_VARIABLE(bool, PrintUmdSharedMigration, false, "Print log message when shared allocation is being migrated by UMD")
 DECLARE_DEBUG_VARIABLE(bool, PrintImageBlitBlockCopyCmdDetails, false, "Prints XY_BLOCK_COPY_BLT command details")
 DECLARE_DEBUG_VARIABLE(bool, PrintCompletionFenceUsage, false, "Prints all usages of DRM completion fences")
+DECLARE_DEBUG_VARIABLE(bool, PrintKernelDispatchParameters, false, "Prints kernel parameters used in tg dispatch size heuristic on encode dispatch kernel")
 DECLARE_DEBUG_VARIABLE(bool, LogGdiCalls, false, "Log GDI calls")
 DECLARE_DEBUG_VARIABLE(bool, LogGdiCallsToFile, false, "Log GDI calls to file")
 DECLARE_DEBUG_VARIABLE(bool, PrintGmmCompressionParams, false, "Print Gmm compression resource params")

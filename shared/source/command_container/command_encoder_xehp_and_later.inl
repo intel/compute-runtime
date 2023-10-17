@@ -328,6 +328,20 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, *args.device, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, walkerCmd);
+    if (DebugManager.flags.PrintKernelDispatchParameters.get()) {
+        fprintf(stdout, "kernel, %s, numGrf, %d, simdSize, %d, tilesCount, %d, implicitScaling, %s, threadGroupCount, %d, numberOfThreadsInGpgpuThreadGroup, %d, threadGroupDimensions, %d, %d, %d, threadGroupDispatchSize enum, %d\n",
+                kernelDescriptor.kernelMetadata.kernelName.c_str(),
+                kernelDescriptor.kernelAttributes.numGrfRequired,
+                kernelDescriptor.kernelAttributes.simdSize,
+                args.device->getNumSubDevices(),
+                ImplicitScalingHelper::isImplicitScalingEnabled(args.device->getDeviceBitfield(), true) ? "Yes" : "no",
+                threadGroupCount,
+                idd.getNumberOfThreadsInGpgpuThreadGroup(),
+                walkerCmd.getThreadGroupIdXDimension(),
+                walkerCmd.getThreadGroupIdYDimension(),
+                walkerCmd.getThreadGroupIdZDimension(),
+                idd.getThreadGroupDispatchSize());
+    }
 
     EncodeDispatchKernel<Family>::appendAdditionalIDDFields(&idd, rootDeviceEnvironment, threadsPerThreadGroup,
                                                             args.dispatchInterface->getSlmTotalSize(),
