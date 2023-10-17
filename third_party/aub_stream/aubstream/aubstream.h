@@ -76,6 +76,15 @@ extern "C" void injectMMIOList(MMIOList mmioList);
 extern "C" void setTbxServerPort(uint16_t port);
 extern "C" void setTbxServerIp(std::string server);
 extern "C" void setTbxFrontdoorMode(bool frontdoor);
+extern "C" void setAubStreamCaller(uint32_t caller);
+
+namespace caller {
+constexpr uint32_t neo = 0;
+constexpr uint32_t rlr = 1;
+constexpr uint32_t rlc = 2;
+constexpr uint32_t rll = 3;
+constexpr uint32_t rl = 4;
+} // namespace caller
 
 static_assert(std::is_pod<SurfaceInfo>::value, "SurfaceInfo is not POD type");
 
