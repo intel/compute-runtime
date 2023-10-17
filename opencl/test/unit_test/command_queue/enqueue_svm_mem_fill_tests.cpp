@@ -55,7 +55,7 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
 
 using BaseEnqueueSvmMemFillTest = Test<BaseEnqueueSvmMemFillFixture>;
 
-HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenUseGpuAddressOfPatternSVMAllocation) {
+HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenUseGpuAddressForPatchingOfPatternSVMAllocation) {
     struct MockFillBufferBuilder : MockBuiltinDispatchInfoBuilder {
         MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltinDispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
             : MockBuiltinDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
@@ -82,10 +82,10 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
     size_t patternSize = 0x10u;
     auto patternAllocation = static_cast<MockGraphicsAllocation *>(context->getMemoryManager()->allocateGraphicsMemoryWithProperties({pCmdQ->getDevice().getRootDeviceIndex(), 2 * patternSize, AllocationType::FILL_PATTERN, pCmdQ->getDevice().getDeviceBitfield()}));
 
-    // offset cpuPtr so cpuPtr != gpuAddress in order to ensure that setArgSVM will be called using gpu address of the pattern allocation
+    // offset cpuPtr so cpuPtr != gpuAddress (for patching) in order to ensure that setArgSVM will be called using gpu address of the pattern allocation
     auto origCpuPtr = patternAllocation->cpuPtr;
     patternAllocation->cpuPtr = ptrOffset(patternAllocation->cpuPtr, patternSize);
-    ASSERT_NE((uint64_t)patternAllocation->cpuPtr, patternAllocation->getGpuAddress());
+    ASSERT_NE((uint64_t)patternAllocation->cpuPtr, patternAllocation->getGpuAddressToPatch());
 
     auto internalAllocStorage = pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     internalAllocStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION);
@@ -111,7 +111,7 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
 
     auto patternArgIndex = 2;
     const auto &patternArg = kernel->getKernelArguments().at(patternArgIndex);
-    EXPECT_EQ(patternAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(patternArg.value));
+    EXPECT_EQ(patternAllocation->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(patternArg.value));
 
     patternAllocation->cpuPtr = origCpuPtr;
 }

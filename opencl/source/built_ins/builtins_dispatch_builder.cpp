@@ -340,7 +340,7 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
 
         // Set-up srcMemObj with pattern
         auto graphicsAllocation = operationParams.srcMemObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
-        kernelSplit1DBuilder.setArgSvm(2, operationParams.srcMemObj->getSize(), reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), graphicsAllocation, CL_MEM_READ_ONLY);
+        kernelSplit1DBuilder.setArgSvm(2, operationParams.srcMemObj->getSize(), reinterpret_cast<void *>(graphicsAllocation->getGpuAddressToPatch()), graphicsAllocation, CL_MEM_READ_ONLY);
 
         // Set-up patternSizeInEls
         kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Left, 3, static_cast<OffsetType>(operationParams.srcMemObj->getSize()));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -521,6 +521,39 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
     ASSERT_NE(nullptr, patternAllocation);
 
     EXPECT_EQ(AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
+}
+
+HWTEST_F(EnqueueFillBufferCmdTests, whenFillingBufferThenUseGpuAddressForPatchingOfPatternAllocation) {
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+
+    // Set gpuBaseAddress and offset so gpuAddress != gpuAddressToPatch
+    if (0u == patternAllocation->getGpuBaseAddress()) {
+        patternAllocation->setGpuBaseAddress(4096u);
+    }
+    patternAllocation->setAllocationOffset(10u);
+
+    EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer, pCmdQ->getClDevice());
+    ASSERT_NE(nullptr, &builder);
+
+    BuiltinOpParams dc;
+    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
+    dc.srcMemObj = &patternMemObj;
+    dc.dstMemObj = buffer;
+    dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
+    dc.size = {EnqueueFillBufferTraits::size, 0, 0};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
+    EXPECT_NE(0u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    auto patternArgIndex = 2;
+    const auto &patternArg = kernel->getKernelArguments().at(patternArgIndex);
+    EXPECT_EQ(patternAllocation->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(patternArg.value));
+
+    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 struct EnqueueFillBufferHw : public ::testing::Test {
