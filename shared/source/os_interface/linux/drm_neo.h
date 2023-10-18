@@ -195,6 +195,7 @@ class Drm : public DriverModel {
     const RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return rootDeviceEnvironment;
     }
+    const HardwareInfo *getHardwareInfo() const override;
 
     bool resourceRegistrationEnabled() {
         return classHandles.size() > 0;

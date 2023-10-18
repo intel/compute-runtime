@@ -797,7 +797,7 @@ TEST_F(WddmLinuxTest, whenCheckedIfResourcesCleanupCanBeSkippedAndDeviceIsLostTh
 
 class MockOsTimeLinux : public NEO::OSTimeLinux {
   public:
-    MockOsTimeLinux(NEO::OSInterface *osInterface, std::unique_ptr<NEO::DeviceTime> deviceTime) : NEO::OSTimeLinux(osInterface, std::move(deviceTime)) {}
+    MockOsTimeLinux(NEO::OSInterface &osInterface, std::unique_ptr<NEO::DeviceTime> deviceTime) : NEO::OSTimeLinux(osInterface, std::move(deviceTime)) {}
     bool getCpuTime(uint64_t *timeStamp) override {
         osTimeGetCpuTimeWasCalled = true;
         *timeStamp = 0x1234;
@@ -814,27 +814,27 @@ class MockDeviceTimeWddm : public NEO::DeviceTimeWddm {
     }
 };
 
-TEST(OSTimeWinLinuxTests, givenOSInterfaceWhenGetCpuGpuTimeThenGetCpuTimeFromOsTimeWasCalled) {
+TEST(OSTimeWinLinuxTests, givenOSInterfaceWhenGetGpuCpuTimeThenGetCpuTimeFromOsTimeWasCalled) {
 
-    NEO::TimeStampData cpuGpuTime01 = {0};
+    NEO::TimeStampData gpuCpuTime01 = {0};
 
     std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceIdIn;
     auto osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
     osEnvironment->gdi->closeAdapter = closeAdapterMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
     NEO::MockExecutionEnvironment mockExecEnv;
-    NEO::MockRootDeviceEnvironment mockRootDeviceEnvironment{mockExecEnv};
+    auto &rootDeviceEnvironment = *mockExecEnv.rootDeviceEnvironments[0];
     hwDeviceIdIn.reset(new NEO::HwDeviceIdWddm(NULL_HANDLE, LUID{}, 1u, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>()));
 
-    std::unique_ptr<NEO::OSInterface> osInterface(new NEO::OSInterface());
+    rootDeviceEnvironment.osInterface = std::make_unique<NEO::OSInterface>();
 
-    std::unique_ptr<MockWddmLinux> wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), mockRootDeviceEnvironment);
+    std::unique_ptr<MockWddmLinux> wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), rootDeviceEnvironment);
     static_cast<PLATFORM &>(*wddm->gfxPlatform) = NEO::defaultHwInfo->platform;
-    mockRootDeviceEnvironment.setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+    rootDeviceEnvironment.setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
     auto mockDeviceTimeWddm = std::make_unique<MockDeviceTimeWddm>(wddm.get());
-    osInterface->setDriverModel(std::move(wddm));
+    rootDeviceEnvironment.osInterface->setDriverModel(std::move(wddm));
     std::unique_ptr<NEO::DeviceTime> deviceTime = std::unique_ptr<NEO::DeviceTime>(mockDeviceTimeWddm.release());
-    auto osTime = std::unique_ptr<MockOsTimeLinux>(new MockOsTimeLinux(osInterface.get(), std::move(deviceTime)));
-    osTime->getCpuGpuTime(&cpuGpuTime01);
+    auto osTime = std::unique_ptr<MockOsTimeLinux>(new MockOsTimeLinux(*rootDeviceEnvironment.osInterface, std::move(deviceTime)));
+    osTime->getGpuCpuTime(&gpuCpuTime01);
     EXPECT_TRUE(osTime->osTimeGetCpuTimeWasCalled);
 }

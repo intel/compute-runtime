@@ -41,21 +41,21 @@ using namespace NEO;
 struct DrmTimeTest : public ::testing::Test {
   public:
     void SetUp() override {
-        osInterface = std::unique_ptr<OSInterface>(new OSInterface());
-        osTime = MockOSTimeLinux::create(osInterface.get());
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+        rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
+        osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
         osTime->setResolutionFunc(resolutionFuncTrue);
         osTime->setGetTimeFunc(getTimeFuncTrue);
+        deviceTime = osTime->getDeviceTime();
     }
 
     void TearDown() override {
     }
+    MockDeviceTimeDrm *deviceTime = nullptr;
     std::unique_ptr<MockOSTimeLinux> osTime;
-    std::unique_ptr<OSInterface> osInterface;
     MockExecutionEnvironment executionEnvironment;
 };
-
-TEST_F(DrmTimeTest, GivenMockOsTimeThenInitializes) {
-}
 
 TEST_F(DrmTimeTest, WhenGettingCpuTimeThenSucceeds) {
     uint64_t time = 0;
@@ -98,60 +98,125 @@ TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingGpuTimeThenFails) {
     EXPECT_FALSE(error);
 }
 
-TEST_F(DrmTimeTest, WhenGettingCpuGpuTimeThenSucceeds) {
-    TimeStampData cpuGpuTime01 = {0, 0};
-    TimeStampData cpuGpuTime02 = {0, 0};
+TEST_F(DrmTimeTest, WhenGettingGpuCpuTimeThenSucceeds) {
+    TimeStampData gpuCpuTime01 = {0, 0};
+    TimeStampData gpuCpuTime02 = {0, 0};
     auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
-    auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
+    auto error = osTime->getGpuCpuTime(&gpuCpuTime01);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, cpuGpuTime01.cpuTimeinNS);
-    EXPECT_NE(0ULL, cpuGpuTime01.gpuTimeStamp);
-    error = osTime->getCpuGpuTime(&cpuGpuTime02);
+    EXPECT_NE(0ULL, gpuCpuTime01.cpuTimeinNS);
+    EXPECT_NE(0ULL, gpuCpuTime01.gpuTimeStamp);
+    error = osTime->getGpuCpuTime(&gpuCpuTime02);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, cpuGpuTime02.cpuTimeinNS);
-    EXPECT_NE(0ULL, cpuGpuTime02.gpuTimeStamp);
-    EXPECT_GT(cpuGpuTime02.gpuTimeStamp, cpuGpuTime01.gpuTimeStamp);
-    EXPECT_GT(cpuGpuTime02.cpuTimeinNS, cpuGpuTime01.cpuTimeinNS);
+    EXPECT_NE(0ULL, gpuCpuTime02.cpuTimeinNS);
+    EXPECT_NE(0ULL, gpuCpuTime02.gpuTimeStamp);
+    EXPECT_GT(gpuCpuTime02.gpuTimeStamp, gpuCpuTime01.gpuTimeStamp);
+    EXPECT_GT(gpuCpuTime02.cpuTimeinNS, gpuCpuTime01.cpuTimeinNS);
 }
 
-TEST_F(DrmTimeTest, GivenDrmWhenGettingCpuGpuTimeThenSucceeds) {
-    TimeStampData cpuGpuTime01 = {0, 0};
-    TimeStampData cpuGpuTime02 = {0, 0};
+TEST_F(DrmTimeTest, GivenDrmWhenGettingGpuCpuTimeThenSucceeds) {
+    TimeStampData gpuCpuTime01 = {0, 0};
+    TimeStampData gpuCpuTime02 = {0, 0};
     auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
-    auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
+    auto error = osTime->getGpuCpuTime(&gpuCpuTime01);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, cpuGpuTime01.cpuTimeinNS);
-    EXPECT_NE(0ULL, cpuGpuTime01.gpuTimeStamp);
-    error = osTime->getCpuGpuTime(&cpuGpuTime02);
+    EXPECT_NE(0ULL, gpuCpuTime01.cpuTimeinNS);
+    EXPECT_NE(0ULL, gpuCpuTime01.gpuTimeStamp);
+    error = osTime->getGpuCpuTime(&gpuCpuTime02);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, cpuGpuTime02.cpuTimeinNS);
-    EXPECT_NE(0ULL, cpuGpuTime02.gpuTimeStamp);
-    EXPECT_GT(cpuGpuTime02.gpuTimeStamp, cpuGpuTime01.gpuTimeStamp);
-    EXPECT_GT(cpuGpuTime02.cpuTimeinNS, cpuGpuTime01.cpuTimeinNS);
+    EXPECT_NE(0ULL, gpuCpuTime02.cpuTimeinNS);
+    EXPECT_NE(0ULL, gpuCpuTime02.gpuTimeStamp);
+    EXPECT_GT(gpuCpuTime02.gpuTimeStamp, gpuCpuTime01.gpuTimeStamp);
+    EXPECT_GT(gpuCpuTime02.cpuTimeinNS, gpuCpuTime01.cpuTimeinNS);
 }
 
-TEST_F(DrmTimeTest, givenGetCpuGpuTimeWhenItIsUnavailableThenReturnFalse) {
-    TimeStampData cpuGpuTime = {0, 0};
-    auto error = osTime->getCpuGpuTime(&cpuGpuTime);
+TEST_F(DrmTimeTest, givenGetGpuCpuTimeWhenItIsUnavailableThenReturnFalse) {
+    TimeStampData gpuCpuTime = {0, 0};
+
+    deviceTime->callBaseGetGpuCpuTimeImpl = false;
+    deviceTime->getGpuCpuTimeImplResult = false;
+    auto error = osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_FALSE(error);
 }
 
-TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingCpuGpuTimeThenFails) {
-    TimeStampData cpuGpuTime01 = {0, 0};
+TEST_F(DrmTimeTest, given36BitGpuTimeStampWhenGpuTimeStampOverflowThenGpuTimeDoesNotDecrease) {
+    TimeStampData gpuCpuTime = {0ull, 0ull};
+
+    deviceTime->callBaseGetGpuCpuTimeImpl = false;
+    deviceTime->gpuCpuTimeValue = {100ull, 100ull};
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(100ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 200ll;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(200ull, gpuCpuTime.gpuTimeStamp);
+
+    osTime->maxGpuTimeStamp = 1ull << 36;
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 10ull; // read below initial value
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(osTime->maxGpuTimeStamp + 10ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 30ull; // second read below initial value
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(osTime->maxGpuTimeStamp + 30ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 110ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(osTime->maxGpuTimeStamp + 110ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 70ull; // second overflow
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(2ull * osTime->maxGpuTimeStamp + 70ull, gpuCpuTime.gpuTimeStamp);
+}
+
+TEST_F(DrmTimeTest, given64BitGpuTimeStampWhenGpuTimeStampOverflowThenOverflowsAreNotDetected) {
+    TimeStampData gpuCpuTime = {0ull, 0ull};
+
+    deviceTime->callBaseGetGpuCpuTimeImpl = false;
+    deviceTime->gpuCpuTimeValue = {100ull, 100ull};
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(100ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 200ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(200ull, gpuCpuTime.gpuTimeStamp);
+
+    osTime->maxGpuTimeStamp = 0ull;
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 10ull; // read below initial value
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(10ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 30ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(30ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 110ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(110ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 70ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(70ull, gpuCpuTime.gpuTimeStamp);
+}
+
+TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingGpuCpuTimeThenFails) {
+    TimeStampData gpuCpuTime01 = {0, 0};
     auto pDrm = new DrmMockFail(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
-    auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
+    auto error = osTime->getGpuCpuTime(&gpuCpuTime01);
     EXPECT_FALSE(error);
 }
 
-TEST_F(DrmTimeTest, GivenInvalidFuncTimeWhenGettingCpuGpuTimeCpuThenFails) {
-    TimeStampData cpuGpuTime01 = {0, 0};
+TEST_F(DrmTimeTest, GivenInvalidFuncTimeWhenGettingGpuCpuTimeCpuThenFails) {
+    TimeStampData gpuCpuTime01 = {0, 0};
     auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->setGetTimeFunc(getTimeFuncFalse);
     osTime->updateDrm(pDrm);
-    auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
+    auto error = osTime->getGpuCpuTime(&gpuCpuTime01);
     EXPECT_FALSE(error);
 }
 
@@ -221,15 +286,6 @@ TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlSucceedsThenNonDefau
     EXPECT_EQ(result, frequency);
 }
 
-TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenNoDrmThenDefaultResolutionIsReturned) {
-    osTime->updateDrm(nullptr);
-
-    auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
-
-    auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
-    EXPECT_DOUBLE_EQ(result, defaultResolution);
-}
-
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectResolutionIsReturned) {
     auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(drm);
@@ -265,8 +321,18 @@ TEST_F(DrmTimeTest, givenAlwaysFailingGetTimeFuncWhenGetCpuRawTimestampIsCalledT
     auto retVal = osTime->getCpuRawTimestamp();
     EXPECT_EQ(0ull, retVal);
 }
+
 TEST_F(DrmTimeTest, givenAlwaysPassingResolutionFuncWhenGetCpuRawTimestampIsCalledThenReturnsNonzero) {
     actualTime = 4;
     auto retVal = osTime->getCpuRawTimestamp();
     EXPECT_EQ(1ull, retVal);
+}
+
+TEST_F(DrmTimeTest, whenGettingMaxGpuTimeStampValueThenHwInfoBasedValueIsReturned) {
+    if (defaultHwInfo->capabilityTable.timestampValidBits < 64) {
+        auto expectedMaxGpuTimeStampValue = 1ull << defaultHwInfo->capabilityTable.timestampValidBits;
+        EXPECT_EQ(expectedMaxGpuTimeStampValue, osTime->getMaxGpuTimeStamp());
+    } else {
+        EXPECT_EQ(0ull, osTime->getMaxGpuTimeStamp());
+    }
 }

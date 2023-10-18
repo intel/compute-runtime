@@ -10,6 +10,7 @@
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include <cstdint>
 #include <functional>
@@ -40,6 +41,8 @@ class MockDriverModel : public NEO::DriverModel {
     }
 
     PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override { return pciSpeedInfo; }
+
+    const HardwareInfo *getHardwareInfo() const override { return nullptr; }
 
     PhysicalDevicePciSpeedInfo pciSpeedInfo{};
     PhysicalDevicePciBusInfo pciBusInfo{};

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
@@ -417,6 +418,8 @@ int main(int argc, char **argv) {
             }
             sipInitialized = true;
         }
+
+        Device::createPerformanceCountersFunc = [](Device *) -> std::unique_ptr<NEO::PerformanceCounters> { return {}; };
 
         retVal = RUN_ALL_TESTS();
 

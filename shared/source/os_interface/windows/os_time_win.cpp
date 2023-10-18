@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/os_time_win.h"
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/windows/device_time_wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
@@ -24,13 +25,17 @@ bool OSTimeWin::getCpuTime(uint64_t *timeStamp) {
     return true;
 };
 
-std::unique_ptr<OSTime> OSTimeWin::create(OSInterface *osInterface) {
+std::unique_ptr<OSTime> OSTimeWin::create(OSInterface &osInterface) {
     return std::unique_ptr<OSTime>(new OSTimeWin(osInterface));
 }
 
-OSTimeWin::OSTimeWin(OSInterface *osInterface) {
-    this->osInterface = osInterface;
-    Wddm *wddm = osInterface ? osInterface->getDriverModel()->as<Wddm>() : nullptr;
+OSTimeWin::OSTimeWin(OSInterface &osInterface) {
+    this->osInterface = &osInterface;
+    Wddm *wddm = osInterface.getDriverModel()->as<Wddm>();
+    auto hwInfo = wddm->getHardwareInfo();
+    if (hwInfo->capabilityTable.timestampValidBits < 64) {
+        maxGpuTimeStamp = 1ull << hwInfo->capabilityTable.timestampValidBits;
+    }
     this->deviceTime = std::make_unique<DeviceTimeWddm>(wddm);
     QueryPerformanceFrequency(&frequency);
 }

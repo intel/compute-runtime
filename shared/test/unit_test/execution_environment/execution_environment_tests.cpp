@@ -120,7 +120,7 @@ TEST(RootDeviceEnvironment, whenCreatingRootDeviceEnvironmentThenCreateOsAgnosti
     EXPECT_EQ(0u, rootDeviceEnvironment->osTime->getCpuRawTimestamp());
 
     TimeStampData tsData{1, 2};
-    EXPECT_TRUE(rootDeviceEnvironment->osTime->getCpuGpuTime(&tsData));
+    EXPECT_TRUE(rootDeviceEnvironment->osTime->getGpuCpuTime(&tsData));
     EXPECT_EQ(0u, tsData.cpuTimeinNS);
     EXPECT_EQ(0u, tsData.gpuTimeStamp);
 

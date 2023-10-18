@@ -13,8 +13,8 @@ class Drm;
 
 class DeviceTimeDrm : public DeviceTime {
   public:
-    DeviceTimeDrm(OSInterface *osInterface);
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
+    DeviceTimeDrm(OSInterface &osInterface);
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     typedef bool (DeviceTimeDrm::*TimestampFunction)(uint64_t *);
     void timestampTypeDetect();
     TimestampFunction getGpuTime = nullptr;

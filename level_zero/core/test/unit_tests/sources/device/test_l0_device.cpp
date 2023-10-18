@@ -1533,11 +1533,11 @@ struct GlobalTimestampTest : public ::testing::Test {
     const uint32_t numRootDevices = 2u;
 };
 
-TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuGpuTimeIsFalseReturnError) {
+TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetGpuCpuTimeIsFalseReturnError) {
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
-    neoDevice->setOSTime(new FalseCpuGpuTime());
+    neoDevice->setOSTime(new FalseGpuCpuTime());
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
@@ -1549,7 +1549,7 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuGpuTimeIsFalseR
 }
 
 TEST_F(GlobalTimestampTest, whenGetProfilingTimerClockandProfilingTimerResolutionThenVerifyRelation) {
-    neoDevice->setOSTime(new FalseCpuGpuTime());
+    neoDevice->setOSTime(new FalseGpuCpuTime());
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
@@ -1563,7 +1563,7 @@ TEST_F(GlobalTimestampTest, whenGetProfilingTimerClockandProfilingTimerResolutio
 }
 
 TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithLegacyDevicePropertiesStructThenDefaultTimerResolutionInNanoSecondsIsReturned) {
-    neoDevice->setOSTime(new FalseCpuGpuTime());
+    neoDevice->setOSTime(new FalseGpuCpuTime());
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     std::unique_ptr<L0::DriverHandleImp> driverHandle = std::make_unique<L0::DriverHandleImp>();
@@ -1579,7 +1579,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithLegacyDeviceProper
 }
 
 TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithDeviceProperties_1_2_StructThenDefaultTimerResolutionInCyclesPerSecondsIsReturned) {
-    neoDevice->setOSTime(new FalseCpuGpuTime());
+    neoDevice->setOSTime(new FalseGpuCpuTime());
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     std::unique_ptr<L0::DriverHandleImp> driverHandle = std::make_unique<L0::DriverHandleImp>();
@@ -1598,7 +1598,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecond
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseCyclesPerSecondTimer.set(1u);
 
-    neoDevice->setOSTime(new FalseCpuGpuTime());
+    neoDevice->setOSTime(new FalseGpuCpuTime());
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     std::unique_ptr<L0::DriverHandleImp> driverHandle = std::make_unique<L0::DriverHandleImp>();
@@ -1615,7 +1615,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecond
 
 class FalseCpuDeviceTime : public NEO::DeviceTime {
   public:
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, NEO::OSTime *) override {
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, NEO::OSTime *) override {
         pGpuCpuTime->cpuTimeinNS = mockCpuTimeInNs;
         pGpuCpuTime->gpuTimeStamp = mockGpuTimeInNs;
         return true;

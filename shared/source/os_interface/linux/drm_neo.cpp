@@ -1535,6 +1535,8 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
         completionFenceCpuAddress = ptrOffset(completionFenceCpuAddress, postSyncOffset);
     }
 }
+const HardwareInfo *Drm::getHardwareInfo() const { return rootDeviceEnvironment.getHardwareInfo(); }
+
 template std::vector<uint16_t> Drm::query<uint16_t>(uint32_t queryId, uint32_t queryItemFlags);
 template std::vector<uint32_t> Drm::query<uint32_t>(uint32_t queryId, uint32_t queryItemFlags);
 template std::vector<uint64_t> Drm::query<uint64_t>(uint32_t queryId, uint32_t queryItemFlags);

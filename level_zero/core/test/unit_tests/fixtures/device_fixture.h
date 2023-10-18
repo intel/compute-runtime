@@ -186,9 +186,9 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public SingleRootMul
     SingleRootMultiSubDeviceFixtureWithImplicitScaling() : SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(copyEngineCount, implicitScalingArg){};
 };
 
-class FalseCpuGpuDeviceTime : public NEO::DeviceTime {
+class FalseGpuCpuDeviceTime : public NEO::DeviceTime {
   public:
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         return false;
     }
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
@@ -199,10 +199,10 @@ class FalseCpuGpuDeviceTime : public NEO::DeviceTime {
     }
 };
 
-class FalseCpuGpuTime : public NEO::OSTime {
+class FalseGpuCpuTime : public NEO::OSTime {
   public:
-    FalseCpuGpuTime() {
-        this->deviceTime = std::make_unique<FalseCpuGpuDeviceTime>();
+    FalseGpuCpuTime() {
+        this->deviceTime = std::make_unique<FalseGpuCpuDeviceTime>();
     }
 
     bool getCpuTime(uint64_t *timeStamp) override {
@@ -215,7 +215,7 @@ class FalseCpuGpuTime : public NEO::OSTime {
         return 0;
     }
     static std::unique_ptr<OSTime> create() {
-        return std::unique_ptr<OSTime>(new FalseCpuGpuTime());
+        return std::unique_ptr<OSTime>(new FalseGpuCpuTime());
     }
 };
 

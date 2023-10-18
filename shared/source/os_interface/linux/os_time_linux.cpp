@@ -7,7 +7,8 @@
 
 #include "shared/source/os_interface/linux/os_time_linux.h"
 
-#include "shared/source/os_interface/linux/device_time_drm.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include <chrono>
@@ -15,8 +16,13 @@
 
 namespace NEO {
 
-OSTimeLinux::OSTimeLinux(OSInterface *osInterface, std::unique_ptr<DeviceTime> deviceTime) {
-    this->osInterface = osInterface;
+OSTimeLinux::OSTimeLinux(OSInterface &osInterface, std::unique_ptr<DeviceTime> deviceTime) {
+    this->osInterface = &osInterface;
+    auto hwInfo = osInterface.getDriverModel()->getHardwareInfo();
+    if (hwInfo->capabilityTable.timestampValidBits < 64) {
+        this->maxGpuTimeStamp = 1ull << hwInfo->capabilityTable.timestampValidBits;
+    }
+
     resolutionFunc = &clock_getres;
     getTimeFunc = &clock_gettime;
     this->deviceTime = std::move(deviceTime);
@@ -55,7 +61,7 @@ uint64_t OSTimeLinux::getCpuRawTimestamp() {
     return timesInNsec / ticksInNsec;
 }
 
-std::unique_ptr<OSTime> OSTimeLinux::create(OSInterface *osInterface, std::unique_ptr<DeviceTime> deviceTime) {
+std::unique_ptr<OSTime> OSTimeLinux::create(OSInterface &osInterface, std::unique_ptr<DeviceTime> deviceTime) {
     return std::unique_ptr<OSTime>(new OSTimeLinux(osInterface, std::move(deviceTime)));
 }
 

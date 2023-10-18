@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
-bool DeviceTimeWddm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
+bool DeviceTimeWddm::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     bool retVal = false;
 
     pGpuCpuTime->cpuTimeinNS = 0;

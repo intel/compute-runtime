@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -392,29 +393,13 @@ TEST_F(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedT
 }
 
 TEST_F(DeviceGetCapsTest, whenDriverModelHasLimitationForMaxMemoryAllocationSizeThenTakeItIntoAccount) {
-    struct MockDriverModel : NEO::DriverModel {
-        size_t maxAllocSize;
-
-        MockDriverModel(size_t maxAllocSize) : NEO::DriverModel(NEO::DriverModelType::UNKNOWN), maxAllocSize(maxAllocSize) {}
-
-        void setGmmInputArgs(void *args) override {}
-        uint32_t getDeviceHandle() const override { return {}; }
-        PhysicalDevicePciBusInfo getPciBusInfo() const override { return {}; }
-        bool isGpuHangDetected(NEO::OsContext &osContext) override {
-            return false;
-        }
-
-        size_t getMaxMemAllocSize() const override {
-            return maxAllocSize;
-        }
-        PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
-    };
-
     DebugManagerStateRestore dbgRestorer;
     size_t maxAllocSizeTestValue = 512;
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     device->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
-    device->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModel>(maxAllocSizeTestValue));
+    auto driverModel = std::make_unique<MockDriverModel>();
+    driverModel->maxAllocSize = maxAllocSizeTestValue;
+    device->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(driverModel));
     device->initializeCaps();
     const auto &caps = device->getDeviceInfo();
     EXPECT_EQ(maxAllocSizeTestValue, caps.maxMemAllocSize);

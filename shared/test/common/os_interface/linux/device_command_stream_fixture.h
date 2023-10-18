@@ -78,7 +78,7 @@ class DrmMockTime : public DrmMockSuccess {
     using DrmMockSuccess::DrmMockSuccess;
     int ioctl(DrmIoctl request, void *arg) override {
         auto *reg = reinterpret_cast<NEO::RegisterRead *>(arg);
-        reg->value = getVal() << 32;
+        reg->value = getVal() << 32 | 0x1;
         return 0;
     };
 

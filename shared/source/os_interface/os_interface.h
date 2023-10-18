@@ -17,6 +17,7 @@
 namespace NEO {
 struct PhysicalDevicePciBusInfo;
 struct PhysicalDevicePciSpeedInfo;
+struct HardwareInfo;
 enum class DriverModelType;
 class ExecutionEnvironment;
 class MemoryManager;
@@ -95,6 +96,8 @@ class DriverModel : public NonCopyableClass {
     virtual void cleanup() {}
 
     virtual bool isGpuHangDetected(OsContext &osContext) = 0;
+    virtual const HardwareInfo *getHardwareInfo() const = 0;
+
     const TopologyMap &getTopologyMap() {
         return topologyMap;
     };

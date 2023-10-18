@@ -11,7 +11,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/os_time_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
@@ -20,7 +19,7 @@ namespace NEO {
 /////////////////////////////////////////////////////
 std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device) {
     auto counter = std::make_unique<PerformanceCountersWin>();
-    auto wddm = device->getOSTime()->getOSInterface()->getDriverModel()->as<Wddm>();
+    auto wddm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     UNRECOVERABLE_IF(counter == nullptr);
 

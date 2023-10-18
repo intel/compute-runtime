@@ -374,7 +374,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
 
     if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency);
-        if (startTimeStamp < gpuQueueTimeStamp) {
+        while (startTimeStamp < gpuQueueTimeStamp) {
             startTimeStamp += static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * frequency);
         }
     } else {
@@ -612,7 +612,7 @@ void Event::submitCommand(bool abortTasks) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
                 cmdToProcess->timestamp = timeStampNode;
             }
-            this->cmdQueue->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
+            this->cmdQueue->getDevice().getOSTime()->getGpuCpuTime(&submitTimeStamp);
             if (profilingCpuPath) {
                 setStartTimeStamp();
             } else {

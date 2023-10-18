@@ -299,11 +299,11 @@ TEST_F(MetricIpSamplingTimestampTest, GivenEnumerationIsSuccessfulWhenReadingMet
     EXPECT_NE(metricTimestamp, 0UL);
 }
 
-TEST_F(MetricIpSamplingTimestampTest, GivenGetCpuGpuTimeIsFalseWhenReadingMetricsFrequencyThenValuesAreZero) {
+TEST_F(MetricIpSamplingTimestampTest, GivenGetGpuCpuTimeIsFalseWhenReadingMetricsFrequencyThenValuesAreZero) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
 
-    neoDevice->setOSTime(new FalseCpuGpuTime());
+    neoDevice->setOSTime(new FalseGpuCpuTime());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
     device->getProperties(&deviceProps);

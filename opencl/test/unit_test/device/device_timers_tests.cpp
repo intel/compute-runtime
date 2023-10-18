@@ -164,7 +164,7 @@ class FailingMockOSTime : public OSTime {
 
 class FailingMockDeviceTime : public DeviceTime {
   public:
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         return false;
     }
 

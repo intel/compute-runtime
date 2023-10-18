@@ -227,7 +227,7 @@ void CommandQueueHw<Family>::setupEvent(EventBuilder &eventBuilder, cl_event *ou
 
         if (eventObj->isProfilingEnabled()) {
             TimeStampData queueTimeStamp;
-            getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
+            getDevice().getOSTime()->getGpuCpuTime(&queueTimeStamp);
             eventObj->setQueueTimeStamp(queueTimeStamp);
 
             if (isCommandWithoutKernel(cmdType) && cmdType != CL_COMMAND_MARKER) {

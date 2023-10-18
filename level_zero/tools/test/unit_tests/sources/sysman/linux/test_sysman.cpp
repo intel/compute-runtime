@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/mocks/mock_driver_info.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -800,27 +801,11 @@ TEST_F(SysmanMultiDeviceFixture, GivenSysmanEnvironmentVariableSetWhenCreateL0De
     EXPECT_EQ(device->getSysmanHandle(), nullptr);
 }
 
-class UnknownDriverModel : public DriverModel {
-  public:
-    UnknownDriverModel() : DriverModel(DriverModelType::UNKNOWN) {}
-    void setGmmInputArgs(void *args) override {}
-    uint32_t getDeviceHandle() const override { return 0u; }
-    PhysicalDevicePciBusInfo getPciBusInfo() const override {
-        PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
-        return pciBusInfo;
-    }
-    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
-
-    bool isGpuHangDetected(OsContext &osContext) override {
-        return false;
-    }
-};
-
 using SysmanUnknownDriverModelTest = Test<DeviceFixture>;
 TEST_F(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysmanOnLinuxThenErrorIsReturned) {
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
     auto &osInterface = device->getOsInterface();
-    osInterface.setDriverModel(std::make_unique<UnknownDriverModel>());
+    osInterface.setDriverModel(std::make_unique<NEO::MockDriverModel>());
     auto pSysmanDeviceImp = std::make_unique<SysmanDeviceImp>(device->toHandle());
     auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxSysmanImp->init());

@@ -786,7 +786,7 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetri
 
     globalTimestamp = 1;
     metricTimestamp = 1;
-    neoDevice->setOSTime(new FalseCpuGpuTime());
+    neoDevice->setOSTime(new FalseGpuCpuTime());
     EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_ERROR_DEVICE_LOST);
     EXPECT_EQ(globalTimestamp, 0UL);
     EXPECT_EQ(metricTimestamp, 0UL);

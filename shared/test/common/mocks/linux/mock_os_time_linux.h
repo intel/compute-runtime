@@ -14,15 +14,26 @@
 namespace NEO {
 class MockDeviceTimeDrm : public DeviceTimeDrm {
   public:
+    using DeviceTimeDrm::DeviceTimeDrm;
     using DeviceTimeDrm::pDrm;
-    MockDeviceTimeDrm() : DeviceTimeDrm(nullptr) {
+
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+        if (callBaseGetGpuCpuTimeImpl) {
+            return DeviceTimeDrm::getGpuCpuTimeImpl(pGpuCpuTime, osTime);
+        }
+        *pGpuCpuTime = gpuCpuTimeValue;
+        return getGpuCpuTimeImplResult;
     }
+    bool callBaseGetGpuCpuTimeImpl = true;
+    bool getGpuCpuTimeImplResult = true;
+    TimeStampData gpuCpuTimeValue{};
 };
 
 class MockOSTimeLinux : public OSTimeLinux {
   public:
-    MockOSTimeLinux(OSInterface *osInterface)
-        : OSTimeLinux(osInterface, std::make_unique<MockDeviceTimeDrm>()) {
+    using OSTimeLinux::maxGpuTimeStamp;
+    MockOSTimeLinux(OSInterface &osInterface)
+        : OSTimeLinux(osInterface, std::make_unique<MockDeviceTimeDrm>(osInterface)) {
     }
     void setResolutionFunc(resolutionFunc_t func) {
         this->resolutionFunc = func;
@@ -35,7 +46,7 @@ class MockOSTimeLinux : public OSTimeLinux {
         static_cast<MockDeviceTimeDrm *>(this->deviceTime.get())->pDrm = drm;
         static_cast<MockDeviceTimeDrm *>(this->deviceTime.get())->timestampTypeDetect();
     }
-    static std::unique_ptr<MockOSTimeLinux> create(OSInterface *osInterface) {
+    static std::unique_ptr<MockOSTimeLinux> create(OSInterface &osInterface) {
         return std::unique_ptr<MockOSTimeLinux>(new MockOSTimeLinux(osInterface));
     }
 

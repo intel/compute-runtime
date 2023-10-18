@@ -248,7 +248,7 @@ bool Device::createDeviceImpl() {
 
     initializeCaps();
 
-    if (getOSTime()->getOSInterface()) {
+    if (getRootDeviceEnvironment().osInterface) {
         if (hwInfo.capabilityTable.instrumentationEnabled) {
             performanceCounters = createPerformanceCountersFunc(this);
         }
@@ -512,7 +512,7 @@ EngineControl &Device::getEngine(uint32_t index) {
 
 bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {
     TimeStampData timeStamp;
-    auto retVal = getOSTime()->getCpuGpuTime(&timeStamp);
+    auto retVal = getOSTime()->getGpuCpuTime(&timeStamp);
     if (retVal) {
         *hostTimestamp = timeStamp.cpuTimeinNS;
         if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {

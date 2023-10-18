@@ -14,7 +14,7 @@
 using namespace NEO;
 
 struct FailDeviceTime : public MockDeviceTime {
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *) override {
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *) override {
         return false;
     }
 };

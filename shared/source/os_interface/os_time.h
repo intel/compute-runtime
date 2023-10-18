@@ -7,6 +7,7 @@
 
 #pragma once
 #include <memory>
+#include <optional>
 
 #define NSEC_PER_SEC (1000000000ULL)
 
@@ -25,9 +26,14 @@ class OSTime;
 class DeviceTime {
   public:
     virtual ~DeviceTime() = default;
-    virtual bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime);
+    bool getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime);
+    virtual bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime);
     virtual double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const;
     virtual uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const;
+
+    std::optional<uint64_t> initialGpuTimeStamp{};
+    bool waitingForGpuTimeStampOverflow = false;
+    uint64_t gpuTimeStampOverflowCounter = 0;
 };
 
 class OSTime {
@@ -39,13 +45,10 @@ class OSTime {
     virtual bool getCpuTime(uint64_t *timeStamp);
     virtual double getHostTimerResolution() const;
     virtual uint64_t getCpuRawTimestamp();
-    OSInterface *getOSInterface() const {
-        return osInterface;
-    }
 
     static double getDeviceTimerResolution(HardwareInfo const &hwInfo);
-    bool getCpuGpuTime(TimeStampData *gpuCpuTime) {
-        return deviceTime->getCpuGpuTime(gpuCpuTime, this);
+    bool getGpuCpuTime(TimeStampData *gpuCpuTime) {
+        return deviceTime->getGpuCpuTime(gpuCpuTime, this);
     }
 
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
@@ -56,9 +59,12 @@ class OSTime {
         return deviceTime->getDynamicDeviceTimerClock(hwInfo);
     }
 
+    uint64_t getMaxGpuTimeStamp() const { return maxGpuTimeStamp; }
+
   protected:
     OSTime() = default;
     OSInterface *osInterface = nullptr;
     std::unique_ptr<DeviceTime> deviceTime;
+    uint64_t maxGpuTimeStamp = 0;
 };
 } // namespace NEO

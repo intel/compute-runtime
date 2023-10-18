@@ -17,19 +17,14 @@
 
 namespace NEO {
 
-DeviceTimeDrm::DeviceTimeDrm(OSInterface *osInterface) {
-    if (osInterface) {
-        pDrm = osInterface->getDriverModel()->as<Drm>();
-    }
+DeviceTimeDrm::DeviceTimeDrm(OSInterface &osInterface) {
+    pDrm = osInterface.getDriverModel()->as<Drm>();
     timestampTypeDetect();
 }
 
 void DeviceTimeDrm::timestampTypeDetect() {
     RegisterRead reg = {};
     int err;
-
-    if (pDrm == nullptr)
-        return;
 
     reg.offset = (REG_GLOBAL_TIMESTAMP_LDW | 1);
     auto ioctlHelper = pDrm->getIoctlHelper();
@@ -98,7 +93,11 @@ bool DeviceTimeDrm::getGpuTimeSplitted(uint64_t *timestamp) {
     return true;
 }
 
-bool DeviceTimeDrm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
+std::optional<uint64_t> initialGpuTimeStamp{};
+bool waitingForGpuTimeStampOverflow = false;
+uint64_t gpuTimeStampOverflowCounter = 0;
+
+bool DeviceTimeDrm::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     if (nullptr == this->getGpuTime) {
         return false;
     }
@@ -108,7 +107,6 @@ bool DeviceTimeDrm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     if (!osTime->getCpuTime(&pGpuCpuTime->cpuTimeinNS)) {
         return false;
     }
-
     return true;
 }
 

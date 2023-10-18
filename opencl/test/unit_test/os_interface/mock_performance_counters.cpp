@@ -361,8 +361,6 @@ void PerformanceCountersMetricsLibraryFixture::tearDown() {
 //////////////////////////////////////////////////////
 PerformanceCountersFixture::PerformanceCountersFixture() {
     executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
-    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
 }
 
 //////////////////////////////////////////////////////

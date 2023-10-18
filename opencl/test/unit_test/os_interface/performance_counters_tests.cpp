@@ -215,9 +215,10 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
   public:
     void SetUp() override {
         PerformanceCountersMetricsLibraryFixture::setUp();
-        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
-        osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0],
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment)[0],
                                                                                                     PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         queue->getGpgpuCommandStreamReceiver().setupContext(*osContext);
     }

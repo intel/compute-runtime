@@ -226,8 +226,6 @@ struct PerformanceCountersFixture {
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockCommandQueue> queue;
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
-    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
-    std::unique_ptr<OSInterface> osInterface;
 };
 
 //////////////////////////////////////////////////////

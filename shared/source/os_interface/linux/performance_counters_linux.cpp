@@ -9,9 +9,9 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
@@ -20,7 +20,7 @@ namespace NEO {
 ////////////////////////////////////////////////////
 std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device) {
     auto counter = std::make_unique<PerformanceCountersLinux>();
-    auto drm = device->getOSTime()->getOSInterface()->getDriverModel()->as<Drm>();
+    auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     UNRECOVERABLE_IF(counter == nullptr);
 

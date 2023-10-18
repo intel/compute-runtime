@@ -15,12 +15,12 @@ namespace NEO {
 
 class OSTimeLinux : public OSTime {
   public:
-    OSTimeLinux(OSInterface *osInterface, std::unique_ptr<DeviceTime> deviceTime);
+    OSTimeLinux(OSInterface &osInterface, std::unique_ptr<DeviceTime> deviceTime);
     bool getCpuTime(uint64_t *timeStamp) override;
     double getHostTimerResolution() const override;
     uint64_t getCpuRawTimestamp() override;
 
-    static std::unique_ptr<OSTime> create(OSInterface *osInterface, std::unique_ptr<DeviceTime> deviceTime);
+    static std::unique_ptr<OSTime> create(OSInterface &osInterface, std::unique_ptr<DeviceTime> deviceTime);
 
   protected:
     typedef int (*resolutionFunc_t)(clockid_t, struct timespec *);

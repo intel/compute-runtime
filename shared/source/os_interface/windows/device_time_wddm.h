@@ -19,7 +19,7 @@ struct TimeStampDataHeader;
 class DeviceTimeWddm : public DeviceTime {
   public:
     DeviceTimeWddm(Wddm *wddm);
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override;
     uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override;
 

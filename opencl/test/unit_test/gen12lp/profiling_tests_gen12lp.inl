@@ -93,7 +93,7 @@ class MyDeviceTime : public DeviceTime {
         EXPECT_FALSE(true);
         return 0;
     }
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *) override {
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *) override {
         EXPECT_FALSE(true);
         return false;
     }

@@ -12,7 +12,7 @@ namespace NEO {
 static int PerfTicks = 0;
 constexpr uint64_t convertToNs = 100;
 class MockDeviceTime : public DeviceTime {
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         pGpuCpuTime->gpuTimeStamp = ++PerfTicks;
         pGpuCpuTime->cpuTimeinNS = PerfTicks * convertToNs;
         return true;
@@ -54,7 +54,7 @@ class MockDeviceTimeWithConstTimestamp : public DeviceTime {
     static constexpr uint64_t cpuTimeInNs = 1u;
     static constexpr uint64_t gpuTimestamp = 2u;
 
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         pGpuCpuTime->gpuTimeStamp = gpuTimestamp;
         pGpuCpuTime->cpuTimeinNS = cpuTimeInNs;
         return true;

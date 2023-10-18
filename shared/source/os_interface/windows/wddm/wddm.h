@@ -185,6 +185,7 @@ class Wddm : public DriverModel {
     }
 
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return rootDeviceEnvironment; }
+    const HardwareInfo *getHardwareInfo() const override { return rootDeviceEnvironment.getHardwareInfo(); }
 
     uint32_t getTimestampFrequency() const { return timestampFrequency; }
 

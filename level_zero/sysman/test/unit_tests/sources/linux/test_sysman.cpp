@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/mocks/mock_driver_info.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
@@ -312,22 +313,6 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermission
     }
 }
 
-class UnknownDriverModel : public DriverModel {
-  public:
-    UnknownDriverModel() : DriverModel(DriverModelType::UNKNOWN) {}
-    void setGmmInputArgs(void *args) override {}
-    uint32_t getDeviceHandle() const override { return 0u; }
-    PhysicalDevicePciBusInfo getPciBusInfo() const override {
-        PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
-        return pciBusInfo;
-    }
-    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
-
-    bool isGpuHangDetected(OsContext &osContext) override {
-        return false;
-    }
-};
-
 TEST(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysmanOnLinuxThenErrorIsReturned) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -335,7 +320,7 @@ TEST(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysm
     execEnv->prepareRootDeviceEnvironments(1);
     execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
     execEnv->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
-    execEnv->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<UnknownDriverModel>());
+    execEnv->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModel>());
 
     auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv, 0);
     auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);

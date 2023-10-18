@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/windows/mock_os_time_win.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
@@ -25,16 +26,96 @@ BOOL WINAPI QueryPerformanceCounterMock(
     return true;
 };
 
+class MockDeviceTimeWin : public MockDeviceTime {
+  public:
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+        *pGpuCpuTime = gpuCpuTimeValue;
+        return true;
+    }
+    TimeStampData gpuCpuTimeValue{};
+};
+
 struct OSTimeWinTest : public ::testing::Test {
   public:
     void SetUp() override {
-        osTime = std::unique_ptr<MockOSTimeWin>(new MockOSTimeWin(nullptr));
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+        auto wddm = new WddmMock(rootDeviceEnvironment);
+        rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+        osTime = std::unique_ptr<MockOSTimeWin>(new MockOSTimeWin(*rootDeviceEnvironment.osInterface));
     }
 
     void TearDown() override {
     }
+    MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<MockOSTimeWin> osTime;
 };
+
+TEST_F(OSTimeWinTest, given36BitGpuTimeStampWhenGpuTimeStampOverflowThenGpuTimeDoesNotDecrease) {
+    auto deviceTime = new MockDeviceTimeWin();
+    osTime->deviceTime.reset(deviceTime);
+
+    TimeStampData gpuCpuTime = {0ull, 0ull};
+
+    deviceTime->gpuCpuTimeValue = {100ull, 100ull};
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(100ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 200ll;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(200ull, gpuCpuTime.gpuTimeStamp);
+
+    osTime->maxGpuTimeStamp = 1ull << 36;
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 10ull; // read below initial value
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(osTime->maxGpuTimeStamp + 10ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 30ull; // second read below initial value
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(osTime->maxGpuTimeStamp + 30ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 110ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(osTime->maxGpuTimeStamp + 110ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 70ull; // second overflow
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(2ull * osTime->maxGpuTimeStamp + 70ull, gpuCpuTime.gpuTimeStamp);
+}
+
+TEST_F(OSTimeWinTest, given64BitGpuTimeStampWhenGpuTimeStampOverflowThenOverflowsAreNotDetected) {
+    auto deviceTime = new MockDeviceTimeWin();
+    osTime->deviceTime.reset(deviceTime);
+
+    TimeStampData gpuCpuTime = {0ull, 0ull};
+
+    deviceTime->gpuCpuTimeValue = {100ull, 100ull};
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(100ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 200ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(200ull, gpuCpuTime.gpuTimeStamp);
+
+    osTime->maxGpuTimeStamp = 0ull;
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 10ull; // read below initial value
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(10ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 30ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(30ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 110ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(110ull, gpuCpuTime.gpuTimeStamp);
+
+    deviceTime->gpuCpuTimeValue.gpuTimeStamp = 70ull;
+    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(70ull, gpuCpuTime.gpuTimeStamp);
+}
 
 TEST_F(OSTimeWinTest, givenZeroFrequencyWhenGetHostTimerFuncIsCalledThenReturnsZero) {
     LARGE_INTEGER frequency;
@@ -77,33 +158,41 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuTimeThenReturnsSuccess) {
     EXPECT_EQ(0u, time);
 }
 
-TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
-    TimeStampData CPUGPUTime = {0};
+TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetGpuCpuTimeThenReturnsSuccess) {
+    TimeStampData gpuCpuTime = {0};
     auto osTime(OSTime::create(nullptr));
-    auto success = osTime->getCpuGpuTime(&CPUGPUTime);
+    auto success = osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_TRUE(success);
-    EXPECT_EQ(0u, CPUGPUTime.cpuTimeinNS);
-    EXPECT_EQ(0u, CPUGPUTime.gpuTimeStamp);
+    EXPECT_EQ(0u, gpuCpuTime.cpuTimeinNS);
+    EXPECT_EQ(0u, gpuCpuTime.gpuTimeStamp);
 }
 
-TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
+TEST(OSTimeWinTests, givenOSInterfaceWhenGetGpuCpuTimeThenReturnsSuccess) {
     MockExecutionEnvironment executionEnvironment;
-    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto wddm = new WddmMock(rootDeviceEnvironment);
-    TimeStampData CPUGPUTime01 = {0};
-    TimeStampData CPUGPUTime02 = {0};
+    TimeStampData gpuCpuTime01 = {0};
+    TimeStampData gpuCpuTime02 = {0};
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
     osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     auto osTime = OSTime::create(osInterface.get());
-    auto success = osTime->getCpuGpuTime(&CPUGPUTime01);
+    auto success = osTime->getGpuCpuTime(&gpuCpuTime01);
     EXPECT_TRUE(success);
-    EXPECT_NE(0u, CPUGPUTime01.cpuTimeinNS);
-    EXPECT_NE(0u, CPUGPUTime01.gpuTimeStamp);
-    success = osTime->getCpuGpuTime(&CPUGPUTime02);
+    EXPECT_NE(0u, gpuCpuTime01.cpuTimeinNS);
+    EXPECT_NE(0u, gpuCpuTime01.gpuTimeStamp);
+    success = osTime->getGpuCpuTime(&gpuCpuTime02);
     EXPECT_TRUE(success);
-    EXPECT_NE(0u, CPUGPUTime02.cpuTimeinNS);
-    EXPECT_NE(0u, CPUGPUTime02.gpuTimeStamp);
-    EXPECT_GT(CPUGPUTime02.gpuTimeStamp, CPUGPUTime01.gpuTimeStamp);
-    EXPECT_GT(CPUGPUTime02.cpuTimeinNS, CPUGPUTime01.cpuTimeinNS);
+    EXPECT_NE(0u, gpuCpuTime02.cpuTimeinNS);
+    EXPECT_NE(0u, gpuCpuTime02.gpuTimeStamp);
+    EXPECT_GT(gpuCpuTime02.gpuTimeStamp, gpuCpuTime01.gpuTimeStamp);
+    EXPECT_GT(gpuCpuTime02.cpuTimeinNS, gpuCpuTime01.cpuTimeinNS);
+}
+
+TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueThenHwInfoBasedValueIsReturned) {
+    if (defaultHwInfo->capabilityTable.timestampValidBits < 64) {
+        auto expectedMaxGpuTimeStampValue = 1ull << defaultHwInfo->capabilityTable.timestampValidBits;
+        EXPECT_EQ(expectedMaxGpuTimeStampValue, osTime->getMaxGpuTimeStamp());
+    } else {
+        EXPECT_EQ(0ull, osTime->getMaxGpuTimeStamp());
+    }
 }

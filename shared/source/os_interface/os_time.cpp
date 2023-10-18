@@ -9,13 +9,15 @@
 
 #include "shared/source/helpers/hw_info.h"
 
+#include <mutex>
+
 namespace NEO {
 
 double OSTime::getDeviceTimerResolution(HardwareInfo const &hwInfo) {
     return hwInfo.capabilityTable.defaultProfilingTimerResolution;
 };
 
-bool DeviceTime::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
+bool DeviceTime::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     pGpuCpuTime->cpuTimeinNS = 0;
     pGpuCpuTime->gpuTimeStamp = 0;
 
@@ -27,6 +29,33 @@ double DeviceTime::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) c
 
 uint64_t DeviceTime::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const {
     return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
+}
+
+bool DeviceTime::getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
+    if (!getGpuCpuTimeImpl(pGpuCpuTime, osTime)) {
+        return false;
+    }
+
+    auto maxGpuTimeStampValue = osTime->getMaxGpuTimeStamp();
+
+    static std::mutex gpuTimeStampOverflowCounterMutex;
+    std::lock_guard<std::mutex> lock(gpuTimeStampOverflowCounterMutex);
+    pGpuCpuTime->gpuTimeStamp &= (maxGpuTimeStampValue - 1);
+    if (!initialGpuTimeStamp) {
+        initialGpuTimeStamp = pGpuCpuTime->gpuTimeStamp;
+        waitingForGpuTimeStampOverflow = true;
+    } else {
+        if (waitingForGpuTimeStampOverflow && pGpuCpuTime->gpuTimeStamp < *initialGpuTimeStamp) {
+            gpuTimeStampOverflowCounter++;
+            waitingForGpuTimeStampOverflow = false;
+        }
+        if (!waitingForGpuTimeStampOverflow && pGpuCpuTime->gpuTimeStamp > *initialGpuTimeStamp) {
+            waitingForGpuTimeStampOverflow = true;
+        }
+
+        pGpuCpuTime->gpuTimeStamp += gpuTimeStampOverflowCounter * maxGpuTimeStampValue;
+    }
+    return true;
 }
 
 bool OSTime::getCpuTime(uint64_t *timeStamp) {

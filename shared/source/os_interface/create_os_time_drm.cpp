@@ -13,7 +13,7 @@ namespace NEO {
 
 std::unique_ptr<OSTime> OSTime::create(OSInterface *osInterface) {
     if (osInterface) {
-        return OSTimeLinux::create(osInterface, std::make_unique<DeviceTimeDrm>(osInterface));
+        return OSTimeLinux::create(*osInterface, std::make_unique<DeviceTimeDrm>(*osInterface));
     }
 
     return std::make_unique<OSTime>(std::make_unique<DeviceTime>());

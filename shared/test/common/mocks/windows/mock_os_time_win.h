@@ -11,7 +11,9 @@
 namespace NEO {
 class MockOSTimeWin : public OSTimeWin {
   public:
-    MockOSTimeWin(OSInterface *osInterface) : OSTimeWin(osInterface){};
+    using OSTimeWin::deviceTime;
+    using OSTimeWin::maxGpuTimeStamp;
+    MockOSTimeWin(OSInterface &osInterface) : OSTimeWin(osInterface){};
 
     void overrideQueryPerformanceCounterFunction(decltype(&QueryPerformanceCounter) function) {
         this->QueryPerfomanceCounterFnc = function;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,5 +36,5 @@ TEST_F(PerformanceCountersLinuxTest, WhenCreatingPerformanceCountersThenDrmFileD
     auto performanceCountersLinux = static_cast<PerformanceCountersLinux *>(performanceCounters.get());
 
     EXPECT_EQ(LinuxAdapterType::DrmFileDescriptor, performanceCountersLinux->adapter.Type);
-    EXPECT_EQ(osInterface->getDriverModel()->as<NEO::Drm>()->getFileDescriptor(), performanceCountersLinux->adapter.DrmFileDescriptor);
+    EXPECT_EQ(device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getFileDescriptor(), performanceCountersLinux->adapter.DrmFileDescriptor);
 }
