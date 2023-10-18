@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@ namespace aub_stream_stubs {
 uint16_t tbxServerPort = 4321;
 std::string tbxServerIp = "127.0.0.1";
 bool tbxFrontdoorMode = false;
+uint32_t aubStreamCaller = std::numeric_limits<uint32_t>::max();
 } // namespace aub_stream_stubs
 
 namespace aub_stream {
@@ -24,7 +25,8 @@ void setTbxServerIp(std::string server) {
     if (aub_stream_stubs::tbxServerIp != server)
         aub_stream_stubs::tbxServerIp = server;
 };
-void setTbxFrontdoorMode(bool frontdoor) { aub_stream_stubs::tbxFrontdoorMode = frontdoor; }
+void setTbxFrontdoorMode(bool frontdoor) { aub_stream_stubs::tbxFrontdoorMode = frontdoor; };
+void setAubStreamCaller(uint32_t caller) { aub_stream_stubs::aubStreamCaller = caller; };
 }
 
 } // namespace aub_stream
