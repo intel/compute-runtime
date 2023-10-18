@@ -112,10 +112,14 @@ HWTEST_F(ContextCreateCommandQueueTest, givenRootDeviceAndImplicitScalingDisable
 
 using AubCsrTest = Test<AubCsrFixture>;
 
-HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPollForCompletionIsCalled) {
+HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrSyncQueueAndKmdWaitWhenCallingExecuteCommandListsThenPollForCompletionIsCalled) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.OverrideUseKmdWaitFunction.set(1);
+
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_command_queue_handle_t commandQueue = {};
     ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
@@ -133,6 +137,58 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPoll
 
     queue->executeCommandLists(1, &commandListHandle, nullptr, false);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 1u);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndSyncQueueWhenCallingExecuteCommandListsThenPollForCompletionIsNotCalled) {
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_command_queue_handle_t commandQueue = {};
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto aubCsr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
+    CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
+    EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
+
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
+    queue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndAsyncQueueWhenCallingExecuteCommandListsThenPollForCompletionIsNotCalled) {
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_command_queue_handle_t commandQueue = {};
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto aubCsr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
+    CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
+    EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
+
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    auto commandListHandle = commandList->toHandle();
+    commandList->close();
+
+    queue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }

@@ -185,10 +185,88 @@ bool testEventsDeviceSignalHostWait(ze_context_handle_t &context, ze_device_hand
     return outputValidationSuccessful;
 }
 
+// Test Host Signal and Host wait
+bool testEventsHostSignalHostWait(ze_context_handle_t &context, ze_device_handle_t &device) {
+    ze_command_queue_handle_t cmdQueue;
+    ze_command_list_handle_t cmdList;
+
+    // Create commandQueue and cmdList
+    createCmdQueueAndCmdList(device, context, cmdQueue, cmdList);
+
+    // Create two shared buffers
+    constexpr size_t allocSize = 4096;
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    deviceDesc.ordinal = 0;
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+
+    void *srcBuffer = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 1, device, &srcBuffer));
+
+    void *dstBuffer = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 1, device, &dstBuffer));
+
+    // Initialize memory
+    constexpr uint8_t val = 55;
+    memset(srcBuffer, val, allocSize);
+    memset(dstBuffer, 0, allocSize);
+
+    // Create Event Pool and kernel launch event
+    ze_event_pool_handle_t eventPool;
+    uint32_t numEvents = 2;
+    std::vector<ze_event_handle_t> events(numEvents);
+    createEventPoolAndEvents(context, device, eventPool,
+                             (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
+                             numEvents, events.data(),
+                             ZE_EVENT_SCOPE_FLAG_HOST,
+                             (ze_event_scope_flag_t)0);
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdList, 1, &events[0]));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize, events[1], 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeEventHostSignal(events[0]));
+
+    SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[1], std::numeric_limits<uint64_t>::max()));
+    SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[0], std::numeric_limits<uint64_t>::max()));
+
+    // Validate
+    bool outputValidationSuccessful = true;
+    if (memcmp(dstBuffer, srcBuffer, allocSize)) {
+        outputValidationSuccessful = false;
+        uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
+        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
+        for (size_t i = 0; i < allocSize; i++) {
+            if (srcCharBuffer[i] != dstCharBuffer[i]) {
+                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
+                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
+                break;
+            }
+        }
+    }
+
+    // Cleanup
+    for (auto event : events) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+    }
+
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    return outputValidationSuccessful;
+}
+
 int main(int argc, char *argv[]) {
     const std::string blackBoxName("Zello Events");
 
-    bool outputValidationSuccessful;
+    bool outputValidationSuccessful = true;
+    ;
     verbose = isVerbose(argc, argv);
     bool aubMode = isAubMode(argc, argv);
 
@@ -210,6 +288,12 @@ int main(int argc, char *argv[]) {
     if (outputValidationSuccessful || aubMode) {
         currentTest = "Device signal and device wait test";
         outputValidationSuccessful = testEventsDeviceSignalDeviceWait(context, device);
+        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+    }
+
+    if (outputValidationSuccessful || aubMode) {
+        currentTest = "Host signal and host wait test";
+        outputValidationSuccessful = testEventsHostSignalHostWait(context, device);
         printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 

@@ -1203,8 +1203,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::waitForCommandQueueCompletionAndClean
         if (const auto syncRet = this->synchronize(std::numeric_limits<uint64_t>::max()); syncRet == ZE_RESULT_ERROR_DEVICE_LOST) {
             ret = syncRet;
         }
-    } else {
-        this->csr->pollForCompletion();
     }
     this->heapContainer.clear();
 
