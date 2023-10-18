@@ -11,6 +11,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -23,7 +25,6 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
-
 namespace NEO {
 
 CommandContainer::~CommandContainer() {
@@ -74,6 +75,8 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     if (this->stateBaseAddressTracking) {
         this->defaultSshSize = defaultSshSize;
     }
+
+    globalBindlessHeapsEnabled = this->device->getExecutionEnvironment()->rootDeviceEnvironments[this->device->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr;
 
     auto cmdBufferAllocation = this->obtainNextCommandBufferAllocation();
 
@@ -573,7 +576,7 @@ bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
     }
     const auto &hardwareInfo = this->device->getHardwareInfo();
 
-    bool skipCreation = (NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration() && IndirectHeap::Type::SURFACE_STATE == heapType) ||
+    bool skipCreation = (globalBindlessHeapsEnabled && IndirectHeap::Type::SURFACE_STATE == heapType) ||
                         this->immediateCmdListSharedHeap(heapType) ||
                         (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) ||
                         (this->heapAddressModel != HeapAddressModel::PrivateHeaps);

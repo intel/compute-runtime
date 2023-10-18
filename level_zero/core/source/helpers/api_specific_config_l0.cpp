@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 
@@ -24,11 +25,11 @@ bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }
 
-bool ApiSpecificConfig::getBindlessMode() {
+bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *releaseHelper) {
     if (DebugManager.flags.UseBindlessMode.get() != -1) {
         return DebugManager.flags.UseBindlessMode.get();
     } else {
-        return false;
+        return releaseHelper ? !releaseHelper->isBindlessAddressingDisabled() : false;
     }
 }
 

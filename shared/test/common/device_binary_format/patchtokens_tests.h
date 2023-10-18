@@ -236,7 +236,7 @@ struct ValidEmptyKernel {
         auto execEnvTokInl = initToken<iOpenCL::SPatchExecutionEnvironment>(iOpenCL::PATCH_TOKEN_EXECUTION_ENVIRONMENT);
         execEnvTokInl.LargestCompiledSIMDSize = 32U;
         execEnvTokInl.CompiledSIMD32 = 1U;
-        execEnvTokInl.UseBindlessMode = NEO::ApiSpecificConfig::getBindlessMode();
+        execEnvTokInl.UseBindlessMode = NEO::ApiSpecificConfig::getBindlessMode(nullptr);
         headerTokInl.PatchListSize = sizeof(execEnvTokInl);
         ret.decodeStatus = NEO::DecodeError::Success;
         ret.name = "test_kernel";

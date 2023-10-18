@@ -75,7 +75,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
         auto cmd = genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(*itorMIDL);
         ASSERT_NE(cmd, nullptr);
 
-        auto dsh = NEO::ApiSpecificConfig::getBindlessMode() ? device->getNEODevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto dsh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
         auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
 
         if (NEO::EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {

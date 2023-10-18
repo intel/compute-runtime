@@ -885,7 +885,7 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
 
         createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
-    if (NEO::ApiSpecificConfig::getBindlessMode()) {
+    if (NEO::ApiSpecificConfig::getBindlessMode(device->getNEODevice()->getReleaseHelper())) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessMode.str());
     }
 }

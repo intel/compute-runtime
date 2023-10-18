@@ -12,6 +12,7 @@
 #include <vector>
 
 namespace NEO {
+class ReleaseHelper;
 
 ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
 bool isStatelessCompressionSupportedForUlts = true;
@@ -27,7 +28,7 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }
-bool ApiSpecificConfig::getBindlessMode() {
+bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *) {
     if (DebugManager.flags.UseBindlessMode.get() != -1) {
         return DebugManager.flags.UseBindlessMode.get();
     } else {

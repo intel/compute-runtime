@@ -41,7 +41,7 @@ void KernelArgBufferFixture::setUp() {
 
     pKernelInfo->addArgBuffer(0, 0x30, sizeof(void *), 0x0);
 
-    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessMode() ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessMode(nullptr) ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
 
     pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 

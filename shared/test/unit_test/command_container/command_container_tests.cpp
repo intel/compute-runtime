@@ -17,6 +17,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -1500,6 +1501,14 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
 
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
+                                                               pDevice->getNumGenericSubDevices() > 1,
+                                                               pDevice->getRootDeviceIndex(),
+                                                               pDevice->getDeviceBitfield());
+    mockHelper->globalBindlessDsh = false;
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
     auto cmdContainer = std::make_unique<CommandContainer>();
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::defaultHeapSize, true, false);

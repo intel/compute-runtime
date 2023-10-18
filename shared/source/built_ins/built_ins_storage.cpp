@@ -84,6 +84,7 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
 StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
     auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto releaseHelper = device.getReleaseHelper();
 
     auto createDeviceIdFilenameComponent = [](const NEO::HardwareIpVersion &hwIpVersion) {
         std::ostringstream deviceId;
@@ -93,13 +94,13 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     const auto deviceIp = createDeviceIdFilenameComponent(hwInfo.ipVersion);
     const auto builtinName = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);
-    auto getAddressingMode = [type, &productHelper, builtin]() {
+    auto getAddressingMode = [type, &productHelper, releaseHelper, builtin]() {
         if (type == BuiltinCode::ECodeType::Binary) {
             const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
             const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
             if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
                 return "stateless_";
-            } else if (ApiSpecificConfig::getBindlessMode()) {
+            } else if (ApiSpecificConfig::getBindlessMode(releaseHelper)) {
                 return "bindless_";
             } else {
                 return "bindful_";

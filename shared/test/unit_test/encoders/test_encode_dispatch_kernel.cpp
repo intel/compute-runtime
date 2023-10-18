@@ -1354,15 +1354,17 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    auto commandContainer = std::make_unique<CommandContainer>();
-    commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    commandContainer->setDirtyStateForAllHeaps(false);
-    commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
                                                                                                                          pDevice->getRootDeviceIndex(),
                                                                                                                          pDevice->getDeviceBitfield());
+
+    auto commandContainer = std::make_unique<CommandContainer>();
+    commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    commandContainer->setDirtyStateForAllHeaps(false);
+    commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
+
     uint32_t numBindingTable = 1;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

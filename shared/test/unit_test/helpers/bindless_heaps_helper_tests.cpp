@@ -18,11 +18,20 @@
 
 using namespace NEO;
 
-TEST(BindlessHeapsHelper, givenExternalAllocatorFlagEnabledWhenCreatingRootDevicesThenBindlesHeapHelperCreated) {
+TEST(BindlessHeapsHelper, givenExternalAllocatorFlagAndBindlessModeEnabledWhenCreatingRootDevicesThenBindlessHeapsHelperCreated) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    DebugManager.flags.UseBindlessMode.set(1);
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     EXPECT_NE(deviceFactory->rootDevices[0]->getBindlessHeapsHelper(), nullptr);
+}
+
+TEST(BindlessHeapsHelper, givenExternalAllocatorFlagEnabledAndBindlessModeDisabledWhenCreatingRootDevicesThenBindlessHeapsHelperIsNotCreated) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    DebugManager.flags.UseBindlessMode.set(0);
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    EXPECT_EQ(deviceFactory->rootDevices[0]->getBindlessHeapsHelper(), nullptr);
 }
 
 TEST(BindlessHeapsHelper, givenExternalAllocatorFlagDisabledWhenCreatingRootDevicesThenBindlesHeapHelperIsNotCreated) {

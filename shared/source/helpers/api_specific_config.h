@@ -14,13 +14,14 @@
 #include <vector>
 
 namespace NEO {
+class ReleaseHelper;
 
 struct ApiSpecificConfig {
     enum ApiType { OCL,
                    L0 };
     static bool isStatelessCompressionSupported();
     static bool getGlobalBindlessHeapConfiguration();
-    static bool getBindlessMode();
+    static bool getBindlessMode(const ReleaseHelper *);
     static bool isDeviceAllocationCacheEnabled();
     static bool isDynamicPostSyncAllocLayoutEnabled();
     static ApiType getApiType();

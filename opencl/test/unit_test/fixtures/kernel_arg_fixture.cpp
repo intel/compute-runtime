@@ -49,8 +49,8 @@ void KernelImageArgTest::SetUp() {
 
     pKernelInfo->addArgImage(4, 0x20);
 
-    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessMode() ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
-    pKernelInfo->kernelDescriptor.kernelAttributes.imageAddressingMode = ApiSpecificConfig::getBindlessMode() ? KernelDescriptor::AddressingMode::Bindless : KernelDescriptor::AddressingMode::Bindful;
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessMode(nullptr) ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
+    pKernelInfo->kernelDescriptor.kernelAttributes.imageAddressingMode = ApiSpecificConfig::getBindlessMode(nullptr) ? KernelDescriptor::AddressingMode::Bindless : KernelDescriptor::AddressingMode::Bindful;
 
     ClDeviceFixture::setUp();
     context.reset(new MockContext(pClDevice));

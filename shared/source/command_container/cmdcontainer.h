@@ -266,6 +266,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool systolicModeSupport = false;
     bool doubleSbaWa = false;
     bool usingPrimaryBuffer = false;
+    bool globalBindlessHeapsEnabled = false;
 };
 
 } // namespace NEO
