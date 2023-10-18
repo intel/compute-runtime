@@ -45,7 +45,7 @@ namespace NEO {
 int IoctlHelperXe::xeGetQuery(Query *data) {
     if (data->numItems == 1) {
         QueryItem *queryItem = reinterpret_cast<QueryItem *>(data->itemsPtr);
-        std::vector<uint64_t> *queryData = nullptr;
+        std::vector<uint32_t> *queryData = nullptr;
         switch (queryItem->queryId) {
         case static_cast<int>(DrmParam::QueryHwconfigTable):
             queryData = &hwconfigFakei915;
@@ -54,7 +54,7 @@ int IoctlHelperXe::xeGetQuery(Query *data) {
             xeLog("error: bad query 0x%x\n", queryItem->queryId);
             return -1;
         }
-        auto queryDataSize = static_cast<int32_t>(queryData->size() * sizeof(uint64_t));
+        auto queryDataSize = static_cast<int32_t>(queryData->size() * sizeof(uint32_t));
         if (queryItem->length == 0) {
             queryItem->length = queryDataSize;
             return 0;
@@ -165,7 +165,8 @@ bool IoctlHelperXe::initialize() {
     memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
     IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-    hwconfigFakei915.resize(queryConfig.size);
+    auto newSize = queryConfig.size / sizeof(uint32_t);
+    hwconfigFakei915.resize(newSize);
     queryConfig.data = castToUint64(hwconfigFakei915.data());
     IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
 
@@ -291,17 +292,20 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     }
 
     for (auto i = 0u; i < xeGtsData->num_gt; i++) {
-        uint64_t nativeMemRegions = xeGtsData->gts[i].native_mem_regions;
-        auto regionIndex = Math::log2(nativeMemRegions);
-        UNRECOVERABLE_IF(!memoryRegionInstances[regionIndex]);
-        regionsContainer.push_back(createMemoryRegionFromXeMemRegion(*memoryRegionInstances[regionIndex]));
+        if (xeGtsData->gts[i].type == XE_QUERY_GT_TYPE_MAIN) {
+            uint64_t nativeMemRegions = xeGtsData->gts[i].native_mem_regions;
+            auto regionIndex = Math::log2(nativeMemRegions);
+            UNRECOVERABLE_IF(!memoryRegionInstances[regionIndex]);
+            regionsContainer.push_back(createMemoryRegionFromXeMemRegion(*memoryRegionInstances[regionIndex]));
 
-        xeTimestampFrequency = xeGtsData->gts[i].clock_freq;
+            xeTimestampFrequency = xeGtsData->gts[i].clock_freq;
+        }
     }
     return std::make_unique<MemoryInfo>(regionsContainer, drm);
 }
 
-void IoctlHelperXe::getTopologyData(uint32_t nTiles, std::vector<std::bitset<8>> geomDss[2], std::vector<std::bitset<8>> computeDss[2], std::vector<std::bitset<8>> euDss[2], DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty) {
+void IoctlHelperXe::getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss,
+                                    std::vector<std::bitset<8>> *euDss, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty) {
     int subSliceCount = 0;
     int euPerDss = 0;
 
@@ -340,7 +344,7 @@ void IoctlHelperXe::getTopologyData(uint32_t nTiles, std::vector<std::bitset<8>>
     topologyData.maxSliceCount = 1;
 }
 
-void IoctlHelperXe::getTopologyMap(uint32_t nTiles, std::vector<std::bitset<8>> dssInfo[2], TopologyMap &topologyMap) {
+void IoctlHelperXe::getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap) {
     for (auto tileId = 0u; tileId < nTiles; tileId++) {
         std::vector<int> sliceIndices;
         std::vector<int> subSliceIndices;
@@ -371,34 +375,49 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
         }
     };
 
-    std::vector<std::bitset<8>> geomDss[2];
-    std::vector<std::bitset<8>> computeDss[2];
-    std::vector<std::bitset<8>> euDss[2];
+    StackVec<std::vector<std::bitset<8>>, 2> geomDss;
+    StackVec<std::vector<std::bitset<8>>, 2> computeDss;
+    StackVec<std::vector<std::bitset<8>>, 2> euDss;
+    StackVec<int, 2> gtIdToTile{-1};
+
     auto topologySize = queryGtTopology.size();
     auto dataPtr = queryGtTopology.data();
 
-    auto nTiles = 1u;
+    auto gtsData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GTS);
+    auto xeGtsData = reinterpret_cast<drm_xe_query_gts *>(gtsData.data());
+    gtIdToTile.resize(xeGtsData->num_gt, -1);
 
+    auto tileIndex = 0u;
+    for (auto gt = 0u; gt < gtIdToTile.size(); gt++) {
+        if (xeGtsData->gts[gt].type == XE_QUERY_GT_TYPE_MAIN) {
+            gtIdToTile[gt] = tileIndex++;
+        }
+    }
+
+    geomDss.resize(tileIndex);
+    computeDss.resize(tileIndex);
+    euDss.resize(tileIndex);
     while (topologySize >= sizeof(drm_xe_query_topology_mask)) {
         drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
         UNRECOVERABLE_IF(topo == nullptr);
 
-        uint32_t tileId = topo->gt_id;
-        nTiles = std::max(tileId + 1, nTiles);
+        uint32_t gtId = topo->gt_id;
 
-        switch (topo->type) {
-        case XE_TOPO_DSS_GEOMETRY:
-            fillMask(geomDss[tileId], topo);
-            break;
-        case XE_TOPO_DSS_COMPUTE:
-            fillMask(computeDss[tileId], topo);
-            break;
-        case XE_TOPO_EU_PER_DSS:
-            fillMask(euDss[tileId], topo);
-            break;
-        default:
-            xeLog("Unhandle GT Topo type: %d\n", topo->type);
-            return false;
+        if (xeGtsData->gts[gtId].type == XE_QUERY_GT_TYPE_MAIN) {
+            switch (topo->type) {
+            case XE_TOPO_DSS_GEOMETRY:
+                fillMask(geomDss[gtIdToTile[gtId]], topo);
+                break;
+            case XE_TOPO_DSS_COMPUTE:
+                fillMask(computeDss[gtIdToTile[gtId]], topo);
+                break;
+            case XE_TOPO_EU_PER_DSS:
+                fillMask(euDss[gtIdToTile[gtId]], topo);
+                break;
+            default:
+                xeLog("Unhandle GT Topo type: %d\n", topo->type);
+                return false;
+            }
         }
 
         uint32_t itemSize = sizeof(drm_xe_query_topology_mask) + topo->num_bytes;
@@ -407,10 +426,10 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     }
 
     bool isComputeDssEmpty = false;
-    getTopologyData(nTiles, geomDss, computeDss, euDss, topologyData, isComputeDssEmpty);
+    getTopologyData(tileIndex, geomDss.begin(), computeDss.begin(), euDss.begin(), topologyData, isComputeDssEmpty);
 
     auto &dssInfo = isComputeDssEmpty ? geomDss : computeDss;
-    getTopologyMap(nTiles, dssInfo, topologyMap);
+    getTopologyMap(tileIndex, dssInfo.begin(), topologyMap);
 
     return true;
 }
