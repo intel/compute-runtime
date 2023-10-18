@@ -629,7 +629,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenMiMemFenceRequiredThenGpuVaForAdditional
 }
 
 HWTEST_F(WddmDirectSubmissionTest,
-         givenRenderDirectSubmissionWithDisabledMonitorFenceWhenMonitorFenceExplicitlyRequiredThenDispatchPostSyncOperation) {
+         givenRenderDirectSubmissionWithDisabledMonitorFenceWhenHasStallingCommandDispatchedThenDispatchPostSyncOperation) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using Dispatcher = RenderDispatcher<FamilyType>;
@@ -654,7 +654,7 @@ HWTEST_F(WddmDirectSubmissionTest,
     batchBuffer.usedSize = 0x40;
     batchBuffer.taskStartAddress = clientCommandBuffer->getGpuAddress();
     batchBuffer.stream = clientStream.get();
-    batchBuffer.dispatchMonitorFence = true;
+    batchBuffer.hasStallingCmds = true;
 
     FlushStampTracker flushStamp(true);
 
