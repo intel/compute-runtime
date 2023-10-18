@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -48,7 +49,13 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_
         return false;
     }
 
-    if (productConfig != AOT::UNKNOWN_ISA) {
+    bool useLegacyValidationPath = false;
+    auto ailConfiguration = AILConfiguration::get(targetDevice.productFamily);
+    if (ailConfiguration) {
+        useLegacyValidationPath = ailConfiguration->useLegacyValidationLogic();
+    }
+
+    if (false == NEO::DebugManager.flags.DoNotUseProductConfigForValidationWa.get() && false == useLegacyValidationPath && productConfig != AOT::UNKNOWN_ISA) {
         return targetDevice.aotConfig.value == productConfig;
     }
 

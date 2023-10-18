@@ -28,6 +28,11 @@ class MockAILConfiguration : public AILConfiguration {
         return contextSyncFlagReturn;
     }
 
+    bool fallbackToLegacyValidationLogic = false;
+    bool useLegacyValidationLogic() override {
+        return fallbackToLegacyValidationLogic;
+    }
+
   protected:
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override {}
 };
