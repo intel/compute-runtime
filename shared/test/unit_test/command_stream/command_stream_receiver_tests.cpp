@@ -1454,6 +1454,19 @@ TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThe
     EXPECT_TRUE(csr.expectMemory(setA2, setB2, setSize, compareNotEqual));
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenBaseCsrWhenWritingMemoryThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+
+    MockGraphicsAllocation mockAllocation;
+
+    EXPECT_FALSE(csr.writeMemory(mockAllocation));
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushDisabledWhenProvidingNeverUsedAllocationTaskCountThenDoNotMarkNewResourceTrue) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);

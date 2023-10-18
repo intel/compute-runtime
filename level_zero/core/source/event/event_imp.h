@@ -26,8 +26,8 @@ class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT, NEO::Ti
 template <typename TagSizeT>
 struct EventImp : public Event {
 
-    EventImp(EventPool *eventPool, int index, Device *device, bool downloadAllocationRequired)
-        : Event(eventPool, index, device), downloadAllocationRequired(downloadAllocationRequired) {
+    EventImp(EventPool *eventPool, int index, Device *device, bool tbxMode)
+        : Event(eventPool, index, device), tbxMode(tbxMode) {
         contextStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextStartOffset();
         contextEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextEndOffset();
         globalStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalStartOffset();
@@ -64,7 +64,7 @@ struct EventImp : public Event {
 
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
 
-    const bool downloadAllocationRequired = false;
+    const bool tbxMode = false;
 
   protected:
     ze_result_t waitForUserFence(uint64_t timeout);
@@ -78,9 +78,10 @@ struct EventImp : public Event {
     MOCKABLE_VIRTUAL ze_result_t hostEventSetValue(TagSizeT eventValue);
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
     MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
-    void setRemainingPackets(TagSizeT eventVal, void *nextPacketAddress, uint32_t packetsAlreadySet);
+    void setRemainingPackets(TagSizeT eventVal, uint64_t nextPacketGpuVa, void *nextPacketAddress, uint32_t packetsAlreadySet);
     void getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,
                                          const uint32_t count, const ze_kernel_timestamp_result_t *pKernelTimestampsBuffer);
+    void copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, uint64_t copyData);
 };
 
 } // namespace L0

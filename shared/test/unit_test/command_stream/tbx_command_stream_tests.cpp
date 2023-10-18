@@ -72,7 +72,7 @@ struct MockTbxCsrToTestDumpTbxNonWritable : public TbxCommandStreamReceiverHw<Gf
     using TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw;
     using TbxCommandStreamReceiverHw<GfxFamily>::dumpTbxNonWritable;
 
-    bool writeMemory(GraphicsAllocation &gfxAllocation) override {
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
         return true;
     }
 };

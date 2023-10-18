@@ -114,7 +114,7 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
                                                                                                                                   PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
     aubCsr->setupContext(*osContext);
 
-    aubCsr->writeMemoryWithAubManager(*allocation);
+    aubCsr->writeMemoryWithAubManager(*allocation, false, 0, 0);
     EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceBatchBuffer, aubManager.hintToWriteMemory);
 
@@ -122,7 +122,7 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
 
     auto allocation2 = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::LINEAR_STREAM});
 
-    aubCsr->writeMemoryWithAubManager(*allocation2);
+    aubCsr->writeMemoryWithAubManager(*allocation2, true, 1, 1);
     EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
 

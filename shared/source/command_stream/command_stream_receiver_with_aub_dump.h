@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,8 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     using BaseCSR::osContext;
 
   public:
+    using BaseCSR::writeMemory;
+
     CommandStreamReceiverWithAUBDump(const std::string &baseName,
                                      ExecutionEnvironment &executionEnvironment,
                                      uint32_t rootDeviceIndex,
@@ -51,6 +53,8 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
 
     bool expectMemory(const void *gfxAddress, const void *srcAddress,
                       size_t length, uint32_t compareOperation) override;
+
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override;
 
     std::unique_ptr<CommandStreamReceiver> aubCSR;
 };

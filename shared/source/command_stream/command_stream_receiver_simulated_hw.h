@@ -90,16 +90,21 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         const auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         return new PhysicalAddressAllocatorHw<GfxFamily>(bankSize, devicesCount);
     }
-    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override {
+    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
         uint64_t gpuAddress;
         void *cpuAddress;
-        size_t size;
-        this->getParametersForMemory(graphicsAllocation, gpuAddress, cpuAddress, size);
+        size_t allocSize;
+        this->getParametersForMemory(graphicsAllocation, gpuAddress, cpuAddress, allocSize);
         int hint = graphicsAllocation.getAllocationType() == AllocationType::COMMAND_BUFFER
                        ? AubMemDump::DataTypeHintValues::TraceBatchBuffer
                        : AubMemDump::DataTypeHintValues::TraceNotype;
 
-        aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, size, this->getMemoryBank(&graphicsAllocation),
+        if (isChunkCopy) {
+            gpuAddress += gpuVaChunkOffset;
+            allocSize = chunkSize;
+        }
+
+        aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, allocSize, this->getMemoryBank(&graphicsAllocation),
                                                       hint, graphicsAllocation.getUsedPageSize());
 
         auto gmm = graphicsAllocation.getDefaultGmm();

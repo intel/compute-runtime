@@ -3289,9 +3289,11 @@ HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequire
         ultCsr.downloadAllocationsCalledCount = 0;
     }
 }
-HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocationIsResidentOnce) {
+HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocationIsWritten) {
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
     auto mockMemIface = static_cast<NEO::MockMemoryOperations *>(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
+
+    constexpr uint32_t expectedBanks = std::numeric_limits<uint32_t>::max();
 
     mockMemIface->captureGfxAllocationsForMakeResident = true;
 
@@ -3300,6 +3302,8 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.callCount);
 
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
     auto eventAllocation = &event->getAllocation(device);
@@ -3310,13 +3314,24 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
                                     mockMemIface->gfxAllocationsForMakeResident.end(),
                                     eventAllocation);
     EXPECT_EQ(mockMemIface->gfxAllocationsForMakeResident.end(), eventAllocItor);
-    EXPECT_EQ(1, mockMemIface->makeResidentCalledCount);
 
-    constexpr uint32_t expectedBanks = std::numeric_limits<uint32_t>::max();
-    eventAllocation->setTbxWritable(false, expectedBanks);
+    uint32_t expectedCallCount = std::min(static_cast<uint32_t>(eventPool->getEventSize() / sizeof(uint64_t)), uint32_t(16));
+
+    EXPECT_EQ(expectedCallCount, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
+    EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
+    EXPECT_EQ(sizeof(uint64_t), ultCsr.writeMemoryParams.latestChunkSize);
+    EXPECT_EQ((expectedCallCount - 1) * sizeof(uint64_t), ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
+    EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
+
     auto status = event->hostSignal();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
-    EXPECT_EQ(2, mockMemIface->makeResidentCalledCount);
+
+    EXPECT_EQ(expectedCallCount + 1, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
+    EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
+    EXPECT_EQ(sizeof(uint64_t), ultCsr.writeMemoryParams.latestChunkSize);
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
 
     EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
 
@@ -3329,7 +3344,15 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     }
 
     event->reset();
-    EXPECT_EQ(3, mockMemIface->makeResidentCalledCount);
+    EXPECT_EQ(0, mockMemIface->makeResidentCalledCount);
+
+    EXPECT_EQ(expectedCallCount + 2, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
+    EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
+    EXPECT_EQ(sizeof(uint64_t), ultCsr.writeMemoryParams.latestChunkSize);
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
+
+    EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
 
     size_t offset = event->getCompletionFieldOffset();
     void *completionAddress = ptrOffset(event->hostAddress, offset);

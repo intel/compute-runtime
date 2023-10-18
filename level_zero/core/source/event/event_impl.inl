@@ -25,9 +25,8 @@ template <typename TagSizeT>
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
     auto neoDevice = device->getNEODevice();
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-    bool downloadAllocationRequired = csr->isTbxMode();
 
-    auto event = new EventImp<TagSizeT>(eventPool, desc->index, device, downloadAllocationRequired);
+    auto event = new EventImp<TagSizeT>(eventPool, desc->index, device, csr->isTbxMode());
     UNRECOVERABLE_IF(event == nullptr);
 
     if (eventPool->isEventPoolTimestampFlagSet()) {
@@ -180,7 +179,7 @@ ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
 
 template <typename TagSizeT>
 void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
-    if (this->downloadAllocationRequired) {
+    if (this->tbxMode) {
         for (auto &csr : csrs) {
             csr->downloadAllocations();
         }
@@ -241,7 +240,7 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     if (metricStreamer != nullptr) {
         hostEventSetValue(metricStreamer->getNotificationState());
     }
-    if (this->downloadAllocationRequired) {
+    if (this->tbxMode) {
         for (auto &csr : csrs) {
 
             if (auto &alloc = this->getAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
@@ -279,36 +278,36 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 
-    auto baseAddr = castToUint64(this->hostAddress);
-    auto eventTsSetFunc = [](auto tsAddr, TagSizeT value) {
-        auto tsptr = reinterpret_cast<void *>(tsAddr);
-        memcpy_s(tsptr, sizeof(TagSizeT), static_cast<void *>(&value), sizeof(TagSizeT));
-    };
+    auto baseHostAddr = this->hostAddress;
+    auto baseGpuAddr = getAllocation(device).getGpuAddress();
 
-    TagSizeT timestampStart = eventVal;
-    TagSizeT timestampEnd = eventVal;
+    uint64_t timestampStart = static_cast<uint64_t>(eventVal);
+    uint64_t timestampEnd = static_cast<uint64_t>(eventVal);
     if (eventVal == Event::STATE_SIGNALED) {
-        timestampStart = static_cast<TagSizeT>(this->gpuStartTimestamp);
-        timestampEnd = static_cast<TagSizeT>(this->gpuEndTimestamp);
+        timestampStart = static_cast<uint64_t>(this->gpuStartTimestamp);
+        timestampEnd = static_cast<uint64_t>(this->gpuEndTimestamp);
     }
 
     uint32_t packets = 0;
     for (uint32_t i = 0; i < this->kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++, packets++) {
-            if (baseAddr >= castToUint64(ptrOffset(this->hostAddress, totalEventSize))) {
+            if (castToUint64(baseHostAddr) >= castToUint64(ptrOffset(this->hostAddress, totalEventSize))) {
                 break;
             }
-            eventTsSetFunc(baseAddr + contextStartOffset, timestampStart);
-            eventTsSetFunc(baseAddr + globalStartOffset, timestampStart);
-            eventTsSetFunc(baseAddr + contextEndOffset, timestampEnd);
-            eventTsSetFunc(baseAddr + globalEndOffset, timestampEnd);
-            baseAddr += singlePacketSize;
+            copyDataToEventAlloc(ptrOffset(baseHostAddr, contextStartOffset), baseGpuAddr + contextStartOffset, sizeof(TagSizeT), timestampStart);
+            copyDataToEventAlloc(ptrOffset(baseHostAddr, globalStartOffset), baseGpuAddr + globalStartOffset, sizeof(TagSizeT), timestampStart);
+            copyDataToEventAlloc(ptrOffset(baseHostAddr, contextEndOffset), baseGpuAddr + contextEndOffset, sizeof(TagSizeT), timestampEnd);
+            copyDataToEventAlloc(ptrOffset(baseHostAddr, globalEndOffset), baseGpuAddr + globalEndOffset, sizeof(TagSizeT), timestampEnd);
+
+            baseHostAddr = ptrOffset(baseHostAddr, singlePacketSize);
+            baseGpuAddr += singlePacketSize;
         }
     }
     if (this->signalAllEventPackets) {
-        baseAddr = ptrOffset(baseAddr, this->contextEndOffset);
-        setRemainingPackets(eventVal, reinterpret_cast<void *>(baseAddr), packets);
+        baseHostAddr = ptrOffset(baseHostAddr, this->contextEndOffset);
+        baseGpuAddr += this->contextEndOffset;
+        setRemainingPackets(eventVal, baseGpuAddr, baseHostAddr, packets);
     }
 
     const auto dataSize = 4u * EventPacketsCount::maxKernelSplit * NEO::TimestampPacketConstants::preferredPacketCount;
@@ -324,6 +323,23 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 }
 
 template <typename TagSizeT>
+void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, uint64_t copyData) {
+    memcpy_s(dstHostAddr, copySize, &copyData, copySize);
+
+    if (this->tbxMode) {
+        auto &alloc = getAllocation(device);
+        constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+        alloc.setTbxWritable(true, allBanks);
+
+        auto offset = ptrDiff(dstGpuVa, alloc.getGpuAddress());
+
+        csrs[0]->writeMemory(alloc, true, offset, copySize);
+
+        alloc.setTbxWritable(true, allBanks);
+    }
+}
+
+template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
     UNRECOVERABLE_IF(hostAddress == nullptr);
 
@@ -332,6 +348,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
     }
 
     auto packetHostAddr = getCompletionFieldHostAddress();
+    auto packetGpuAddr = getCompletionFieldGpuAddress(device);
 
     UNRECOVERABLE_IF(sizeof(TagSizeT) > sizeof(uint64_t));
 
@@ -344,30 +361,23 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
     }
 
     uint32_t packets = 0;
+
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++, packets++) {
             if (castToUint64(packetHostAddr) >= castToUint64(ptrOffset(this->hostAddress, totalEventSize))) {
                 break;
             }
-            memcpy_s(packetHostAddr, copySize, &copyData, copySize);
+            copyDataToEventAlloc(packetHostAddr, packetGpuAddr, copySize, copyData);
+
             packetHostAddr = ptrOffset(packetHostAddr, this->singlePacketSize);
+            packetGpuAddr = ptrOffset(packetGpuAddr, this->singlePacketSize);
         }
     }
     if (this->signalAllEventPackets) {
-        setRemainingPackets(eventVal, packetHostAddr, packets);
+        setRemainingPackets(eventVal, packetGpuAddr, packetHostAddr, packets);
     }
 
-    if (this->downloadAllocationRequired) {
-        auto memoryIface = this->device->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get();
-
-        auto eventAllocation = &this->getAllocation(device);
-        ArrayRef<NEO::GraphicsAllocation *> allocationArray(&eventAllocation, 1);
-        memoryIface->makeResident(nullptr, allocationArray);
-
-        constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-        eventAllocation->setTbxWritable(true, allBanks);
-    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -698,12 +708,15 @@ uint64_t EventImp<TagSizeT>::getPacketAddress(Device *device) {
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::setRemainingPackets(TagSizeT eventVal, void *nextPacketAddress, uint32_t packetsAlreadySet) {
+void EventImp<TagSizeT>::setRemainingPackets(TagSizeT eventVal, uint64_t nextPacketGpuVa, void *nextPacketAddress, uint32_t packetsAlreadySet) {
+    const uint64_t copyData = eventVal;
+
     if (getMaxPacketsCount() > packetsAlreadySet) {
         uint32_t remainingPackets = getMaxPacketsCount() - packetsAlreadySet;
         for (uint32_t i = 0; i < remainingPackets; i++) {
-            memcpy_s(nextPacketAddress, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
+            copyDataToEventAlloc(nextPacketAddress, nextPacketGpuVa, sizeof(TagSizeT), copyData);
             nextPacketAddress = ptrOffset(nextPacketAddress, this->singlePacketSize);
+            nextPacketGpuVa = ptrOffset(nextPacketGpuVa, this->singlePacketSize);
         }
     }
 }

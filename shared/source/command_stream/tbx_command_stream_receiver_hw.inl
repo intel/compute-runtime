@@ -427,11 +427,13 @@ void TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 }
 
 template <typename GfxFamily>
-bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
-    UNRECOVERABLE_IF(!isEngineInitialized);
-
+bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) {
     if (!this->isTbxWritable(gfxAllocation)) {
         return false;
+    }
+
+    if (!isEngineInitialized) {
+        initializeEngine();
     }
 
     uint64_t gpuAddress;
@@ -442,8 +444,12 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     }
 
     if (aubManager) {
-        this->writeMemoryWithAubManager(gfxAllocation);
+        this->writeMemoryWithAubManager(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
     } else {
+        if (isChunkCopy) {
+            gpuAddress += gpuVaChunkOffset;
+            size = chunkSize;
+        }
         writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation));
     }
 

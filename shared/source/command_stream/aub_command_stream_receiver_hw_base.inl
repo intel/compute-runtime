@@ -664,11 +664,13 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 }
 
 template <typename GfxFamily>
-bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
-    UNRECOVERABLE_IF(!isEngineInitialized);
-
+bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) {
     if (!this->isAubWritable(gfxAllocation)) {
         return false;
+    }
+
+    if (!isEngineInitialized) {
+        initializeEngine();
     }
 
     bool ownsLock = !gfxAllocation.isLocked();
@@ -682,8 +684,9 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     auto streamLocked = getAubStream()->lockStream();
 
     if (aubManager) {
-        this->writeMemoryWithAubManager(gfxAllocation);
+        this->writeMemoryWithAubManager(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
     } else {
+        UNRECOVERABLE_IF(isChunkCopy);
         writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation));
     }
 

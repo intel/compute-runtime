@@ -34,6 +34,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
 
   public:
     using CommandStreamReceiverHw<GfxFamily>::peekExecutionEnvironment;
+    using CommandStreamReceiverHw<GfxFamily>::writeMemory;
 
     CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment,
                                            uint32_t rootDeviceIndex,
@@ -55,9 +56,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual bool expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual bool expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length);
     virtual void pollForCompletionImpl(){};
-    virtual bool writeMemory(GraphicsAllocation &gfxAllocation) = 0;
     virtual void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) = 0;
-    virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) = 0;
+    virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) = 0;
     virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
 
     virtual void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) = 0;

@@ -313,7 +313,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSimulatedCommandStreamReceiverWhenClo
     GraphicsAllocation graphicsAllocation{0, AllocationType::UNKNOWN,
                                           &dummy, 0, 0, sizeof(dummy), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
-    csr->writeMemoryWithAubManager(graphicsAllocation);
+    csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
     EXPECT_FALSE(mockHardwareContext->writeMemory2Called);
     EXPECT_TRUE(mockManager->writeMemory2Called);
@@ -339,7 +339,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedAllocationWhenCloningPageTa
 
     graphicsAllocation.setDefaultGmm(&gmm);
 
-    csr->writeMemoryWithAubManager(graphicsAllocation);
+    csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
     EXPECT_FALSE(mockHardwareContext->writeMemory2Called);
     EXPECT_TRUE(mockManager->writeMemory2Called);
@@ -369,7 +369,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedAllocationWhenCloningPageTabl
 
     graphicsAllocation.setDefaultGmm(&gmm);
 
-    csr->writeMemoryWithAubManager(graphicsAllocation);
+    csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
     EXPECT_FALSE(mockHardwareContext->writeMemory2Called);
     EXPECT_TRUE(mockManager->writeMemory2Called);
@@ -396,7 +396,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWhenWriteMemor
     graphicsAllocation.storageInfo.cloningOfPageTables = false;
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 0b11u;
-    csr->writeMemoryWithAubManager(graphicsAllocation);
+    csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
     EXPECT_TRUE(firstMockHardwareContext->writeMemory2Called);
     EXPECT_EQ(0b01u, firstMockHardwareContext->memoryBanksPassed);
@@ -431,7 +431,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
 
     graphicsAllocation.setDefaultGmm(&gmm);
 
-    csr->writeMemoryWithAubManager(graphicsAllocation);
+    csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
     EXPECT_TRUE(firstMockHardwareContext->writeMemory2Called);
     EXPECT_EQ(1u, firstMockHardwareContext->storedAllocationParams.size());
@@ -470,7 +470,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedTileInstancedAllocationWhenWr
 
     graphicsAllocation.setDefaultGmm(&gmm);
 
-    csr->writeMemoryWithAubManager(graphicsAllocation);
+    csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
     EXPECT_TRUE(firstMockHardwareContext->writeMemory2Called);
     EXPECT_EQ(1u, firstMockHardwareContext->storedAllocationParams.size());
@@ -500,7 +500,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWithMissingMem
     graphicsAllocation.storageInfo.cloningOfPageTables = false;
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 2u;
-    EXPECT_THROW(csr->writeMemoryWithAubManager(graphicsAllocation), std::exception);
+    EXPECT_THROW(csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0), std::exception);
     EXPECT_FALSE(firstMockHardwareContext->writeMemory2Called);
     EXPECT_FALSE(secondMockHardwareContext->writeMemory2Called);
 }
@@ -514,7 +514,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCommandBufferAllocationWhenWriteMemor
     GraphicsAllocation graphicsAllocation{0, AllocationType::COMMAND_BUFFER,
                                           &dummy, 0, 0, sizeof(dummy), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
-    csr->writeMemoryWithAubManager(graphicsAllocation);
+    csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceBatchBuffer, mockManager->hintToWriteMemory);
     EXPECT_TRUE(mockManager->writeMemory2Called);
@@ -548,13 +548,13 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
         GraphicsAllocation graphicsAllocation{0, AllocationType::COMMAND_BUFFER,
                                               &dummy, 0, 0, sizeof(dummy), poolsWith4kPages[i], MemoryManager::maxOsContextCount};
         graphicsAllocation.storageInfo.cloningOfPageTables = true;
-        csr->writeMemoryWithAubManager(graphicsAllocation);
+        csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
         EXPECT_TRUE(mockManager->writeMemory2Called);
         EXPECT_EQ(MemoryConstants::pageSize, mockManager->writeMemoryPageSizePassed);
 
         graphicsAllocation.storageInfo.cloningOfPageTables = false;
-        csr->writeMemoryWithAubManager(graphicsAllocation);
+        csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
         if (graphicsAllocation.isAllocatedInLocalMemoryPool()) {
             EXPECT_TRUE(mockHardwareContext->writeMemory2Called);
@@ -581,13 +581,13 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
         GraphicsAllocation graphicsAllocation{0, AllocationType::COMMAND_BUFFER,
                                               &dummy, 0, 0, sizeof(dummy), poolsWith64kPages[i], MemoryManager::maxOsContextCount};
         graphicsAllocation.storageInfo.cloningOfPageTables = true;
-        csr->writeMemoryWithAubManager(graphicsAllocation);
+        csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
         EXPECT_TRUE(mockManager->writeMemory2Called);
         EXPECT_EQ(MemoryConstants::pageSize64k, mockManager->writeMemoryPageSizePassed);
 
         graphicsAllocation.storageInfo.cloningOfPageTables = false;
-        csr->writeMemoryWithAubManager(graphicsAllocation);
+        csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
         if (graphicsAllocation.isAllocatedInLocalMemoryPool()) {
             EXPECT_TRUE(mockHardwareContext->writeMemory2Called);

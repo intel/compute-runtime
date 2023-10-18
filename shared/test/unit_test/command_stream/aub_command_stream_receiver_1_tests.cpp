@@ -35,7 +35,7 @@ struct MockAubCsrToTestDumpAubNonWritable : public AUBCommandStreamReceiverHw<Gf
     using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
     using AUBCommandStreamReceiverHw<GfxFamily>::dumpAubNonWritable;
 
-    bool writeMemory(GraphicsAllocation &gfxAllocation) override {
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
         return true;
     }
 };

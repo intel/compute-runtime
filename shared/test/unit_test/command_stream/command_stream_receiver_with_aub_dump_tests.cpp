@@ -305,6 +305,43 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
 }
 
+HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenWriteMemoryIsCalledThenBothCommandStreamReceiversAreCalled) {
+    MockGraphicsAllocation mockAllocation;
+
+    EXPECT_EQ(0u, csrWithAubDump->writeMemoryParams.callCount);
+    if (createAubCSR) {
+        EXPECT_EQ(0u, csrWithAubDump->getAubMockCsr().writeMemoryParams.callCount);
+    }
+
+    csrWithAubDump->writeMemory(mockAllocation, false, 0, 0);
+
+    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.callCount);
+    EXPECT_EQ(&mockAllocation, csrWithAubDump->writeMemoryParams.latestGfxAllocation);
+    EXPECT_FALSE(csrWithAubDump->writeMemoryParams.latestChunkedMode);
+
+    if (createAubCSR) {
+        EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().writeMemoryParams.callCount);
+        EXPECT_EQ(&mockAllocation, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGfxAllocation);
+        EXPECT_FALSE(csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkedMode);
+    }
+
+    csrWithAubDump->writeMemory(mockAllocation, true, 1, 2);
+
+    EXPECT_EQ(2u, csrWithAubDump->writeMemoryParams.callCount);
+    EXPECT_TRUE(csrWithAubDump->writeMemoryParams.latestChunkedMode);
+    EXPECT_EQ(&mockAllocation, csrWithAubDump->writeMemoryParams.latestGfxAllocation);
+    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.latestGpuVaChunkOffset);
+    EXPECT_EQ(2u, csrWithAubDump->writeMemoryParams.latestChunkSize);
+
+    if (createAubCSR) {
+        EXPECT_EQ(2u, csrWithAubDump->getAubMockCsr().writeMemoryParams.callCount);
+        EXPECT_TRUE(csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkedMode);
+        EXPECT_EQ(&mockAllocation, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGfxAllocation);
+        EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGpuVaChunkOffset);
+        EXPECT_EQ(2u, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkSize);
+    }
+}
+
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenCreatingAubCsrThenInitializeTagAllocation) {
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();

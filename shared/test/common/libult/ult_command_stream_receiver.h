@@ -33,6 +33,14 @@ struct WaitUserFenceParams {
     bool forceRetStatusValue = true;
 };
 
+struct WriteMemoryParams {
+    GraphicsAllocation *latestGfxAllocation = nullptr;
+    uint64_t latestGpuVaChunkOffset = 0;
+    size_t latestChunkSize = 0;
+    uint32_t callCount = 0;
+    bool latestChunkedMode = false;
+};
+
 template <typename GfxFamily>
 class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, public NonCopyableOrMovableClass {
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
@@ -205,6 +213,17 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         recordedImmediateDispatchFlags = dispatchFlags;
         this->lastFlushedCommandStream = &commandStream;
         return BaseClass::flushImmediateTask(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+    }
+
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+        writeMemoryParams.callCount++;
+
+        writeMemoryParams.latestGfxAllocation = &gfxAllocation;
+        writeMemoryParams.latestChunkedMode = isChunkCopy;
+        writeMemoryParams.latestGpuVaChunkOffset = gpuVaChunkOffset;
+        writeMemoryParams.latestChunkSize = chunkSize;
+
+        return BaseClass::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
     }
 
     size_t getPreferredTagPoolSize() const override {
@@ -447,6 +466,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     TaskCountType latestSentTaskCountValueDuringFlush = 0;
     WaitParams latestWaitForCompletionWithTimeoutWaitParams{0};
     WaitUserFenceParams waitUserFenecParams;
+    WriteMemoryParams writeMemoryParams;
     TaskCountType flushBcsTaskReturnValue{};
 
     LinearStream *lastFlushedCommandStream = nullptr;

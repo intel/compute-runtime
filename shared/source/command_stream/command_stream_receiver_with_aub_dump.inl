@@ -115,4 +115,13 @@ bool CommandStreamReceiverWithAUBDump<BaseCSR>::expectMemory(const void *gfxAddr
     }
     return BaseCSR::expectMemory(gfxAddress, srcAddress, length, compareOperation);
 }
+
+template <typename BaseCSR>
+bool CommandStreamReceiverWithAUBDump<BaseCSR>::writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) {
+    if (aubCSR) {
+        [[maybe_unused]] auto result = aubCSR->writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+        DEBUG_BREAK_IF(!result);
+    }
+    return BaseCSR::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+}
 } // namespace NEO

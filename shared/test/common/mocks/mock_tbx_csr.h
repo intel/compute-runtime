@@ -33,8 +33,8 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         initializeEngineCalled = true;
     }
 
-    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override {
-        CommandStreamReceiverSimulatedHw<GfxFamily>::writeMemoryWithAubManager(graphicsAllocation);
+    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+        CommandStreamReceiverSimulatedHw<GfxFamily>::writeMemoryWithAubManager(graphicsAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
         writeMemoryWithAubManagerCalled = true;
     }
 
