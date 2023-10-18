@@ -146,6 +146,13 @@ enum Activity {
     // current runtime values
     CurrentActivityCounter,
 
+    NumberOfVfsEnabled,
+    EngineInstancesPerGroup,
+    // activity per engine
+    CurrentCounterV2,
+    // array of per-engine activities for all pf and vf
+    CurrentCounterV2Ext,
+
     MaxActivityRequests,
 };
 
@@ -358,6 +365,13 @@ enum ActivityDomainsType {
     ActitvityDomainGT = 0,
     ActivityDomainRenderCompute,
     ActivityDomainMedia,
+
+    ActivityDomainCopy,
+    ActivityDomainComputeSingle,
+    ActivityDomainRenderSingle,
+    ActivityDomainMediaCodecSingle,
+    ActivityDomainMediaEnhancementSingle,
+    ActivityDomainCopySingle,
 
     ActivityDomainMaxTypes,
 };

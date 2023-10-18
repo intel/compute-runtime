@@ -7,10 +7,28 @@
 
 #include "level_zero/tools/source/sysman/engine/windows/os_engine_imp.h"
 
+#include "shared/source/helpers/debug_helpers.h"
+
 #include "level_zero/tools/source/sysman/windows/kmd_sys.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
+#include <algorithm>
+#include <map>
+
 namespace L0 {
+
+static const std::map<zes_engine_group_t, KmdSysman::ActivityDomainsType> engineGroupToDomainTypeMap = {
+    {ZES_ENGINE_GROUP_ALL, KmdSysman::ActivityDomainsType::ActitvityDomainGT},
+    {ZES_ENGINE_GROUP_COMPUTE_ALL, KmdSysman::ActivityDomainsType::ActivityDomainRenderCompute},
+    {ZES_ENGINE_GROUP_MEDIA_ALL, KmdSysman::ActivityDomainsType::ActivityDomainMedia},
+    {ZES_ENGINE_GROUP_COPY_ALL, KmdSysman::ActivityDomainsType::ActivityDomainCopy},
+    {ZES_ENGINE_GROUP_COMPUTE_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainComputeSingle},
+    {ZES_ENGINE_GROUP_RENDER_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainRenderSingle},
+    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaCodecSingle},
+    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaCodecSingle},
+    {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaEnhancementSingle},
+    {ZES_ENGINE_GROUP_COPY_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainCopySingle},
+};
 
 ze_result_t WddmEngineImp::getActivity(zes_engine_stats_t *pStats) {
     uint64_t activeTime = 0;
@@ -21,25 +39,19 @@ ze_result_t WddmEngineImp::getActivity(zes_engine_stats_t *pStats) {
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::ActivityComponent;
 
-    switch (this->engineGroup) {
-    case ZES_ENGINE_GROUP_ALL:
-        request.paramInfo = KmdSysman::ActivityDomainsType::ActitvityDomainGT;
-        break;
-    case ZES_ENGINE_GROUP_COMPUTE_ALL:
-        request.paramInfo = KmdSysman::ActivityDomainsType::ActivityDomainRenderCompute;
-        break;
-    case ZES_ENGINE_GROUP_MEDIA_ALL:
-        request.paramInfo = KmdSysman::ActivityDomainsType::ActivityDomainMedia;
-        break;
-    default:
+    const auto &iterator = engineGroupToDomainTypeMap.find(this->engineGroup);
+    if (iterator == engineGroupToDomainTypeMap.end()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        break;
     }
 
-    request.requestId = KmdSysman::Requests::Activity::CurrentActivityCounter;
+    request.paramInfo = engineGroupToDomainTypeMap.at(this->engineGroup);
+    request.requestId = KmdSysman::Requests::Activity::CurrentCounterV2;
+    if (isSingle) {
+        request.dataSize = sizeof(engineInstance);
+        memcpy_s(request.dataBuffer, KmdSysman::MaxPropertyBufferSize, &engineInstance, sizeof(engineInstance));
+    }
 
     ze_result_t status = pKmdSysManager->requestSingle(request, response);
-
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
@@ -51,6 +63,10 @@ ze_result_t WddmEngineImp::getActivity(zes_engine_stats_t *pStats) {
     pStats->timestamp = timeStamp;
 
     return status;
+}
+
+ze_result_t WddmEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t WddmEngineImp::getProperties(zes_engine_properties_t &properties) {
@@ -67,6 +83,19 @@ bool WddmEngineImp::isEngineModuleSupported() {
 WddmEngineImp::WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     this->engineGroup = engineType;
+
+    const std::vector singleEngineGroups = {
+        ZES_ENGINE_GROUP_COMPUTE_SINGLE,
+        ZES_ENGINE_GROUP_RENDER_SINGLE,
+        ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE,
+        ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE,
+        ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE,
+        ZES_ENGINE_GROUP_COPY_SINGLE};
+
+    if (std::find(singleEngineGroups.begin(), singleEngineGroups.end(), engineType) != singleEngineGroups.end()) {
+        isSingle = true;
+    }
+
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
@@ -79,28 +108,42 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    engineGroupInstance.clear();
 
+    // create multiple requests for all the possible engine groups
+    std::vector<KmdSysman::RequestProperty> vRequests{};
+    std::vector<KmdSysman::ResponseProperty> vResponses{};
+
+    KmdSysman::RequestProperty request = {};
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::ActivityComponent;
-    request.requestId = KmdSysman::Requests::Activity::NumActivityDomains;
+    request.requestId = KmdSysman::Requests::Activity::EngineInstancesPerGroup;
 
-    ze_result_t status = pKmdSysManager->requestSingle(request, response);
+    for (auto &engineGroup : engineGroupToDomainTypeMap) {
+        request.paramInfo = static_cast<uint32_t>(engineGroup.second);
+        vRequests.push_back(request);
+    }
 
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
 
-    uint32_t maxNumEnginesSupported = 0;
-    memcpy_s(&maxNumEnginesSupported, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-
-    if (maxNumEnginesSupported == 0) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (vResponses.size() != vRequests.size()) {
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    for (uint32_t i = 0; i < maxNumEnginesSupported; i++) {
-        engineGroupInstance.insert({static_cast<zes_engine_group_t>(i), {0, 0}});
+    uint32_t index = 0;
+    for (auto &engineGroup : engineGroupToDomainTypeMap) {
+        if (vResponses[index].dataSize > 0) {
+            uint32_t instanceCount = 0;
+            memcpy_s(&instanceCount, sizeof(uint32_t), vResponses[index].dataBuffer, sizeof(uint32_t));
+            for (uint32_t instance = 0; instance < instanceCount; instance++) {
+                engineGroupInstance.insert({engineGroup.first, {instance, 0}});
+            }
+        }
+        index++;
     }
 
     return status;

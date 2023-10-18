@@ -11,7 +11,7 @@ namespace L0 {
 namespace Sysman {
 
 ze_result_t EngineImp::engineGetActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pOsEngine->getActivityExt(pCount, pStats);
 }
 
 ze_result_t EngineImp::engineGetActivity(zes_engine_stats_t *pStats) {

@@ -17,6 +17,7 @@ class KmdSysManager;
 class WddmEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
+    ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;
     ze_result_t getProperties(zes_engine_properties_t &properties) override;
     bool isEngineModuleSupported() override;
 
@@ -27,6 +28,8 @@ class WddmEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
     zes_engine_group_t engineGroup = ZES_ENGINE_GROUP_ALL;
+    ze_bool_t isSingle = false;
+    uint32_t engineInstance = 0u;
 };
 } // namespace Sysman
 } // namespace L0

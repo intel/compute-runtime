@@ -56,6 +56,11 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderOut);
 
         if (pRequest->inRequestId == KmdSysman::Requests::Power::CurrentPowerLimit1) {
+            if (pRequest->inDataSize != 0) {
+                pResponse->outDataSize = 0;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+                return;
+            }
             uint32_t *pPl1 = reinterpret_cast<uint32_t *>(pBuffer);
             *pPl1 = mockPowerLimit1;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
@@ -228,10 +233,6 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
             } else {
                 return false;
             }
-        }
-
-        if (sizeCheck != 0) {
-            return false;
         }
 
         return true;

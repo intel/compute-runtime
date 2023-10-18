@@ -20,6 +20,9 @@ struct Device;
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
+    ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ze_result_t getProperties(zes_engine_properties_t &properties) override;
     bool isEngineModuleSupported() override;
     static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
