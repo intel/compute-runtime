@@ -28,4 +28,17 @@ HWTEST2_F(AILTestsMTL, givenMtlWhenSvchostAppIsDetectedThenDisableDirectSubmissi
     EXPECT_FALSE(capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
 }
 
+HWTEST2_F(AILTestsMTL, givenApplicationNameRequiringCrossTargetCompabilityWhenCallingUseValidationLogicThenReturnProperValue, IsMTL) {
+    AILWhitebox<productFamily> ail;
+    ail.processName = "unknown";
+    EXPECT_FALSE(ail.useLegacyValidationLogic());
+
+    std::array<std::string_view, 3> applicationNamesRequiringLegacyValidation = {
+        "blender", "bforartists", "cycles"};
+    for (auto appName : applicationNamesRequiringLegacyValidation) {
+        ail.processName = appName;
+        EXPECT_TRUE(ail.useLegacyValidationLogic());
+    }
+}
+
 } // namespace NEO

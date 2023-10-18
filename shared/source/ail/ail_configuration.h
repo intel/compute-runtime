@@ -72,6 +72,8 @@ class AILConfiguration {
 
     virtual ~AILConfiguration() = default;
 
+    virtual bool useLegacyValidationLogic() = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
@@ -95,6 +97,7 @@ class AILConfigurationHw : public AILConfiguration {
     void modifyKernelIfRequired(std::string &kernel) override;
     bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override;
     bool isContextSyncFlagRequired() override;
+    bool useLegacyValidationLogic() override;
 };
 
 template <PRODUCT_FAMILY product>

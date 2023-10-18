@@ -5696,6 +5696,54 @@ TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTar
     EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, generator));
 }
 
+TEST_F(IntelGTNotesFixture, givenRequestedTargetDeviceWithApplyValidationWorkaroundFlagSetToTrueWhenValidatingDeviceBinaryThenDoNotUseProductConfigForValidation) {
+    NEO::HardwareIpVersion aotConfig = {0};
+    aotConfig.value = 0x00001234;
+
+    TargetDevice targetDevice;
+    targetDevice.productFamily = productFamily;
+    targetDevice.maxPointerSizeInBytes = 8;
+    targetDevice.aotConfig.value = aotConfig.value + 0x10; // ensure mismatch and valiation error if AOT config is used
+    targetDevice.applyValidationWorkaround = true;
+
+    std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
+    for (int i = 0; i < 2; i++) {
+        auto &inserted = elfNoteSections.emplace_back();
+        inserted.descSize = 4u;
+        inserted.nameSize = 8u;
+    }
+
+    // Minimum passing configuration - required i.e. proper product family passed
+    // Product config data should get ignored and not be used at all
+    elfNoteSections.at(0).type = Zebin::Elf::IntelGTSectionType::ProductFamily;
+    elfNoteSections.at(1).type = Zebin::Elf::IntelGTSectionType::ProductConfig;
+    std::vector<uint8_t *> descData;
+
+    uint8_t productFamilyData[4];
+    memcpy_s(productFamilyData, 4, &targetDevice.productFamily, 4);
+    descData.push_back(productFamilyData);
+
+    uint8_t productConfigData[4];
+    memcpy_s(productConfigData, 4, &targetDevice.aotConfig.value, 4);
+    descData.push_back(productConfigData);
+
+    const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
+                                                 [](auto totalSize, const auto &elfNoteSection) {
+                                                     return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+                                                 });
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendIntelGTSectionData(elfNoteSections, noteIntelGTSectionData.get(), descData, sectionDataSize);
+    zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    GeneratorType generator{};
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, generator));
+}
+
 TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenValidatingTargetDeviceThenReturnTrue) {
     TargetDevice targetDevice;
     targetDevice.productFamily = productFamily;

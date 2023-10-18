@@ -14,6 +14,8 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
@@ -48,6 +50,34 @@ TEST(IsAnyDeviceBinaryFormat, GivenArFormatThenReturnsTrue) {
 TEST(IsAnyDeviceBinaryFormat, GivenZebinFormatThenReturnsTrue) {
     ZebinTestData::ValidEmptyProgram zebinProgram;
     EXPECT_TRUE(NEO::isAnyDeviceBinaryFormat(zebinProgram.storage));
+}
+
+TEST(GetTargetDeviceTests, givenAILAvailableAndUseLegacyValidationLogicReturningTrueWhenGettingTargetDeviceThenSetApplyValidationWaFlagToTrue) {
+    NEO::MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.ailConfiguration.reset(new MockAILConfiguration());
+    auto mockAIL = static_cast<MockAILConfiguration *>(rootDeviceEnvironment.ailConfiguration.get());
+
+    auto targetDevice = getTargetDevice(rootDeviceEnvironment);
+    EXPECT_FALSE(targetDevice.applyValidationWorkaround);
+
+    mockAIL->fallbackToLegacyValidationLogic = true;
+    targetDevice = getTargetDevice(rootDeviceEnvironment);
+    EXPECT_TRUE(targetDevice.applyValidationWorkaround);
+}
+
+TEST(GetTargetDeviceTests, givenDoNotUseProductConfigForValidationWaFlagSetToTrueWhenGettingTargetDeviceThenSetApplyValidationWaFlagToTrue) {
+    DebugManagerStateRestore restore;
+    NEO::MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.ailConfiguration.reset(nullptr);
+
+    auto targetDevice = getTargetDevice(rootDeviceEnvironment);
+    EXPECT_FALSE(targetDevice.applyValidationWorkaround);
+
+    NEO::DebugManager.flags.DoNotUseProductConfigForValidationWa.set(true);
+    targetDevice = getTargetDevice(rootDeviceEnvironment);
+    EXPECT_TRUE(targetDevice.applyValidationWorkaround);
 }
 
 TEST(UnpackSingleDeviceBinary, GivenUnknownBinaryThenReturnError) {

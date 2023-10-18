@@ -7,6 +7,8 @@
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
 
+#include "shared/source/ail/ail_configuration.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -36,6 +38,12 @@ TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment)
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;
     targetDevice.minScratchSpaceSize = gfxCoreHelper.getMinimalScratchSpaceSize();
+
+    if (auto ail = rootDeviceEnvironment.getAILConfigurationHelper(); nullptr != ail) {
+        targetDevice.applyValidationWorkaround = ail->useLegacyValidationLogic();
+    } else if (DebugManager.flags.DoNotUseProductConfigForValidationWa.get()) {
+        targetDevice.applyValidationWorkaround = true;
+    }
     return targetDevice;
 }
 } // namespace NEO

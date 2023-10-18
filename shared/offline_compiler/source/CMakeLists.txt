@@ -10,6 +10,10 @@ set(OCLOC_NAME "ocloc")
 set(OCLOC_FOLDER_NAME "offline_compiler")
 
 set(CLOC_LIB_SRCS_LIB
+    ${NEO_SHARED_DIRECTORY}/ail/ail_configuration.h
+    ${NEO_SHARED_DIRECTORY}/ail/ail_configuration.cpp
+    ${NEO_SHARED_DIRECTORY}/ail${BRANCH_DIR_SUFFIX}ail_configuration_extra.cpp
+    ${NEO_SHARED_DIRECTORY}/ail//ail_configuration_base.inl
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options_extra.h
@@ -136,6 +140,7 @@ endif()
 
 if(WIN32)
   list(APPEND CLOC_LIB_SRCS_LIB
+       ${NEO_SHARED_DIRECTORY}/ail/windows/ail_configuration_windows.cpp
        ${NEO_SHARED_DIRECTORY}/compiler_interface/windows/compiler_cache_windows.cpp
        ${NEO_SHARED_DIRECTORY}/compiler_interface/windows/os_compiler_cache_helper.cpp
        ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
@@ -147,6 +152,7 @@ if(WIN32)
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
+       ${NEO_SHARED_DIRECTORY}/ail/linux/ail_configuration_linux.cpp
        ${NEO_SHARED_DIRECTORY}/compiler_interface/linux/compiler_cache_linux.cpp
        ${NEO_SHARED_DIRECTORY}/compiler_interface/linux/os_compiler_cache_helper.cpp
        ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
@@ -179,6 +185,7 @@ macro(macro_for_each_platform)
                 ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
                 ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}compiler_product_helper_${PLATFORM_IT_LOWER}.inl
                 ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}enable_compiler_product_helper_${PLATFORM_IT_LOWER}.cpp
+                ${NEO_SOURCE_DIR}/shared/source/ail${BRANCH_DIR}${CORE_TYPE_LOWER}${BRANCH}${PLATFORM_IT_LOWER}/ail_configuration_${PLATFORM_IT_LOWER}.cpp
         )
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})

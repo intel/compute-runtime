@@ -67,6 +67,7 @@ struct TargetDevice {
     uint32_t maxPointerSizeInBytes = 4U;
     uint32_t grfSize = 32U;
     uint32_t minScratchSpaceSize = 0U;
+    bool applyValidationWorkaround = false;
 };
 TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment);
 

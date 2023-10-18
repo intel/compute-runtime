@@ -124,9 +124,12 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             break;
         }
         case Elf::IntelGTSectionType::ProductConfig: {
-            DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
-            auto productConfigData = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
-            productConfig = static_cast<AOT::PRODUCT_CONFIG>(*productConfigData);
+            if (false == targetDevice.applyValidationWorkaround) {
+                DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
+                auto productConfigData = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
+                productConfig = static_cast<AOT::PRODUCT_CONFIG>(*productConfigData);
+                break;
+            }
             break;
         }
         case Elf::IntelGTSectionType::vISAAbiVersion: {

@@ -10,6 +10,7 @@
 
 #include "aubstream/engine_node.h"
 
+#include <algorithm>
 #include <map>
 #include <vector>
 
@@ -18,6 +19,9 @@ namespace NEO {
 extern std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL;
 
 static EnableAIL<IGFX_METEORLAKE> enableAILMTL;
+
+constexpr std::array<std::string_view, 3> applicationsLegacyValidationPathMtl = {
+    "blender", "bforartists", "cycles"};
 
 template <>
 void AILConfigurationHw<IGFX_METEORLAKE>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {
@@ -38,6 +42,14 @@ template <>
 bool AILConfigurationHw<IGFX_METEORLAKE>::isContextSyncFlagRequired() {
     auto iterator = applicationsContextSyncFlag.find(processName);
     return iterator != applicationsContextSyncFlag.end();
+}
+
+template <>
+bool AILConfigurationHw<IGFX_METEORLAKE>::useLegacyValidationLogic() {
+    auto it = std::find_if(applicationsLegacyValidationPathMtl.begin(), applicationsLegacyValidationPathMtl.end(), [this](const auto &appName) {
+        return this->processName == appName;
+    });
+    return it != applicationsLegacyValidationPathMtl.end() ? true : false;
 }
 
 template class AILConfigurationHw<IGFX_METEORLAKE>;
