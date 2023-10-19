@@ -105,8 +105,8 @@ class IoctlHelperXe : public IoctlHelper {
     bool isWaitBeforeBindRequired(bool bind) const override;
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
-    void getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss, std::vector<std::bitset<8>> *euDss, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
-    void getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap);
+    void getTopologyData(uint32_t nTiles, std::vector<std::bitset<8>> geomDss[2], std::vector<std::bitset<8>> computeDss[2], std::vector<std::bitset<8>> euDss[2], DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
+    void getTopologyMap(uint32_t nTiles, std::vector<std::bitset<8>> dssInfo[2], TopologyMap &topologyMap);
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
     bool isImmediateVmBindRequired() const override;
 
@@ -146,7 +146,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::vector<BindInfo> bindInfo;
     int instance = 0;
     uint32_t xeTimestampFrequency = 0;
-    std::vector<uint32_t> hwconfigFakei915;
+    std::vector<uint64_t> hwconfigFakei915;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
     std::vector<drm_xe_engine_class_instance> allEngines;
 };

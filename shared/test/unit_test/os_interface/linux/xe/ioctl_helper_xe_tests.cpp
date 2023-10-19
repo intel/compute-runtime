@@ -145,8 +145,8 @@ class DrmMockXe : public DrmMockCustom {
             MemoryConstants::gigaByte      // used size
         };
 
-        auto xeQueryGts = reinterpret_cast<drm_xe_query_gts *>(queryGts.begin());
-        xeQueryGts->num_gt = 3;
+        auto xeQueryGts = reinterpret_cast<drm_xe_query_gts *>(queryGts);
+        xeQueryGts->num_gt = 2;
         xeQueryGts->gts[0] = {
             XE_QUERY_GT_TYPE_MAIN, // type
             0,                     // instance
@@ -157,22 +157,13 @@ class DrmMockXe : public DrmMockCustom {
             0                      // inaccessible mem regions
         };
         xeQueryGts->gts[1] = {
-            XE_QUERY_GT_TYPE_MEDIA, // type
-            1,                      // instance
-            12500000,               // clock freq
-            0,                      // features
-            0b001,                  // native mem regions
-            0x110,                  // slow mem regions
-            0                       // inaccessible mem regions
-        };
-        xeQueryGts->gts[2] = {
-            XE_QUERY_GT_TYPE_MAIN, // type
-            0,                     // instance
-            12500000,              // clock freq
-            0,                     // features
-            0b010,                 // native mem regions
-            0x101,                 // slow mem regions
-            0                      // inaccessible mem regions
+            XE_QUERY_GT_TYPE_REMOTE, // type
+            1,                       // instance
+            12500000,                // clock freq
+            0,                       // features
+            0b010,                   // native mem regions
+            0x101,                   // slow mem regions
+            0                        // inaccessible mem regions
         };
     }
 
@@ -259,7 +250,7 @@ class DrmMockXe : public DrmMockCustom {
                 break;
             case DRM_XE_DEVICE_QUERY_GTS:
                 if (deviceQuery->data) {
-                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryGts.begin(), sizeof(queryGts));
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryGts, sizeof(queryGts));
                 }
                 deviceQuery->size = sizeof(queryGts);
                 break;
@@ -336,7 +327,7 @@ class DrmMockXe : public DrmMockCustom {
     static_assert(sizeof(drm_xe_query_mem_region) == 12 * sizeof(uint64_t), "");
     uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
     static_assert(sizeof(drm_xe_query_gts::drm_xe_query_gt) == 13 * sizeof(uint64_t), "");
-    StackVec<uint64_t, 40> queryGts{}; // 1 qword for num gts and 13 qwords per gt
+    uint64_t queryGts[27]{}; // 1 qword for num gts and 13 qwords per gt
     std::vector<uint8_t> queryTopology;
     StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
     StackVec<drm_xe_vm_bind, 1> vmBindInputs;
@@ -941,11 +932,11 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
     uint16_t tileId = 0;
-    for (auto gtId = 0u; gtId < 3u; gtId++) {
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
-    }
+
+    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
+
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
 
@@ -988,11 +979,9 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
     uint16_t tileId = 0;
-    for (auto gtId = 0u; gtId < 3u; gtId++) {
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
-    }
+    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
+    drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
 
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
@@ -1033,183 +1022,10 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     }
 }
 
-TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceIndicesNotSet) {
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeQueryGts = reinterpret_cast<drm_xe_query_gts *>(drm.queryGts.begin());
-    xeQueryGts->num_gt = 1;
-    xeQueryGts->gts[0] = {
-        XE_QUERY_GT_TYPE_MEDIA, // type
-        0,                      // instance
-        12500000,               // clock freq
-        0,                      // features
-        0b100,                  // native mem regions
-        0x011,                  // slow mem regions
-        0                       // inaccessible mem regions
-    };
-
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
-
-    uint16_t tileId = 0;
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
-
-    DrmQueryTopologyData topologyData{};
-    TopologyMap topologyMap{};
-
-    auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
-    ASSERT_TRUE(result);
-
-    // verify topology data
-    EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
-
-    EXPECT_EQ(0, topologyData.subSliceCount);
-    EXPECT_EQ(0, topologyData.maxSubSliceCount);
-
-    EXPECT_EQ(0, topologyData.euCount);
-    EXPECT_EQ(0, topologyData.maxEuPerSubSlice);
-
-    // verify topology map
-    ASSERT_EQ(0u, topologyMap[tileId].sliceIndices.size());
-
-    ASSERT_EQ(0u, topologyMap[tileId].subsliceIndices.size());
-}
-
-TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResultsAreCorrect) {
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.queryGts.resize(53);
-    auto xeQueryGts = reinterpret_cast<drm_xe_query_gts *>(drm.queryGts.begin());
-    xeQueryGts->num_gt = 4;
-    xeQueryGts->gts[0] = {
-        XE_QUERY_GT_TYPE_MAIN, // type
-        0,                     // instance
-        12500000,              // clock freq
-        0,                     // features
-        0b100,                 // native mem regions
-        0x011,                 // slow mem regions
-        0                      // inaccessible mem regions
-    };
-    xeQueryGts->gts[1] = {
-        XE_QUERY_GT_TYPE_MEDIA, // type
-        0,                      // instance
-        12500000,               // clock freq
-        0,                      // features
-        0b100,                  // native mem regions
-        0x011,                  // slow mem regions
-        0                       // inaccessible mem regions
-    };
-    xeQueryGts->gts[2] = {
-        XE_QUERY_GT_TYPE_MAIN, // type
-        0,                     // instance
-        12500000,              // clock freq
-        0,                     // features
-        0b010,                 // native mem regions
-        0x101,                 // slow mem regions
-        0                      // inaccessible mem regions
-    };
-    xeQueryGts->gts[3] = {
-        XE_QUERY_GT_TYPE_MEDIA, // type
-        0,                      // instance
-        12500000,               // clock freq
-        0,                      // features
-        0b001,                  // native mem regions
-        0x100,                  // slow mem regions
-        0                       // inaccessible mem regions
-    };
-
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
-    for (auto tileId = 0; tileId < 4; tileId++) {
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-    }
-
-    DrmQueryTopologyData topologyData{};
-    TopologyMap topologyMap{};
-
-    auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
-    ASSERT_TRUE(result);
-
-    // verify topology data
-    EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
-
-    EXPECT_EQ(64, topologyData.subSliceCount);
-    EXPECT_EQ(64, topologyData.maxSubSliceCount);
-
-    EXPECT_EQ(4096, topologyData.euCount);
-    EXPECT_EQ(64, topologyData.maxEuPerSubSlice);
-    EXPECT_EQ(2u, topologyMap.size());
-    // verify topology map
-    for (auto tileId : {0u, 1u}) {
-        ASSERT_EQ(1u, topologyMap[tileId].sliceIndices.size());
-        ASSERT_EQ(64u, topologyMap[tileId].subsliceIndices.size());
-    }
-}
-
-struct DrmMockXe2T : public DrmMockXe {
-    DrmMockXe2T(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {
-        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_usage *>(queryMemUsage);
-        xeQueryMemUsage->num_regions = 3;
-        xeQueryMemUsage->regions[0] = {
-            XE_MEM_REGION_CLASS_VRAM,      // class
-            1,                             // instance
-            0,                             // padding
-            MemoryConstants::pageSize,     // min page size
-            2 * MemoryConstants::gigaByte, // total size
-            MemoryConstants::megaByte      // used size
-        };
-        xeQueryMemUsage->regions[1] = {
-            XE_MEM_REGION_CLASS_SYSMEM, // class
-            0,                          // instance
-            0,                          // padding
-            MemoryConstants::pageSize,  // min page size
-            MemoryConstants::gigaByte,  // total size
-            MemoryConstants::kiloByte   // used size
-        };
-        xeQueryMemUsage->regions[2] = {
-            XE_MEM_REGION_CLASS_VRAM,      // class
-            2,                             // instance
-            0,                             // padding
-            MemoryConstants::pageSize,     // min page size
-            4 * MemoryConstants::gigaByte, // total size
-            MemoryConstants::gigaByte      // used size
-        };
-        queryGts.resize(27);
-        auto xeQueryGts = reinterpret_cast<drm_xe_query_gts *>(queryGts.begin());
-        xeQueryGts->num_gt = 2;
-        xeQueryGts->gts[0] = {
-            XE_QUERY_GT_TYPE_MAIN, // type
-            0,                     // instance
-            12500000,              // clock freq
-            0,                     // features
-            0b100,                 // native mem regions
-            0x011,                 // slow mem regions
-            0                      // inaccessible mem regions
-        };
-        xeQueryGts->gts[1] = {
-            XE_QUERY_GT_TYPE_MAIN, // type
-            0,                     // instance
-            12500000,              // clock freq
-            0,                     // features
-            0b010,                 // native mem regions
-            0x101,                 // slow mem regions
-            0                      // inaccessible mem regions
-        };
-    }
-};
-
 TEST(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResultsAreCorrect) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe2T drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
@@ -1264,7 +1080,7 @@ TEST(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResu
 
 TEST(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTopologyDataAndMapThenResultsAreCorrect) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe2T drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
@@ -1330,7 +1146,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTopo
 TEST(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopologyDataAndMapThenResultsAreCorrect) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe2T drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
