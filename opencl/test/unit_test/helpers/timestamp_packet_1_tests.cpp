@@ -1615,6 +1615,70 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
     EXPECT_EQ(pipeControlCountSecondEnqueue, pipeControlCountFirstEnqueue + 1);
 }
 
+HWTEST2_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsAndSingleIOQWhenEnqueueKernelThenDoNotProgramSemaphoresButProgramPipeControlWithProperFlagsBeforeGpgpuWalker, IsXeHpgCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    const cl_uint eventsOnWaitlist = 4;
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    UserEvent event1;
+    event1.setStatus(CL_COMPLETE);
+    UserEvent event2;
+    event2.setStatus(CL_COMPLETE);
+    Event event3(cmdQ1.get(), 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+    Event event4(cmdQ1.get(), 0, 0, 0);
+    event4.addTimestampPacketNodes(timestamp4);
+
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4};
+    ASSERT_EQ(cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0u, nullptr, nullptr), CL_SUCCESS);
+    ASSERT_EQ(cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr), CL_SUCCESS);
+    ASSERT_NE(cmdQ1->commandStream, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ1->commandStream, 0u);
+
+    auto it = hwParser.cmdList.begin();
+    size_t pipeControlCountFirstEnqueue = 0u;
+    size_t pipeControlCountSecondEnqueue = 0u;
+    size_t semaphoreWaitCount = 0u;
+    size_t currentEnqueue = 1u;
+    while (it != hwParser.cmdList.end()) {
+        MI_SEMAPHORE_WAIT *semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
+        PIPE_CONTROL *pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        MI_BATCH_BUFFER_END *miBatchBufferEnd = genCmdCast<MI_BATCH_BUFFER_END *>(*it);
+        if (pipeControlCmd != nullptr) {
+            EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+            EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+            EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+            if (currentEnqueue == 1) {
+                ++pipeControlCountFirstEnqueue;
+            } else if (currentEnqueue == 2) {
+                ++pipeControlCountSecondEnqueue;
+            }
+        } else if (semaphoreWaitCmd != nullptr) {
+            ++semaphoreWaitCount;
+        } else if (miBatchBufferEnd != nullptr) {
+            if (++currentEnqueue > 2) {
+                break;
+            }
+        }
+        ++it;
+    }
+    EXPECT_EQ(semaphoreWaitCount, 0u);
+    EXPECT_EQ(pipeControlCountSecondEnqueue, pipeControlCountFirstEnqueue + 1);
+}
+
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedThenMakeItResident) {
     auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
 
