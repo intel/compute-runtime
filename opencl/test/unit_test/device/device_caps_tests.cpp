@@ -422,7 +422,14 @@ TEST_F(DeviceGetCapsTest, Given32bitAddressingWhenDeviceIsCreatedThenGlobalMemSi
     cl_ulong sharedMem = (cl_ulong)pMemManager->getSystemSharedMemory(0u);
     cl_ulong maxAppAddrSpace = (cl_ulong)pMemManager->getMaxApplicationAddress() + 1ULL;
     cl_ulong memSize = std::min(sharedMem, maxAppAddrSpace);
-    memSize = (cl_ulong)((double)memSize * memSizePercent);
+
+    size_t internalResourcesSize = 0u;
+    if (!pMemManager->isLocalMemorySupported(device->getRootDeviceIndex())) {
+        internalResourcesSize = 450 * MemoryConstants::megaByte;
+    }
+
+    memSize = (cl_ulong)((double)memSize * memSizePercent) - internalResourcesSize;
+
     if (addressing32Bit) {
         memSize = std::min(memSize, (uint64_t)(4 * GB * memSizePercent));
     }

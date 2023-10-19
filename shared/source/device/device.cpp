@@ -580,6 +580,12 @@ uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {
     double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
     globalMemorySize = static_cast<uint64_t>(static_cast<double>(globalMemorySize) * percentOfGlobalMemoryAvailable);
 
+    if (DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get() == -1 &&
+        !getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())) {
+        const uint64_t internalResourcesSize = 450 * MemoryConstants::megaByte;
+        globalMemorySize = std::max(static_cast<uint64_t>(0), globalMemorySize - internalResourcesSize);
+    }
+
     return globalMemorySize;
 }
 
