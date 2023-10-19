@@ -83,7 +83,7 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
 
-    uint32_t subDeviceCount = gfxCoreHelper.getSubDevicesCount(&getHardwareInfo());
+    uint32_t subDeviceCount = gfxCoreHelper.getSubDevicesCount(this->executionEnvironment->isExposingSubDevicesAsDevices(), &getHardwareInfo());
     auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
     bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
 

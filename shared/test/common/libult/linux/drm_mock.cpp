@@ -33,7 +33,7 @@ DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std
 
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     if (!isPerContextVMRequired()) {
-        createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+        createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.executionEnvironment.isExposingSubDevicesAsDevices(), rootDeviceEnvironment.getHardwareInfo()));
     }
     storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |

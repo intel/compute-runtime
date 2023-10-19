@@ -1400,7 +1400,7 @@ bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const v
 
 uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    uint64_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+    uint64_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment.isExposingSubDevicesAsDevices(), hwInfo);
 
     auto singleRegionSize = getWddm(rootDeviceIndex).getDedicatedVideoMemory() / subDevicesCount;
 

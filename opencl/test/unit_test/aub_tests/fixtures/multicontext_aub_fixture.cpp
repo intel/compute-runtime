@@ -81,7 +81,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         strfilename << renderEngineName << "_CCS0_3"; // xehp_config_name_RCS_CCS0_3.aub
     }
 
-    auto filename = AUBCommandStreamReceiver::createFullFilePath(localHwInfo, strfilename.str(), rootDeviceIndex);
+    auto filename = AUBCommandStreamReceiver::createFullFilePath(localHwInfo, strfilename.str(), rootDeviceIndex, platform()->peekExecutionEnvironment()->isExposingSubDevicesAsDevices());
 
     DebugManager.flags.AUBDumpCaptureFileName.set(filename);
 

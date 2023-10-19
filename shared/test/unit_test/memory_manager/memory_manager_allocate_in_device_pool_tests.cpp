@@ -589,10 +589,11 @@ TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGetLocalMemoryIsCalledTh
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
 
-    auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+    bool subDevicesAsDevices = executionEnvironment.isExposingSubDevicesAsDevices();
+    auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(subDevicesAsDevices, hwInfo);
     uint32_t deviceMask = static_cast<uint32_t>(maxNBitValue(subDevicesCount));
 
-    EXPECT_EQ(AubHelper::getPerTileLocalMemorySize(hwInfo) * subDevicesCount, memoryManager.getLocalMemorySize(0u, deviceMask));
+    EXPECT_EQ(AubHelper::getPerTileLocalMemorySize(subDevicesAsDevices, hwInfo) * subDevicesCount, memoryManager.getLocalMemorySize(0u, deviceMask));
 }
 
 HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingKernelIsaThenLocalMemoryPoolIsUsed) {

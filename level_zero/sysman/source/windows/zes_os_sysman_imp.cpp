@@ -30,7 +30,7 @@ ze_result_t WddmSysmanImp::init() {
     pKmdSysManager = KmdSysManager::create(pWddm);
     UNRECOVERABLE_IF(nullptr == pKmdSysManager);
 
-    subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&pParentSysmanDeviceImp->getHardwareInfo());
+    subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(false, &pParentSysmanDeviceImp->getHardwareInfo());
     if (subDeviceCount == 1) {
         subDeviceCount = 0;
     }

@@ -51,7 +51,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
         auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-        mock->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo));
+        mock->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(executionEnvironment.isExposingSubDevicesAsDevices(), hwInfo));
         osContext = std::make_unique<OsContextLinux>(*mock, 0, 0u,
                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));

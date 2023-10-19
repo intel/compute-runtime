@@ -29,7 +29,7 @@ ze_result_t LinuxRasSourceHbm::osRasGetState(zes_ras_state_t &state, ze_bool_t c
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     uint32_t subDeviceCount = 0;
-    subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&pDevice->getHardwareInfo());
+    subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(false, &pDevice->getHardwareInfo());
     if (clear == true) {
         uint64_t errorCount = 0;
         ze_result_t result = pFwInterface->fwGetMemoryErrorCount(osRasErrorType, subDeviceCount, subdeviceId, errorCount);

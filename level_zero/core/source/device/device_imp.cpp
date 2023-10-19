@@ -1588,7 +1588,7 @@ void DeviceImp::setDebugSession(DebugSession *session) {
 }
 bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t &deviceIndex) {
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getHardwareInfo();
-    uint32_t subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(hwInfo);
+    uint32_t subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(neoDevice->getExecutionEnvironment()->isExposingSubDevicesAsDevices(), hwInfo);
     auto deviceBitfield = neoDevice->getDeviceBitfield();
 
     if (topologyMap.size() == subDeviceCount && !isSubdevice) {

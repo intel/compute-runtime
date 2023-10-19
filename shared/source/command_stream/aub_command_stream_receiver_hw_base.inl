@@ -64,7 +64,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
     aubManager = aubCenter->getAubManager();
 
     if (!aubCenter->getPhysicalAddressAllocator()) {
-        aubCenter->initPhysicalAddressAllocator(this->createPhysicalAddressAllocator(&this->peekHwInfo()));
+        aubCenter->initPhysicalAddressAllocator(this->createPhysicalAddressAllocator(executionEnvironment.isExposingSubDevicesAsDevices(), &this->peekHwInfo()));
     }
     auto physicalAddressAllocator = aubCenter->getPhysicalAddressAllocator();
     UNRECOVERABLE_IF(nullptr == physicalAddressAllocator);

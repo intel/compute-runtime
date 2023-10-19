@@ -650,7 +650,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
 
 uint64_t OsAgnosticMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
     DeviceBitfield bitfield = deviceBitfield;
-    return (AubHelper::getPerTileLocalMemorySize(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()) * bitfield.count());
+    return (AubHelper::getPerTileLocalMemorySize(executionEnvironment.isExposingSubDevicesAsDevices(), executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()) * bitfield.count());
 }
 
 double OsAgnosticMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
