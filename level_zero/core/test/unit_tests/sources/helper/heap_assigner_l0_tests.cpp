@@ -23,23 +23,17 @@ using AlocationHelperTests = Test<DeviceFixture>;
 using Platforms = IsAtMostProduct<IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse, Platforms) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
-    HeapAssigner heapAssigner = {};
+    HeapAssigner heapAssigner{false};
     EXPECT_FALSE(heapAssigner.use32BitHeap(AllocationType::LINEAR_STREAM));
 }
 
 HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUse32BitIsTrue, Platforms) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-    HeapAssigner heapAssigner = {};
+    HeapAssigner heapAssigner{true};
     EXPECT_TRUE(heapAssigner.use32BitHeap(AllocationType::LINEAR_STREAM));
 }
 
 HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseIternalAllocatorThenUseHeapExternal, Platforms) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-    HeapAssigner heapAssigner = {};
+    HeapAssigner heapAssigner{true};
     auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::LINEAR_STREAM, true, *defaultHwInfo.get(), false);
     EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY);
 }
@@ -52,6 +46,7 @@ TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUse
 
     allocation.set32BitAllocation(false);
     EXPECT_EQ(MemoryManager::selectExternalHeap(allocation.isAllocatedInLocalMemoryPool()), mockMemoryManager->selectHeap(&allocation, false, false, false));
+    EXPECT_TRUE(mockMemoryManager->heapAssigners[0]->apiAllowExternalHeapForSshAndDsh);
 }
 
 TEST_F(AlocationHelperTests, givenExternalHeapIndexWhenMapingToExternalFrontWindowThenEternalFrontWindowReturned) {

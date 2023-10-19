@@ -17,7 +17,7 @@ constexpr uint64_t dummyAddress = 0xFFFFF000u;
 class OsAgnosticMemoryManager : public MemoryManager {
   public:
     using MemoryManager::allocateGraphicsMemory;
-    using MemoryManager::heapAssigner;
+    using MemoryManager::heapAssigners;
 
     OsAgnosticMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, executionEnvironment) {}
     OsAgnosticMemoryManager(bool aubUsage, ExecutionEnvironment &executionEnvironment);

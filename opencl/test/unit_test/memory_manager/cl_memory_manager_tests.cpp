@@ -352,6 +352,15 @@ TEST(ClMemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValue
     alignedFree(hostPtr);
 }
 
+TEST(ClOsAgnosticMemoryManager, givenUseExternalAllocatorForSshAndDshWhenMemoryManagerCreatedThenExternalHeapIsNotallowed) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+
+    MockExecutionEnvironment executionEnvironment{};
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    EXPECT_FALSE(memoryManager.heapAssigners[0]->apiAllowExternalHeapForSshAndDsh);
+}
+
 using ClMemoryManagerMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(ClMemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHasCorrectRootDeviceIndex) {

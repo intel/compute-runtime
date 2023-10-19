@@ -78,7 +78,7 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
-        if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh, DrmMemoryManager::getSystemSharedMemory(rootDeviceIndex))) {
+        if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, DrmMemoryManager::getSystemSharedMemory(rootDeviceIndex))) {
             initialized = false;
             return;
         }
@@ -686,7 +686,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
 GraphicsAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-    auto allocatorToUse = heapAssigner.get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow);
+    auto allocatorToUse = heapAssigners[allocationData.rootDeviceIndex]->get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow);
 
     if (allocationData.hostPtr) {
         uintptr_t inputPtr = reinterpret_cast<uintptr_t>(allocationData.hostPtr);
@@ -1788,7 +1788,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
     uint64_t gpuAddress = 0lu;
 
-    status = getGpuAddress(this->alignmentSelector, this->heapAssigner, *hwInfo, gfxPartition, allocationData, sizeAllocated, gmmHelper, gpuAddress);
+    status = getGpuAddress(this->alignmentSelector, *this->heapAssigners[allocationData.rootDeviceIndex], *hwInfo, gfxPartition, allocationData, sizeAllocated, gmmHelper, gpuAddress);
     if (status == AllocationStatus::Error) {
         return nullptr;
     }
@@ -1834,9 +1834,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
         allocation->setCpuPtrAndGpuAddress(cpuAddress, canonizedGpuAddress);
     }
-    if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
+    if (heapAssigners[allocationData.rootDeviceIndex]->useInternal32BitHeap(allocationData.type)) {
         allocation->setGpuBaseAddress(gmmHelper->canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
-    } else if (heapAssigner.useExternal32BitHeap(allocationData.type)) {
+    } else if (heapAssigners[allocationData.rootDeviceIndex]->useExternal32BitHeap(allocationData.type)) {
         allocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
     }
 

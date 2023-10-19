@@ -7,15 +7,14 @@
 
 #include "shared/source/helpers/heap_assigner.h"
 
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 
-HeapAssigner::HeapAssigner() {
-    apiAllowExternalHeapForSshAndDsh = ApiSpecificConfig::getGlobalBindlessHeapConfiguration();
+HeapAssigner::HeapAssigner(bool allowExternalHeap) {
+    apiAllowExternalHeapForSshAndDsh = allowExternalHeap;
 }
 bool HeapAssigner::useInternal32BitHeap(AllocationType allocType) {
     return GraphicsAllocation::isIsaAllocationType(allocType) ||

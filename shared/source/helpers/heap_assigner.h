@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ enum class HeapIndex : uint32_t;
 struct HardwareInfo;
 
 struct HeapAssigner {
-    HeapAssigner();
+    HeapAssigner(bool allowExternalHeap);
     ~HeapAssigner() = default;
     bool useExternal32BitHeap(AllocationType allocType);
     bool useInternal32BitHeap(AllocationType allocType);

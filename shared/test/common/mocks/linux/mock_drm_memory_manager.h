@@ -80,7 +80,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::waitOnCompletionFence;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
     using MemoryManager::allRegisteredEngines;
-    using MemoryManager::heapAssigner;
+    using MemoryManager::heapAssigners;
 
     TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment);
     TestedDrmMemoryManager(bool enableLocalMemory,

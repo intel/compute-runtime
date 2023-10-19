@@ -69,6 +69,9 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
         anyLocalMemorySupported |= this->localMemorySupported[rootDeviceIndex];
         isLocalMemoryUsedForIsa(rootDeviceIndex);
+
+        auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration();
+        heapAssigners.push_back(std::make_unique<HeapAssigner>(globalHeap));
     }
 
     if (anyLocalMemorySupported) {
@@ -638,7 +641,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         }
         return allocation;
     }
-    bool use32Allocator = heapAssigner.use32BitHeap(allocationData.type);
+    bool use32Allocator = heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type);
 
     bool isAllocationOnLimitedGPU = isLimitedGPUOnType(allocationData.rootDeviceIndex, allocationData.type);
     if (use32Allocator || isAllocationOnLimitedGPU ||
@@ -758,10 +761,10 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
 
 HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useFrontWindow) {
     if (allocation) {
-        if (heapAssigner.useInternal32BitHeap(allocation->getAllocationType())) {
+        if (heapAssigners[allocation->getRootDeviceIndex()]->useInternal32BitHeap(allocation->getAllocationType())) {
             return useFrontWindow ? HeapAssigner::mapInternalWindowIndex(selectInternalHeap(allocation->isAllocatedInLocalMemoryPool())) : selectInternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
-        if (allocation->is32BitAllocation() || heapAssigner.useExternal32BitHeap(allocation->getAllocationType())) {
+        if (allocation->is32BitAllocation() || heapAssigners[allocation->getRootDeviceIndex()]->useExternal32BitHeap(allocation->getAllocationType())) {
             return useFrontWindow ? HeapAssigner::mapExternalWindowIndex(selectExternalHeap(allocation->isAllocatedInLocalMemoryPool()))
                                   : selectExternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }

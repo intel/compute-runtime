@@ -345,7 +345,7 @@ class MemoryManager {
     std::unique_ptr<PageFaultManager> pageFaultManager;
     std::unique_ptr<PrefetchManager> prefetchManager;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
-    HeapAssigner heapAssigner;
+    std::vector<std::unique_ptr<HeapAssigner>> heapAssigners;
     AlignmentSelector alignmentSelector = {};
     std::unique_ptr<std::once_flag[]> checkIsaPlacementOnceFlags;
     std::vector<bool> isaInLocalMemory;

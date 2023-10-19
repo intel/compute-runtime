@@ -17,9 +17,7 @@ namespace NEO {
 using AlocationHelperTests = Test<ClDeviceFixture>;
 
 HWTEST_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-    HeapAssigner heapAssigner = {};
+    HeapAssigner heapAssigner{false};
     EXPECT_FALSE(heapAssigner.use32BitHeap(AllocationType::LINEAR_STREAM));
 }
 

@@ -16,7 +16,7 @@ namespace NEO {
 
 class AlocationHelperTests : public Test<DeviceFixture> {
   public:
-    HeapAssigner heapAssigner = {};
+    HeapAssigner heapAssigner{false};
 };
 
 HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUse32BitHeapCalledThenTrueReturned) {

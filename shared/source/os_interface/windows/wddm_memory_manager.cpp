@@ -57,7 +57,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         mallocRestrictions.minAddress = std::max(mallocRestrictions.minAddress, getWddm(rootDeviceIndex).getWddmMinAddress());
-        getWddm(rootDeviceIndex).initGfxPartition(*getGfxPartition(rootDeviceIndex), rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh);
+        getWddm(rootDeviceIndex).initGfxPartition(*getGfxPartition(rootDeviceIndex), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh);
     }
 
     alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage);
@@ -524,7 +524,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         freeSystemMemory(pSysMem);
         return nullptr;
     }
-    auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigner.get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow));
+    auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigners[allocationData.rootDeviceIndex]->get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow));
     UNRECOVERABLE_IF(gmmHelper->canonize(baseAddress) != wddmAllocation->getGpuBaseAddress());
 
     wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(baseAddress));
@@ -1364,7 +1364,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     wddmAllocation->storageInfo = allocationData.storageInfo;
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
     wddmAllocation->needsMakeResidentBeforeLock = true;
-    if (heapAssigner.use32BitHeap(allocationData.type)) {
+    if (heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type)) {
         wddmAllocation->allocInFrontWindowPool = allocationData.flags.use32BitFrontWindow;
     }
 
@@ -1375,7 +1375,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
 
-    if (!heapAssigner.use32BitHeap(allocationData.type)) {
+    if (!heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type)) {
         adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa);
     }
 
