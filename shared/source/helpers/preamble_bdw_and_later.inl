@@ -73,4 +73,13 @@ size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
     return sizeof(MEDIA_VFE_STATE) + sizeof(PIPE_CONTROL);
 }
 
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {}
+
+template <typename GfxFamily>
+size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
+    return sizeof(PIPELINE_SELECT);
+}
+
 } // namespace NEO

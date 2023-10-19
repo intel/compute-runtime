@@ -16,6 +16,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/surface.h"
@@ -4671,4 +4672,76 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenFlushHeapStorageRequiresRecyclingTagW
 
     EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.dispatchMonitorFence);
     EXPECT_EQ(24u, commandStreamReceiver.peekLatestFlushedTaskCount());
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenSpecialPipelineSelectModeChangedWhenGetCmdSizeForPielineSelectIsCalledThenCorrectSizeIsReturned, IsAtMostXeHpcCore) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    CsrSizeRequestFlags csrSizeRequest = {};
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    csrSizeRequest.systolicPipelineSelectMode = true;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    size_t size = commandStreamReceiver.getCmdSizeForPipelineSelect();
+
+    size_t expectedSize = sizeof(PIPELINE_SELECT);
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
+        expectedSize += sizeof(PIPE_CONTROL);
+    }
+    EXPECT_EQ(expectedSize, size);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenCsrWhenPreambleSentThenRequiredCsrSizeDependsOnmediaSamplerConfigChanged, IsAtMostXeHpcCore) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    CsrSizeRequestFlags csrSizeRequest = {};
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    commandStreamReceiver.isPreambleSent = true;
+
+    csrSizeRequest.mediaSamplerConfigChanged = false;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    auto mediaSamplerConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
+
+    csrSizeRequest.mediaSamplerConfigChanged = true;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    auto mediaSamplerConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
+
+    EXPECT_NE(mediaSamplerConfigChangedSize, mediaSamplerConfigNotChangedSize);
+    auto difference = mediaSamplerConfigChangedSize - mediaSamplerConfigNotChangedSize;
+
+    size_t expectedDifference = sizeof(PIPELINE_SELECT);
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
+        expectedDifference += sizeof(PIPE_CONTROL);
+    }
+
+    EXPECT_EQ(expectedDifference, difference);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPreambleSentWhenEstimatingFlushTaskSizeThenResultDependsOnAdditionalCmdsSize) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.isPreambleSent = false;
+    auto preambleNotSentPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+    auto preambleNotSentFlush = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
+
+    commandStreamReceiver.isPreambleSent = true;
+    auto preambleSentPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+    auto preambleSentFlush = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
+
+    auto actualDifferenceForPreamble = preambleNotSentPreamble - preambleSentPreamble;
+    auto actualDifferenceForFlush = preambleNotSentFlush - preambleSentFlush;
+
+    commandStreamReceiver.isPreambleSent = false;
+    auto expectedDifferenceForPreamble = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
+    auto expectedDifferenceForFlush = expectedDifferenceForPreamble + commandStreamReceiver.getCmdSizeForL3Config() +
+                                      PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(pDevice->getRootDeviceEnvironment());
+
+    EXPECT_EQ(expectedDifferenceForPreamble, actualDifferenceForPreamble);
+    EXPECT_EQ(expectedDifferenceForFlush, actualDifferenceForFlush);
 }

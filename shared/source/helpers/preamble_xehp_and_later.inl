@@ -15,82 +15,20 @@
 
 #include "reg_configs_common.h"
 
-// L3 programming:
-// All L3 Client Pool: 320KB
-// URB Pool: 64KB
-// Use Full ways: true
-// SLM: reserved (always enabled)
-
 namespace NEO {
 
-template <typename Family>
-void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
-                                                   const PipelineSelectArgs &pipelineSelectArgs,
-                                                   const RootDeviceEnvironment &rootDeviceEnvironment) {
-
-    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
-
-    PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
-
-    if (DebugManager.flags.CleanStateInPreamble.get()) {
-        auto cmdBuffer = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-        cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_3D);
-        *cmdBuffer = cmd;
-
-        PipeControlArgs args = {};
-        args.stateCacheInvalidationEnable = true;
-        MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
-    }
-
-    auto cmdBuffer = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-
-    auto mask = pipelineSelectEnablePipelineSelectMaskBits;
-
-    cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    if constexpr (Family::isUsingMediaSamplerDopClockGate) {
-        mask |= pipelineSelectMediaSamplerDopClockGateMaskBits;
-        cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
-    }
-
-    bool systolicSupport = pipelineSelectArgs.systolicPipelineSelectSupport;
-    bool systolicValue = pipelineSelectArgs.systolicPipelineSelectMode;
-    int32_t overrideSystolic = DebugManager.flags.OverrideSystolicPipelineSelect.get();
-
-    if (overrideSystolic != -1) {
-        systolicSupport = true;
-        systolicValue = !!overrideSystolic;
-    }
-
-    if (systolicSupport) {
-        cmd.setSystolicModeEnable(systolicValue);
-        mask |= pipelineSelectSystolicModeEnableMaskBits;
-    }
-
-    cmd.setMaskBits(mask);
-
-    *cmdBuffer = cmd;
-
-    if (DebugManager.flags.CleanStateInPreamble.get()) {
-        PipeControlArgs args = {};
-        args.stateCacheInvalidationEnable = true;
-        MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
-    }
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
 }
 
-template <>
-void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
 }
 
-template <>
-void PreambleHelper<Family>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
-}
-
-template <>
-uint32_t PreambleHelper<Family>::getUrbEntryAllocationSize() {
+template <typename GfxFamily>
+uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
     return 0u;
 }
-template <>
-void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd);
 
 template <typename GfxFamily>
 void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStream,
@@ -130,8 +68,8 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     *cfeState = cmd;
 }
 
-template <>
-uint64_t PreambleHelper<Family>::getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState) {
+template <typename GfxFamily>
+uint64_t PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState) {
     return 0;
 }
 
@@ -141,8 +79,8 @@ size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
     return sizeof(CFE_STATE);
 }
 
-template <>
-uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
+template <typename GfxFamily>
+uint32_t PreambleHelper<GfxFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     return 0u;
 }
 

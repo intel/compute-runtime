@@ -173,6 +173,12 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xe_hpg_and_xe_hpc.inl
+  )
+endif()
+
 if(SUPPORT_DG2_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_dg2_and_later.inl

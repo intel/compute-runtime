@@ -36,23 +36,6 @@ HWTEST2_F(ThreadArbitrationXeHPAndLater, whenGetDefaultThreadArbitrationPolicyIs
 }
 
 using ProgramPipelineXeHPAndLater = PreambleFixture;
-HWTEST2_F(ProgramPipelineXeHPAndLater, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded, IsWithinXeGfxFamily) {
-    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.CleanStateInPreamble.set(true);
-
-    LinearStream &cs = linearStream;
-    PipelineSelectArgs pipelineArgs;
-    PreambleHelper<FamilyType>::programPipelineSelect(&cs, pipelineArgs, pDevice->getRootDeviceEnvironment());
-
-    parseCommands<FamilyType>(cs, 0);
-    auto numPipeControl = getCommandsList<PIPE_CONTROL>().size();
-    EXPECT_EQ(2u, numPipeControl);
-    auto numPipelineSelect = getCommandsList<PIPELINE_SELECT>().size();
-    EXPECT_EQ(2u, numPipelineSelect);
-}
-
 HWTEST2_F(ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet, IsWithinXeGfxFamily) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     DebugManagerStateRestore stateRestore;

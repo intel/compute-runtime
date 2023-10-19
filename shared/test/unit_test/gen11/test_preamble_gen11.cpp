@@ -179,3 +179,10 @@ GEN11TEST_F(ThreadArbitrationGen11, whenGetSupportThreadArbitrationPoliciesIsCal
                                                  supportedPolicies.end(),
                                                  ThreadArbitrationPolicy::RoundRobinAfterDependency));
 }
+
+using Gen11PreamblePipelineSelect = PreambleFixture;
+GEN11TEST_F(Gen11PreamblePipelineSelect, WhenPreambleRetrievesPipelineSelectSizeThenValueIsCorrect) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    size_t actualVal = PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(sizeof(PIPELINE_SELECT), actualVal);
+}

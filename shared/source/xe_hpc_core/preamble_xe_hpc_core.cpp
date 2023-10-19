@@ -13,6 +13,7 @@ using Family = XeHpcCoreFamily;
 } // namespace NEO
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/preamble_xe_hpg_and_xe_hpc.inl"
 #include "shared/source/helpers/preamble_xehp_and_later.inl"
 #include "shared/source/os_interface/product_helper.h"
 

@@ -130,3 +130,10 @@ GEN9TEST_F(PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCo
     EXPECT_TRUE(pc.getDcFlushEnable());
     EXPECT_EQ(1u, pc.getCommandStreamerStallEnable());
 }
+
+using Gen9PreamblePipelineSelect = PreambleFixture;
+GEN9TEST_F(Gen9PreamblePipelineSelect, WhenPreambleRetrievesPipelineSelectSizeThenValueIsCorrect) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    size_t actualVal = PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(sizeof(PIPELINE_SELECT), actualVal);
+}

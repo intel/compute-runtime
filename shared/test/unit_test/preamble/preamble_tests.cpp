@@ -11,9 +11,11 @@
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -248,4 +250,51 @@ HWTEST_F(PreambleTest, givenNotSetForceSemaphoreDelayBetweenWaitsWhenProgramSema
     hwParser.parseCommands<FamilyType>(stream);
     auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
     ASSERT_EQ(0u, cmdList.size());
+}
+
+HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded, IsWithinXeGfxFamily) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.CleanStateInPreamble.set(true);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    constexpr size_t bufferSize = 256;
+    uint8_t buffer[bufferSize];
+    LinearStream stream(buffer, bufferSize);
+
+    PipelineSelectArgs pipelineArgs;
+
+    PreambleHelper<FamilyType>::programPipelineSelect(&stream, pipelineArgs, mockDevice->getRootDeviceEnvironment());
+    size_t usedSpace = stream.getUsed();
+
+    EXPECT_EQ(usedSpace, PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(mockDevice->getRootDeviceEnvironment()));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream);
+
+    auto numPipeControl = hwParser.getCommandsList<PIPE_CONTROL>().size();
+    EXPECT_EQ(2u, numPipeControl);
+    auto numPipelineSelect = hwParser.getCommandsList<PIPELINE_SELECT>().size();
+    EXPECT_EQ(2u, numPipelineSelect);
+}
+
+HWTEST2_F(PreambleTest, GivenAtLeastXeHpCoreWhenPreambleRetrievesUrbEntryAllocationSizeThenValueIsCorrect, IsAtLeastXeHpCore) {
+    uint32_t actualVal = PreambleHelper<FamilyType>::getUrbEntryAllocationSize();
+    EXPECT_EQ(0u, actualVal);
+}
+
+using PreambleHwTest = PreambleFixture;
+
+HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeCommandThenExpectNothingToAdd, IsAtLeastXeHpCore) {
+    constexpr size_t bufferSize = 64;
+    uint8_t buffer[bufferSize];
+    LinearStream stream(buffer, bufferSize);
+
+    auto &hwInfo = pDevice->getHardwareInfo();
+
+    PreambleHelper<FamilyType>::addPipeControlBeforeVfeCmd(&stream, &hwInfo, EngineGroupType::Compute);
+    EXPECT_EQ(0u, stream.getUsed());
 }

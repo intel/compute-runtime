@@ -108,3 +108,10 @@ BDWTEST_F(PreambleVfeState, WhenProgrammingVfeStateThenProgrammingIsCorrect) {
     EXPECT_TRUE(pc.getDcFlushEnable());
     EXPECT_EQ(1u, pc.getCommandStreamerStallEnable());
 }
+
+using Gen8PreamblePipelineSelect = PreambleFixture;
+BDWTEST_F(Gen8PreamblePipelineSelect, WhenPreambleRetrievesPipelineSelectSizeThenValueIsCorrect) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    size_t actualVal = PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(sizeof(PIPELINE_SELECT), actualVal);
+}

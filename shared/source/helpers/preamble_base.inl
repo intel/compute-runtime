@@ -54,17 +54,6 @@ size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device
 }
 
 template <typename GfxFamily>
-size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    size_t size = 0;
-    using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
-    size += sizeof(PIPELINE_SELECT);
-    if (MemorySynchronizationCommands<GfxFamily>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
-        size += sizeof(PIPE_CONTROL);
-    }
-    return size;
-}
-
-template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                                 GraphicsAllocation *preemptionCsr) {
     programL3(pCommandStream, l3Config);
@@ -85,9 +74,6 @@ size_t PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(bool debuggingA
     }
     return 0;
 }
-
-template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {}
 
 template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize) {

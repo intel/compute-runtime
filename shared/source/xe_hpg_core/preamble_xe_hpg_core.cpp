@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@ struct XeHpgCoreFamily;
 using Family = XeHpgCoreFamily;
 } // namespace NEO
 
+#include "shared/source/helpers/preamble_xe_hpg_and_xe_hpc.inl"
 #include "shared/source/helpers/preamble_xehp_and_later.inl"
 
 namespace NEO {

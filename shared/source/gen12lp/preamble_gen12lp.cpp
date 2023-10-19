@@ -64,6 +64,17 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 }
 
 template <>
+size_t PreambleHelper<Family>::getCmdSizeForPipelineSelect(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    size_t size = 0;
+    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
+    size += sizeof(PIPELINE_SELECT);
+    if (MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
+        size += sizeof(PIPE_CONTROL);
+    }
+    return size;
+}
+
+template <>
 void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
     PipeControlArgs args = {};
     if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
