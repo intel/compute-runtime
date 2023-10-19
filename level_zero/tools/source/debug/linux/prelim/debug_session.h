@@ -37,6 +37,7 @@ struct DebugSessionLinuxi915 : DebugSessionImp {
     ~DebugSessionLinuxi915() override;
     DebugSessionLinuxi915(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
+    static DebugSession *createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
     ze_result_t initialize() override;
 
     bool closeConnection() override;

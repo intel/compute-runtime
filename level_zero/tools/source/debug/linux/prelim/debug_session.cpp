@@ -25,6 +25,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
+#include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 #include "level_zero/tools/source/debug/linux/prelim/drm_helper.h"
 #include <level_zero/ze_api.h>
 
@@ -34,6 +35,9 @@
 #include <fcntl.h>
 
 namespace L0 {
+
+static DebugSessionLinuxPopulateFactory<DEBUG_SESSION_LINUX_TYPE_I915, DebugSessionLinuxi915>
+    populatei915Debugger;
 
 DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
@@ -62,38 +66,22 @@ DebugSessionLinuxi915::~DebugSessionLinuxi915() {
     closeFd();
 }
 
-DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
-    if (device->getOsInterface().isDebugAttachAvailable()) {
-        struct prelim_drm_i915_debugger_open_param open = {};
-        open.pid = config.pid;
-        open.events = 0;
-        open.version = 0;
+DebugSession *DebugSessionLinuxi915::createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
+    struct prelim_drm_i915_debugger_open_param open = {};
+    open.pid = config.pid;
+    open.events = 0;
+    open.version = 0;
+    auto debugFd = DrmHelper::ioctl(device, NEO::DrmIoctl::DebuggerOpen, &open);
+    if (debugFd >= 0) {
+        PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: open.pid: %d, open.events: %d, debugFd: %d\n",
+                                open.pid, open.events, debugFd);
 
-        auto debugFd = DrmHelper::ioctl(device, NEO::DrmIoctl::DebuggerOpen, &open);
-        if (debugFd >= 0) {
-            PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: open.pid: %d, open.events: %d, debugFd: %d\n",
-                                    open.pid, open.events, debugFd);
-
-            auto debugSession = createDebugSessionHelper(config, device, debugFd, &open);
-            debugSession->setAttachMode(isRootAttach);
-            result = debugSession->initialize();
-
-            if (result != ZE_RESULT_SUCCESS) {
-                debugSession->closeConnection();
-                delete debugSession;
-                debugSession = nullptr;
-            } else {
-                debugSession->startAsyncThread();
-            }
-            return debugSession;
-        } else {
-            auto reason = DrmHelper::getErrno(device);
-            PRINT_DEBUGGER_ERROR_LOG("PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN failed: open.pid: %d, open.events: %d, retCode: %d, errno: %d\n",
-                                     open.pid, open.events, debugFd, reason);
-            result = DebugSessionLinuxi915::translateDebuggerOpenErrno(reason);
-        }
+        return createDebugSessionHelper(config, device, debugFd, &open);
     } else {
-        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        auto reason = DrmHelper::getErrno(device);
+        PRINT_DEBUGGER_ERROR_LOG("PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN failed: open.pid: %d, open.events: %d, retCode: %d, errno: %d\n",
+                                 open.pid, open.events, debugFd, reason);
+        result = DebugSessionLinuxi915::translateDebuggerOpenErrno(reason);
     }
     return nullptr;
 }
