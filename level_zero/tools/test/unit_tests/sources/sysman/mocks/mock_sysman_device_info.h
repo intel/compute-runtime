@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ class SysmanMultiDeviceInfoFixture : public ::testing::Test {
         hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
         hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = 1;
         auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+        executionEnvironment->setExposeSubDevicesAsDevices(false);
         neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
 
         NEO::DeviceVector devices;

@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_base.inl"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
@@ -34,7 +35,7 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initGlobalMMIO() {
                                     {0x0000490c, 0x0001}}; // XEHP_TILE_ADDR_RANGE
 
         const uint32_t numberOfTiles = 4;
-        const uint32_t localMemorySizeGB = static_cast<uint32_t>(AubHelper::getPerTileLocalMemorySize(&this->peekHwInfo()) / MemoryConstants::gigaByte);
+        const uint32_t localMemorySizeGB = static_cast<uint32_t>(AubHelper::getPerTileLocalMemorySize(peekExecutionEnvironment().isExposingSubDevicesAsDevices(), &this->peekHwInfo()) / MemoryConstants::gigaByte);
 
         uint32_t localMemoryBaseAddressInGB = 0x0;
 

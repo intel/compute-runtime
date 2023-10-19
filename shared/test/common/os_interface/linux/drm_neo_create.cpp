@@ -59,7 +59,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     }
 
     if (!drm->isPerContextVMRequired()) {
-        drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo));
+        drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.executionEnvironment.isExposingSubDevicesAsDevices(), hwInfo));
     }
 
     return drm;
