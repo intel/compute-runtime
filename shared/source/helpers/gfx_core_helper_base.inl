@@ -245,6 +245,7 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
     PIPE_CONTROL pipeControl = GfxFamily::cmdInitPipeControl;
 
     pipeControl.setCommandStreamerStallEnable(true);
+    setBarrierExtraProperties(&pipeControl, args);
 
     if (args.csStallOnly) {
         *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = pipeControl;
@@ -268,7 +269,6 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
     if constexpr (GfxFamily::isUsingGenericMediaStateClear) {
         pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
     }
-    setBarrierExtraProperties(&pipeControl, args);
 
     if (DebugManager.flags.FlushAllCaches.get()) {
         pipeControl.setDcFlushEnable(true);
