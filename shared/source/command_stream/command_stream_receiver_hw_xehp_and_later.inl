@@ -173,6 +173,8 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncC
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
     PipeControlArgs args;
+    args.hdcPipelineFlush = true;
+    args.unTypedDataPortCacheFlush = true;
     if (isMultiTileOperationEnabled()) {
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
                                                                     this->deviceBitfield,
@@ -192,6 +194,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport && dcFlushRequired;
+    args.hdcPipelineFlush = true;
+    args.unTypedDataPortCacheFlush = true;
     if (isMultiTileOperationEnabled()) {
         args.workloadPartitionOffset = true;
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,

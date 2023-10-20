@@ -4745,3 +4745,198 @@ HWTEST_F(CommandStreamReceiverHwTest, givenPreambleSentWhenEstimatingFlushTaskSi
     EXPECT_EQ(expectedDifferenceForPreamble, actualDifferenceForPreamble);
     EXPECT_EQ(expectedDifferenceForFlush, actualDifferenceForFlush);
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenStaticPartitionEnabledWhenOnlySinglePartitionUsedThenExpectSinglePipeControlAsBarrier, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    constexpr size_t cmdSize = 256;
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
+    LinearStream cs(buffer.get(), cmdSize);
+
+    commandStreamReceiver.staticWorkPartitioningEnabled = true;
+    commandStreamReceiver.activePartitions = 1;
+
+    size_t estimatedCmdSize = commandStreamReceiver.getCmdSizeForStallingNoPostSyncCommands();
+    EXPECT_EQ(sizeof(PIPE_CONTROL), estimatedCmdSize);
+
+    commandStreamReceiver.programStallingNoPostSyncCommandsForBarrier(cs);
+    EXPECT_EQ(estimatedCmdSize, cs.getUsed());
+
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
+    EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenStaticPartitionDisabledWhenMultiplePartitionsUsedThenExpectSinglePipeControlAsBarrier, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    constexpr size_t cmdSize = 256;
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
+    LinearStream cs(buffer.get(), cmdSize);
+
+    commandStreamReceiver.staticWorkPartitioningEnabled = false;
+    commandStreamReceiver.activePartitions = 2;
+
+    size_t estimatedCmdSize = commandStreamReceiver.getCmdSizeForStallingNoPostSyncCommands();
+    EXPECT_EQ(sizeof(PIPE_CONTROL), estimatedCmdSize);
+
+    commandStreamReceiver.programStallingNoPostSyncCommandsForBarrier(cs);
+    EXPECT_EQ(estimatedCmdSize, cs.getUsed());
+
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
+    EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenStaticPartitionEnabledWhenMultiplePartitionsUsedThenExpectImplicitScalingWithoutSelfCleanupBarrier, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    constexpr size_t cmdSize = 256;
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
+    MockGraphicsAllocation allocation(buffer.get(), cmdSize);
+    allocation.gpuAddress = 0xFF000;
+    LinearStream cs(buffer.get(), cmdSize);
+    cs.replaceGraphicsAllocation(&allocation);
+
+    commandStreamReceiver.staticWorkPartitioningEnabled = true;
+    commandStreamReceiver.activePartitions = 2;
+
+    size_t expectedSize = sizeof(PIPE_CONTROL) +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          2 * sizeof(uint32_t);
+    size_t estimatedCmdSize = commandStreamReceiver.getCmdSizeForStallingNoPostSyncCommands();
+    EXPECT_EQ(expectedSize, estimatedCmdSize);
+
+    commandStreamReceiver.programStallingNoPostSyncCommandsForBarrier(cs);
+    EXPECT_EQ(estimatedCmdSize, cs.getUsed());
+
+    void *cmdBuffer = buffer.get();
+    size_t offset = 0;
+
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(cmdBuffer);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
+    EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
+
+    offset += sizeof(PIPE_CONTROL);
+
+    MI_ATOMIC *miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, miAtomic);
+    offset += sizeof(MI_ATOMIC);
+
+    MI_SEMAPHORE_WAIT *miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, miSemaphore);
+    offset += NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+
+    MI_BATCH_BUFFER_START *bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, bbStart);
+    offset += sizeof(MI_BATCH_BUFFER_START);
+
+    uint32_t *data = reinterpret_cast<uint32_t *>(ptrOffset(cmdBuffer, offset));
+    EXPECT_EQ(0u, *data);
+    offset += sizeof(uint32_t);
+
+    data = reinterpret_cast<uint32_t *>(ptrOffset(cmdBuffer, offset));
+    EXPECT_EQ(0u, *data);
+    offset += sizeof(uint32_t);
+
+    EXPECT_EQ(estimatedCmdSize, offset);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenSingleTileWhenProgrammingPostSyncBarrierThenExpectPipeControlWithCorrectFlags, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.activePartitions = 1;
+
+    size_t estimatedCmdSize = ultCsr.getCmdSizeForStallingPostSyncCommands();
+
+    char commandBuffer[MemoryConstants::pageSize];
+    LinearStream commandStream(commandBuffer, MemoryConstants::pageSize);
+    TagNodeBase *tagNode = ultCsr.getTimestampPacketAllocator()->getTag();
+
+    ultCsr.programStallingPostSyncCommandsForBarrier(commandStream, *tagNode, false);
+    size_t sizeUsed = commandStream.getUsed();
+    ASSERT_EQ(estimatedCmdSize, sizeUsed);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        commandStream.getCpuBase(),
+        sizeUsed));
+    auto pipeControlIteratorVector = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, pipeControlIteratorVector.size());
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlIteratorVector[0]);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
+    EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenImplicitScalingEnabledWhenProgrammingPostSyncBarrierThenExpectPipeControlWithCorrectFlags, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.activePartitions = 2;
+    ultCsr.staticWorkPartitioningEnabled = true;
+
+    size_t barrierWithPostSyncOperationSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false);
+    size_t expectedSize = barrierWithPostSyncOperationSize +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          2 * sizeof(uint32_t);
+    size_t estimatedCmdSize = ultCsr.getCmdSizeForStallingPostSyncCommands();
+    EXPECT_EQ(expectedSize, estimatedCmdSize);
+
+    char commandBuffer[MemoryConstants::pageSize];
+    MockGraphicsAllocation mockCmdBufferAllocation(commandBuffer, 0x4000, MemoryConstants::pageSize);
+    LinearStream commandStream(&mockCmdBufferAllocation);
+    TagNodeBase *tagNode = ultCsr.getTimestampPacketAllocator()->getTag();
+
+    ultCsr.programStallingPostSyncCommandsForBarrier(commandStream, *tagNode, false);
+
+    EXPECT_EQ(estimatedCmdSize, commandStream.getUsed());
+
+    void *cmdBuffer = reinterpret_cast<void *>(commandBuffer);
+    size_t offset = 0;
+
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(cmdBuffer);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
+    EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
+
+    offset += barrierWithPostSyncOperationSize;
+
+    MI_ATOMIC *miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, miAtomic);
+    offset += sizeof(MI_ATOMIC);
+
+    MI_SEMAPHORE_WAIT *miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, miSemaphore);
+    offset += NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+
+    MI_BATCH_BUFFER_START *bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, bbStart);
+    offset += sizeof(MI_BATCH_BUFFER_START);
+
+    uint32_t *data = reinterpret_cast<uint32_t *>(ptrOffset(cmdBuffer, offset));
+    EXPECT_EQ(0u, *data);
+    offset += sizeof(uint32_t);
+
+    data = reinterpret_cast<uint32_t *>(ptrOffset(cmdBuffer, offset));
+    EXPECT_EQ(0u, *data);
+    offset += sizeof(uint32_t);
+
+    EXPECT_EQ(estimatedCmdSize, offset);
+}
