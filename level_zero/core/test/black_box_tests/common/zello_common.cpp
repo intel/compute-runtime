@@ -243,6 +243,26 @@ uint32_t getCommandQueueOrdinal(ze_device_handle_t &device) {
     return computeQueueGroupOrdinal;
 }
 
+std::vector<uint32_t> getComputeQueueOrdinals(ze_device_handle_t &device) {
+    std::vector<uint32_t> ordinals;
+    uint32_t numQueueGroups = 0;
+    SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
+    if (numQueueGroups == 0) {
+        std::cerr << "No queue groups found!\n";
+        std::terminate();
+    }
+    std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
+    SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups,
+                                                                queueProperties.data()));
+
+    for (uint32_t i = 0; i < numQueueGroups; i++) {
+        if (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) {
+            ordinals.push_back(i);
+        }
+    }
+    return ordinals;
+}
+
 uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
@@ -281,6 +301,25 @@ ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_de
     if (ordinal != nullptr) {
         *ordinal = descriptor.ordinal;
     }
+    return cmdQueue;
+}
+
+ze_command_queue_handle_t createCommandQueueWithOrdinal(ze_context_handle_t &context, ze_device_handle_t &device,
+                                                        uint32_t ordinal, ze_command_queue_mode_t mode,
+                                                        ze_command_queue_priority_t priority) {
+    ze_command_queue_handle_t cmdQueue;
+    ze_command_queue_desc_t descriptor = {};
+    descriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+
+    descriptor.pNext = nullptr;
+    descriptor.flags = 0;
+    descriptor.mode = mode;
+    descriptor.priority = priority;
+
+    descriptor.ordinal = ordinal;
+    descriptor.index = 0;
+    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &descriptor, &cmdQueue));
+
     return cmdQueue;
 }
 

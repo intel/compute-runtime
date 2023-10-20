@@ -3182,6 +3182,60 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
     event->destroy();
 }
 
+HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenAllocationIsDownloaded) {
+    std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
+
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+
+    ASSERT_NE(event, nullptr);
+    ASSERT_NE(nullptr, event->csrs[0]);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csrs[0]);
+    event->setUsingContextEndOffset(false);
+
+    size_t eventCompletionOffset = event->getContextStartOffset();
+    if (event->isUsingContextEndOffset()) {
+        eventCompletionOffset = event->getContextEndOffset();
+    }
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    *eventAddress = Event::STATE_SIGNALED;
+
+    EXPECT_LT(1u, neoDevice->getAllEngines().size());
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getAllEngines()[1].commandStreamReceiver);
+    EXPECT_NE(event->csrs[0], ultCsr);
+
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
+        downloadAllocationTrack[&gfxAllocation]++;
+    };
+
+    auto eventAllocation = &event->getAllocation(device);
+    constexpr uint64_t timeout = 0;
+    auto result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t downloadedAllocations = downloadAllocationTrack[eventAllocation];
+    EXPECT_EQ(0u, downloadedAllocations);
+    EXPECT_EQ(0u, ultCsr->downloadAllocationsCalledCount);
+
+    *eventAddress = Event::STATE_SIGNALED;
+
+    ultCsr->downloadAllocationsCalledCount = 0;
+
+    eventAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
+
+    result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    downloadedAllocations = downloadAllocationTrack[eventAllocation];
+    EXPECT_EQ(1u, downloadedAllocations);
+
+    event->destroy();
+}
+
 HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
 

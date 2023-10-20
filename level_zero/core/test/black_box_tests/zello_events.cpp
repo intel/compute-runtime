@@ -24,6 +24,15 @@ void createCmdQueueAndCmdList(ze_device_handle_t &device,
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
 }
 
+void createCmdQueueAndCmdListWithOrdinal(ze_device_handle_t &device,
+                                         ze_context_handle_t &context, uint32_t ordinal,
+                                         ze_command_queue_handle_t &cmdqueue,
+                                         ze_command_list_handle_t &cmdList) {
+    // Create commandQueue and cmdList
+    cmdqueue = createCommandQueueWithOrdinal(context, device, ordinal, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList, ordinal));
+}
+
 // Test Device Signal and Device wait followed by Host Wait
 bool testEventsDeviceSignalDeviceWait(ze_context_handle_t &context, ze_device_handle_t &device) {
     ze_command_queue_handle_t cmdQueue;
@@ -185,6 +194,50 @@ bool testEventsDeviceSignalHostWait(ze_context_handle_t &context, ze_device_hand
     return outputValidationSuccessful;
 }
 
+// Test Device Signal and Host wait
+bool testEventsDeviceSignalHostWaitWithNonZeroOrdinal(ze_context_handle_t &context, ze_device_handle_t &device) {
+    ze_command_queue_handle_t cmdQueue;
+    ze_command_list_handle_t cmdList;
+    auto ordinals = getComputeQueueOrdinals(device);
+
+    if (ordinals.size() <= 1) {
+        return true;
+    }
+
+    auto ordinal = ordinals[ordinals.size() - 1];
+
+    // Create Event Pool and kernel launch event
+    ze_event_pool_handle_t eventPool;
+    uint32_t numEvents = 2;
+    std::vector<ze_event_handle_t> events(numEvents);
+    createEventPoolAndEvents(context, device, eventPool,
+                             (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
+                             numEvents, events.data(),
+                             ZE_EVENT_SCOPE_FLAG_HOST,
+                             (ze_event_scope_flag_t)0);
+
+    bool outputValidationSuccessful = true;
+
+    // Create commandQueue and cmdList
+    createCmdQueueAndCmdListWithOrdinal(device, context, ordinal, cmdQueue, cmdList);
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEvent(cmdList, events[0]));
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+    SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[0], std::numeric_limits<uint64_t>::max()));
+
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    // Cleanup
+    for (auto event : events) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+    }
+
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    return outputValidationSuccessful;
+}
+
 // Test Host Signal and Host wait
 bool testEventsHostSignalHostWait(ze_context_handle_t &context, ze_device_handle_t &device) {
     ze_command_queue_handle_t cmdQueue;
@@ -294,6 +347,12 @@ int main(int argc, char *argv[]) {
     if (outputValidationSuccessful || aubMode) {
         currentTest = "Host signal and host wait test";
         outputValidationSuccessful = testEventsHostSignalHostWait(context, device);
+        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+    }
+
+    if (outputValidationSuccessful || aubMode) {
+        currentTest = "Device signal and host wait with non-zero ordinal";
+        outputValidationSuccessful = testEventsDeviceSignalHostWaitWithNonZeroOrdinal(context, device);
         printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 

@@ -241,16 +241,29 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
         hostEventSetValue(metricStreamer->getNotificationState());
     }
     if (this->tbxMode) {
-        for (auto &csr : csrs) {
+        auto &allEngines = this->device->getNEODevice()->getAllEngines();
 
-            if (auto &alloc = this->getAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
-                csr->downloadAllocation(alloc);
+        bool downloadedAllocation = false;
+        bool downloadedInOrdedAllocation = false;
+
+        for (auto const &engine : allEngines) {
+            const auto &csr = engine.commandStreamReceiver;
+            if (!downloadedAllocation) {
+                if (auto &alloc = this->getAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
+                    csr->downloadAllocation(alloc);
+                    downloadedAllocation = true;
+                }
             }
 
-            if (inOrderExecInfo) {
+            if (!downloadedInOrdedAllocation && inOrderExecInfo) {
                 if (auto &alloc = inOrderExecInfo->inOrderDependencyCounterAllocation; alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
                     csr->downloadAllocation(alloc);
+                    downloadedInOrdedAllocation = true;
                 }
+            }
+
+            if (downloadedAllocation && downloadedInOrdedAllocation) {
+                break;
             }
         }
     }
