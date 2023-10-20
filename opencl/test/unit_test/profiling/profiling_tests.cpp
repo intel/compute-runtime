@@ -625,6 +625,50 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhen
     event.timeStampNode = nullptr;
 }
 
+TEST_F(EventProfilingTests, givenSubmitTimeMuchGreaterThanQueueTimeWhenCalculatingStartTimeThenItIsGreaterThanSubmitTime) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
+    cmdQ.setProfilingEnabled();
+
+    HwTimeStamps timestamp{};
+    timestamp.globalStartTS = 10;
+    timestamp.contextStartTS = 20;
+    timestamp.globalEndTS = 80;
+    timestamp.contextEndTS = 56;
+
+    MockTagNode<HwTimeStamps> timestampNode{};
+    timestampNode.tagForCpuAccess = &timestamp;
+
+    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+    cl_event clEvent = &event;
+
+    event.queueTimeStamp.cpuTimeinNS = 1;
+    event.queueTimeStamp.gpuTimeStamp = 2;
+
+    event.submitTimeStamp.cpuTimeinNS = (1ull << 33) + 3;
+    event.submitTimeStamp.gpuTimeStamp = (1ull << 33) + 4;
+
+    event.timeStampNode = &timestampNode;
+
+    cl_ulong queued = 0ul;
+    cl_ulong submited = 0ul;
+    cl_ulong start = 0ul;
+    cl_ulong end = 0ul;
+
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submited, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
+
+    EXPECT_LT(0ull, queued);
+    EXPECT_LT(queued, submited);
+    EXPECT_LT(submited, start);
+    EXPECT_LT(start, end);
+
+    event.timeStampNode = nullptr;
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenStartTimeStampLTQueueTimeStampThenIncreaseStartTimeStamp) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ReturnRawGpuTimestamps.set(1);

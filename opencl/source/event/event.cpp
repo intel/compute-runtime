@@ -370,17 +370,17 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     auto &device = this->cmdQueue->getDevice();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto frequency = device.getDeviceInfo().profilingTimerResolution;
-    auto gpuQueueTimeStamp = gfxCoreHelper.getGpuTimeStampInNS(queueTimeStamp.gpuTimeStamp, frequency);
+    auto gpuSubmitTimeStamp = gfxCoreHelper.getGpuTimeStampInNS(submitTimeStamp.gpuTimeStamp, frequency);
 
     if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency);
-        while (startTimeStamp < gpuQueueTimeStamp) {
+        while (startTimeStamp < gpuSubmitTimeStamp) {
             startTimeStamp += static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * frequency);
         }
     } else {
-        int64_t c0 = queueTimeStamp.cpuTimeinNS - gpuQueueTimeStamp;
+        int64_t c0 = submitTimeStamp.cpuTimeinNS - gpuSubmitTimeStamp;
         startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
-        if (startTimeStamp < queueTimeStamp.cpuTimeinNS) {
+        if (startTimeStamp < submitTimeStamp.cpuTimeinNS) {
             c0 += static_cast<uint64_t>((1ULL << (gfxCoreHelper.getGlobalTimeStampBits())) * frequency);
             startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
         }

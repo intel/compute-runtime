@@ -825,6 +825,10 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
     timestamp.globalStartTS = 2;
     event.queueTimeStamp.gpuTimeStamp = 1;
     event.queueTimeStamp.cpuTimeinNS = 100;
+
+    event.queueTimeStamp.gpuTimeStamp = 2;
+    event.queueTimeStamp.cpuTimeinNS = 200;
+
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
     event.timeStampNode = &timestampNode;
@@ -834,7 +838,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
 
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto c0 = event.queueTimeStamp.cpuTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(event.queueTimeStamp.gpuTimeStamp, resolution);
+    auto c0 = event.submitTimeStamp.cpuTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(event.submitTimeStamp.gpuTimeStamp, resolution);
     EXPECT_EQ(start, static_cast<uint64_t>(timestamp.globalStartTS * resolution) + c0);
 
     event.timeStampNode = nullptr;
@@ -883,8 +887,9 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
 
     HwTimeStamps timestamp{};
-    timestamp.globalStartTS = 1;
+    timestamp.globalStartTS = 3;
     event.queueTimeStamp.gpuTimeStamp = 2;
+    event.submitTimeStamp.gpuTimeStamp = 4;
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
     event.timeStampNode = &timestampNode;
@@ -894,7 +899,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
 
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
-    auto refStartTime = static_cast<uint64_t>(timestamp.globalStartTS * resolution + (1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
+    auto refStartTime = static_cast<uint64_t>(timestamp.globalStartTS * resolution) + static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
     EXPECT_EQ(start, refStartTime);
 
     event.timeStampNode = nullptr;
