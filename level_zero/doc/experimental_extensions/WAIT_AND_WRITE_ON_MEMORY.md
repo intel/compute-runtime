@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2022 Intel Corporation
+Copyright (C) 2022-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 * [Overview](#Overview)
 * [Definitions](#Definitions)
-* [Known Issues and Limitations](#Known-Issues-and-Limitations)
 
 # Overview
 
@@ -101,8 +100,3 @@ zex_write_to_mem_desc_t writeDesc = {};
 uint32_t signalData = 0x2;
 pfnWriteMemFn(cmdList, &writeDesc, zeBuffer, signalData);
 ```
-
-# Known Issues and Limitations
-
-- Hangs may be seen when using BCS for appending memory copy with IPC buffers and if waitOnMemory is performed on any queue (CCS or BCS).
-    - Workaround is to use a barrier after WaitOnMemory and before any subsequent action.
