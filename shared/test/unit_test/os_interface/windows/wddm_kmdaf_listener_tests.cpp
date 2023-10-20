@@ -85,8 +85,8 @@ TEST_F(WddmKmDafListenerTest, givenInvalidAllocationWhenLockResourceFailsThenKmD
     EXPECT_FALSE(wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.ftrKmdDaf);
     EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAdapter);
     EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hDevice);
-    EXPECT_EQ(0, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAllocation);
-    EXPECT_EQ(0, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.pLockFlags);
+    EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAllocation);
+    EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.pLockFlags);
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafListenerNotifyUnlockIsFedWithCorrectParams) {

@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/memory_manager/memory_banks.h"
 
-#include "aub_mapper.h"
+#include "aub_mapper_common.h"
 #include "aubstream/hardware_context.h"
 
 namespace aub_stream {

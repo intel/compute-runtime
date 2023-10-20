@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <winsock.h>
+#include "shared/source/os_interface/windows/windows_wrapper.h"

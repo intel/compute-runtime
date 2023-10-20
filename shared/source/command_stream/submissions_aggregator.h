@@ -61,6 +61,7 @@ struct BatchBuffer {
 
 struct CommandBuffer : public IDNode<CommandBuffer> {
     CommandBuffer(Device &device);
+    ~CommandBuffer() override;
     ResidencyContainer surfaces;
     BatchBuffer batchBuffer;
     void *batchBufferEndLocation = nullptr;

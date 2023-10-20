@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/windows/environment_variables.h"
 
-extern uint32_t (*getEnvironmentVariableMock)(const char *name, char *outBuffer, uint32_t outBufferSize) = nullptr;
+uint32_t (*getEnvironmentVariableMock)(const char *name, char *outBuffer, uint32_t outBufferSize) = nullptr;
 
 uint32_t getEnvironmentVariable(const char *name, char *outBuffer, uint32_t outBufferSize) {
     if (getEnvironmentVariableMock == nullptr) {

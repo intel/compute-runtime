@@ -21,13 +21,13 @@ using namespace NEO;
 
 class OsLibraryBackup : public Windows::OsLibrary {
     using Type = decltype(Windows::OsLibrary::loadLibraryExA);
-    using BackupType = typename VariableBackup<Type>;
+    using BackupType = VariableBackup<Type>;
 
     using ModuleNameType = decltype(Windows::OsLibrary::getModuleFileNameA);
-    using ModuleNameBackupType = typename VariableBackup<ModuleNameType>;
+    using ModuleNameBackupType = VariableBackup<ModuleNameType>;
 
     using SystemDirectoryType = decltype(Windows::OsLibrary::getSystemDirectoryA);
-    using SystemDirectoryBackupType = typename VariableBackup<SystemDirectoryType>;
+    using SystemDirectoryBackupType = VariableBackup<SystemDirectoryType>;
 
     struct Backup {
         std::unique_ptr<BackupType> bkp1 = nullptr;

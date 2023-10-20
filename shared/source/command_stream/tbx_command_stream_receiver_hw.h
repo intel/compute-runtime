@@ -12,8 +12,6 @@
 #include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/page_table.h"
 
-#include "aub_mapper.h"
-
 #include <set>
 
 namespace NEO {

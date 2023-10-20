@@ -16,7 +16,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "aub_mapper.h"
+#include "aub_mapper_common.h"
 
 namespace Os {
 extern const char *fileSeparator;

@@ -125,7 +125,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         directSubmissionControllerStarted = true;
     }
     int flushCalledCount = 0;
-    std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
+    std::unique_ptr<CommandBuffer> recordedCommandBuffer;
 
     bool callParentInitDirectSubmission = true;
     bool initBlitterDirectSubmission = false;

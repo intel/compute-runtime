@@ -73,7 +73,7 @@ class Timer::TimerImpl {
 };
 
 LARGE_INTEGER Timer::TimerImpl::mFrequency = {
-    {{0}},
+    {},
 };
 
 Timer::Timer() {

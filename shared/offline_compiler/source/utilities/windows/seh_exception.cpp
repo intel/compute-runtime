@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@
 #include <psapi.h>
 
 std::string SehException::getExceptionDescription(unsigned int code) {
-    switch (code) {
+    switch (static_cast<long>(code)) {
     case EXCEPTION_ACCESS_VIOLATION:
         return "Access violation";
     case EXCEPTION_DATATYPE_MISALIGNMENT:
@@ -44,7 +44,7 @@ int SehException::filter(unsigned int code, struct _EXCEPTION_POINTERS *ep) {
 
     printf("EXCEPTION: %s\n", SehException::getExceptionDescription(code).c_str());
 
-    if (code != EXCEPTION_STACK_OVERFLOW) {
+    if (static_cast<long>(code) != EXCEPTION_STACK_OVERFLOW) {
         std::string callstack;
 
         SehException::getCallStack(code, ep, callstack);

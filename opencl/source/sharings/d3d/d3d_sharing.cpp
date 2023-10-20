@@ -14,9 +14,9 @@
 
 using namespace NEO;
 
-template class D3DSharing<D3DTypesHelper::D3D9>;
-template class D3DSharing<D3DTypesHelper::D3D10>;
-template class D3DSharing<D3DTypesHelper::D3D11>;
+template class NEO::D3DSharing<D3DTypesHelper::D3D9>;
+template class NEO::D3DSharing<D3DTypesHelper::D3D10>;
+template class NEO::D3DSharing<D3DTypesHelper::D3D11>;
 
 template <typename D3D>
 D3DSharing<D3D>::D3DSharing(Context *context, D3DResource *resource, D3DResource *resourceStaging, unsigned int subresource, bool sharedResource)
@@ -75,7 +75,7 @@ void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, ImagePl
 }
 
 template <typename D3D>
-const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported) {
+const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported) {
     ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, supportsOcl20Features);
     for (auto &format : formats) {
         if (gmmFormat == format.surfaceFormat.gmmSurfaceFormat) {

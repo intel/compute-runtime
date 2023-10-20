@@ -934,7 +934,7 @@ TEST_F(WddmResidencyControllerLockTest, givenPeriodicTrimWhenTrimmingResidencyTh
     trimNotification.NumBytesToTrim = 0;
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
-    EXPECT_EQ(1, residencyController->acquireLockCallCount);
+    EXPECT_EQ(1u, residencyController->acquireLockCallCount);
 }
 
 TEST_F(WddmResidencyControllerLockTest, givenTrimToBudgetWhenTrimmingResidencyThenLockOnce) {
@@ -943,7 +943,7 @@ TEST_F(WddmResidencyControllerLockTest, givenTrimToBudgetWhenTrimmingResidencyTh
     trimNotification.NumBytesToTrim = 0;
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
-    EXPECT_EQ(1, residencyController->acquireLockCallCount);
+    EXPECT_EQ(1u, residencyController->acquireLockCallCount);
 }
 
 TEST_F(WddmResidencyControllerLockTest, givenPeriodicTrimAndTrimToBudgetWhenTrimmingResidencyThenLockTwice) {
@@ -953,7 +953,7 @@ TEST_F(WddmResidencyControllerLockTest, givenPeriodicTrimAndTrimToBudgetWhenTrim
     trimNotification.NumBytesToTrim = 0;
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
-    EXPECT_EQ(2, residencyController->acquireLockCallCount);
+    EXPECT_EQ(2u, residencyController->acquireLockCallCount);
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentResidencyAllocationsThenAllAllocationsAreMarked) {
@@ -1099,8 +1099,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenAllocationPackPassedWhenCal
     EXPECT_TRUE(result);
     EXPECT_EQ(2 * EngineLimits::maxHandleCount, wddm->makeResidentResult.handleCount);
     EXPECT_EQ(false, wddm->makeResidentResult.cantTrimFurther);
-    EXPECT_EQ(1, wddm->makeResidentResult.handlePack[0 * EngineLimits::maxHandleCount]);
-    EXPECT_EQ(2, wddm->makeResidentResult.handlePack[1 * EngineLimits::maxHandleCount]);
+    EXPECT_EQ(1u, wddm->makeResidentResult.handlePack[0 * EngineLimits::maxHandleCount]);
+    EXPECT_EQ(2u, wddm->makeResidentResult.handlePack[1 * EngineLimits::maxHandleCount]);
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
 }
 
@@ -1139,7 +1139,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 }
 
 struct WddmMakeResidentMock : public WddmMock {
-    WddmMakeResidentMock::WddmMakeResidentMock(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment){};
+    WddmMakeResidentMock(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment){};
 
     bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override {
         *numberOfBytesToTrim = makeResidentNumberOfBytesToTrim;

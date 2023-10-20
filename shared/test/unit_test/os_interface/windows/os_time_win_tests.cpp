@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-LARGE_INTEGER valueToSet = {0};
+LARGE_INTEGER valueToSet = {};
 
 BOOL WINAPI QueryPerformanceCounterMock(
     _Out_ LARGE_INTEGER *lpPerformanceCount) {
@@ -140,7 +140,7 @@ TEST_F(OSTimeWinTest, givenOsTimeWinWhenGetCpuRawTimestampIsCalledThenReturnsNon
 
 TEST_F(OSTimeWinTest, givenHighValueOfCpuTimestampWhenItIsObtainedThenItHasProperValue) {
     osTime->overrideQueryPerformanceCounterFunction(QueryPerformanceCounterMock);
-    LARGE_INTEGER frequency = {0};
+    LARGE_INTEGER frequency = {};
     frequency.QuadPart = 190457;
     osTime->setFrequency(frequency);
     valueToSet.QuadPart = 700894514854;
@@ -159,7 +159,7 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuTimeThenReturnsSuccess) {
 }
 
 TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetGpuCpuTimeThenReturnsSuccess) {
-    TimeStampData gpuCpuTime = {0};
+    TimeStampData gpuCpuTime = {};
     auto osTime(OSTime::create(nullptr));
     auto success = osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_TRUE(success);
@@ -171,8 +171,8 @@ TEST(OSTimeWinTests, givenOSInterfaceWhenGetGpuCpuTimeThenReturnsSuccess) {
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto wddm = new WddmMock(rootDeviceEnvironment);
-    TimeStampData gpuCpuTime01 = {0};
-    TimeStampData gpuCpuTime02 = {0};
+    TimeStampData gpuCpuTime01 = {};
+    TimeStampData gpuCpuTime02 = {};
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
     osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     auto osTime = OSTime::create(osInterface.get());

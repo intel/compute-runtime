@@ -505,7 +505,8 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenCreate
 
     const char *binary = "12345";
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(strlen(binary));
-    cache.createUniqueTempFileAndWriteData("somePath\\cl_cache\\TMP.XXXXXX", binary, strlen(binary));
+    char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
+    cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
 
     EXPECT_EQ(0, strcmp(SysCalls::writeFileBuffer, binary));
     EXPECT_EQ(1u, SysCalls::getTempFileNameACalled);
@@ -525,7 +526,8 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenGetTem
 
     const char *binary = "12345";
     ::testing::internal::CaptureStderr();
-    cache.createUniqueTempFileAndWriteData("somePath\\cl_cache\\TMP.XXXXXX", binary, strlen(binary));
+    char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
+    cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
     auto capturedStderr = ::testing::internal::GetCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Creating temporary file name failed! error code:");
@@ -548,7 +550,8 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenCreate
 
     const char *binary = "12345";
     ::testing::internal::CaptureStderr();
-    cache.createUniqueTempFileAndWriteData("somePath\\cl_cache\\TMP.XXXXXX", binary, strlen(binary));
+    char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
+    cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
     auto capturedStderr = ::testing::internal::GetCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Creating temporary file failed! error code:");
@@ -572,7 +575,8 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenWriteF
 
     const char *binary = "12345";
     ::testing::internal::CaptureStderr();
-    cache.createUniqueTempFileAndWriteData("somePath\\cl_cache\\TMP.XXXXXX", binary, strlen(binary));
+    char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
+    cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
     auto capturedStderr = ::testing::internal::GetCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Writing to temporary file failed! error code:");
@@ -597,7 +601,8 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenWriteF
     const char *binary = "12345";
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(strlen(binary)) - 1;
     ::testing::internal::CaptureStderr();
-    cache.createUniqueTempFileAndWriteData("somePath\\cl_cache\\TMP.XXXXXX", binary, strlen(binary));
+    char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
+    cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
     auto capturedStderr = ::testing::internal::GetCapturedStderr();
 
     std::stringstream expectedStderrSubstr;

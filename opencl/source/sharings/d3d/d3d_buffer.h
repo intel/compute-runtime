@@ -60,6 +60,6 @@ class D3DBuffer : public D3DSharing<D3D> {
 
   protected:
     D3DBuffer(Context *context, D3DBufferObj *d3dBuffer, D3DBufferObj *bufferStaging, bool sharedResource)
-        : D3DSharing(context, d3dBuffer, bufferStaging, 0, sharedResource){};
+        : D3DSharing<D3D>(context, d3dBuffer, bufferStaging, 0, sharedResource){};
 };
 } // namespace NEO

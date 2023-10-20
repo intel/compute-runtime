@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,9 +154,9 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
         uint32_t seqNo = 0;
         union {
             READ_EVENT_PARAMS_BUFFER eventParamsBuffer;
-            uint8_t rawBytes[READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {0};
+            uint8_t rawBytes[READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {};
         } eventParamsBuffer;
-    } eventQueue[10] = {0};
+    } eventQueue[10] = {};
 
     struct {
         EUDBG_L0DBGUMD_ESCAPE_RETURN_TYPE escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
@@ -166,7 +166,7 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
 
     struct {
         uint32_t allocDataSize = 0;
-        uint32_t allocData[100] = {0};
+        uint32_t allocData[100] = {};
     } registerAllocationTypePassedParams;
 
     struct {
@@ -179,19 +179,19 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
         NTSTATUS ntStatus = STATUS_SUCCESS;
     } moduleCreateNotificationPassedParam;
 
-    DBGUMD_ACTION_ACKNOWLEDGE_EVENT_PARAMS acknowledgeEventPassedParam = {0};
+    DBGUMD_ACTION_ACKNOWLEDGE_EVENT_PARAMS acknowledgeEventPassedParam = {};
 
     bool debugAttachAvailable = true;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     EUDBG_L0DBGUMD_ESCAPE_RETURN_TYPE escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
 
     uint64_t debugHandle = 0x0DEB0DEB;
-    uint32_t dbgUmdEscapeActionCalled[DBGUMD_ACTION_MAX] = {0};
+    uint32_t dbgUmdEscapeActionCalled[DBGUMD_ACTION_MAX] = {};
     uint32_t registerAllocationTypeCalled = 0;
     uint32_t createDebugDataCalled = 0;
     uint32_t moduleCreateNotifyCalled = 0;
     static constexpr size_t bufferSize = 16;
-    uint8_t testBuffer[bufferSize] = {0};
+    uint8_t testBuffer[bufferSize] = {};
     uint64_t mockGpuVa = 0x12345678;
     void *srcReadBuffer = nullptr;
     uint64_t srcReadBufferBaseAddress = 0;

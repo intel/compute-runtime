@@ -7,10 +7,23 @@
 
 #pragma once
 #if _WIN32
-#include <windows.h>
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-pragma-intrinsic"
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#pragma clang diagnostic ignored "-Wignored-attributes"
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#define UNICODE
+#endif
+
+#include <Windows.h>
 
 #include <ShlObj.h>
 #include <winternl.h>
+
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 
 #pragma warning(push)
 #pragma warning(disable : 4005)

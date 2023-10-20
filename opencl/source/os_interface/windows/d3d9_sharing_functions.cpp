@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,8 @@
 
 using namespace NEO;
 
-template class D3DSharingFunctions<D3DTypesHelper::D3D9>;
+template class NEO::D3DSharingFunctions<D3DTypesHelper::D3D9>;
+template <>
 const uint32_t D3DSharingFunctions<D3DTypesHelper::D3D9>::sharingId = SharingType::D3D9_SHARING;
 
 template <>
@@ -60,6 +61,7 @@ bool D3DSharingFunctions<D3DTypesHelper::D3D9>::checkFormatSupport(DXGI_FORMAT f
     return false;
 }
 
+template <>
 cl_int D3DSharingFunctions<D3DTypesHelper::D3D9>::validateFormatSupport(DXGI_FORMAT format, cl_mem_object_type type) {
     return CL_SUCCESS;
 }

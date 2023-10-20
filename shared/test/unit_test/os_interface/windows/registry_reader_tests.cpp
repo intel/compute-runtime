@@ -68,14 +68,14 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenItIsCreatedWithRegKeySpecified
 }
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentVariableExistsThenReturnCorrectValue) {
-    char *envVar = "TestedEnvironmentVariable";
+    const char *envVar = "TestedEnvironmentVariable";
     std::string value = "defaultValue";
     TestedRegistryReader registryReader("");
     EXPECT_EQ("TestedEnvironmentVariableValue", registryReader.getSetting(envVar, value));
 }
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentVariableExistsThenReturnCorrectValuePrefix) {
-    char *envVar = "TestedEnvironmentVariable";
+    const char *envVar = "TestedEnvironmentVariable";
     std::string value = "defaultValue";
     TestedRegistryReader registryReader("");
     DebugVarPrefix type = DebugVarPrefix::None;
@@ -84,7 +84,7 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentVariableExistsThenR
 }
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenPrefixedEnvironmentVariableExistsThenReturnCorrectValue) {
-    char *envVar = "TestedEnvironmentVariableWithPrefix";
+    const char *envVar = "TestedEnvironmentVariableWithPrefix";
     std::string value = "defaultValue";
     TestedRegistryReader registryReader("");
     DebugVarPrefix type = DebugVarPrefix::None;
@@ -93,14 +93,14 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenPrefixedEnvironmentVariableExi
 }
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentIntVariableExistsThenReturnCorrectValue) {
-    char *envVar = "TestedEnvironmentIntVariable";
+    const char *envVar = "TestedEnvironmentIntVariable";
     int32_t value = -1;
     TestedRegistryReader registryReader("");
     EXPECT_EQ(1234, registryReader.getSetting(envVar, value));
 }
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentIntVariableExistsThenReturnCorrectValuePrefix) {
-    char *envVar = "TestedEnvironmentIntVariable";
+    const char *envVar = "TestedEnvironmentIntVariable";
     int32_t value = -1;
     TestedRegistryReader registryReader("");
     DebugVarPrefix type = DebugVarPrefix::None;
@@ -109,7 +109,7 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentIntVariableExistsTh
 }
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenPrefixedEnvironmentIntVariableExistsThenReturnCorrectValue) {
-    char *envVar = "TestedEnvironmentIntVariableWithPrefix";
+    const char *envVar = "TestedEnvironmentIntVariableWithPrefix";
     int32_t value = -1;
     TestedRegistryReader registryReader("");
     DebugVarPrefix type = DebugVarPrefix::None;
@@ -155,7 +155,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySu
     SysCalls::regOpenKeySuccessCount = 1u;
     SysCalls::regQueryValueSuccessCount = 1u;
 
-    EXPECT_EQ(1u, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(1, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValuePrefix) {
@@ -163,7 +163,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySu
     SysCalls::regQueryValueSuccessCount = 1u;
 
     DebugVarPrefix type = DebugVarPrefix::None;
-    EXPECT_EQ(1u, registryReader.getSetting("settingSourceInt", 0, type));
+    EXPECT_EQ(1, registryReader.getSetting("settingSourceInt", 0, type));
     EXPECT_EQ(DebugVarPrefix::None, type);
 }
 
@@ -171,7 +171,8 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenInt64DebugKeyWhenReadFromRegistry
     SysCalls::regOpenKeySuccessCount = 1u;
     SysCalls::regQueryValueSuccessCount = 1u;
 
-    EXPECT_EQ(0xeeeeeeee, registryReader.getSetting("settingSourceInt64", 0));
+    int expectedValue = 0xeeeeeeee;
+    EXPECT_EQ(expectedValue, registryReader.getSetting("settingSourceInt64", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenInt64DebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValuePrefix) {
@@ -179,7 +180,8 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenInt64DebugKeyWhenReadFromRegistry
     SysCalls::regQueryValueSuccessCount = 1u;
 
     DebugVarPrefix type = DebugVarPrefix::None;
-    EXPECT_EQ(0xeeeeeeee, registryReader.getSetting("settingSourceInt64", 0, type));
+    int expectedValue = 0xeeeeeeee;
+    EXPECT_EQ(expectedValue, registryReader.getSetting("settingSourceInt64", 0, type));
     EXPECT_EQ(DebugVarPrefix::None, type);
 }
 
@@ -187,7 +189,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThe
     SysCalls::regOpenKeySuccessCount = 1u;
     SysCalls::regQueryValueSuccessCount = 0u;
 
-    EXPECT_EQ(2u, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThenObtainValueFromEnvPrefix) {
@@ -195,7 +197,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThe
     SysCalls::regQueryValueSuccessCount = 0u;
 
     DebugVarPrefix type = DebugVarPrefix::None;
-    EXPECT_EQ(2u, registryReader.getSetting("settingSourceInt", 0, type));
+    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0, type));
     EXPECT_EQ(DebugVarPrefix::None, type);
 }
 
@@ -203,7 +205,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenOb
     SysCalls::regOpenKeySuccessCount = 0u;
     SysCalls::regQueryValueSuccessCount = 0u;
 
-    EXPECT_EQ(2u, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenObtainValueFromEnvPrefix) {
@@ -211,7 +213,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenOb
     SysCalls::regQueryValueSuccessCount = 0u;
 
     DebugVarPrefix type = DebugVarPrefix::None;
-    EXPECT_EQ(2u, registryReader.getSetting("settingSourceInt", 0, type));
+    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0, type));
     EXPECT_EQ(DebugVarPrefix::None, type);
 }
 

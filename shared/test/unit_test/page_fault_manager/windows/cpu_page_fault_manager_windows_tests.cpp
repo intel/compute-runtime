@@ -5,12 +5,12 @@
  *
  */
 
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/page_fault_manager/windows/cpu_page_fault_manager_windows.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
-#include <windows.h>
 
 using namespace NEO;
 

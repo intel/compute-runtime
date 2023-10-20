@@ -25,7 +25,7 @@ std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device)
 
     counter->clientData.Windows.Adapter = reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getAdapter()));
     counter->clientData.Windows.Device = reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getDeviceHandle()));
-    counter->clientData.Windows.Escape = wddm->getEscapeHandle();
+    counter->clientData.Windows.Escape = reinterpret_cast<void *>(wddm->getEscapeHandle());
     counter->clientData.Windows.KmdInstrumentationEnabled = device->getHardwareInfo().capabilityTable.instrumentationEnabled;
     counter->contextData.ClientData = &counter->clientData;
     counter->clientType.Gen = static_cast<MetricsLibraryApi::ClientGen>(gfxCoreHelper.getMetricsLibraryGenId());

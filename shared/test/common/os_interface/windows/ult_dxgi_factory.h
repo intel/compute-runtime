@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 namespace NEO {
 class UltIDXGIAdapter1 : public IDXGIAdapter1 {
   public:
+    virtual ~UltIDXGIAdapter1() = default;
     const static wchar_t *description;
     // IDXGIAdapter1
     HRESULT STDMETHODCALLTYPE GetDesc1(
@@ -96,6 +97,7 @@ class UltIDXGIAdapter1 : public IDXGIAdapter1 {
 extern uint32_t numRootDevicesToEnum;
 class UltIDXGIFactory1 : public IDXGIFactory1 {
   public:
+    virtual ~UltIDXGIFactory1() = default;
     HRESULT STDMETHODCALLTYPE EnumAdapters1(
         UINT Adapter,
         IDXGIAdapter1 **ppAdapter) {

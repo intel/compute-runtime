@@ -7,9 +7,8 @@
 
 #pragma once
 
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
-
-#include <windows.h>
 
 #include <functional>
 

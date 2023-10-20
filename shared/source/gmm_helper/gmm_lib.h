@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,19 @@
 #endif // !WDDM_LINUX
 #endif // !_WIN32
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonportable-include-path"
+#pragma clang diagnostic ignored "-Wmissing-braces"
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+
+#endif
+
 #include "GmmLib.h"
+
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 
 #ifdef RESTORE_WDDM_LINUX
 #ifdef RESTORE_LHDM

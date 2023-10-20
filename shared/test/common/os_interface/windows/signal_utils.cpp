@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #include "shared/test/common/libult/signal_utils.h"
 
+#include "shared/source/os_interface/windows/windows_wrapper.h"
+
 #include "gtest/gtest.h"
-#include <windows.h>
 
 #include <io.h>
 #include <signal.h>

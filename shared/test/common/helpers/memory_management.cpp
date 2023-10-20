@@ -23,9 +23,18 @@
 #include <dlfcn.h>
 #include <execinfo.h>
 #elif defined(_WIN32)
-#include <windows.h>
+#include "shared/source/os_interface/windows/windows_wrapper.h"
+
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#endif
 
 #include <DbgHelp.h>
+
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 #endif
 
 namespace MemoryManagement {

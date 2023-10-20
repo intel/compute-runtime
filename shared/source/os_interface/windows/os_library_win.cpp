@@ -96,7 +96,7 @@ bool OsLibrary::isLoaded() {
 }
 
 void *OsLibrary::getProcAddress(const std::string &procName) {
-    return ::GetProcAddress(this->handle, procName.c_str());
+    return reinterpret_cast<void *>(::GetProcAddress(this->handle, procName.c_str()));
 }
 
 std::string OsLibrary::getFullPath() {

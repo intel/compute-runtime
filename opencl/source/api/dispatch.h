@@ -11,6 +11,14 @@
 #include "CL/cl_ext.h"
 #include "CL/cl_gl.h"
 #if defined(_WIN32)
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-pragma-intrinsic"
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#pragma clang diagnostic ignored "-Wignored-attributes"
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#pragma clang diagnostic ignored "-Wcomment"
+#endif
 #include <d3d10_1.h>
 
 #include "CL/cl_d3d10.h"
@@ -20,6 +28,10 @@
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include "CL/cl_dx9_media_sharing.h"
+
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 #else
 #define CL_CONTEXT_D3D10_DEVICE_KHR 0x4014
 #define CL_CONTEXT_D3D10_PREFER_SHARED_RESOURCES_KHR 0x402C

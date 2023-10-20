@@ -7,9 +7,8 @@
 
 #pragma once
 
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/debug_settings_reader.h"
-
-#include <windows.h>
 
 #include <stdint.h>
 #include <string>

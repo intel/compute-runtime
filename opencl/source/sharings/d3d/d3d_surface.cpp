@@ -26,8 +26,8 @@ using namespace NEO;
 
 D3DSurface::D3DSurface(Context *context, cl_dx9_surface_info_khr *surfaceInfo, D3D9Surface *surfaceStaging, cl_uint plane,
                        ImagePlane imagePlane, cl_dx9_media_adapter_type_khr adapterType, bool sharedResource, bool lockable)
-    : D3DSharing(context, surfaceInfo->resource, surfaceStaging, plane, sharedResource), adapterType(adapterType),
-      surfaceInfo(*surfaceInfo), lockable(lockable), plane(plane), imagePlane(imagePlane), d3d9Surface(surfaceInfo->resource),
+    : D3DSharing(context, surfaceInfo->resource, surfaceStaging, plane, sharedResource), lockable(lockable), adapterType(adapterType),
+      surfaceInfo(*surfaceInfo), plane(plane), imagePlane(imagePlane), d3d9Surface(surfaceInfo->resource),
       d3d9SurfaceStaging(surfaceStaging) {
     if (sharingFunctions) {
         resourceDevice = sharingFunctions->getDevice();
@@ -237,8 +237,9 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
     }
 
     imgFormat = element->second;
-    switch (d3dFormat) {
-    case static_cast<D3DFORMAT>(MAKEFOURCC('N', 'V', '1', '2')):
+    int d3dFormatValue = d3dFormat;
+    switch (d3dFormatValue) {
+    case MAKEFOURCC('N', 'V', '1', '2'):
         switch (plane) {
         case 0:
             imgFormat.image_channel_order = CL_R;
@@ -253,7 +254,7 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
             return CL_INVALID_VALUE;
         }
 
-    case static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2')):
+    case MAKEFOURCC('Y', 'V', '1', '2'):
         switch (plane) {
         case 0:
             imagePlane = ImagePlane::PLANE_Y;

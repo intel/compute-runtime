@@ -432,8 +432,8 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenCreateResou
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
     auto passedCreateAllocation = getMockAllocationFcn();
-    EXPECT_EQ(TRUE, passedCreateAllocation->Flags.CreateShared);
-    EXPECT_EQ(TRUE, passedCreateAllocation->Flags.CreateResource);
+    EXPECT_EQ(1u, passedCreateAllocation->Flags.CreateShared);
+    EXPECT_EQ(1u, passedCreateAllocation->Flags.CreateResource);
     wddm->destroyAllocation(&allocation, nullptr);
 }
 

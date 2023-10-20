@@ -31,7 +31,7 @@ class DxgiAdapterFactory : public AdapterFactory {
         return nullptr != adapterFactory;
     }
 
-    uint32_t getNumAdaptersInSnapshot() {
+    uint32_t getNumAdaptersInSnapshot() override {
         return static_cast<uint32_t>(adaptersInSnapshot.size());
     }
 

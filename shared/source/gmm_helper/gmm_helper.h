@@ -6,7 +6,6 @@
  */
 
 #pragma once
-
 #include <memory>
 
 namespace NEO {

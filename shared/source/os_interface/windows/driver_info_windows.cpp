@@ -58,7 +58,7 @@ std::string DriverInfoWindows::getVersion(std::string defaultVersion) {
 };
 
 bool DriverInfoWindows::isCompatibleDriverStore() const {
-    auto toLowerAndUnifyDriverStore = [](std::string &input) -> std::string {
+    auto toLowerAndUnifyDriverStore = [](std::string input) -> std::string {
         std::transform(input.begin(), input.end(), input.begin(), [](unsigned char c) { return std::tolower(c); });
         auto hostDriverStorePos = input.find("\\hostdriverstore\\");
         if (hostDriverStorePos != std::string::npos) {

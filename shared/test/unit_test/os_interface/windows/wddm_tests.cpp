@@ -31,7 +31,7 @@ TEST_F(WddmTests, whenCreatingAllocation64kThenDoNotCreateResource) {
 
     EXPECT_TRUE(wddm->createAllocation(&gmm, handle));
     auto gdiParam = getMockAllocationFcn();
-    EXPECT_EQ(FALSE, gdiParam->Flags.CreateResource);
+    EXPECT_EQ(0u, gdiParam->Flags.CreateResource);
     EXPECT_TRUE(wddm->destroyAllocations(&handle, 1, 0));
 }
 

@@ -44,7 +44,7 @@ class SWTagsManager {
     unsigned int currentCallCount = 0;
     unsigned int getCurrentHeapOffset() { return currentHeapOffset; }
 
-  private:
+  protected:
     void allocateBXMLHeap(Device &device);
     void allocateSWTagHeap(Device &device);
 

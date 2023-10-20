@@ -38,7 +38,7 @@ bool PageFaultManagerWindows::checkFaultHandlerFromPageFaultManager() {
 
 void PageFaultManagerWindows::registerFaultHandler() {
     pageFaultHandler = [this](struct _EXCEPTION_POINTERS *exceptionInfo) {
-        if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
+        if (static_cast<long>(exceptionInfo->ExceptionRecord->ExceptionCode) == EXCEPTION_ACCESS_VIOLATION) {
             if (this->verifyPageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]))) {
                 // this is our fault that we serviced, continue app execution
                 return EXCEPTION_CONTINUE_EXECUTION;

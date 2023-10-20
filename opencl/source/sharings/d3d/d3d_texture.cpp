@@ -25,8 +25,8 @@
 
 using namespace NEO;
 
-template class D3DTexture<D3DTypesHelper::D3D10>;
-template class D3DTexture<D3DTypesHelper::D3D11>;
+template class NEO::D3DTexture<D3DTypesHelper::D3D10>;
+template class NEO::D3DTexture<D3DTypesHelper::D3D11>;
 
 template <typename D3D>
 Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_mem_flags flags, cl_uint subresource, cl_int *retCode) {

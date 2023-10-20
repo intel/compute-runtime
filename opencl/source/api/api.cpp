@@ -415,7 +415,7 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
     cl_int retVal = CL_SUCCESS;
     cl_context context = nullptr;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("properties", properties, "numDevices", numDevices, "cl_device_id", devices, "funcNotify", funcNotify, "userData", userData);
+    DBG_LOG_INPUTS("properties", properties, "numDevices", numDevices, "cl_device_id", devices, "funcNotify", reinterpret_cast<void *>(funcNotify), "userData", userData);
 
     do {
         if (devices == nullptr) {
@@ -471,7 +471,7 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
     TRACING_ENTER(ClCreateContextFromType, &properties, &deviceType, &funcNotify, &userData, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("properties", properties, "deviceType", deviceType, "funcNotify", funcNotify, "userData", userData);
+    DBG_LOG_INPUTS("properties", properties, "deviceType", deviceType, "funcNotify", reinterpret_cast<void *>(funcNotify), "userData", userData);
     cl_context context = nullptr;
 
     do {
@@ -1264,7 +1264,7 @@ cl_int CL_API_CALL clSetMemObjectDestructorCallback(cl_mem memobj,
     TRACING_ENTER(ClSetMemObjectDestructorCallback, &memobj, &funcNotify, &userData);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("memobj", memobj, "funcNotify", funcNotify, "userData", userData);
+    DBG_LOG_INPUTS("memobj", memobj, "funcNotify", reinterpret_cast<void *>(funcNotify), "userData", userData);
     retVal = validateObjects(memobj, (void *)funcNotify);
 
     if (CL_SUCCESS != retVal) {
@@ -1577,7 +1577,7 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
     TRACING_ENTER(ClBuildProgram, &program, &numDevices, &deviceList, &options, &funcNotify, &userData);
     cl_int retVal = CL_INVALID_PROGRAM;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("clProgram", program, "numDevices", numDevices, "cl_device_id", deviceList, "options", (options != nullptr) ? options : "", "funcNotify", funcNotify, "userData", userData);
+    DBG_LOG_INPUTS("clProgram", program, "numDevices", numDevices, "cl_device_id", deviceList, "options", (options != nullptr) ? options : "", "funcNotify", reinterpret_cast<void *>(funcNotify), "userData", userData);
     Program *pProgram = nullptr;
 
     retVal = validateObjects(withCastToInternal(program, &pProgram), Program::isValidCallback(funcNotify, userData));
@@ -3630,7 +3630,7 @@ cl_int CL_API_CALL clEnqueueNativeKernel(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueNativeKernel, &commandQueue, &userFunc, &args, &cbArgs, &numMemObjects, &memList, &argsMemLoc, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_OUT_OF_HOST_MEMORY;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("commandQueue", commandQueue, "userFunc", userFunc, "args", args,
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "userFunc", reinterpret_cast<void *>(userFunc), "args", args,
                    "cbArgs", cbArgs, "numMemObjects", numMemObjects, "memList", memList, "argsMemLoc", argsMemLoc,
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
@@ -4669,7 +4669,7 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numSvmPointers", numSvmPointers,
                    "svmPointers", svmPointers,
-                   "pfnFreeFunc", pfnFreeFunc,
+                   "pfnFreeFunc", reinterpret_cast<void *>(pfnFreeFunc),
                    "userData", userData,
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
@@ -5901,7 +5901,7 @@ cl_int CL_API_CALL clSetProgramReleaseCallback(cl_program program,
                                                void(CL_CALLBACK *pfnNotify)(cl_program /* program */, void * /* user_data */),
                                                void *userData) {
     DBG_LOG_INPUTS("program", program,
-                   "pfnNotify", pfnNotify,
+                   "pfnNotify", reinterpret_cast<void *>(pfnNotify),
                    "userData", userData);
 
     cl_int retVal = CL_SUCCESS;
@@ -6143,7 +6143,7 @@ cl_int CL_API_CALL clSetContextDestructorCallback(cl_context context,
                                                   void(CL_CALLBACK *pfnNotify)(cl_context /* context */, void * /* user_data */),
                                                   void *userData) {
     DBG_LOG_INPUTS("program", context,
-                   "pfnNotify", pfnNotify,
+                   "pfnNotify", reinterpret_cast<void *>(pfnNotify),
                    "userData", userData);
 
     cl_int retVal = CL_SUCCESS;

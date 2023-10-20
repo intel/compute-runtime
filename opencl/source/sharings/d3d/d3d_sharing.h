@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 
 #include <mutex>
 
-enum GMM_RESOURCE_FORMAT_ENUM;
 namespace NEO {
 enum class ImagePlane;
 class Context;
@@ -36,9 +35,9 @@ class D3DSharing : public SharingHandler {
     D3DResource **getResourceHandler() { return &resource; }
     void *getResourceStaging() { return resourceStaging; }
     unsigned int &getSubresource() { return subresource; }
-    typename D3DQuery *getQuery() { return d3dQuery; }
+    D3DQuery *getQuery() { return d3dQuery; }
     bool isSharedResource() { return sharedResource; }
-    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported);
+    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported);
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,6 @@ class D3DTexture : public D3DSharing<D3D> {
 
   protected:
     D3DTexture(Context *context, D3DResource *d3dTexture, cl_uint subresource, D3DResource *textureStaging, bool sharedResource)
-        : D3DSharing(context, d3dTexture, textureStaging, subresource, sharedResource){};
+        : D3DSharing<D3D>(context, d3dTexture, textureStaging, subresource, sharedResource){};
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,8 @@
 
 // gmm enforces include order
 // clang-format off
-#ifndef WDDM_LINUX
-#  include <windows.h>
-#  include "d3dkmthk.h"
-#else
-#  include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
+#ifdef WDDM_LINUX
 #  include "umKmInc/sharedata.h"
 #  ifdef LHDM
 #    undef LHDM

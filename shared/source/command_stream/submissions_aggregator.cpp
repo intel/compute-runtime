@@ -108,3 +108,5 @@ NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_
 NEO::CommandBuffer::CommandBuffer(Device &device) : device(device) {
     flushStamp.reset(new FlushStampTracker(false));
 }
+
+NEO::CommandBuffer::~CommandBuffer() = default;

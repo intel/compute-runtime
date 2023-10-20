@@ -12,7 +12,7 @@
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
-#include "aub_mapper.h"
+#include "aub_mapper_common.h"
 #include "config.h"
 #include "reg_configs_common.h"
 

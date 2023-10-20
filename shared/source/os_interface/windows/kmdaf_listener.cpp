@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/windows/kmdaf_listener.h"
 #pragma warning(push)           // save the current state
 #pragma warning(disable : 4189) // disable warning 4189 (unused local variable)
-#include "kmdaf.h"
+#include "kmDaf.h"
 #pragma warning(pop) // restore state.
 
 namespace NEO {

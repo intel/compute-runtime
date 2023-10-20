@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ TEST(DxCoreAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     EXPECT_TRUE(retreivedAdapterDesc);
     EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::Hardware, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
-    EXPECT_EQ(0x1234U, adapterDesc.luid.HighPart);
+    EXPECT_EQ(0x1234, adapterDesc.luid.HighPart);
     EXPECT_EQ(0U, adapterDesc.luid.LowPart);
     EXPECT_STREQ("Intel", adapterDesc.driverDescription.c_str());
 }
@@ -121,7 +121,7 @@ TEST(DxgiAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     EXPECT_TRUE(retreivedAdapterDesc);
     EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::Unknown, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
-    EXPECT_EQ(0x1234U, adapterDesc.luid.HighPart);
+    EXPECT_EQ(0x1234, adapterDesc.luid.HighPart);
     EXPECT_EQ(0U, adapterDesc.luid.LowPart);
     EXPECT_STREQ("Intel", adapterDesc.driverDescription.c_str());
 }

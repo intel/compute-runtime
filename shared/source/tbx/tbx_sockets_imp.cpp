@@ -10,9 +10,9 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 
-#ifdef WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
+#ifndef _WIN32_LEAN_AND_MEAN
+#define _WIN32_LEAN_AND_MEAN
 #endif
 typedef int socklen_t;
 #else
@@ -118,7 +118,7 @@ bool TbxSocketsImp::connectToServer(const std::string &hostNameOrIp, uint16_t po
         clientService.sin_family = AF_INET;
         clientService.sin_port = htons(port);
 
-        if (::connect(socket, (SOCKADDR *)&clientService, sizeof(clientService)) == INVALID_SOCKET) {
+        if (::connect(socket, (SOCKADDR *)&clientService, sizeof(clientService)) == static_cast<int>(INVALID_SOCKET)) {
             logErrorInfo("Failed to connect: ");
             cerrStream << "Is TBX server process running on host system [ " << hostNameOrIp.c_str()
                        << ", port " << port << "]?" << std::endl;
@@ -278,7 +278,7 @@ bool TbxSocketsImp::sendWriteData(const void *buffer, size_t sizeInBytes) {
 
     do {
         auto bytesSent = ::send(socket, &dataBuffer[totalSent], static_cast<int>(sizeInBytes - totalSent), 0);
-        if (bytesSent == 0 || bytesSent == INVALID_SOCKET) {
+        if (bytesSent == 0 || bytesSent == static_cast<int>(INVALID_SOCKET)) {
             logErrorInfo("Connection Closed.");
             return false;
         }
@@ -295,7 +295,7 @@ bool TbxSocketsImp::getResponseData(void *buffer, size_t sizeInBytes) {
 
     do {
         auto bytesRecv = ::recv(socket, &dataBuffer[totalRecv], static_cast<int>(sizeInBytes - totalRecv), 0);
-        if (bytesRecv == 0 || bytesRecv == INVALID_SOCKET) {
+        if (bytesRecv == 0 || bytesRecv == static_cast<int>(INVALID_SOCKET)) {
             logErrorInfo("Connection Closed.");
             return false;
         }
