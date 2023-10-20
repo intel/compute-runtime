@@ -889,7 +889,7 @@ double WddmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceI
     if (isLocalMemorySupported(rootDeviceIndex)) {
         return 0.98;
     }
-    return 0.8;
+    return 0.94;
 }
 
 AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {

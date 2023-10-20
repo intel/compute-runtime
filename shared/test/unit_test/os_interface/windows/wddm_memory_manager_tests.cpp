@@ -163,7 +163,7 @@ TEST_F(WddmMemoryManagerTests, GivenCompressedAndNotLockableAllocationTypeWhenAl
 TEST_F(WddmMemoryManagerTests, givenWddmMemoryManagerWithoutLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
     MockWddmMemoryManager memoryManager(true, false, *executionEnvironment);
     uint32_t rootDeviceIndex = 0u;
-    EXPECT_EQ(0.8, memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex));
+    EXPECT_EQ(0.94, memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex));
 }
 
 TEST_F(WddmMemoryManagerTests, givenWddmMemoryManagerWithLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
