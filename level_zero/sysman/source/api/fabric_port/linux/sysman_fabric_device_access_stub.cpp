@@ -64,7 +64,7 @@ ze_result_t FabricDeviceAccessStub::getPorts(std::vector<zes_fabric_port_id_t> &
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) {
+ze_result_t FabricDeviceAccessStub::getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) {
     return ZE_RESULT_SUCCESS;
 }
 
