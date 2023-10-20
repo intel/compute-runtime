@@ -4732,7 +4732,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryWhenGettingGlobalMemo
 TEST_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     uint32_t rootDeviceIndex = 0u;
-    EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.8);
+    EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.94);
 }
 
 struct DrmMemoryManagerToTestLockInLocalMemory : public TestedDrmMemoryManager {

@@ -83,7 +83,7 @@ There is no plan to provide the following features or support in the NEO driver 
 Actual available memory should be read from the driver capabilities using the dedicated API. The driver will report available memory depending on the type of graphics device
 (discrete vs. integrated) and operating system as follows:
 * discrete on Linux - 95% of device memory
-* integrated on Linux - 80% of system memory
+* integrated on Linux - 94% of system memory - 450 MB for internal resources
 * discrete on Windows - 98% of device memory
 * integrated on Windows - 94% of system memory - 450 MB for internal resources
 

@@ -1202,7 +1202,7 @@ double DrmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIn
     if (isLocalMemorySupported(rootDeviceIndex)) {
         return 0.95;
     }
-    return 0.8;
+    return 0.94;
 }
 
 AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
