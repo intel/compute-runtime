@@ -58,7 +58,7 @@ ze_result_t DebugSessionWindows::initialize() {
     wddm = connectedDevice->getOsInterface().getDriverModel()->as<NEO::Wddm>();
     UNRECOVERABLE_IF(wddm == nullptr);
 
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_ATTACH_DEBUGGER;
     escapeInfo.KmEuDbgL0EscapeInfo.AttachDebuggerParams.hAdapter = wddm->getAdapter();
     escapeInfo.KmEuDbgL0EscapeInfo.AttachDebuggerParams.ProcessId = processId;
@@ -98,7 +98,7 @@ bool DebugSessionWindows::closeConnection() {
 
     closeAsyncThread();
 
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_DETACH_DEBUGGER;
     escapeInfo.KmEuDbgL0EscapeInfo.DetachDebuggerParams.ProcessID = processId;
 
@@ -136,7 +136,7 @@ void *DebugSessionWindows::asyncThreadFunction(void *arg) {
 }
 
 NTSTATUS DebugSessionWindows::runEscape(KM_ESCAPE_INFO &escapeInfo) {
-    D3DKMT_ESCAPE escapeCommand = {0};
+    D3DKMT_ESCAPE escapeCommand = {};
 
     escapeInfo.Header.EscapeCode = GFX_ESCAPE_KMD;
     escapeInfo.Header.Size = sizeof(escapeInfo) - sizeof(escapeInfo.Header);
@@ -156,11 +156,11 @@ NTSTATUS DebugSessionWindows::runEscape(KM_ESCAPE_INFO &escapeInfo) {
 }
 
 ze_result_t DebugSessionWindows::readAndHandleEvent(uint64_t timeoutMs) {
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
 
     union {
         READ_EVENT_PARAMS_BUFFER eventParamsBuffer;
-        uint8_t rawBytes[8 * READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {0};
+        uint8_t rawBytes[8 * READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {};
     } eventParamsBuffer;
 
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_EVENT;
@@ -210,7 +210,7 @@ ze_result_t DebugSessionWindows::handleModuleCreateEvent(uint32_t seqNo, DBGUMD_
     {
         std::unique_lock<std::mutex> lock(asyncThreadMutex);
         if (moduleCreateParams.IsModuleCreate) {
-            Module module = {0};
+            Module module = {};
             module.cpuAddress = moduleCreateParams.hElfAddressPtr;
             module.gpuAddress = moduleCreateParams.LoadAddress;
             module.size = moduleCreateParams.ElfModulesize;
@@ -302,7 +302,7 @@ ze_result_t DebugSessionWindows::handleAllocationDataEvent(uint32_t seqNo, DBGUM
     for (uint32_t i = 0; i < allocationDataParams.NumOfDebugData; ++i) {
         auto dataType = allocationDebugData[i].DataType;
         PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_READ_ALLOCATION_DATA: DataType=%d DataSize=%d DataPointer=%p\n", dataType, allocationDebugData[i].DataSize, allocationDebugData[i].DataPointer);
-        NEO::WddmAllocation::RegistrationData registrationData = {0};
+        NEO::WddmAllocation::RegistrationData registrationData = {};
         auto result = readAllocationDebugData(seqNo, allocationDebugData[i].DataPointer, &registrationData, sizeof(registrationData));
         if (result != ZE_RESULT_SUCCESS) {
             PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_ALLOCATION_DATA - Fail!\n");
@@ -350,7 +350,7 @@ ze_result_t DebugSessionWindows::handleDeviceCreateDestroyEvent(DBGUMD_READ_EVEN
 }
 
 ze_result_t DebugSessionWindows::readAllocationDebugData(uint32_t seqNo, uint64_t umdDataBufferPtr, void *outBuf, size_t outBufSize) {
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
 
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_ALLOCATION_DATA;
     escapeInfo.KmEuDbgL0EscapeInfo.ReadAdditionalAllocDataParams.EventSeqNo = seqNo;
@@ -397,7 +397,7 @@ ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CR
 
 ze_result_t DebugSessionWindows::acknowledgeEventImp(uint32_t seqNo, uint32_t eventType) {
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ACKNOWLEDGE_EVENT: seqNo: %d eventType: %d\n", seqNo, eventType);
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_ACKNOWLEDGE_EVENT;
     escapeInfo.KmEuDbgL0EscapeInfo.AckEventParams.EventSeqNo = seqNo;
     escapeInfo.KmEuDbgL0EscapeInfo.AckEventParams.ReadEventType = eventType;
@@ -452,7 +452,7 @@ ze_result_t DebugSessionWindows::translateEscapeReturnStatusToZeResult(uint32_t 
 
 ze_result_t DebugSessionWindows::readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
 
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_UMD_MEMORY;
     escapeInfo.KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.hElfHandle = desc->address;
     escapeInfo.KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.BufferSize = static_cast<uint32_t>(size);
@@ -588,7 +588,7 @@ ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId>
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     printBitmask(bitmask.get(), bitmaskSize);
 
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT;
     escapeInfo.KmEuDbgL0EscapeInfo.EuControlClrAttBitParams.BitmaskArrayPtr = reinterpret_cast<uint64_t>(bitmask.get());
     escapeInfo.KmEuDbgL0EscapeInfo.EuControlClrAttBitParams.BitMaskSizeInBytes = static_cast<uint32_t>(bitmaskSize);
@@ -609,7 +609,7 @@ ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId>
 }
 
 ze_result_t DebugSessionWindows::interruptImp(uint32_t deviceIndex) {
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CONTROL_INT_ALL;
 
     auto status = runEscape(escapeInfo);
@@ -632,7 +632,7 @@ ze_result_t DebugSessionWindows::readGpuMemory(uint64_t memoryHandle, char *outp
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
 
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_GFX_MEMORY;
     escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.hContextHandle = memoryHandle;
     escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.GpuVirtualAddr = gpuVa;
@@ -653,7 +653,7 @@ ze_result_t DebugSessionWindows::writeGpuMemory(uint64_t memoryHandle, const cha
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
 
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_WRITE_GFX_MEMORY;
     escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.hContextHandle = memoryHandle;
     escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.GpuVirtualAddr = gpuVa;
@@ -689,7 +689,7 @@ ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId threadId, NEO:
 }
 
 void DebugSessionWindows::getSbaBufferGpuVa(uint64_t &gpuVa) {
-    KM_ESCAPE_INFO escapeInfo = {0};
+    KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_MMIO;
     escapeInfo.KmEuDbgL0EscapeInfo.MmioReadParams.MmioOffset = CS_GPR_R15;
     escapeInfo.KmEuDbgL0EscapeInfo.MmioReadParams.RegisterOutBufferPtr = reinterpret_cast<uint64_t>(&gpuVa);

@@ -107,7 +107,11 @@ if(BUILD_WITH_L0)
   endif()
 
   if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+  endif()
+
+  if(NOT WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   endif()
 
   set(L0_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")

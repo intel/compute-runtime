@@ -5,12 +5,12 @@
  *
  */
 
+#include "shared/source/os_interface/windows/windows_wrapper.h"
+
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/global_teardown.h"
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 #include "level_zero/tools/source/sysman/sysman.h"
-
-#include <windows.h>
 
 namespace L0 {
 

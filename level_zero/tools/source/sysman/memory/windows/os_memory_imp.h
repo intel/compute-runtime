@@ -12,7 +12,20 @@
 #include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
-#include <pdh.h>
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-pragma-intrinsic"
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#pragma clang diagnostic ignored "-Wignored-attributes"
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#define UNICODE
+#endif
+
+#include <Pdh.h>
+
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 
 typedef PDH_STATUS(__stdcall *fn_PdhOpenQueryW)(LPCWSTR szDataSource, DWORD_PTR dwUserData, PDH_HQUERY *phQuery);
 typedef PDH_STATUS(__stdcall *fn_PdhAddEnglishCounterW)(PDH_HQUERY hQuery, LPCWSTR szFullCounterPath, DWORD_PTR dwUserData, PDH_HCOUNTER *phCounter);

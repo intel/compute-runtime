@@ -33,8 +33,6 @@ class WddmFanImp : public OsFan, NEO::NonCopyableOrMovableClass {
     KmdSysManager *pKmdSysManager = nullptr;
 
   private:
-    uint64_t prevTS = 0;
-    uint32_t prevPulses = 0;
     int32_t maxPoints = 0;
 };
 

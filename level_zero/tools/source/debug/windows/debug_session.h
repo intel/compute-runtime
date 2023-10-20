@@ -45,7 +45,7 @@ struct DebugSessionWindows : DebugSessionImp {
 
   protected:
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
-    void DebugSessionWindows::pushApiEvent(zet_debug_event_t &debugEvent, uint32_t seqNo, uint32_t type) {
+    void pushApiEvent(zet_debug_event_t &debugEvent, uint32_t seqNo, uint32_t type) {
         std::unique_lock<std::mutex> lock(asyncThreadMutex);
         apiEvents.push(debugEvent);
         if (debugEvent.flags & ZET_DEBUG_EVENT_FLAG_NEED_ACK) {

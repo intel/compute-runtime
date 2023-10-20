@@ -12,7 +12,7 @@
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/source/windows/zes_os_sysman_imp.h"
 
-#include <pdh.h>
+#include <Pdh.h>
 
 typedef PDH_STATUS(__stdcall *fn_PdhOpenQueryW)(LPCWSTR szDataSource, DWORD_PTR dwUserData, PDH_HQUERY *phQuery);
 typedef PDH_STATUS(__stdcall *fn_PdhAddEnglishCounterW)(PDH_HQUERY hQuery, LPCWSTR szFullCounterPath, DWORD_PTR dwUserData, PDH_HCOUNTER *phCounter);

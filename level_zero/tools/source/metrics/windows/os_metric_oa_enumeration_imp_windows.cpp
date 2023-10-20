@@ -59,7 +59,7 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
         auto adapterParams = getAdapterParams(adapter);
 
         const bool validAdapterInfo = adapterParams->SystemId.Type == MetricsDiscovery::ADAPTER_ID_TYPE_LUID;
-        const bool validAdapterMatch = (adapterParams->SystemId.Luid.HighPart == major) &&
+        const bool validAdapterMatch = (static_cast<uint32_t>(adapterParams->SystemId.Luid.HighPart) == major) &&
                                        (adapterParams->SystemId.Luid.LowPart == minor);
 
         if (validAdapterInfo && validAdapterMatch) {
@@ -72,18 +72,13 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
 
 class MetricOAWindowsImp : public MetricOAOsInterface {
   public:
-    MetricOAWindowsImp(Device &device);
+    MetricOAWindowsImp() = default;
     ~MetricOAWindowsImp() override = default;
     ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
-
-  private:
-    Device &device;
 };
 
-MetricOAWindowsImp::MetricOAWindowsImp(Device &device) : device(device) {}
-
 std::unique_ptr<MetricOAOsInterface> MetricOAOsInterface::create(Device &device) {
-    return std::make_unique<MetricOAWindowsImp>(device);
+    return std::make_unique<MetricOAWindowsImp>();
 }
 
 ze_result_t MetricOAWindowsImp::getMetricsTimerResolution(uint64_t &timerResolution) {

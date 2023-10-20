@@ -146,7 +146,7 @@ NTSTATUS KmdSysManager::escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dat
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     if (pWddmAccess) {
         D3DKMT_ESCAPE escapeCommand = {0};
-        PcEscapeInfo pcEscape = {0};
+        PcEscapeInfo pcEscape = {};
         escapeCommand.Flags.HardwareAccess = 0;
         escapeCommand.Flags.Reserved = 0;
         escapeCommand.hAdapter = (D3DKMT_HANDLE)0;

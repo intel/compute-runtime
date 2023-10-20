@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &conte
     // Copy escape data (adapter/device/escape function).
     osData.KmdInstrumentationEnabled = true;
     osData.Device = reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getDeviceHandle()));
-    osData.Escape = wddm->getEscapeHandle();
+    osData.Escape = reinterpret_cast<void *>(wddm->getEscapeHandle());
     osData.Adapter =
         reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getAdapter()));
 
