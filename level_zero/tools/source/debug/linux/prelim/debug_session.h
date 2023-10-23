@@ -16,6 +16,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
+#include "level_zero/tools/source/debug/linux/debug_session.h"
 
 #include <atomic>
 #include <mutex>
@@ -30,7 +31,7 @@ struct EngineClassInstance;
 namespace L0 {
 struct TileDebugSessionLinuxi915;
 
-struct DebugSessionLinuxi915 : DebugSessionImp {
+struct DebugSessionLinuxi915 : DebugSessionLinux {
 
     friend struct TileDebugSessionLinuxi915;
 
@@ -170,8 +171,6 @@ struct DebugSessionLinuxi915 : DebugSessionImp {
 
         std::unordered_map<uint64_t, Module> uuidToModule;
     };
-
-    static ze_result_t translateDebuggerOpenErrno(int error);
 
     constexpr static uint64_t invalidClientHandle = std::numeric_limits<uint64_t>::max();
     constexpr static uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();

@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/tools/source/debug/linux/prelim/drm_helper.h"
+#include "level_zero/tools/source/debug/linux/drm_helper.h"
 
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"

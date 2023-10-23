@@ -26,7 +26,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
-#include "level_zero/tools/source/debug/linux/prelim/drm_helper.h"
+#include "level_zero/tools/source/debug/linux/drm_helper.h"
 #include <level_zero/ze_api.h>
 
 #include "common/StateSaveAreaHeader.h"
@@ -41,7 +41,7 @@ static DebugSessionLinuxPopulateFactory<DEBUG_SESSION_LINUX_TYPE_I915, DebugSess
 
 DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
-DebugSessionLinuxi915::DebugSessionLinuxi915(const zet_debug_config_t &config, Device *device, int debugFd, void *params) : DebugSessionImp(config, device), fd(debugFd) {
+DebugSessionLinuxi915::DebugSessionLinuxi915(const zet_debug_config_t &config, Device *device, int debugFd, void *params) : DebugSessionLinux(config, device), fd(debugFd) {
     ioctlHandler.reset(new IoctlHandler);
 
     if (params) {
@@ -81,26 +81,9 @@ DebugSession *DebugSessionLinuxi915::createLinuxSession(const zet_debug_config_t
         auto reason = DrmHelper::getErrno(device);
         PRINT_DEBUGGER_ERROR_LOG("PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN failed: open.pid: %d, open.events: %d, retCode: %d, errno: %d\n",
                                  open.pid, open.events, debugFd, reason);
-        result = DebugSessionLinuxi915::translateDebuggerOpenErrno(reason);
+        result = translateDebuggerOpenErrno(reason);
     }
     return nullptr;
-}
-
-ze_result_t DebugSessionLinuxi915::translateDebuggerOpenErrno(int error) {
-
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    switch (error) {
-    case ENODEV:
-        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        break;
-    case EBUSY:
-        result = ZE_RESULT_ERROR_NOT_AVAILABLE;
-        break;
-    case EACCES:
-        result = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-        break;
-    }
-    return result;
 }
 
 int DebugSessionLinuxi915::ioctl(unsigned long request, void *arg) {

@@ -9,6 +9,7 @@ if(UNIX)
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/debug_session.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/drm_helper.cpp
   )
 
   if(NEO_ENABLE_i915_PRELIM_DETECTION)
@@ -16,7 +17,6 @@ if(UNIX)
                    PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/prelim/debug_session.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/prelim/debug_session.h
-                   ${CMAKE_CURRENT_SOURCE_DIR}/prelim/drm_helper.cpp
     )
   endif()
 

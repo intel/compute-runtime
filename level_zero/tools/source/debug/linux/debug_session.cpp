@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/debug/linux/debug_session.h"
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 
 namespace L0 {
@@ -51,4 +52,22 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
     }
     return debugSession;
 }
+
+ze_result_t DebugSessionLinux::translateDebuggerOpenErrno(int error) {
+
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    switch (error) {
+    case ENODEV:
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        break;
+    case EBUSY:
+        result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        break;
+    case EACCES:
+        result = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+        break;
+    }
+    return result;
+}
+
 } // namespace L0
