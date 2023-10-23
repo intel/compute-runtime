@@ -1876,6 +1876,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
     };
 
     DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    DebugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 

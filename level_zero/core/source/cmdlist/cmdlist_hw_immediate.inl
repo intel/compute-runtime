@@ -415,6 +415,9 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasStallingCmdsForRelaxedOrd
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const {
+    if (!NEO::DebugManager.flags.SkipInOrderNonWalkerSignalingAllowed.get()) {
+        return false;
+    }
     return this->isInOrderNonWalkerSignalingRequired(Event::fromHandle(signalEvent));
 }
 
