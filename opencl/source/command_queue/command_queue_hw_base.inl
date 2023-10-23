@@ -172,6 +172,7 @@ bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEngine
     bool waited = false;
 
     if (isWaitForTimestampsEnabled()) {
+        TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
         waited = waitForTimestampsWithinContainer<TSPacketType>(mainContainer, getGpgpuCommandStreamReceiver(), status);
 
         if (waited) {
