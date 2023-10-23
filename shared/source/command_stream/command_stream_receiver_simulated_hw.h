@@ -101,6 +101,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
 
         if (isChunkCopy) {
             gpuAddress += gpuVaChunkOffset;
+            cpuAddress = ptrOffset(cpuAddress, static_cast<uintptr_t>(gpuVaChunkOffset));
             allocSize = chunkSize;
         }
 

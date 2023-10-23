@@ -91,7 +91,7 @@ HWTEST_F(AubCsrTest, givenAUBDumpForceAllToLocalMemoryWhenGettingAddressSpaceFor
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
 }
 
-HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithCorrectHint) {
+HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithCorrectHintAndParams) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
@@ -122,9 +122,15 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
 
     auto allocation2 = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::LINEAR_STREAM});
 
+    aubManager.storeAllocationParams = true;
     aubCsr->writeMemoryWithAubManager(*allocation2, true, 1, 1);
     EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
+    ASSERT_EQ(1u, aubManager.storedAllocationParams.size());
+
+    EXPECT_EQ(ptrOffset(allocation2->getUnderlyingBuffer(), 1), aubManager.storedAllocationParams[0].memory);
+    EXPECT_EQ(ptrOffset(allocation2->getGpuAddress(), 1), aubManager.storedAllocationParams[0].gfxAddress);
+    EXPECT_EQ(1u, aubManager.storedAllocationParams[0].size);
 
     executionEnvironment->memoryManager->freeGraphicsMemory(allocation);
     executionEnvironment->memoryManager->freeGraphicsMemory(allocation2);
