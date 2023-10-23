@@ -60,9 +60,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     if (eventsRequest.outEvent && !isMarkerRequiredForEventSignal) {
         eventBuilder.create<Event>(this, transferProperties.cmdType, CompletionStamp::notReady, CompletionStamp::notReady);
         outEventObj = eventBuilder.getEvent();
-        TimeStampData queueTimeStamp;
-        getDevice().getOSTime()->getGpuCpuTime(&queueTimeStamp);
-        outEventObj->setQueueTimeStamp(queueTimeStamp);
+        outEventObj->setQueueTimeStamp();
         outEventObj->setCPUProfilingPath(true);
         *eventsRequest.outEvent = outEventObj;
     }

@@ -40,6 +40,7 @@
 
 #include "event_fixture.h"
 
+#include <cmath>
 #include <memory>
 #include <type_traits>
 
@@ -824,10 +825,12 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
     HwTimeStamps timestamp{};
     timestamp.globalStartTS = 2;
     event.queueTimeStamp.gpuTimeStamp = 1;
-    event.queueTimeStamp.cpuTimeinNS = 100;
+    event.queueTimeStamp.cpuTimeInNs = 100;
+    event.queueTimeStamp.gpuTimeInNs = 10;
 
-    event.queueTimeStamp.gpuTimeStamp = 2;
-    event.queueTimeStamp.cpuTimeinNS = 200;
+    event.submitTimeStamp.gpuTimeStamp = 2;
+    event.submitTimeStamp.cpuTimeInNs = 200;
+    event.submitTimeStamp.gpuTimeInNs = 50;
 
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
@@ -838,7 +841,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
 
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto c0 = event.submitTimeStamp.cpuTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(event.submitTimeStamp.gpuTimeStamp, resolution);
+    auto c0 = event.submitTimeStamp.cpuTimeInNs - gfxCoreHelper.getGpuTimeStampInNS(event.submitTimeStamp.gpuTimeStamp, resolution);
     EXPECT_EQ(start, static_cast<uint64_t>(timestamp.globalStartTS * resolution) + c0);
 
     event.timeStampNode = nullptr;
@@ -885,11 +888,13 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
 
     HwTimeStamps timestamp{};
     timestamp.globalStartTS = 3;
     event.queueTimeStamp.gpuTimeStamp = 2;
     event.submitTimeStamp.gpuTimeStamp = 4;
+    event.submitTimeStamp.gpuTimeInNs = static_cast<uint64_t>(4 * resolution);
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
     event.timeStampNode = &timestampNode;
@@ -898,8 +903,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
     event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
 
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
-    auto refStartTime = static_cast<uint64_t>(timestamp.globalStartTS * resolution) + static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
+    auto refStartTime = static_cast<uint64_t>((timestamp.globalStartTS + (1ULL << gfxCoreHelper.getGlobalTimeStampBits())) * resolution);
     EXPECT_EQ(start, refStartTime);
 
     event.timeStampNode = nullptr;
@@ -1315,50 +1319,52 @@ TEST_F(EventTest, WhenSettingCpuTimeStampThenCorrectTimeIsSet) {
     ev.setProfilingEnabled(true);
 
     ev.setStartTimeStamp();
-    uint64_t outCPUtimeStamp = ev.getStartTimeStamp();
-    EXPECT_NE(0ULL, outCPUtimeStamp);
+    EXPECT_NE(0ULL, ev.startTimeStamp.cpuTimeInNs);
+    EXPECT_NE(0ULL, ev.startTimeStamp.gpuTimeInNs);
+    EXPECT_NE(0ULL, ev.startTimeStamp.gpuTimeStamp);
 
     ev.setEndTimeStamp();
-    outCPUtimeStamp = ev.getEndTimeStamp();
-    EXPECT_NE(0ULL, outCPUtimeStamp);
-
-    outCPUtimeStamp = ev.getCompleteTimeStamp();
-    EXPECT_NE(0ULL, outCPUtimeStamp);
+    EXPECT_NE(0ULL, ev.endTimeStamp.cpuTimeInNs);
+    EXPECT_NE(0ULL, ev.endTimeStamp.gpuTimeInNs);
+    EXPECT_NE(0ULL, ev.endTimeStamp.gpuTimeStamp);
+    EXPECT_NE(0ULL, ev.completeTimeStamp.cpuTimeInNs);
+    EXPECT_NE(0ULL, ev.completeTimeStamp.gpuTimeInNs);
+    EXPECT_NE(0ULL, ev.completeTimeStamp.gpuTimeStamp);
 }
 
-TEST_F(EventTest, whenSettingQueueTimestampThenCorrectTimestampIsSet) {
-    MyEvent event(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
+TEST_F(EventTest, whenSettingQueueTimestampThenOnlyCpuTimeIsSet) {
+    MyEvent event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
 
-    TimeStampData queueTimeStamp = {1234, 5678};
-    event.setQueueTimeStamp(queueTimeStamp);
-    auto timeStamp = event.getQueueTimeStamp();
-    EXPECT_EQ(1234ULL, timeStamp.gpuTimeStamp);
-    EXPECT_EQ(5678ULL, timeStamp.cpuTimeinNS);
+    event.setQueueTimeStamp();
+    EXPECT_EQ(0ull, event.queueTimeStamp.gpuTimeStamp);
+    EXPECT_NE(0ull, event.queueTimeStamp.cpuTimeInNs);
+    EXPECT_EQ(0ull, event.queueTimeStamp.gpuTimeInNs);
 }
 
-TEST_F(EventTest, whenSettingSubmitTimestampThenCorrectTimestampIsSet) {
-    MyEvent event(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
+TEST_F(EventTest, whenSettingSubmitTimestampThenQueueAndSubmitTimestampsAreSet) {
+    MyEvent event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
 
-    TimeStampData submitTimeStamp = {1234, 5678};
+    uint64_t cpuTimeStamp = 1234u;
+    event.queueTimeStamp.cpuTimeInNs = cpuTimeStamp;
+
+    auto resolution = pDevice->getDeviceInfo().profilingTimerResolution;
+    auto expectedQueueGpuTimeStamp = 1000ul;
+    auto expectedGpuDiff = 300;
+    auto expectedCpuDiff = static_cast<uint64_t>(std::ceil(expectedGpuDiff * resolution));
+    auto expectedSubmitGpuTimeInNs = static_cast<uint64_t>((expectedQueueGpuTimeStamp + expectedGpuDiff) * resolution);
+
+    TimeStampData submitTimeStamp{};
+    submitTimeStamp.cpuTimeinNS = cpuTimeStamp + expectedCpuDiff;
+    submitTimeStamp.gpuTimeStamp = expectedQueueGpuTimeStamp + expectedGpuDiff;
+
     event.setSubmitTimeStamp(submitTimeStamp);
-    auto timeStamp = event.getSubmitTimeStamp();
-    EXPECT_EQ(1234ULL, timeStamp.gpuTimeStamp);
-    EXPECT_EQ(5678ULL, timeStamp.cpuTimeinNS);
-}
 
-TEST_F(EventTest, GivenNoQueueWhenSettingCpuTimeStampThenTimesIsNotSet) {
-    MyEvent ev(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
-
-    ev.setStartTimeStamp();
-    uint64_t outCPUtimeStamp = ev.getStartTimeStamp();
-    EXPECT_EQ(0ULL, outCPUtimeStamp);
-
-    ev.setEndTimeStamp();
-    outCPUtimeStamp = ev.getEndTimeStamp();
-    EXPECT_EQ(0ULL, outCPUtimeStamp);
-
-    outCPUtimeStamp = ev.getCompleteTimeStamp();
-    EXPECT_EQ(0ULL, outCPUtimeStamp);
+    EXPECT_EQ(expectedQueueGpuTimeStamp, event.queueTimeStamp.gpuTimeStamp);
+    EXPECT_EQ(cpuTimeStamp, event.queueTimeStamp.cpuTimeInNs);
+    EXPECT_EQ(expectedSubmitGpuTimeInNs - expectedCpuDiff, event.queueTimeStamp.gpuTimeInNs);
+    EXPECT_EQ(submitTimeStamp.gpuTimeStamp, event.submitTimeStamp.gpuTimeStamp);
+    EXPECT_EQ(submitTimeStamp.cpuTimeinNS, event.submitTimeStamp.cpuTimeInNs);
+    EXPECT_EQ(expectedSubmitGpuTimeInNs, event.submitTimeStamp.gpuTimeInNs);
 }
 
 HWTEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {

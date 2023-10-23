@@ -44,19 +44,13 @@ Event::Event(
     TaskCountType taskLevel,
     TaskCountType taskCount)
     : taskLevel(taskLevel),
-      currentCmdQVirtualEvent(false),
-      cmdToSubmit(nullptr),
-      submittedCmd(nullptr),
       ctx(ctx),
       cmdQueue(cmdQueue),
       cmdType(cmdType),
-      dataCalculated(false),
       taskCount(taskCount) {
     if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyCreation(this);
     }
-    parentCount = 0;
-    executionStatus = CL_QUEUED;
     flushStamp.reset(new FlushStampTracker(true));
 
     DBG_LOG(EventsDebugEnable, "Event()", this);
@@ -79,12 +73,6 @@ Event::Event(
     if (this->ctx != nullptr) {
         this->ctx->incRefInternal();
     }
-
-    queueTimeStamp = {0, 0};
-    submitTimeStamp = {0, 0};
-    startTimeStamp = 0;
-    endTimeStamp = 0;
-    completeTimeStamp = 0;
 
     profilingEnabled = !isUserEvent() &&
                        (cmdQueue ? cmdQueue->getCommandQueueProperties() & CL_QUEUE_PROFILING_ENABLE : false);
@@ -175,33 +163,35 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     // if paramValue is NULL, it is ignored
     switch (paramName) {
     case CL_PROFILING_COMMAND_QUEUED:
-        timestamp = getTimeInNSFromTimestampData(queueTimeStamp);
+        timestamp = getProfilingInfoData(queueTimeStamp);
         src = &timestamp;
         srcSize = sizeof(cl_ulong);
         break;
 
     case CL_PROFILING_COMMAND_SUBMIT:
-        calculateSubmitTimestampData();
-        timestamp = getTimeInNSFromTimestampData(submitTimeStamp);
+        timestamp = getProfilingInfoData(submitTimeStamp);
         src = &timestamp;
         srcSize = sizeof(cl_ulong);
         break;
 
     case CL_PROFILING_COMMAND_START:
         calcProfilingData();
-        src = &startTimeStamp;
+        timestamp = getProfilingInfoData(startTimeStamp);
+        src = &timestamp;
         srcSize = sizeof(cl_ulong);
         break;
 
     case CL_PROFILING_COMMAND_END:
         calcProfilingData();
-        src = &endTimeStamp;
+        timestamp = getProfilingInfoData(endTimeStamp);
+        src = &timestamp;
         srcSize = sizeof(cl_ulong);
         break;
 
     case CL_PROFILING_COMMAND_COMPLETE:
         calcProfilingData();
-        src = &completeTimeStamp;
+        timestamp = getProfilingInfoData(completeTimeStamp);
+        src = &timestamp;
         srcSize = sizeof(cl_ulong);
         break;
 
@@ -282,35 +272,47 @@ cl_ulong Event::getDelta(cl_ulong startTime,
     return delta;
 }
 
-void Event::calculateSubmitTimestampData() {
-    if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
-        auto &device = cmdQueue->getDevice();
-        auto &gfxCoreHelper = device.getGfxCoreHelper();
-        double resolution = device.getDeviceInfo().profilingTimerResolution;
+void Event::setupRelativeProfilingInfo(ProfilingInfo &profilingInfo) {
+    UNRECOVERABLE_IF(!cmdQueue);
+    auto &device = cmdQueue->getDevice();
+    double resolution = device.getDeviceInfo().profilingTimerResolution;
+    UNRECOVERABLE_IF(resolution == 0.0);
 
-        int64_t timerDiff = queueTimeStamp.cpuTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(queueTimeStamp.gpuTimeStamp, resolution);
-        submitTimeStamp.gpuTimeStamp = static_cast<uint64_t>((submitTimeStamp.cpuTimeinNS - timerDiff) / resolution);
+    if (profilingInfo.cpuTimeInNs > submitTimeStamp.cpuTimeInNs) {
+        auto timeDiff = profilingInfo.cpuTimeInNs - submitTimeStamp.cpuTimeInNs;
+        auto gpuTicksDiff = static_cast<uint64_t>(timeDiff / resolution);
+        profilingInfo.gpuTimeInNs = submitTimeStamp.gpuTimeInNs + timeDiff;
+        profilingInfo.gpuTimeStamp = submitTimeStamp.gpuTimeStamp + gpuTicksDiff;
+    } else {
+        auto timeDiff = submitTimeStamp.cpuTimeInNs - profilingInfo.cpuTimeInNs;
+        auto gpuTicksDiff = static_cast<uint64_t>(timeDiff / resolution);
+        profilingInfo.gpuTimeInNs = submitTimeStamp.gpuTimeInNs - timeDiff;
+        profilingInfo.gpuTimeStamp = submitTimeStamp.gpuTimeStamp - gpuTicksDiff;
     }
 }
 
-uint64_t Event::getTimeInNSFromTimestampData(const TimeStampData &timestamp) const {
-    if (isCPUProfilingPath()) {
-        return timestamp.cpuTimeinNS;
-    }
+void Event::setSubmitTimeStamp(const TimeStampData &submitTimeStamp) {
+    UNRECOVERABLE_IF(!cmdQueue);
+    auto &device = cmdQueue->getDevice();
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    double resolution = device.getDeviceInfo().profilingTimerResolution;
+    UNRECOVERABLE_IF(resolution == 0.0);
+    this->submitTimeStamp.cpuTimeInNs = submitTimeStamp.cpuTimeinNS;
+    this->submitTimeStamp.gpuTimeInNs = gfxCoreHelper.getGpuTimeStampInNS(submitTimeStamp.gpuTimeStamp, resolution);
+    this->submitTimeStamp.gpuTimeStamp = submitTimeStamp.gpuTimeStamp;
 
+    setupRelativeProfilingInfo(queueTimeStamp);
+}
+
+uint64_t Event::getProfilingInfoData(const ProfilingInfo &profilingInfo) const {
     if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
-        return timestamp.gpuTimeStamp;
+        return profilingInfo.gpuTimeStamp;
     }
 
-    if (cmdQueue && DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
-        auto &device = cmdQueue->getDevice();
-        auto &gfxCoreHelper = device.getGfxCoreHelper();
-        double resolution = device.getDeviceInfo().profilingTimerResolution;
-
-        return gfxCoreHelper.getGpuTimeStampInNS(timestamp.gpuTimeStamp, resolution);
+    if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
+        return profilingInfo.gpuTimeInNs;
     }
-
-    return timestamp.cpuTimeinNS;
+    return profilingInfo.cpuTimeInNs;
 }
 
 bool Event::calcProfilingData() {
@@ -361,39 +363,26 @@ bool Event::calcProfilingData() {
 }
 
 void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) {
+    auto &device = this->cmdQueue->getDevice();
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    auto resolution = device.getDeviceInfo().profilingTimerResolution;
+
+    startTimeStamp.gpuTimeStamp = globalStartTS;
+    while (startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp) {
+        startTimeStamp.gpuTimeStamp += static_cast<uint64_t>(1ULL << gfxCoreHelper.getGlobalTimeStampBits());
+    }
+    auto gpuTicksDiff = startTimeStamp.gpuTimeStamp - submitTimeStamp.gpuTimeStamp;
+    auto timeDiff = static_cast<uint64_t>(gpuTicksDiff * resolution);
+    startTimeStamp.cpuTimeInNs = submitTimeStamp.cpuTimeInNs + timeDiff;
+    startTimeStamp.gpuTimeInNs = gfxCoreHelper.getGpuTimeStampInNS(startTimeStamp.gpuTimeStamp, resolution);
+
+    // If device enqueue has not updated complete timestamp, assign end timestamp
     uint64_t gpuDuration = 0;
     uint64_t cpuDuration = 0;
 
     uint64_t gpuCompleteDuration = 0;
     uint64_t cpuCompleteDuration = 0;
 
-    auto &device = this->cmdQueue->getDevice();
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
-    auto resolution = device.getDeviceInfo().profilingTimerResolution;
-    auto gpuSubmitTimeStamp = gfxCoreHelper.getGpuTimeStampInNS(submitTimeStamp.gpuTimeStamp, resolution);
-
-    if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
-        startTimeStamp = static_cast<uint64_t>(globalStartTS * resolution);
-        while (startTimeStamp < gpuSubmitTimeStamp) {
-            startTimeStamp += static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
-        }
-    } else {
-        int64_t c0 = submitTimeStamp.cpuTimeinNS - gpuSubmitTimeStamp;
-        startTimeStamp = static_cast<uint64_t>(globalStartTS * resolution) + c0;
-        if (startTimeStamp < submitTimeStamp.cpuTimeinNS) {
-            c0 += static_cast<uint64_t>((1ULL << (gfxCoreHelper.getGlobalTimeStampBits())) * resolution);
-            startTimeStamp = static_cast<uint64_t>(globalStartTS * resolution) + c0;
-        }
-    }
-
-    /* calculation based on equation
-       CpuTime = GpuTime * scalar + const( == c0)
-       scalar = DeltaCpu( == dCpu) / DeltaGpu( == dGpu)
-       to determine the value of the const we can use one pair of values
-       const = CpuTimeQueue - GpuTimeQueue * scalar
-    */
-
-    // If device enqueue has not updated complete timestamp, assign end timestamp
     gpuDuration = getDelta(contextStartTS, contextEndTS);
     if (*contextCompleteTS == 0) {
         *contextCompleteTS = contextEndTS;
@@ -404,13 +393,18 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     cpuDuration = static_cast<uint64_t>(gpuDuration * resolution);
     cpuCompleteDuration = static_cast<uint64_t>(gpuCompleteDuration * resolution);
 
-    endTimeStamp = startTimeStamp + cpuDuration;
-    completeTimeStamp = startTimeStamp + cpuCompleteDuration;
+    endTimeStamp.cpuTimeInNs = startTimeStamp.cpuTimeInNs + cpuDuration;
+    endTimeStamp.gpuTimeInNs = startTimeStamp.gpuTimeInNs + cpuDuration;
+    endTimeStamp.gpuTimeStamp = startTimeStamp.gpuTimeStamp + gpuDuration;
+
+    completeTimeStamp.cpuTimeInNs = startTimeStamp.cpuTimeInNs + cpuCompleteDuration;
+    completeTimeStamp.gpuTimeInNs = startTimeStamp.gpuTimeInNs + cpuCompleteDuration;
+    completeTimeStamp.gpuTimeStamp = startTimeStamp.gpuTimeStamp + gpuCompleteDuration;
 
     if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
-        startTimeStamp = contextStartTS;
-        endTimeStamp = contextEndTS;
-        completeTimeStamp = *contextCompleteTS;
+        startTimeStamp.gpuTimeStamp = contextStartTS;
+        endTimeStamp.gpuTimeStamp = contextEndTS;
+        completeTimeStamp.gpuTimeStamp = *contextCompleteTS;
     }
 
     dataCalculated = true;
@@ -612,7 +606,9 @@ void Event::submitCommand(bool abortTasks) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
                 cmdToProcess->timestamp = timeStampNode;
             }
+            TimeStampData submitTimeStamp{};
             this->cmdQueue->getDevice().getOSTime()->getGpuCpuTime(&submitTimeStamp);
+            this->setSubmitTimeStamp(submitTimeStamp);
             if (profilingCpuPath) {
                 setStartTimeStamp();
             } else {
@@ -635,7 +631,7 @@ void Event::submitCommand(bool abortTasks) {
         updateTaskCount(complStamp.taskCount, peekBcsTaskCountFromCommandQueue());
         flushStamp->setStamp(complStamp.flushStamp);
         submittedCmd.exchange(cmdToProcess.release());
-    } else if (profilingCpuPath && endTimeStamp == 0) {
+    } else if (profilingCpuPath && endTimeStamp.gpuTimeInNs == 0) {
         setEndTimeStamp();
     }
     if (this->taskCount == CompletionStamp::notReady) {
@@ -888,17 +884,22 @@ bool Event::tryFlushEvent() {
     return true;
 }
 
+void Event::setQueueTimeStamp() {
+    UNRECOVERABLE_IF(!cmdQueue);
+    this->cmdQueue->getDevice().getOSTime()->getCpuTime(&queueTimeStamp.cpuTimeInNs);
+}
+
 void Event::setStartTimeStamp() {
-    if (this->profilingEnabled && (this->cmdQueue != nullptr)) {
-        this->cmdQueue->getDevice().getOSTime()->getCpuTime(&startTimeStamp);
-    }
+    UNRECOVERABLE_IF(!cmdQueue);
+    this->cmdQueue->getDevice().getOSTime()->getCpuTime(&startTimeStamp.cpuTimeInNs);
+    setupRelativeProfilingInfo(startTimeStamp);
 }
 
 void Event::setEndTimeStamp() {
-    if (this->profilingEnabled && (this->cmdQueue != nullptr)) {
-        this->cmdQueue->getDevice().getOSTime()->getCpuTime(&endTimeStamp);
-        completeTimeStamp = endTimeStamp;
-    }
+    UNRECOVERABLE_IF(!cmdQueue);
+    this->cmdQueue->getDevice().getOSTime()->getCpuTime(&endTimeStamp.cpuTimeInNs);
+    setupRelativeProfilingInfo(endTimeStamp);
+    completeTimeStamp = endTimeStamp;
 }
 
 TagNodeBase *Event::getHwTimeStampNode() {

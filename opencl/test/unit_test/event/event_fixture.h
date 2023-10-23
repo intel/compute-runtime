@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,27 +75,15 @@ struct MyUserEvent : public VirtualEvent {
 };
 
 struct MyEvent : public Event {
+
+    using Event::completeTimeStamp;
+    using Event::endTimeStamp;
+    using Event::queueTimeStamp;
+    using Event::startTimeStamp;
+    using Event::submitTimeStamp;
+
     MyEvent(CommandQueue *cmdQueue, cl_command_type cmdType, TaskCountType taskLevel, TaskCountType taskCount)
         : Event(cmdQueue, cmdType, taskLevel, taskCount) {
-    }
-    TimeStampData getQueueTimeStamp() {
-        return this->queueTimeStamp;
-    };
-
-    TimeStampData getSubmitTimeStamp() {
-        return this->submitTimeStamp;
-    };
-
-    uint64_t getStartTimeStamp() {
-        return this->startTimeStamp;
-    };
-
-    uint64_t getEndTimeStamp() {
-        return this->endTimeStamp;
-    };
-
-    uint64_t getCompleteTimeStamp() {
-        return this->completeTimeStamp;
     }
 
     uint64_t getGlobalStartTimestamp() const {

@@ -203,9 +203,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNo
 
     auto mockEvent = static_cast<MockEvent<Event> *>(event);
     EXPECT_NE(0u, mockEvent->queueTimeStamp.gpuTimeStamp);
-    EXPECT_NE(0u, mockEvent->queueTimeStamp.cpuTimeinNS);
-    EXPECT_LT(mockEvent->queueTimeStamp.cpuTimeinNS, mockEvent->submitTimeStamp.cpuTimeinNS);
-    EXPECT_NE(0u, mockEvent->submitTimeStamp.gpuTimeStamp);
+    EXPECT_NE(0u, mockEvent->queueTimeStamp.gpuTimeInNs);
+    EXPECT_NE(0u, mockEvent->queueTimeStamp.cpuTimeInNs);
+    EXPECT_LT(mockEvent->queueTimeStamp.cpuTimeInNs, mockEvent->submitTimeStamp.cpuTimeInNs);
+    EXPECT_LT(mockEvent->queueTimeStamp.gpuTimeInNs, mockEvent->submitTimeStamp.gpuTimeInNs);
+    EXPECT_LT(mockEvent->queueTimeStamp.gpuTimeStamp, mockEvent->submitTimeStamp.gpuTimeStamp);
 
     clReleaseEvent(event);
 }
@@ -599,10 +601,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhen
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     cl_event clEvent = &event;
 
-    event.queueTimeStamp.cpuTimeinNS = 1;
     event.queueTimeStamp.gpuTimeStamp = 2;
 
-    event.submitTimeStamp.cpuTimeinNS = 3;
     event.submitTimeStamp.gpuTimeStamp = 4;
 
     event.setCPUProfilingPath(false);
@@ -643,10 +643,12 @@ TEST_F(EventProfilingTests, givenSubmitTimeMuchGreaterThanQueueTimeWhenCalculati
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     cl_event clEvent = &event;
 
-    event.queueTimeStamp.cpuTimeinNS = 1;
+    event.queueTimeStamp.cpuTimeInNs = 1;
+    event.queueTimeStamp.gpuTimeInNs = 1;
     event.queueTimeStamp.gpuTimeStamp = 2;
 
-    event.submitTimeStamp.cpuTimeinNS = (1ull << 33) + 3;
+    event.submitTimeStamp.cpuTimeInNs = (1ull << 33) + 3;
+    event.submitTimeStamp.gpuTimeInNs = (1ull << 33) + 3;
     event.submitTimeStamp.gpuTimeStamp = (1ull << 33) + 4;
 
     event.timeStampNode = &timestampNode;
@@ -695,8 +697,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenS
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     cl_event clEvent = &event;
 
-    event.queueTimeStamp.cpuTimeinNS = 83;
+    event.queueTimeStamp.cpuTimeInNs = 83;
     event.queueTimeStamp.gpuTimeStamp = 1;
+
+    event.submitTimeStamp.cpuTimeInNs = 83;
+    event.submitTimeStamp.gpuTimeStamp = 1;
 
     event.setCPUProfilingPath(false);
     event.timeStampNode = &timestampNode;
@@ -1261,8 +1266,8 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneEleme
 
     ev->calcProfilingData();
 
-    EXPECT_EQ(12u, ev->getStartTimeStamp());
-    EXPECT_EQ(13u, ev->getEndTimeStamp());
+    EXPECT_EQ(12u, ev->startTimeStamp.gpuTimeStamp);
+    EXPECT_EQ(13u, ev->endTimeStamp.gpuTimeStamp);
     EXPECT_EQ(12u, ev->getGlobalStartTimestamp());
 
     ev->timeStampNode = nullptr;
@@ -1280,8 +1285,8 @@ TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCal
     csr.multiOsContextCapable = true;
 
     ev->calcProfilingData();
-    EXPECT_EQ(50u, ev->getStartTimeStamp());
-    EXPECT_EQ(350u, ev->getEndTimeStamp());
+    EXPECT_EQ(50u, ev->startTimeStamp.gpuTimeStamp);
+    EXPECT_EQ(350u, ev->endTimeStamp.gpuTimeStamp);
 }
 
 TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWhenCalculatingThenDontUseThatPacket) {
@@ -1304,8 +1309,8 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWh
     ev->timestampPacketContainer->peekNodes()[1]->setProfilingCapable(false);
 
     ev->calcProfilingData();
-    EXPECT_EQ(static_cast<uint64_t>(globalStart0), ev->getStartTimeStamp());
-    EXPECT_EQ(static_cast<uint64_t>(globalEnd0), ev->getEndTimeStamp());
+    EXPECT_EQ(static_cast<uint64_t>(globalStart0), ev->startTimeStamp.gpuTimeStamp);
+    EXPECT_EQ(static_cast<uint64_t>(globalEnd0), ev->endTimeStamp.gpuTimeStamp);
 }
 
 TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
@@ -1354,8 +1359,8 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithThreeEle
 
     ev->calcProfilingData();
 
-    EXPECT_EQ(2u, ev->getStartTimeStamp());
-    EXPECT_EQ(13u, ev->getEndTimeStamp());
+    EXPECT_EQ(2u, ev->startTimeStamp.gpuTimeStamp);
+    EXPECT_EQ(13u, ev->endTimeStamp.gpuTimeStamp);
     EXPECT_EQ(2u, ev->getGlobalStartTimestamp());
 }
 

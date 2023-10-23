@@ -79,6 +79,12 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         void *userData;
     };
 
+    struct ProfilingInfo {
+        uint64_t cpuTimeInNs;
+        uint64_t gpuTimeInNs;
+        uint64_t gpuTimeStamp;
+    };
+
     static const cl_ulong objectMagic = 0x80134213A43C981ALL;
     static constexpr cl_int executionAbortedDueToGpuHang = -777;
 
@@ -287,14 +293,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return this->taskCount;
     }
 
-    void setQueueTimeStamp(const TimeStampData &queueTimeStamp) {
-        this->queueTimeStamp = queueTimeStamp;
-    };
-
-    void setSubmitTimeStamp(const TimeStampData &submitTimeStamp) {
-        this->submitTimeStamp = submitTimeStamp;
-    };
-
+    void setQueueTimeStamp();
+    void setSubmitTimeStamp(const TimeStampData &submitTimeStamp);
     void setStartTimeStamp();
     void setEndTimeStamp();
 
@@ -334,8 +334,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         }
     }
 
-    void calculateSubmitTimestampData();
-    uint64_t getTimeInNSFromTimestampData(const TimeStampData &timestamp) const;
+    uint64_t getProfilingInfoData(const ProfilingInfo &profilingInfo) const;
+    void setupRelativeProfilingInfo(ProfilingInfo &profilingInfo);
     bool calcProfilingData();
     MOCKABLE_VIRTUAL void calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS);
     MOCKABLE_VIRTUAL void synchronizeTaskCount() {
@@ -360,14 +360,14 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     bool isWaitForTimestampsEnabled() const;
     bool areTimestampsCompleted();
 
-    bool currentCmdQVirtualEvent;
-    std::atomic<Command *> cmdToSubmit;
-    std::atomic<Command *> submittedCmd;
+    bool currentCmdQVirtualEvent = false;
+    std::atomic<Command *> cmdToSubmit{nullptr};
+    std::atomic<Command *> submittedCmd{nullptr};
     bool eventWithoutCommand = true;
 
-    Context *ctx;
-    CommandQueue *cmdQueue;
-    cl_command_type cmdType;
+    Context *ctx = nullptr;
+    CommandQueue *cmdQueue = nullptr;
+    cl_command_type cmdType{};
 
     // callbacks to be executed when this event changes its execution state
     IFList<Callback, true, true> callbacks[(uint32_t)ECallbackTarget::MAX];
@@ -375,31 +375,33 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // can be accessed only with transitionExecutionState
     // this is to ensure state consitency event when doning lock-free multithreading
     // e.g. CL_COMPLETE -> CL_SUBMITTED or CL_SUBMITTED -> CL_QUEUED becomes forbiden
-    mutable std::atomic<int32_t> executionStatus;
+    mutable std::atomic<int32_t> executionStatus{CL_QUEUED};
     // Timestamps
-    bool profilingEnabled;
-    bool profilingCpuPath;
-    bool dataCalculated;
-    TimeStampData queueTimeStamp;
-    TimeStampData submitTimeStamp;
-    uint64_t startTimeStamp;
-    uint64_t endTimeStamp;
-    uint64_t completeTimeStamp;
+    bool profilingEnabled = false;
+    bool profilingCpuPath = false;
+    bool dataCalculated = false;
+
+    ProfilingInfo queueTimeStamp{};
+    ProfilingInfo submitTimeStamp{};
+    ProfilingInfo startTimeStamp{};
+    ProfilingInfo endTimeStamp{};
+    ProfilingInfo completeTimeStamp{};
+
     CopyEngineState bcsState{};
-    bool perfCountersEnabled;
+    bool perfCountersEnabled = false;
     TagNodeBase *timeStampNode = nullptr;
     TagNodeBase *perfCounterNode = nullptr;
     TagNodeBase *multiRootTimeStampSyncNode = nullptr;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
     // number of events this event depends on
     std::unique_ptr<TimestampPacketContainer> multiRootDeviceTimestampPacketContainer;
-    std::atomic<int> parentCount;
-    std::atomic<bool> gpuStateWaited = false;
+    std::atomic<int> parentCount{0u};
+    std::atomic<bool> gpuStateWaited{false};
     // event parents
     std::vector<Event *> parentEvents;
 
   private:
     // can be accessed only with updateTaskCount
-    std::atomic<TaskCountType> taskCount;
+    std::atomic<TaskCountType> taskCount{0};
 };
 } // namespace NEO

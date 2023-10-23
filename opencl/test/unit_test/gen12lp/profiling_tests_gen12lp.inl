@@ -150,10 +150,10 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQuerie
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     cl_event clEvent = &event;
 
-    event.queueTimeStamp.cpuTimeinNS = 1;
+    event.queueTimeStamp.cpuTimeInNs = 1;
     event.queueTimeStamp.gpuTimeStamp = 2;
 
-    event.submitTimeStamp.cpuTimeinNS = 3;
+    event.submitTimeStamp.cpuTimeInNs = 3;
     event.submitTimeStamp.gpuTimeStamp = 4;
 
     event.setCPUProfilingPath(false);
