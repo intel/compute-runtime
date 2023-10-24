@@ -30,9 +30,6 @@ const std::vector<ApplicationKernelFixDg2> applicationsKernelFixesDG2 =
     {{"FAHBench-gui", "findBlocksWithInteractions", 0xa39732fc26656899, 12651u, "else { SYNC_WARPS; }"},
      {"FAHBench-cmd", "findBlocksWithInteractions", 0xa39732fc26656899, 12651u, "else { SYNC_WARPS; }"}};
 
-constexpr std::array<std::string_view, 1> applicationsLegacyValidationPathDG2 = {
-    "blender"};
-
 template <>
 void AILConfigurationHw<IGFX_DG2>::modifyKernelIfRequired(std::string &kernelsSources) {
 
@@ -46,14 +43,6 @@ void AILConfigurationHw<IGFX_DG2>::modifyKernelIfRequired(std::string &kernelsSo
             kernelsSources.insert(it->fixStartPosition, it->fixCode);
         }
     }
-}
-
-template <>
-bool AILConfigurationHw<IGFX_DG2>::useLegacyValidationLogic() {
-    auto it = std::find_if(applicationsLegacyValidationPathDG2.begin(), applicationsLegacyValidationPathDG2.end(), [this](const auto &appName) {
-        return this->processName == appName;
-    });
-    return it != applicationsLegacyValidationPathDG2.end() ? true : false;
 }
 
 template class AILConfigurationHw<IGFX_DG2>;

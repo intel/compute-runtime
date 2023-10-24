@@ -45,9 +45,4 @@ inline bool AILConfigurationHw<Product>::isContextSyncFlagRequired() {
     return false;
 }
 
-template <PRODUCT_FAMILY Product>
-inline bool AILConfigurationHw<Product>::useLegacyValidationLogic() {
-    return false;
-}
-
 } // namespace NEO

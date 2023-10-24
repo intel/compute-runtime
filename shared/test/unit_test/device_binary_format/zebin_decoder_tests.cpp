@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -20,8 +19,6 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
@@ -5985,50 +5982,6 @@ TEST(ValidateTargetDeviceTests, givenSteppingBiggerThanMaxHwRevisionWhenValidati
 
     auto res = validateTargetDevice(targetDevice, Zebin::Elf::EI_CLASS_64, IGFX_UNKNOWN, renderCoreFamily, AOT::UNKNOWN_ISA, targetMetadata);
     EXPECT_FALSE(res);
-}
-
-TEST(ValidateTargetDeviceTests, givenAILEnabledAndUseLegacyValidationLogicReturningTrueWhenValidatingTargetDeviceThenDoNotUseProductConfigForValidationWa) {
-    VariableBackup<AILConfiguration *> ailConfiguration(&ailConfigurationTable[productFamily]);
-
-    MockAILConfiguration mockAilConfig;
-    mockAilConfig.fallbackToLegacyValidationLogic = true;
-    ASSERT_TRUE(mockAilConfig.useLegacyValidationLogic());
-    ailConfigurationTable[productFamily] = &mockAilConfig;
-
-    NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = 0x00001234;
-
-    TargetDevice targetDevice;
-    targetDevice.maxPointerSizeInBytes = 8u;
-    targetDevice.productFamily = productFamily;
-    targetDevice.coreFamily = renderCoreFamily;
-    targetDevice.aotConfig.value = aotConfig.value + 0x10; // assert mismatch on aotConfig values, rest of values should result in validation success
-
-    Zebin::Elf::ZebinTargetFlags targetMetadata;
-    targetMetadata.validateRevisionId = false; // in this test case, AOT config should be skipped and productFamily and coreFamily used only
-
-    auto res = validateTargetDevice(targetDevice, Zebin::Elf::EI_CLASS_64, productFamily, renderCoreFamily, static_cast<AOT::PRODUCT_CONFIG>(aotConfig.value), targetMetadata);
-    EXPECT_TRUE(res);
-}
-
-TEST(ValidateTargetDeviceTests, givenDoNotUseProductConfigForValidationWaFlagSetWhenValidatingTargetDeviceThenDoNotUseProductConfigForValidation) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DoNotUseProductConfigForValidationWa.set(true);
-
-    NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = 0x00001234;
-
-    TargetDevice targetDevice;
-    targetDevice.maxPointerSizeInBytes = 8u;
-    targetDevice.productFamily = productFamily;
-    targetDevice.coreFamily = renderCoreFamily;
-    targetDevice.aotConfig.value = aotConfig.value + 0x10; // assert mismatch on aotConfig values, rest of values should result in validation success
-
-    Zebin::Elf::ZebinTargetFlags targetMetadata;
-    targetMetadata.validateRevisionId = false; // in this test case, AOT config should be skipped and productFamily and coreFamily used only
-
-    auto res = validateTargetDevice(targetDevice, Zebin::Elf::EI_CLASS_64, productFamily, renderCoreFamily, static_cast<AOT::PRODUCT_CONFIG>(aotConfig.value), targetMetadata);
-    EXPECT_TRUE(res);
 }
 
 TEST(PopulateGlobalDeviceHostNameMapping, givenValidZebinWithGlobalHostAccessTableSectionThenPopulateHostDeviceNameMapCorrectly) {

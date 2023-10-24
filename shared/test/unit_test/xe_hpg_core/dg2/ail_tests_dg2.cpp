@@ -8,7 +8,6 @@
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
@@ -107,25 +106,6 @@ HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCall
         ail.modifyKernelIfRequired(kernelSources);
 
         EXPECT_STREQ(copyKernelSources.c_str(), kernelSources.c_str());
-    }
-}
-
-HWTEST2_F(AILTestsDg2, givenApplicationNameRequiringCrossTargetCompabilityWhenCallingUseValidationLogicThenReturnProperValue, IsDG2) {
-    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
-    AILMock<productFamily> ail;
-    ailConfigurationTable[productFamily] = &ail;
-
-    auto ailConfiguration = AILConfiguration::get(defaultHwInfo->platform.eProductFamily);
-    ASSERT_NE(nullptr, ailConfiguration);
-
-    ail.processName = "unknown";
-    EXPECT_FALSE(ail.useLegacyValidationLogic());
-
-    std::array<std::string_view, 1> applicationNamesRequiringLegacyValidation = {
-        "blender"};
-    for (auto appName : applicationNamesRequiringLegacyValidation) {
-        ail.processName = appName;
-        EXPECT_TRUE(ail.useLegacyValidationLogic());
     }
 }
 } // namespace NEO
