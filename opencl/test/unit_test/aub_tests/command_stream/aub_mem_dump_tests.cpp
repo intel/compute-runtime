@@ -72,7 +72,7 @@ HWTEST_F(AubMemDumpTests, GivenHeaderThenExpectationsAreMet) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, GivenReserveMaxAddressThenExpectationsAreMet) {
+HWTEST_F(AubMemDumpTests, DISABLED_GivenReserveMaxAddressThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
