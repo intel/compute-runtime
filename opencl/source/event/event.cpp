@@ -369,20 +369,20 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
 
     auto &device = this->cmdQueue->getDevice();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
-    auto frequency = device.getDeviceInfo().profilingTimerResolution;
-    auto gpuSubmitTimeStamp = gfxCoreHelper.getGpuTimeStampInNS(submitTimeStamp.gpuTimeStamp, frequency);
+    auto resolution = device.getDeviceInfo().profilingTimerResolution;
+    auto gpuSubmitTimeStamp = gfxCoreHelper.getGpuTimeStampInNS(submitTimeStamp.gpuTimeStamp, resolution);
 
     if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
-        startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency);
+        startTimeStamp = static_cast<uint64_t>(globalStartTS * resolution);
         while (startTimeStamp < gpuSubmitTimeStamp) {
-            startTimeStamp += static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * frequency);
+            startTimeStamp += static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
         }
     } else {
         int64_t c0 = submitTimeStamp.cpuTimeinNS - gpuSubmitTimeStamp;
-        startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
+        startTimeStamp = static_cast<uint64_t>(globalStartTS * resolution) + c0;
         if (startTimeStamp < submitTimeStamp.cpuTimeinNS) {
-            c0 += static_cast<uint64_t>((1ULL << (gfxCoreHelper.getGlobalTimeStampBits())) * frequency);
-            startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
+            c0 += static_cast<uint64_t>((1ULL << (gfxCoreHelper.getGlobalTimeStampBits())) * resolution);
+            startTimeStamp = static_cast<uint64_t>(globalStartTS * resolution) + c0;
         }
     }
 
@@ -401,8 +401,8 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     } else {
         gpuCompleteDuration = getDelta(contextStartTS, *contextCompleteTS);
     }
-    cpuDuration = static_cast<uint64_t>(gpuDuration * frequency);
-    cpuCompleteDuration = static_cast<uint64_t>(gpuCompleteDuration * frequency);
+    cpuDuration = static_cast<uint64_t>(gpuDuration * resolution);
+    cpuCompleteDuration = static_cast<uint64_t>(gpuCompleteDuration * resolution);
 
     endTimeStamp = startTimeStamp + cpuDuration;
     completeTimeStamp = startTimeStamp + cpuCompleteDuration;

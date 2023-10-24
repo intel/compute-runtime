@@ -124,11 +124,6 @@ inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const Kern
     return defaultMaxGroupSize;
 }
 
-template <typename GfxFamily>
-uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const {
-    return static_cast<uint64_t>(timeStamp * frequency);
-}
-
 constexpr uint32_t planarYuvMaxHeight = 16128;
 
 template <typename GfxFamily>

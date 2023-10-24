@@ -715,4 +715,11 @@ char const *GfxCoreHelperHw<GfxFamily>::getDefaultDeviceHierarchy() const {
     return deviceHierarchyComposite;
 }
 
+template <typename GfxFamily>
+uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const {
+    UNRECOVERABLE_IF(resolution > 127.0);
+    constexpr auto timestampMask = maxNBitValue(57);
+    return static_cast<uint64_t>(static_cast<uint64_t>(timeStamp & timestampMask) * resolution);
+}
+
 } // namespace NEO

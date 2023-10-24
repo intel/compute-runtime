@@ -610,8 +610,8 @@ void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timesta
 
     auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
-    const auto frequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
-    auto deviceTsInNs = gfxCoreHelper.getGpuTimeStampInNS(referenceTs.gpuTimeStamp, frequency);
+    const auto resolution = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
+    auto deviceTsInNs = gfxCoreHelper.getGpuTimeStampInNS(referenceTs.gpuTimeStamp, resolution);
     const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
 
     auto getDuration = [&](uint64_t startTs, uint64_t endTs) {
@@ -640,15 +640,15 @@ void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timesta
     auto calculateSynchronizedTs = [&](ze_synchronized_timestamp_data_ext_t *synchronizedTs, const ze_kernel_timestamp_data_t *deviceTs) {
         // Add the offset to the kernel timestamp to find the start timestamp on the CPU timescale
         int64_t offset = tsOffsetInNs;
-        uint64_t startTimeStampInNs = static_cast<uint64_t>(deviceTs->kernelStart * frequency) + offset;
+        uint64_t startTimeStampInNs = static_cast<uint64_t>(deviceTs->kernelStart * resolution) + offset;
         if (startTimeStampInNs < referenceHostTsInNs) {
-            offset += static_cast<uint64_t>(maxNBitValue(gfxCoreHelper.getGlobalTimeStampBits()) * frequency);
-            startTimeStampInNs = static_cast<uint64_t>(deviceTs->kernelStart * frequency) + offset;
+            offset += static_cast<uint64_t>(maxNBitValue(gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
+            startTimeStampInNs = static_cast<uint64_t>(deviceTs->kernelStart * resolution) + offset;
         }
 
         // Get the kernel timestamp duration
         uint64_t deviceDuration = getDuration(deviceTs->kernelStart, deviceTs->kernelEnd);
-        uint64_t deviceDurationNs = static_cast<uint64_t>(deviceDuration * frequency);
+        uint64_t deviceDurationNs = static_cast<uint64_t>(deviceDuration * resolution);
         // Add the duration to the startTimeStamp to get the endTimeStamp
         uint64_t endTimeStampInNs = startTimeStampInNs + deviceDurationNs;
 
@@ -662,7 +662,7 @@ void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timesta
         pSynchronizedTimestampsBuffer[index].context.kernelStart = pSynchronizedTimestampsBuffer[index].global.kernelStart;
         uint64_t deviceDuration = getDuration(pKernelTimestampsBuffer[index].context.kernelStart,
                                               pKernelTimestampsBuffer[index].context.kernelEnd);
-        uint64_t deviceDurationNs = static_cast<uint64_t>(deviceDuration * frequency);
+        uint64_t deviceDurationNs = static_cast<uint64_t>(deviceDuration * resolution);
         pSynchronizedTimestampsBuffer[index].context.kernelEnd = pSynchronizedTimestampsBuffer[index].context.kernelStart +
                                                                  deviceDurationNs;
     }

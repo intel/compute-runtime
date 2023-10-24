@@ -110,7 +110,7 @@ class GfxCoreHelper {
     virtual uint32_t getMinimalGrfSize() const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const = 0;
-    virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
+    virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const = 0;
     virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
     virtual void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
@@ -303,7 +303,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getMinimalGrfSize() const override;
 
-    uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const override;
+    uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const override;
 
     uint32_t getGlobalTimeStampBits() const override;
 

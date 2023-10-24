@@ -149,13 +149,14 @@ HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThe
     EXPECT_EQ(0U, configs.size());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGetGpuTimeStampInNSIsCalledThenCorrectValueIsReturned) {
-
+TEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGetGpuTimeStampInNSIsCalledThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto timeStamp = 0x00ff'ffff'ffff;
-    auto frequency = 123456.0;
-    auto result = static_cast<uint64_t>(timeStamp * frequency);
-    EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp, frequency));
+    auto timeStamp0 = 0x00ff'ffff'ffff;
+    auto timeStamp1 = 0xfe00'00ff'ffff'ffff;
+    auto resolution = 123.0;
+    auto result = static_cast<uint64_t>(timeStamp0 * resolution);
+    EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp0, resolution));
+    EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp1, resolution));
 }
 
 TEST(DwordBuilderTest, WhenSettingNonMaskedBitsThenOnlySelectedBitAreSet) {
