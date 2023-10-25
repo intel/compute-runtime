@@ -11,7 +11,7 @@
 #include "level_zero/sysman/source/linux/nl_api/sysman_iaf_nl_api.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api_prelim.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <limits>
 #include <netlink/handlers.h>

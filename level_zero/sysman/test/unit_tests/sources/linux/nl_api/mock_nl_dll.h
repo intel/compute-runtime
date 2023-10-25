@@ -11,7 +11,7 @@
 
 #include "level_zero/sysman/source/linux/nl_api/sysman_nl_api.h"
 
-#include "gmock/gmock.h"
+#include <map>
 
 // Define opaque types so variables can be allocated
 struct nl_sock {};

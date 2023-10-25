@@ -10,7 +10,6 @@
 #include "level_zero/sysman/test/unit_tests/sources/ecc/windows/mock_ecc.h"
 
 using ::testing::Matcher;
-using ::testing::NiceMock;
 
 namespace L0 {
 namespace Sysman {

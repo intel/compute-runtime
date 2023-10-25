@@ -12,8 +12,6 @@
 
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 
-#include "gmock/gmock.h"
-
 using namespace NEO;
 
 namespace L0 {

@@ -7,7 +7,6 @@
 
 #include "level_zero/sysman/test/unit_tests/sources/firmware/windows/mock_zes_sysman_firmware.h"
 
-using ::testing::_;
 namespace L0 {
 namespace Sysman {
 namespace ult {

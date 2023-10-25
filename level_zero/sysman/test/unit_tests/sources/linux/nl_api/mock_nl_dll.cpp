@@ -9,6 +9,7 @@
 
 #include <level_zero/zes_api.h>
 
+#include "gtest/gtest.h"
 #include "iaf/iaf_netlink.h"
 
 namespace L0 {

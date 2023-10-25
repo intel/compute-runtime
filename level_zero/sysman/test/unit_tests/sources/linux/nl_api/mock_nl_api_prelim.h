@@ -12,8 +12,6 @@
 #include "level_zero/sysman/source/linux/nl_api/sysman_iaf_nl_api.h"
 #include "level_zero/sysman/source/linux/nl_api/sysman_nl_api.h"
 
-#include "gmock/gmock.h"
-
 #include <map>
 
 namespace L0 {

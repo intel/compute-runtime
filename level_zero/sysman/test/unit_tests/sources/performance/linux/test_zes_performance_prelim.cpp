@@ -8,6 +8,10 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/performance/linux/mock_sysfs_performance_prelim.h"
 
+#include "gtest/gtest.h"
+
+#include <cmath>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {

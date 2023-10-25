@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_dll.h"
 
+#include "gtest/gtest.h"
 #include "iaf/iaf_netlink.h"
 
 namespace L0 {

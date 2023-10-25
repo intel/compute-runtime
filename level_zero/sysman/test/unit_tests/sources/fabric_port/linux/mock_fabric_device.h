@@ -13,8 +13,6 @@
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 
-#include "gmock/gmock.h"
-
 namespace L0 {
 namespace Sysman {
 namespace ult {

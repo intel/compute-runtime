@@ -9,8 +9,6 @@
 
 #include "level_zero/sysman/source/linux/nl_api/sysman_iaf_nl_api.h"
 
-#include "gmock/gmock.h"
-
 #include <sstream>
 
 namespace L0 {
