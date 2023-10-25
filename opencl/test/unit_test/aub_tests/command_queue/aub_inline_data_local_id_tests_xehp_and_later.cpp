@@ -5,13 +5,13 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -135,7 +135,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    if (!HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*kernels[4])) {
+    if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernels[4]->getKernelInfo().kernelDescriptor)) {
         return;
     }
 
@@ -189,7 +189,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    if (!HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*kernels[3])) {
+    if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernels[3]->getKernelInfo().kernelDescriptor)) {
         return;
     }
 

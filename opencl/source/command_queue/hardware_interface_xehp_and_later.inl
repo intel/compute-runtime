@@ -74,7 +74,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                                  requiredWalkOrder,
                                                                  simd);
 
-    bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
+    bool inlineDataProgrammingRequired = EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelInfo().kernelDescriptor);
     auto idd = &walkerCmd.getInterfaceDescriptor();
     auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
 

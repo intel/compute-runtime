@@ -1055,41 +1055,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     delete[] mockDsh;
 }
 
-HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineThenReturnTrue) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(1u);
-
-    uint32_t crossThreadData[8];
-    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData = true;
-    mockKernelWithInternal->mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
-
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel));
-}
-
-HWTEST_F(HardwareCommandsTest, givenNoDebugSettingsWhenDefaultModeIsExcercisedThenWeFollowKernelSettingForInlineProgramming) {
-    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData = true;
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel));
-}
-
-HWTEST_F(HardwareCommandsTest, givenDisabledPassInlineDataWhenKernelAllowsInlineThenReturnFalse) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(0u);
-    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData = true;
-    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel));
-}
-
-HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInlineThenReturnFalse) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(1u);
-
-    uint32_t crossThreadData[8];
-
-    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData = false;
-    mockKernelWithInternal->mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
-
-    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel));
-}
-
 HWTEST_F(HardwareCommandsTest, whenNumLocalIdsIsBiggerThanZeroThenExpectLocalIdsInUseIsTrue) {
     mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 1;
     EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel));

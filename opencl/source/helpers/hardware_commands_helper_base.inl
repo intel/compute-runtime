@@ -233,7 +233,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
-    auto inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
+    auto inlineDataProgrammingRequired = EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelInfo().kernelDescriptor);
 
     // Copy the kernel over to the ISH
     const auto &kernelInfo = kernel.getKernelInfo();
@@ -319,18 +319,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     walkerCmd->setIndirectDataLength(indirectDataLength);
 
     return offsetCrossThreadData;
-}
-
-template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel &kernel) {
-    auto checkKernelForInlineData = true;
-    if (DebugManager.flags.EnablePassInlineData.get() != -1) {
-        checkKernelForInlineData = !!DebugManager.flags.EnablePassInlineData.get();
-    }
-    if (checkKernelForInlineData) {
-        return kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.passInlineData;
-    }
-    return false;
 }
 
 template <typename GfxFamily>

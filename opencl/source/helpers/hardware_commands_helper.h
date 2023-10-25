@@ -118,7 +118,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         WALKER_TYPE *walkerCmd,
         uint32_t &interfaceDescriptorIndex);
 
-    static bool inlineDataProgrammingRequired(const Kernel &kernel);
     static bool kernelUsesLocalIds(const Kernel &kernel);
     static size_t checkForAdditionalBTAndSetBTPointer(IndirectHeap &ssh, const Kernel &kernel);
 };
