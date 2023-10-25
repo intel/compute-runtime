@@ -66,7 +66,7 @@ TEST_P(CreateSampler, GivenModeWhenSamplerIsCreatedThenParamsAreSetCorrectly) {
     // check for SnapWA
     bool snapWaNeeded = addressingMode == CL_ADDRESS_CLAMP && filterMode == CL_FILTER_NEAREST;
     auto snapWaValue = snapWaNeeded ? iOpenCL::CONSTANT_REGISTER_BOOLEAN_TRUE : iOpenCL::CONSTANT_REGISTER_BOOLEAN_FALSE;
-    EXPECT_EQ(snapWaValue, sampler->getSnapWaValue());
+    EXPECT_EQ(static_cast<uint32_t>(snapWaValue), sampler->getSnapWaValue());
 
     delete sampler;
 }

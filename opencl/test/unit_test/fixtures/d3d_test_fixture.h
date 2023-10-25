@@ -71,7 +71,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         }
 
         bool verifyValue = true;
-        bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) { return verifyValue; }
+        bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) override { return verifyValue; }
 
         bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) override {
             mapAuxGpuVACalled++;
@@ -112,7 +112,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         context->setSharingFunctions(mockSharingFcns);
         context->memoryManager = mockMM.get();
         cmdQ = new MockCommandQueue(context, context->getDevice(0), 0, false);
-        DebugManager.injectFcn = &mockSharingFcns->mockGetDxgiDesc;
+        DebugManager.injectFcn = reinterpret_cast<void *>(&mockSharingFcns->mockGetDxgiDesc);
 
         mockSharingFcns->mockTexture2dDesc.ArraySize = 1;
         mockSharingFcns->mockTexture2dDesc.MipLevels = 4;

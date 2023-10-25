@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -502,7 +503,7 @@ TEST_F(GlSharingTextureTests, givenTextureWithOneSampleWhenAskedForNumSamplesThe
 
     auto retVal = clGetGLTextureInfo(image.get(), CL_GL_NUM_SAMPLES, sizeof(GLsizei), &numSamples, &retSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, numSamples);
+    EXPECT_EQ(0u, numSamples);
     EXPECT_EQ(sizeof(GLsizei), retSize);
 }
 
@@ -516,7 +517,7 @@ TEST_F(GlSharingTextureTests, givenTextureWithZeroSamplesWhenAskedForNumSamplesT
 
     auto retVal = clGetGLTextureInfo(image.get(), CL_GL_NUM_SAMPLES, sizeof(GLsizei), &numSamples, &retSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, numSamples);
+    EXPECT_EQ(0u, numSamples);
     EXPECT_EQ(sizeof(GLsizei), retSize);
 }
 

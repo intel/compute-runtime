@@ -1367,7 +1367,7 @@ TEST(GlSharingAdapterLuid, whenInitializingGlSharingThenProperAdapterLuidIsObtai
         auto luid = glSharing.getAdapterLuid(reinterpret_cast<GLContext>(0x1));
         EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
 
-        EXPECT_EQ(0u, luid.HighPart);
+        EXPECT_EQ(0, luid.HighPart);
         EXPECT_EQ(0u, luid.LowPart);
     }
     dllParam.resetParam("glGetLuidFuncAvailable");

@@ -80,6 +80,6 @@ TEST(GetDeviceInfo, givenClDeviceWhenGettingDeviceInfoThenGetNodeMask) {
     auto retVal = clDevice->getDeviceInfo(CL_DEVICE_NODE_MASK_KHR, sizeof(cl_uint), &nodeMask, 0);
 
     ASSERT_EQ(retVal, CL_SUCCESS);
-    EXPECT_EQ(nodeMask, 0b1);
+    EXPECT_EQ(nodeMask, 0b1u);
 }
 } // namespace ULT

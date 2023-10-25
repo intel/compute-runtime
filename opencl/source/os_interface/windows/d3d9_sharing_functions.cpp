@@ -11,7 +11,6 @@
 
 using namespace NEO;
 
-template class NEO::D3DSharingFunctions<D3DTypesHelper::D3D9>;
 template <>
 const uint32_t D3DSharingFunctions<D3DTypesHelper::D3D9>::sharingId = SharingType::D3D9_SHARING;
 
@@ -159,3 +158,4 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::getDxgiDesc(DXGI_ADAPTER_DESC *d
 }
 
 template D3DSharingFunctions<D3DTypesHelper::D3D9> *Context::getSharing<D3DSharingFunctions<D3DTypesHelper::D3D9>>();
+template class NEO::D3DSharingFunctions<D3DTypesHelper::D3D9>;

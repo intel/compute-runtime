@@ -41,7 +41,7 @@ class MockMM : public OsAgnosticMemoryManager {
     }
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
         auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), *allocationData.imgInfo, StorageInfo{}, false);
-        AllocationProperties properties(allocationData.rootDeviceIndex, nullptr, false, AllocationType::SHARED_IMAGE, false, {});
+        AllocationProperties properties(allocationData.rootDeviceIndex, false, nullptr, AllocationType::SHARED_IMAGE, DeviceBitfield{});
         auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false, false, true, nullptr);
         alloc->setDefaultGmm(forceGmm);
         gmmOwnershipPassed = true;
@@ -99,7 +99,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         mockSharingFcns = new MockD3DSharingFunctions<D3D9>();
         context->setSharingFunctions(mockSharingFcns);
         cmdQ = new MockCommandQueue(context, context->getDevice(0), 0, false);
-        DebugManager.injectFcn = &mockSharingFcns->mockGetDxgiDesc;
+        DebugManager.injectFcn = reinterpret_cast<void *>(&mockSharingFcns->mockGetDxgiDesc);
 
         surfaceInfo.resource = reinterpret_cast<IDirect3DSurface9 *>(&dummyD3DSurface);
 
@@ -841,7 +841,7 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndLockableWhenReleasingThenResou
     EXPECT_EQ(1u, mockSharingFcns->updateDeviceCalled);
 
     EXPECT_EQ(reinterpret_cast<IDirect3DSurface9 *>(&dummyD3DSurface), mockSharingFcns->lockRectParamsPassed[0].d3dResource);
-    EXPECT_EQ(D3DLOCK_READONLY, mockSharingFcns->lockRectParamsPassed[0].flags);
+    EXPECT_EQ(static_cast<uint32_t>(D3DLOCK_READONLY), mockSharingFcns->lockRectParamsPassed[0].flags);
     EXPECT_EQ(reinterpret_cast<IDirect3DSurface9 *>(&dummyD3DSurface), mockSharingFcns->lockRectParamsPassed[1].d3dResource);
     EXPECT_EQ(0u, mockSharingFcns->lockRectParamsPassed[1].flags);
 
@@ -911,7 +911,7 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndLockableIntelWhenReleasingThen
     EXPECT_EQ(1u, mockSharingFcns->updateDeviceCalled);
 
     EXPECT_EQ(reinterpret_cast<IDirect3DSurface9 *>(&dummyD3DSurface), mockSharingFcns->lockRectParamsPassed[0].d3dResource);
-    EXPECT_EQ(D3DLOCK_READONLY, mockSharingFcns->lockRectParamsPassed[0].flags);
+    EXPECT_EQ(static_cast<uint32_t>(D3DLOCK_READONLY), mockSharingFcns->lockRectParamsPassed[0].flags);
     EXPECT_EQ(reinterpret_cast<IDirect3DSurface9 *>(&dummyD3DSurface), mockSharingFcns->lockRectParamsPassed[1].d3dResource);
     EXPECT_EQ(0u, mockSharingFcns->lockRectParamsPassed[1].flags);
 
@@ -985,7 +985,7 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndNonLockableWhenReleasingThenRe
     EXPECT_EQ(1u, mockSharingFcns->updateDeviceCalled);
 
     EXPECT_EQ(reinterpret_cast<IDirect3DSurface9 *>(&dummyD3DSurfaceStaging), mockSharingFcns->lockRectParamsPassed[0].d3dResource);
-    EXPECT_EQ(D3DLOCK_READONLY, mockSharingFcns->lockRectParamsPassed[0].flags);
+    EXPECT_EQ(static_cast<uint32_t>(D3DLOCK_READONLY), mockSharingFcns->lockRectParamsPassed[0].flags);
     EXPECT_EQ(reinterpret_cast<IDirect3DSurface9 *>(&dummyD3DSurfaceStaging), mockSharingFcns->lockRectParamsPassed[1].d3dResource);
     EXPECT_EQ(0u, mockSharingFcns->lockRectParamsPassed[1].flags);
 

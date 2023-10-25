@@ -22,7 +22,7 @@ struct MockEngineKmdSysManager : public MockKmdSysManager {
     uint32_t mockFrequencyTimeStamp = 38400000;
     uint32_t mockFrequencyActivity = 1200000;
 
-    void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+    void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
         pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderOut);
 
@@ -69,9 +69,6 @@ struct MockEngineKmdSysManager : public MockKmdSysManager {
     }
 
     void setActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
-        uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pRequest);
-        pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderIn);
-
         pResponse->outDataSize = 0;
         pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
     }

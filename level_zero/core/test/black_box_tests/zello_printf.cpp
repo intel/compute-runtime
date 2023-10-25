@@ -14,7 +14,7 @@
 #include <cstring>
 #include <iostream>
 #include <numeric>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 
 #include <io.h>

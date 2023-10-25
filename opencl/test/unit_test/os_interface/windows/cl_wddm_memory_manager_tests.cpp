@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -123,7 +124,7 @@ TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCount
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
-    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipCount());
+    EXPECT_EQ(static_cast<uint32_t>(imageDesc.num_mip_levels), dstImage->peekMipCount());
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
@@ -191,7 +192,7 @@ TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCoun
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
-    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipCount());
+    EXPECT_EQ(static_cast<uint32_t>(imageDesc.num_mip_levels), dstImage->peekMipCount());
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
@@ -255,7 +256,7 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
     for (int i = 0; i < maxFragmentsCount; i++) {
         auto osHandle = static_cast<OsHandleWin *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
-        EXPECT_NE((D3DKMT_HANDLE) nullptr, osHandle->handle);
+        EXPECT_NE(0u, osHandle->handle);
 
         EXPECT_NE(nullptr, osHandle->gmm);
         EXPECT_EQ(reqs.allocationFragments[i].allocationPtr,

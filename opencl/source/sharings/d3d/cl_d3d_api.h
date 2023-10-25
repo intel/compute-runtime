@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,14 @@
 
 #pragma once
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-pragma-intrinsic"
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#pragma clang diagnostic ignored "-Wignored-attributes"
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#pragma clang diagnostic ignored "-Wcomment"
+#endif
 #include <d3d10_1.h>
 
 #include "CL/cl.h"
@@ -15,6 +23,9 @@
 #include "CL/cl_dx9_media_sharing.h"
 #define CL_DX9_MEDIA_SHARING_INTEL_EXT
 #include "CL/cl_dx9_media_sharing.h"
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 
 extern CL_API_ENTRY cl_int CL_API_CALL clGetDeviceIDsFromDX9INTEL(
     cl_platform_id platform,

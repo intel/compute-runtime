@@ -31,7 +31,7 @@ struct MockOSInterface : OSInterface {
     static HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName, void *data) {
         MockOSInterface *self = reinterpret_cast<MockOSInterface *>(data);
         if (self->eventNum++ == self->failEventNum) {
-            return INVALID_HANDLE;
+            return reinterpret_cast<HANDLE>(INVALID_HANDLE);
         }
         return handleValue;
     }
@@ -111,11 +111,11 @@ TEST_F(GlArbSyncEventOsTest, WhenCreateSynchronizationObjectSucceedsThenAllHAndl
                 return STATUS_INVALID_PARAMETER;
             }
 
-            EXPECT_NE(NULL, pData->hDevice);
+            EXPECT_NE(0u, pData->hDevice);
             EXPECT_EQ(D3DDDI_SEMAPHORE, pData->Info.Type);
 
-            EXPECT_EQ(32, pData->Info.Semaphore.MaxCount);
-            EXPECT_EQ(0, pData->Info.Semaphore.InitialCount);
+            EXPECT_EQ(32u, pData->Info.Semaphore.MaxCount);
+            EXPECT_EQ(0u, pData->Info.Semaphore.InitialCount);
 
             pData->hSyncObject = getHandle()++;
             return STATUS_SUCCESS;
@@ -126,7 +126,7 @@ TEST_F(GlArbSyncEventOsTest, WhenCreateSynchronizationObjectSucceedsThenAllHAndl
                 return STATUS_INVALID_PARAMETER;
             }
 
-            EXPECT_NE(NULL, pData->hDevice);
+            EXPECT_NE(0u, pData->hDevice);
             EXPECT_EQ(D3DDDI_CPU_NOTIFICATION, pData->Info.Type);
             EXPECT_NE(nullptr, pData->Info.CPUNotification.Event);
 
@@ -303,10 +303,10 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
                 return STATUS_INVALID_PARAMETER;
             }
 
-            EXPECT_EQ(2, obj->ObjectCount);
+            EXPECT_EQ(2u, obj->ObjectCount);
             EXPECT_EQ(getExpectedSynchHandle0(), obj->ObjectHandleArray[0]);
             EXPECT_EQ(getExpectedSynchHandle1(), obj->ObjectHandleArray[1]);
-            EXPECT_EQ(0, obj->Flags.SignalAtSubmission);
+            EXPECT_EQ(0u, obj->Flags.SignalAtSubmission);
             EXPECT_EQ(getExpectedContextHandle(), obj->hContext);
             return STATUS_INVALID_PARAMETER;
         }
@@ -364,9 +364,9 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
                 return STATUS_SUCCESS;
             }
 
-            EXPECT_EQ(1, obj->ObjectCount);
+            EXPECT_EQ(1u, obj->ObjectCount);
             EXPECT_EQ(getExpectedSynchHandle0(), obj->ObjectHandleArray[0]);
-            EXPECT_EQ(1, obj->Flags.SignalAtSubmission);
+            EXPECT_EQ(1u, obj->Flags.SignalAtSubmission);
             EXPECT_EQ(getExpectedContextHandle(), obj->hContext);
 
             return STATUS_SUCCESS;
@@ -417,7 +417,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSyn
                 return STATUS_INVALID_PARAMETER;
             }
 
-            EXPECT_EQ(1, waitData->ObjectCount);
+            EXPECT_EQ(1u, waitData->ObjectCount);
             EXPECT_EQ(getExpectedSynchHandle0(), waitData->ObjectHandleArray[0]);
             EXPECT_EQ(getExpectedContextHandle(), waitData->hContext);
             return STATUS_INVALID_PARAMETER;

@@ -82,7 +82,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidDeviceHandleWhenEnumeratingTemp
     uint32_t count = 0;
     pKmdSysManager->isIntegrated = true;
     EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0);
+    EXPECT_EQ(count, 0u);
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleWhenGettingTemperaturePropertiesAllowSetToTrueThenCallSucceeds) {
@@ -95,7 +95,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleWhenGettingTemperatu
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0);
+        EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_FALSE(properties.isCriticalTempSupported);
         EXPECT_FALSE(properties.isThreshold1Supported);
         EXPECT_FALSE(properties.isThreshold2Supported);

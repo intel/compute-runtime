@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,10 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     typedef typename D3D::D3DTexture3d D3DTexture3d;
 
   public:
-    MockD3DSharingFunctions() : D3DSharingFunctions((D3DDevice *)1) {
+    MockD3DSharingFunctions() : D3DSharingFunctions<D3D>((D3DDevice *)1) {
         memset(&mockDxgiDesc, 0, sizeof(DXGI_ADAPTER_DESC));
         mockDxgiDesc.VendorId = INTEL_VENDOR_ID;
-        getDxgiDescFcn = &this->mockGetDxgiDesc;
+        this->getDxgiDescFcn = &this->mockGetDxgiDesc;
         getDxgiDescCalled = 0;
         getDxgiDescAdapterRequested = nullptr;
     }

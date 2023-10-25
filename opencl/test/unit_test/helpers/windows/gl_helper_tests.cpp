@@ -29,7 +29,7 @@ TEST(GlFunctionHelper, whenCreateGlFunctionHelperThenSetGlFunctionPtrToLoadAnoth
     std::unique_ptr<OsLibrary> glLibrary(OsLibrary::load("mock_opengl32.dll"));
     EXPECT_TRUE(glLibrary->isLoaded());
     GlFunctionHelperMock loader(glLibrary.get(), "mockLoader");
-    funcType function1 = ConvertibleProcAddr{loader.glFunctionPtr("realFunction")};
+    funcType function1 = ConvertibleProcAddr{reinterpret_cast<void *>(loader.glFunctionPtr("realFunction"))};
     funcType function2 = loader["realFunction"];
     EXPECT_STREQ(function1(), function2());
 }

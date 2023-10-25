@@ -14,13 +14,9 @@
 
 using namespace NEO;
 
-template class NEO::D3DSharing<D3DTypesHelper::D3D9>;
-template class NEO::D3DSharing<D3DTypesHelper::D3D10>;
-template class NEO::D3DSharing<D3DTypesHelper::D3D11>;
-
 template <typename D3D>
 D3DSharing<D3D>::D3DSharing(Context *context, D3DResource *resource, D3DResource *resourceStaging, unsigned int subresource, bool sharedResource)
-    : sharedResource(sharedResource), subresource(subresource), resource(resource), resourceStaging(resourceStaging), context(context) {
+    : context(context), resource(resource), resourceStaging(resourceStaging), sharedResource(sharedResource), subresource(subresource) {
     sharingFunctions = context->getSharing<D3DSharingFunctions<D3D>>();
     if (sharingFunctions) {
         sharingFunctions->addRef(resource);
@@ -104,6 +100,11 @@ bool D3DSharing<D3D>::isFormatWithPlane1(DXGI_FORMAT format) {
     case DXGI_FORMAT_NV11:
     case DXGI_FORMAT_P208:
         return true;
+    default:
+        return false;
     }
-    return false;
 }
+
+template class NEO::D3DSharing<D3DTypesHelper::D3D9>;
+template class NEO::D3DSharing<D3DTypesHelper::D3D10>;
+template class NEO::D3DSharing<D3DTypesHelper::D3D11>;

@@ -170,6 +170,20 @@ struct clIntelSharingFormatQueryDX1X : public PlatformFixture, public ::testing:
         PlatformFixture::tearDown();
     }
 };
+template <>
+DXGI_ADAPTER_DESC MockD3DSharingFunctions<D3DTypesHelper::D3D10>::mockDxgiDesc{};
+template <>
+DXGI_ADAPTER_DESC MockD3DSharingFunctions<D3DTypesHelper::D3D11>::mockDxgiDesc{};
+
+template <>
+uint32_t MockD3DSharingFunctions<D3DTypesHelper::D3D10>::getDxgiDescCalled{};
+template <>
+uint32_t MockD3DSharingFunctions<D3DTypesHelper::D3D11>::getDxgiDescCalled{};
+
+template <>
+IDXGIAdapter *MockD3DSharingFunctions<D3DTypesHelper::D3D10>::getDxgiDescAdapterRequested{};
+template <>
+IDXGIAdapter *MockD3DSharingFunctions<D3DTypesHelper::D3D11>::getDxgiDescAdapterRequested{};
 
 typedef clIntelSharingFormatQueryDX1X<D3DTypesHelper::D3D10> clIntelSharingFormatQueryDX10;
 typedef clIntelSharingFormatQueryDX1X<D3DTypesHelper::D3D11> clIntelSharingFormatQueryDX11;
@@ -294,12 +308,12 @@ TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestingDX11Text
                                                     &retrievedFormats[0], &numImageFormats);
 
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_EQ(0, numImageFormats);
+    EXPECT_EQ(0u, numImageFormats);
 
     retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 3,
                                                     static_cast<cl_uint>(retrievedFormats.size()),
                                                     &retrievedFormats[0], &numImageFormats);
 
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_EQ(0, numImageFormats);
+    EXPECT_EQ(0u, numImageFormats);
 }

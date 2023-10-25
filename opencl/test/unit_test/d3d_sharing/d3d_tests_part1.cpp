@@ -120,7 +120,7 @@ TYPED_TEST_P(D3DTests, givenNonIntelVendorWhenGetDeviceIdIsCalledThenReturnError
 TYPED_TEST_P(D3DTests, WhenCreatingFromD3DBufferKhrApiThenValidBufferIsReturned) {
     cl_int retVal;
 
-    auto memObj = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), &retVal);
+    auto memObj = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -130,7 +130,7 @@ TYPED_TEST_P(D3DTests, WhenCreatingFromD3DBufferKhrApiThenValidBufferIsReturned)
 
     auto bufferObj = static_cast<D3DBuffer<TypeParam> *>(buffer->getSharingHandler().get());
 
-    EXPECT_EQ(reinterpret_cast<D3DResource *>(&this->dummyD3DBuffer), *bufferObj->getResourceHandler());
+    EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DResource *>(&this->dummyD3DBuffer), *bufferObj->getResourceHandler());
     EXPECT_TRUE(buffer->getFlags() == CL_MEM_READ_WRITE);
 
     clReleaseMemObject(memObj);
@@ -145,14 +145,14 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
     EXPECT_EQ(GMM_PLANE_Y, image->getPlane());
 
     auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
-    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
-    EXPECT_EQ(2u, mockGmmResInfo->arrayIndexPassedToGetOffset);
+    EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(2u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
@@ -165,9 +165,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextWhen2dCreatedThenRetur
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = 0;
-    mockMM->verifyValue = false;
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
-    mockMM->verifyValue = true;
+    this->mockMM->verifyValue = false;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
+    this->mockMM->verifyValue = true;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
 
@@ -182,9 +182,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen2dCreat
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = 0;
-    mockMM->verifyValue = false;
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
-    mockMM->verifyValue = true;
+    this->mockMM->verifyValue = false;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
+    this->mockMM->verifyValue = true;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
 
@@ -199,9 +199,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen2dCreatedThenRetur
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = 0;
-    mockMM->failAlloc = true;
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
-    mockMM->failAlloc = false;
+    this->mockMM->failAlloc = true;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
+    this->mockMM->failAlloc = false;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
 
@@ -216,9 +216,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectAndNTHandleAndAllocationFailedWhen2dCrea
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = 0;
-    mockMM->failAlloc = true;
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
-    mockMM->failAlloc = false;
+    this->mockMM->failAlloc = true;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
+    this->mockMM->failAlloc = false;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
 
@@ -231,14 +231,14 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
     EXPECT_EQ(GMM_PLANE_U, image->getPlane());
 
     auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
-    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
-    EXPECT_EQ(3u, mockGmmResInfo->arrayIndexPassedToGetOffset);
+    EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(3u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
@@ -249,13 +249,13 @@ TYPED_TEST_P(D3DTests, givenP010FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
     auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
-    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
-    EXPECT_EQ(2u, mockGmmResInfo->arrayIndexPassedToGetOffset);
+    EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(2u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
@@ -266,13 +266,13 @@ TYPED_TEST_P(D3DTests, givenP010FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
 
     auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
-    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
-    EXPECT_EQ(3u, mockGmmResInfo->arrayIndexPassedToGetOffset);
+    EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(3u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
@@ -283,13 +283,13 @@ TYPED_TEST_P(D3DTests, givenP016FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
     auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
-    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
-    EXPECT_EQ(2u, mockGmmResInfo->arrayIndexPassedToGetOffset);
+    EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(2u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
@@ -300,13 +300,13 @@ TYPED_TEST_P(D3DTests, givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
 
     auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
-    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
-    EXPECT_EQ(3u, mockGmmResInfo->arrayIndexPassedToGetOffset);
+    EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(3u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
@@ -317,11 +317,11 @@ TYPED_TEST_P(D3DTests, WhenCreatingFromD3D2dTextureKhrApiThenValidImageIsReturne
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), 1, &retVal);
+    auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), 1, &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
-    EXPECT_EQ(0u, mockGmmResInfo->arrayIndexPassedToGetOffset);
+    EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(0u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     auto image = castToObject<Image>(memObj);
     ASSERT_NE(nullptr, image);
@@ -329,7 +329,7 @@ TYPED_TEST_P(D3DTests, WhenCreatingFromD3D2dTextureKhrApiThenValidImageIsReturne
 
     auto textureObj = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
 
-    EXPECT_EQ(reinterpret_cast<D3DResource *>(&this->dummyD3DTexture), *textureObj->getResourceHandler());
+    EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DResource *>(&this->dummyD3DTexture), *textureObj->getResourceHandler());
     EXPECT_TRUE(image->getFlags() == CL_MEM_READ_WRITE);
     EXPECT_TRUE(image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D);
     EXPECT_EQ(1u, textureObj->getSubresource());
@@ -348,11 +348,11 @@ TYPED_TEST_P(D3DTests, WhenCreatingFromD3D3dTextureKhrApiThenValidImageIsReturne
     this->mockSharingFcns->getTexture3dDescSetParams = true;
     this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
 
-    auto memObj = this->createFromD3DTexture3DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), 1, &retVal);
+    auto memObj = this->createFromD3DTexture3DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture3d *>(&this->dummyD3DTexture), 1, &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
-    EXPECT_EQ(0u, mockGmmResInfo->arrayIndexPassedToGetOffset);
+    EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(0u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     auto image = castToObject<Image>(memObj);
     ASSERT_NE(nullptr, image);
@@ -360,7 +360,7 @@ TYPED_TEST_P(D3DTests, WhenCreatingFromD3D3dTextureKhrApiThenValidImageIsReturne
 
     auto textureObj = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
 
-    EXPECT_EQ(reinterpret_cast<D3DResource *>(&this->dummyD3DTexture), *textureObj->getResourceHandler());
+    EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DResource *>(&this->dummyD3DTexture), *textureObj->getResourceHandler());
     EXPECT_TRUE(image->getFlags() == CL_MEM_READ_WRITE);
     EXPECT_TRUE(image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE3D);
     EXPECT_EQ(1u, textureObj->getSubresource());
@@ -383,9 +383,9 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreateBufferThenStagingBufferE
         this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
 
         this->mockSharingFcns->createQuerySetParams = true;
-        this->mockSharingFcns->createQueryParamsSet.query = reinterpret_cast<D3DQuery *>(1);
+        this->mockSharingFcns->createQueryParamsSet.query = reinterpret_cast<typename TestFixture::D3DQuery *>(1);
 
-        auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+        auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
         ASSERT_NE(nullptr, buffer.get());
         auto d3dBuffer = static_cast<D3DBuffer<TypeParam> *>(buffer->getSharingHandler().get());
         ASSERT_NE(nullptr, d3dBuffer);
@@ -394,8 +394,8 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreateBufferThenStagingBufferE
         EXPECT_TRUE(d3dBuffer->isSharedResource());
         EXPECT_EQ(&this->dummyD3DBuffer, d3dBuffer->getResourceStaging());
 
-        releaseExpectedParams.push_back(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer));
-        releaseExpectedParams.push_back(reinterpret_cast<D3DQuery *>(d3dBuffer->getQuery()));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DQuery *>(d3dBuffer->getQuery()));
 
         EXPECT_EQ(0u, this->mockSharingFcns->createBufferCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->createQueryCalled);
@@ -403,8 +403,8 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreateBufferThenStagingBufferE
         EXPECT_EQ(1u, this->mockSharingFcns->getSharedHandleCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->addRefCalled);
 
-        EXPECT_EQ(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
-        EXPECT_EQ(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->addRefParamsPassed[0].resource);
+        EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
+        EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->addRefParamsPassed[0].resource);
     }
     EXPECT_EQ(2u, this->mockSharingFcns->releaseCalled);
 
@@ -417,12 +417,12 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreateBufferThenCreateNewSt
 
     {
         this->mockSharingFcns->createBufferSetParams = true;
-        this->mockSharingFcns->createBufferParamsSet.buffer = reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBufferStaging);
+        this->mockSharingFcns->createBufferParamsSet.buffer = reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging);
 
         this->mockSharingFcns->createQuerySetParams = true;
-        this->mockSharingFcns->createQueryParamsSet.query = reinterpret_cast<D3DQuery *>(1);
+        this->mockSharingFcns->createQueryParamsSet.query = reinterpret_cast<typename TestFixture::D3DQuery *>(1);
 
-        auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+        auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
         ASSERT_NE(nullptr, buffer.get());
         auto d3dBuffer = static_cast<D3DBuffer<TypeParam> *>(buffer->getSharingHandler().get());
         ASSERT_NE(nullptr, d3dBuffer);
@@ -431,17 +431,17 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreateBufferThenCreateNewSt
         EXPECT_FALSE(d3dBuffer->isSharedResource());
         EXPECT_EQ(&this->dummyD3DBufferStaging, d3dBuffer->getResourceStaging());
 
-        releaseExpectedParams.push_back(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBufferStaging));
-        releaseExpectedParams.push_back(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer));
-        releaseExpectedParams.push_back(reinterpret_cast<D3DQuery *>(d3dBuffer->getQuery()));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DQuery *>(d3dBuffer->getQuery()));
 
         EXPECT_EQ(1u, this->mockSharingFcns->createBufferCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->createQueryCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->getSharedHandleCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->addRefCalled);
 
-        EXPECT_EQ(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBufferStaging), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
-        EXPECT_EQ(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->addRefParamsPassed[0].resource);
+        EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
+        EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->addRefParamsPassed[0].resource);
     }
     EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
 
@@ -454,9 +454,9 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferWhenAcquiredThenCopySubregion
     this->context->setInteropUserSyncEnabled(true);
 
     this->mockSharingFcns->createBufferSetParams = true;
-    this->mockSharingFcns->createBufferParamsSet.buffer = reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBufferStaging);
+    this->mockSharingFcns->createBufferParamsSet.buffer = reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging);
 
-    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
     cl_mem bufferMem = (cl_mem)buffer.get();
 
@@ -487,14 +487,14 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferWhenAcquiredThenCopySubregion
     EXPECT_EQ(2u, this->mockSharingFcns->copySubresourceRegionCalled);
     EXPECT_EQ(1u, this->mockSharingFcns->flushAndWaitCalled);
 
-    EXPECT_EQ(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBufferStaging), this->mockSharingFcns->copySubresourceRegionParamsPassed[0].dst);
+    EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging), this->mockSharingFcns->copySubresourceRegionParamsPassed[0].dst);
     EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionParamsPassed[0].dstSubresource);
-    EXPECT_EQ(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->copySubresourceRegionParamsPassed[0].src);
+    EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->copySubresourceRegionParamsPassed[0].src);
     EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionParamsPassed[0].srcSubresource);
 
-    EXPECT_EQ(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->copySubresourceRegionParamsPassed[1].dst);
+    EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->copySubresourceRegionParamsPassed[1].dst);
     EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionParamsPassed[1].dstSubresource);
-    EXPECT_EQ(reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBufferStaging), this->mockSharingFcns->copySubresourceRegionParamsPassed[1].src);
+    EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging), this->mockSharingFcns->copySubresourceRegionParamsPassed[1].src);
     EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionParamsPassed[1].srcSubresource);
 }
 
@@ -505,7 +505,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferWhenAcquiredThenDontCopySubregio
     this->mockSharingFcns->getBufferDescSetParams = true;
     this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
 
-    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
     cl_mem bufferMem = (cl_mem)buffer.get();
 
@@ -530,7 +530,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenAc
     this->mockSharingFcns->getBufferDescSetParams = true;
     this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
 
-    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
     cl_mem bufferMem = (cl_mem)buffer.get();
 
@@ -568,14 +568,14 @@ TYPED_TEST_P(D3DTests, WhenGettingPreferD3DSharedResourcesThenCorrectValueIsRetu
 }
 
 TYPED_TEST_P(D3DTests, WhenGettingD3DResourceInfoFromMemObjThenCorrectInfoIsReturned) {
-    auto memObj = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), nullptr);
+    auto memObj = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), nullptr);
     ASSERT_NE(nullptr, memObj);
     auto param = this->pickParam(CL_MEM_D3D10_RESOURCE_KHR, CL_MEM_D3D11_RESOURCE_KHR);
 
     void *retBuffer = nullptr;
     size_t retSize = 0;
-    clGetMemObjectInfo(memObj, param, sizeof(D3DBufferObj), &retBuffer, &retSize);
-    EXPECT_EQ(sizeof(D3DBufferObj), retSize);
+    clGetMemObjectInfo(memObj, param, sizeof(typename TestFixture::D3DBufferObj), &retBuffer, &retSize);
+    EXPECT_EQ(sizeof(typename TestFixture::D3DBufferObj), retSize);
     EXPECT_EQ(&this->dummyD3DBuffer, retBuffer);
 
     clReleaseMemObject(memObj);
@@ -589,7 +589,7 @@ TYPED_TEST_P(D3DTests, WhenGettingD3DSubresourceInfoFromMemObjThenCorrectInfoIsR
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
+    auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -608,13 +608,13 @@ TYPED_TEST_P(D3DTests, givenTheSameD3DBufferWhenNextCreateIsCalledThenFail) {
     cl_int retVal;
 
     EXPECT_EQ(0u, this->mockSharingFcns->getTrackedResourcesVector()->size());
-    auto memObj = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), &retVal);
+    auto memObj = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTrackedResourcesVector()->size());
     EXPECT_EQ(0u, this->mockSharingFcns->getTrackedResourcesVector()->at(0).second);
-    auto memObj2 = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), &retVal);
+    auto memObj2 = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), &retVal);
     EXPECT_EQ(nullptr, memObj2);
     EXPECT_EQ(this->pickParam(CL_INVALID_D3D10_RESOURCE_KHR, CL_INVALID_D3D11_RESOURCE_KHR), retVal);
     EXPECT_EQ(1u, this->mockSharingFcns->getTrackedResourcesVector()->size());
@@ -631,12 +631,12 @@ TYPED_TEST_P(D3DTests, givenD3DTextureWithTheSameSubresourceWhenNextCreateIsCall
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     EXPECT_EQ(0u, this->mockSharingFcns->getTrackedResourcesVector()->size());
-    auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
+    auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTrackedResourcesVector()->size());
-    auto memObj2 = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
+    auto memObj2 = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
     EXPECT_EQ(nullptr, memObj2);
     EXPECT_EQ(this->pickParam(CL_INVALID_D3D10_RESOURCE_KHR, CL_INVALID_D3D11_RESOURCE_KHR), retVal);
     EXPECT_EQ(1u, this->mockSharingFcns->getTrackedResourcesVector()->size());
@@ -647,7 +647,7 @@ TYPED_TEST_P(D3DTests, givenD3DTextureWithTheSameSubresourceWhenNextCreateIsCall
 
     subresource++;
     this->setupMockGmm(); // setup new mock for new resource
-    auto memObj3 = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
+    auto memObj3 = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(2u, this->mockSharingFcns->getTrackedResourcesVector()->size());
@@ -669,7 +669,7 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture2dIsCalledThenFai
     this->mockSharingFcns->getTexture2dDescSetParams = true;
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
+    auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
     EXPECT_EQ(nullptr, memObj);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
@@ -678,7 +678,7 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture2dIsCalledThenFai
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     subresource = 20;
-    memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
+    memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), subresource, &retVal);
     EXPECT_EQ(nullptr, memObj);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
@@ -693,7 +693,7 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFai
     this->mockSharingFcns->getTexture3dDescSetParams = true;
     this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
 
-    auto memObj = this->createFromD3DTexture3DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), subresource, &retVal);
+    auto memObj = this->createFromD3DTexture3DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture3d *>(&this->dummyD3DTexture), subresource, &retVal);
     EXPECT_EQ(nullptr, memObj);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
@@ -702,7 +702,7 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFai
     this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
 
     subresource = 20;
-    memObj = this->createFromD3DTexture3DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), subresource, &retVal);
+    memObj = this->createFromD3DTexture3DApi(this->context, CL_MEM_READ_WRITE, reinterpret_cast<typename TestFixture::D3DTexture3d *>(&this->dummyD3DTexture), subresource, &retVal);
     EXPECT_EQ(nullptr, memObj);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
@@ -752,7 +752,7 @@ TYPED_TEST_P(D3DTests, givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturn
             format.oclImageFormat.image_channel_order == CL_BGRA ||
             format.oclImageFormat.image_channel_order == CL_RG ||
             format.oclImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_WRITE_ONLY, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_WRITE_ONLY, this->context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -767,7 +767,7 @@ TYPED_TEST_P(D3DTests, givenReadWriteFormatWhenLookingForSurfaceFormatThenReturn
             format.oclImageFormat.image_channel_order == CL_BGRA ||
             format.oclImageFormat.image_channel_order == CL_RG ||
             format.oclImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_WRITE, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_WRITE, this->context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }

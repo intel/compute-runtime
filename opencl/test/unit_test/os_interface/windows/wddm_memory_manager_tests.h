@@ -19,10 +19,9 @@
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
-
-#include "gtest/gtest.h"
 
 #include <type_traits>
 
@@ -45,7 +44,7 @@ class ClWddmMemoryManagerFixture : public GdiDllFixture {
     const uint32_t rootDeviceIndex = 0u;
 };
 
-using ClWddmMemoryManagerTest = ::Test<ClWddmMemoryManagerFixture>;
+using ClWddmMemoryManagerTest = Test<ClWddmMemoryManagerFixture>;
 
 class ClMockWddmMemoryManagerFixture {
   public:

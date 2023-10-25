@@ -104,7 +104,7 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBuff
     auto glBuffer = clBuffer->peekSharingHandler();
     auto oldGraphicsAllocation = clBuffer->getGraphicsAllocation(rootDeviceIndex);
 
-    ASSERT_EQ(40, oldGraphicsAllocation->peekSharedHandle());
+    ASSERT_EQ(40u, oldGraphicsAllocation->peekSharedHandle());
 
     bufferInfoOutput.globalShareHandle = 41;
     dllParam.loadBuffer(bufferInfoOutput);
@@ -112,7 +112,7 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBuff
     auto newGraphicsAllocation = clBuffer->getGraphicsAllocation(rootDeviceIndex);
 
     EXPECT_NE(oldGraphicsAllocation, newGraphicsAllocation);
-    EXPECT_EQ(41, newGraphicsAllocation->peekSharedHandle());
+    EXPECT_EQ(41u, newGraphicsAllocation->peekSharedHandle());
 
     glBuffer->release(clBuffer.get(), rootDeviceIndex);
 }

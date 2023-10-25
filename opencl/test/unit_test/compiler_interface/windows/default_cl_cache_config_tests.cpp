@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/default_cache_config.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/debug_settings_reader.h"

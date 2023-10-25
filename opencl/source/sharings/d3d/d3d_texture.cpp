@@ -25,9 +25,6 @@
 
 using namespace NEO;
 
-template class NEO::D3DTexture<D3DTypesHelper::D3D10>;
-template class NEO::D3DTexture<D3DTypesHelper::D3D11>;
-
 template <typename D3D>
 Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_mem_flags flags, cl_uint subresource, cl_int *retCode) {
     ErrorCodeHelper err(retCode, CL_SUCCESS);
@@ -35,7 +32,6 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     ImagePlane imagePlane = ImagePlane::NO_PLANE;
     void *sharedHandle = nullptr;
     cl_uint arrayIndex = 0u;
-    cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
     ImageInfo imgInfo = {};
     imgInfo.imgDesc.imageType = ImageType::Image2D;
@@ -105,7 +101,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         return nullptr;
     }
 
-    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imagePlane, arrayIndex);
+    D3DSharing<D3D>::updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imagePlane, arrayIndex);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
@@ -118,7 +114,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         clSurfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     } else {
-        clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
+        clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     }
 
@@ -138,7 +134,6 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     ErrorCodeHelper err(retCode, CL_SUCCESS);
     auto sharingFcns = context->getSharing<D3DSharingFunctions<D3D>>();
     void *sharedHandle = nullptr;
-    cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
     ImageInfo imgInfo = {};
     imgInfo.imgDesc.imageType = ImageType::Image3D;
@@ -203,14 +198,14 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
         return nullptr;
     }
 
-    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::NO_PLANE, 0u);
+    D3DSharing<D3D>::updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::NO_PLANE, 0u);
 
     auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
-    auto *clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
+    auto *clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
     imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
 
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
@@ -244,3 +239,6 @@ const ClSurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT
 
     return Image::getSurfaceFormatFromTable(flags, &imgFormat, false /* supportsOcl20Features */);
 }
+
+template class NEO::D3DTexture<D3DTypesHelper::D3D10>;
+template class NEO::D3DTexture<D3DTypesHelper::D3D11>;

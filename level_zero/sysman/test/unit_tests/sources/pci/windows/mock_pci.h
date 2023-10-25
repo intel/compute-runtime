@@ -113,9 +113,6 @@ struct PciKmdSysManager : public MockKmdSysManager {
     }
 
     void setPciProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
-        uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pRequest);
-        pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderIn);
-
         pResponse->outDataSize = 0;
         pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
     }
