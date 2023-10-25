@@ -15,7 +15,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -168,7 +167,7 @@ class IoctlHelper {
 
     virtual void initializeGetGpuTimeFunction();
     virtual bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime);
-    std::function<bool(::NEO::Drm &, uint64_t *)> getGpuTime;
+    bool (*getGpuTime)(::NEO::Drm &, uint64_t *) = nullptr;
 
   protected:
     Drm &drm;

@@ -633,12 +633,12 @@ void IoctlHelper::initializeGetGpuTimeFunction() {
         reg.offset = REG_GLOBAL_TIMESTAMP_UN;
         err = this->ioctl(DrmIoctl::RegRead, &reg);
         if (err) {
-            this->getGpuTime = getGpuTime32;
+            this->getGpuTime = &getGpuTime32;
         } else {
-            this->getGpuTime = getGpuTimeSplitted;
+            this->getGpuTime = &getGpuTimeSplitted;
         }
     } else {
-        this->getGpuTime = getGpuTime36;
+        this->getGpuTime = &getGpuTime36;
     }
 }
 
@@ -647,7 +647,7 @@ bool IoctlHelper::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
         return false;
     }
 
-    if (!this->getGpuTime) {
+    if (this->getGpuTime == nullptr) {
         return false;
     }
 

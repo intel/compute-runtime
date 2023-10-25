@@ -759,17 +759,13 @@ TEST(IoctlHelperTestsUpstream, whenGettingTimeThenTimeIsCorrect) {
     ASSERT_EQ(true, ioctlHelper.initialize());
 
     {
-        auto p = ioctlHelper.getGpuTime;
-        bool (*const *ptr)(Drm &, uint64_t *) = p.target<bool (*)(Drm &, uint64_t *)>();
-        EXPECT_EQ(*ptr, &::NEO::getGpuTime36);
+        EXPECT_EQ(ioctlHelper.getGpuTime, &getGpuTime36);
     }
 
     {
         drm->ioctlRes = -1;
         ioctlHelper.initializeGetGpuTimeFunction();
-        auto p = ioctlHelper.getGpuTime;
-        bool (*const *ptr)(Drm &, uint64_t *) = p.target<bool (*)(Drm &, uint64_t *)>();
-        EXPECT_EQ(*ptr, &::NEO::getGpuTime32);
+        EXPECT_EQ(ioctlHelper.getGpuTime, &getGpuTime32);
     }
 
     DrmMockCustom::IoctlResExt ioctlToPass = {1, 0};
@@ -778,9 +774,7 @@ TEST(IoctlHelperTestsUpstream, whenGettingTimeThenTimeIsCorrect) {
         drm->ioctlRes = -1;
         drm->ioctlResExt = &ioctlToPass; // 2nd ioctl is successful
         ioctlHelper.initializeGetGpuTimeFunction();
-        auto p = ioctlHelper.getGpuTime;
-        bool (*const *ptr)(Drm &, uint64_t *) = p.target<bool (*)(Drm &, uint64_t *)>();
-        EXPECT_EQ(*ptr, &::NEO::getGpuTimeSplitted);
+        EXPECT_EQ(ioctlHelper.getGpuTime, &getGpuTimeSplitted);
         drm->ioctlResExt = &drm->none;
     }
 }
