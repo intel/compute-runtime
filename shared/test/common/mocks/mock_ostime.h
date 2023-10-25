@@ -8,8 +8,10 @@
 #pragma once
 #include "shared/source/os_interface/os_time.h"
 
+#include <atomic>
+
 namespace NEO {
-static int PerfTicks = 0;
+static std::atomic<int> PerfTicks{0};
 constexpr uint64_t convertToNs = 100;
 class MockDeviceTime : public DeviceTime {
     bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
