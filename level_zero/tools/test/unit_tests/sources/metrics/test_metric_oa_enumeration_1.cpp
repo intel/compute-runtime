@@ -28,9 +28,7 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetr
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(nullptr), Return(TCompletionCode::CC_ERROR_GENERAL)));
+    mockMetricEnumeration->openAdapterGroup = [](MetricsDiscovery::IAdapterGroupLatest **) -> TCompletionCode { return TCompletionCode::CC_ERROR_GENERAL; };
 
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
@@ -115,28 +113,15 @@ TEST_F(MetricEnumerationTest, givenTwoConcurrentMetricGroupsWhenZetGetMetricGrou
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(2)
-        .WillOnce(Return(&metricsConcurrentGroup0))
-        .WillOnce(Return(&metricsConcurrentGroup1));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup0);
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup1);
 
-    EXPECT_CALL(metricsConcurrentGroup0, GetParams())
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup0.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup1.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup0.getMetricSetResult = &metricsSet;
+    metricsConcurrentGroup1.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup1, GetParams())
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
-
-    EXPECT_CALL(metricsConcurrentGroup0, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsConcurrentGroup1, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
@@ -173,22 +158,12 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetGetMetricGroupProperti
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -230,22 +205,12 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -293,22 +258,12 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGetIsCalledThenR
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -353,30 +308,15 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetIsCalledThenRet
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -392,6 +332,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetIsCalledThenRet
     uint32_t metricCount = 0;
     EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricCount, 1u);
+    EXPECT_EQ(1u, metric.GetParamsCalled);
 }
 
 TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyAndValidBitsThenConfirmExpectedValuesAreReturned) {
@@ -427,22 +368,12 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFreq
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -500,22 +431,12 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingPropertiesAndIncor
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -565,22 +486,12 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -672,22 +583,12 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFreq
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -747,22 +648,12 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetri
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -824,30 +715,15 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetIsCalledThenRet
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -866,6 +742,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetIsCalledThenRet
     EXPECT_EQ(metricCount, 1u);
     EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &metricHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(metricHandle, nullptr);
+    EXPECT_EQ(1u, metric.GetParamsCalled);
 }
 
 TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGetPropertiestIsCalledThenReturnsFail) {
@@ -900,30 +777,15 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGetPropertiestIs
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -942,6 +804,7 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGetPropertiestIs
     EXPECT_EQ(metricCount, 1u);
     EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &metricHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(metricHandle, nullptr);
+    EXPECT_EQ(1u, metric.GetParamsCalled);
 }
 
 TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCalledThenReturnSuccess) {
@@ -982,30 +845,15 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -1031,6 +879,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
     EXPECT_EQ(strcmp(metricProperties.description, metricParams.LongName), 0);
     EXPECT_EQ(metricProperties.metricType, ZET_METRIC_TYPE_RATIO);
     EXPECT_EQ(metricProperties.resultType, ZET_VALUE_TYPE_UINT64);
+    EXPECT_EQ(1u, metric.GetParamsCalled);
 }
 
 TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCalledThenReturnSuccessExt) {
@@ -1071,30 +920,15 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -1159,30 +993,15 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenzetContextActivateMetricG
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -1232,30 +1051,14 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenzetContextActiv
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -1274,9 +1077,6 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenzetContextActiv
 using MultiDeviceMetricEnumerationTest = Test<MetricMultiDeviceFixture>;
 
 TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndValidEventBasedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
-
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1313,30 +1113,15 @@ TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndValidEventBasedM
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -1353,9 +1138,6 @@ TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndValidEventBasedM
 }
 
 TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndTwoMetricGroupsWithTheSameDomainsWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
-
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1402,48 +1184,21 @@ TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndTwoMetricGroupsW
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metricsConcurrentGroup0));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup0);
 
-    EXPECT_CALL(metricsConcurrentGroup0, GetParams())
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams0));
+    metricsConcurrentGroup0.GetParamsResult = &metricsConcurrentGroupParams0;
+    metricsConcurrentGroup0.getMetricSetResults.push_back(&metricsSet0);
+    metricsConcurrentGroup0.getMetricSetResults.push_back(&metricsSet1);
+    metricsConcurrentGroup0.getMetricSetResults.push_back(&metricsSet0);
+    metricsConcurrentGroup0.getMetricSetResults.push_back(&metricsSet1);
 
-    EXPECT_CALL(metricsConcurrentGroup0, GetMetricSet(_))
-        .Times(subDeviceCount * 2)
-        .WillOnce(Return(&metricsSet0))
-        .WillOnce(Return(&metricsSet1))
-        .WillOnce(Return(&metricsSet0))
-        .WillOnce(Return(&metricsSet1));
+    metricsSet0.GetParamsResult = &metricsSetParams0;
+    metricsSet1.GetParamsResult = &metricsSetParams1;
+    metricsSet0.GetMetricResult = &metric0;
+    metricsSet1.GetMetricResult = &metric1;
 
-    EXPECT_CALL(metricsSet0, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams0));
-
-    EXPECT_CALL(metricsSet1, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams1));
-
-    EXPECT_CALL(metricsSet0, GetMetric(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metric0));
-
-    EXPECT_CALL(metricsSet1, GetMetric(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metric1));
-
-    EXPECT_CALL(metricsSet0, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metricsSet1, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric0, GetParams())
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metricParams0));
-
-    EXPECT_CALL(metric1, GetParams())
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(&metricParams1));
+    metric0.GetParamsResult = &metricParams0;
+    metric1.GetParamsResult = &metricParams1;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -1506,30 +1261,15 @@ TEST_F(MetricEnumerationTest, givenValidTimeBasedMetricGroupWhenzetContextActiva
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -1582,30 +1322,15 @@ TEST_F(MetricEnumerationTest, givenActivateTheSameMetricGroupTwiceWhenzetContext
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -1652,30 +1377,16 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsWh
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(2)
-        .WillOnce(Return(&metricsConcurrentGroup0))
-        .WillOnce(Return(&metricsConcurrentGroup1));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup0);
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup1);
 
-    EXPECT_CALL(metricsConcurrentGroup0, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams0));
+    metricsConcurrentGroup0.GetParamsResult = &metricsConcurrentGroupParams0;
+    metricsConcurrentGroup1.GetParamsResult = &metricsConcurrentGroupParams1;
 
-    EXPECT_CALL(metricsConcurrentGroup1, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams1));
+    metricsConcurrentGroup0.getMetricSetResult = &metricsSet;
+    metricsConcurrentGroup1.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup0, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsConcurrentGroup1, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 2;
@@ -1723,30 +1434,15 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsAt
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(2)
-        .WillOnce(Return(&metricsConcurrentGroup0))
-        .WillOnce(Return(&metricsConcurrentGroup1));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup0);
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup1);
 
-    EXPECT_CALL(metricsConcurrentGroup0, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams0));
+    metricsConcurrentGroup0.GetParamsResult = &metricsConcurrentGroupParams0;
+    metricsConcurrentGroup1.GetParamsResult = &metricsConcurrentGroupParams1;
+    metricsConcurrentGroup0.getMetricSetResult = &metricsSet;
+    metricsConcurrentGroup1.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup1, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams1));
-
-    EXPECT_CALL(metricsConcurrentGroup0, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsConcurrentGroup1, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 2;
@@ -1792,30 +1488,14 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhen
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResults.push_back(&metricsSet0);
+    metricsConcurrentGroup.getMetricSetResults.push_back(&metricsSet1);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(2)
-        .WillOnce(Return(&metricsSet0))
-        .WillOnce(Return(&metricsSet1));
-
-    EXPECT_CALL(metricsSet0, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams0));
-
-    EXPECT_CALL(metricsSet1, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams1));
-
-    EXPECT_CALL(metricsSet0, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metricsSet1, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet0.GetParamsResult = &metricsSetParams0;
+    metricsSet1.GetParamsResult = &metricsSetParams1;
 
     // Metric group handles.
     uint32_t metricGroupCount = 2;
@@ -1856,23 +1536,12 @@ TEST_F(MetricEnumerationTest, givenValidMetricGroupWhenDeactivateIsDoneThenDomai
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet0;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(1)
-        .WillOnce(Return(&metricsSet0));
-
-    EXPECT_CALL(metricsSet0, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams0));
-
-    EXPECT_CALL(metricsSet0, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet0.GetParamsResult = &metricsSetParams0;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -1897,12 +1566,9 @@ TEST_F(MetricEnumerationTest, GivenAlreadyActivatedMetricGroupWhenzetContextActi
     metricsConcurrentGroupParams.SymbolName = "OA";
 
     // Metrics Discovery: metric set
-    Mock<IMetricSet_1_5> metricsSet0;
-    Mock<IMetricSet_1_5> metricsSet1;
-    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams0 = {};
-    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams1 = {};
-    metricsSetParams0.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
-    metricsSetParams1.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    Mock<IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
 
     // One api: metric group.
     zet_metric_group_handle_t metricGroupHandle[2] = {};
@@ -1914,30 +1580,12 @@ TEST_F(MetricEnumerationTest, GivenAlreadyActivatedMetricGroupWhenzetContextActi
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(2)
-        .WillOnce(Return(&metricsSet0))
-        .WillOnce(Return(&metricsSet1));
-
-    EXPECT_CALL(metricsSet0, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams0));
-
-    EXPECT_CALL(metricsSet1, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams1));
-
-    EXPECT_CALL(metricsSet0, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metricsSet1, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 2;
@@ -1996,23 +1644,12 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGroupCalculateMe
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(1)
-        .WillOnce(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2045,23 +1682,12 @@ TEST_F(MetricEnumerationTest, givenIncorrectRawReportSizeWhenZetMetricGroupCalcu
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(1)
-        .WillOnce(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2108,23 +1734,12 @@ TEST_F(MetricEnumerationTest, givenIncorrectRawReportSizeWhenZetMetricGroupCalcu
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(1)
-        .WillOnce(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2177,30 +1792,15 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeWhenZetMetricGroupCalcula
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(1)
-        .WillOnce(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(metricsSetParams.MetricsCount)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
         .Times(1)
@@ -2254,30 +1854,15 @@ TEST_F(MetricEnumerationTest, givenFailedCalculateMetricsWhenZetMetricGroupCalcu
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(1)
-        .WillOnce(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(metricsSetParams.MetricsCount)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
         .Times(1)
@@ -2331,30 +1916,15 @@ TEST_F(MetricEnumerationTest, givenInvalidQueryReportSizeWhenZetMetricGroupCalcu
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(1)
-        .WillOnce(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(metricsSetParams.MetricsCount)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2411,30 +1981,15 @@ TEST_F(MetricEnumerationTest, givenCorrectRawDataHeaderWhenZetMetricGroupCalcula
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .Times(1)
-        .WillOnce(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(metricsSetParams.MetricsCount)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
         .Times(1)
@@ -2505,29 +2060,15 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeWhenZetMetricGroupCalcula
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(11)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2585,29 +2126,15 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndLowerProvidedCalculate
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(11)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     uint32_t returnedMetricCount = 2;
     EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
@@ -2663,33 +2190,19 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(11)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
     EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
 
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2739,33 +2252,19 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(11)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
     EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<4>(metricsSetParams.MetricsCount), Return(TCompletionCode::CC_OK)));
 
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2815,29 +2314,15 @@ TEST_F(MetricEnumerationTest, givenIncorrectCalculationTypeWhenZetMetricGroupCal
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(11)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2886,29 +2371,15 @@ TEST_F(MetricEnumerationTest, givenNotInitializedMetricEnumerationWhenIsInitiali
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(11)
-        .WillRepeatedly(Return(&metric));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(metric, GetParams())
-        .WillRepeatedly(Return(&metricParams));
+    metric.GetParamsResult = &metricParams;
 
     mockMetricEnumeration->initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
@@ -2957,27 +2428,14 @@ TEST_F(MetricEnumerationTest, givenRootDeviceWhenLoadDependenciesIsCalledThenLeg
         .Times(1)
         .WillOnce(Return(ZE_RESULT_SUCCESS));
 
-    EXPECT_CALL(*Mock<MetricEnumeration>::g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&mockAdapterGroup), Return(TCompletionCode::CC_OK)));
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&mockAdapterGroup);
 
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce(Return(&mockAdapter));
-
-    EXPECT_CALL(mockAdapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&mockDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(mockAdapter, CloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    mockAdapter.openMetricsDeviceOutDevice = &mockDevice;
 
     setupDefaultMocksForMetricDevice(mockDevice);
-
-    EXPECT_CALL(mockAdapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
 
     // Use first sub device.
     device->getMetricDeviceContext().setSubDeviceIndex(0);
@@ -3037,30 +2495,15 @@ TEST_P(MetricEnumerationTestMetricTypes, givenValidMetricTypesWhenSetAndGetIsSam
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetMetric(_))
-        .Times(1)
-        .WillOnce(Return(&metric));
-
-    EXPECT_CALL(metric, GetParams())
-        .Times(1)
-        .WillOnce(Return(&metricParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metric.GetParamsResult = &metricParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -3158,30 +2601,15 @@ TEST_P(MetricEnumerationTestInformationTypes, givenValidInformationTypesWhenSetA
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .Times(1)
-        .WillOnce(Return(&metricsConcurrentGroup));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup, GetParams())
-        .Times(1)
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetInformationResult = &information;
 
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, GetInformation(_))
-        .Times(1)
-        .WillOnce(Return(&information));
-
-    EXPECT_CALL(information, GetParams())
-        .Times(1)
-        .WillOnce(Return(&sourceInformationParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    information.GetParamsResult = &sourceInformationParams;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -3231,8 +2659,6 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsT
     MetricGroupImpTest metricGroup;
 
     metricGroup.pReferenceMetricSet = &metricsSet;
-    EXPECT_CALL(metricsSet, Activate())
-        .WillRepeatedly(Return(MetricsDiscovery::CC_OK));
 
     EXPECT_EQ(metricGroup.activateMetricSet(), true);
 }
@@ -3243,8 +2669,7 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsF
     MetricGroupImpTest metricGroup;
 
     metricGroup.pReferenceMetricSet = &metricsSet;
-    EXPECT_CALL(metricsSet, Activate())
-        .WillRepeatedly(Return(MetricsDiscovery::CC_ERROR_GENERAL));
+    metricsSet.ActivateResult = TCompletionCode::CC_ERROR_GENERAL;
 
     EXPECT_EQ(metricGroup.activateMetricSet(), false);
 }
@@ -3255,8 +2680,6 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateRetu
     MetricGroupImpTest metricGroup;
 
     metricGroup.pReferenceMetricSet = &metricsSet;
-    EXPECT_CALL(metricsSet, Deactivate())
-        .WillRepeatedly(Return(MetricsDiscovery::CC_OK));
 
     EXPECT_EQ(metricGroup.deactivateMetricSet(), true);
 }
@@ -3267,8 +2690,7 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateRetu
     MetricGroupImpTest metricGroup;
 
     metricGroup.pReferenceMetricSet = &metricsSet;
-    EXPECT_CALL(metricsSet, Deactivate())
-        .WillRepeatedly(Return(MetricsDiscovery::CC_ERROR_GENERAL));
+    metricsSet.DeactivateResult = TCompletionCode::CC_ERROR_GENERAL;
 
     EXPECT_EQ(metricGroup.deactivateMetricSet(), false);
 }
@@ -3279,8 +2701,6 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForRep
     MetricGroupImpTest metricGroup;
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
-    EXPECT_CALL(concurrentGroup, WaitForReports(_))
-        .WillRepeatedly(Return(MetricsDiscovery::TCompletionCode::CC_OK));
 
     uint32_t timeout = 1;
     EXPECT_EQ(metricGroup.waitForReports(timeout), ZE_RESULT_SUCCESS);
@@ -3292,8 +2712,7 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForRep
     MetricGroupImpTest metricGroup;
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
-    EXPECT_CALL(concurrentGroup, WaitForReports(_))
-        .WillRepeatedly(Return(MetricsDiscovery::TCompletionCode::CC_ERROR_GENERAL));
+    concurrentGroup.WaitForReportsResult = TCompletionCode::CC_ERROR_GENERAL;
 
     uint32_t timeout = 1;
     EXPECT_EQ(metricGroup.waitForReports(timeout), ZE_RESULT_NOT_READY);

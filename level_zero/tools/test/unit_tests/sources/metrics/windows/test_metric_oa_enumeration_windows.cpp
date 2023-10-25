@@ -44,15 +44,9 @@ TEST_F(MetricEnumerationTestWindows, givenCorrectWindowsAdapterWhenGetMetricsAda
 
     std::unique_ptr<MetricOAOsInterface> OAOsInterface = MetricOAOsInterface::create(*device);
 
-    EXPECT_CALL(adapterGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&adapterGroupParams));
-
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapter, GetParams())
-        .WillRepeatedly(Return(&adapterParams));
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
+    adapter.GetParamsResult = &adapterParams;
 
     EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
         .Times(1)

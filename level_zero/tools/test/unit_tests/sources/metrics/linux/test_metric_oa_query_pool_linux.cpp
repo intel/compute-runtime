@@ -157,7 +157,7 @@ TEST_F(MetricQueryPoolLinuxTest, givenMetricLibraryIsInIncorrectInitializedState
 TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenCacheConfigurationIsCalledThenCacheingIsSuccessfull) {
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
-    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup0;
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.SymbolName = "OA";
     metricsConcurrentGroupParams.MetricSetsCount = 1;
@@ -168,20 +168,12 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenCacheConfigurationIsCa
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
-        .WillOnce(Return(&metricsConcurrentGroup0));
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
 
-    EXPECT_CALL(metricsConcurrentGroup0, GetParams())
-        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
-    EXPECT_CALL(metricsConcurrentGroup0, GetMetricSet(_))
-        .WillRepeatedly(Return(&metricsSet));
-
-    EXPECT_CALL(metricsSet, GetParams())
-        .WillRepeatedly(Return(&metricsSetParams));
-
-    EXPECT_CALL(metricsSet, SetApiFiltering(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    metricsSet.GetParamsResult = &metricsSetParams;
 
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDelete(_))
         .WillOnce(Return(StatusCode::Success));
@@ -262,15 +254,10 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxDrmAdapterWhenGetMetricsAdap
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(adapterGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&adapterGroupParams));
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
 
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapter, GetParams())
-        .WillRepeatedly(Return(&adapterParams));
+    adapter.GetParamsResult = &adapterParams;
 
     EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
         .Times(1)
@@ -303,14 +290,10 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxMinorPrimaryNodeDrmAdapterWh
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(adapterGroup, GetParams())
-        .WillRepeatedly(Return(&adapterGroupParams));
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
 
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapter, GetParams())
-        .WillRepeatedly(Return(&adapterParams));
+    adapter.GetParamsResult = &adapterParams;
 
     EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
         .Times(1)
@@ -343,14 +326,10 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxMinorRenderNodeDrmAdapterWhe
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(adapterGroup, GetParams())
-        .WillRepeatedly(Return(&adapterGroupParams));
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
 
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapter, GetParams())
-        .WillRepeatedly(Return(&adapterParams));
+    adapter.GetParamsResult = &adapterParams;
 
     EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
         .Times(1)
@@ -373,19 +352,12 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterTypeWhenGe
     adapterParams.SystemId.MajorMinor.Major = 0;
     adapterParams.SystemId.MajorMinor.Minor = 0;
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
 
-    EXPECT_CALL(adapterGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&adapterGroupParams));
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
 
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapter, GetParams())
-        .WillRepeatedly(Return(&adapterParams));
+    adapter.GetParamsResult = &adapterParams;
 
     EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
         .Times(1)
@@ -394,10 +366,6 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterTypeWhenGe
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce([&]() { return mockMetricEnumeration->baseGetMetricsAdapter(); });
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
@@ -417,19 +385,12 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMajorWhenG
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
 
-    EXPECT_CALL(adapterGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&adapterGroupParams));
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
 
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapter, GetParams())
-        .WillRepeatedly(Return(&adapterParams));
+    adapter.GetParamsResult = &adapterParams;
 
     EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
         .Times(1)
@@ -438,10 +399,6 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMajorWhenG
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce([&]() { return mockMetricEnumeration->baseGetMetricsAdapter(); });
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
 
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
@@ -459,19 +416,12 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMinorWhenG
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
 
-    EXPECT_CALL(adapterGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&adapterGroupParams));
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
 
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapter, GetParams())
-        .WillRepeatedly(Return(&adapterParams));
+    adapter.GetParamsResult = &adapterParams;
 
     EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
         .Times(1)
@@ -481,14 +431,10 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMinorWhenG
         .Times(1)
         .WillOnce([&]() { return mockMetricEnumeration->baseGetMetricsAdapter(); });
 
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTestLinux, givenIcorrectOpenMetricDeviceOnAdapterWhenGetMetricsAdapterThenReturnFail) {
+TEST_F(MetricEnumerationTestLinux, givenIncorrectOpenMetricDeviceOnAdapterWhenGetMetricsAdapterThenReturnFail) {
 
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
     auto adapterParams = TAdapterParams_1_9{};
@@ -500,19 +446,12 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectOpenMetricDeviceOnAdapterWhenGet
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
 
-    EXPECT_CALL(adapterGroup, GetParams())
-        .Times(1)
-        .WillOnce(Return(&adapterGroupParams));
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
 
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapter, GetParams())
-        .WillRepeatedly(Return(&adapterParams));
+    adapter.GetParamsResult = &adapterParams;
 
     EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
         .Times(1)
@@ -522,13 +461,7 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectOpenMetricDeviceOnAdapterWhenGet
         .Times(1)
         .WillOnce([&]() { return mockMetricEnumeration->baseGetMetricsAdapter(); });
 
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(nullptr), Return(TCompletionCode::CC_ERROR_GENERAL)));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    adapter.openMetricsDeviceResult = TCompletionCode::CC_ERROR_GENERAL;
 
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }

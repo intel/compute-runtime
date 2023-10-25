@@ -77,28 +77,12 @@ void MetricContextFixture::openMetricsAdapter() {
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .Times(0);
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
+    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce(Return(&adapter));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
 void MetricContextFixture::openMetricsAdapterGroup() {
@@ -106,26 +90,12 @@ void MetricContextFixture::openMetricsAdapterGroup() {
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
+    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 }
 
 void MetricContextFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice) {
-    EXPECT_CALL(metricDevice, GetParams())
-        .WillRepeatedly(testing::Return(&metricsDeviceParams));
+    metricDevice.GetParamsResult = &metricsDeviceParams;
 }
 
 void MetricMultiDeviceFixture::setUp() {
@@ -210,32 +180,13 @@ void MetricMultiDeviceFixture::openMetricsAdapter() {
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsSubDevice(_, _))
-        .Times(2)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(3)
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .Times(0);
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
+    adapter.openMetricsSubDeviceOutDevice = &metricsDevice;
+    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce(Return(&adapter));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapterSubDevice(uint32_t subDeviceIndex) {
@@ -243,88 +194,37 @@ void MetricMultiDeviceFixture::openMetricsAdapterSubDevice(uint32_t subDeviceInd
     EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex], loadMetricsDiscovery())
         .Times(0);
 
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex]->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(1)
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .Times(0);
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
+    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 
     EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex], getMetricsAdapter())
         .Times(1)
         .WillOnce(Return(&adapter));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapterDeviceAndSubDeviceNoCountVerify(uint32_t subDeviceIndex) {
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsSubDevice(_, _))
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
+    adapter.openMetricsSubDeviceOutDevice = &metricsDevice;
 
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex]->g_mockApi, MockOpenAdapterGroup(_))
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 
     EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex], getMetricsAdapter())
         .WillRepeatedly(Return(&adapter));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
+    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 }
 
 void MetricMultiDeviceFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice) {
-    EXPECT_CALL(metricDevice, GetParams())
-        .WillRepeatedly(testing::Return(&metricsDeviceParams));
+    metricDevice.GetParamsResult = &metricsDeviceParams;
 }
 
 void MetricStreamerMultiDeviceFixture::cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer) {

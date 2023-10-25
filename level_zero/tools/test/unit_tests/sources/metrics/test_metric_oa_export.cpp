@@ -424,19 +424,18 @@ class MetricExportDataOaTest : public Test<MetricMultiDeviceFixture> {
     }
 
     void setupMocks() {
-        EXPECT_CALL(adapter, GetParams()).WillRepeatedly(Return(&adapterParams));
-        EXPECT_CALL(metricsDevice, GetGlobalSymbol(_)).WillRepeatedly(Return(&globalSymbol));
-        EXPECT_CALL(metricsDevice, GetConcurrentGroup(_)).WillRepeatedly(Return(&metricsConcurrentGroup));
-        EXPECT_CALL(metricsConcurrentGroup, GetParams()).WillRepeatedly(Return(&metricsConcurrentGroupParams));
-        EXPECT_CALL(metricsConcurrentGroup, GetIoMeasurementInformation(_)).WillRepeatedly(Return(&information));
-        EXPECT_CALL(metricsConcurrentGroup, GetIoGpuContextInformation(_)).WillRepeatedly(Return(&information));
-        EXPECT_CALL(information, GetParams()).WillRepeatedly(Return(&informationParams));
-        EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_)).WillRepeatedly(Return(&metricsSet));
-        EXPECT_CALL(metricsSet, GetParams()).WillRepeatedly(Return(&metricsSetParams));
-        EXPECT_CALL(metricsSet, GetInformation(_)).WillRepeatedly(Return(&information));
-        EXPECT_CALL(metricsSet, GetMetric(_)).WillRepeatedly(Return(&metric));
-        EXPECT_CALL(metric, GetParams()).WillRepeatedly(Return(&metricParams));
-        EXPECT_CALL(metricsSet, SetApiFiltering(_)).WillRepeatedly(Return(TCompletionCode::CC_OK));
+        adapter.GetParamsResult = &adapterParams;
+        metricsDevice.GetGlobalSymbolResult = &globalSymbol;
+        metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+        metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+        metricsConcurrentGroup.GetIoMeasurementInformationResult = &information;
+        metricsConcurrentGroup.GetIoGpuContextInformationResult = &information;
+        information.GetParamsResult = &informationParams;
+        metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+        metricsSet.GetParamsResult = &metricsSetParams;
+        metricsSet.GetInformationResult = &information;
+        metricsSet.GetMetricResult = &metric;
+        metric.GetParamsResult = &metricParams;
     }
 
     zet_metric_group_handle_t getMetricGroupHandle() {
@@ -851,7 +850,7 @@ TEST_F(MetricExportDataOaTest, givenUnsupportedInformationParamsWhenMetricGroupG
 
     MetricsDiscovery::TInformationParams_1_0 invalidInformationParams{};
     Mock<IInformation_1_0> invalidInformation{};
-    EXPECT_CALL(invalidInformation, GetParams()).WillRepeatedly(Return(&invalidInformationParams));
+    invalidInformation.GetParamsResult = &invalidInformationParams;
     setupInformationParams(invalidInformationParams, equation, deltaFunction);
     invalidInformationParams.InfoType = MetricsDiscovery::INFORMATION_TYPE_LAST;
 
@@ -865,30 +864,30 @@ TEST_F(MetricExportDataOaTest, givenUnsupportedInformationParamsWhenMetricGroupG
     size_t exportDataSize = 0;
 
     {
-        EXPECT_CALL(metricsConcurrentGroup, GetIoMeasurementInformation(_)).WillRepeatedly(Return(&invalidInformation));
+        metricsConcurrentGroup.GetIoMeasurementInformationResult = &invalidInformation;
         EXPECT_EQ(zetMetricGroupGetExportDataExp(metricGroupHandle,
                                                  &dummyRawData, 1, &exportDataSize, nullptr),
                   ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         EXPECT_EQ(exportDataSize, 0u);
-        EXPECT_CALL(metricsConcurrentGroup, GetIoMeasurementInformation(_)).WillRepeatedly(Return(&information));
+        metricsConcurrentGroup.GetIoMeasurementInformationResult = &information;
     }
 
     {
-        EXPECT_CALL(metricsConcurrentGroup, GetIoGpuContextInformation(_)).WillRepeatedly(Return(&invalidInformation));
+        metricsConcurrentGroup.GetIoGpuContextInformationResult = &invalidInformation;
         EXPECT_EQ(zetMetricGroupGetExportDataExp(metricGroupHandle,
                                                  &dummyRawData, 1, &exportDataSize, nullptr),
                   ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         EXPECT_EQ(exportDataSize, 0u);
-        EXPECT_CALL(metricsConcurrentGroup, GetIoGpuContextInformation(_)).WillRepeatedly(Return(&information));
+        metricsConcurrentGroup.GetIoGpuContextInformationResult = &information;
     }
 
     {
-        EXPECT_CALL(metricsSet, GetInformation(_)).WillRepeatedly(Return(&invalidInformation));
+        metricsSet.GetInformationResult = &invalidInformation;
         EXPECT_EQ(zetMetricGroupGetExportDataExp(metricGroupHandle,
                                                  &dummyRawData, 1, &exportDataSize, nullptr),
                   ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         EXPECT_EQ(exportDataSize, 0u);
-        EXPECT_CALL(metricsSet, GetInformation(_)).WillRepeatedly(Return(&information));
+        metricsSet.GetInformationResult = &information;
     }
 }
 

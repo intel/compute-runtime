@@ -58,57 +58,66 @@ using MetricsDiscovery::TTypedValue_1_0;
 struct MockMetricsDiscoveryApi {
 
     // Original api functions.
-    static TCompletionCode MD_STDCALL OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDeviceLatest **device); // NOLINT(readability-identifier-naming)
-    static TCompletionCode MD_STDCALL CloseMetricsDevice(IMetricsDeviceLatest *device);                                                 // NOLINT(readability-identifier-naming)
-    static TCompletionCode MD_STDCALL SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDeviceLatest *device);    // NOLINT(readability-identifier-naming)
-    static TCompletionCode MD_STDCALL OpenAdapterGroup(IAdapterGroupLatest **adapterGroup);                                             // NOLINT(readability-identifier-naming)
+    static TCompletionCode MD_STDCALL openAdapterGroup(IAdapterGroupLatest **adapterGroup);
 
-    // Mocked api functions.
-    MOCK_METHOD(TCompletionCode, MockOpenMetricsDeviceFromFile, (const char *, void *, IMetricsDevice_1_5 **));
-    MOCK_METHOD(TCompletionCode, MockCloseMetricsDevice, (IMetricsDevice_1_5 *));
-    MOCK_METHOD(TCompletionCode, MockSaveMetricsDeviceToFile, (const char *, void *, IMetricsDevice_1_5 *));
-    MOCK_METHOD(TCompletionCode, MockOpenAdapterGroup, (IAdapterGroup_1_9 **));
+    IAdapterGroupLatest *adapterGroup = nullptr;
 };
 
 template <>
 class Mock<IAdapterGroup_1_9> : public IAdapterGroup_1_9 {
   public:
-    Mock(){};
+    ~Mock() override = default;
 
-    MOCK_METHOD(IAdapter_1_9 *, GetAdapter, (uint32_t), (override));
-    MOCK_METHOD(const TAdapterGroupParams_1_6 *, GetParams, (), (const, override));
-    MOCK_METHOD(TCompletionCode, Close, (), (override));
+    ADDMETHOD_NOBASE(GetAdapter, IAdapter_1_9 *, nullptr, (uint32_t));
+    ADDMETHOD_CONST_NOBASE(GetParams, const TAdapterGroupParams_1_6 *, nullptr, ());
+    ADDMETHOD_NOBASE(Close, TCompletionCode, TCompletionCode::CC_OK, ());
 };
 
 template <>
 class Mock<IAdapter_1_9> : public IAdapter_1_9 {
   public:
-    Mock(){};
+    ~Mock() override = default;
 
     // 1.9
-    MOCK_METHOD(const TSubDeviceParams_1_9 *, GetSubDeviceParams, (const uint32_t subDeviceIndex), (override));
-    MOCK_METHOD(const TEngineParams_1_9 *, GetEngineParams, (const uint32_t subDeviceIndex, const uint32_t engineIndex), (override));
-    MOCK_METHOD(TCompletionCode, OpenMetricsSubDevice, (const uint32_t subDeviceIndex, IMetricsDevice_1_5 **metricsDevice), (override));
-    MOCK_METHOD(TCompletionCode, OpenMetricsSubDeviceFromFile, (const uint32_t subDeviceIndex, const char *fileName, void *openParams, IMetricsDevice_1_5 **metricsDevice), (override));
+    ADDMETHOD_NOBASE(GetSubDeviceParams, const TSubDeviceParams_1_9 *, nullptr, (const uint32_t subDeviceIndex));
+    ADDMETHOD_NOBASE(GetEngineParams, const TEngineParams_1_9 *, nullptr, (const uint32_t subDeviceIndex, const uint32_t engineIndex));
+    ADDMETHOD_NOBASE(OpenMetricsSubDeviceFromFile, TCompletionCode, TCompletionCode::CC_OK, (const uint32_t subDeviceIndex, const char *fileName, void *openParams, IMetricsDevice_1_5 **metricsDevice));
+    ADDMETHOD_CONST_NOBASE(GetParams, const TAdapterParams_1_9 *, nullptr, ());
+    ADDMETHOD_NOBASE(Reset, TCompletionCode, TCompletionCode::CC_OK, ());
+    ADDMETHOD_NOBASE(OpenMetricsDeviceFromFile, TCompletionCode, TCompletionCode::CC_OK, (const char *, void *, IMetricsDevice_1_5 **));
+    ADDMETHOD_NOBASE(CloseMetricsDevice, TCompletionCode, TCompletionCode::CC_OK, (IMetricsDevice_1_5 *));
+    ADDMETHOD_NOBASE(SaveMetricsDeviceToFile, TCompletionCode, TCompletionCode::CC_OK, (const char *, void *, IMetricsDevice_1_5 *));
 
-    MOCK_METHOD(const TAdapterParams_1_9 *, GetParams, (), (const, override));
-    MOCK_METHOD(TCompletionCode, Reset, (), (override));
-    MOCK_METHOD(TCompletionCode, OpenMetricsDevice, (IMetricsDevice_1_5 **), (override));
-    MOCK_METHOD(TCompletionCode, OpenMetricsDeviceFromFile, (const char *, void *, IMetricsDevice_1_5 **), (override));
-    MOCK_METHOD(TCompletionCode, CloseMetricsDevice, (IMetricsDevice_1_5 *), (override));
-    MOCK_METHOD(TCompletionCode, SaveMetricsDeviceToFile, (const char *, void *, IMetricsDevice_1_5 *), (override));
+    TCompletionCode OpenMetricsDevice(IMetricsDevice_1_5 **metricsDevice) override {
+        *metricsDevice = openMetricsDeviceOutDevice;
+        return openMetricsDeviceResult;
+    }
+
+    TCompletionCode OpenMetricsSubDevice(const uint32_t subDeviceIndex, IMetricsDevice_1_5 **metricsDevice) override {
+        *metricsDevice = openMetricsSubDeviceOutDevice;
+        return openMetricsSubDeviceResult;
+    }
+
+    IMetricsDevice_1_5 *openMetricsSubDeviceOutDevice = nullptr;
+    IMetricsDevice_1_5 *openMetricsDeviceOutDevice = nullptr;
+    TCompletionCode openMetricsSubDeviceResult = TCompletionCode::CC_OK;
+    TCompletionCode openMetricsDeviceResult = TCompletionCode::CC_OK;
 };
 
 template <>
 class Mock<IMetricsDevice_1_5> : public IMetricsDevice_1_5 {
   public:
-    Mock(){};
+    ~Mock() override = default;
 
-    MOCK_METHOD(TMetricsDeviceParams_1_2 *, GetParams, (), (override));
-    MOCK_METHOD(IOverride_1_2 *, GetOverride, (uint32_t index), (override));
-    MOCK_METHOD(IOverride_1_2 *, GetOverrideByName, (const char *symbolName), (override));
-    MOCK_METHOD(IConcurrentGroup_1_5 *, GetConcurrentGroup, (uint32_t index), (override));
-    MOCK_METHOD(TGlobalSymbol_1_0 *, GetGlobalSymbol, (uint32_t index), (override));
+    ADDMETHOD_NOBASE(GetParams, TMetricsDeviceParams_1_2 *, nullptr, ());
+    ADDMETHOD_NOBASE(GetOverride, IOverride_1_2 *, nullptr, (uint32_t index));
+    ADDMETHOD_NOBASE(GetOverrideByName, IOverride_1_2 *, nullptr, (const char *symbolName));
+    ADDMETHOD_NOBASE(GetGlobalSymbol, TGlobalSymbol_1_0 *, nullptr, (uint32_t index));
+    ADDMETHOD_NOBASE(GetLastError, TCompletionCode, TCompletionCode::CC_OK, ());
+
+    IConcurrentGroup_1_5 *GetConcurrentGroup(uint32_t index) override {
+        return getConcurrentGroupResults[index];
+    }
 
     MetricsDiscovery::TTypedValue_1_0 symbolValue = {};
     bool forceGetSymbolByNameFail = false;
@@ -133,8 +142,6 @@ class Mock<IMetricsDevice_1_5> : public IMetricsDevice_1_5 {
         return nullptr;
     }
 
-    MOCK_METHOD(TCompletionCode, GetLastError, (), (override));
-
     TCompletionCode GetGpuCpuTimestamps(uint64_t *gpuTimestampNs, uint64_t *cpuTimestampNs, uint32_t *cpuId) override {
         if (forceGetGpuCpuTimestampsFail) {
             *gpuTimestampNs = 0;
@@ -148,37 +155,70 @@ class Mock<IMetricsDevice_1_5> : public IMetricsDevice_1_5 {
         *cpuId = 0;
         return MetricsDiscovery::CC_OK;
     }
+
+    std::vector<IConcurrentGroup_1_5 *> getConcurrentGroupResults;
 };
 
 template <>
 class Mock<IConcurrentGroup_1_5> : public IConcurrentGroup_1_5 {
   public:
-    Mock(){};
+    ~Mock() override = default;
 
-    MOCK_METHOD(IMetricSet_1_5 *, GetMetricSet, (uint32_t index), (override));
-    MOCK_METHOD(TConcurrentGroupParams_1_0 *, GetParams, (), (override));
-    MOCK_METHOD(TCompletionCode, OpenIoStream, (IMetricSet_1_0 * metricSet, uint32_t processId, uint32_t *nsTimerPeriod, uint32_t *oaBufferSize), (override));
-    MOCK_METHOD(TCompletionCode, ReadIoStream, (uint32_t * reportsCount, char *reportData, uint32_t readFlags), (override));
-    MOCK_METHOD(TCompletionCode, CloseIoStream, (), (override));
-    MOCK_METHOD(TCompletionCode, WaitForReports, (uint32_t milliseconds), (override));
-    MOCK_METHOD(TCompletionCode, SetIoStreamSamplingType, (TSamplingType type), (override));
-    MOCK_METHOD(IInformation_1_0 *, GetIoMeasurementInformation, (uint32_t index), (override));
-    MOCK_METHOD(IInformation_1_0 *, GetIoGpuContextInformation, (uint32_t index), (override));
+    ADDMETHOD_NOBASE(GetParams, TConcurrentGroupParams_1_0 *, nullptr, ());
+    ADDMETHOD_NOBASE(CloseIoStream, TCompletionCode, TCompletionCode::CC_OK, ());
+    ADDMETHOD_NOBASE(WaitForReports, TCompletionCode, TCompletionCode::CC_OK, (uint32_t milliseconds));
+    ADDMETHOD_NOBASE(SetIoStreamSamplingType, TCompletionCode, TCompletionCode::CC_OK, (TSamplingType type));
+    ADDMETHOD_NOBASE(GetIoMeasurementInformation, IInformation_1_0 *, nullptr, (uint32_t index));
+    ADDMETHOD_NOBASE(GetIoGpuContextInformation, IInformation_1_0 *, nullptr, (uint32_t index));
+
+    IMetricSet_1_5 *GetMetricSet(uint32_t index) override {
+        if (!getMetricSetResults.empty()) {
+            return getMetricSetResults[index];
+        }
+        return getMetricSetResult;
+    }
+    TCompletionCode OpenIoStream(IMetricSet_1_0 *metricSet, uint32_t processId, uint32_t *nsTimerPeriod, uint32_t *oaBufferSize) override {
+        if (openIoStreamOutOaBufferSize) {
+            *oaBufferSize = *openIoStreamOutOaBufferSize;
+        }
+        if (!openIoStreamResults.empty()) {
+            auto retVal = openIoStreamResults.back();
+            openIoStreamResults.pop_back();
+            return retVal;
+        }
+        return openIoStreamResult;
+    }
+    TCompletionCode ReadIoStream(uint32_t *reportsCount, char *reportData, uint32_t readFlags) override {
+        if (!readIoStreamOutReportsCount.empty()) {
+            *reportsCount = readIoStreamOutReportsCount.back();
+            readIoStreamOutReportsCount.pop_back();
+        }
+
+        return readIoStreamResult;
+    }
+
+    IMetricSet_1_5 *getMetricSetResult = nullptr;
+    std::vector<IMetricSet_1_5 *> getMetricSetResults;
+    std::vector<uint32_t> readIoStreamOutReportsCount{};
+    uint32_t *openIoStreamOutOaBufferSize = nullptr;
+    TCompletionCode openIoStreamResult = TCompletionCode::CC_OK;
+    TCompletionCode readIoStreamResult = TCompletionCode::CC_OK;
+    std::vector<TCompletionCode> openIoStreamResults{};
 };
 
 template <>
 class Mock<IMetricSet_1_5> : public IMetricSet_1_5 {
   public:
-    Mock(){};
+    ~Mock() override = default;
 
-    MOCK_METHOD(TMetricSetParams_1_4 *, GetParams, (), (override));
-    MOCK_METHOD(IMetric_1_0 *, GetMetric, (uint32_t index), (override));
-    MOCK_METHOD(IInformation_1_0 *, GetInformation, (uint32_t index), (override));
-    MOCK_METHOD(TCompletionCode, Activate, (), (override));
-    MOCK_METHOD(TCompletionCode, Deactivate, (), (override));
-    MOCK_METHOD(TCompletionCode, SetApiFiltering, (uint32_t apiMask), (override));
+    ADDMETHOD_NOBASE(GetParams, TMetricSetParams_1_4 *, nullptr, ());
+    ADDMETHOD_NOBASE(GetMetric, IMetric_1_0 *, nullptr, (uint32_t index));
+    ADDMETHOD_NOBASE(GetInformation, IInformation_1_0 *, nullptr, (uint32_t index));
+    ADDMETHOD_NOBASE(Activate, TCompletionCode, TCompletionCode::CC_OK, ());
+    ADDMETHOD_NOBASE(Deactivate, TCompletionCode, TCompletionCode::CC_OK, ());
+    ADDMETHOD_NOBASE(SetApiFiltering, TCompletionCode, TCompletionCode::CC_OK, (uint32_t apiMask));
     MOCK_METHOD(TCompletionCode, CalculateMetrics, (const unsigned char *rawData, uint32_t rawDataSize, TTypedValue_1_0 *out, uint32_t outSize, uint32_t *outReportCount, bool enableContextFiltering), (override));
-    MOCK_METHOD(TCompletionCode, CalculateIoMeasurementInformation, (TTypedValue_1_0 * out, uint32_t outSize), (override));
+    ADDMETHOD_NOBASE(CalculateIoMeasurementInformation, TCompletionCode, TCompletionCode::CC_OK, (TTypedValue_1_0 * out, uint32_t outSize));
     MOCK_METHOD(IMetricSet_1_5 *, GetComplementaryMetricSet, (uint32_t index), (override));
     MOCK_METHOD(TCompletionCode, CalculateMetrics, (const unsigned char *rawData, uint32_t rawDataSize, TTypedValue_1_0 *out, uint32_t outSize, uint32_t *outReportCount, TTypedValue_1_0 *outMaxValues, uint32_t outMaxValuesSize), (override));
 };
@@ -186,9 +226,9 @@ class Mock<IMetricSet_1_5> : public IMetricSet_1_5 {
 template <>
 class Mock<IMetric_1_0> : public IMetric_1_0 {
   public:
-    Mock(){};
+    ~Mock() override = default;
 
-    MOCK_METHOD(TMetricParams_1_0 *, GetParams, (), (override));
+    ADDMETHOD_NOBASE(GetParams, TMetricParams_1_0 *, nullptr, ());
 };
 
 template <>
@@ -196,7 +236,7 @@ class Mock<IInformation_1_0> : public IInformation_1_0 {
   public:
     Mock(){};
 
-    MOCK_METHOD(MetricsDiscovery::TInformationParams_1_0 *, GetParams, (), (override));
+    ADDMETHOD_NOBASE(GetParams, MetricsDiscovery::TInformationParams_1_0 *, nullptr, ());
 };
 
 template <>
@@ -226,7 +266,7 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
     ze_result_t baseLoadMetricsDiscovery() { return MetricEnumeration::loadMetricsDiscovery(); }
 
     // Mock metrics discovery api.
-    static MockMetricsDiscoveryApi *g_mockApi; // NOLINT(readability-identifier-naming)
+    static MockMetricsDiscoveryApi *globalMockApi;
 
     // Original metric enumeration obtained from metric context.
     ::L0::MetricEnumeration *metricEnumeration = nullptr;
