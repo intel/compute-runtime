@@ -125,6 +125,8 @@ void printCommandQueueGroupsProperties(ze_device_handle_t &device);
 
 const std::vector<const char *> &getResourcesSearchLocations();
 
+void setEnvironmentVariable(const char *variableName, const char *variableValue);
+
 // read binary file into a non-NULL-terminated string
 template <typename SizeT>
 inline std::unique_ptr<char[]> readBinaryFile(const std::string &name, SizeT &outSize) {

@@ -19,12 +19,6 @@
 #include <limits>
 #include <memory>
 
-#ifdef _WIN64
-#include <windows.h>
-#else
-#include <stdlib.h>
-#endif
-
 struct UserTracerData {
     uint32_t tracerData;
 };
@@ -635,14 +629,6 @@ void testAppendMemoryCopy2(ze_context_handle_t &context, ze_device_handle_t &dev
     SUCCESS_OR_TERMINATE(memDdiTable.pfnFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(cmdListDdiTable.pfnDestroy(cmdList));
     SUCCESS_OR_TERMINATE(cmdQueueDdiTable.pfnDestroy(cmdQueue));
-}
-
-void setEnvironmentVariable(const char *variableName, const char *variableValue) {
-#ifdef _WIN64
-    SetEnvironmentVariableA(variableName, variableValue);
-#else
-    setenv(variableName, variableValue, 1);
-#endif
 }
 
 int main(int argc, char *argv[]) {

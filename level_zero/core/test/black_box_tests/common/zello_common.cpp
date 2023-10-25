@@ -11,6 +11,12 @@
 #include <cstring>
 #include <iomanip>
 
+#ifdef _WIN64
+#include <windows.h>
+#else
+#include <stdlib.h>
+#endif
+
 bool verbose;
 
 bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName) {
@@ -552,4 +558,12 @@ const std::vector<const char *> &getResourcesSearchLocations() {
 #endif
     };
     return locations;
+}
+
+void setEnvironmentVariable(const char *variableName, const char *variableValue) {
+#ifdef _WIN64
+    SetEnvironmentVariableA(variableName, variableValue);
+#else
+    setenv(variableName, variableValue, 1);
+#endif
 }
