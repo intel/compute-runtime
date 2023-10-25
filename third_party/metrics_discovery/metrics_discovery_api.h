@@ -37,7 +37,7 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 166
+#define MD_API_BUILD_NUMBER_CURRENT 168
 
 namespace MetricsDiscovery
 {
@@ -251,12 +251,12 @@ namespace MetricsDiscovery
         API_TYPE_OGL      = 0x00000010,
         API_TYPE_OGL4_X   = 0x00000020,
         API_TYPE_OCL      = 0x00000040,
-        API_TYPE_MEDIA    = 0x00000080, // Only option would be using DmaBuffer sampling
+        API_TYPE_MEDIA    = 0x00000080, // Obsolete
         API_TYPE_DX12     = 0x00000100,
-        API_TYPE_BBSTREAM = 0x00000200,
+        API_TYPE_BBSTREAM = 0x00000200, // Obsolete
         API_TYPE_VULKAN   = 0x00000400,
         API_TYPE_RESERVED = 0x00000800,
-        API_TYPE_ALL      = 0xffffffff
+        API_TYPE_ALL      = 0xFFFFFFFF
     } TMetricApiType;
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -267,7 +267,7 @@ namespace MetricsDiscovery
         MEASUREMENT_TYPE_SNAPSHOT_IO    = 0x00000001,
         MEASUREMENT_TYPE_SNAPSHOT_QUERY = 0x00000002,
         MEASUREMENT_TYPE_DELTA_QUERY    = 0x00000004,
-        MEASUREMENT_TYPE_ALL            = 0x0000ffff,
+        MEASUREMENT_TYPE_ALL            = 0x0000FFFF,
     } TMeasurementType;
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -287,7 +287,7 @@ namespace MetricsDiscovery
         USAGE_FLAG_TIER_3    = 0x00001000,
         USAGE_FLAG_TIER_4    = 0x00002000,
         USAGE_FLAG_GLASS_JAW = 0x00004000,
-        USAGE_FLAG_ALL       = 0x0000ffff,
+        USAGE_FLAG_ALL       = 0x0000FFFF,
     } TMetricUsageFlag;
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -300,7 +300,7 @@ namespace MetricsDiscovery
         SAMPLING_TYPE_GPU_QUERY  = 0x00000004,
         SAMPLING_TYPE_DMA_BUFFER = 0x00000008, // Possible future extension for media
         SAMPLING_TYPE_OAM_TIMER  = 0x00000010,
-        SAMPLING_TYPE_ALL        = 0x0000ffff,
+        SAMPLING_TYPE_ALL        = 0x0000FFFF,
     } TSamplingType;
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -487,8 +487,8 @@ namespace MetricsDiscovery
     //////////////////////////////////////////////////////////////////////////////////
     typedef struct SConcurrentGroupParams_1_0
     {
-        const char* SymbolName;  // For example "PerfMon" or "OA" or "PipeStats"
-        const char* Description; // For example "PerfMon and ODLAT Uncore ring counters"
+        const char* SymbolName;  // For example "OA" or "OAM0" or "PipeStats"
+        const char* Description; // For example "OA Unit Metrics"
         uint32_t    MeasurementTypeMask;
         uint32_t    MetricSetsCount;
         uint32_t    IoMeasurementInformationCount;
