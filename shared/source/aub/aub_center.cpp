@@ -9,7 +9,6 @@
 
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -25,9 +24,8 @@ extern aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOpti
 AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-        bool subDevicesAsDevices = rootDeviceEnvironment.executionEnvironment.isExposingSubDevicesAsDevices();
-        auto devicesCount = GfxCoreHelper::getSubDevicesCount(subDevicesAsDevices, hwInfo);
-        auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(subDevicesAsDevices, hwInfo);
+        auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+        auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
         CommandStreamReceiverType type = csrType;
         if (DebugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
             type = static_cast<CommandStreamReceiverType>(DebugManager.flags.SetCommandStreamReceiver.get());

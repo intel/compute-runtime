@@ -8,7 +8,6 @@
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include "shared/source/device/sub_device.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -89,7 +88,7 @@ void SysmanDeviceImp::getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t 
     // Check for root device with 1 sub-device case
     if (!neoDevice->isSubDevice() && neoDevice->getDeviceBitfield().count() == 1) {
         subdeviceId = Math::log2(static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong()));
-        if ((NEO::GfxCoreHelper::getSubDevicesCount(neoDevice->getExecutionEnvironment()->isExposingSubDevicesAsDevices(), &neoDevice->getHardwareInfo()) > 1) && useMultiArchEnabled) {
+        if ((NEO::GfxCoreHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) && useMultiArchEnabled) {
             onSubdevice = true;
         }
     } else if (neoDevice->isSubDevice()) {

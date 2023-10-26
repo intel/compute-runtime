@@ -69,10 +69,10 @@ uint32_t GfxCoreHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
     return maxHwThreadsReturned;
 }
 
-uint32_t GfxCoreHelper::getSubDevicesCount(bool subDevicesAsDevices, const HardwareInfo *pHwInfo) {
+uint32_t GfxCoreHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
     if (DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
         return DebugManager.flags.CreateMultipleSubDevices.get();
-    } else if (DebugManager.flags.ReturnSubDevicesAsApiDevices.get() > 0 || subDevicesAsDevices) {
+    } else if (DebugManager.flags.ReturnSubDevicesAsApiDevices.get() > 0) {
         return 1u;
     } else if (pHwInfo->gtSystemInfo.MultiTileArchInfo.IsValid && pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 0u) {
         return pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount;

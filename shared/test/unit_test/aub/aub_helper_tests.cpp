@@ -43,11 +43,11 @@ TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsR
     HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
     DebugManager.flags.CreateMultipleSubDevices.set(2);
 
-    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(false, &hwInfo);
+    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 2u);
 
     DebugManager.flags.CreateMultipleSubDevices.set(0);
-    devicesCount = GfxCoreHelper::getSubDevicesCount(false, &hwInfo);
+    devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
 
@@ -63,11 +63,11 @@ TEST(AubHelper, GivenReturnSubDevicesAsApiDevicesWhenGettingDeviceCountThenCorre
     sysInfo.MultiTileArchInfo.TileCount = 2;
     HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
 
-    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(false, &hwInfo);
+    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 2u);
 
     DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
-    devicesCount = GfxCoreHelper::getSubDevicesCount(false, &hwInfo);
+    devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
 
@@ -102,13 +102,13 @@ TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsSetThenGetMemBankSizeReturnsCorre
 
     sysInfo.MultiTileArchInfo.IsValid = true;
     sysInfo.MultiTileArchInfo.TileCount = 1;
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(false, &hwInfo));
+    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 
     sysInfo.MultiTileArchInfo.TileCount = 2;
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(false, &hwInfo));
+    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 
     sysInfo.MultiTileArchInfo.TileCount = 4;
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(false, &hwInfo));
+    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 }
 
 TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsNotSetThenGetMemBankSizeReturnsCorrectValue) {
@@ -117,13 +117,13 @@ TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsNotSetThenGetMemBankSizeReturnsCo
 
     sysInfo.MultiTileArchInfo.IsValid = true;
     sysInfo.MultiTileArchInfo.TileCount = 1;
-    EXPECT_EQ(32 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(false, &hwInfo));
+    EXPECT_EQ(32 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 
     sysInfo.MultiTileArchInfo.TileCount = 2;
-    EXPECT_EQ(16 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(false, &hwInfo));
+    EXPECT_EQ(16 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 
     sysInfo.MultiTileArchInfo.TileCount = 4;
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(false, &hwInfo));
+    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 }
 
 using AubHelperHwTest = Test<DeviceFixture>;

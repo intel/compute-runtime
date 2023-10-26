@@ -22,7 +22,7 @@ struct AUBCommandStreamReceiver {
                                          ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
                                          const DeviceBitfield deviceBitfield);
-    static std::string createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename, uint32_t rootDeviceIndex, bool subDevicesAsDevices);
+    static std::string createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename, uint32_t rootDeviceIndex);
 
     using AubFileStream = AubMemDump::AubFileStream;
 };
