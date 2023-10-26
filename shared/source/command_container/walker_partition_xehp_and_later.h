@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -54,6 +53,9 @@ template <typename GfxFamily>
 using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 template <typename GfxFamily>
 using POST_SYNC_OPERATION = typename PIPE_CONTROL<GfxFamily>::POST_SYNC_OPERATION;
+
+template <typename GfxFamily, typename WalkerType>
+void appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount);
 
 template <typename Command>
 Command *putCommand(void *&inputAddress, uint32_t &totalBytesProgrammed) {
@@ -524,7 +526,7 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
         }
     }
 
-    NEO::ImplicitScalingDispatch<GfxFamily>::appendWalkerFields(cmd, tileCount);
+    appendWalkerFields<GfxFamily, WalkerType>(cmd, tileCount);
 
     *computeWalker = cmd;
 

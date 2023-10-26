@@ -90,9 +90,6 @@ struct ImplicitScalingDispatch {
 
     static bool platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    template <typename WalkerType>
-    static void appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount);
-
   private:
     static bool pipeControlStallRequired;
 };

@@ -254,9 +254,4 @@ inline bool ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(
     return false;
 }
 
-template <typename GfxFamily>
-template <typename WalkerType>
-void ImplicitScalingDispatch<GfxFamily>::appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount) {
-}
-
 } // namespace NEO

@@ -70,18 +70,14 @@ template <typename GfxFamily>
 inline bool ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
 }
-
-template <typename GfxFamily>
-template <typename WalkerType>
-void ImplicitScalingDispatch<GfxFamily>::appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount) {
-}
-
 template <>
 bool ImplicitScalingDispatch<Family>::pipeControlStallRequired = true;
 
 template struct ImplicitScalingDispatch<Family>;
-template void ImplicitScalingDispatch<Family>::dispatchCommands<Family::DefaultWalkerType>(LinearStream &commandStream, Family::DefaultWalkerType &walkerCmd, void **outWalkerPtr, const DeviceBitfield &devices, NEO::RequiredPartitionDim requiredPartitionDim, uint32_t &partitionCount, bool useSecondaryBatchBuffer, bool apiSelfCleanup, bool dcFlush, bool forceExecutionOnSingleTile, uint64_t workPartitionAllocationGpuVa, const HardwareInfo &hwInfo);
+template void ImplicitScalingDispatch<Family>::dispatchCommands<Family::DefaultWalkerType>(LinearStream &commandStream, Family::DefaultWalkerType &walkerCmd, void **outWalkerPtr,
+                                                                                           const DeviceBitfield &devices, RequiredPartitionDim requiredPartitionDim, uint32_t &partitionCount,
+                                                                                           bool useSecondaryBatchBuffer, bool apiSelfCleanup, bool dcFlush, bool forceExecutionOnSingleTile,
+                                                                                           uint64_t workPartitionAllocationGpuVa, const HardwareInfo &hwInfo);
 template size_t ImplicitScalingDispatch<Family>::getSize<Family::DefaultWalkerType>(bool apiSelfCleanup, bool preferStaticPartitioning, const DeviceBitfield &devices, const Vec3<size_t> &groupStart, const Vec3<size_t> &groupCount);
-template void ImplicitScalingDispatch<Family>::appendWalkerFields<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, uint32_t tileCount);
 
 } // namespace NEO
