@@ -238,11 +238,4 @@ class MockProgram : public Program {
     bool callBasePopulateZebinExtendedArgsMetadataOnce = false;
 };
 
-class MockProgramAppendKernelDebugOptions : public Program {
-  public:
-    using Program::Program;
-    ADDMETHOD_NOBASE(appendKernelDebugOptions, bool, true, (ClDevice & clDevice, std::string &internalOptions));
-    ADDMETHOD_NOBASE(processGenBinary, cl_int, CL_SUCCESS, (const ClDevice &clDevice));
-};
-
 } // namespace NEO

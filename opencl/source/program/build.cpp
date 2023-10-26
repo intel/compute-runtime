@@ -182,12 +182,6 @@ cl_int Program::build(
     return retVal;
 }
 
-bool Program::appendKernelDebugOptions(ClDevice &clDevice, std::string &internalOptions) {
-    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::debugKernelEnable);
-    CompilerOptions::concatenateAppend(options, CompilerOptions::generateDebugInfo);
-    return true;
-}
-
 cl_int Program::build(const ClDeviceVector &deviceVector, const char *buildOptions,
                       std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap) {
     auto ret = this->build(deviceVector, buildOptions);

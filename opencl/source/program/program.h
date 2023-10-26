@@ -292,7 +292,6 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL bool isFlagOption(ConstStringRef option);
     MOCKABLE_VIRTUAL bool isOptionValueValid(ConstStringRef option, ConstStringRef value);
 
-    MOCKABLE_VIRTUAL bool appendKernelDebugOptions(ClDevice &clDevice, std::string &internalOptions);
     void prependFilePathToOptions(const std::string &filename);
 
     void setBuildStatus(cl_build_status status);
