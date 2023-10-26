@@ -55,14 +55,13 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     checkIsaPlacementOnceFlags = std::make_unique<std::once_flag[]>(rootEnvCount);
     isaInLocalMemory.resize(rootEnvCount);
     allRegisteredEngines.resize(rootEnvCount + 1);
-    bool subDevicesAsDevices = executionEnvironment.isExposingSubDevicesAsDevices();
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-        internalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(subDevicesAsDevices, hwInfo)));
-        externalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(subDevicesAsDevices, hwInfo)));
+        internalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
+        externalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
         this->localMemorySupported.push_back(gfxCoreHelper.getEnableLocalMemory(*hwInfo));
         this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages && !!DebugManager.flags.Enable64kbpages.get());
 

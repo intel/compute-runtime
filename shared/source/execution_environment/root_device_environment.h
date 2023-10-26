@@ -45,6 +45,9 @@ struct AllocationProperties;
 struct HardwareInfo;
 
 struct RootDeviceEnvironment : NonCopyableClass {
+  protected:
+    std::unique_ptr<HardwareInfo> hwInfo;
+
   public:
     RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
     MOCKABLE_VIRTUAL ~RootDeviceEnvironment();
@@ -120,7 +123,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
     bool isWddmOnLinuxEnable = false;
     std::once_flag isDummyAllocationInitialized;
     std::unique_ptr<AllocationProperties> dummyBlitProperties;
-    std::unique_ptr<HardwareInfo> hwInfo;
 
   private:
     std::mutex mtx;

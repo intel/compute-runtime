@@ -455,12 +455,12 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     {
         DebugManager.flags.EngineInstancedSubDevices.set(false);
         MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
-        bool subDevicesAsDevices = executionEnvironment.isExposingSubDevicesAsDevices();
+
         for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
             auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
             auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
             auto osContextCount = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment).size();
-            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(subDevicesAsDevices, hwInfo);
+            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
             bool hasRootCsr = subDevicesCount > 1;
             auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
 
